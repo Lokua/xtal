@@ -1,6 +1,9 @@
+use std::path::PathBuf;
+
 use bevy_reflect::Reflect;
 use nannou::prelude::*;
 
+use crate::framework::gpu_hot as gpu;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -78,7 +81,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./flow_field.wgsl");
+    // let shader = wgpu::include_wgsl!("./flow_field.wgsl");
     let initial_vertices: Vec<Vertex> = vec![
         Vertex {
             position: [0.0, 0.0],
@@ -87,9 +90,9 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         (MAX_COUNT * 6) + 6
     ];
 
-    let gpu = gpu::GpuState::new(
+    let gpu = gpu::GpuState::new_with_path(
         app,
-        shader,
+        PathBuf::from("src/sketches/flow_field.wgsl"),
         &params,
         Some(&initial_vertices),
         wgpu::PrimitiveTopology::TriangleList,

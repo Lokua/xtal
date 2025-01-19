@@ -8,6 +8,7 @@ pub use crate::framework::drop::*;
 pub use crate::framework::easing::*;
 pub use crate::framework::frame_controller;
 pub use crate::framework::gpu;
+pub use crate::framework::gpu_hot;
 pub use crate::framework::logging::*;
 pub use crate::framework::midi::*;
 pub use crate::framework::noise::*;

@@ -8,6 +8,7 @@ pub mod drop;
 pub mod easing;
 pub mod frame_controller;
 pub mod gpu;
+pub mod gpu_hot;
 pub mod logging;
 pub mod midi;
 pub mod noise;
