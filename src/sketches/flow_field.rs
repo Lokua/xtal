@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(300),
 };
 
-const MAX_COUNT: usize = 10_000;
+const MAX_COUNT: usize = 100_000;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
@@ -28,6 +28,8 @@ struct Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
+    // size, ...unused
+    a: [f32; 4],
 }
 
 #[derive(SketchComponents)]
@@ -60,6 +62,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         ),
         Control::checkbox("randomize_point_size", false),
         Control::slider("agent_count", 1_000.0, (10.0, MAX_COUNT as f32), 1.0),
+        Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
         Control::slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01),
         Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
         Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
@@ -69,6 +72,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let params = ShaderParams {
         resolution: [0.0; 4],
+        a: [0.0; 4],
     };
 
     let shader = wgpu::include_wgsl!("./flow_field.wgsl");
@@ -114,6 +118,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         m.controls.mark_unchanged();
     }
 
+    let agent_size = m.controls.float("agent_size");
     let noise_scale = m.controls.float("noise_scale");
     let noise_strength = m.controls.float("noise_strength");
     let noise_vel = m.controls.float("noise_vel");
@@ -134,6 +139,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
+        a: [agent_size, 0.0, 0.0, 0.0],
     };
 
     #[allow(unused_variables)]
@@ -143,7 +149,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     for agent in &m.agents {
         vertices.extend(generate_quad_vertices(
             [agent.pos.x / m.wr.hw(), agent.pos.y / m.wr.hh()],
-            0.002,
+            agent_size,
         ));
     }
 
@@ -245,30 +251,32 @@ impl Agent {
 }
 
 fn generate_quad_vertices(center: [f32; 2], size: f32) -> Vec<Vertex> {
+    let color = [0.0, 0.0, 0.0, 1.0];
+
     vec![
         Vertex {
             position: [center[0] - size, center[1] - size],
-            color: [1.0, 0.0, 0.0, 1.0],
+            color,
         },
         Vertex {
             position: [center[0] + size, center[1] - size],
-            color: [0.0, 1.0, 0.0, 1.0],
+            color,
         },
         Vertex {
             position: [center[0] + size, center[1] + size],
-            color: [0.0, 0.0, 1.0, 1.0],
+            color,
         },
         Vertex {
             position: [center[0] - size, center[1] - size],
-            color: [1.0, 0.0, 0.0, 1.0],
+            color,
         },
         Vertex {
             position: [center[0] + size, center[1] + size],
-            color: [0.0, 0.0, 1.0, 1.0],
+            color,
         },
         Vertex {
             position: [center[0] - size, center[1] + size],
-            color: [1.0, 1.0, 0.0, 1.0],
+            color,
         },
     ]
 }
