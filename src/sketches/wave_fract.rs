@@ -91,8 +91,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         d: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./wave_fract.wgsl");
-    let gpu = gpu::GpuState::new_full_screen(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./wave_fract.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,

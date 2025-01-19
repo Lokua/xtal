@@ -87,9 +87,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let pattern_a = square1 * square2;
     let pattern_b = abs(square1 - square2) / (square1 + square2 + 0.1);
-    let value = select(pattern_a, pattern_b, checkerboard == 1.0);
-   
-   return vec4f(value);
+    var value = select(pattern_a, pattern_b, checkerboard == 1.0);
+    
+    return vec4f(value);
 }
 
 fn calculate_wave(

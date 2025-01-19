@@ -180,6 +180,7 @@ fn fs_main(
     if invert == 1.0 {
         return vec4f(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
     }
+    
     return color;
 }
 
