@@ -1,4 +1,3 @@
-use gpu::GpuState;
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;

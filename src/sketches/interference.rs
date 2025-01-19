@@ -1,6 +1,5 @@
 use nannou::prelude::*;
 
-use crate::framework::gpu_hot as gpu;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
