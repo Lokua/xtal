@@ -1,5 +1,10 @@
 use bevy_reflect::{Reflect, TypeInfo, Typed};
 use bytemuck::{Pod, Zeroable};
+use naga;
+use naga::front::wgsl;
+use naga::valid::{Capabilities, ValidationFlags, Validator};
+// use naga::front::wgsl;
+// use naga::valid::Validator;
 use nannou::prelude::*;
 use notify::{Event, RecursiveMode, Watcher};
 use std::fs;
@@ -134,38 +139,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         }
     }
 
-    fn setup_shader_watcher(
-        path: PathBuf,
-        state: Arc<Mutex<Option<PathBuf>>>,
-    ) -> notify::RecommendedWatcher {
-        let path_to_watch = path.clone();
-
-        let mut watcher = notify::recommended_watcher(move |res| {
-            let event: Event = match res {
-                Ok(event) => event,
-                Err(_) => return,
-            };
-
-            if event.kind != notify::EventKind::Modify(notify::event::ModifyKind::Data(
-                notify::event::DataChange::Content,
-            )) {
-                return;
-            }
-
-            info!("Shader {:?} changed. Pipeline will be recreated on next update.", path);
-            if let Ok(mut guard) = state.lock() {
-                *guard = Some(path.clone());
-            }
-        })
-        .expect("Failed to create watcher");
-
-        watcher
-            .watch(&path_to_watch, RecursiveMode::NonRecursive)
-            .expect("Failed to start watching shader file");
-
-        watcher
-    }
-
     fn create_params_bind_group_layout<P: Pod>(
         device: &wgpu::Device,
     ) -> wgpu::BindGroupLayout {
@@ -272,6 +245,38 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             })
     }
 
+    fn setup_shader_watcher(
+        path: PathBuf,
+        state: Arc<Mutex<Option<PathBuf>>>,
+    ) -> notify::RecommendedWatcher {
+        let path_to_watch = path.clone();
+
+        let mut watcher = notify::recommended_watcher(move |res| {
+            let event: Event = match res {
+                Ok(event) => event,
+                Err(_) => return,
+            };
+
+            if event.kind != notify::EventKind::Modify(notify::event::ModifyKind::Data(
+                notify::event::DataChange::Content,
+            )) {
+                return;
+            }
+
+            info!("Shader {:?} changed. Pipeline will be recreated on next update.", path);
+            if let Ok(mut guard) = state.lock() {
+                *guard = Some(path.clone());
+            }
+        })
+        .expect("Failed to create watcher");
+
+        watcher
+            .watch(&path_to_watch, RecursiveMode::NonRecursive)
+            .expect("Failed to start watching shader file");
+
+        watcher
+    }
+
     /// This will be called multiple times when we update but it doesn't matter
     /// since the update_state's content will be none due to `guard.take()`
     fn update_shader(&mut self, app: &App) {
@@ -280,42 +285,66 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                 info!("Reloading shader from {:?}", path);
 
                 if let Ok(shader_content) = fs::read_to_string(&path) {
-                    let shader = wgpu::ShaderModuleDescriptor {
-                        label: Some("Hot Reloadable Shader"),
-                        source: wgpu::ShaderSource::Wgsl(shader_content.into()),
-                    };
+                    let parse_result = wgsl::parse_str(&shader_content);
 
-                    let window = app.main_window();
-                    let device = window.device();
+                    if let Ok(module) = parse_result {
+                        let mut validator = Validator::new(
+                            ValidationFlags::all(),
+                            Capabilities::empty(),
+                        );
 
-                    // Create shader module (this will panic if invalid)
-                    let shader_module = device.create_shader_module(shader);
+                        let validation_result = validator.validate(&module);
+                        if let Err(validation_error) = validation_result {
+                            error!(
+                                "Shader validation failed:\n{}",
+                                validation_error
+                            );
+                            // The error above is from naga's Display impl,
+                            // Here we can get more details via Debug impl
+                            trace!("{:?}", validation_error);
+                            return;
+                        }
 
-                    let pipeline_layout = device.create_pipeline_layout(
-                        &wgpu::PipelineLayoutDescriptor {
-                            label: Some("Pipeline Layout"),
-                            bind_group_layouts: &[
-                                &self.params_bind_group_layout
-                            ],
-                            push_constant_ranges: &[],
-                        },
-                    );
+                        // If we got here, shader is valid - create the module
+                        let shader = wgpu::ShaderModuleDescriptor {
+                            label: Some("Hot Reloadable Shader"),
+                            source: wgpu::ShaderSource::Wgsl(
+                                shader_content.into(),
+                            ),
+                        };
 
-                    let creation_state = PipelineCreationState {
-                        device,
-                        shader_module: &shader_module,
-                        pipeline_layout: &pipeline_layout,
-                        vertex_buffers: &self.vertex_buffers,
-                        sample_count: self.sample_count,
-                        format: Frame::TEXTURE_FORMAT,
-                        topology: self.topology,
-                        blend: self.blend,
-                    };
+                        let window = app.main_window();
+                        let device = window.device();
 
-                    self.render_pipeline =
-                        Self::create_render_pipeline(creation_state);
+                        let shader_module = device.create_shader_module(shader);
+                        let pipeline_layout = device.create_pipeline_layout(
+                            &wgpu::PipelineLayoutDescriptor {
+                                label: Some("Pipeline Layout"),
+                                bind_group_layouts: &[
+                                    &self.params_bind_group_layout
+                                ],
+                                push_constant_ranges: &[],
+                            },
+                        );
 
-                    info!("Shader pipeline successfully recreated");
+                        let creation_state = PipelineCreationState {
+                            device,
+                            shader_module: &shader_module,
+                            pipeline_layout: &pipeline_layout,
+                            vertex_buffers: &self.vertex_buffers,
+                            sample_count: self.sample_count,
+                            format: Frame::TEXTURE_FORMAT,
+                            topology: self.topology,
+                            blend: self.blend,
+                        };
+
+                        self.render_pipeline =
+                            Self::create_render_pipeline(creation_state);
+
+                        info!("Shader pipeline successfully recreated");
+                    } else {
+                        error!("Failed to parse shader");
+                    }
                 }
             }
         }

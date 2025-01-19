@@ -2203,6 +2203,7 @@ dependencies = [
  "lazy_static",
  "log",
  "midir",
+ "naga",
  "nannou",
  "nannou_egui",
  "nannou_osc",
