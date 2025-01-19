@@ -16,19 +16,22 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 };
 
 const MAX_COUNT: usize = 100_000;
+const VERTEX_TYPE_BG: f32 = 0.0;
+const VERTEX_TYPE_AGENT: f32 = 1.0;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 2],
-    color: [f32; 4],
+    // 0.0 for background, 1.0 for agent
+    vertex_type: f32,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
-    // size, ...unused
+    // bg_alpha
     a: [f32; 4],
 }
 
@@ -79,9 +82,9 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let initial_vertices: Vec<Vertex> = vec![
         Vertex {
             position: [0.0, 0.0],
-            color: [1.0, 0.0, 0.0, 1.0],
+            vertex_type: VERTEX_TYPE_AGENT,
         };
-        MAX_COUNT * 6
+        (MAX_COUNT * 6) + 6
     ];
 
     let gpu = gpu::GpuState::new(
@@ -118,12 +121,13 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         m.controls.mark_unchanged();
     }
 
+    let algorithm = m.controls.string("algorithm");
     let agent_size = m.controls.float("agent_size");
     let noise_scale = m.controls.float("noise_scale");
     let noise_strength = m.controls.float("noise_strength");
     let noise_vel = m.controls.float("noise_vel");
     let step_range = m.controls.float("step_range");
-    let algorithm = m.controls.string("algorithm");
+    let bg_alpha = m.controls.float("bg_alpha");
 
     m.agents.iter_mut().for_each(|agent| {
         agent.step_size = random_range(1.0, step_range + 0.001);
@@ -139,17 +143,27 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [agent_size, 0.0, 0.0, 0.0],
+        a: [bg_alpha, 0.0, 0.0, 0.0],
     };
 
-    #[allow(unused_variables)]
     let randomize_point_size = m.controls.bool("randomize_point_size");
+    let (size_min, _) = m.controls.slider_range("agent_size");
+    let size_range = safe_range(size_min - 0.000_1, agent_size);
 
-    let mut vertices = Vec::new();
+    let mut vertices =
+        generate_quad_vertices(vec2(0.0, 0.0), 1.0, VERTEX_TYPE_BG);
+    vertices.reserve(m.agents.len() * 6);
+
     for agent in &m.agents {
+        let size = if randomize_point_size {
+            random_range(size_range.0, size_range.1)
+        } else {
+            agent_size
+        };
         vertices.extend(generate_quad_vertices(
-            [agent.pos.x / m.wr.hw(), agent.pos.y / m.wr.hh()],
-            agent_size,
+            vec2(agent.pos.x / m.wr.hw(), agent.pos.y / m.wr.hh()),
+            size,
+            VERTEX_TYPE_AGENT,
         ));
     }
 
@@ -157,7 +171,6 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(hsla(1.0, 1.0, 1.0, m.controls.float("bg_alpha")));
     m.gpu.render(&frame);
 }
 
@@ -250,33 +263,31 @@ impl Agent {
     }
 }
 
-fn generate_quad_vertices(center: [f32; 2], size: f32) -> Vec<Vertex> {
-    let color = [0.0, 0.0, 0.0, 1.0];
-
+fn generate_quad_vertices(p: Vec2, size: f32, vertex_type: f32) -> Vec<Vertex> {
     vec![
         Vertex {
-            position: [center[0] - size, center[1] - size],
-            color,
+            position: [p.x - size, p.y - size],
+            vertex_type,
         },
         Vertex {
-            position: [center[0] + size, center[1] - size],
-            color,
+            position: [p.x + size, p.y - size],
+            vertex_type,
         },
         Vertex {
-            position: [center[0] + size, center[1] + size],
-            color,
+            position: [p.x + size, p.y + size],
+            vertex_type,
         },
         Vertex {
-            position: [center[0] - size, center[1] - size],
-            color,
+            position: [p.x - size, p.y - size],
+            vertex_type,
         },
         Vertex {
-            position: [center[0] + size, center[1] + size],
-            color,
+            position: [p.x + size, p.y + size],
+            vertex_type,
         },
         Vertex {
-            position: [center[0] - size, center[1] + size],
-            color,
+            position: [p.x - size, p.y + size],
+            vertex_type,
         },
     ]
 }

@@ -72,13 +72,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             });
 
         let (vertex_buffer, n_vertices) = if let Some(verts) = vertices {
-            let buffer =
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Vertex Buffer"),
-                    contents: bytemuck::cast_slice(verts),
-                    usage: wgpu::BufferUsages::VERTEX
-                        | wgpu::BufferUsages::COPY_DST,
-                });
+            let buffer = Self::create_vertex_buffer(device, verts);
             (Some(buffer), verts.len() as u32)
         } else {
             (None, 0)
@@ -89,6 +83,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         } else {
             vec![]
         };
+
         let vertex_buffers = if vertices.is_some() {
             vec![wgpu::VertexBufferLayout {
                 array_stride: std::mem::size_of::<V>() as u64,
@@ -140,6 +135,17 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         }
     }
 
+    fn create_vertex_buffer(
+        device: &wgpu::Device,
+        vertices: &[V],
+    ) -> wgpu::Buffer {
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(vertices),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        })
+    }
+
     pub fn update_params<P: Pod>(&self, app: &App, params: &P) {
         app.main_window().queue().write_buffer(
             &self.params_buffer,
@@ -148,15 +154,27 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         );
     }
 
-    pub fn update_vertex_buffer(&self, app: &App, vertices: &[V]) {
-        app.main_window().queue().write_buffer(
+    pub fn update_vertex_buffer(&mut self, app: &App, vertices: &[V]) {
+        let window = app.main_window();
+        let device = window.device();
+
+        if vertices.len() as u32 != self.n_vertices {
+            if let Some(_) = self.vertex_buffer {
+                self.vertex_buffer =
+                    Some(Self::create_vertex_buffer(device, vertices));
+            }
+            // Why don't we need this?
+            // self.n_vertices = vertices.len() as u32;
+        }
+
+        window.queue().write_buffer(
             self.vertex_buffer.as_ref().unwrap(),
             0,
-            bytemuck::cast_slice(&vertices),
+            bytemuck::cast_slice(vertices),
         );
     }
 
-    pub fn update<P: Pod>(&self, app: &App, params: &P, vertices: &[V]) {
+    pub fn update<P: Pod>(&mut self, app: &App, params: &P, vertices: &[V]) {
         self.update_params(app, params);
         self.update_vertex_buffer(app, vertices);
     }
