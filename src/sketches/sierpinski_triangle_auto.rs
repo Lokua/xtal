@@ -20,7 +20,7 @@ pub struct Model {
     animation: Animation<FrameTiming>,
     controls: Controls,
     wr: WindowRect,
-    gpu: gpu::GpuState,
+    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
     midi: MidiControls,
 }
 
@@ -50,7 +50,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let shader = wgpu::include_wgsl!("./sierpinski_triangle.wgsl");
-    let gpu = gpu::GpuState::new(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(app, shader, &params);
 
     let midi = MidiControlBuilder::new()
         .control_mapped("primary_iterations", (0, 1), (0.0, 5.0), 0.0)

@@ -139,3 +139,6 @@ fn mix_max(c1: vec4f, c2: vec4f) -> vec4f {
     return max(c1, c2);
 }
 
+fn powf(x: f32, y: f32) -> f32 {
+    return sign(x) * exp(log(abs(x)) * y);
+}

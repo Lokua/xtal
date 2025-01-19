@@ -22,7 +22,7 @@ pub struct Model {
     animation: Animation<FrameTiming>,
     controls: Controls,
     wr: WindowRect,
-    gpu: gpu::GpuState,
+    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
 #[repr(C)]
@@ -52,7 +52,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let shader = wgpu::include_wgsl!("./bos.wgsl");
-    let gpu = GpuState::new(app, shader, &params);
+    let gpu = GpuState::new_full_screen(app, shader, &params);
 
     Model {
         animation,

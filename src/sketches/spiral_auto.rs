@@ -50,7 +50,7 @@ pub struct Model {
     animation: Animation<FrameTiming>,
     controls: Controls,
     wr: WindowRect,
-    gpu: gpu::GpuState,
+    gpu: gpu::GpuState<()>,
     midi: MidiControls,
 }
 
@@ -134,27 +134,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let shader = wgpu::include_wgsl!("./spiral.wgsl");
-    let gpu = gpu::GpuState::new_with_config(
-        app,
-        shader,
-        &params,
-        gpu::PipelineConfig {
-            vertex_data: None,
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent {
-                    src_factor: wgpu::BlendFactor::SrcAlpha,
-                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                    operation: wgpu::BlendOperation::Add,
-                },
-                alpha: wgpu::BlendComponent {
-                    src_factor: wgpu::BlendFactor::One,
-                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                    operation: wgpu::BlendOperation::Add,
-                },
-            }),
-            ..Default::default()
-        },
-    );
+    let gpu = gpu::GpuState::new_procedural(app, shader, &params);
 
     let midi = MidiControlBuilder::new()
         .control_mapped("n_lines", (0, 1), (1.0, 256.0), 0.5)

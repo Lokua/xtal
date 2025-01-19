@@ -51,7 +51,7 @@ pub struct Model {
     animation: Animation<FrameTiming>,
     controls: Controls,
     wr: WindowRect,
-    gpu: gpu::GpuState,
+    gpu: gpu::GpuState<()>,
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -114,16 +114,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let shader = wgpu::include_wgsl!("./spiral_2.wgsl");
-    let gpu = gpu::GpuState::new_with_config(
-        app,
-        shader,
-        &params,
-        gpu::PipelineConfig {
-            vertex_data: None,
-            blend: Some(create_blend_state()),
-            ..Default::default()
-        },
-    );
+    let gpu = gpu::GpuState::new_procedural(app, shader, &params);
 
     Model {
         animation,
@@ -196,19 +187,4 @@ pub fn view(_app: &App, m: &Model, frame: Frame) {
     let total_vertices = background_vertices + spiral_vertices;
 
     m.gpu.render_procedural(&frame, total_vertices);
-}
-
-fn create_blend_state() -> wgpu::BlendState {
-    wgpu::BlendState {
-        color: wgpu::BlendComponent {
-            src_factor: wgpu::BlendFactor::SrcAlpha,
-            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-            operation: wgpu::BlendOperation::Add,
-        },
-        alpha: wgpu::BlendComponent {
-            src_factor: wgpu::BlendFactor::One,
-            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-            operation: wgpu::BlendOperation::Add,
-        },
-    }
 }

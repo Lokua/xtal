@@ -17,6 +17,7 @@ members = [
 
 [dependencies]
 arboard = "3.4.1"
+bevy_reflect = "0.15.1"
 bytemuck = "1.21.0"
 chrono = "0.4.38"
 cpal = "0.15.3"

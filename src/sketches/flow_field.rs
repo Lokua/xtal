@@ -1,3 +1,4 @@
+use bevy_reflect::Reflect;
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
@@ -17,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const MAX_COUNT: usize = 10_000;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 2],
     color: [f32; 4],
@@ -38,7 +39,7 @@ pub struct Model {
     wr: WindowRect,
     agents: Vec<Agent>,
     noise: PerlinNoise,
-    gpu: gpu::GpuState,
+    gpu: gpu::GpuState<Vertex>,
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -71,24 +72,21 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let shader = wgpu::include_wgsl!("./flow_field.wgsl");
-    let config = gpu::PipelineConfig {
-        topology: wgpu::PrimitiveTopology::TriangleList,
-        vertex_data: None, // Dynamic vertex data
-        blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-    };
-    let empty_vertices: Vec<Vertex> = vec![
+    let initial_vertices: Vec<Vertex> = vec![
         Vertex {
             position: [0.0, 0.0],
             color: [1.0, 0.0, 0.0, 1.0],
         };
         MAX_COUNT * 6
     ];
-    let gpu = gpu::GpuState::new_test(
+
+    let gpu = gpu::GpuState::new(
         app,
         shader,
         &params,
-        Some(&empty_vertices),
-        config,
+        Some(&initial_vertices),
+        wgpu::PrimitiveTopology::TriangleList,
+        Some(wgpu::BlendState::ALPHA_BLENDING),
     );
 
     Model {
@@ -149,13 +147,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ));
     }
 
-    app.main_window().queue().write_buffer(
-        &m.gpu.vertex_buffer.as_ref().unwrap(),
-        0,
-        bytemuck::cast_slice(&vertices),
-    );
-
-    m.gpu.update_params(app, &params);
+    m.gpu.update(app, &params, &vertices);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {
