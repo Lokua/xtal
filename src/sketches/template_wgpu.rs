@@ -46,8 +46,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./template_wgpu.wgsl");
-    let gpu = gpu::GpuState::new_full_screen(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./template_wgpu.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,

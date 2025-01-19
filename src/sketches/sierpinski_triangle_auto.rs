@@ -49,9 +49,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./sierpinski_triangle.wgsl");
-    let gpu = gpu::GpuState::new_full_screen(app, shader, &params);
-
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./sierpinski_triangle.wgsl"),
+        &params,
+        true,
+    );
     let midi = MidiControlBuilder::new()
         .control_mapped("primary_iterations", (0, 1), (0.0, 5.0), 0.0)
         .control_mapped("second_iterations", (0, 2), (0.0, 3.0), 0.0)

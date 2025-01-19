@@ -1,4 +1,3 @@
-use gpu::GpuState;
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
@@ -69,8 +68,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         d: [0.0, 0.0, 0.0, 0.0],
     };
 
-    let shader = wgpu::include_wgsl!("./genuary_2.wgsl");
-    let gpu = GpuState::new_full_screen(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./genuary_2.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,

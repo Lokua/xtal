@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 
+use crate::framework::gpu_hot as gpu;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -139,8 +140,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         h: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./spiral.wgsl");
-    let gpu = gpu::GpuState::new_procedural(app, shader, &params);
+    let gpu = gpu::GpuState::new_procedural(
+        app,
+        to_absolute_path(file!(), "./spiral.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,

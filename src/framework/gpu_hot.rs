@@ -272,7 +272,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             })
     }
 
-    pub fn update<P: Pod>(&mut self, app: &App, params: &P, vertices: &[V]) {
+    /// This will be called multiple times when we update but it doesn't matter
+    /// since the update_state's content will be none due to `guard.take()`
+    fn update_shader(&mut self, app: &App) {
         if let Ok(mut guard) = self.update_state.lock() {
             if let Some(path) = guard.take() {
                 info!("Reloading shader from {:?}", path);
@@ -312,16 +314,23 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
                     self.render_pipeline =
                         Self::create_render_pipeline(creation_state);
+
                     info!("Shader pipeline successfully recreated");
                 }
             }
         }
+    }
 
+    /// For non-procedural and full-screen shaders when vertices are altered on CPU
+    pub fn update<P: Pod>(&mut self, app: &App, params: &P, vertices: &[V]) {
+        self.update_shader(app);
         self.update_params(app, params);
         self.update_vertex_buffer(app, vertices);
     }
 
-    pub fn update_params<P: Pod>(&self, app: &App, params: &P) {
+    /// For procedural and full-screen shaders that do not need updated vertices
+    pub fn update_params<P: Pod>(&mut self, app: &App, params: &P) {
+        self.update_shader(app);
         app.main_window().queue().write_buffer(
             &self.params_buffer,
             0,
@@ -338,7 +347,13 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                 self.vertex_buffer =
                     Some(Self::create_vertex_buffer(device, vertices));
             }
-            self.n_vertices = vertices.len() as u32;
+
+            // Not sure why this isn't 100% needed.
+            // This works with or without it, but it's not even correct
+            // as it doesn't multiply the length by the actual position data
+            // e.g. len * 6 for quads:
+            //
+            // self.n_vertices = vertices.len() as u32;
         }
 
         window.queue().write_buffer(
@@ -350,11 +365,13 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
     pub fn render(&self, frame: &Frame) {
         let mut encoder = frame.command_encoder();
+
         let mut render_pass = wgpu::RenderPassBuilder::new()
             .color_attachment(frame.texture_view(), |color| {
                 color.load_op(wgpu::LoadOp::Load)
             })
             .begin(&mut encoder);
+
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
 
@@ -443,6 +460,8 @@ pub const QUAD_COVER_VERTICES: &[BasicPositionVertex] = &[
     },
 ];
 
+/// Specialized impl for shaders that simply need every pixel.
+/// See interference and wave_fract for examples.
 impl GpuState<BasicPositionVertex> {
     pub fn new_full_screen<P: Pod + Zeroable>(
         app: &App,
@@ -462,6 +481,8 @@ impl GpuState<BasicPositionVertex> {
     }
 }
 
+/// Specialized impl for purly procedural shaders (no vertices).
+/// See spiral and genuary_14 for examples.
 impl GpuState<()> {
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,

@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 
+use crate::framework::gpu_hot as gpu;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -92,8 +93,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         e: [0.0; 4],
     };
 
-    let shader = wgpu::include_wgsl!("./interference.wgsl");
-    let gpu = gpu::GpuState::new_full_screen(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./interference.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,

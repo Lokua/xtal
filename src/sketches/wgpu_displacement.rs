@@ -118,8 +118,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         time: app.time,
     };
 
-    let shader = wgpu::include_wgsl!("./wgpu_displacement.wgsl");
-    let gpu = GpuState::new_full_screen(app, shader, &params);
+    let gpu = gpu::GpuState::new_full_screen(
+        app,
+        to_absolute_path(file!(), "./wgpu_displacement.wgsl"),
+        &params,
+        true,
+    );
 
     Model {
         animation,
