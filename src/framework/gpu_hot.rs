@@ -61,7 +61,10 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         let update_state = Arc::new(Mutex::new(None));
         let watcher = if watch {
-            Some(Self::setup_shader_watcher(shader_path.clone(), update_state.clone()))
+            Some(Self::setup_shader_watcher(
+                shader_path.clone(),
+                update_state.clone(),
+            ))
         } else {
             None
         };
@@ -136,40 +139,41 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         state: Arc<Mutex<Option<PathBuf>>>,
     ) -> notify::RecommendedWatcher {
         let path_to_watch = path.clone();
-    
+
         let mut watcher = notify::recommended_watcher(move |res| {
             let event: Event = match res {
                 Ok(event) => event,
                 Err(_) => return,
             };
-    
+
             if event.kind != notify::EventKind::Modify(notify::event::ModifyKind::Data(
                 notify::event::DataChange::Content,
             )) {
                 return;
             }
-    
+
             info!("Shader {:?} changed. Pipeline will be recreated on next update.", path);
             if let Ok(mut guard) = state.lock() {
                 *guard = Some(path.clone());
             }
         })
         .expect("Failed to create watcher");
-    
+
         watcher
             .watch(&path_to_watch, RecursiveMode::NonRecursive)
             .expect("Failed to start watching shader file");
-    
+
         watcher
     }
-    
+
     fn create_params_bind_group_layout<P: Pod>(
         device: &wgpu::Device,
     ) -> wgpu::BindGroupLayout {
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                visibility: wgpu::ShaderStages::VERTEX
+                    | wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -182,7 +186,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             label: Some("Params Bind Group Layout"),
         })
     }
-    
+
     fn create_params_buffer<P: Pod>(
         device: &wgpu::Device,
         params: &P,
@@ -193,7 +197,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         })
     }
-    
+
     fn create_params_bind_group(
         device: &wgpu::Device,
         layout: &wgpu::BindGroupLayout,
@@ -208,7 +212,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             label: Some("Params Bind Group"),
         })
     }
-    
+
     fn create_vertex_buffer(
         device: &wgpu::Device,
         vertices: &[V],
@@ -219,46 +223,53 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         })
     }
-    
+
     fn create_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
         let vertex_attributes = Self::infer_vertex_attributes();
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<V>() as u64,
             step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: vertex_attributes.into_iter().collect::<Vec<_>>().leak(),
+            attributes: vertex_attributes
+                .into_iter()
+                .collect::<Vec<_>>()
+                .leak(),
         }
     }
-    
-    fn create_render_pipeline(state: PipelineCreationState) -> wgpu::RenderPipeline {
-        state.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(state.pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: state.shader_module,
-                entry_point: "vs_main",
-                buffers: state.vertex_buffers,
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: state.shader_module,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: state.format,
-                    blend: state.blend,
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: state.topology,
-                ..Default::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: state.sample_count,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        })
+
+    fn create_render_pipeline(
+        state: PipelineCreationState,
+    ) -> wgpu::RenderPipeline {
+        state
+            .device
+            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline"),
+                layout: Some(state.pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: state.shader_module,
+                    entry_point: "vs_main",
+                    buffers: state.vertex_buffers,
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: state.shader_module,
+                    entry_point: "fs_main",
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: state.format,
+                        blend: state.blend,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: state.topology,
+                    ..Default::default()
+                },
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState {
+                    count: state.sample_count,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
+            })
     }
 
     pub fn update<P: Pod>(&mut self, app: &App, params: &P, vertices: &[V]) {
@@ -274,14 +285,16 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
                     let window = app.main_window();
                     let device = window.device();
-                    
+
                     // Create shader module (this will panic if invalid)
                     let shader_module = device.create_shader_module(shader);
 
                     let pipeline_layout = device.create_pipeline_layout(
                         &wgpu::PipelineLayoutDescriptor {
                             label: Some("Pipeline Layout"),
-                            bind_group_layouts: &[&self.params_bind_group_layout],
+                            bind_group_layouts: &[
+                                &self.params_bind_group_layout
+                            ],
                             push_constant_ranges: &[],
                         },
                     );
@@ -297,16 +310,17 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                         blend: self.blend,
                     };
 
-                    self.render_pipeline = Self::create_render_pipeline(creation_state);
+                    self.render_pipeline =
+                        Self::create_render_pipeline(creation_state);
                     info!("Shader pipeline successfully recreated");
                 }
             }
         }
-    
+
         self.update_params(app, params);
         self.update_vertex_buffer(app, vertices);
     }
-    
+
     pub fn update_params<P: Pod>(&self, app: &App, params: &P) {
         app.main_window().queue().write_buffer(
             &self.params_buffer,
@@ -314,25 +328,26 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             bytemuck::bytes_of(params),
         );
     }
-    
+
     pub fn update_vertex_buffer(&mut self, app: &App, vertices: &[V]) {
         let window = app.main_window();
         let device = window.device();
-    
+
         if vertices.len() as u32 != self.n_vertices {
             if let Some(_) = self.vertex_buffer {
-                self.vertex_buffer = Some(Self::create_vertex_buffer(device, vertices));
+                self.vertex_buffer =
+                    Some(Self::create_vertex_buffer(device, vertices));
             }
             self.n_vertices = vertices.len() as u32;
         }
-    
+
         window.queue().write_buffer(
             self.vertex_buffer.as_ref().unwrap(),
             0,
             bytemuck::cast_slice(vertices),
         );
     }
-    
+
     pub fn render(&self, frame: &Frame) {
         let mut encoder = frame.command_encoder();
         let mut render_pass = wgpu::RenderPassBuilder::new()
@@ -342,7 +357,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             .begin(&mut encoder);
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
-    
+
         if let Some(ref vertex_buffer) = self.vertex_buffer {
             render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
             render_pass.draw(0..self.n_vertices, 0..1);
@@ -351,17 +366,19 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             panic!();
         }
     }
-    
+
     fn infer_vertex_attributes() -> Vec<wgpu::VertexAttribute> {
         let mut attributes = Vec::new();
         let mut offset = 0;
-    
+
         match V::type_info() {
             TypeInfo::Struct(struct_info) => {
-                for (i, field) in struct_info.field_names().into_iter().enumerate() {
+                for (i, field) in
+                    struct_info.field_names().into_iter().enumerate()
+                {
                     if let Some(field_info) = struct_info.field(field) {
                         println!("Field: {} -> {:?}", field, field_info);
-    
+
                         let format = match field_info.type_path() {
                             "f32" => wgpu::VertexFormat::Float32,
                             "[f32; 2]" => wgpu::VertexFormat::Float32x2,
@@ -372,13 +389,13 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                                 panic!();
                             }
                         };
-    
+
                         attributes.push(wgpu::VertexAttribute {
                             offset: offset as u64,
                             shader_location: i as u32,
                             format,
                         });
-    
+
                         offset += match format {
                             wgpu::VertexFormat::Float32 => 4,
                             wgpu::VertexFormat::Float32x2 => 8,
@@ -394,7 +411,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                 panic!();
             }
         }
-    
+
         attributes
     }
 }
