@@ -38,5 +38,5 @@ fn fs_main(frag: VertexOutput) -> @location(0) vec4f {
         return vec4f(vec3f(1.0), bg_alpha);
     }
 
-    return vec4f(0.2, 0.0, 0.3, 1.0);
+    return vec4f(0.2, 0., 0.3, 1.0);
 }

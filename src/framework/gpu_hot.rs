@@ -11,7 +11,6 @@ use super::prelude::*;
 struct PipelineCreationState<'a> {
     device: &'a wgpu::Device,
     shader_module: &'a wgpu::ShaderModule,
-    params_bind_group_layout: &'a wgpu::BindGroupLayout,
     pipeline_layout: &'a wgpu::PipelineLayout,
     vertex_buffers: &'a [wgpu::VertexBufferLayout<'a>],
     sample_count: u32,
@@ -27,15 +26,17 @@ pub struct GpuState<V: Pod + Zeroable> {
     params_bind_group: wgpu::BindGroup,
     n_vertices: u32,
     _marker: std::marker::PhantomData<V>,
-    // New fields for hot reloading
-    shader_path: Option<PathBuf>,
+
+    // Fields for hot reloading
     topology: wgpu::PrimitiveTopology,
     blend: Option<wgpu::BlendState>,
-    // Store layout info for pipeline recreation
+
+    // Layout info for pipeline recreation
     params_bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffers: Vec<wgpu::VertexBufferLayout<'static>>,
     sample_count: u32,
-    // Arc<Mutex<>> to allow shared access from the watcher callback
+
+    // Shaded access for hot reloading
     update_state: Arc<Mutex<Option<PathBuf>>>,
     _watcher: Option<notify::RecommendedWatcher>,
 }
@@ -43,12 +44,28 @@ pub struct GpuState<V: Pod + Zeroable> {
 impl<V: Pod + Zeroable + Typed> GpuState<V> {
     pub fn new<P: Pod + Zeroable>(
         app: &App,
-        shader: wgpu::ShaderModuleDescriptor,
+        shader_path: PathBuf,
         params: &P,
         vertices: Option<&[V]>,
         topology: wgpu::PrimitiveTopology,
         blend: Option<wgpu::BlendState>,
+        watch: bool,
     ) -> Self {
+        let shader_content = fs::read_to_string(&shader_path)
+            .expect("Failed to read shader file");
+
+        let shader = wgpu::ShaderModuleDescriptor {
+            label: Some("Hot Reloadable Shader"),
+            source: wgpu::ShaderSource::Wgsl(shader_content.into()),
+        };
+
+        let update_state = Arc::new(Mutex::new(None));
+        let watcher = if watch {
+            Some(Self::setup_shader_watcher(shader_path.clone(), update_state.clone()))
+        } else {
+            None
+        };
+
         let window = app.main_window();
         let device = window.device();
         let sample_count = window.msaa_samples();
@@ -87,7 +104,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let creation_state = PipelineCreationState {
             device,
             shader_module: &shader_module,
-            params_bind_group_layout: &params_bind_group_layout,
             pipeline_layout: &pipeline_layout,
             vertex_buffers: &vertex_buffers,
             sample_count,
@@ -105,47 +121,14 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             params_bind_group,
             n_vertices,
             _marker: std::marker::PhantomData,
-            shader_path: None,
             topology,
             blend,
             params_bind_group_layout,
             vertex_buffers,
             sample_count,
-            update_state: Arc::new(Mutex::new(None)),
-            _watcher: None,
+            update_state,
+            _watcher: watcher,
         }
-    }
-
-    pub fn new_with_path<P: Pod + Zeroable>(
-        app: &App,
-        shader_path: PathBuf,
-        params: &P,
-        vertices: Option<&[V]>,
-        topology: wgpu::PrimitiveTopology,
-        blend: Option<wgpu::BlendState>,
-    ) -> Self {
-        let shader_content = fs::read_to_string(&shader_path)
-            .expect("Failed to read shader file");
-
-        let shader = wgpu::ShaderModuleDescriptor {
-            label: Some("Hot Reloadable Shader"),
-            source: wgpu::ShaderSource::Wgsl(shader_content.into()),
-        };
-
-        let update_state = Arc::new(Mutex::new(None));
-        let watcher = Self::setup_shader_watcher(
-            shader_path.clone(),
-            update_state.clone(),
-        );
-
-        let mut state =
-            Self::new(app, shader, params, vertices, topology, blend);
-
-        state.shader_path = Some(shader_path);
-        state.update_state = update_state;
-        state._watcher = Some(watcher);
-
-        state
     }
 
     fn setup_shader_watcher(
@@ -282,6 +265,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         if let Ok(mut guard) = self.update_state.lock() {
             if let Some(path) = guard.take() {
                 info!("Reloading shader from {:?}", path);
+
                 if let Ok(shader_content) = fs::read_to_string(&path) {
                     let shader = wgpu::ShaderModuleDescriptor {
                         label: Some("Hot Reloadable Shader"),
@@ -305,7 +289,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                     let creation_state = PipelineCreationState {
                         device,
                         shader_module: &shader_module,
-                        params_bind_group_layout: &self.params_bind_group_layout,
                         pipeline_layout: &pipeline_layout,
                         vertex_buffers: &self.vertex_buffers,
                         sample_count: self.sample_count,
@@ -314,14 +297,12 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                         blend: self.blend,
                     };
 
-                    // Create the new pipeline
                     self.render_pipeline = Self::create_render_pipeline(creation_state);
                     info!("Shader pipeline successfully recreated");
                 }
             }
         }
     
-        // Normal update logic
         self.update_params(app, params);
         self.update_vertex_buffer(app, vertices);
     }
@@ -448,16 +429,18 @@ pub const QUAD_COVER_VERTICES: &[BasicPositionVertex] = &[
 impl GpuState<BasicPositionVertex> {
     pub fn new_full_screen<P: Pod + Zeroable>(
         app: &App,
-        shader: wgpu::ShaderModuleDescriptor,
+        shader_path: PathBuf,
         params: &P,
+        watch: bool,
     ) -> Self {
         Self::new(
             app,
-            shader,
+            shader_path,
             params,
             Some(QUAD_COVER_VERTICES),
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
+            watch,
         )
     }
 }
@@ -465,16 +448,18 @@ impl GpuState<BasicPositionVertex> {
 impl GpuState<()> {
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,
-        shader: wgpu::ShaderModuleDescriptor,
+        shader_path: PathBuf,
         params: &P,
+        watch: bool,
     ) -> Self {
         Self::new(
             app,
-            shader,
+            shader_path,
             params,
             None,
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
+            watch,
         )
     }
 

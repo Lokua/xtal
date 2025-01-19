@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use bevy_reflect::Reflect;
 use nannou::prelude::*;
 
@@ -90,13 +88,14 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         (MAX_COUNT * 6) + 6
     ];
 
-    let gpu = gpu::GpuState::new_with_path(
+    let gpu = gpu::GpuState::new(
         app,
-        PathBuf::from("src/sketches/flow_field.wgsl"),
+        to_absolute_path(file!(), "./flow_field.wgsl"),
         &params,
         Some(&initial_vertices),
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
+        true,
     );
 
     Model {
