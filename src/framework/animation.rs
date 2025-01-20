@@ -172,11 +172,15 @@ impl<T: TimingSource> Animation<T> {
         let beat_in_segment = wrapped_beat - segment_start_beats;
         let segment_progress = beat_in_segment / current_keyframe.duration;
 
-        lerp(
+        let value = lerp(
             current_keyframe.value,
             next_keyframe.value,
             segment_progress,
-        )
+        );
+
+        debug!("current_beat: {}, value: {}", current_beat, value);
+
+        value
     }
 
     /// Convenience version of r_ramp

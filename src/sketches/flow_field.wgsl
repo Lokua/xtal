@@ -15,7 +15,7 @@ struct Params {
     // w, h, ..unused
     resolution: vec4f,
 
-    // bg_alpha, ...unused
+    // bg_alpha, bg_anim, ..unused
     a: vec4f,
 }
 
@@ -33,9 +33,9 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(frag: VertexOutput) -> @location(0) vec4f {
     let bg_alpha = params.a.x;
+    let bg_anim = params.a.y;
 
-
-    let pos_noise = rand_pcg(u32(frag.position.x + frag.position.y)) * 25.0;
+    let pos_noise = rand_pcg(u32(frag.position.x + frag.position.y)) * bg_anim;
     let d = length(frag.position * 0.0005);
 
     if frag.vertex_type == VERTEX_TYPE_BG {
