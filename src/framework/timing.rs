@@ -6,8 +6,7 @@ use std::sync::{
 use crate::framework::prelude::*;
 
 pub trait TimingSource: Clone {
-    fn beat_position(&self) -> f32;
-    fn total_beats(&self) -> f32;
+    fn beats(&self) -> f32;
     fn beats_to_frames(&self, beats: f32) -> f32;
 }
 
@@ -23,12 +22,8 @@ impl FrameTiming {
 }
 
 impl TimingSource for FrameTiming {
-    fn beat_position(&self) -> f32 {
+    fn beats(&self) -> f32 {
         frame_controller::frame_count() as f32 / self.beats_to_frames(1.0)
-    }
-
-    fn total_beats(&self) -> f32 {
-        self.beat_position()
     }
 
     fn beats_to_frames(&self, beats: f32) -> f32 {
@@ -173,11 +168,7 @@ impl MidiSongTiming {
 }
 
 impl TimingSource for MidiSongTiming {
-    fn beat_position(&self) -> f32 {
-        self.get_position_in_beats()
-    }
-
-    fn total_beats(&self) -> f32 {
+    fn beats(&self) -> f32 {
         self.get_position_in_beats()
     }
 
@@ -319,7 +310,7 @@ impl HybridTiming {
                             + frames.load(Ordering::Relaxed) as f32 / fps;
 
                         let mtc_beats = mtc_seconds * (bpm / 60.0);
-                        let midi_beats = midi_timing.beat_position();
+                        let midi_beats = midi_timing.beats();
 
                         let beat_difference = (mtc_beats - midi_beats).abs();
 
@@ -365,19 +356,13 @@ impl HybridTiming {
     }
 
     fn get_position_in_beats(&self) -> f32 {
-        self.midi_timing.beat_position()
+        self.midi_timing.beats()
     }
 }
 
 impl TimingSource for HybridTiming {
-    fn beat_position(&self) -> f32 {
+    fn beats(&self) -> f32 {
         self.get_position_in_beats()
-    }
-
-    // TODO: none of our implementations need this.
-    // Also, rename `beat_position` to beats for clarity
-    fn total_beats(&self) -> f32 {
-        self.beat_position()
     }
 
     fn beats_to_frames(&self, beats: f32) -> f32 {
@@ -411,6 +396,6 @@ mod tests {
             .store(44 * 4 * TICKS_PER_QUARTER_NOTE, Ordering::Relaxed);
 
         // Each bar is 4 beats, so bar 44 starts at beat 176
-        assert_eq!(timing.beat_position(), 176.0);
+        assert_eq!(timing.beats(), 176.0);
     }
 }

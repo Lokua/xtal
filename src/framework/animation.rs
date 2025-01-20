@@ -63,12 +63,8 @@ impl<T: TimingSource> Animation<T> {
         Self { timing }
     }
 
-    fn beat_position(&self) -> f32 {
-        self.timing.beat_position()
-    }
-
-    fn total_beats(&self) -> f32 {
-        self.timing.total_beats()
+    fn beats(&self) -> f32 {
+        self.timing.beats()
     }
 
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
@@ -76,7 +72,7 @@ impl<T: TimingSource> Animation<T> {
     }
 
     pub fn loop_progress(&self, duration: f32) -> f32 {
-        let total_beats = self.total_beats();
+        let total_beats = self.beats();
         (total_beats / duration) % 1.0
     }
 
@@ -109,7 +105,7 @@ impl<T: TimingSource> Animation<T> {
 
     /// Checks if a trigger should fire based on current beat position
     pub fn should_trigger(&self, config: &mut Trigger) -> bool {
-        let total_beats = self.total_beats();
+        let total_beats = self.beats();
         let current_interval = (total_beats / config.every).floor();
         let position_in_interval = total_beats % config.every;
 
@@ -138,7 +134,7 @@ impl<T: TimingSource> Animation<T> {
             .map(|kf| kf.duration)
             .sum();
 
-        let current_beat = self.beat_position();
+        let current_beat = self.beats();
         let delay_beats = delay;
         let wrapped_beat = current_beat % total_beats;
 
@@ -207,7 +203,7 @@ impl<T: TimingSource> Animation<T> {
         }
 
         let total_beats: f32 = keyframes.iter().map(|kf| kf.duration).sum();
-        let wrapped_beat = self.beat_position() % total_beats;
+        let wrapped_beat = self.beats() % total_beats;
         let delay_beats = delay;
 
         if wrapped_beat < delay_beats {
@@ -215,7 +211,7 @@ impl<T: TimingSource> Animation<T> {
         }
 
         // No ramping at absolute start
-        if self.beat_position() <= ramp_time {
+        if self.beats() <= ramp_time {
             return keyframes[0].value;
         }
 
@@ -271,13 +267,14 @@ impl<T: TimingSource> Animation<T> {
         }
 
         let total_beats: f32 = keyframes.iter().map(|kf| kf.duration).sum();
-        let wrapped_beat = self.beat_position() % total_beats;
+        let beats_elapsed = self.beats();
+        let wrapped_beat = beats_elapsed % total_beats;
         let delay_beats = delay;
 
-        let cycle_float = (self.total_beats() / total_beats) + 1e-9;
+        let cycle_float = (beats_elapsed / total_beats) + 1e-9;
         let current_cycle = cycle_float.floor() as u64;
 
-        if self.total_beats() == 0.0 {
+        if beats_elapsed == 0.0 {
             return keyframes[0].generate_value(0);
         }
 
