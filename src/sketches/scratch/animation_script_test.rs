@@ -8,7 +8,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Animation Script Test",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    bpm: 125.0,
+    // bpm: 20.0,
     w: 700,
     h: 700,
     gui_w: None,
@@ -17,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation_script: AnimationScript<FrameTiming>,
+    animation_script: AnimationScript<HybridTiming>,
     controls: Controls,
     wr: WindowRect,
     radius: f32,
@@ -34,7 +35,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 
     let animation_script = AnimationScript::new(
         to_absolute_path(file!(), "./animation_script_test.toml"),
-        Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm)),
+        Animation::new(HybridTiming::new(SKETCH_CONFIG.bpm)),
     );
 
     Model {
@@ -49,7 +50,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
     m.animation_script.update();
     m.radius = m.animation_script.get("radius");
-    m.hue = m.animation_script.get("hue");
+    // m.hue = m.animation_script.get("hue");
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {

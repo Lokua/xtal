@@ -23,7 +23,6 @@ const VERTEX_TYPE_AGENT: f32 = 1.0;
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 2],
-    // 0.0 for background, 1.0 for agent
     vertex_type: f32,
 }
 
@@ -31,7 +30,7 @@ struct Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
-    // bg_alpha
+    // bg_alpha, bg_anim
     a: [f32; 4],
 }
 
@@ -39,7 +38,8 @@ struct ShaderParams {
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<MidiSongTiming>,
+    animation_script: AnimationScript<MidiSongTiming>,
     controls: Controls,
     wr: WindowRect,
     agents: Vec<Agent>,
@@ -48,7 +48,12 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
+
+    let animation_script = AnimationScript::<MidiSongTiming>::new(
+        to_absolute_path(file!(), "./flow_field.toml"),
+        animation.clone(),
+    );
 
     let controls = Controls::with_previous(vec![
         Control::select(
@@ -99,6 +104,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     Model {
         animation,
+        animation_script,
         controls,
         wr,
         agents: vec![],
@@ -108,6 +114,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
+    m.animation_script.update();
+
     if m.controls.any_changed_in(&["agent_count"]) {
         let agent_count = m.controls.float("agent_count") as usize;
 
@@ -144,7 +152,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [bg_alpha, 0.0, 0.0, 0.0],
+        a: [bg_alpha, m.animation_script.get("bg_anim"), 0.0, 0.0],
     };
 
     let randomize_point_size = m.controls.bool("randomize_point_size");

@@ -3,3 +3,4 @@
 .DS_Store
 out*.txt
 /control-snaps
+debug.txt
