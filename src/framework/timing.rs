@@ -1,5 +1,5 @@
 use std::sync::{
-    atomic::{AtomicI64, AtomicU32, Ordering},
+    atomic::{AtomicU32, Ordering},
     Arc,
 };
 
@@ -324,11 +324,6 @@ impl HybridTiming {
                         let beat_difference = (mtc_beats - midi_beats).abs();
 
                         if beat_difference > Self::BEAT_SYNC_THRESHOLD {
-                            debug!(
-                                "Beat difference ({}) exceeds threshold. MTC: {}, MIDI: {}",
-                                beat_difference, mtc_beats, midi_beats
-                            );
-
                             let ticks = (mtc_beats
                                 * TICKS_PER_QUARTER_NOTE as f32)
                                 as u32;
@@ -337,17 +332,22 @@ impl HybridTiming {
                                 .song_position
                                 .store(ticks, Ordering::SeqCst);
 
+                            let clock =
+                                mtc_beats as u32 * PULSES_PER_QUARTER_NOTE;
+
+                            midi_timing
+                                .clock_count
+                                .store(clock, Ordering::SeqCst);
+
                             debug!(
-                                "clock should be: {}",
-                                mtc_beats * PULSES_PER_QUARTER_NOTE as f32
+                                "Beat difference ({}) exceeds threshold. mtc_beats: {}, midi_beats: {}, resetting clock to: {}:",
+                                beat_difference, 
+                                mtc_beats, 
+                                midi_beats,
+                                clock
                             );
 
-                            midi_timing.clock_count.store(
-                                mtc_beats as u32 * PULSES_PER_QUARTER_NOTE,
-                                Ordering::SeqCst,
-                            );
-
-                            debug!("Synced MIDI position to {} ticks", ticks);
+                            trace!("Synced MIDI position to {} ticks", ticks);
                         }
                     }
                     _ => {}

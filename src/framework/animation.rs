@@ -178,7 +178,7 @@ impl<T: TimingSource> Animation<T> {
             segment_progress,
         );
 
-        debug!("current_beat: {}, value: {}", current_beat, value);
+        // trace!("current_beat: {}, value: {}", current_beat, value);
 
         value
     }
