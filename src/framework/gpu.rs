@@ -296,12 +296,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                         let validation_result = validator.validate(&module);
                         if let Err(validation_error) = validation_result {
                             error!(
-                                "Shader validation failed:\n{}",
+                                "Shader validation failed:\n{:?}",
                                 validation_error
                             );
-                            // The error above is from naga's Display impl,
-                            // Here we can get more details via Debug impl
-                            trace!("{:?}", validation_error);
                             return;
                         }
 
@@ -343,7 +340,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
                         info!("Shader pipeline successfully recreated");
                     } else {
-                        error!("Failed to parse shader");
+                        error!("Failed to parse shader: {:?}", parse_result);
                     }
                 }
             }

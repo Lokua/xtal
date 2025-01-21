@@ -116,7 +116,7 @@ fn mix_alpha(c1: vec4f, c2: vec4f, t: f32) -> vec4f {
 // --- POST PROCESSING
 
 fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {
-    let random = random2(p);
+    let random = random_v2(p);
     return clamp(color + (random - 0.5) * intensity, vec3f(0.0), vec3f(1.0));
 }
 

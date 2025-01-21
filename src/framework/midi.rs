@@ -99,6 +99,15 @@ impl MidiControls {
                         if config.channel == channel && config.cc == cc {
                             let mapped_value =
                                 value * (config.max - config.min) + config.min;
+
+                            trace!(
+                                "Message match - channel: {}, cc: {}, value: {}, mapped: {}",
+                                channel,
+                                cc,
+                                value,
+                                mapped_value
+                            );
+
                             state.lock().unwrap().set(name, mapped_value);
                         }
                     }

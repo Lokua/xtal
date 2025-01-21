@@ -330,7 +330,7 @@ impl HybridTiming {
                                 .clock_count
                                 .store(clock, Ordering::SeqCst);
 
-                            debug!(
+                            trace!(
                                 "Beat difference ({}) exceeds threshold. mtc_beats: {}, midi_beats: {}, resetting clock to: {}:",
                                 beat_difference, 
                                 mtc_beats, 

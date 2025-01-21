@@ -12,7 +12,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(300),
+    gui_h: Some(400),
 };
 
 const MAX_COUNT: usize = 100_000;
@@ -30,17 +30,19 @@ struct Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
-    // bg_alpha, bg_anim
+    // bg_alpha, bg_anim, ..unused
     a: [f32; 4],
+    b: [f32; 4],
 }
 
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<MidiSongTiming>,
-    animation_script: AnimationScript<MidiSongTiming>,
+    animation: Animation<HybridTiming>,
+    animation_script: AnimationScript<HybridTiming>,
     controls: Controls,
+    midi: MidiControls,
     wr: WindowRect,
     agents: Vec<Agent>,
     noise: PerlinNoise,
@@ -48,9 +50,9 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(HybridTiming::new(SKETCH_CONFIG.bpm));
 
-    let animation_script = AnimationScript::<MidiSongTiming>::new(
+    let animation_script = AnimationScript::new(
         to_absolute_path(file!(), "./flow_field.toml"),
         animation.clone(),
     );
@@ -71,19 +73,31 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::checkbox("randomize_point_size", false),
         Control::slider("agent_count", 1_000.0, (10.0, MAX_COUNT as f32), 1.0),
         Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
-        Control::slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01),
-        Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
-        Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
+        // Control::slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01),
+        // Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
+        // Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
         Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
         Control::slider_norm("bg_alpha", 0.02),
+        Control::slider_norm("grain_amount", 0.00),
+        Control::slider_norm("glitch_size", 0.00),
+        Control::slider_norm("glitch_amount", 0.00),
+        Control::slider_norm("b2", 0.00),
+        Control::slider_norm("b3", 0.00),
+        Control::slider_norm("b4", 0.00),
     ]);
+
+    let midi = MidiControlBuilder::new()
+        .control_mapped("noise_strength", (0, 1), (0.0, 20.0), 0.0)
+        .control_mapped("noise_vel", (0, 2), (0.0, 0.02), 0.0)
+        .control_mapped("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
         a: [0.0; 4],
+        b: [0.0; 4],
     };
 
-    // let shader = wgpu::include_wgsl!("./flow_field.wgsl");
     let initial_vertices: Vec<Vertex> = vec![
         Vertex {
             position: [0.0, 0.0],
@@ -106,6 +120,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         animation,
         animation_script,
         controls,
+        midi,
         wr,
         agents: vec![],
         noise: PerlinNoise::new(512),
@@ -132,9 +147,9 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let algorithm = m.controls.string("algorithm");
     let agent_size = m.controls.float("agent_size");
-    let noise_scale = m.controls.float("noise_scale");
-    let noise_strength = m.controls.float("noise_strength");
-    let noise_vel = m.controls.float("noise_vel");
+    let noise_scale = m.midi.get("noise_scale");
+    let noise_strength = m.midi.get("noise_strength");
+    let noise_vel = m.midi.get("noise_vel");
     let step_range = m.controls.float("step_range");
     let bg_alpha = m.controls.float("bg_alpha");
 
@@ -152,7 +167,18 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [bg_alpha, m.animation_script.get("bg_anim"), 0.0, 0.0],
+        a: [
+            bg_alpha,
+            m.animation_script.get("bg_anim"),
+            m.controls.float("grain_amount"),
+            m.controls.float("glitch_size"),
+        ],
+        b: [
+            m.controls.float("glitch_amount"),
+            m.controls.float("b2"),
+            m.controls.float("b3"),
+            m.controls.float("b4"),
+        ],
     };
 
     let randomize_point_size = m.controls.bool("randomize_point_size");
