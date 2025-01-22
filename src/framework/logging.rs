@@ -46,20 +46,37 @@ pub fn warn_once(message: String) {
     });
 }
 
+/// Logs a debug message at most once within a specified time interval.
+///
+/// # Parameters
+/// - `$interval_ms`: The minimum time in milliseconds between log messages
+///   for the same content.
+/// - `$($arg:tt)*`: The debug message and its optional format arguments,
+///   similar to the `log::debug!` macro.
+///
+/// This macro ensures that repeated debug messages are throttled, avoiding
+/// log spam. It uses a global throttle map to track the last logged time
+/// for each unique message.
+///
+/// # Examples
+/// ```rust
+/// debug_throttled!(1000, "This message appears at most once every second.");
+/// debug_throttled!(2000, "Another throttled message: {}", 42);
+/// ```
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! debug_throttled {
     ($interval_ms:expr, $($arg:tt)*) => {
         {
-            // Encapsulate imports within the macro
+            use std::collections::HashMap;
             use std::time::{Duration, Instant};
             use std::sync::Mutex;
             use log::debug;
 
             // Lazy initialization of throttle map
             lazy_static::lazy_static! {
-                static ref DEBUG_THROTTLE: Mutex<std::collections::HashMap<&'static str, Instant>> =
-                    Mutex::new(std::collections::HashMap::new());
+                static ref DEBUG_THROTTLE: Mutex<HashMap<&'static str, Instant>> =
+                    Mutex::new(HashMap::new());
             }
 
             // Throttle logic
@@ -68,7 +85,9 @@ macro_rules! debug_throttled {
             let mut throttle_map = DEBUG_THROTTLE.lock().unwrap();
             let now = Instant::now();
 
-            if throttle_map.get(key).map_or(true, |&last_log_time| now.duration_since(last_log_time) >= interval) {
+            if throttle_map.get(key).map_or(true, |&last_log_time| {
+                now.duration_since(last_log_time) >= interval
+            }) {
                 throttle_map.insert(key, now);
                 debug!($($arg)*);
             }

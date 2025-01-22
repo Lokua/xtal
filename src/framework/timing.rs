@@ -115,7 +115,7 @@ impl MidiSongTiming {
                         let msb = message[2] as u32;
                         let position = ((msb << 7) | lsb) as u32;
 
-                        trace!(
+                        debug!(
                             "Received SPP message: position={} (msb={}, lsb={})", 
                             position, msb, lsb
                         );

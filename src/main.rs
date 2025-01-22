@@ -224,6 +224,7 @@ fn model<S: SketchModel + 'static>(
 static INIT_MIDI_HANDLER: Once = Once::new();
 enum MidiInstruction {
     Start,
+    Continue,
     Stop,
 }
 
@@ -277,13 +278,21 @@ fn update<S: SketchModel>(
         });
         on_message(
             move |message| {
-                if message[0] == 250 {
-                    tx.send(MidiInstruction::Start)
-                        .expect("Unabled to send Start instruction");
-                } else if message[0] == 252 {
-                    tx.send(MidiInstruction::Stop)
-                        .expect("Unabled to send Stop instruction");
-                }
+                match message[0] {
+                    START => {
+                        tx.send(MidiInstruction::Start)
+                            .expect("Unable to send Start instruction");
+                    }
+                    CONTINUE => {
+                        tx.send(MidiInstruction::Continue)
+                            .expect("Unable to send Continue instruction");
+                    }
+                    STOP => {
+                        tx.send(MidiInstruction::Stop)
+                            .expect("Unable to send Stop instruction");
+                    }
+                    _ => {}
+                };
             },
             "[Global Start/Stop]",
         )
@@ -491,6 +500,18 @@ fn on_midi_instruction(
             info!("Received MIDI Start message. Resetting frame count.");
             frame_controller::reset_frame_count();
             if recording_state.is_queued {
+                recording_state
+                    .start_recording(alert_text)
+                    .expect("Unable to start frame recording.");
+            }
+        }
+        MidiInstruction::Continue => {
+            if recording_state.is_queued {
+                info!(
+                    "Received MIDI Continue message. \
+                    Resetting frame count due to QUE_RECORD state."
+                );
+                frame_controller::reset_frame_count();
                 recording_state
                     .start_recording(alert_text)
                     .expect("Unable to start frame recording.");

@@ -176,10 +176,12 @@ fn fs_main(
     let brightness = combined_noise * bg_brightness;
     let background_color = vec4f(vec3f(brightness), 1.0);
 
-    let color = select(background_color, point_color, point_color.a > 0.0);
+    var color = select(background_color, point_color, point_color.a > 0.0);
     if invert == 1.0 {
         return vec4f(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
     }
+
+    color.g = 0.02;
     
     return color;
 }

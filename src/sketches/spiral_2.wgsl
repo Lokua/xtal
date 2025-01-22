@@ -177,10 +177,11 @@ fn fs_main(
     let invert = params.d.z;
     let near_black = vec4f(vec3f(0.05), 1.0);
     
-    let color = select(near_black, point_color, point_color.a > 0.0);
+    var color = select(near_black, point_color, point_color.a > 0.0);
     if invert == 1.0 {
         return vec4f(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
     }
+    
     return color;
 }
 

@@ -7,7 +7,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Spiral",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 120.0,
+    bpm: 90.0,
     w: 700,
     h: 700,
     gui_w: None,

@@ -30,8 +30,11 @@ struct Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
-    // bg_alpha, bg_anim, ..unused
+
+    // bg_alpha, bg_anim, displace, slice_glitch
     a: [f32; 4],
+
+    // lightning, ...unsued
     b: [f32; 4],
 }
 
@@ -39,8 +42,7 @@ struct ShaderParams {
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<HybridTiming>,
-    animation_script: AnimationScript<HybridTiming>,
+    animation: Animation<MidiSongTiming>,
     controls: Controls,
     midi: MidiControls,
     wr: WindowRect,
@@ -50,12 +52,7 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(HybridTiming::new(SKETCH_CONFIG.bpm));
-
-    let animation_script = AnimationScript::new(
-        to_absolute_path(file!(), "./flow_field.toml"),
-        animation.clone(),
-    );
+    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::select(
@@ -73,14 +70,11 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::checkbox("randomize_point_size", false),
         Control::slider("agent_count", 1_000.0, (10.0, MAX_COUNT as f32), 1.0),
         Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
-        // Control::slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01),
-        // Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
-        // Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
         Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
         Control::slider_norm("bg_alpha", 0.02),
-        Control::slider_norm("grain_amount", 0.00),
-        Control::slider_norm("glitch_size", 0.00),
-        Control::slider_norm("glitch_amount", 0.00),
+        Control::Separator {},
+        Control::slider_norm("displace", 0.00),
+        Control::slider_norm("slice_glitch", 0.00),
         Control::slider_norm("b2", 0.00),
         Control::slider_norm("b3", 0.00),
         Control::slider_norm("b4", 0.00),
@@ -90,6 +84,10 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         .control_mapped("noise_strength", (0, 1), (0.0, 20.0), 0.0)
         .control_mapped("noise_vel", (0, 2), (0.0, 0.02), 0.0)
         .control_mapped("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
+        .control("displace", (0, 4), 0.0)
+        .control("slice_glitch", (0, 5), 1.0)
+        .control_mapped("alg", (0, 6), (0.0, 5.0), 0.0)
+        .control("lightning", (0, 7), 1.0)
         .build();
 
     let params = ShaderParams {
@@ -118,7 +116,6 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     Model {
         animation,
-        animation_script,
         controls,
         midi,
         wr,
@@ -129,8 +126,6 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.animation_script.update();
-
     if m.controls.any_changed_in(&["agent_count"]) {
         let agent_count = m.controls.float("agent_count") as usize;
 
@@ -145,7 +140,16 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         m.controls.mark_unchanged();
     }
 
-    let algorithm = m.controls.string("algorithm");
+    let algorithm = match m.midi.get("alg").floor() as u32 {
+        0 => "cos,sin",
+        1 => "tanh,cosh",
+        2 => "exponential_drift",
+        3 => "lightning",
+        4 => "plasma",
+        5 => "static",
+        _ => panic!("Unsupported algorithm"),
+    };
+
     let agent_size = m.controls.float("agent_size");
     let noise_scale = m.midi.get("noise_scale");
     let noise_strength = m.midi.get("noise_strength");
@@ -156,7 +160,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     m.agents.iter_mut().for_each(|agent| {
         agent.step_size = random_range(1.0, step_range + 0.001);
         agent.update(
-            algorithm.as_str(),
+            algorithm,
             &m.noise,
             noise_scale,
             noise_strength,
@@ -169,12 +173,12 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
             bg_alpha,
-            m.animation_script.get("bg_anim"),
-            m.controls.float("grain_amount"),
-            m.controls.float("glitch_size"),
+            m.animation.lrp(&[((40.0), 4.0), (70.0, 4.0)], 0.0),
+            m.midi.get("displace"),
+            m.midi.get("slice_glitch"),
         ],
         b: [
-            m.controls.float("glitch_amount"),
+            m.midi.get("lightning"),
             m.controls.float("b2"),
             m.controls.float("b3"),
             m.controls.float("b4"),

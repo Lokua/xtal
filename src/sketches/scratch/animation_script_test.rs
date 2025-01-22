@@ -18,7 +18,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation_script: AnimationScript<HybridTiming>,
+    // animation_script: AnimationScript<MidiSongTiming>,
+    animation_script: AnimationScript<MidiSongTiming>,
     controls: Controls,
     wr: WindowRect,
     radius: f32,
@@ -35,7 +36,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 
     let animation_script = AnimationScript::new(
         to_absolute_path(file!(), "./animation_script_test.toml"),
-        Animation::new(HybridTiming::new(SKETCH_CONFIG.bpm)),
+        Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm)),
     );
 
     Model {

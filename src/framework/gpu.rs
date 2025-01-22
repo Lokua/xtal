@@ -3,8 +3,6 @@ use bytemuck::{Pod, Zeroable};
 use naga;
 use naga::front::wgsl;
 use naga::valid::{Capabilities, ValidationFlags, Validator};
-// use naga::front::wgsl;
-// use naga::valid::Validator;
 use nannou::prelude::*;
 use notify::{Event, RecursiveMode, Watcher};
 use std::fs;
