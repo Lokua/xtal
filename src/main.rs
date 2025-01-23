@@ -82,6 +82,7 @@ fn main() {
         "audio_test" => run_sketch!(audio_test),
         "bos" => run_sketch!(bos),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
+        "cv_test" => run_sketch!(cv_test),
         "displacement_1" => run_sketch!(displacement_1),
         "displacement_1a" => run_sketch!(displacement_1a),
         "displacement_2" => run_sketch!(displacement_2),

@@ -2,6 +2,7 @@ pub mod animation;
 pub mod animation_script;
 pub mod audio;
 pub mod controls;
+pub mod cv;
 pub mod displacer;
 pub mod distance;
 pub mod drop;

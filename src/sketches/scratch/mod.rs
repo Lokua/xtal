@@ -3,6 +3,7 @@ pub mod animation_test;
 pub mod audio_test;
 pub mod bos;
 pub mod chromatic_aberration;
+pub mod cv_test;
 pub mod lin_alg;
 pub mod lines;
 pub mod midi_test;

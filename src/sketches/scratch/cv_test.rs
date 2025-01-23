@@ -3,8 +3,8 @@ use nannou::prelude::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "osc_test",
-    display_name: "OSC Test",
+    name: "cv_test",
+    display_name: "CV Test",
     fps: 60.0,
     bpm: 134.0,
     w: 700,
@@ -16,21 +16,21 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    osc: OscControls,
+    cv: CvControls,
     wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let osc = OscControlBuilder::new()
-        .control_mapped("/a", (0.0, 400.0), 0.5)
-        .control_mapped("/b", (0.0, 400.0), 0.5)
+    let cv = CvControlBuilder::new(SKETCH_CONFIG.fps)
+        .control_mapped("a", 0, (0.0, 400.0), 0.5)
+        .control_mapped("b", 1, (0.0, 400.0), 0.5)
         .build();
 
-    Model { osc, wr }
+    Model { cv, wr }
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug_throttled!(1_000, "/a: {}, /b: {}", m.osc.get("/a"), m.osc.get("/b"));
+    debug_throttled!(1_000, "a: {}, b: {}", m.cv.get("a"), m.cv.get("b"));
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {
@@ -41,8 +41,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h());
 
-    let a = m.osc.get("/a");
-    let b = m.osc.get("/b");
+    let a = m.cv.get("a");
+    let b = m.cv.get("b");
 
     draw.ellipse()
         .color(rgba(1.0, 0.0, 0.0, 0.5))
