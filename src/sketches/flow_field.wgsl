@@ -68,13 +68,11 @@ fn fs_main(frag: VertexOutput) -> @location(0) vec4f {
 }
 
 fn gen_color(d: f32) -> vec3f {
+    let t = params.b.y + 0.5 * 0.5;
     let a = vec3f(1.0, 0.16, 0.16);
     let b = vec3f(0.4, 0.56, 0.33);
-    let white = vec3f(0.97);
     
-    let color = mix(b, a, smoothstep(0., 0.9, d)); 
-    
-    return 1.0 - mix(color, white, 0.0); 
+    return 1.0 - mix(b, a, smoothstep(0.1, 0.9, d * t)); 
 }
 
 fn displace(p: vec2f) -> vec2f {

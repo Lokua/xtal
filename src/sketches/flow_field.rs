@@ -10,7 +10,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     fps: 60.0,
     bpm: 134.0,
     w: 700,
-    h: 700,
+    h: 1244,
     gui_w: None,
     gui_h: Some(400),
 };
@@ -179,7 +179,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         b: [
             m.midi.get("lightning"),
-            m.controls.float("b2"),
+            m.animation.ping_pong(6.0),
             m.controls.float("b3"),
             m.controls.float("b4"),
         ],

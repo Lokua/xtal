@@ -7,6 +7,7 @@ use std::{
     str,
     sync::mpsc,
     thread,
+    time::Instant,
 };
 
 use super::prelude::*;
@@ -21,6 +22,7 @@ pub struct RecordingState {
     pub recording_dir: Option<PathBuf>,
     pub encoding_thread: Option<thread::JoinHandle<()>>,
     pub encoding_progress_rx: Option<mpsc::Receiver<EncodingMessage>>,
+    pub encoding_start: Option<Instant>,
 }
 
 impl RecordingState {
@@ -79,6 +81,7 @@ impl RecordingState {
             info!("Preparing to encode. Output path: {}", output_path);
             debug!("Spawning encoding_thread");
 
+            self.encoding_start = Some(Instant::now());
             self.encoding_thread = Some(thread::spawn(move || {
                 if let Err(e) = frames_to_video(
                     &path,
@@ -128,6 +131,15 @@ impl RecordingState {
                     }
                     EncodingMessage::Complete => {
                         info!("Encoding complete");
+                        if let Some(start_time) = self.encoding_start.take() {
+                            let duration = start_time.elapsed();
+                            let secs = duration.as_secs();
+                            info!(
+                                "Encoding duration: {}m {}s",
+                                secs / 60,
+                                secs % 60
+                            );
+                        }
                         self.is_encoding = false;
                         self.encoding_progress_rx = None;
                         let output_path =
@@ -196,23 +208,49 @@ pub fn frames_to_video(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let process = Command::new("ffmpeg")
         .args([
-            "-n", // Don't overwrite
+            // Don't overwrite
+            "-n",
+            // ---
             "-loglevel",
             "level+info",
+            // ---
             "-framerate",
             &fps.to_string(),
+            // ---
             "-i",
             &format!("{}/frame-%06d.png", frame_dir),
+            // ---
             "-c:v",
             "libx264",
+            // ---
             "-crf",
+            // Very high quality
             "16",
+            // "18",
+            // Better compression, still visually lossless (supposedly)
+            // "23",
+            // ---
             "-preset",
-            "veryslow",
+            // "medium",
+            "slow",
+            // "veryslow",
+            // ---
             "-pix_fmt",
             "yuv420p",
+            // ---
             "-progress",
             "pipe:1",
+            // ---
+            // -maxrate sets the maximum bitrate the encoder can use at any point.
+            // -bufsize controls how strictly that limit is enforced - it's the size of the
+            // buffer used for bitrate constraints.
+            // Setting both to 20M (20 megabits/sec) provides high quality while
+            // preventing excessive file sizes and unusual bitrate spikes
+            // "-maxrate",
+            // "20M",
+            // "-bufsize",
+            // "20M",
+            // ---
             output_path,
         ])
         .stdout(Stdio::piped())
