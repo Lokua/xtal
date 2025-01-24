@@ -3,6 +3,9 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+const S3_BASE_URL: &str =
+    "https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images";
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let images_dir = Path::new("images");
     let output_file = Path::new("index.md");
@@ -28,24 +31,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .cmp(&fs::metadata(a).unwrap().modified().unwrap())
     });
 
-    // Generate markdown content
     let mut markdown_content =
         String::from("Files sorted from most to least recent\n\n");
 
     for path in image_paths {
         let filename = path.file_name().unwrap().to_string_lossy().into_owned();
-        let relative_path = path.strip_prefix(".").unwrap_or(&path);
+        let relative_path = path
+            .strip_prefix(images_dir)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .into_owned();
 
-        // Add to markdown
         markdown_content.push_str(&format!("## {}\n\n", filename));
         markdown_content.push_str(&format!(
-            "<img src=\"{}\" alt=\"{}\">\n\n",
-            relative_path.display(),
-            filename
+            "<img src=\"{}/{}\" alt=\"{}\">\n\n",
+            S3_BASE_URL, relative_path, filename
         ));
     }
 
-    // Write to file
     let mut file = File::create(output_file)?;
     file.write_all(markdown_content.as_bytes())?;
 
