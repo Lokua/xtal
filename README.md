@@ -5,9 +5,9 @@ A hobbyist project exploring generative art while learning Rust and
 
 Stuff like this:
 
-<img src="images/displacement_2-627iz.png" alt="displacement_2-627iz">
-<img src="images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
-<img src="images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-627iz.png" alt="displacement_2-627iz">
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
 
 You can see more here on github by looking at the auto generated
 [markdown index](index.md).
@@ -19,29 +19,32 @@ performance. It provides a personal framework around nannou that simplifies
 creating multiple sketches by handling common concerns like window creation, GUI
 controls, and declarative frame-based animation.
 
-## Features / TODO
+## Features
 
-- [x] Export frame captures and generate MP4 videos for any sketch
-- [x] Restart frame counter when receiving MIDI start signal
-- [x] Queue frame/video recording to start when receiving MIDI Start message
-- [x] Receive MIDI enable parameter automation via automation lanes (MIDI CC)
-- [x] Common controls system:
-- [x] Shared controls available to all sketches (screenshot, pause, record,
-      etc.)
-- [x] Declarative per-sketch control definitions with frameword agnostic design
-- [x] BPM/musical timing based keyframe animations (times are expressed in
-      beats)
-- [x] NEW! Ability to write parameter automations in TOML and hotswap without
-      reloading the sketch!
-- [x] Automatic store/recall of GUI control/parameters
-- [x] Audio reactivity. Basic peak, rms, and FFT available to use in sketches
-      through a dead simple API
+- Export images and capture mp4 videos with the press of a button
+- Declarative animation interface with times specified in musical beats, e.g.
+  `3.25` represents a duration of 3 beats a 16th note.
+- Sync animations to MIDI using MIDI Clock and Song Position Pointers (to track
+  when a DAW is looping so you can work on or see the animation loop in-time) or
+  a hybrid MIDI Time Code / MIDI Clock system that uses the higher resolution
+  MIDI clock for sync but relies on MTC to detect when a source has jumped or is
+  looping (this is for sources that don't properly send the SPP message). There
+  is even included a special L.OscTransport Max4Live devices that will send
+  transport over OSC which is much more reliable than MIDI clocking.
+- Write animations in code or configure your sketch to use an external TOML file
+  so you can work on animations without restarting the rust program. Or...
+- Automate parameters with MIDI CC, OSC, CV, or even audio with peak, rms, and
+  multiband mechanisms all available through a dead simple API
+- Declarative per-sketch UI control definitions with frameword agnostic design
+- Automatic store/recall of GUI control/parameters
+
+### TODO
+
 - [ ] Multichannel audio
 
 ## Status
 
-The project is under active development. Basic animation features are working,
-with more functionality planned.
+This project is under active development.
 
 ## Requirements
 
