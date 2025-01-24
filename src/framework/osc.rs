@@ -1,8 +1,8 @@
 use nannou_osc as osc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::thread;
 
+use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
 
 pub const OSC_PORT: u16 = 2346;
@@ -76,42 +76,25 @@ impl OscControls {
         let state = self.state.clone();
         let configs = self.configs.clone();
 
-        let receiver = osc::Receiver::bind(OSC_PORT)?;
+        SHARED_OSC_RECEIVER.register_callback("*", move |msg| {
+            if let Some(config) = configs.get(&msg.addr) {
+                let value: Option<f32> = match msg.args.get(0) {
+                    Some(osc::Type::Float(value)) => Some(*value),
+                    Some(osc::Type::Int(value)) => Some(*value as f32),
+                    Some(osc::Type::Double(value)) => Some(*value as f32),
+                    _ => None,
+                };
 
-        thread::spawn(move || {
-            for (packet, addr) in receiver.iter() {
-                trace!("Received OSC packet from {}", addr);
-                if let osc::Packet::Message(msg) = packet {
-                    trace!("OSC message to {}: {:?}", msg.addr, msg.args);
-                    if let Some(config) = configs.get(&msg.addr) {
-                        let value: Option<f32> = match msg.args.get(0) {
-                            Some(osc::Type::Float(value)) => Some(*value),
-                            Some(osc::Type::Int(value)) => Some(*value as f32),
-                            Some(osc::Type::Double(value)) => {
-                                Some(*value as f32)
-                            }
-                            _ => None,
-                        };
-                        if let Some(value) = value {
-                            trace!("Setting {} to {}", msg.addr, value);
-                            let mapped_value =
-                                value * (config.max - config.min) + config.min;
-                            state.lock().unwrap().set(&msg.addr, mapped_value);
-                        } else {
-                            warn!("OSC message to {} did not contain a float value", msg.addr);
-                        }
-                    } else {
-                        warn!(
-                            "Received OSC message for unconfigured address: {}",
-                            msg.addr
-                        );
-                    }
+                if let Some(value) = value {
+                    trace!("Setting {} to {}", msg.addr, value);
+                    let mapped_value =
+                        value * (config.max - config.min) + config.min;
+                    state.lock().unwrap().set(&msg.addr, mapped_value);
                 }
             }
         });
 
         self.is_active = true;
-        info!("Connected to OSC port {}", OSC_PORT);
         Ok(())
     }
 
@@ -150,7 +133,7 @@ impl OscControlBuilder {
 
     pub fn build(mut self) -> OscControls {
         if let Err(e) = self.controls.start() {
-            warn!(
+            error!(
                 "Failed to initialize OSC controls: {}. Using default values.",
                 e
             );

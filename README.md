@@ -37,6 +37,7 @@ controls, and declarative frame-based animation.
   multiband mechanisms all available through a dead simple API
 - Declarative per-sketch UI control definitions with frameword agnostic design
 - Automatic store/recall of GUI control/parameters
+- Hot reloadable WGSL shaders
 
 ### TODO
 

@@ -13,6 +13,7 @@ pub mod logging;
 pub mod midi;
 pub mod noise;
 pub mod osc;
+pub mod osc_receiver;
 pub mod prelude;
 pub mod sand_line;
 pub mod sketch;

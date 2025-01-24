@@ -5,10 +5,10 @@ use std::{
         atomic::{AtomicBool, AtomicU32, Ordering},
         Arc,
     },
-    thread,
 };
 
-use crate::framework::prelude::*;
+use super::osc_receiver::SHARED_OSC_RECEIVER;
+use super::prelude::*;
 
 pub trait TimingSource: Clone {
     fn beats(&self) -> f32;
@@ -382,12 +382,10 @@ pub struct OscTransportTiming {
     bars: Arc<AtomicU32>,
     beats: Arc<AtomicU32>,
 
-    /// [0-1] fraction of beat that will be stored as bits
+    /// [0.0-1.0] fraction of beat that will be stored as bits
     /// to avoid losing precision
     ticks: Arc<AtomicU32>,
 }
-
-const OSC_PORT: u16 = 2346;
 
 impl OscTransportTiming {
     pub fn new(bpm: f32) -> Self {
@@ -407,49 +405,31 @@ impl OscTransportTiming {
     }
 
     fn setup_osc_listener(&self) -> Result<(), Box<dyn Error>> {
-        let receiver = osc::Receiver::bind(OSC_PORT)?;
         let is_playing = self.is_playing.clone();
         let bars = self.bars.clone();
         let beats = self.beats.clone();
         let ticks = self.ticks.clone();
 
-        thread::spawn(move || {
-            for (packet, _) in receiver.iter() {
-                if let osc::Packet::Message(msg) = packet {
-                    trace!("OSC message to {}: {:?}", msg.addr, msg.args);
-                    if msg.addr == "/transport" {
-                        match (
-                            &msg.args[0],
-                            &msg.args[1],
-                            &msg.args[2],
-                            &msg.args[3],
-                        ) {
-                            (
-                                osc::Type::Int(a),
-                                osc::Type::Int(b),
-                                osc::Type::Int(c),
-                                osc::Type::Float(d),
-                            ) => {
-                                is_playing.store(*a != 0, Ordering::Release);
-                                bars.store(*b as u32 - 1, Ordering::Release);
-                                beats.store(*c as u32 - 1, Ordering::Release);
-                                ticks.store(d.to_bits(), Ordering::Release);
-                            }
-                            _ => {}
-                        }
-                        trace!(
-                            "is_playing: {:?}, bars: {:?}, beats: {:?}, ticks: {:?}",
-                            is_playing,
-                            bars,
-                            beats,
-                            ticks
-                        );
-                    }
-                }
+        SHARED_OSC_RECEIVER.register_callback("/transport", move |msg| match (
+            &msg.args[0],
+            &msg.args[1],
+            &msg.args[2],
+            &msg.args[3],
+        ) {
+            (
+                osc::Type::Int(a),
+                osc::Type::Int(b),
+                osc::Type::Int(c),
+                osc::Type::Float(d),
+            ) => {
+                is_playing.store(*a != 0, Ordering::Release);
+                bars.store(*b as u32 - 1, Ordering::Release);
+                beats.store(*c as u32 - 1, Ordering::Release);
+                ticks.store(d.to_bits(), Ordering::Release);
             }
+            _ => {}
         });
 
-        info!("OscTransportTiming connected to OSC port {}", OSC_PORT);
         Ok(())
     }
 
