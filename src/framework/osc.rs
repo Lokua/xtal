@@ -17,6 +17,7 @@ pub struct OscControlConfig {
 
 impl OscControlConfig {
     pub fn new(address: &str, range: (f32, f32), default: f32) -> Self {
+        validate_address(address);
         let (min, max) = range;
         Self {
             address: address.to_string(),
@@ -51,7 +52,6 @@ impl OscState {
 pub struct OscControls {
     configs: HashMap<String, OscControlConfig>,
     state: Arc<Mutex<OscState>>,
-    is_active: bool,
 }
 
 impl OscControls {
@@ -59,7 +59,6 @@ impl OscControls {
         Self {
             configs: HashMap::new(),
             state: Arc::new(Mutex::new(OscState::new())),
-            is_active: false,
         }
     }
 
@@ -69,6 +68,7 @@ impl OscControls {
     }
 
     pub fn get(&self, address: &str) -> f32 {
+        validate_address(address);
         self.state.lock().unwrap().get(address)
     }
 
@@ -94,12 +94,7 @@ impl OscControls {
             }
         });
 
-        self.is_active = true;
         Ok(())
-    }
-
-    pub fn is_active(&self) -> bool {
-        self.is_active
     }
 }
 
@@ -139,5 +134,12 @@ impl OscControlBuilder {
             );
         }
         self.controls
+    }
+}
+
+fn validate_address(address: &str) {
+    if !address.starts_with("/") {
+        error!("OSC address `{}` does not start with `/`", address);
+        panic!();
     }
 }

@@ -2,14 +2,17 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// b/w Ableton 2025/Lattice - Wave Fract
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "genuary_19",
     display_name: "Genuary 19: Op Art",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    bpm: 127.0,
     w: 700,
     h: 700,
+    // h: 1244,
     gui_w: None,
     gui_h: Some(540),
 };
@@ -39,8 +42,11 @@ struct ShaderParams {
     // reduce_mix, map_mix, wave_bands, wave_threshold
     c: [f32; 4],
 
-    // bg_invert, unused, mix_mode, unused
+    // bg_invert, wave1_mod, mix_mode, wave_scale
     d: [f32; 4],
+
+    // wave1_mix, wave2_mix, wave3_mix, unused
+    e: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -52,13 +58,10 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider("wave_threshold", 0.0, (-1.0, 1.0), 0.001),
         Control::Separator {}, // -------------------
         Control::checkbox("bg_invert", false),
-        Control::slider("bg_freq", 10.0, (0.0, 100.0), 1.0),
         Control::slider_norm("bg_radius", 0.5),
         Control::slider_norm("bg_gradient_strength", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("reduce_mix", 0.5),
         Control::select("mix_mode", "mix", &["mix", "min_max"]),
-        Control::slider_norm("map_mix", 0.5),
     ]);
 
     let osc = OscControlBuilder::new()
@@ -66,6 +69,13 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         .control_mapped("/wave_radial_freq", (0.0, 100.0), 0.0)
         .control_mapped("/wave_horiz_freq", (0.0, 100.0), 0.0)
         .control_mapped("/wave_vert_freq", (0.0, 100.0), 0.0)
+        .control("/reduce_mix", 0.0)
+        .control("/map_mix", 0.0)
+        .control("/wave_scale", 0.0)
+        .control_mapped("/bg_freq", (0.0, 100.0), 90.0)
+        .control("/wave1_mix", 0.0)
+        .control("/wave2_mix", 0.0)
+        .control("/wave3_mix", 0.0)
         .build();
 
     let params = ShaderParams {
@@ -74,6 +84,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
         c: [0.0; 4],
         d: [0.0; 4],
+        e: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_full_screen(
@@ -102,25 +113,31 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.osc.get("/wave_vert_freq"),
         ],
         b: [
-            m.controls.float("bg_freq"),
+            m.osc.get("/bg_freq"),
             m.controls.float("bg_radius"),
             m.controls.float("bg_gradient_strength"),
             m.controls.float("wave_power"),
         ],
         c: [
-            m.controls.float("reduce_mix"),
-            m.controls.float("map_mix"),
+            m.osc.get("/reduce_mix"),
+            m.osc.get("/map_mix"),
             m.controls.float("wave_bands"),
             m.controls.float("wave_threshold"),
         ],
         d: [
             bool_to_f32(m.controls.bool("bg_invert")),
-            0.0,
+            m.animation.ping_pong(8.0) * 2.0 - 1.0,
             match m.controls.string("mix_mode").as_str() {
                 "mix" => 0.0,
                 "min_max" => 1.0,
                 _ => unreachable!(),
             },
+            m.osc.get("/wave_scale"),
+        ],
+        e: [
+            m.osc.get("/wave1_mix"),
+            m.osc.get("/wave2_mix"),
+            m.osc.get("/wave3_mix"),
             0.0,
         ],
     };

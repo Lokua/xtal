@@ -23,8 +23,11 @@ struct Params {
     // reduce_mix, map_mix, wave_bands, wave_threshold
     c: vec4f,
 
-    // bg_invert, unused, mix_mode, unused
+    // bg_invert, wave1_mod, mix_mode, wave_scale
     d: vec4f,
+
+    // wave1_mix, wave2_mix, wave3_mix, unused
+    e: vec4f,
 }
 
 @group(0) @binding(0)
@@ -80,11 +83,22 @@ fn wave_reduce(p: vec2f) -> f32 {
     let horiz_freq = params.a.z;
     let vert_freq = params.a.w;
     let power = params.b.w;
+    let scale = params.d.w;
+    let wave1_mod = params.d.y;
+    let wave1_mix = params.e.x;
+    let wave2_mix = params.e.y;
+    let wave3_mix = params.e.z;
 
     let d = length(p);
-    let wave1 = sin(d * radial_freq - phase * TAU);
-    let wave2 = sin(p.x * horiz_freq);
-    let wave3 = sin(p.y * vert_freq);
+
+    var wave1 = sin(d * radial_freq - phase * TAU);
+    wave1 = mix(wave1, tan(p.y * wave1_mod), wave1_mix);
+
+    var wave2 = sin(p.x * horiz_freq) * scale;
+    wave2 = mix(wave2, cosh(p.x), wave2_mix);
+
+    var wave3 = sin(p.y * vert_freq) * scale;
+    wave3 = mix(wave3, fract(p.y * 8.0), wave3_mix);
 
     return powf(wave1 + wave2 + wave3, power);
 }
@@ -141,4 +155,8 @@ fn mix_max(c1: vec4f, c2: vec4f) -> vec4f {
 
 fn powf(x: f32, y: f32) -> f32 {
     return sign(x) * exp(log(abs(x)) * y);
+}
+
+fn modulo(x: f32, y: f32) -> f32 {
+    return x - y * floor(x / y);
 }
