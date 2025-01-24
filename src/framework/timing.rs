@@ -382,7 +382,8 @@ pub struct OscTransportTiming {
     bars: Arc<AtomicU32>,
     beats: Arc<AtomicU32>,
 
-    /// [0-1] fraction of beat scaled by 1000
+    /// [0-1] fraction of beat that will be stored as bits
+    /// to avoid losing precision
     ticks: Arc<AtomicU32>,
 }
 
@@ -429,21 +430,18 @@ impl OscTransportTiming {
                                 osc::Type::Int(c),
                                 osc::Type::Float(d),
                             ) => {
-                                is_playing.store(*a != 0, Ordering::Relaxed);
-                                bars.store(*b as u32, Ordering::Relaxed);
-                                beats.store(*c as u32, Ordering::Relaxed);
-                                ticks.store(
-                                    (*d * 1000.0) as u32,
-                                    Ordering::Relaxed,
-                                );
+                                is_playing.store(*a != 0, Ordering::Release);
+                                bars.store(*b as u32 - 1, Ordering::Release);
+                                beats.store(*c as u32 - 1, Ordering::Release);
+                                ticks.store(d.to_bits(), Ordering::Release);
                             }
                             _ => {}
                         }
                         trace!(
-                            "is_playing: {:?}, bars: {:?}, beats: {:?}, ticks: {:?}", 
-                            is_playing, 
-                            bars, 
-                            beats, 
+                            "is_playing: {:?}, bars: {:?}, beats: {:?}, ticks: {:?}",
+                            is_playing,
+                            bars,
+                            beats,
                             ticks
                         );
                     }
@@ -456,14 +454,15 @@ impl OscTransportTiming {
     }
 
     fn get_position_in_beats(&self) -> f32 {
-        if !self.is_playing.load(Ordering::Relaxed) {
+        if !self.is_playing.load(Ordering::Acquire) {
             return 0.0;
         }
 
-        let bars = self.bars.load(Ordering::Relaxed) as f32;
-        let beats = self.beats.load(Ordering::Relaxed) as f32;
-        let ticks = self.ticks.load(Ordering::Relaxed) as f32;
-        (bars * 4.0) + beats + (ticks / 1000.0)
+        let bars = self.bars.load(Ordering::Acquire) as f32;
+        let beats = self.beats.load(Ordering::Acquire) as f32;
+        let ticks = f32::from_bits(self.ticks.load(Ordering::Acquire));
+
+        (bars * 4.0) + beats + ticks
     }
 }
 
