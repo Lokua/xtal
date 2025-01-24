@@ -9,6 +9,7 @@ pub mod lines;
 pub mod midi_test;
 pub mod noise;
 pub mod osc_test;
+pub mod osc_transport_test;
 pub mod perlin_loop;
 pub mod responsive_test;
 pub mod sand_line;

@@ -1,6 +1,11 @@
-use std::sync::{
-    atomic::{AtomicU32, Ordering},
-    Arc,
+use nannou_osc as osc;
+use std::{
+    error::Error,
+    sync::{
+        atomic::{AtomicBool, AtomicU32, Ordering},
+        Arc,
+    },
+    thread,
 };
 
 use crate::framework::prelude::*;
@@ -116,7 +121,7 @@ impl MidiSongTiming {
                         let position = ((msb << 7) | lsb) as u32;
 
                         debug!(
-                            "Received SPP message: position={} (msb={}, lsb={})", 
+                            "Received SPP message: position={} (msb={}, lsb={})",
                             position, msb, lsb
                         );
 
@@ -330,10 +335,10 @@ impl HybridTiming {
                                 .clock_count
                                 .store(clock, Ordering::SeqCst);
 
-                            trace!(
+                            debug!(
                                 "Beat difference ({}) exceeds threshold. mtc_beats: {}, midi_beats: {}, resetting clock to: {}:",
-                                beat_difference, 
-                                mtc_beats, 
+                                beat_difference,
+                                mtc_beats,
                                 midi_beats,
                                 clock
                             );
@@ -367,6 +372,110 @@ impl TimingSource for HybridTiming {
 
     fn beats_to_frames(&self, beats: f32) -> f32 {
         self.midi_timing.beats_to_frames(beats)
+    }
+}
+
+#[derive(Clone)]
+pub struct OscTransportTiming {
+    bpm: f32,
+    is_playing: Arc<AtomicBool>,
+    bars: Arc<AtomicU32>,
+    beats: Arc<AtomicU32>,
+
+    /// [0-1] fraction of beat scaled by 1000
+    ticks: Arc<AtomicU32>,
+}
+
+const OSC_PORT: u16 = 2346;
+
+impl OscTransportTiming {
+    pub fn new(bpm: f32) -> Self {
+        let timing = Self {
+            bpm,
+            is_playing: Arc::new(AtomicBool::new(false)),
+            bars: Arc::new(AtomicU32::default()),
+            beats: Arc::new(AtomicU32::default()),
+            ticks: Arc::new(AtomicU32::default()),
+        };
+
+        timing
+            .setup_osc_listener()
+            .expect("Unable to setup OSC listener");
+
+        timing
+    }
+
+    fn setup_osc_listener(&self) -> Result<(), Box<dyn Error>> {
+        let receiver = osc::Receiver::bind(OSC_PORT)?;
+        let is_playing = self.is_playing.clone();
+        let bars = self.bars.clone();
+        let beats = self.beats.clone();
+        let ticks = self.ticks.clone();
+
+        thread::spawn(move || {
+            for (packet, _) in receiver.iter() {
+                if let osc::Packet::Message(msg) = packet {
+                    trace!("OSC message to {}: {:?}", msg.addr, msg.args);
+                    if msg.addr == "/transport" {
+                        match (
+                            &msg.args[0],
+                            &msg.args[1],
+                            &msg.args[2],
+                            &msg.args[3],
+                        ) {
+                            (
+                                osc::Type::Int(a),
+                                osc::Type::Int(b),
+                                osc::Type::Int(c),
+                                osc::Type::Float(d),
+                            ) => {
+                                is_playing.store(*a != 0, Ordering::Relaxed);
+                                bars.store(*b as u32, Ordering::Relaxed);
+                                beats.store(*c as u32, Ordering::Relaxed);
+                                ticks.store(
+                                    (*d * 1000.0) as u32,
+                                    Ordering::Relaxed,
+                                );
+                            }
+                            _ => {}
+                        }
+                        trace!(
+                            "is_playing: {:?}, bars: {:?}, beats: {:?}, ticks: {:?}", 
+                            is_playing, 
+                            bars, 
+                            beats, 
+                            ticks
+                        );
+                    }
+                }
+            }
+        });
+
+        info!("OscTransportTiming connected to OSC port {}", OSC_PORT);
+        Ok(())
+    }
+
+    fn get_position_in_beats(&self) -> f32 {
+        if !self.is_playing.load(Ordering::Relaxed) {
+            return 0.0;
+        }
+
+        let bars = self.bars.load(Ordering::Relaxed) as f32;
+        let beats = self.beats.load(Ordering::Relaxed) as f32;
+        let ticks = self.ticks.load(Ordering::Relaxed) as f32;
+        (bars * 4.0) + beats + (ticks / 1000.0)
+    }
+}
+
+impl TimingSource for OscTransportTiming {
+    fn beats(&self) -> f32 {
+        self.get_position_in_beats()
+    }
+
+    fn beats_to_frames(&self, beats: f32) -> f32 {
+        let seconds_per_beat = 60.0 / self.bpm;
+        let total_seconds = beats * seconds_per_beat;
+        total_seconds * frame_controller::fps()
     }
 }
 

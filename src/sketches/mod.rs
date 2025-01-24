@@ -37,6 +37,7 @@ pub use self::scratch::lines;
 pub use self::scratch::midi_test;
 pub use self::scratch::noise;
 pub use self::scratch::osc_test;
+pub use self::scratch::osc_transport_test;
 pub use self::scratch::perlin_loop;
 pub use self::scratch::responsive_test;
 pub use self::scratch::sand_line;

@@ -17,8 +17,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<MidiSongTiming>,
-    animation_script: AnimationScript<MidiSongTiming>,
+    animation: Animation<HybridTiming>,
+    animation_script: AnimationScript<HybridTiming>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
@@ -44,7 +44,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(HybridTiming::new(SKETCH_CONFIG.bpm));
     let animation_script = AnimationScript::new(
         to_absolute_path(file!(), "./wave_fract.toml"),
         animation.clone(),
@@ -114,7 +114,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
             if m.controls.bool("animate_wave_phase") {
-                m.animation_script.get("wave_phase")
+                m.animation_script.get("wave_phase") * TAU
             } else {
                 m.controls.float("wave_phase")
             },
