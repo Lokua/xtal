@@ -33,52 +33,34 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
+    let mix = params.b.x;
     let p = correct_aspect(position);
-    let t1 = params.a.x;
-    let t2 = params.a.y;
-    let t3 = params.a.z;
-    let t4 = params.a.w;
-    let b1 = params.b.x;
-
-    let p1 = vec2f(1.0 - t1, 1.0 - t1);
-    let p2 = vec2f(1.0 - t2, -1.0 + t2);
-    let p3 = vec2f(-1.0 + t3, -1.0 + t3);
-    let p4 = vec2f(-1.0 + t4, 1.0 - t4);
-    let p5 = vec2f(0.0);
-
-    let scale = 0.9;
-    let d1 = length(p - p1) / scale;
-    let d2 = length(p - p2) / scale;
-    let d3 = length(p - p3) / scale;
-    let d4 = length(p - p4) / scale;
-    let d5 = length(p - p5) / (scale * t2);
-
-    let k = t1;
-    
-    // Mix each corner with the center point
-    let mix1 = smin(d1, d5, k);
-    let mix2 = smin(d2, d5, k);
-    let mix3 = smin(d3, d5, k);
-    let mix4 = smin(d4, d5, k);
-
-    // Combine all mixed pairs
-    let mix12 = smin(mix1, mix2, k);
-    let mix34 = smin(mix3, mix4, k);
-    let final_mix = smin(mix12, mix34, k);
-
-    let brightness = 5.0;
-    let d = final_mix * brightness;
-
-    let tint = vec3f(
-        0.5 + 0.5 * tanh(p.x * 1.0),
-        0.5 + 0.5 * tanh(p.y * 1.0),
-        0.5 + 0.5 * tanh((p.x + p.y) * 1.0)
-    );
-
-    var color = vec3f(d) * tint;
-    color = mix(color, 1.0 - color, b1);
-    
+    let base = pattern_a(p);
+    let color = dots(p, base);
     return vec4f(color, 1.0);
+}
+
+fn pattern_a(p: vec2f) -> vec3f {
+    let t = pow(1.0 - (p.y + 1.0) * 0.5, 2.0);
+    let a = vec3f(1.0, 0.1, 0.2);
+    let b = vec3f(0.3, 0.0, 0.5);
+    return mix(a, b, t);
+}
+
+fn dots(p: vec2f, base: vec3f) -> vec3f {
+    // Create dot grid
+    let freq = 50.0;
+    let grid_p = p * freq;
+    let dots_p = fract(grid_p) * 2.0 - 1.0;
+    
+    // Dots get smaller as they go up
+    let t = (p.y + 1.0) * 0.5;
+    let size = 0.7 * (1.0 - t);
+    let dots = step(length(dots_p), size);
+    
+    // Brighter dots
+    let dot_color = base * 1.5;
+    return mix(base, dot_color, dots * 0.9);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {

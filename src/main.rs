@@ -80,6 +80,7 @@ fn main() {
         "animation_script_test" => run_sketch!(animation_script_test),
         "animation_test" => run_sketch!(animation_test),
         "audio_test" => run_sketch!(audio_test),
+        "blob" => run_sketch!(blob),
         "bos" => run_sketch!(bos),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
         "cv_test" => run_sketch!(cv_test),
