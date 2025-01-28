@@ -2,9 +2,11 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// ~/Documents/Live/2025/2025.01.11 Lattice - Spiral
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "spiral_auto",
-    display_name: "Spiral (Automated)",
+    name: "g25_10_11_12",
+    display_name: "Genuary 10-12: Spiral (Automated)",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -135,7 +137,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_procedural(
         app,
-        to_absolute_path(file!(), "./spiral.wgsl"),
+        to_absolute_path(file!(), "./g25_10_11_12.wgsl"),
         &params,
         true,
     );

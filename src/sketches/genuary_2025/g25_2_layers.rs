@@ -5,7 +5,7 @@ use crate::framework::prelude::*;
 // b/w 2025 DD Running Free
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "genuary_2",
+    name: "g25_2_layers",
     display_name: "Genuary 2: Layers Upon Layers",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -70,7 +70,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_full_screen(
         app,
-        to_absolute_path(file!(), "./genuary_2.wgsl"),
+        to_absolute_path(file!(), "./g25_2_layers.wgsl"),
         &params,
         true,
     );

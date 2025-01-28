@@ -6,8 +6,8 @@ use crate::framework::prelude::*;
 // ~/Documents/Live/2024/2016 Begins
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "genuary_1",
-    display_name: "Genuary 1",
+    name: "g25_1_horiz_vert",
+    display_name: "Genuary 1: Vertical or horizontal lines only",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 127.0,

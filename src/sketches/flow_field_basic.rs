@@ -63,8 +63,6 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    let start = Instant::now();
-
     if m.controls.any_changed_in(&["agent_count"]) {
         let agent_count = m.controls.float("agent_count") as usize;
 
@@ -96,8 +94,6 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         );
         agent.constrain(&m.wr);
     });
-
-    debug!("update: {:?}", start.elapsed());
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {

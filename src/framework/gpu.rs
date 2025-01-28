@@ -508,7 +508,7 @@ impl GpuState<BasicPositionVertex> {
 }
 
 /// Specialized impl for purly procedural shaders (no vertices).
-/// See spiral and genuary_14 for examples.
+/// See spiral for examples.
 impl GpuState<()> {
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,

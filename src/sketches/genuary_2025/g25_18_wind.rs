@@ -3,9 +3,11 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Bitwig/2025/Lattice - Flow Field w 312
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "flow_field",
-    display_name: "Flow Field",
+    name: "g25_18_wind",
+    display_name: "Genuary 18: What does wind look like?",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -68,7 +70,14 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
             ],
         ),
         Control::checkbox("randomize_point_size", false),
-        Control::slider("agent_count", 1_000.0, (10.0, MAX_COUNT as f32), 1.0),
+        // NOTE: this control is broken; needs to be maxed out
+        Control::slider_x(
+            "agent_count",
+            MAX_COUNT as f32,
+            (10.0, MAX_COUNT as f32),
+            1.0,
+            |_controls: &Controls| true,
+        ),
         Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
         Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
         Control::slider_norm("bg_alpha", 0.02),
@@ -106,7 +115,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
-        to_absolute_path(file!(), "./flow_field.wgsl"),
+        to_absolute_path(file!(), "g25_18_wind.wgsl"),
         &params,
         Some(&initial_vertices),
         wgpu::PrimitiveTopology::TriangleList,
@@ -127,7 +136,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
     if m.controls.any_changed_in(&["agent_count"]) {
-        let agent_count = m.controls.float("agent_count") as usize;
+        // let agent_count = m.controls.float("agent_count") as usize;
+        let agent_count = MAX_COUNT;
 
         if m.agents.len() > agent_count {
             m.agents.truncate(agent_count);

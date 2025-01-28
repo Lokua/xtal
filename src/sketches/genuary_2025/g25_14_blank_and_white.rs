@@ -3,8 +3,10 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// ~/Documents/Live/2025/2025.01.15 - 2020.01.28 F7 - Lattice Auto
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "genuary_14",
+    name: "g25_14_blank_and_white",
     display_name: "Genuary 14: Interference",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -21,7 +23,7 @@ pub struct Model {
     animation_script: AnimationScript<MidiSongTiming>,
     controls: Controls,
     wr: WindowRect,
-    gpu: gpu::GpuState<()>,
+    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
 #[repr(C)]
@@ -50,7 +52,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
 
     let animation_script = AnimationScript::new(
-        to_absolute_path(file!(), "genuary_14.toml"),
+        to_absolute_path(file!(), "g25_14_blank_and_white.toml"),
         animation.clone(),
     );
 
@@ -65,9 +67,9 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         e: [0.0; 4],
     };
 
-    let gpu = GpuState::new_procedural(
+    let gpu = GpuState::new_full_screen(
         app,
-        to_absolute_path(file!(), "./genuary_14.wgsl"),
+        to_absolute_path(file!(), "./g25_14_blank_and_white.wgsl"),
         &params,
         true,
     );

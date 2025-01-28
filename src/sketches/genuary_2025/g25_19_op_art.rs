@@ -5,7 +5,7 @@ use crate::framework::prelude::*;
 // b/w Ableton 2025/Lattice - Wave Fract
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "genuary_19",
+    name: "g25_19_op_art",
     display_name: "Genuary 19: Op Art",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -89,7 +89,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_full_screen(
         app,
-        to_absolute_path(file!(), "./genuary_19.wgsl"),
+        to_absolute_path(file!(), "./g25_19_op_art.wgsl"),
         &params,
         true,
     );
