@@ -11,6 +11,7 @@ pub mod genuary_1;
 pub mod genuary_14;
 pub mod genuary_19;
 pub mod genuary_2;
+pub mod genuary_22;
 pub mod genuary_5;
 pub mod heat_mask;
 pub mod interference;

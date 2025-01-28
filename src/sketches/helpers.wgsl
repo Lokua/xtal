@@ -113,6 +113,12 @@ fn mix_alpha(c1: vec4f, c2: vec4f, t: f32) -> vec4f {
     return vec4f(blended_color, blended_alpha);
 }
 
+// smooth minimum
+fn smin(a: f32, b: f32, k: f32) -> f32 {
+    let h = max(k - abs(a - b), 0.0) / k;
+    return min(a, b) - h * h * k * 0.25;
+}
+
 // --- POST PROCESSING
 
 fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {

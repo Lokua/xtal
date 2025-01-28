@@ -31,15 +31,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let w = params.resolution.x;
-    let h = params.resolution.y;
     let mode = params.a.x;
     let radius = params.a.y;
 
-    let aspect = w / h;
-    var p = position;
-    p.x *= aspect;
-
+    let p = correct_aspect(position);
     let d = length(p);
 
     if mode == 0.0 {
@@ -47,5 +42,14 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     return vec4f(step(d, radius));
+}
+
+fn correct_aspect(position: vec2f) -> vec2f {
+    let w = params.resolution.x;
+    let h = params.resolution.y;
+    let aspect = w / h;
+    var p = position;
+    p.x *= aspect;
+    return p;
 }
 

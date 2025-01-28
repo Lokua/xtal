@@ -97,6 +97,7 @@ fn main() {
         "genuary_5" => run_sketch!(genuary_5),
         "genuary_14" => run_sketch!(genuary_14),
         "genuary_19" => run_sketch!(genuary_19),
+        "genuary_22" => run_sketch!(genuary_22),
         "heat_mask" => run_sketch!(heat_mask),
         "interference" => run_sketch!(interference),
         "lin_alg" => run_sketch!(lin_alg),

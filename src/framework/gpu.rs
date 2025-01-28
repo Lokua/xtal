@@ -255,13 +255,15 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                 Err(_) => return,
             };
 
-            if event.kind != notify::EventKind::Modify(notify::event::ModifyKind::Data(
-                notify::event::DataChange::Content,
-            )) {
+            if event.kind
+                != notify::EventKind::Modify(notify::event::ModifyKind::Data(
+                    notify::event::DataChange::Content,
+                ))
+            {
                 return;
             }
 
-            info!("Shader {:?} changed. Pipeline will be recreated on next update.", path);
+            trace!("Shader {:?} changed", path);
             if let Ok(mut guard) = state.lock() {
                 *guard = Some(path.clone());
             }
