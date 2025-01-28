@@ -82,10 +82,12 @@ fn main() {
         "g25_2_layers" => run_sketch!(g25_2_layers),
         "g25_5_isometric" => run_sketch!(g25_5_isometric),
         "g25_10_11_12" => run_sketch!(g25_10_11_12),
+        "g25_13_triangle" => run_sketch!(g25_13_triangle),
         "g25_14_blank_and_white" => run_sketch!(g25_14_blank_and_white),
         "g25_18_wind" => run_sketch!(g25_18_wind),
         "g25_19_op_art" => run_sketch!(g25_19_op_art),
         "g25_22_gradients_only" => run_sketch!(g25_22_gradients_only),
+        "g25_26_symmetry" => run_sketch!(g25_26_symmetry),
 
         // --- SCRATCH
         "animation_script_test" => run_sketch!(animation_script_test),
@@ -123,7 +125,6 @@ fn main() {
         "interference" => run_sketch!(interference),
         "sand_lines" => run_sketch!(sand_lines),
         "sierpinski_triangle" => run_sketch!(sierpinski_triangle),
-        "sierpinski_triangle_auto" => run_sketch!(sierpinski_triangle_auto),
         "spiral" => run_sketch!(spiral),
         "spiral_2" => run_sketch!(spiral_2),
         "template" => run_sketch!(template),

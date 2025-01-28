@@ -2,9 +2,11 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Live/2025/2025.01.14 Lattice - Sierpinski Triangle Project
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "sierpinski_triangle_anim",
-    display_name: "Sierpinski Triangle Animation",
+    name: "g25_13_triangle",
+    display_name: "Genuary 13: Triangles and nothing else",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -51,7 +53,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_full_screen(
         app,
-        to_absolute_path(file!(), "./sierpinski_triangle.wgsl"),
+        to_absolute_path(file!(), "g25_13_triangle.wgsl"),
         &params,
         true,
     );

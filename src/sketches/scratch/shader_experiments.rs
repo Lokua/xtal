@@ -11,7 +11,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(400),
+    gui_h: Some(500),
 };
 
 #[derive(SketchComponents)]
@@ -31,6 +31,7 @@ struct ShaderParams {
     a: [f32; 4],
     b: [f32; 4],
     c: [f32; 4],
+    d: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -51,6 +52,11 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider_norm("c2", 0.5),
         Control::slider_norm("c3", 0.5),
         Control::slider_norm("c4", 0.5),
+        Control::Separator {}, // -------------------
+        Control::slider_norm("d1", 0.5),
+        Control::slider_norm("d2", 0.5),
+        Control::slider_norm("d3", 0.5),
+        Control::slider_norm("d4", 0.5),
     ]);
 
     let params = ShaderParams {
@@ -58,6 +64,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
         b: [0.0; 4],
         c: [0.0; 4],
+        d: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_full_screen(
@@ -95,6 +102,12 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.float("c2"),
             m.controls.float("c3"),
             m.controls.float("c4"),
+        ],
+        d: [
+            m.controls.float("d1"),
+            m.controls.float("d2"),
+            m.controls.float("d3"),
+            m.controls.float("d4"),
         ],
     };
 

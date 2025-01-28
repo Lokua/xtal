@@ -11,7 +11,6 @@ pub mod heat_mask;
 pub mod interference;
 pub mod sand_lines;
 pub mod sierpinski_triangle;
-pub mod sierpinski_triangle_auto;
 pub mod spiral;
 pub mod spiral_2;
 pub mod template;
@@ -22,11 +21,13 @@ pub mod wgpu_displacement_2;
 
 pub mod genuary_2025;
 pub use self::genuary_2025::g25_10_11_12;
+pub use self::genuary_2025::g25_13_triangle;
 pub use self::genuary_2025::g25_14_blank_and_white;
 pub use self::genuary_2025::g25_18_wind;
 pub use self::genuary_2025::g25_19_op_art;
 pub use self::genuary_2025::g25_1_horiz_vert;
 pub use self::genuary_2025::g25_22_gradients_only;
+pub use self::genuary_2025::g25_26_symmetry;
 pub use self::genuary_2025::g25_2_layers;
 pub use self::genuary_2025::g25_5_isometric;
 
