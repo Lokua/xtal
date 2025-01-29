@@ -14,3 +14,10 @@ pos_x:
     type: "osc"
     range: [-1.0, 1.0]
     default: 0.0
+
+pos_y:
+    type: "lerp_abs"
+    keyframes:
+        - ["0.0.0", 0.0]
+        - ["1.0.0", 1.0]
+        - ["2.0.0", 0.0]

@@ -17,15 +17,15 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript,
+    controls: ControlScript<FrameTiming>,
     wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let controls = ControlScript::new(to_absolute_path(
-        file!(),
-        "control_script_test.yaml",
-    ));
+    let controls = ControlScript::new(
+        to_absolute_path(file!(), "control_script_test.yaml"),
+        FrameTiming::new(SKETCH_CONFIG.bpm),
+    );
 
     Model { controls, wr }
 }
@@ -46,6 +46,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let hue = m.controls.get("hue");
     let radius = m.controls.get("radius");
     let pos_x = m.controls.get("/pos_x");
+    let pos_y = m.controls.get("pos_y");
 
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
@@ -55,7 +56,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     draw.ellipse()
         .color(WHITE)
         .radius(20.0)
-        .x_y(pos_x * m.wr.hw(), 0.0);
+        .x_y(pos_x * m.wr.hw(), pos_y * m.wr.hh());
 
     draw.to_frame(app, &frame).unwrap();
 }

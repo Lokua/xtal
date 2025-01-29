@@ -1,10 +1,8 @@
-// In control_provider.rs
 use super::prelude::*;
 
 pub trait ControlProvider {
-    // Match Controls exactly
     fn as_controls(&mut self) -> &mut Controls;
-    fn get_controls(&self) -> &Vec<Control>; // Note: &self not &mut self
+    fn get_controls(&self) -> &Vec<Control>;
     fn update_value(&mut self, name: &str, value: ControlValue);
     fn to_serialized(&self) -> SerializedControls;
 }
@@ -27,7 +25,7 @@ impl ControlProvider for Controls {
     }
 }
 
-impl ControlProvider for ControlScript {
+impl<T: TimingSource> ControlProvider for ControlScript<T> {
     fn as_controls(&mut self) -> &mut Controls {
         &mut self.controls
     }

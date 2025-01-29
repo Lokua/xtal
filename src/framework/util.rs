@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 use std::path::PathBuf;
 
 use geom::Ellipse;
@@ -418,6 +419,22 @@ pub fn average_neighbors(points: Vec<Vec2>, iterations: usize) -> Vec<Vec2> {
 
 pub fn on_screen(v: Vec2, wr: &WindowRect) -> bool {
     v.x >= -wr.hw() && v.x <= wr.hw() && v.y >= -wr.hh() && v.y <= wr.hh()
+}
+
+pub fn parse_bar_beat_16th(time_str: &str) -> Result<f32, Box<dyn Error>> {
+    let parts: Vec<f32> = time_str
+        .split('.')
+        .map(|s| s.parse::<f32>())
+        .collect::<Result<Vec<f32>, _>>()?;
+
+    if parts.len() != 3 {
+        return Err("Time string must be in format bar.beat.16th".into());
+    }
+
+    let [bars, beats, sixteenths] = [parts[0], parts[1], parts[2]];
+    let total_beats = (bars * 4.0) + beats + (sixteenths * 0.25);
+
+    Ok(total_beats)
 }
 
 #[cfg(test)]
