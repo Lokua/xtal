@@ -20,13 +20,13 @@ struct Params {
     // wave_freq, wave_scale, wave_x, wave_y
     b: vec4f,
 
-    // distort_freq, signal_mix, unused, fractal_scale
+    // distort_freq, signal_mix, fractal_grid_scale, fractal_scale
     c: vec4f,
 
-    // signal_contrast, signal_steps, fractal_color_scale, unused
+    // unused, signal_steps, fractal_color_scale, fractal_grid_mix
     d: vec4f,
 
-    // ....unused
+    // mask_radius, ...unused
     e: vec4f,
 }
 
@@ -52,10 +52,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let fractal = fractal_reduce(p);
     let distort = distort_reduce(p);
     let wave = wave_reduce(p);
+    let mask = circular_mask(p);
     var reduced = 
-        fractal * fractal_mix + 
+        fractal * fractal_mix + (1.0 - mask) +
         distort * distort_mix + 
-        wave * wave_mix;
+        wave * wave_mix * mask;
     
     let total_mix = fractal_mix + distort_mix + wave_mix;
     reduced = select(reduced, reduced / total_mix, total_mix > 1.0);
@@ -63,8 +64,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     return vec4f(vec3f(map_signal(reduced)), 1.0);
 }
 
+fn circular_mask(p: vec2f) -> f32 {
+    let center = vec2f(0.0);
+    let radius = params.e.x * 0.25;
+    let falloff = params.e.y;
+    let d = length(p - center);
+    return smoothstep(radius + falloff, radius, d);
+}
+
 fn map_signal(value: f32) -> vec3f {
-    let contrast = params.d.x * 100.0;
+    // let contrast = params.d.x * 100.0;
+    let contrast = 2.0;
     let steps = (params.d.y * 100.0) + 1.0;
     let signal_mix = params.c.y; 
 
@@ -105,6 +115,8 @@ fn fractal_reduce(pos: vec2f) -> f32 {
     let count = params.a.w * 20.0; 
     let scale = params.c.w;
     let color_scale = params.d.z;
+    let fractal_grid_mix = params.d.w;
+    let fractal_grid_scale = params.c.z * 10.0;
     
     var p = pos * scale;
     var color = 0.0;
@@ -114,7 +126,11 @@ fn fractal_reduce(pos: vec2f) -> f32 {
         let weight = 1.0 - smoothstep(count - 1.0, count, f32(i));
         if (weight <= 0.0) { break; }
         
-        p = abs(p) * 2.0 - 1.0;
+        p = mix(
+            abs(p) * 2.0 - 1.0, 
+            fract(abs(p)) * fractal_grid_scale, 
+            fractal_grid_mix
+        );
         let len = max(length(p), 0.001);
         color += (color_scale / len) * weight;
     }
@@ -144,3 +160,4 @@ fn mix_min(c1: vec4f, c2: vec4f) -> vec4f {
 fn mix_max(c1: vec4f, c2: vec4f) -> vec4f {
     return max(c1, c2);
 }
+

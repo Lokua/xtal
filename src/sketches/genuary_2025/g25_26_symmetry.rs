@@ -9,7 +9,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     fps: 60.0,
     bpm: 134.0,
     w: 700,
-    h: 700,
+    h: 1244,
     gui_w: None,
     gui_h: Some(640),
 };
@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<OscTransportTiming>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
@@ -35,18 +35,18 @@ struct ShaderParams {
     // wave_freq, wave_scale, wave_x, wave_y
     b: [f32; 4],
 
-    // distort_freq, signal_mix, unused, fractal_scale
+    // distort_freq, signal_mix, fractal_grid_scale, fractal_scale
     c: [f32; 4],
 
-    // signal_contrast, signal_steps, fractal_color_scale, unused
+    // unused, signal_steps, fractal_color_scale, fractal_grid_mix
     d: [f32; 4],
 
-    // ...unused
+    // mask_radius, mask_falloff, ...unused
     e: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(OscTransportTiming::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::slider_norm("wave_mix", 0.5),
@@ -62,15 +62,15 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider_norm("fractal_count", 0.5),
         Control::slider_norm("fractal_scale", 0.5),
         Control::slider_norm("fractal_color_scale", 0.5),
+        Control::slider_norm("fractal_grid_mix", 0.5),
+        Control::slider_norm("fractal_grid_scale", 0.5),
         Control::Separator {}, // -------------------
         Control::slider_norm("signal_mix", 0.5),
-        Control::slider_norm("signal_contrast", 0.5),
         Control::slider_norm("signal_steps", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("c3", 0.5),
-        Control::slider_norm("d4", 0.5),
-        Control::slider_norm("e1", 0.5),
-        Control::slider_norm("e2", 0.5),
+        Control::slider_norm("mask_falloff", 0.5),
+        Control::Separator {}, // -------------------
+        Control::slider_norm("d1", 0.5),
         Control::slider_norm("e3", 0.5),
         Control::slider_norm("e4", 0.5),
     ]);
@@ -117,18 +117,20 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         c: [
             m.controls.float("distort_freq"),
             m.controls.float("signal_mix"),
-            m.controls.float("c3"),
+            m.controls.float("fractal_grid_scale"),
             m.controls.float("fractal_scale"),
         ],
         d: [
-            m.controls.float("signal_contrast"),
+            m.controls.float("d1"),
             m.controls.float("signal_steps"),
             m.controls.float("fractal_color_scale"),
-            m.controls.float("d4"),
+            m.controls.float("fractal_grid_mix"),
         ],
         e: [
-            m.controls.float("e1"),
-            m.controls.float("e2"),
+            // mask_radius
+            // m.animation.lrp(&[(0.0, 0.5), (1.0, 0.5)], 0.0),
+            m.animation.lrp(&[(1.0, 0.5), (0.0, 0.5)], 0.0),
+            m.controls.float("mask_falloff"),
             m.controls.float("e3"),
             m.controls.float("e4"),
         ],
