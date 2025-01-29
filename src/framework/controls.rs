@@ -351,6 +351,19 @@ impl Controls {
             previous_values: HashMap::new(),
         }
     }
+
+    pub fn add(&mut self, control: Control) {
+        let name = control.name().to_string();
+        let value = control.value();
+
+        if self.values.contains_key(&name) {
+            panic!("Control '{}' already exists", name);
+        }
+
+        self.controls.push(control);
+        self.values.insert(name, value);
+        self.changed = true;
+    }
 }
 
 pub fn draw_controls(controls: &mut Controls, ui: &mut egui::Ui) -> bool {

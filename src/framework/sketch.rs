@@ -26,8 +26,8 @@ pub enum PlayMode {
 }
 
 pub trait SketchModel {
-    fn controls(&mut self) -> Option<&mut Controls> {
-        None
+    fn controls(&mut self) -> Option<&mut impl ControlProvider> {
+        None::<&mut Controls>
     }
 
     fn clear_color(&self) -> Rgba {

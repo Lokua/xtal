@@ -68,7 +68,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
         .any(|f| f.ident.as_ref().unwrap() == "controls")
     {
         Some(quote! {
-            fn controls(&mut self) -> Option<&mut Controls> {
+            fn controls(&mut self) -> Option<&mut impl ControlProvider> {
                 Some(&mut self.controls)
             }
         })
