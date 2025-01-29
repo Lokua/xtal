@@ -44,8 +44,6 @@ struct UpdateState {
 }
 
 pub struct ControlScript<T: TimingSource> {
-    /// The raw yaml representation that represents the last valid parsed state
-    control_configs: Option<ConfigFile>,
     pub controls: Controls,
     osc_controls: OscControls,
     animation: Animation<T>,
@@ -59,7 +57,6 @@ impl<T: TimingSource> ControlScript<T> {
         let state_clone = state.clone();
 
         let mut script = Self {
-            control_configs: None,
             controls: Controls::with_previous(vec![]),
             osc_controls: OscControls::new(),
             animation: Animation::new(timing),
@@ -104,7 +101,7 @@ impl<T: TimingSource> ControlScript<T> {
         };
 
         if let Some(config) = new_config {
-            if let Err(e) = self.apply_config(config) {
+            if let Err(e) = self.populate_controls(&config) {
                 error!("Failed to apply new configuration: {:?}", e);
             }
         }
@@ -112,7 +109,11 @@ impl<T: TimingSource> ControlScript<T> {
 
     fn import_script(&mut self, path: &PathBuf) -> Result<(), Box<dyn Error>> {
         let config = Self::parse_config(path)?;
-        self.apply_config(config)
+        self.populate_controls(&config)?;
+        if let Ok(mut guard) = self.update_state.state.lock() {
+            *guard = Some(config);
+        }
+        Ok(())
     }
 
     fn parse_config(path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
@@ -121,28 +122,10 @@ impl<T: TimingSource> ControlScript<T> {
         Ok(config)
     }
 
-    fn apply_config(
+    fn populate_controls(
         &mut self,
-        config: ConfigFile,
+        control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
-        self.control_configs = Some(config);
-
-        self.controls = Controls::with_previous(vec![]);
-        self.osc_controls = OscControls::new();
-        self.keyframe_sequences.clear();
-
-        self.populate_controls()?;
-        self.osc_controls.start()?;
-
-        Ok(())
-    }
-
-    fn populate_controls(&mut self) -> Result<(), Box<dyn Error>> {
-        let control_configs = match &self.control_configs {
-            Some(configs) => configs,
-            None => return Ok(()),
-        };
-
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
                 MaybeControlConfig::Control(config) => config,
