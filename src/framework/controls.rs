@@ -238,6 +238,10 @@ impl Controls {
         &self.previous_values
     }
 
+    pub fn has(&self, name: &str) -> bool {
+        self.values.contains_key(name)
+    }
+
     pub fn float(&self, name: &str) -> f32 {
         self.check_contains_key(name);
         match self.values.get(name).unwrap() {

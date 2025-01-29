@@ -17,61 +17,45 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<FrameTiming>,
     controls: ControlScript,
     wr: WindowRect,
-    radius: f32,
-    hue: f32,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
-
     let controls = ControlScript::new(to_absolute_path(
         file!(),
         "control_script_test.yaml",
     ));
 
-    Model {
-        animation,
-        controls,
-        wr,
-        radius: 0.0,
-        hue: 0.0,
-    }
+    Model { controls, wr }
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    // m.contols.update();
-
-    let radius_max = m.controls.get("radius");
-
-    m.radius = m.animation.lerp(
-        vec![
-            KF::new(20.0, 2.0),
-            KF::new(radius_max, 1.0),
-            KF::new(radius_max / 2.0, 0.5),
-            KF::new(radius_max, 0.5),
-            KF::new(20.0, KF::END),
-        ],
-        0.0,
-    );
-
-    m.hue = m.animation.ping_pong_loop_progress(12.0)
+    m.controls.update();
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {
     let draw = app.draw();
 
+    // background
     draw.rect()
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h())
         .hsla(0.0, 0.0, 0.02, 0.1);
 
+    let hue = m.controls.get("hue");
+    let radius = m.controls.get("radius");
+    let pos_x = m.controls.get("/pos_x");
+
     draw.ellipse()
-        .color(hsl(m.hue, 0.5, 0.5))
-        .radius(m.radius)
+        .color(hsl(hue, 0.5, 0.5))
+        .radius(radius)
         .x_y(0.0, 0.0);
+
+    draw.ellipse()
+        .color(WHITE)
+        .radius(20.0)
+        .x_y(pos_x * m.wr.hw(), 0.0);
 
     draw.to_frame(app, &frame).unwrap();
 }
