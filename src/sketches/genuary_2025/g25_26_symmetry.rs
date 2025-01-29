@@ -61,6 +61,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::Separator {}, // -------------------
         Control::slider_norm("distort_mix", 0.5),
         Control::slider_norm("distort_freq", 0.5),
+        Control::slider_norm("distort_angle_offset", 0.5),
         Control::Separator {}, // -------------------
         Control::slider_norm("fractal_mix", 0.5),
         Control::slider_norm("fractal_count", 0.5),
@@ -74,7 +75,6 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::Separator {}, // -------------------
         Control::slider_norm("mask_falloff", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("d1", 0.5),
         Control::slider_norm("e3", 0.5),
         Control::slider_norm("e4", 0.5),
     ]);
@@ -128,7 +128,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.float("fractal_scale"),
         ],
         d: [
-            m.controls.float("d1"),
+            m.controls.float("distort_angle_offset"),
             m.controls.float("signal_steps"),
             m.controls.float("fractal_color_scale"),
             m.controls.float("fractal_grid_mix"),

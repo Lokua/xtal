@@ -23,7 +23,7 @@ struct Params {
     // distort_freq, signal_mix, fractal_grid_scale, fractal_scale
     c: vec4f,
 
-    // unused, signal_steps, fractal_color_scale, fractal_grid_mix
+    // distort_angle_offset, signal_steps, fractal_color_scale, fractal_grid_mix
     d: vec4f,
 
     // mask_radius, mask_falloff, mask_x, mask_y
@@ -103,11 +103,13 @@ fn wave_reduce(p: vec2f) -> f32 {
 }
 
 fn distort_reduce(pos: vec2f) -> f32 {
-    let freq = params.c.x * 20.0;
+    let freq = params.c.x * 3.0;
+    let angle_offset = params.d.x * 10.0;
     let phase = 0.0;
     var p = vec2f(pos);
-    p *= tan(p * freq + phase);
-    return length(p);
+    p *= tanh(p * freq + phase);
+    let len = length(p);
+    return 0.5 + 0.5 * sin(len * PI * angle_offset);
 }
 
 fn fractal_reduce(pos: vec2f) -> f32 {
