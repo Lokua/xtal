@@ -26,7 +26,7 @@ struct Params {
     // unused, signal_steps, fractal_color_scale, fractal_grid_mix
     d: vec4f,
 
-    // mask_radius, ...unused
+    // mask_radius, mask_falloff, mask_x, mask_y
     e: vec4f,
 }
 
@@ -65,18 +65,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 }
 
 fn circular_mask(p: vec2f) -> f32 {
-    let center = vec2f(0.0);
     let radius = params.e.x * 0.25;
     let falloff = params.e.y;
+    let center = vec2f(params.e.z, params.e.w);
     let d = length(p - center);
     return smoothstep(radius + falloff, radius, d);
 }
 
 fn map_signal(value: f32) -> vec3f {
-    // let contrast = params.d.x * 100.0;
-    let contrast = 2.0;
     let steps = (params.d.y * 100.0) + 1.0;
     let signal_mix = params.c.y; 
+    let contrast = 2.0;
 
     let transformed = 
         value * (1.0 - signal_mix) + 

@@ -16,8 +16,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    #[allow(dead_code)]
     animation: Animation<OscTransportTiming>,
+    animation_script: AnimationScript<OscTransportTiming>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
@@ -41,12 +41,16 @@ struct ShaderParams {
     // unused, signal_steps, fractal_color_scale, fractal_grid_mix
     d: [f32; 4],
 
-    // mask_radius, mask_falloff, ...unused
+    // mask_radius, mask_falloff, mask_x, mask_y
     e: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(OscTransportTiming::new(SKETCH_CONFIG.bpm));
+    let animation_script = AnimationScript::new(
+        to_absolute_path(file!(), "g25_26_symmetry.toml"),
+        animation.clone(),
+    );
 
     let controls = Controls::with_previous(vec![
         Control::slider_norm("wave_mix", 0.5),
@@ -93,6 +97,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     Model {
         animation,
+        animation_script,
         controls,
         wr,
         gpu,
@@ -100,6 +105,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
+    m.animation_script.update();
+
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
@@ -131,8 +138,8 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             // m.animation.lrp(&[(0.0, 0.5), (1.0, 0.5)], 0.0),
             m.animation.lrp(&[(1.0, 0.5), (0.0, 0.5)], 0.0),
             m.controls.float("mask_falloff"),
-            m.controls.float("e3"),
-            m.controls.float("e4"),
+            m.animation_script.get("mask_x"),
+            m.animation_script.get("mask_y"),
         ],
     };
 

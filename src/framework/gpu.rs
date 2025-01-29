@@ -420,7 +420,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                     struct_info.field_names().into_iter().enumerate()
                 {
                     if let Some(field_info) = struct_info.field(field) {
-                        println!("Field: {} -> {:?}", field, field_info);
+                        trace!("Field: {} -> {:?}", field, field_info);
 
                         let format = match field_info.type_path() {
                             "f32" => wgpu::VertexFormat::Float32,

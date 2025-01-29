@@ -169,6 +169,7 @@ impl<T: TimingSource> AnimationScript<T> {
                 info!(
                     "Created new keyframe sequences; call `update` to refresh."
                 );
+                debug!("keyframes: {:?}", keyframe_sequences);
                 *guard = Some((new_config, keyframe_sequences));
             }
         })
