@@ -77,6 +77,29 @@ fn main() {
     let sketch_name = args.get(1).map(|s| s.as_str()).unwrap_or("template");
 
     match sketch_name {
+        // --- MAIN
+        "blob" => run_sketch!(blob),
+        "displacement_1" => run_sketch!(displacement_1),
+        "displacement_1a" => run_sketch!(displacement_1a),
+        "displacement_2" => run_sketch!(displacement_2),
+        "displacement_2a" => run_sketch!(displacement_2a),
+        "drop" => run_sketch!(drop),
+        "drop_walk" => run_sketch!(drop_walk),
+        "floor_supervisor" => run_sketch!(floor_supervisor),
+        "flow_field_basic" => run_sketch!(flow_field_basic),
+        "heat_mask" => run_sketch!(heat_mask),
+        "interference" => run_sketch!(interference),
+        "sand_lines" => run_sketch!(sand_lines),
+        "sierpinski_triangle" => run_sketch!(sierpinski_triangle),
+        "spiral" => run_sketch!(spiral),
+        "spiral_2" => run_sketch!(spiral_2),
+        "template" => run_sketch!(template),
+        "template_wgpu" => run_sketch!(template_wgpu),
+        "wave_fract" => run_sketch!(wave_fract),
+        "wgpu_displacement" => run_sketch!(wgpu_displacement),
+        "wgpu_displacement_2" => run_sketch!(wgpu_displacement_2),
+        "wgpu_test" => run_sketch!(wgpu_test),
+
         // --- GENUARY 2025
         "g25_1_horiz_vert" => run_sketch!(g25_1_horiz_vert),
         "g25_2_layers" => run_sketch!(g25_2_layers),
@@ -113,28 +136,9 @@ fn main() {
         "wgpu_compute_test" => run_sketch!(wgpu_compute_test),
         "z_sim" => run_sketch!(z_sim),
 
-        // --- MAIN
-        "blob" => run_sketch!(blob),
-        "displacement_1" => run_sketch!(displacement_1),
-        "displacement_1a" => run_sketch!(displacement_1a),
-        "displacement_2" => run_sketch!(displacement_2),
-        "displacement_2a" => run_sketch!(displacement_2a),
-        "drop" => run_sketch!(drop),
-        "drop_walk" => run_sketch!(drop_walk),
-        "floor_supervisor" => run_sketch!(floor_supervisor),
-        "flow_field_basic" => run_sketch!(flow_field_basic),
-        "heat_mask" => run_sketch!(heat_mask),
-        "interference" => run_sketch!(interference),
-        "sand_lines" => run_sketch!(sand_lines),
-        "sierpinski_triangle" => run_sketch!(sierpinski_triangle),
-        "spiral" => run_sketch!(spiral),
-        "spiral_2" => run_sketch!(spiral_2),
-        "template" => run_sketch!(template),
-        "template_wgpu" => run_sketch!(template_wgpu),
-        "wave_fract" => run_sketch!(wave_fract),
-        "wgpu_displacement" => run_sketch!(wgpu_displacement),
-        "wgpu_displacement_2" => run_sketch!(wgpu_displacement_2),
-        "wgpu_test" => run_sketch!(wgpu_test),
+        // --- TEMPLATES
+        "basic_cube_shader_template" => run_sketch!(basic_cube_shader_template),
+
         _ => {
             warn!("Sketch not found, running template");
             run_sketch!(template)

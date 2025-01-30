@@ -55,3 +55,6 @@ pub use self::scratch::vertical_2;
 pub use self::scratch::wgpu_compute_test;
 pub use self::scratch::wgpu_test;
 pub use self::scratch::z_sim;
+
+pub mod templates;
+pub use self::templates::basic_cube_shader_template;

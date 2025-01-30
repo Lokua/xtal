@@ -4,9 +4,8 @@ use nannou::prelude::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "g25_20_23_brutal_arch",
-    display_name:
-        "Genuary 20, 23 - Generative Architecture, Inspired by Brutalism",
+    name: "basic_cube_shader_template",
+    display_name: "Template | Basic Cube Shader",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -41,7 +40,7 @@ struct ShaderParams {
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
-        to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
+        to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
         FrameTiming::new(SKETCH_CONFIG.bpm),
     );
 
@@ -55,7 +54,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
-        to_absolute_path(file!(), "./g25_20_23_brutal_arch.wgsl"),
+        to_absolute_path(file!(), "basic_cube_shader_template.wgsl"),
         &params,
         Some(&vertices),
         wgpu::PrimitiveTopology::TriangleList,
