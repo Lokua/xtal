@@ -3,10 +3,21 @@ info:
         PI: &PI 3.14159265359
         TAU: &TAU 6.283185307179586
 
-rotation:
-    type: "slider"
-    range: [0.0, *TAU]
-    default: *PI
+rot_x:
+    type: "lerp_rel"
+    keyframes:
+        - [8.0, *TAU]
+        - [8.0, 0.0]
+rot_y:
+    type: "lerp_rel"
+    keyframes:
+        - [12.0, *TAU]
+        - [12.0, 0.0]
+rot_z:
+    type: "lerp_rel"
+    keyframes:
+        - [14.0, *TAU]
+        - [14.0, 0.0]
 
 z_offset:
     type: "slider"
@@ -16,5 +27,9 @@ z_offset:
 scale:
     type: "slider"
 
-a4:
+b2:
+    type: "slider"
+b3:
+    type: "slider"
+b4:
     type: "slider"

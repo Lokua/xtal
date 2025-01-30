@@ -1,10 +1,16 @@
+const BACKGROUND: f32 = 0.0;
+const FOREGROUND: f32 = 1.0;
+const DEBUG: bool = false;
+
 struct VertexInput {
     @location(0) position: vec3f,
+    @location(1) @interpolate(flat) layer: f32
 };
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4f,
     @location(0) pos: vec3f,
+    @location(1) @interpolate(flat) layer: f32
 };
 
 struct Params {
@@ -20,10 +26,22 @@ var<uniform> params: Params;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.layer = vert.layer;
+
+    if vert.layer < FOREGROUND {
+        let p = correct_aspect(vert.position);
+        out.clip_position = vec4f(p.xy, 0.999, 1.0);
+        out.pos = vec3f(p.xy, 0.999);
+
+        return out;
+    } 
+
     let rotation = params.a.x;
     let z_offset = clamp(params.a.y, -10.0, -0.5);
     let scale = params.a.z;
 
+    // let scaled_position = correct_aspect(vert.position * scale);
     let scaled_position = vert.position * scale;
 
     // Y-axis rotation
@@ -66,13 +84,28 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
         vec4f(0.0, 0.0, near * far * range_inv, 0.0)
     );
 
-    var out: VertexOutput;
     out.clip_position = proj * vec4f(translated, 1.0);
     out.pos = translated;
+
     return out;
 }
 
 @fragment
-fn fs_main(@location(0) pos: vec3f) -> @location(0) vec4f {
-    return vec4f(1.0, 1.0, 1.0, 1.0);
+fn fs_main(input: VertexOutput) -> @location(0) vec4f {
+    if DEBUG {
+        return vec4f(input.layer, input.layer, input.layer, 1.0);
+    }
+
+    if input.layer < FOREGROUND { 
+        return vec4f(1.0);
+    } 
+
+    return vec4f(vec3f(0.4), 1.0);
+}
+
+fn correct_aspect(position: vec3f) -> vec3f {
+    let w = params.resolution.x;
+    let h = params.resolution.y;
+    let aspect = w / h;
+    return vec3f(position.x * aspect, position.y, position.z);
 }

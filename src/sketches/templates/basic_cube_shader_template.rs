@@ -15,6 +15,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
+const BACKGROUND: f32 = 0.0;
+const FOREGROUND: f32 = 1.0;
+
 #[derive(SketchComponents)]
 pub struct Model {
     controls: ControlScript<FrameTiming>,
@@ -26,6 +29,7 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 3],
+    layer: f32,
 }
 
 #[repr(C)]
@@ -49,8 +53,15 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    // 6 faces * 6 vertices each
-    let vertices = vec![Vertex { position: [0.0; 3] }; 36];
+    // 6 vertices for the background +
+    // 6 vertices * 6 faces for the foreground = 42
+    let vertices = vec![
+        Vertex {
+            position: [0.0; 3],
+            layer: BACKGROUND
+        };
+        42
+    ];
 
     let gpu = gpu::GpuState::new(
         app,
@@ -79,133 +90,205 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
+    let fullscreen_quad = vec![
+        Vertex {
+            // Bottom-left
+            position: [-1.0, -1.0, 0.0],
+            layer: BACKGROUND,
+        },
+        Vertex {
+            // Bottom-right
+            position: [1.0, -1.0, 0.0],
+            layer: BACKGROUND,
+        },
+        Vertex {
+            // Top-right
+            position: [1.0, 1.0, 0.0],
+            layer: BACKGROUND,
+        },
+        Vertex {
+            // Bottom-left
+            position: [-1.0, -1.0, 0.0],
+            layer: BACKGROUND,
+        },
+        Vertex {
+            // Top-right
+            position: [1.0, 1.0, 0.0],
+            layer: BACKGROUND,
+        },
+        Vertex {
+            // Top-left
+            position: [-1.0, 1.0, 0.0],
+            layer: BACKGROUND,
+        },
+    ];
+
     let front_face = vec![
         Vertex {
             position: [-0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
     ];
 
     let back_face = vec![
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
     ];
 
     let top_face = vec![
         Vertex {
             position: [-0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
     ];
 
     let bottom_face = vec![
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
     ];
 
     let right_face = vec![
         Vertex {
             position: [0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
     ];
 
     let left_face = vec![
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, -0.5, -0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, 0.5],
+            layer: FOREGROUND,
         },
         Vertex {
             position: [-0.5, 0.5, -0.5],
+            layer: FOREGROUND,
         },
     ];
 
-    let mut vertices = Vec::with_capacity(36);
+    // 6 vertices for the background +
+    // 6 vertices * 6 sides for the foreground = 42
+    let mut vertices = Vec::with_capacity(42);
+    vertices.extend(fullscreen_quad);
     vertices.extend(front_face);
     vertices.extend(back_face);
     vertices.extend(top_face);
