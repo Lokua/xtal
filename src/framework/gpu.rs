@@ -20,6 +20,7 @@ struct PipelineCreationState<'a> {
     format: wgpu::TextureFormat,
     topology: wgpu::PrimitiveTopology,
     blend: Option<wgpu::BlendState>,
+    depth_stencil: Option<wgpu::DepthStencilState>,
 }
 
 pub struct GpuState<V: Pod + Zeroable> {
@@ -28,16 +29,14 @@ pub struct GpuState<V: Pod + Zeroable> {
     params_buffer: wgpu::Buffer,
     params_bind_group: wgpu::BindGroup,
     n_vertices: u32,
-    _marker: std::marker::PhantomData<V>,
-
-    // Fields for hot reloading
+    depth_texture: Option<wgpu::TextureView>,
+    depth_stencil: Option<wgpu::DepthStencilState>,
     topology: wgpu::PrimitiveTopology,
     blend: Option<wgpu::BlendState>,
-
-    // Layout info for pipeline recreation
     params_bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffers: Vec<wgpu::VertexBufferLayout<'static>>,
     sample_count: u32,
+    _marker: std::marker::PhantomData<V>,
 
     // Shaded access for hot reloading
     update_state: Arc<Mutex<Option<PathBuf>>>,
@@ -45,6 +44,10 @@ pub struct GpuState<V: Pod + Zeroable> {
 }
 
 impl<V: Pod + Zeroable + Typed> GpuState<V> {
+    /// Create a GpuState instance that accepts your own vertices.
+    /// Example at `src/sketches/genuary_2025/g25_18_wind.rs`.
+    /// See the specialized `new_procedural` and `new_full_screen` constructors
+    /// for easier to get up and running shaders.
     pub fn new<P: Pod + Zeroable>(
         app: &App,
         shader_path: PathBuf,
@@ -52,6 +55,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         vertices: Option<&[V]>,
         topology: wgpu::PrimitiveTopology,
         blend: Option<wgpu::BlendState>,
+        enable_depth_testing: bool,
         watch: bool,
     ) -> Self {
         let shader_content = fs::read_to_string(&shader_path)
@@ -75,6 +79,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let window = app.main_window();
         let device = window.device();
         let sample_count = window.msaa_samples();
+        let rect = window.rect();
         let format = Frame::TEXTURE_FORMAT;
         let shader_module = device.create_shader_module(shader);
 
@@ -107,6 +112,32 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             vec![]
         };
 
+        let depth_stencil = if enable_depth_testing {
+            Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            })
+        } else {
+            None
+        };
+
+        let depth_texture = if enable_depth_testing {
+            let texture = wgpu::TextureBuilder::new()
+                // Hack: multiply by two since rect isn't pixel_depth aware
+                .size([rect.w() as u32 * 2, rect.h() as u32 * 2])
+                .format(wgpu::TextureFormat::Depth32Float)
+                .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
+                .sample_count(sample_count)
+                .build(device);
+
+            Some(texture.view().build())
+        } else {
+            None
+        };
+
         let creation_state = PipelineCreationState {
             device,
             shader_module: &shader_module,
@@ -116,6 +147,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             format,
             topology,
             blend,
+            depth_stencil: depth_stencil.clone(),
         };
 
         let render_pipeline = Self::create_render_pipeline(creation_state);
@@ -126,6 +158,8 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             params_buffer,
             params_bind_group,
             n_vertices,
+            depth_stencil,
+            depth_texture,
             _marker: std::marker::PhantomData,
             topology,
             blend,
@@ -233,7 +267,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                     topology: state.topology,
                     ..Default::default()
                 },
-                depth_stencil: None,
+                depth_stencil: state.depth_stencil,
                 multisample: wgpu::MultisampleState {
                     count: state.sample_count,
                     mask: !0,
@@ -333,6 +367,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                             format: Frame::TEXTURE_FORMAT,
                             topology: self.topology,
                             blend: self.blend,
+                            depth_stencil: self.depth_stencil.clone(),
                         };
 
                         self.render_pipeline =
@@ -392,11 +427,17 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     pub fn render(&self, frame: &Frame) {
         let mut encoder = frame.command_encoder();
 
-        let mut render_pass = wgpu::RenderPassBuilder::new()
+        let mut render_pass_builder = wgpu::RenderPassBuilder::new()
             .color_attachment(frame.texture_view(), |color| {
                 color.load_op(wgpu::LoadOp::Load)
-            })
-            .begin(&mut encoder);
+            });
+
+        if let Some(ref depth_texture) = self.depth_texture {
+            render_pass_builder = render_pass_builder
+                .depth_stencil_attachment(depth_texture, |depth| depth);
+        }
+
+        let mut render_pass = render_pass_builder.begin(&mut encoder);
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
@@ -502,13 +543,14 @@ impl GpuState<BasicPositionVertex> {
             Some(QUAD_COVER_VERTICES),
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
+            false,
             watch,
         )
     }
 }
 
 /// Specialized impl for purly procedural shaders (no vertices).
-/// See spiral for examples.
+/// See spiral.rs for an example.
 impl GpuState<()> {
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,
@@ -523,6 +565,7 @@ impl GpuState<()> {
             None,
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
+            false,
             watch,
         )
     }

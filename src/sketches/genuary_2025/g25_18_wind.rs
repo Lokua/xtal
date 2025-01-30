@@ -120,6 +120,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Some(&initial_vertices),
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
+        false,
         true,
     );
 

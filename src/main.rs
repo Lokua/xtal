@@ -86,6 +86,7 @@ fn main() {
         "g25_14_blank_and_white" => run_sketch!(g25_14_blank_and_white),
         "g25_18_wind" => run_sketch!(g25_18_wind),
         "g25_19_op_art" => run_sketch!(g25_19_op_art),
+        "g25_20_23_brutal_arch" => run_sketch!(g25_20_23_brutal_arch),
         "g25_22_gradients_only" => run_sketch!(g25_22_gradients_only),
         "g25_26_symmetry" => run_sketch!(g25_26_symmetry),
 

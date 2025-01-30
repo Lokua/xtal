@@ -26,6 +26,7 @@ pub use self::genuary_2025::g25_14_blank_and_white;
 pub use self::genuary_2025::g25_18_wind;
 pub use self::genuary_2025::g25_19_op_art;
 pub use self::genuary_2025::g25_1_horiz_vert;
+pub use self::genuary_2025::g25_20_23_brutal_arch;
 pub use self::genuary_2025::g25_22_gradients_only;
 pub use self::genuary_2025::g25_26_symmetry;
 pub use self::genuary_2025::g25_2_layers;

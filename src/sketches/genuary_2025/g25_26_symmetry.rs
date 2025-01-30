@@ -2,6 +2,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Live/2025/Lattice - Gen 26 - Symmetry
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_26_symmetry",
     display_name: "Genuary 26: Symmetry",
