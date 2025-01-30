@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use notify::{Event, RecursiveMode, Watcher};
 use serde::Deserialize;
 use std::{
@@ -40,7 +41,7 @@ enum ControlType {
     RRampRel,
 }
 
-type ConfigFile = HashMap<String, MaybeControlConfig>;
+type ConfigFile = IndexMap<String, MaybeControlConfig>;
 
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
