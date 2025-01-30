@@ -9,6 +9,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     fps: 60.0,
     bpm: 134.0,
     w: 700,
+    // h: 700,
     h: 1244,
     gui_w: None,
     gui_h: Some(640),
@@ -98,9 +99,6 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("fractal_grid_mix"),
         ],
         e: [
-            // mask_radius
-            // m.animation.lrp(&[(0.0, 0.5), (1.0, 0.5)], 0.0),
-            // m.animation.lrp(&[(1.0, 0.5), (0.0, 0.5)], 0.0),
             m.controls.get("mask_radius"),
             m.controls.get("mask_falloff"),
             m.controls.get("mask_x"),

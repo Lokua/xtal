@@ -3,11 +3,39 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
 
+use super::prelude::*;
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ControlValue {
     Float(f32),
     Bool(bool),
     String(String),
+}
+
+impl ControlValue {
+    pub fn as_float(&self) -> Option<f32> {
+        if let ControlValue::Float(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        if let ControlValue::Bool(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_string(&self) -> Option<&str> {
+        if let ControlValue::String(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }
 
 type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
@@ -286,31 +314,38 @@ impl Controls {
 
     pub fn float(&self, name: &str) -> f32 {
         self.check_contains_key(name);
-        match self.values.get(name).unwrap() {
-            ControlValue::Float(v) => *v,
-            _ => panic!("Control '{}' exists but is not a float", name),
-        }
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_float)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a float", name)
+            })
     }
 
     pub fn bool(&self, name: &str) -> bool {
         self.check_contains_key(name);
-        match self.values.get(name).unwrap() {
-            ControlValue::Bool(v) => *v,
-            _ => panic!("Control '{}' exists but is not a bool", name),
-        }
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_bool)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a bool", name)
+            })
     }
 
     pub fn string(&self, name: &str) -> String {
         self.check_contains_key(name);
-        match self.values.get(name).unwrap() {
-            ControlValue::String(v) => v.clone(),
-            _ => panic!("Control '{}' exists but is not a string", name),
-        }
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_string)
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a string", name)
+            })
     }
 
     fn check_contains_key(&self, key: &str) {
         if !self.values.contains_key(key) {
-            panic!("Control {} does not exist", key);
+            loud_panic!("Control {} does not exist", key);
         }
     }
 
@@ -320,7 +355,7 @@ impl Controls {
 
     pub fn any_changed_in(&self, names: &[&str]) -> bool {
         if !self.save_previous {
-            panic!(
+            loud_panic!(
                 "Cannot check previous values when `save_previous` is false"
             );
         }
@@ -369,7 +404,7 @@ impl Controls {
                 Control::Slider { min, max, .. } => Some((*min, *max)),
                 _ => None,
             })
-            .unwrap_or_else(|| panic!("Unable to find range for {}", name))
+            .unwrap_or_else(|| loud_panic!("Unable to find range for {}", name))
     }
 
     pub fn to_serialized(&self) -> SerializedControls {
@@ -403,7 +438,7 @@ impl Controls {
         let value = control.value();
 
         if self.values.contains_key(&name) {
-            panic!("Control '{}' already exists", name);
+            loud_panic!("Control '{}' already exists", name);
         }
 
         self.controls.push(control);

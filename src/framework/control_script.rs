@@ -183,6 +183,8 @@ impl<T: TimingSource> ControlScript<T> {
         &mut self,
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
+        let current_values: ControlValues = self.controls.values().clone();
+
         self.controls = Controls::with_previous(vec![]);
         self.osc_controls = OscControls::new();
         self.keyframe_sequences.clear();
@@ -198,9 +200,14 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: SliderConfig =
                         serde_yml::from_value(config.config.clone())?;
 
+                    let value = current_values
+                        .get(id)
+                        .and_then(ControlValue::as_float)
+                        .unwrap_or(conf.default);
+
                     let slider = Control::slider(
                         id.as_str(),
-                        conf.default,
+                        value,
                         (conf.range[0], conf.range[1]),
                         conf.step,
                     );
@@ -311,7 +318,7 @@ impl<T: TimingSource> ControlScript<T> {
 
         self.osc_controls
             .start()
-            .expect("Unable to start OSC receiver.");
+            .expect("Unable to start OSC receiver");
 
         info!("Controls populated");
 
@@ -343,7 +350,7 @@ impl<T: TimingSource> ControlScript<T> {
             match Self::parse_config(&path) {
                 Ok(new_config) => {
                     if let Ok(mut guard) = state.lock() {
-                        info!("Loaded new configuration.");
+                        info!("Loaded new configuration");
                         *guard = Some(new_config);
                     }
                 }
@@ -446,9 +453,16 @@ struct RRampRelConfig {
     delay: f32,
     #[serde(default)]
     ramp_time: f32,
-    #[serde(default)]
+    // serde uses Default::default _before_ it calls our
+    // RRampRelConfig::default, but Default::default for string is "",
+    // which doesn't trigger the RRampRelConfig fallback. I mean, WTF!?!
+    #[serde(default = "default_ramp")]
     ramp: String,
     keyframes: Vec<(f32, (f32, f32))>,
+}
+
+fn default_ramp() -> String {
+    "linear".to_string()
 }
 
 impl Default for RRampRelConfig {

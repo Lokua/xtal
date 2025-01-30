@@ -21,6 +21,12 @@ mask_y:
         - [2.0, -1.0]
         - [0.0, 1.0]
 
+distort_freq:
+    type: "r_ramp_rel"
+    ramp_time: 1.0
+    keyframes:
+        - [4.0, [0.0, 1.0]]
+
 # --- UI CONTROLS
 
 wave_mix:
@@ -42,8 +48,8 @@ wave_y:
 distort_mix:
     type: "slider"
 
-distort_freq:
-    type: "slider"
+# distort_freq:
+#     type: "slider"
 
 distort_angle_offset:
     type: "slider"
