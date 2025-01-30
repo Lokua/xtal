@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::{
     collections::HashMap,
     error::Error,
-    fs,
+    fmt, fs,
     path::PathBuf,
     sync::{Arc, Mutex},
 };
@@ -34,6 +34,8 @@ enum ControlType {
     Osc,
     #[serde(rename = "lerp_abs")]
     LerpAbs,
+    #[serde(rename = "lerp_rel")]
+    LerpRel,
 }
 
 type ConfigFile = HashMap<String, MaybeControlConfig>;
@@ -42,12 +44,45 @@ struct UpdateState {
     _watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
 }
+impl fmt::Debug for UpdateState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UpdateState")
+            // Skip _watcher field since RecommendedWatcher doesn't implement Debug
+            .field("state", &self.state)
+            .finish()
+    }
+}
+
+enum LerpConfig {
+    Abs(LerpAbsConfig),
+    Rel(LerpRelConfig),
+}
+impl LerpConfig {
+    pub fn delay(&self) -> f32 {
+        match self {
+            LerpConfig::Abs(abs) => abs.delay,
+            LerpConfig::Rel(rel) => rel.delay,
+        }
+    }
+}
+impl fmt::Debug for LerpConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LerpConfig::Abs(abs_config) => {
+                f.debug_tuple("LerpConfig::Abs").field(abs_config).finish()
+            }
+            LerpConfig::Rel(rel_config) => {
+                f.debug_tuple("LerpConfig::Rel").field(rel_config).finish()
+            }
+        }
+    }
+}
 
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     osc_controls: OscControls,
     animation: Animation<T>,
-    keyframe_sequences: HashMap<String, (LerpAbsConfig, Vec<Keyframe>)>,
+    keyframe_sequences: HashMap<String, (LerpConfig, Vec<Keyframe>)>,
     update_state: UpdateState,
 }
 
@@ -84,7 +119,8 @@ impl<T: TimingSource> ControlScript<T> {
         if self.keyframe_sequences.contains_key(name) {
             let (config, keyframes) =
                 self.keyframe_sequences.get(name).unwrap();
-            return self.animation.lerp(keyframes.clone(), config.delay);
+
+            return self.animation.lerp(keyframes.clone(), config.delay());
         }
 
         error!("No control named {}", name);
@@ -126,6 +162,10 @@ impl<T: TimingSource> ControlScript<T> {
         &mut self,
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
+        self.controls = Controls::with_previous(vec![]);
+        self.osc_controls = OscControls::new();
+        self.keyframe_sequences.clear();
+
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
                 MaybeControlConfig::Control(config) => config,
@@ -187,11 +227,43 @@ impl<T: TimingSource> ControlScript<T> {
                         keyframes.push(Keyframe::new(current.value, duration));
                     }
 
-                    self.keyframe_sequences
-                        .insert(id.to_string(), (conf, keyframes));
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (LerpConfig::Abs(conf), keyframes),
+                    );
+                }
+                ControlType::LerpRel => {
+                    let conf: LerpRelConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let mut keyframes =
+                        Vec::with_capacity(conf.keyframes.len());
+                    for (i, &(beats, value)) in
+                        conf.keyframes.iter().enumerate()
+                    {
+                        let duration = if i < conf.keyframes.len() - 1 {
+                            beats
+                        } else {
+                            0.0
+                        };
+
+                        keyframes.push(Keyframe::new(value, duration));
+                    }
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (LerpConfig::Rel(conf), keyframes),
+                    );
                 }
             }
         }
+
+        trace!("Config populated. controls: {:?}, osc_controls: {:?}, keyframe_sequences: {:?}", 
+            self.controls, self.osc_controls, self.keyframe_sequences);
+
+        self.osc_controls
+            .start()
+            .expect("Unable to start OSC receiver.");
 
         Ok(())
     }
@@ -240,6 +312,18 @@ impl<T: TimingSource> ControlScript<T> {
     }
 }
 
+impl<T: TimingSource + fmt::Debug> fmt::Debug for ControlScript<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ControlScript")
+            .field("controls", &self.controls)
+            .field("osc_controls", &self.osc_controls)
+            .field("animation", &self.animation)
+            .field("keyframe_sequences", &self.keyframe_sequences)
+            .field("update_state", &self.update_state)
+            .finish()
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct SliderConfig {
@@ -282,6 +366,22 @@ struct LerpAbsConfig {
 }
 
 impl Default for LerpAbsConfig {
+    fn default() -> Self {
+        Self {
+            delay: 0.0,
+            keyframes: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+struct LerpRelConfig {
+    #[serde(default)]
+    delay: f32,
+    keyframes: Vec<(f32, f32)>,
+}
+
+impl Default for LerpRelConfig {
     fn default() -> Self {
         Self {
             delay: 0.0,

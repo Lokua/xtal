@@ -1,7 +1,7 @@
 use nannou_egui::egui;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ControlValue {
@@ -172,6 +172,48 @@ impl Control {
                 disabled.as_ref().map_or(false, |f| f(controls))
             }
             _ => false,
+        }
+    }
+}
+
+impl fmt::Debug for Control {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                ..
+            } => f
+                .debug_struct("Slider")
+                .field("name", name)
+                .field("value", value)
+                .field("min", min)
+                .field("max", max)
+                .field("step", step)
+                .finish(),
+            Control::Checkbox { name, value, .. } => f
+                .debug_struct("Checkbox")
+                .field("name", name)
+                .field("value", value)
+                .finish(),
+            Control::Select {
+                name,
+                value,
+                options,
+                ..
+            } => f
+                .debug_struct("Select")
+                .field("name", name)
+                .field("value", value)
+                .field("options", options)
+                .finish(),
+            Control::Button { name, .. } => {
+                f.debug_struct("Button").field("name", name).finish()
+            }
+            Control::Separator {} => f.debug_struct("Separator").finish(),
         }
     }
 }
@@ -367,6 +409,23 @@ impl Controls {
         self.controls.push(control);
         self.values.insert(name, value);
         self.changed = true;
+    }
+}
+
+impl fmt::Debug for Controls {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut debug_struct = f.debug_struct("Controls");
+
+        debug_struct.field("controls", &self.controls);
+        debug_struct.field("values", &self.values);
+        debug_struct.field("changed", &self.changed);
+        debug_struct.field("save_previous", &self.save_previous);
+
+        if self.save_previous {
+            debug_struct.field("previous_values", &self.previous_values);
+        }
+
+        debug_struct.finish()
     }
 }
 

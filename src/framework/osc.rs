@@ -28,7 +28,7 @@ impl OscControlConfig {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct OscState {
     values: HashMap<String, f32>,
 }
@@ -53,7 +53,9 @@ impl OscState {
     }
 }
 
+#[derive(Debug)]
 pub struct OscControls {
+    pub is_active: bool,
     configs: HashMap<String, OscControlConfig>,
     state: Arc<Mutex<OscState>>,
 }
@@ -63,6 +65,7 @@ impl OscControls {
         Self {
             configs: HashMap::new(),
             state: Arc::new(Mutex::new(OscState::new())),
+            is_active: false,
         }
     }
 
@@ -101,6 +104,8 @@ impl OscControls {
                 }
             }
         });
+
+        self.is_active = true;
 
         Ok(())
     }
