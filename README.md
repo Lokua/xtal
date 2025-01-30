@@ -21,27 +21,31 @@ controls, and declarative frame-based animation.
 
 ## Features
 
-- Export images and capture mp4 videos with the press of a button
-- Declarative animation interface with times specified in musical beats, e.g.
-  `3.25` represents a duration of 3 beats a 16th note.
-- Sync animations to MIDI using MIDI Clock and Song Position Pointers (to track
-  when a DAW is looping so you can work on or see the animation loop in-time) or
-  a hybrid MIDI Time Code / MIDI Clock system that uses the higher resolution
-  MIDI clock for sync but relies on MTC to detect when a source has jumped or is
-  looping (this is for sources that don't properly send the SPP message). There
-  is even included a special L.OscTransport Max4Live devices that will send
-  transport over OSC which is much more reliable than MIDI clocking.
-- Write animations in code or configure your sketch to use an external TOML file
-  so you can work on animations without restarting the rust program. Or...
-- Automate parameters with MIDI CC, OSC, CV, or even audio with peak, rms, and
-  multiband mechanisms all available through a dead simple API
-- Declarative per-sketch UI control definitions with frameword agnostic design
-- Automatic store/recall of GUI control/parameters
-- Hot reloadable WGSL shaders
+-   Export images and capture mp4 videos with the press of a button
+-   Declarative animation interface with times specified in musical beats, e.g.
+    `3.25` represents a duration of 3 beats a 16th note.
+-   Sync animations to MIDI using MIDI Clock and Song Position Pointers (to
+    track when a DAW is looping so you can work on or see the animation loop
+    in-time) or a hybrid MIDI Time Code / MIDI Clock system that uses the higher
+    resolution MIDI clock for sync but relies on MTC to detect when a source has
+    jumped or is looping (this is for sources that don't properly send the SPP
+    message). There is even included a special L.OscTransport Max4Live devices
+    that will send transport over OSC which is much more reliable than MIDI
+    clocking.
+-   Write animations in code or configure your sketch to use an external TOML
+    file so you can work on animations without restarting the rust program.
+    Or...
+-   Automate parameters with MIDI CC, OSC, CV, or even audio with peak, rms, and
+    multiband mechanisms all available through a dead simple API
+-   Declarative per-sketch UI control definitions with framework agnostic design
+-   Automatic store/recall of GUI control/parameters
+-   Hot reloadable WGSL shaders
+-   Hot reloadable UI/OSC/Animation declarations. See
+    [Control Scripting](#control-scripting).
 
 ### TODO
 
-- [ ] Multichannel audio
+-   [ ] Multichannel audio
 
 ## Status
 
@@ -52,11 +56,11 @@ This project is under active development.
 This project has been developed on MacOS, though I'm sure most of it would work
 on other platforms. This project requires or optionally needs:
 
-- Rust
-- Git LFS for screenshot storage (perhaps this is optional? I'm not too familiar
-  with Git LFS but I'm using it for this so you might want to too)
-- (optional) [just][just-link] for running commands
-- (optional) ffmpeg available on your path for video exports
+-   Rust
+-   Git LFS for screenshot storage (perhaps this is optional? I'm not too
+    familiar with Git LFS but I'm using it for this so you might want to too)
+-   (optional) [just][just-link] for running commands
+-   (optional) ffmpeg available on your path for video exports
 
 ## Usage
 
@@ -64,15 +68,15 @@ on other platforms. This project requires or optionally needs:
 
 1. Copy the [template sketch][template-link] into a new file in sketches folder.
 2. Rename at a minimum the `SKETCH_CONFIG.name` field at the top of the file:
-   ```rust
-   pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-      name: "template", // <-- RENAME THIS!
-   ```
+    ```rust
+    pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
+       name: "template", // <-- RENAME THIS!
+    ```
 3. Add that filename to the [sketches module][module-link]
 4. Add a match case for the sketch in [src/main.rs][main-link]:
-   ```rust
-   "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
-   ```
+    ```rust
+    "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
+    ```
 5. Run that sketch via command line by `cargo run --release <name>` or
    `just start <name>` where `name` is what you put in your file's
    `SKETCH_CONFIG.name` field.
@@ -144,22 +148,134 @@ control to something.
 4. Now, pressing play in Ableton will also initiate recording in Lattice,
    likewise pressing Stop in Ableton will stop recording in Lattice.
 
+### Control Scripting
+
+Lattice provides various interfaces for controlling parameters including
+`Controls` for UI sliders, checkboxes, and selects (dropdowns), `MidiControls`
+and `OscControls` for controlling parameters from an external source,
+`CvControls` and `Audio` for controlling parameters with audio, and a
+comprehensive `Animation` module that can tween or generate random values and
+ramp to/from them at musical intervals. While these parameters are simple to
+setup, it's a bit of pain to have to restart the rust sketch every time you want
+to change an animation or control value. For this reason Lattice provides a
+`ControlScript` helper that uses yaml for configuration and adds these controls
+dynamically and self-updates at runtime when the yaml file is changed. You still
+have to take care to setup the routings in your sketch (e.g.
+`let radius = model.control_script.get("radius")`), but once these routings are
+in place you are free to edit their ranges, values, timing, etc. See [Control
+Script Test][control-script-test-link] for a working example. See below for
+scripting documentation:
+
+> Note: not all control interfaces or animation methods are supported at this
+> time. If it isn't listed below, it isn't supported yet. Also note that you
+> cannot use an instance of `Controls` and `ControlScript` in a sketch at the
+> same time; you must choose one or the other and it must be attached to the
+> sketch's `Model` as `model.controls`.
+
+```yaml
+# "info" is the only thing in the document that won't be parsed
+# as a control. Use this for taking advantage of yaml's anchor/alias
+# functionality. Note that placing these under `info.vars` is just a personal
+# preference; they can really be anywhere you want under the `info` section.
+info:
+    vars:
+        example_var: &example_var 33.0
+
+# Available in sketch as `m.controls.get("radius")`
+radius:
+    type: "slider"
+    # Optional, defaults to [0.0, 1.0]
+    range: [0.0, 500.0]
+    # Optional, defaults to 0.5
+    # (here we are referencing the example_var declared in the `info` section)
+    default: *example_var
+    # Optional, defaults to 0.0001
+    step: 1.0
+
+# Available in the sketch as `m.controls.get("/position_x")`
+# Notice that the OSC address with forward slash is automatically
+# derived from the key.
+position_x:
+    type: "osc"
+    # Optional, defaults to [0.0, 1.0]
+    range: [0.0, 100.0]
+    # Optional, defaults to 0.5
+    default: 50.0
+
+# Interface to the `Animation#lerp` method that differs from the normal code
+# signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
+# DAW would use and are absolute with respect to the timeline depending on what
+# `TimingSource` is provided to the `ControlScript` constructor.
+hue:
+    type: "lerp_abs"
+    # Optional, defaults to 0.0
+    delay: 0.0
+    keyframes:
+        # beats, bars, and 16ths are zero indexed!
+        #...start at 0 then...
+        - ["0.0.0", 0.0]
+        # ramp to 1 over the duration from 0 to the 2nd beat, then...
+        - ["0.1.0", 1.0]
+        # ramp back down to 0.0 from the 2nd to the start of the 3rd beat
+        - ["0.2.0", 0.0]
+        # ^ the above creates a perfect 2 beat loop and will continue looping.
+
+# Another interface to the same `Animation#lerp` method as above but uses the
+# exact same signature as the code instance for keyframes which is [beats, value].
+# This example and last are 100% equivalent but read quite differently.
+# While the `abs` version can be read as "arrive at this value at this time",
+# the `rel` version should be read as "ramp from this value to the next over this time"
+saturation:
+    type: "lerp_rel"
+    # Optional, defaults to 0.0
+    delay: 0.0
+    keyframes:
+        # Ramp from 0.0 to the next keyframe value (1.0) over 1 beat
+        - [1.0, 0.0]
+        # etc...
+        - [1.0, 1.0]
+        - [0.0, 0.0]
+
+# A 1:1 interface to the `Animation#r_ramp` method.
+lightness:
+    type: "r_ramp_rel"
+    # Optional, defaults to "linear". Easing options include:
+    # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
+    # cubic_ease_in_out, sine_ease_in, sine_ease_out, sine_ease_in_out, logarithmic
+    ramp: "linear"
+    # Optional, defaults to 0.25 (1/16th note)
+    ramp_time: 0.5
+    keyframes:
+        # Every beat, pick a random value between 0.0 and 1.0, and ramp to it
+        # over `ramp_time` beats. So for example let's say the random number generated
+        # for the 1st cycle was 0.2 and the 2nd cycle was 0.7: When the animation is
+        # started it will stay at 0.2 for the first 1/2 of a beat, then over the next 1/2
+        # beat it will ramp to 0.7. If `ramp_time` was 0.25, it would stay at 0.2 for the
+        # duration of a dotted eigth note, then ramp to 0.7 over a single 16th.
+        # Note that only the first keyframe is held; all subsequent cycles will always be
+        # ramped to (ramp happens at the end of a cycle and happens within that cycle's
+        # duration; this is why the first cycle starts static until its ramp phase -
+        # this is because there was no previous cycle that could ramp to it)
+        - [1.0, [0.0, 1.0]]
+```
+
 ## Resources
 
-- https://inconvergent.net/generative/
-- http://www.complexification.net/
-- https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
-- https://www.andylomas.com/cellularFormImages.html
-- http://www.complexification.net/gallery/machines/sandstroke/
-- https://thebookofshaders.com/
-- https://github.com/jasonwebb/2d-space-colonization-experiments
-- https://paulbourke.net/geometry/
+-   https://inconvergent.net/generative/
+-   http://www.complexification.net/
+-   https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
+-   https://www.andylomas.com/cellularFormImages.html
+-   http://www.complexification.net/gallery/machines/sandstroke/
+-   https://thebookofshaders.com/
+-   https://github.com/jasonwebb/2d-space-colonization-experiments
+-   https://paulbourke.net/geometry/
 
 [nannou-link]: https://github.com/nannou-org/nannou
 [p5-link]: https://github.com/Lokua/p5/tree/main
 [just-link]: https://github.com/casey/just
+[blackhole]: https://existential.audio/blackhole/
 [template-link]: src/sketches/template.rs
 [midi-sketch-link]: src/sketches/midi_test.rs
 [module-link]: src/sketches/mod.res
 [main-link]: src/main.rs
-[blackhole]: https://existential.audio/blackhole/
+[control-script-test-link]: src/sketches/scratch/control_script_test.rs

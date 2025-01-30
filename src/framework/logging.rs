@@ -46,6 +46,15 @@ pub fn warn_once(message: String) {
     });
 }
 
+#[allow(unused_macros)]
+#[macro_export]
+macro_rules! loud_panic {
+    ($($arg:tt)*) => {{
+        error!($($arg)*);
+        panic!($($arg)*);
+    }};
+}
+
 /// Logs a debug message at most once within a specified time interval.
 ///
 /// # Parameters

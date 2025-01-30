@@ -1,5 +1,53 @@
 use std::f32::consts::PI;
 
+use super::prelude::*;
+
+pub fn str_to_fn_unary(name: &str) -> fn(f32) -> f32 {
+    match name {
+        "linear" => linear,
+        "ease_in" => ease_in,
+        "ease_out" => ease_out,
+        "ease_in_out" => ease_in_out,
+        "cubic_ease_in" => cubic_ease_in,
+        "cubic_ease_out" => cubic_ease_out,
+        "cubic_ease_in_out" => cubic_ease_in_out,
+        "sine_ease_in" => sine_ease_in,
+        "sine_ease_out" => sine_ease_out,
+        "sine_ease_in_out" => sine_ease_in_out,
+        "logarithmic" => logarithmic,
+        _ => {
+            loud_panic!(
+                "Easing function '{}' not found or requires extra parameters.",
+                name
+            );
+        }
+    }
+}
+
+pub enum EasingFn {
+    OneArg(fn(f32) -> f32),
+    TwoArg(fn(f32, f32) -> f32),
+}
+
+pub fn str_to_fn_any(name: &str) -> EasingFn {
+    match name {
+        "linear" => EasingFn::OneArg(linear),
+        "ease_in" => EasingFn::OneArg(ease_in),
+        "ease_out" => EasingFn::OneArg(ease_out),
+        "ease_in_out" => EasingFn::OneArg(ease_in_out),
+        "cubic_ease_in" => EasingFn::OneArg(cubic_ease_in),
+        "cubic_ease_out" => EasingFn::OneArg(cubic_ease_out),
+        "cubic_ease_in_out" => EasingFn::OneArg(cubic_ease_in_out),
+        "sine_ease_in" => EasingFn::OneArg(sine_ease_in),
+        "sine_ease_out" => EasingFn::OneArg(sine_ease_out),
+        "sine_ease_in_out" => EasingFn::OneArg(sine_ease_in_out),
+        "logarithmic" => EasingFn::OneArg(logarithmic),
+        "exponential" => EasingFn::TwoArg(exponential),
+        "sigmoid" => EasingFn::TwoArg(sigmoid),
+        _ => loud_panic!("Easing function '{}' not found.", name),
+    }
+}
+
 pub fn linear(t: f32) -> f32 {
     t
 }

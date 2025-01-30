@@ -49,7 +49,6 @@ struct UpdateState {
 impl fmt::Debug for UpdateState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UpdateState")
-            // Skip _watcher field since RecommendedWatcher doesn't implement Debug
             .field("state", &self.state)
             .finish()
     }
@@ -141,13 +140,7 @@ impl<T: TimingSource> ControlScript<T> {
                     kfs,
                     conf.delay,
                     conf.ramp_time,
-                    match conf.ramp.as_str() {
-                        "linear" => linear,
-                        "ease_in" => ease_in,
-                        "ease_out" => ease_out,
-                        "ease_in_out" => ease_in_out,
-                        _ => linear,
-                    },
+                    str_to_fn_unary(conf.ramp.as_str()),
                 ),
                 _ => unreachable!(),
             };
