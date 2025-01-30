@@ -32,6 +32,8 @@ radius_small:
 pos_x2:
     type: "r_ramp_rel"
     ramp: "linear"
-    ramp_time: 0.5
+    ramp_time: 0.25
     keyframes:
-        - [1.0, [-1.0, 1.0]]
+        - [1.5, [-1.0, -0.5]]
+        - [1.5, [-0.25, 0.25]]
+        - [1.0, [0.5, 1.0]]

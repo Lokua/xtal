@@ -50,8 +50,6 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let radius_small = m.controls.get("radius_small");
     let pos_x2 = m.controls.get("pos_x2");
 
-    debug!("pos_x2: {}", pos_x2);
-
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
         .radius(radius)

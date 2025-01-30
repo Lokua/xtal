@@ -192,6 +192,11 @@ impl<T: TimingSource> Animation<T> {
     }
 
     /// Animates through keyframes with stepped transitions and configurable ramping
+    /// Ramps happen at the start of a segment, so if duration is 1.0 and ramp_time is
+    /// 0.5, the first 1/2 beat will be a ramp from the previous value to this value, then
+    /// another 1/2 beat of the value held. For this reason the first time the keyframe
+    /// sequence is played, there is no initial ramp, because there is no previous value
+    /// to ramp from.
     pub fn ramp(
         &self,
         keyframes: Vec<Keyframe>,
@@ -256,6 +261,12 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
+    /// Same as `ramp` only uses random ranges intead of explicit values.
+    /// Ramps happen at the start of a segment, so if duration is 1.0 and ramp_time is
+    /// 0.5, the first 1/2 beat will be a ramp from the previous value to this value, then
+    /// another 1/2 beat of the value held. For this reason the first time the keyframe
+    /// sequence is played, there is no initial ramp, because there is no previous value
+    /// to ramp from.
     pub fn r_ramp(
         &self,
         keyframes: &[KeyframeRandom],
@@ -263,6 +274,11 @@ impl<T: TimingSource> Animation<T> {
         ramp_time: f32,
         ramp: fn(f32) -> f32,
     ) -> f32 {
+        warn_once(format!(
+            "keyframes: {:?}, ramp_time: {}",
+            keyframes, ramp_time
+        ));
+
         if keyframes.is_empty() {
             return 0.0;
         }
@@ -299,23 +315,28 @@ impl<T: TimingSource> Animation<T> {
         let beat_in_segment = wrapped_beat - segment_start_beats;
 
         let current_value = if current_segment_index == 0 {
-            keyframes[0].generate_value(current_cycle)
+            keyframes[0].generate_value(current_cycle * keyframes.len() as u64)
         } else {
-            keyframes[current_segment_index]
-                .generate_value(current_cycle * keyframes.len() as u64)
+            keyframes[current_segment_index].generate_value(
+                current_cycle * keyframes.len() as u64
+                    + current_segment_index as u64,
+            )
         };
 
         let previous_value = if current_segment_index == 0 {
             if current_cycle == 0 {
-                keyframes[0].generate_value(0)
+                keyframes[keyframes.len() - 1].generate_value(0)
             } else {
                 keyframes[keyframes.len() - 1].generate_value(
-                    (current_cycle - 1) * keyframes.len() as u64,
+                    (current_cycle - 1) * keyframes.len() as u64
+                        + (keyframes.len() - 1) as u64,
                 )
             }
         } else {
-            keyframes[current_segment_index - 1]
-                .generate_value(current_cycle * keyframes.len() as u64)
+            keyframes[current_segment_index - 1].generate_value(
+                current_cycle * keyframes.len() as u64
+                    + (current_segment_index - 1) as u64,
+            )
         };
 
         if beat_in_segment < delay_beats {
@@ -327,11 +348,17 @@ impl<T: TimingSource> Animation<T> {
         let clamped_progress = ramp_progress.clamp(0.0, 1.0);
         let eased_progress = ramp(clamped_progress);
 
-        if adjusted_beats <= ramp_time {
+        let value = if adjusted_beats <= ramp_time {
             lerp(previous_value, current_value, eased_progress)
         } else {
             current_value
-        }
+        };
+
+        trace!("adjusted_beats: {}, ramp_progress: {}, clamped_progress: {}, eased_progress: {}, value: {}", 
+            adjusted_beats, ramp_progress, clamped_progress, eased_progress, value
+        );
+
+        value
     }
 }
 
@@ -685,6 +712,55 @@ pub mod tests {
                 curr_result.1,
                 next_result.1,
                 expected_midpoint
+            );
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_r_ramp_osc_transport_timing() {
+        let keyframes = vec![
+            KeyframeRandom::new((0.0, 1.0), 1.5),
+            KeyframeRandom::new((0.0, 1.0), 3.0),
+            KeyframeRandom::new((0.0, 1.0), 2.5),
+            KeyframeRandom::new((0.0, 1.0), 1.0),
+        ];
+
+        let mut timing = OscTransportTiming::new(BPM);
+        let animation = Animation::new(timing.clone());
+
+        // Test transition points directly
+        let transition_points = vec![1.5, 4.5, 7.0, 8.0];
+
+        for &beat in &transition_points {
+            timing.set_beat_position(beat);
+            let total_beats =
+                keyframes.iter().map(|kf| kf.duration).sum::<f32>();
+            let beats_elapsed = timing.beats();
+            let wrapped_beat = beats_elapsed % total_beats;
+            let cycle_float = (beats_elapsed / total_beats) + 1e-9;
+            let current_cycle = cycle_float.floor() as u64;
+
+            println!("\nAt beat: {}", beat);
+            println!("total_beats: {}", total_beats);
+            println!("beats_elapsed: {}", beats_elapsed);
+            println!("wrapped_beat: {}", wrapped_beat);
+            println!("cycle_float: {}", cycle_float);
+            println!("current_cycle: {}", current_cycle);
+
+            let before = animation.r_ramp(&keyframes, 0.0, 0.25, linear);
+
+            timing.set_beat_position(beat + 0.1);
+            let after = animation.r_ramp(&keyframes, 0.0, 0.25, linear);
+
+            println!("Values: {} -> {}", before, after);
+
+            assert!(
+                (before - after).abs() > 0.0001,
+                "Value should change at transition {}. Got {} -> {}",
+                beat,
+                before,
+                after
             );
         }
     }

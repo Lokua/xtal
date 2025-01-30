@@ -3,29 +3,41 @@
 mask_radius:
     type: "lerp_rel"
     keyframes:
-        - [0.5, 1.0]
-        - [0.5, 0.0]
+        - [1.0, 1.0]
+        - [1.0, 0.0]
         - [0.0, 1.0]
 
 mask_x:
     type: "lerp_rel"
     keyframes:
-        - [4.0, 0.0]
-        - [4.0, 0.0]
+        - [1.0, 0.0]
+        - [1.0, 0.0]
         - [0.0, 0.0]
 
 mask_y:
     type: "lerp_rel"
     keyframes:
-        - [2.0, 1.0]
-        - [2.0, -1.0]
-        - [0.0, 1.0]
+        - [2.0, 0.0]
+        - [2.0, 0.0]
+        - [0.0, 0.0]
+        # - [2.0, 1.0]
+        # - [2.0, -1.0]
+        # - [0.0, 1.0]
 
 distort_freq:
     type: "r_ramp_rel"
-    ramp_time: 1.0
+    ramp_time: 2.0
     keyframes:
         - [4.0, [0.0, 1.0]]
+
+distort_angle_offset:
+    type: "r_ramp_rel"
+    ramp_time: 0.75
+    keyframes:
+        - [1.5, [0.0, 1.0]]
+        - [3.0, [0.0, 1.0]]
+        - [2.5, [0.0, 1.0]]
+        - [1.0, [0.0, 1.0]]
 
 # --- UI CONTROLS
 
@@ -51,8 +63,8 @@ distort_mix:
 # distort_freq:
 #     type: "slider"
 
-distort_angle_offset:
-    type: "slider"
+# distort_angle_offset:
+#     type: "slider"
 
 fractal_mix:
     type: "slider"

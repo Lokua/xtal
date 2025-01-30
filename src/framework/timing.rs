@@ -459,6 +459,25 @@ impl TimingSource for OscTransportTiming {
 }
 
 #[cfg(test)]
+pub trait TestTiming {
+    fn set_beat_position(&mut self, beat: f32);
+}
+
+#[cfg(test)]
+impl TestTiming for OscTransportTiming {
+    fn set_beat_position(&mut self, beat: f32) {
+        let bars = (beat / 4.0).floor();
+        let remaining_beats = beat - (bars * 4.0);
+        let beats = remaining_beats.floor();
+        let ticks = remaining_beats - beats;
+        self.is_playing.store(true, Ordering::Release);
+        self.bars.store(bars as u32, Ordering::Release);
+        self.beats.store(beats as u32, Ordering::Release);
+        self.ticks.store(ticks.to_bits(), Ordering::Release);
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use serial_test::serial;
