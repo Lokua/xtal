@@ -36,6 +36,8 @@ enum ControlType {
     LerpAbs,
     #[serde(rename = "lerp_rel")]
     LerpRel,
+    #[serde(rename = "r_ramp_rel")]
+    RRampRel,
 }
 
 type ConfigFile = HashMap<String, MaybeControlConfig>;
@@ -53,36 +55,47 @@ impl fmt::Debug for UpdateState {
     }
 }
 
-enum LerpConfig {
-    Abs(LerpAbsConfig),
-    Rel(LerpRelConfig),
+enum AnimationConfig {
+    LerpAbs(LerpAbsConfig),
+    LerpRel(LerpRelConfig),
+    RRampRel(RRampRelConfig),
 }
-impl LerpConfig {
+impl AnimationConfig {
     pub fn delay(&self) -> f32 {
         match self {
-            LerpConfig::Abs(abs) => abs.delay,
-            LerpConfig::Rel(rel) => rel.delay,
+            AnimationConfig::LerpAbs(x) => x.delay,
+            AnimationConfig::LerpRel(x) => x.delay,
+            AnimationConfig::RRampRel(x) => x.delay,
         }
     }
 }
-impl fmt::Debug for LerpConfig {
+impl fmt::Debug for AnimationConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            LerpConfig::Abs(abs_config) => {
-                f.debug_tuple("LerpConfig::Abs").field(abs_config).finish()
+            AnimationConfig::LerpAbs(x) => {
+                f.debug_tuple("AnimationConfig::LerpAbs").field(x).finish()
             }
-            LerpConfig::Rel(rel_config) => {
-                f.debug_tuple("LerpConfig::Rel").field(rel_config).finish()
+            AnimationConfig::LerpRel(x) => {
+                f.debug_tuple("AnimationConfig::LerpRel").field(x).finish()
+            }
+            AnimationConfig::RRampRel(x) => {
+                f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
             }
         }
     }
+}
+
+#[derive(Clone, Debug)]
+enum KeyframeSequence {
+    Linear(Vec<Keyframe>),
+    Random(Vec<KeyframeRandom>),
 }
 
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     osc_controls: OscControls,
     animation: Animation<T>,
-    keyframe_sequences: HashMap<String, (LerpConfig, Vec<Keyframe>)>,
+    keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     update_state: UpdateState,
 }
 
@@ -116,11 +129,28 @@ impl<T: TimingSource> ControlScript<T> {
             return self.controls.float(name);
         }
 
-        if self.keyframe_sequences.contains_key(name) {
-            let (config, keyframes) =
-                self.keyframe_sequences.get(name).unwrap();
-
-            return self.animation.lerp(keyframes.clone(), config.delay());
+        if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
+            return match (config, sequence) {
+                (_, KeyframeSequence::Linear(kfs)) => {
+                    self.animation.lerp(kfs.clone(), config.delay())
+                }
+                (
+                    AnimationConfig::RRampRel(conf),
+                    KeyframeSequence::Random(kfs),
+                ) => self.animation.r_ramp(
+                    kfs,
+                    conf.delay,
+                    conf.ramp_time,
+                    match conf.ramp.as_str() {
+                        "linear" => linear,
+                        "ease_in" => ease_in,
+                        "ease_out" => ease_out,
+                        "ease_in_out" => ease_in_out,
+                        _ => linear,
+                    },
+                ),
+                _ => unreachable!(),
+            };
         }
 
         error!("No control named {}", name);
@@ -229,7 +259,10 @@ impl<T: TimingSource> ControlScript<T> {
 
                     self.keyframe_sequences.insert(
                         id.to_string(),
-                        (LerpConfig::Abs(conf), keyframes),
+                        (
+                            AnimationConfig::LerpAbs(conf),
+                            KeyframeSequence::Linear(keyframes),
+                        ),
                     );
                 }
                 ControlType::LerpRel => {
@@ -238,6 +271,7 @@ impl<T: TimingSource> ControlScript<T> {
 
                     let mut keyframes =
                         Vec::with_capacity(conf.keyframes.len());
+
                     for (i, &(beats, value)) in
                         conf.keyframes.iter().enumerate()
                     {
@@ -252,7 +286,30 @@ impl<T: TimingSource> ControlScript<T> {
 
                     self.keyframe_sequences.insert(
                         id.to_string(),
-                        (LerpConfig::Rel(conf), keyframes),
+                        (
+                            AnimationConfig::LerpRel(conf),
+                            KeyframeSequence::Linear(keyframes),
+                        ),
+                    );
+                }
+                ControlType::RRampRel => {
+                    let conf: RRampRelConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let keyframes: Vec<_> = conf
+                        .keyframes
+                        .iter()
+                        .map(|&(beats, range)| {
+                            KeyframeRandom::new(range, beats)
+                        })
+                        .collect();
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::RRampRel(conf),
+                            KeyframeSequence::Random(keyframes),
+                        ),
                     );
                 }
             }
@@ -385,6 +442,28 @@ impl Default for LerpRelConfig {
     fn default() -> Self {
         Self {
             delay: 0.0,
+            keyframes: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+struct RRampRelConfig {
+    #[serde(default)]
+    delay: f32,
+    #[serde(default)]
+    ramp_time: f32,
+    #[serde(default)]
+    ramp: String,
+    keyframes: Vec<(f32, (f32, f32))>,
+}
+
+impl Default for RRampRelConfig {
+    fn default() -> Self {
+        Self {
+            delay: 0.0,
+            ramp: "linear".to_string(),
+            ramp_time: 0.25,
             keyframes: Vec::new(),
         }
     }
