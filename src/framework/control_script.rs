@@ -170,9 +170,6 @@ impl<T: TimingSource> ControlScript<T> {
     fn import_script(&mut self, path: &PathBuf) -> Result<(), Box<dyn Error>> {
         let config = Self::parse_config(path)?;
         self.populate_controls(&config)?;
-        if let Ok(mut guard) = self.update_state.state.lock() {
-            *guard = Some(config);
-        }
         Ok(())
     }
 
@@ -315,6 +312,8 @@ impl<T: TimingSource> ControlScript<T> {
         self.osc_controls
             .start()
             .expect("Unable to start OSC receiver.");
+
+        info!("Controls populated");
 
         Ok(())
     }

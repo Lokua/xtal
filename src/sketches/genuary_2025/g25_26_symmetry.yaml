@@ -1,0 +1,82 @@
+# --- ANIMATIONS
+
+mask_radius:
+    type: "lerp_rel"
+    keyframes:
+        - [0.5, 1.0]
+        - [0.5, 0.0]
+        - [0.0, 1.0]
+
+mask_x:
+    type: "lerp_rel"
+    keyframes:
+        - [4.0, 0.0]
+        - [4.0, 0.0]
+        - [0.0, 0.0]
+
+mask_y:
+    type: "lerp_rel"
+    keyframes:
+        - [2.0, 1.0]
+        - [2.0, -1.0]
+        - [0.0, 1.0]
+
+# --- UI CONTROLS
+
+wave_mix:
+    type: "slider"
+    default: 0.333
+
+wave_freq:
+    type: "slider"
+
+wave_scale:
+    type: "slider"
+
+wave_x:
+    type: "slider"
+
+wave_y:
+    type: "slider"
+
+distort_mix:
+    type: "slider"
+
+distort_freq:
+    type: "slider"
+
+distort_angle_offset:
+    type: "slider"
+
+fractal_mix:
+    type: "slider"
+
+fractal_count:
+    type: "slider"
+
+fractal_scale:
+    type: "slider"
+
+fractal_color_scale:
+    type: "slider"
+
+fractal_grid_mix:
+    type: "slider"
+
+fractal_grid_scale:
+    type: "slider"
+
+signal_mix:
+    type: "slider"
+
+signal_steps:
+    type: "slider"
+
+mask_falloff:
+    type: "slider"
+
+e3:
+    type: "slider"
+
+e4:
+    type: "slider"

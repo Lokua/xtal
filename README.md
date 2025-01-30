@@ -234,6 +234,9 @@ saturation:
         - [1.0, 0.0]
         # etc...
         - [1.0, 1.0]
+        # By convention I always set the duration of the last keyframe to 0.0
+        # Since it represents the last arrival value and doesn't really have a
+        # duration.
         - [0.0, 0.0]
 
 # A 1:1 interface to the `Animation#r_ramp` method.

@@ -182,11 +182,6 @@ where
         .expect("Unable to find input port")
         .clone();
 
-    info!(
-        "Connecting to {}, connection_purpose: {}",
-        INPUT_PORT_NAME, connection_purpose
-    );
-
     let connection_purpose = connection_purpose.to_string();
     thread::spawn(move || {
         // _conn_in needs to be a named parameter,
