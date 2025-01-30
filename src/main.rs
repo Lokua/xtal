@@ -859,32 +859,3 @@ fn draw_sketch_controls<S: SketchModel>(
         }
     }
 }
-// fn draw_sketch_controls<S: SketchModel>(
-//     ui: &mut egui::Ui,
-//     sketch_model: &mut S,
-//     sketch_config: &SketchConfig,
-//     alert_text: &mut String,
-// ) {
-//     if let Some(controls) = sketch_model.controls() {
-//         let any_changed = draw_controls(controls, ui);
-//         if any_changed {
-//             if frame_controller::is_paused()
-//                 && sketch_config.play_mode != PlayMode::ManualAdvance
-//             {
-//                 frame_controller::advance_single_frame();
-//             }
-
-//             match persist_controls(sketch_config.name, controls) {
-//                 Ok(path_buf) => {
-//                     *alert_text =
-//                         format!("Controls persisted at {:?}", path_buf);
-//                     trace!("Controls persisted at {:?}", path_buf);
-//                 }
-//                 Err(e) => {
-//                     error!("Failed to persist controls: {}", e);
-//                     *alert_text = "Failed to persist controls".into();
-//                 }
-//             }
-//         }
-//     }
-// }
