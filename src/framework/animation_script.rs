@@ -194,22 +194,6 @@ impl<T: TimingSource> AnimationScript<T> {
     }
 }
 
-fn parse_bar_beat_16th(time_str: &str) -> Result<f32, Box<dyn Error>> {
-    let parts: Vec<f32> = time_str
-        .split('.')
-        .map(|s| s.parse::<f32>())
-        .collect::<Result<Vec<f32>, _>>()?;
-
-    if parts.len() != 3 {
-        return Err("Time string must be in format bar.beat.16th".into());
-    }
-
-    let [bars, beats, sixteenths] = [parts[0], parts[1], parts[2]];
-    let total_beats = (bars * 4.0) + beats + (sixteenths * 0.25);
-
-    Ok(total_beats)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

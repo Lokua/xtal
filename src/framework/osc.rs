@@ -47,6 +47,10 @@ impl OscState {
     pub fn get(&self, address: &str) -> f32 {
         *self.values.get(address).unwrap_or(&0.0)
     }
+
+    pub fn has(&self, address: &str) -> bool {
+        self.values.contains_key(address)
+    }
 }
 
 pub struct OscControls {
@@ -55,16 +59,20 @@ pub struct OscControls {
 }
 
 impl OscControls {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             configs: HashMap::new(),
             state: Arc::new(Mutex::new(OscState::new())),
         }
     }
 
-    fn add(&mut self, address: &str, config: OscControlConfig) {
+    pub fn add(&mut self, address: &str, config: OscControlConfig) {
         self.state.lock().unwrap().set(address, config.default);
         self.configs.insert(address.to_string(), config);
+    }
+
+    pub fn has(&self, address: &str) -> bool {
+        self.state.lock().unwrap().has(address)
     }
 
     pub fn get(&self, address: &str) -> f32 {
@@ -72,7 +80,7 @@ impl OscControls {
         self.state.lock().unwrap().get(address)
     }
 
-    fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
 

@@ -238,6 +238,10 @@ impl Controls {
         &self.previous_values
     }
 
+    pub fn has(&self, name: &str) -> bool {
+        self.values.contains_key(name)
+    }
+
     pub fn float(&self, name: &str) -> f32 {
         self.check_contains_key(name);
         match self.values.get(name).unwrap() {
@@ -350,6 +354,19 @@ impl Controls {
             save_previous: false,
             previous_values: HashMap::new(),
         }
+    }
+
+    pub fn add(&mut self, control: Control) {
+        let name = control.name().to_string();
+        let value = control.value();
+
+        if self.values.contains_key(&name) {
+            panic!("Control '{}' already exists", name);
+        }
+
+        self.controls.push(control);
+        self.values.insert(name, value);
+        self.changed = true;
     }
 }
 

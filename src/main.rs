@@ -95,6 +95,7 @@ fn main() {
         "audio_test" => run_sketch!(audio_test),
         "bos" => run_sketch!(bos),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
+        "control_script_test" => run_sketch!(control_script_test),
         "cv_test" => run_sketch!(cv_test),
         "lin_alg" => run_sketch!(lin_alg),
         "lines" => run_sketch!(lines),
@@ -178,7 +179,11 @@ fn model<S: SketchModel + 'static>(
 
     let mut sketch_model = init_sketch_model(app, WindowRect::new(window_rect));
 
-    let (gui_w, gui_h) = calculate_gui_dimensions(sketch_model.controls());
+    let (gui_w, gui_h) = calculate_gui_dimensions(
+        sketch_model
+            .controls()
+            .map(|provider| provider.as_controls()),
+    );
 
     let gui_window_id = app
         .new_window()
@@ -832,7 +837,7 @@ fn draw_sketch_controls<S: SketchModel>(
     alert_text: &mut String,
 ) {
     if let Some(controls) = sketch_model.controls() {
-        let any_changed = draw_controls(controls, ui);
+        let any_changed = draw_controls(controls.as_controls(), ui);
         if any_changed {
             if frame_controller::is_paused()
                 && sketch_config.play_mode != PlayMode::ManualAdvance
@@ -840,7 +845,7 @@ fn draw_sketch_controls<S: SketchModel>(
                 frame_controller::advance_single_frame();
             }
 
-            match persist_controls(sketch_config.name, controls) {
+            match persist_controls(sketch_config.name, controls.as_controls()) {
                 Ok(path_buf) => {
                     *alert_text =
                         format!("Controls persisted at {:?}", path_buf);

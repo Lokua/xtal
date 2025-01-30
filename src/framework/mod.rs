@@ -1,6 +1,8 @@
 pub mod animation;
 pub mod animation_script;
 pub mod audio;
+pub mod control_provider;
+pub mod control_script;
 pub mod controls;
 pub mod cv;
 pub mod displacer;

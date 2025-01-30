@@ -1,0 +1,23 @@
+info:
+    vars:
+        dummy: &dummy 100.0
+
+radius:
+    type: "slider"
+    range: [0.0, 500.0]
+    default: *dummy
+
+hue:
+    type: "slider"
+
+pos_x:
+    type: "osc"
+    range: [-1.0, 1.0]
+    default: 0.0
+
+pos_y:
+    type: "lerp_abs"
+    keyframes:
+        - ["0.0.0", 0.0]
+        - ["0.1.0", 1.0]
+        - ["0.2.0", 0.0]

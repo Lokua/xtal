@@ -2,10 +2,11 @@ use nannou::rand;
 use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
+use serde::Deserialize;
 
 use crate::framework::prelude::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Keyframe {
     pub value: f32,
     pub duration: f32,
