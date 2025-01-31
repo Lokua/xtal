@@ -4,13 +4,15 @@ const DEBUG: bool = false;
 
 struct VertexInput {
     @location(0) position: vec3f,
-    @location(1) @interpolate(flat) layer: f32
+    @location(1) center: vec3f,
+    @location(2) @interpolate(flat) layer: f32
 };
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4f,
     @location(0) pos: vec3f,
-    @location(1) @interpolate(flat) layer: f32
+    @location(1) local_pos: vec3f,
+    @location(2) @interpolate(flat) layer: f32
 };
 
 struct Params {
@@ -31,6 +33,7 @@ var<uniform> params: Params;
 fn vs_main(vert: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.layer = vert.layer;
+    out.local_pos = vert.position;
 
     if vert.layer < FOREGROUND {
         let p = correct_aspect(vert.position);
@@ -38,8 +41,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
         out.pos = vec3f(p.xy, 0.999);
 
         return out;
-    } 
+    }
 
+    // TRS = Translate, Rotate, Scale 
+    // (applied in reverse, because...that's what you do?)
     let r_x = params.a.x;
     let r_y = params.a.y;
     let r_z = params.a.z;
@@ -51,7 +56,9 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     var rotated = rotate_x(scaled_position, r_x);
     rotated = rotate_y(rotated, r_y);
     rotated = rotate_z(rotated, r_z);
-    let translated = vec3f(rotated.x, rotated.y, rotated.z + z_offset);
+    
+    let translated = vec3f(rotated.x, rotated.y, rotated.z + z_offset) + 
+        vert.center;
 
     // Perspective projection matrix
     // Field of view
@@ -77,19 +84,41 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 }
 
 @fragment
-fn fs_main(input: VertexOutput) -> @location(0) vec4f {
+fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     if DEBUG {
-        return vec4f(input.layer, input.layer, input.layer, 1.0);
+        return vec4f(vout.layer, vout.layer, vout.layer, 1.0);
     }
 
-    if input.layer < FOREGROUND { 
+    if vout.layer < FOREGROUND { 
         return vec4f(1.0);
     } 
+    
+    let pos = vout.local_pos;
+    let light_dir = normalize(vec3f(0.5, 0.7, 0.5));
+    
+    var normal = vec3f(0.0);
+    let eps = 0.01;
+    if abs(abs(pos.x) - 0.5) < eps {
+        normal = vec3f(sign(pos.x), 0.0, 0.0);
+    } else if abs(abs(pos.y) - 0.5) < eps {
+        normal = vec3f(0.0, sign(pos.y), 0.0);
+    } else {
+        normal = vec3f(0.0, 0.0, sign(pos.z));
+    }
+    
+    let ambient = 0.6;
+    let diffuse = max(dot(normal, light_dir), 0.0);
+    let light = ambient + diffuse * (1.0 - ambient); 
+    
+    let face_color = vec3f(
+        1.0 - abs(normal.x) * 0.01,
+        1.0 - abs(normal.y) * 0.01,
+        1.0 - abs(normal.z) * 0.01, 
+    );
 
-    return vec4f(vec3f(0.4), 1.0);
+    let color = face_color * light;
+    return vec4f(color, 1.0);
 }
-
-// --- UTILITY
 
 fn correct_aspect(position: vec3f) -> vec3f {
     let w = params.resolution.x;

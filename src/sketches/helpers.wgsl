@@ -119,6 +119,39 @@ fn smin(a: f32, b: f32, k: f32) -> f32 {
     return min(a, b) - h * h * k * 0.25;
 }
 
+fn rotate_x(p: vec3f, radians: f32) -> vec3f {
+    let c = cos(radians);
+    let s = sin(radians);
+    
+    return vec3f(
+        p.x,
+        p.y * c - p.z * s,
+        p.y * s + p.z * c
+    );
+}
+
+fn rotate_y(p: vec3f, radians: f32) -> vec3f {
+    let c = cos(radians);
+    let s = sin(radians);
+    
+    return vec3f(
+        p.x * c - p.z * s,
+        p.y,
+        p.x * s + p.z * c
+    );
+}
+
+fn rotate_z(p: vec3f, radians: f32) -> vec3f {
+    let c = cos(radians);
+    let s = sin(radians);
+    
+    return vec3f(
+        p.x * c - p.y * s,
+        p.x * s + p.y * c,
+        p.z
+    );
+}
+
 // --- POST PROCESSING
 
 fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {

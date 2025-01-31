@@ -30,6 +30,7 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 3],
+    center: [f32; 3],
     layer: f32,
 }
 
@@ -58,15 +59,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
     };
 
-    // 6 vertices for the background +
-    // 6 vertices * 6 faces for the foreground = 42
-    let vertices = vec![
-        Vertex {
-            position: [0.0; 3],
-            layer: BACKGROUND
-        };
-        42
-    ];
+    let vertices = create_vertices();
 
     let gpu = gpu::GpuState::new(
         app,
@@ -101,9 +94,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    let mut vertices = Vec::with_capacity(42);
-    vertices.extend(create_fullscreen_quad());
-    vertices.extend(create_cube());
+    let vertices = create_vertices();
 
     m.gpu.update(app, &params, &vertices);
 }
@@ -113,213 +104,94 @@ pub fn view(_app: &App, m: &Model, frame: Frame) {
     m.gpu.render(&frame);
 }
 
-fn create_fullscreen_quad() -> Vec<Vertex> {
-    vec![
-        Vertex {
-            // Bottom-left
-            position: [-1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Bottom-right
-            position: [1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-right
-            position: [1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Bottom-left
-            position: [-1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-right
-            position: [1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-left
-            position: [-1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-    ]
+fn create_vertices() -> Vec<Vertex> {
+    let mut vertices = Vec::with_capacity(42);
+    vertices.extend(create_fullscreen_quad());
+    vertices.extend(create_cube([-0.5, 0.0, 0.999]));
+    vertices.extend(create_cube([0.5, 0.0, 0.999]));
+    vertices.extend(create_cube([0.0, -0.5, 0.999]));
+    vertices.extend(create_cube([0.0, 0.5, 0.999]));
+    vertices
 }
 
-fn create_cube() -> Vec<Vertex> {
-    let front_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
+const QUAD_POSITIONS: [[f32; 3]; 6] = [
+    // Bottom-left
+    [-1.0, -1.0, 0.0],
+    // Bottom-right
+    [1.0, -1.0, 0.0],
+    // Top-right
+    [1.0, 1.0, 0.0],
+    // Bottom-left
+    [-1.0, -1.0, 0.0],
+    // Top-right
+    [1.0, 1.0, 0.0],
+    // Top-left
+    [-1.0, 1.0, 0.0],
+];
 
-    let back_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
+const CUBE_POSITIONS: [[f32; 3]; 36] = [
+    // Front face
+    [-0.5, -0.5, 0.5],
+    [0.5, -0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, -0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+    // Back face
+    [-0.5, -0.5, -0.5],
+    [-0.5, 0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [-0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [0.5, -0.5, -0.5],
+    // Top face
+    [-0.5, 0.5, -0.5],
+    [-0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, 0.5, -0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, -0.5],
+    // Bottom face
+    [-0.5, -0.5, -0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, -0.5, 0.5],
+    [-0.5, -0.5, -0.5],
+    [0.5, -0.5, 0.5],
+    [-0.5, -0.5, 0.5],
+    // Right face
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, -0.5, 0.5],
+    // Left face
+    [-0.5, -0.5, -0.5],
+    [-0.5, -0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+    [-0.5, -0.5, -0.5],
+    [-0.5, 0.5, 0.5],
+    [-0.5, 0.5, -0.5],
+];
 
-    let top_face = vec![
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
+fn create_fullscreen_quad() -> Vec<Vertex> {
+    QUAD_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            center: [0.0, 0.0, 0.999],
+            layer: BACKGROUND,
+        })
+        .collect()
+}
 
-    let bottom_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
+fn create_cube(center: [f32; 3]) -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            center,
             layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let right_face = vec![
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let left_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    // 6 vertices * 6 faces
-    let mut vertices = Vec::with_capacity(36);
-
-    vertices.extend(front_face);
-    vertices.extend(back_face);
-    vertices.extend(top_face);
-    vertices.extend(bottom_face);
-    vertices.extend(right_face);
-    vertices.extend(left_face);
-
-    vertices
+        })
+        .collect()
 }
