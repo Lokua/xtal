@@ -59,7 +59,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
     };
 
-    let vertices = create_vertices();
+    let vertices = create_vertices(0.0);
 
     let gpu = gpu::GpuState::new(
         app,
@@ -94,7 +94,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    let vertices = create_vertices();
+    let vertices = create_vertices(m.controls.get("scale"));
 
     m.gpu.update(app, &params, &vertices);
 }
@@ -104,75 +104,26 @@ pub fn view(_app: &App, m: &Model, frame: Frame) {
     m.gpu.render(&frame);
 }
 
-fn create_vertices() -> Vec<Vertex> {
-    let mut vertices = Vec::with_capacity(42);
+fn create_vertices(scale: f32) -> Vec<Vertex> {
+    let mut vertices = Vec::new();
     vertices.extend(create_fullscreen_quad());
-    vertices.extend(create_cube([-0.5, 0.0, 0.999]));
-    vertices.extend(create_cube([0.5, 0.0, 0.999]));
-    vertices.extend(create_cube([0.0, -0.5, 0.999]));
-    vertices.extend(create_cube([0.0, 0.5, 0.999]));
+
+    for x in -1..=1 {
+        for y in -1..=1 {
+            for z in -1..=1 {
+                if x.abs() + y.abs() + z.abs() > 1 {
+                    vertices.extend(create_cube([
+                        x as f32 * scale,
+                        y as f32 * scale,
+                        z as f32 * scale,
+                    ]));
+                }
+            }
+        }
+    }
+
     vertices
 }
-
-const QUAD_POSITIONS: [[f32; 3]; 6] = [
-    // Bottom-left
-    [-1.0, -1.0, 0.0],
-    // Bottom-right
-    [1.0, -1.0, 0.0],
-    // Top-right
-    [1.0, 1.0, 0.0],
-    // Bottom-left
-    [-1.0, -1.0, 0.0],
-    // Top-right
-    [1.0, 1.0, 0.0],
-    // Top-left
-    [-1.0, 1.0, 0.0],
-];
-
-const CUBE_POSITIONS: [[f32; 3]; 36] = [
-    // Front face
-    [-0.5, -0.5, 0.5],
-    [0.5, -0.5, 0.5],
-    [0.5, 0.5, 0.5],
-    [-0.5, -0.5, 0.5],
-    [0.5, 0.5, 0.5],
-    [-0.5, 0.5, 0.5],
-    // Back face
-    [-0.5, -0.5, -0.5],
-    [-0.5, 0.5, -0.5],
-    [0.5, 0.5, -0.5],
-    [-0.5, -0.5, -0.5],
-    [0.5, 0.5, -0.5],
-    [0.5, -0.5, -0.5],
-    // Top face
-    [-0.5, 0.5, -0.5],
-    [-0.5, 0.5, 0.5],
-    [0.5, 0.5, 0.5],
-    [-0.5, 0.5, -0.5],
-    [0.5, 0.5, 0.5],
-    [0.5, 0.5, -0.5],
-    // Bottom face
-    [-0.5, -0.5, -0.5],
-    [0.5, -0.5, -0.5],
-    [0.5, -0.5, 0.5],
-    [-0.5, -0.5, -0.5],
-    [0.5, -0.5, 0.5],
-    [-0.5, -0.5, 0.5],
-    // Right face
-    [0.5, -0.5, -0.5],
-    [0.5, 0.5, -0.5],
-    [0.5, 0.5, 0.5],
-    [0.5, -0.5, -0.5],
-    [0.5, 0.5, 0.5],
-    [0.5, -0.5, 0.5],
-    // Left face
-    [-0.5, -0.5, -0.5],
-    [-0.5, -0.5, 0.5],
-    [-0.5, 0.5, 0.5],
-    [-0.5, -0.5, -0.5],
-    [-0.5, 0.5, 0.5],
-    [-0.5, 0.5, -0.5],
-];
 
 fn create_fullscreen_quad() -> Vec<Vertex> {
     QUAD_POSITIONS

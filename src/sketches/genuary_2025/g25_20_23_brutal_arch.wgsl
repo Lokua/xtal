@@ -43,22 +43,20 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
         return out;
     }
 
-    // TRS = Translate, Rotate, Scale 
-    // (applied in reverse, because...that's what you do?)
     let r_x = params.a.x;
     let r_y = params.a.y;
     let r_z = params.a.z;
     let z_offset = clamp(params.a.w, -10.0, -0.5);
     let scale = params.b.x;
 
+    // TRS = Translate, Rotate, Scale 
+    // (applied in reverse, because...that's what you do?)
     let scaled_position = vert.position * scale;
-
-    var rotated = rotate_x(scaled_position, r_x);
+    let positioned = scaled_position + vert.center;
+    var rotated = rotate_x(positioned, r_x);
     rotated = rotate_y(rotated, r_y);
     rotated = rotate_z(rotated, r_z);
-    
-    let translated = vec3f(rotated.x, rotated.y, rotated.z + z_offset) + 
-        vert.center;
+    let translated = vec3f(rotated.x, rotated.y, rotated.z + z_offset);
 
     // Perspective projection matrix
     // Field of view
@@ -90,14 +88,15 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     }
 
     if vout.layer < FOREGROUND { 
-        return vec4f(1.0);
+        // return vec4f(vec3f(0.02), 1.0);
+        return vec4f(vec3f(0.72), 1.0);
     } 
     
     let pos = vout.local_pos;
     let light_dir = normalize(vec3f(0.5, 0.7, 0.5));
     
     var normal = vec3f(0.0);
-    let eps = 0.01;
+    let eps = 0.0001;
     if abs(abs(pos.x) - 0.5) < eps {
         normal = vec3f(sign(pos.x), 0.0, 0.0);
     } else if abs(abs(pos.y) - 0.5) < eps {

@@ -53,15 +53,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    // 6 vertices for the background +
-    // 6 vertices * 6 faces for the foreground = 42
-    let vertices = vec![
-        Vertex {
-            position: [0.0; 3],
-            layer: BACKGROUND
-        };
-        42
-    ];
+    let vertices = create_vertices();
 
     let gpu = gpu::GpuState::new(
         app,
@@ -90,211 +82,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    let fullscreen_quad = vec![
-        Vertex {
-            // Bottom-left
-            position: [-1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Bottom-right
-            position: [1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-right
-            position: [1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Bottom-left
-            position: [-1.0, -1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-right
-            position: [1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-        Vertex {
-            // Top-left
-            position: [-1.0, 1.0, 0.0],
-            layer: BACKGROUND,
-        },
-    ];
-
-    let front_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let back_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let top_face = vec![
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let bottom_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let right_face = vec![
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    let left_face = vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            layer: FOREGROUND,
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            layer: FOREGROUND,
-        },
-    ];
-
-    // 6 vertices for the background +
-    // 6 vertices * 6 sides for the foreground = 42
-    let mut vertices = Vec::with_capacity(42);
-    vertices.extend(fullscreen_quad);
-    vertices.extend(front_face);
-    vertices.extend(back_face);
-    vertices.extend(top_face);
-    vertices.extend(bottom_face);
-    vertices.extend(right_face);
-    vertices.extend(left_face);
+    let vertices = create_vertices();
 
     m.gpu.update(app, &params, &vertices);
 }
@@ -302,4 +90,31 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 pub fn view(_app: &App, m: &Model, frame: Frame) {
     frame.clear(BLACK);
     m.gpu.render(&frame);
+}
+
+fn create_vertices() -> Vec<Vertex> {
+    let mut vertices = vec![];
+    vertices.extend(create_fullscreen_quad());
+    vertices.extend(create_cube());
+    vertices
+}
+
+fn create_fullscreen_quad() -> Vec<Vertex> {
+    QUAD_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            layer: BACKGROUND,
+        })
+        .collect()
+}
+
+fn create_cube() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            layer: FOREGROUND,
+        })
+        .collect()
 }
