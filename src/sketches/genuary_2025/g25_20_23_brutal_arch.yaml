@@ -2,10 +2,9 @@ _vars:
     PI: &PI 3.14159265359
     TAU: &TAU 6.283185307179586
     tx: &tx 32
-    ty: &ty 24
+    ty: &ty 12
     tz: &tz 38
     gt: &gt 16
-    ct: &ct 4
 
 rot_x:
     type: lerp_rel
@@ -62,57 +61,51 @@ grid_contrast:
 
 grid_size:
     type: slider
-    range: [0.0, 16.0]
+    range: [0, 16]
     step: 1.0
 
 grid_border_size:
     type: slider
 
+# corner_offset:
 d2:
-    type: slider
+    type: triangle
+    beats: 4
 
 d3:
     type: slider
 d4:
     type: slider
 
+_corner_t_vars:
+    ct: &ct 4
+    corner_t_base: &corner_t_base
+        type: triangle
+        beats: 8
+        range: [-1, 2]
+        bypass: _
+
 corner_t_1:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0
 corner_t_2:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.125
 corner_t_3:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.25
 corner_t_4:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.375
 corner_t_5:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.5
 corner_t_6:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.625
 corner_t_7:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.75
 corner_t_8:
-    type: triangle
-    beats: *ct
-    range: [-1.0, 1.0]
+    <<: *corner_t_base
     phase: 0.875

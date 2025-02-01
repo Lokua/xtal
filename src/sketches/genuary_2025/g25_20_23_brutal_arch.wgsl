@@ -74,19 +74,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let is_corner = corner_sum > 1.0;
 
     if is_corner {
-        // Corner indices are binary combinations:
-        // 000 = 0 = (-x, -y, -z)
-        // 001 = 1 = (+x, -y, -z)
-        // 010 = 2 = (-x, +y, -z)
-        // 011 = 3 = (+x, +y, -z)
-        // 100 = 4 = (-x, -y, +z)
-        // 101 = 5 = (+x, -y, +z)
-        // 110 = 6 = (-x, +y, +z)
-        // 111 = 7 = (+x, +y, +z)
-        let corner_index = 
-            select(0, 1, vert.center.x > 0.0) +
-            select(0, 2, vert.center.y > 0.0) +
-            select(0, 4, vert.center.z > 0.0);
+        let corner_index = get_corner_index(vert.center);
 
         let is_outer_vertex = 
             sign(position.x) == sign(vert.center.x) && 
@@ -94,23 +82,15 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
             sign(position.z) == sign(vert.center.z);
             
         if is_outer_vertex {
-            var phase = 0.0;
-            switch corner_index {
-                case 0: { phase = params.e.x; }
-                case 1: { phase = params.e.y; }
-                case 2: { phase = params.e.z; }
-                case 3: { phase = params.e.w; }
-                case 4: { phase = params.f.x; }
-                case 5: { phase = params.f.y; }
-                case 6: { phase = params.f.z; }
-                case 7: { phase = params.f.w; }
-                default: { phase = 0.0; }
-            }
-            
+            let phase = get_corner_phase(corner_index, params);
             let factor = 0.5;
             let corner_axis = sign(vert.center);
             position = position + corner_axis * phase * factor;
         }
+
+        // Move corners out and back
+        let dir = normalize(vert.center);
+        position = position + dir * corner_t;
     }
 
     // TRS = Translate, Rotate, Scale 
@@ -165,24 +145,8 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
             abs(vout.center.y) + 
             abs(vout.center.z) > 1.0;
         if is_corner {
-            let corner_index = 
-                select(0, 1, vout.center.x > 0.0) +
-                select(0, 2, vout.center.y > 0.0) +
-                select(0, 4, vout.center.z > 0.0);
-                
-            var phase = 0.0;
-            switch corner_index {
-                case 0: { phase = params.e.x; }
-                case 1: { phase = params.e.y; }
-                case 2: { phase = params.e.z; }
-                case 3: { phase = params.e.w; }
-                case 4: { phase = params.f.x; }
-                case 5: { phase = params.f.y; }
-                case 6: { phase = params.f.z; }
-                case 7: { phase = params.f.w; }
-                default: { phase = 0.0; }
-            }
-            
+            let corner_index = get_corner_index(vout.center);
+            let phase = get_corner_phase(corner_index, params);
             let color = (phase + 1.0) * 0.5;
             return vec4f(0.0, color, color * 0.75, 1.0);
         }
@@ -281,6 +245,28 @@ fn subdivide_face(pos: vec3f, normal: vec3f) -> f32 {
     let vertical = sharp_transition(cell_pos.y, grid_border_size);
     
     return min(horizontal, vertical);
+}
+
+fn get_corner_index(center: vec3f) -> i32 {
+    return select(0, 1, center.x > 0.0) +
+        select(0, 2, center.y > 0.0) +
+        select(0, 4, center.z > 0.0);
+}
+
+fn get_corner_phase(corner_index: i32, params: Params) -> f32 {
+    var phase = 0.0;
+    switch corner_index {
+        case 0: { phase = params.e.x; }
+        case 1: { phase = params.e.y; }
+        case 2: { phase = params.e.z; }
+        case 3: { phase = params.e.w; }
+        case 4: { phase = params.f.x; }
+        case 5: { phase = params.f.y; }
+        case 6: { phase = params.f.z; }
+        case 7: { phase = params.f.w; }
+        default: { phase = 0.0; }
+    }
+    return phase;
 }
 
 fn concrete_texture(pos: vec3f, normal: vec3f, center: vec3f) -> f32 {

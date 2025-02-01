@@ -8,6 +8,7 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
+use yaml_merge_keys::merge_keys_serde_yml;
 
 use super::prelude::*;
 
@@ -201,7 +202,10 @@ impl<T: TimingSource> ControlScript<T> {
 
     fn parse_config(path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
         let file_content = fs::read_to_string(path)?;
-        let config = serde_yml::from_str(&file_content)?;
+        let raw_config = serde_yml::from_str(&file_content)?;
+        let merged_config = merge_keys_serde_yml(raw_config)?;
+        let config: ConfigFile = serde_yml::from_value(merged_config)?;
+        trace!("Parsed config: {:?}", config);
         Ok(config)
     }
 
