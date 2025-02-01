@@ -9,6 +9,7 @@ radius:
 
 hue:
     type: "slider"
+    default: 0.3
 
 pos_x:
     type: "osc"
@@ -37,3 +38,9 @@ pos_x2:
         - [1.5, [-1.0, -0.5]]
         - [1.5, [-0.25, 0.25]]
         - [1.0, [0.5, 1.0]]
+
+pos_x3:
+    type: "triangle"
+    beats: 2.0
+    range: [-0.5, 0.5]
+    phase_offset: 0.0

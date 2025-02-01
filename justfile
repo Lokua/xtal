@@ -9,7 +9,7 @@ trace *ARGS:
 
 # Usage: just trace-module framework::frame_controller <sketch>
 trace-module MODULE *ARGS:
-    RUST_LOG=lattice=info,lattice::{{MODULE}}=trace cargo run --release {{ARGS}}
+  RUST_LOG=lattice=info,lattice::{{MODULE}}=trace cargo run --release {{ARGS}}
 
 # To test just a single test, past the test name e.g. just test my_test
 # To test a single module, pass the module name e.g. just test my::module
@@ -33,3 +33,7 @@ md:
 
 stats:
   sccache --show-stats
+
+# I always forget what this package is called
+loc:
+  tokei .

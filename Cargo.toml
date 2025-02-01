@@ -17,7 +17,9 @@ members = [
 
 [dependencies]
 arboard = "3.4.1"
-bevy_reflect = "0.15.1"
+# glam feature added as a hail-mary to deal with occasional
+# linking errors coming from bevy_reflect. This for some reason works?
+bevy_reflect = { version = "0.15.1", features = ["glam"]}
 bytemuck = "1.21.0"
 chrono = "0.4.38"
 cpal = "0.15.3"

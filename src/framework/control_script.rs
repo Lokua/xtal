@@ -39,6 +39,8 @@ enum ControlType {
     LerpRel,
     #[serde(rename = "r_ramp_rel")]
     RRampRel,
+    #[serde(rename = "triangle")]
+    Triangle,
 }
 
 type ConfigFile = IndexMap<String, MaybeControlConfig>;
@@ -59,6 +61,7 @@ enum AnimationConfig {
     LerpAbs(LerpAbsConfig),
     LerpRel(LerpRelConfig),
     RRampRel(RRampRelConfig),
+    Triangle(TriangleConfig),
 }
 impl AnimationConfig {
     pub fn delay(&self) -> f32 {
@@ -66,6 +69,7 @@ impl AnimationConfig {
             AnimationConfig::LerpAbs(x) => x.delay,
             AnimationConfig::LerpRel(x) => x.delay,
             AnimationConfig::RRampRel(x) => x.delay,
+            _ => 0.0,
         }
     }
 }
@@ -81,6 +85,9 @@ impl fmt::Debug for AnimationConfig {
             AnimationConfig::RRampRel(x) => {
                 f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
             }
+            AnimationConfig::Triangle(x) => {
+                f.debug_tuple("AnimationConfig::Triangle").field(x).finish()
+            }
         }
     }
 }
@@ -89,6 +96,7 @@ impl fmt::Debug for AnimationConfig {
 enum KeyframeSequence {
     Linear(Vec<Keyframe>),
     Random(Vec<KeyframeRandom>),
+    None,
 }
 
 pub struct ControlScript<T: TimingSource> {
@@ -143,12 +151,18 @@ impl<T: TimingSource> ControlScript<T> {
                     conf.ramp_time,
                     str_to_fn_unary(conf.ramp.as_str()),
                 ),
-                _ => unreachable!(),
+                (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
+                    self.animation.triangle(
+                        conf.beats,
+                        (conf.range[0], conf.range[1]),
+                        conf.phase,
+                    )
+                }
+                _ => unimplemented!(),
             };
         }
 
-        error!("No control named {}", name);
-        panic!()
+        loud_panic!("No control named {}", name);
     }
 
     pub fn update(&mut self) {
@@ -310,6 +324,20 @@ impl<T: TimingSource> ControlScript<T> {
                         ),
                     );
                 }
+                ControlType::Triangle => {
+                    let conf: TriangleConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    trace!("raw_conf Triangle: {:?}", conf);
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::Triangle(conf),
+                            KeyframeSequence::None,
+                        ),
+                    );
+                }
             }
         }
 
@@ -453,9 +481,6 @@ struct RRampRelConfig {
     delay: f32,
     #[serde(default)]
     ramp_time: f32,
-    // serde uses Default::default _before_ it calls our
-    // RRampRelConfig::default, but Default::default for string is "",
-    // which doesn't trigger the RRampRelConfig fallback. I mean, WTF!?!
     #[serde(default = "default_ramp")]
     ramp: String,
     keyframes: Vec<(f32, (f32, f32))>,
@@ -472,6 +497,24 @@ impl Default for RRampRelConfig {
             ramp: "linear".to_string(),
             ramp_time: 0.25,
             keyframes: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(default)]
+struct TriangleConfig {
+    beats: f32,
+    range: [f32; 2],
+    phase: f32,
+}
+
+impl Default for TriangleConfig {
+    fn default() -> Self {
+        Self {
+            beats: 1.0,
+            range: [0.0, 1.0],
+            phase: 0.0,
         }
     }
 }

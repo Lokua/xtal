@@ -304,11 +304,6 @@ impl<T: TimingSource> Animation<T> {
         ramp_time: f32,
         ramp: fn(f32) -> f32,
     ) -> f32 {
-        warn_once(format!(
-            "keyframes: {:?}, ramp_time: {}",
-            keyframes, ramp_time
-        ));
-
         if keyframes.is_empty() {
             return 0.0;
         }

@@ -49,6 +49,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let pos_y = m.controls.get("pos_y");
     let radius_small = m.controls.get("radius_small");
     let pos_x2 = m.controls.get("pos_x2");
+    let pos_x3 = m.controls.get("pos_x3");
+    debug_throttled!(1_000, "pos_x3: {}", pos_x3);
 
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
@@ -64,6 +66,11 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .color(RED)
         .radius(50.0)
         .x_y(pos_x2 * m.wr.hw(), -m.wr.h_(4.0));
+
+    draw.ellipse()
+        .color(BLUE)
+        .radius(20.0)
+        .x_y(pos_x3 * m.wr.hw(), -m.wr.h_(4.0));
 
     draw.to_frame(app, &frame).unwrap();
 }
