@@ -34,6 +34,11 @@ struct Params {
 
     // grid_border_size, ...unused
     d: vec4f,
+
+    // corner_t_1 - corner_t_4
+    e: vec4f,
+    // corner_t_5 - corner_t_8
+    f: vec4f,
 }
 
 @group(0) @binding(0)
@@ -59,7 +64,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let r_z = params.a.z;
     let z_offset = clamp(params.a.w, -10.0, -0.5);
     let scale = params.b.x;
-    var corner_t = params.d.y;
+    let corner_t = params.d.y;
 
     var position = vert.position;
     let corner_sum = 
@@ -69,6 +74,15 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let is_corner = corner_sum > 1.0;
 
     if is_corner {
+        // Corner indices are binary combinations:
+        // 000 = 0 = (-x, -y, -z)
+        // 001 = 1 = (+x, -y, -z)
+        // 010 = 2 = (-x, +y, -z)
+        // 011 = 3 = (+x, +y, -z)
+        // 100 = 4 = (-x, -y, +z)
+        // 101 = 5 = (+x, -y, +z)
+        // 110 = 6 = (-x, +y, +z)
+        // 111 = 7 = (+x, +y, +z)
         let corner_index = 
             select(0, 1, vert.center.x > 0.0) +
             select(0, 2, vert.center.y > 0.0) +
@@ -80,18 +94,22 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
             sign(position.z) == sign(vert.center.z);
             
         if is_outer_vertex {
-            // First normalize corner_t from -1..1 to 0..1
-            let normalized_t = (corner_t + 1.0) * 0.5;
+            // var phase = 0.0;
+            // switch corner_index {
+            //     case 0: { phase = params.e.x; }
+            //     case 1: { phase = params.e.y; }
+            //     case 2: { phase = params.e.z; }
+            //     case 3: { phase = params.e.w; }
+            //     case 4: { phase = params.f.x; }
+            //     case 5: { phase = params.f.y; }
+            //     case 6: { phase = params.f.z; }
+            //     case 7: { phase = params.f.w; }
+            //     default: { phase = 0.0; }
+            // }
             
-            // Subtract phase offset (1/8 increments) and wrap with fract
-            let phase_increment = 1.0 / 8.0;
-            let phased_t = fract(normalized_t - (f32(corner_index) * phase_increment));
-            
-            // Convert back to -1..1
-            let corner_t_phased = phased_t * 2.0 - 1.0;
-            
-            let direction = normalize(position);
-            position += direction * corner_t_phased;
+            // let factor = 0.25; // Adjust this to control movement amount
+            // let corner_axis = sign(vert.center);  // This gives us the corner's direction (-1 or 1 for each axis)
+            // position = position + corner_axis * phase * factor;
         }
     }
 
@@ -133,68 +151,135 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
-    if DEBUG {
-        return vec4f(vout.layer, vout.layer, vout.layer, 1.0);
+    // Create 8 rows
+    let row_height = 2.0 / 8.0;  // Screen is -1 to 1, so 2.0 total height
+    let row_index = floor((vout.pos.y + 1.0) / row_height);
+    
+    // Get the phase value for this row
+    var phase = 0.0;
+    switch i32(row_index) {
+        case 0: { phase = params.e.x; }
+        case 1: { phase = params.e.y; }
+        case 2: { phase = params.e.z; }
+        case 3: { phase = params.e.w; }
+        case 4: { phase = params.f.x; }
+        case 5: { phase = params.f.y; }
+        case 6: { phase = params.f.z; }
+        case 7: { phase = params.f.w; }
+        default: { phase = 0.0; }
     }
 
-    if vout.layer < FOREGROUND { 
-        return vec4f(vec3f(0.13), 1.0);
-    } 
-
-    if vout.layer == FOREGROUND && DEBUG_CORNERS {
-        let is_corner = abs(vout.center.x) + abs(vout.center.y) + abs(vout.center.z) > 1.0;
-        if is_corner {
-            // Visualize each corner with a different color based on its index
-            let corner_index = 
-                select(0, 1, vout.center.x > 0.0) +
-                select(0, 2, vout.center.y > 0.0) +
-                select(0, 4, vout.center.z > 0.0);
-            
-            let debug_color = vec3f(
-                f32(corner_index & 1) * 0.5,
-                f32(corner_index & 2) * 0.25,
-                f32(corner_index & 4) * 0.125 
-            );
-            return vec4f(debug_color, 1.0);
-        }
-    }
-
-    let texture_strength = params.b.y;
-    let texture_scale = params.b.z;
-    let grid_contrast = params.c.z;
+    // Map phase from -1..1 to screen space -1..1
+    let pos = phase;
     
-    let pos = vout.local_pos;
-    let light_dir = normalize(vec3f(0.5, 0.7, 0.5));
+    // Draw a dot at the phase position
+    let dot_x = abs(vout.pos.x - pos) < 0.02;
+    let dot_y = fract((vout.pos.y + 1.0) / row_height) < 0.2;  // Row marker
     
-    var normal = vec3f(0.0);
-    let eps = 0.0001;
-    if abs(abs(pos.x) - 0.5) < eps {
-        normal = vec3f(sign(pos.x), 0.0, 0.0);
-    } else if abs(abs(pos.y) - 0.5) < eps {
-        normal = vec3f(0.0, sign(pos.y), 0.0);
-    } else {
-        normal = vec3f(0.0, 0.0, sign(pos.z));
+    if (dot_x && dot_y) {
+        return vec4f(1.0, 1.0, 1.0, 1.0);
     }
     
-    let ambient = 0.3;
-    let diffuse = max(dot(normal, light_dir), 0.0);
-    let light = ambient + diffuse * (1.0 - ambient); 
-    
-    let face_color = vec3f(
-        1.0 - abs(normal.x) * 0.01,
-        1.0 - abs(normal.y) * 0.01,
-        1.0 - abs(normal.z) * 0.01, 
-    );
+    // Draw zero line
+    let zero_line = abs(vout.pos.x) < 0.005;
+    if (zero_line) {
+        return vec4f(0.5, 0.5, 0.5, 1.0);
+    }
 
-    let subdivision = subdivide_face(pos, normal);
-    let texture = concrete_texture(pos * texture_scale, normal, vout.center);
-
-    let color = face_color * light * 
-        (1.0 + texture * texture_strength) * 
-        (grid_contrast + subdivision * (1.0 - grid_contrast));
-
-    return vec4f(color, 1.0);
+    return vec4f(0.1, 0.1, 0.1, 1.0);
 }
+
+// @fragment
+// fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
+//     if DEBUG {
+//         return vec4f(vout.layer, vout.layer, vout.layer, 1.0);
+//     }
+
+//     if vout.layer < FOREGROUND { 
+//         return vec4f(vec3f(0.13), 1.0);
+//     } 
+
+//     // if vout.layer == FOREGROUND && DEBUG_CORNERS {
+//     //     let is_corner = abs(vout.center.x) + abs(vout.center.y) + abs(vout.center.z) > 1.0;
+//     //     if is_corner {
+//     //         // Visualize each corner with a different color based on its index
+//     //         let corner_index = 
+//     //             select(0, 1, vout.center.x > 0.0) +
+//     //             select(0, 2, vout.center.y > 0.0) +
+//     //             select(0, 4, vout.center.z > 0.0);
+            
+//     //         let debug_color = vec3f(
+//     //             f32(corner_index & 1) * 0.5,
+//     //             f32(corner_index & 2) * 0.25,
+//     //             f32(corner_index & 4) * 0.125 
+//     //         );
+
+//     //         return vec4f(debug_color, 1.0);
+//     //     }
+//     // }
+//     if vout.layer == FOREGROUND && DEBUG_CORNERS {
+//         let is_corner = abs(vout.center.x) + abs(vout.center.y) + abs(vout.center.z) > 1.0;
+//         if is_corner {
+//             let corner_index = 
+//                 select(0, 1, vout.center.x > 0.0) +
+//                 select(0, 2, vout.center.y > 0.0) +
+//                 select(0, 4, vout.center.z > 0.0);
+                
+//             var phase = 0.0;
+//             switch corner_index {
+//                 case 0: { phase = params.e.x; }
+//                 case 1: { phase = params.e.y; }
+//                 case 2: { phase = params.e.z; }
+//                 case 3: { phase = params.e.w; }
+//                 case 4: { phase = params.f.x; }
+//                 case 5: { phase = params.f.y; }
+//                 case 6: { phase = params.f.z; }
+//                 case 7: { phase = params.f.w; }
+//                 default: { phase = 0.0; }
+//             }
+            
+//             // Map phase from -1..1 to 0..1 for red channel
+//             let color = (phase + 1.0) * 0.5;
+//             return vec4f(color, 0.0, 0.0, 1.0);
+//         }
+//     }
+
+//     let texture_strength = params.b.y;
+//     let texture_scale = params.b.z;
+//     let grid_contrast = params.c.z;
+    
+//     let pos = vout.local_pos;
+//     let light_dir = normalize(vec3f(0.5, 0.7, 0.5));
+    
+//     var normal = vec3f(0.0);
+//     let eps = 0.0001;
+//     if abs(abs(pos.x) - 0.5) < eps {
+//         normal = vec3f(sign(pos.x), 0.0, 0.0);
+//     } else if abs(abs(pos.y) - 0.5) < eps {
+//         normal = vec3f(0.0, sign(pos.y), 0.0);
+//     } else {
+//         normal = vec3f(0.0, 0.0, sign(pos.z));
+//     }
+    
+//     let ambient = 0.3;
+//     let diffuse = max(dot(normal, light_dir), 0.0);
+//     let light = ambient + diffuse * (1.0 - ambient); 
+    
+//     let face_color = vec3f(
+//         1.0 - abs(normal.x) * 0.01,
+//         1.0 - abs(normal.y) * 0.01,
+//         1.0 - abs(normal.z) * 0.01, 
+//     );
+
+//     let subdivision = subdivide_face(pos, normal);
+//     let texture = concrete_texture(pos * texture_scale, normal, vout.center);
+
+//     let color = face_color * light * 
+//         (1.0 + texture * texture_strength) * 
+//         (grid_contrast + subdivision * (1.0 - grid_contrast));
+
+//     return vec4f(color, 1.0);
+// }
 
 fn modular_echo(pos: vec3f, center: vec3f) -> vec3f {
     let scale = params.b.x;

@@ -51,6 +51,11 @@ struct ShaderParams {
 
     // grid_border_size, ...unused
     d: [f32; 4],
+
+    // corner_t_1 - corner_t_4
+    e: [f32; 4],
+    // corner_t_5 - corner_t_8
+    f: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -65,6 +70,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
         c: [0.0; 4],
         d: [0.0; 4],
+        e: [0.0; 4],
+        f: [0.0; 4],
     };
 
     let vertices = create_vertices(0.0);
@@ -112,7 +119,32 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("d3"),
             m.controls.get("d4"),
         ],
+        e: [
+            m.controls.get("corner_t_1"),
+            m.controls.get("corner_t_2"),
+            m.controls.get("corner_t_3"),
+            m.controls.get("corner_t_4"),
+        ],
+        f: [
+            m.controls.get("corner_t_5"),
+            m.controls.get("corner_t_6"),
+            m.controls.get("corner_t_7"),
+            m.controls.get("corner_t_8"),
+        ],
     };
+
+    // debug_throttled!(
+    //     1_000,
+    //     "{}, {}, {}, {}, {}, {}, {}, {}",
+    //     m.controls.get("corner_t_1"),
+    //     m.controls.get("corner_t_2"),
+    //     m.controls.get("corner_t_3"),
+    //     m.controls.get("corner_t_4"),
+    //     m.controls.get("corner_t_5"),
+    //     m.controls.get("corner_t_6"),
+    //     m.controls.get("corner_t_7"),
+    //     m.controls.get("corner_t_8"),
+    // );
 
     let vertices = create_vertices(m.controls.get("scale"));
 

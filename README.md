@@ -260,6 +260,13 @@ lightness:
         # duration; this is why the first cycle starts static until its ramp phase -
         # this is because there was no previous cycle that could ramp to it)
         - [1.0, [0.0, 1.0]]
+
+foo:
+    type: "triangle"
+    beats: 2.0
+    range: [-1.0, 1.0]
+    # phase offset expressed as percentage (0..1) of the above range
+    phase: 0.25
 ```
 
 ## Resources

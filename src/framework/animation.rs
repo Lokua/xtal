@@ -78,6 +78,7 @@ impl<T: TimingSource> Animation<T> {
         (total_beats / duration) % 1.0
     }
 
+    // #[deprecated(note = "Use `triangle` instead")]
     pub fn ping_pong(&self, duration: f32) -> f32 {
         self.ping_pong_loop_progress(duration)
     }
@@ -91,33 +92,25 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
-    /// A standard traingle wave that ping-pongs from `min` to `max` and
+    /// Successor to `ping_pong` which cycles through the entire up/down
+    /// range over the course of `duration` (ping_pong would need 2x duration)
+    pub fn tri(&self, duration: f32) -> f32 {
+        let x = (self.beats() / duration) % 1.0;
+        ternary!(x < 0.5, x, 1.0 - x) * 2.0
+    }
+
+    /// A (perhaps non-)standard traingle wave that ping-pongs from `min` to `max` and
     /// back to `min` in exactly `duration` beats. `phase_offset` in [0.0..1.0]
-    /// shifts our position in that cycle. Note that positive vs negative
-    /// offsets produce the identical results in a triangle wave!
+    /// shifts our position in that cycle. Only positive offsets are supported.
     pub fn triangle(
         &self,
         duration: f32,
         (min, max): (f32, f32),
         phase_offset: f32,
     ) -> f32 {
-        // First calculate the actual offset amount based on our range
-        let range = max - min;
-        let offset_amount = range * phase_offset;
-
-        // Get basic progress through the cycle
-        let progress = (self.beats() / duration) % 1.0;
-
-        // Convert to triangle wave (0..1)
-        let triangle = if progress < 0.5 {
-            progress * 2.0
-        } else {
-            2.0 * (1.0 - progress)
-        };
-
-        // Map to our range and add the offset
-        let value = map_range(triangle, 0.0, 1.0, min, max);
-        value + offset_amount
+        let mut x = (self.beats() / duration + phase_offset.abs() * 0.5) % 1.0;
+        x = ternary!(x < 0.5, x, 1.0 - x) * 2.0;
+        map_range(x, 0.0, 1.0, min, max)
     }
 
     /// Creates a new trigger with specified interval and delay;
@@ -414,17 +407,137 @@ pub mod tests {
 
     #[test]
     #[serial]
+    fn test_ping_pong() {
+        init(0);
+        let a = create_instance();
+
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.0, "1/16");
+
+        init(1);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.25, "2/16");
+
+        init(2);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.5, "3/16");
+
+        init(3);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.75, "4/16");
+
+        init(4);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 1.0, "5/16");
+
+        init(5);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.75, "6/16");
+
+        init(6);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.5, "7/16");
+
+        init(7);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.25, "8/16");
+
+        init(8);
+        let val = a.ping_pong(1.0);
+        assert_eq!(val, 0.0, "9/16");
+    }
+
+    #[test]
+    #[serial]
+    fn test_tri() {
+        init(0);
+        let a = create_instance();
+
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.0, "1/16");
+
+        init(1);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.25, "2/16");
+
+        init(2);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.5, "3/16");
+
+        init(3);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.75, "4/16");
+
+        init(4);
+        let val = a.tri(2.0);
+        assert_eq!(val, 1.0, "5/16");
+
+        init(5);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.75, "6/16");
+
+        init(6);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.5, "7/16");
+
+        init(7);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.25, "8/16");
+
+        init(8);
+        let val = a.tri(2.0);
+        assert_eq!(val, 0.0, "9/16");
+    }
+
+    // #[test]
+    // #[serial]
+    // fn test_tri_mapped() {
+    //     init(0);
+    //     let a = create_instance();
+
+    //     for i in 0..=15 {
+    //         init(i);
+    //         println!("{}: {}", i, a.triangle(4.0, (-1.0, 1.0), 0.125));
+    //     }
+
+    //     assert_eq!(0, 1, "dummy");
+    // }
+
+    #[test]
+    #[serial]
     fn test_triangle_8beats_positive_offset() {
         init(0);
         let a = create_instance();
 
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
-        assert_eq!(val, -0.75);
+        assert_eq!(val, -0.75, "1st beat");
 
         init(15);
-        let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
-        assert_eq!(val, -1.0);
+        let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
+        assert_eq!(val, -1.0, "last beat");
+
+        init(16);
+        let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
+        assert_eq!(val, -0.75, "1st beat - 2nd cycle");
     }
+
+    // #[test]
+    // #[serial]
+    // fn test_triangle_8beats_negative_offset() {
+    //     init(0);
+    //     let a = create_instance();
+
+    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
+    //     assert_eq!(val, -0.75, "1st beat");
+
+    //     init(15);
+    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
+    //     assert_eq!(val, -1.0, "last beat");
+
+    //     init(16);
+    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
+    //     assert_eq!(val, -0.75, "1st beat - 2nd cycle");
+    // }
 
     #[test]
     #[serial]

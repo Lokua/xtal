@@ -22,6 +22,9 @@ rot_y:
     keyframes:
         - [*ty, *TAU]
         - [*ty, 0.0]
+    # keyframes:
+    #     - [*ty, *TAU]
+    #     - [*ty, 0.0]
 
 rot_z:
     type: "lerp_rel"
@@ -84,3 +87,44 @@ d3:
     type: "slider"
 d4:
     type: "slider"
+
+corner_t_1:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0
+corner_t_2:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.125
+corner_t_3:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.25
+corner_t_4:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.375
+corner_t_5:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.5
+corner_t_6:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.625
+corner_t_7:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.75
+corner_t_8:
+    type: "triangle"
+    beats: *ct
+    range: [-1.0, 1.0]
+    phase: 0.875
