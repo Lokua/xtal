@@ -6,16 +6,16 @@ info:
         ty: &ty 24.0
         tz: &tz 38.0
         gt: &gt 16.0
-        ct: &ct 2.0
+        ct: &ct 4.0
 
 rot_x:
     type: "lerp_rel"
-    keyframes:
-        - [*tx, 0.0]
-        - [*tx, 0.0]
     # keyframes:
-    #     - [*tx, *TAU]
     #     - [*tx, 0.0]
+    #     - [*tx, 0.0]
+    keyframes:
+        - [*tx, *TAU]
+        - [*tx, 0.0]
 
 rot_y:
     type: "lerp_rel"
@@ -28,12 +28,12 @@ rot_y:
 
 rot_z:
     type: "lerp_rel"
-    keyframes:
-        - [*tz, 0.0]
-        - [*tz, 0.0]
     # keyframes:
-    #     - [*tz, *TAU]
     #     - [*tz, 0.0]
+    #     - [*tz, 0.0]
+    keyframes:
+        - [*tz, *TAU]
+        - [*tz, 0.0]
 
 z_offset:
     type: "slider"
@@ -75,7 +75,6 @@ grid_size:
 grid_border_size:
     type: "slider"
 
-# corner_t
 d2:
     type: "lerp_rel"
     keyframes:

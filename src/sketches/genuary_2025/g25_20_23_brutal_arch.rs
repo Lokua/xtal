@@ -133,19 +133,6 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    // debug_throttled!(
-    //     1_000,
-    //     "{}, {}, {}, {}, {}, {}, {}, {}",
-    //     m.controls.get("corner_t_1"),
-    //     m.controls.get("corner_t_2"),
-    //     m.controls.get("corner_t_3"),
-    //     m.controls.get("corner_t_4"),
-    //     m.controls.get("corner_t_5"),
-    //     m.controls.get("corner_t_6"),
-    //     m.controls.get("corner_t_7"),
-    //     m.controls.get("corner_t_8"),
-    // );
-
     let vertices = create_vertices(m.controls.get("scale"));
 
     m.gpu.update(app, &params, &vertices);
