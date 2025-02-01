@@ -2,22 +2,35 @@ info:
     vars:
         PI: &PI 3.14159265359
         TAU: &TAU 6.283185307179586
+        tx: &tx 32.0
+        ty: &ty 24.0
+        tz: &tz 38.0
+        gt: &gt 16.0
+        ct: &ct 2.0
 
 rot_x:
     type: "lerp_rel"
     keyframes:
-        - [8.0, *TAU]
-        - [8.0, 0.0]
+        - [*tx, 0.0]
+        - [*tx, 0.0]
+    # keyframes:
+    #     - [*tx, *TAU]
+    #     - [*tx, 0.0]
+
 rot_y:
     type: "lerp_rel"
     keyframes:
-        - [12.0, *TAU]
-        - [12.0, 0.0]
+        - [*ty, *TAU]
+        - [*ty, 0.0]
+
 rot_z:
     type: "lerp_rel"
     keyframes:
-        - [14.0, *TAU]
-        - [14.0, 0.0]
+        - [*tz, 0.0]
+        - [*tz, 0.0]
+    # keyframes:
+    #     - [*tz, *TAU]
+    #     - [*tz, 0.0]
 
 z_offset:
     type: "slider"
@@ -27,9 +40,47 @@ z_offset:
 scale:
     type: "slider"
 
-b2:
+texture_strength:
     type: "slider"
-b3:
+    range: [0.0, 2.0]
+
+texture_scale:
     type: "slider"
-b4:
+    range: [0.0, 10.0]
+
+glitch_time:
+    type: "lerp_rel"
+    keyframes:
+        - [*gt, 0.0]
+        - [*gt, 1.0]
+        - [*gt, 0.0]
+
+echo_threshold:
+    type: "slider"
+
+echo_intensity:
+    type: "slider"
+
+grid_contrast:
+    type: "slider"
+
+grid_size:
+    type: "slider"
+    range: [0.0, 16.0]
+    step: 1.0
+
+grid_border_size:
+    type: "slider"
+
+# corner_t
+d2:
+    type: "lerp_rel"
+    keyframes:
+        - [*ct, -1.0]
+        - [*ct, 1.0]
+        - [*ct, -1.0]
+
+d3:
+    type: "slider"
+d4:
     type: "slider"

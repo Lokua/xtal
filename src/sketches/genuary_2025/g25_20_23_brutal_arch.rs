@@ -13,7 +13,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(360),
+    gui_h: Some(380),
 };
 
 const BACKGROUND: f32 = 0.0;
@@ -43,8 +43,14 @@ struct ShaderParams {
     // rot_x, rot_y, rot_z, scale
     a: [f32; 4],
 
-    // unused
+    // scale, texture_strength, texture_scale, glitch_time
     b: [f32; 4],
+
+    // echo_threshold, echo_intensity, grid_contrast, grid_size
+    c: [f32; 4],
+
+    // grid_border_size, ...unused
+    d: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -57,6 +63,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         resolution: [0.0; 4],
         a: [0.0; 4],
         b: [0.0; 4],
+        c: [0.0; 4],
+        d: [0.0; 4],
     };
 
     let vertices = create_vertices(0.0);
@@ -88,9 +96,21 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         b: [
             m.controls.get("scale"),
-            m.controls.get("b2"),
-            m.controls.get("b3"),
-            m.controls.get("b4"),
+            m.controls.get("texture_strength"),
+            m.controls.get("texture_scale"),
+            m.controls.get("glitch_time"),
+        ],
+        c: [
+            m.controls.get("echo_threshold"),
+            m.controls.get("echo_intensity"),
+            m.controls.get("grid_contrast"),
+            m.controls.get("grid_size"),
+        ],
+        d: [
+            m.controls.get("grid_border_size"),
+            m.controls.get("d2"),
+            m.controls.get("d3"),
+            m.controls.get("d4"),
         ],
     };
 

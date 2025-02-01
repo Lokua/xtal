@@ -1,3 +1,4 @@
+use nannou::math::map_range;
 use nannou::rand;
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -88,6 +89,35 @@ impl<T: TimingSource> Animation<T> {
         } else {
             (1.0 - progress) * 2.0
         }
+    }
+
+    /// A standard traingle wave that ping-pongs from `min` to `max` and
+    /// back to `min` in exactly `duration` beats. `phase_offset` in [0.0..1.0]
+    /// shifts our position in that cycle. Note that positive vs negative
+    /// offsets produce the identical results in a triangle wave!
+    pub fn triangle(
+        &self,
+        duration: f32,
+        (min, max): (f32, f32),
+        phase_offset: f32,
+    ) -> f32 {
+        // First calculate the actual offset amount based on our range
+        let range = max - min;
+        let offset_amount = range * phase_offset;
+
+        // Get basic progress through the cycle
+        let progress = (self.beats() / duration) % 1.0;
+
+        // Convert to triangle wave (0..1)
+        let triangle = if progress < 0.5 {
+            progress * 2.0
+        } else {
+            2.0 * (1.0 - progress)
+        };
+
+        // Map to our range and add the offset
+        let value = map_range(triangle, 0.0, 1.0, min, max);
+        value + offset_amount
     }
 
     /// Creates a new trigger with specified interval and delay;
@@ -385,6 +415,20 @@ pub mod tests {
 
     fn create_instance() -> Animation<FrameTiming> {
         Animation::new(FrameTiming::new(BPM))
+    }
+
+    #[test]
+    #[serial]
+    fn test_triangle_8beats_positive_offset() {
+        init(0);
+        let a = create_instance();
+
+        let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
+        assert_eq!(val, -0.75);
+
+        init(15);
+        let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
+        assert_eq!(val, -1.0);
     }
 
     #[test]
