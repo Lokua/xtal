@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use notify::{Event, RecursiveMode, Watcher};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::{
     collections::HashMap,
     error::Error,
@@ -58,16 +58,14 @@ impl fmt::Debug for UpdateState {
 }
 
 enum AnimationConfig {
-    LerpAbs(LerpAbsConfig),
-    LerpRel(LerpRelConfig),
+    Lerp(LerpConfig),
     RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
 }
 impl AnimationConfig {
     pub fn delay(&self) -> f32 {
         match self {
-            AnimationConfig::LerpAbs(x) => x.delay,
-            AnimationConfig::LerpRel(x) => x.delay,
+            AnimationConfig::Lerp(x) => x.delay,
             AnimationConfig::RRampRel(x) => x.delay,
             _ => 0.0,
         }
@@ -76,11 +74,8 @@ impl AnimationConfig {
 impl fmt::Debug for AnimationConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AnimationConfig::LerpAbs(x) => {
+            AnimationConfig::Lerp(x) => {
                 f.debug_tuple("AnimationConfig::LerpAbs").field(x).finish()
-            }
-            AnimationConfig::LerpRel(x) => {
-                f.debug_tuple("AnimationConfig::LerpRel").field(x).finish()
             }
             AnimationConfig::RRampRel(x) => {
                 f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
@@ -139,24 +134,41 @@ impl<T: TimingSource> ControlScript<T> {
 
         if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
             return match (config, sequence) {
-                (_, KeyframeSequence::Linear(kfs)) => {
-                    self.animation.lerp(kfs.clone(), config.delay())
+                (
+                    AnimationConfig::Lerp(conf),
+                    KeyframeSequence::Linear(kfs),
+                ) => {
+                    if let Some(bypass) = conf.bypass {
+                        bypass
+                    } else {
+                        self.animation.lerp(kfs.clone(), config.delay())
+                    }
                 }
                 (
                     AnimationConfig::RRampRel(conf),
                     KeyframeSequence::Random(kfs),
-                ) => self.animation.r_ramp(
-                    kfs,
-                    conf.delay,
-                    conf.ramp_time,
-                    str_to_fn_unary(conf.ramp.as_str()),
-                ),
+                ) => {
+                    if let Some(bypass) = conf.bypass {
+                        bypass
+                    } else {
+                        self.animation.r_ramp(
+                            kfs,
+                            conf.delay,
+                            conf.ramp_time,
+                            str_to_fn_unary(conf.ramp.as_str()),
+                        )
+                    }
+                }
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
-                    self.animation.triangle(
-                        conf.beats,
-                        (conf.range[0], conf.range[1]),
-                        conf.phase,
-                    )
+                    if let Some(bypass) = conf.bypass {
+                        bypass
+                    } else {
+                        self.animation.triangle(
+                            conf.beats,
+                            (conf.range[0], conf.range[1]),
+                            conf.phase,
+                        )
+                    }
                 }
                 _ => unimplemented!(),
             };
@@ -272,7 +284,10 @@ impl<T: TimingSource> ControlScript<T> {
                     self.keyframe_sequences.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::LerpAbs(conf),
+                            AnimationConfig::Lerp(LerpConfig {
+                                delay: conf.delay,
+                                bypass: conf.bypass,
+                            }),
                             KeyframeSequence::Linear(keyframes),
                         ),
                     );
@@ -299,7 +314,10 @@ impl<T: TimingSource> ControlScript<T> {
                     self.keyframe_sequences.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::LerpRel(conf),
+                            AnimationConfig::Lerp(LerpConfig {
+                                delay: conf.delay,
+                                bypass: conf.bypass,
+                            }),
                             KeyframeSequence::Linear(keyframes),
                         ),
                     );
@@ -443,11 +461,19 @@ impl Default for OscConfig {
     }
 }
 
+#[derive(Clone, Debug)]
+struct LerpConfig {
+    delay: f32,
+    bypass: Option<f32>,
+}
+
 #[derive(Clone, Deserialize, Debug)]
 struct LerpAbsConfig {
     #[serde(default)]
     delay: f32,
     keyframes: Vec<(String, f32)>,
+    #[serde(default, deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
 }
 
 impl Default for LerpAbsConfig {
@@ -455,6 +481,7 @@ impl Default for LerpAbsConfig {
         Self {
             delay: 0.0,
             keyframes: Vec::new(),
+            bypass: None,
         }
     }
 }
@@ -464,6 +491,8 @@ struct LerpRelConfig {
     #[serde(default)]
     delay: f32,
     keyframes: Vec<(f32, f32)>,
+    #[serde(default, deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
 }
 
 impl Default for LerpRelConfig {
@@ -471,6 +500,7 @@ impl Default for LerpRelConfig {
         Self {
             delay: 0.0,
             keyframes: Vec::new(),
+            bypass: None,
         }
     }
 }
@@ -484,6 +514,8 @@ struct RRampRelConfig {
     #[serde(default = "default_ramp")]
     ramp: String,
     keyframes: Vec<(f32, (f32, f32))>,
+    #[serde(default, deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
 }
 
 fn default_ramp() -> String {
@@ -497,6 +529,7 @@ impl Default for RRampRelConfig {
             ramp: "linear".to_string(),
             ramp_time: 0.25,
             keyframes: Vec::new(),
+            bypass: None,
         }
     }
 }
@@ -507,6 +540,8 @@ struct TriangleConfig {
     beats: f32,
     range: [f32; 2],
     phase: f32,
+    #[serde(deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
 }
 
 impl Default for TriangleConfig {
@@ -515,6 +550,7 @@ impl Default for TriangleConfig {
             beats: 1.0,
             range: [0.0, 1.0],
             phase: 0.0,
+            bypass: None,
         }
     }
 }
@@ -523,4 +559,23 @@ impl Default for TriangleConfig {
 struct ParsedKeyframe {
     beats: f32,
     value: f32,
+}
+
+fn deserialize_number_or_none<'de, D>(
+    deserializer: D,
+) -> Result<Option<f32>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum NumericOrOther {
+        Num(f32),
+        Other(()),
+    }
+
+    match NumericOrOther::deserialize(deserializer) {
+        Ok(NumericOrOther::Num(n)) => Ok(Some(n)),
+        _ => Ok(None),
+    }
 }

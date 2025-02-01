@@ -173,13 +173,12 @@ scripting documentation:
 > sketch's `Model` as `model.controls`.
 
 ```yaml
-# "info" is the only thing in the document that won't be parsed
-# as a control. Use this for taking advantage of yaml's anchor/alias
-# functionality. Note that placing these under `info.vars` is just a personal
-# preference; they can really be anywhere you want under the `info` section.
-info:
-    vars:
-        example_var: &example_var 33.0
+# Any yaml field that doesn't match an object with a known type
+# will be ignored. Use them however you want; here I just use it house
+# aliases/anchors (variables) and prefix with underscore to make it
+# explicit
+_vars:
+    example_var: &example_var 33.0
 
 # Available in sketch as `m.controls.get("radius")`
 radius:
@@ -219,6 +218,11 @@ hue:
         # ramp back down to 0.0 from the 2nd to the start of the 3rd beat
         - ["0.2.0", 0.0]
         # ^ the above creates a perfect 2 beat loop and will continue looping.
+        # `bypass`, if omitted or is not a number will simply be ignored,
+        # however if it is a number will be used instead of the animation.
+        # This is great for testing, debugging, of even "live coding" to mute
+        # animations. All animation definitions support bypass;
+        bypass: _
 
 # Another interface to the same `Animation#lerp` method as above but uses the
 # exact same signature as the code instance for keyframes which is [beats, value].
@@ -229,6 +233,7 @@ saturation:
     type: "lerp_rel"
     # Optional, defaults to 0.0
     delay: 0.0
+    bypass: _
     keyframes:
         # Ramp from 0.0 to the next keyframe value (1.0) over 1 beat
         - [1.0, 0.0]
@@ -248,6 +253,7 @@ lightness:
     ramp: "linear"
     # Optional, defaults to 0.25 (1/16th note)
     ramp_time: 0.5
+    bypass: _
     keyframes:
         # Every beat, pick a random value between 0.0 and 1.0, and ramp to it
         # over `ramp_time` beats. So for example let's say the random number generated
@@ -267,6 +273,7 @@ foo:
     range: [-1.0, 1.0]
     # phase offset expressed as percentage (0..1) of the above range
     phase: 0.25
+    bypass: _
 ```
 
 ## Resources
