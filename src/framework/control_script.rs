@@ -175,7 +175,8 @@ impl<T: TimingSource> ControlScript<T> {
             };
         }
 
-        loud_panic!("No control named {}", name);
+        warn_once(format!("No control named {}. Defaulting to 0.0", name));
+        0.0
     }
 
     pub fn update(&mut self) {

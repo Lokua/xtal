@@ -32,13 +32,17 @@ struct Params {
     // echo_threshold, echo_intensity, grid_contrast, grid_size
     c: vec4f,
 
-    // grid_border_size, ...unused
+    // grid_border_size, corner_offset, middle_offset, middle_size
     d: vec4f,
 
     // corner_t_1 - corner_t_4
     e: vec4f,
     // corner_t_5 - corner_t_8
     f: vec4f,
+
+    // unused
+    g: vec4f,
+    h: vec4f,
 }
 
 @group(0) @binding(0)
@@ -65,6 +69,8 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let z_offset = clamp(params.a.w, -10.0, -0.5);
     let scale = params.b.x;
     let corner_t = params.d.y;
+    let middle_t = params.d.z;
+    let middle_size = params.d.w;
 
     var position = vert.position;
     let corner_sum = 
@@ -83,14 +89,26 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
             
         if is_outer_vertex {
             let phase = get_corner_phase(corner_index, params);
-            let factor = 0.5;
+            let factor = 0.333;
             let corner_axis = sign(vert.center);
-            position = position + corner_axis * phase * factor;
+            position += corner_axis * phase * factor;
         }
 
         // Move corners out and back
         let dir = normalize(vert.center);
         position = position + dir * corner_t;
+    } else {
+        // Move middles out and back
+        let dir = normalize(vert.center);
+        position += dir * middle_t;
+
+        let primary_axis = abs(vert.center);
+        let factor = 1.0 + middle_size;
+        position *= vec3f(
+            select(1.0, factor, primary_axis.x > 0.1),
+            select(1.0, factor, primary_axis.y > 0.1),
+            select(1.0, factor, primary_axis.z > 0.1)
+        ); 
     }
 
     // TRS = Translate, Rotate, Scale 
@@ -98,10 +116,14 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let scaled_position = position * scale;
     let positioned = scaled_position + vert.center;
 
-    let echoed = modular_echo(positioned, vert.center);
+    var p = modular_echo(positioned, vert.center);
+    p = staggered_offset(p, vert.center, params.g.x);
+    p = diagonal_shear(p, vert.center, params.g.y);
+    p = radial_bulge(p, vert.center, params.g.z);
+    p = layered_offset(p, vert.center, params.g.w);
 
     // var rotated = rotate_x(glitched, r_x);
-    var rotated = rotate_x(echoed, r_x);
+    var rotated = rotate_x(p, r_x);
     rotated = rotate_y(rotated, r_y);
     rotated = rotate_z(rotated, r_z);
     let translated = vec3f(rotated.x, rotated.y, rotated.z + z_offset);
@@ -135,10 +157,6 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         return vec4f(vout.layer, vout.layer, vout.layer, 1.0);
     }
 
-    if vout.layer < FOREGROUND { 
-        return vec4f(vec3f(0.13), 1.0);
-    } 
-
     if vout.layer == FOREGROUND && DEBUG_CORNERS {
         let is_corner = 
             abs(vout.center.x) + 
@@ -152,15 +170,21 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         }
     }
 
+    if vout.layer < FOREGROUND { 
+        // return vec4f(vec3f(0.13), 1.0);
+        return vec4f(vec3f(0.88), 1.0);
+    } 
+
     let texture_strength = params.b.y;
     let texture_scale = params.b.z;
     let grid_contrast = params.c.z;
     
     let pos = vout.local_pos;
-    let light_dir = normalize(vec3f(0.5, 0.7, 0.5));
+    let light_dir = normalize(vec3f(0.25, 0.75, -0.75));
     
     var normal = vec3f(0.0);
     let eps = 0.0001;
+    let world_dir = normalize(vout.pos - vout.center);
     if abs(abs(pos.x) - 0.5) < eps {
         normal = vec3f(sign(pos.x), 0.0, 0.0);
     } else if abs(abs(pos.y) - 0.5) < eps {
@@ -169,14 +193,15 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         normal = vec3f(0.0, 0.0, sign(pos.z));
     }
     
-    let ambient = 0.3;
+    let ambient = 0.1;
     let diffuse = max(dot(normal, light_dir), 0.0);
     let light = ambient + diffuse * (1.0 - ambient); 
-    
+
+    let face_tint = 0.01;
     let face_color = vec3f(
-        1.0 - abs(normal.x) * 0.01,
-        1.0 - abs(normal.y) * 0.01,
-        1.0 - abs(normal.z) * 0.01, 
+        1.0 - abs(normal.x) * face_tint,
+        1.0 - abs(normal.y) * face_tint,
+        1.0 - abs(normal.z) * face_tint, 
     );
 
     let subdivision = subdivide_face(pos, normal);
@@ -225,6 +250,35 @@ fn modular_echo(pos: vec3f, center: vec3f) -> vec3f {
     return pos + echo_offset;
 }
 
+fn staggered_offset(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
+    let offset = sign(center) * vec3f(
+        select(0.0, 1.0, abs(center.x) > 0.25),
+        select(0.0, 1.0, abs(center.y) > 0.25),
+        select(0.0, 1.0, abs(center.z) > 0.25)
+    );
+    return pos + offset * intensity;
+}
+
+fn diagonal_shear(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
+    let shear = vec3f(
+        center.y * center.z,
+        center.x * center.z,
+        center.x * center.y
+    );
+    return pos + shear * intensity;
+}
+
+fn radial_bulge(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
+    let dist = length(center);
+    let bulge = normalize(pos) * powf(dist, 2.0);
+    return pos + bulge * intensity;
+}
+
+fn layered_offset(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
+    let layer = floor(abs(pos) * 4.0) * 0.5 * sign(center);
+    return pos + layer * intensity;
+}
+
 fn subdivide_face(pos: vec3f, normal: vec3f) -> f32 {
     let grid_size = params.c.w;
     let grid_border_size = params.d.x;
@@ -254,19 +308,20 @@ fn get_corner_index(center: vec3f) -> i32 {
 }
 
 fn get_corner_phase(corner_index: i32, params: Params) -> f32 {
-    var phase = 0.0;
-    switch corner_index {
-        case 0: { phase = params.e.x; }
-        case 1: { phase = params.e.y; }
-        case 2: { phase = params.e.z; }
-        case 3: { phase = params.e.w; }
-        case 4: { phase = params.f.x; }
-        case 5: { phase = params.f.y; }
-        case 6: { phase = params.f.z; }
-        case 7: { phase = params.f.w; }
-        default: { phase = 0.0; }
-    }
-    return phase;
+    return params.e.x;
+    // var phase = 0.0;
+    // switch corner_index {
+    //     case 0: { phase = params.e.x; }
+    //     case 1: { phase = params.e.y; }
+    //     case 2: { phase = params.e.z; }
+    //     case 3: { phase = params.e.w; }
+    //     case 4: { phase = params.f.x; }
+    //     case 5: { phase = params.f.y; }
+    //     case 6: { phase = params.f.z; }
+    //     case 7: { phase = params.f.w; }
+    //     default: { phase = 0.0; }
+    // }
+    // return phase;
 }
 
 fn concrete_texture(pos: vec3f, normal: vec3f, center: vec3f) -> f32 {
@@ -369,4 +424,8 @@ fn hash(p: vec2f) -> f32 {
     let p3 = fract(vec3f(p.xyx) * 0.13);
     let p4 = p3 + vec3f(7.0, 157.0, 113.0);
     return fract(dot(p4, vec3f(268.5453123, 143.2354234, 424.2424234)));
+}
+
+fn powf(x: f32, y: f32) -> f32 {
+    return sign(x) * exp(log(abs(x)) * y);
 }

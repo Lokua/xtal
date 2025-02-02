@@ -1,14 +1,14 @@
 _vars:
     PI: &PI 3.14159265359
     TAU: &TAU 6.283185307179586
-    tx: &tx 32
-    ty: &ty 12
-    tz: &tz 38
+    tx: &tx 24
+    ty: &ty 8
+    tz: &tz 36
     gt: &gt 16
 
 rot_x:
     type: lerp_rel
-    bypass: 0
+    bypass: _
     keyframes:
         - [*tx, *TAU]
         - [*tx, 0]
@@ -54,7 +54,15 @@ echo_threshold:
     type: slider
 
 echo_intensity:
-    type: slider
+    type: lerp_rel
+    bypass: 0
+    keyframes:
+        - [2.0, 0.0]
+        - [1.0, 0.0]
+        - [0.25, 0.0]
+        - [0.5, 0.5]
+        - [0.25, 1.0]
+        - [0.0, 0.0]
 
 grid_contrast:
     type: slider
@@ -67,24 +75,30 @@ grid_size:
 grid_border_size:
     type: slider
 
-# corner_offset:
-d2:
+corner_offset:
     type: triangle
     beats: 4
 
-d3:
-    type: slider
-d4:
-    type: slider
+middle_offset:
+    type: triangle
+    bypass: _
+    beats: 4
+    phase: 0
+    range: [-0.25, 1]
+
+middle_size:
+    type: triangle
+    beats: 1.5
+    phase: 0.5
+    range: [-1.0, 1.0]
 
 _corner_t_vars:
     ct: &ct 4
     corner_t_base: &corner_t_base
         type: triangle
-        beats: 8
-        range: [-1, 2]
+        beats: 2
+        range: [-1, 3]
         bypass: _
-
 corner_t_1:
     <<: *corner_t_base
     phase: 0
@@ -109,3 +123,30 @@ corner_t_7:
 corner_t_8:
     <<: *corner_t_base
     phase: 0.875
+
+# stag_off
+g1:
+    type: slider
+    range: [-1, 1]
+g2:
+    type: slider
+    range: [-1, 1]
+g3:
+    type: slider
+    range: [-1, 1]
+# lay_off_amount
+g4:
+    type: slider
+    range: [0, -2]
+h1:
+    type: slider
+    range: [-1, 1]
+h2:
+    type: slider
+    range: [-1, 1]
+h3:
+    type: slider
+    range: [-1, 1]
+h4:
+    type: slider
+    range: [-1, 1]

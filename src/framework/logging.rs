@@ -1,6 +1,7 @@
 use env_logger::{Builder, Env};
 use log::LevelFilter;
-use std::{io::Write, sync::Once};
+use once_cell::sync::Lazy;
+use std::{collections::HashSet, io::Write, sync::Mutex};
 use termcolor::{Color, ColorSpec, WriteColor};
 
 pub use log::{debug, error, info, trace, warn};
@@ -38,12 +39,14 @@ pub fn init_logger() {
         .init();
 }
 
-static WARN_ONCE: Once = Once::new();
+static WARNED_MESSAGES: Lazy<Mutex<HashSet<String>>> =
+    Lazy::new(|| Mutex::new(HashSet::new()));
 
 pub fn warn_once(message: String) {
-    WARN_ONCE.call_once(|| {
+    let mut set = WARNED_MESSAGES.lock().unwrap();
+    if set.insert(message.to_string()) {
         warn!("{}", message);
-    });
+    }
 }
 
 #[allow(unused_macros)]

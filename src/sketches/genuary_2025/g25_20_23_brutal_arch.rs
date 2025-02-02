@@ -3,6 +3,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// b/w ~/Live/2025/Lattice - Inspired by Brutalism
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_20_23_brutal_arch",
     display_name:
@@ -13,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(380),
+    gui_h: Some(480),
 };
 
 const BACKGROUND: f32 = 0.0;
@@ -21,7 +23,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<FrameTiming>,
+    controls: ControlScript<OscTransportTiming>,
     wr: WindowRect,
     gpu: gpu::GpuState<Vertex>,
 }
@@ -49,19 +51,23 @@ struct ShaderParams {
     // echo_threshold, echo_intensity, grid_contrast, grid_size
     c: [f32; 4],
 
-    // grid_border_size, ...unused
+    // grid_border_size, corner_offset, middle_offset, middle_size
     d: [f32; 4],
 
     // corner_t_1 - corner_t_4
     e: [f32; 4],
     // corner_t_5 - corner_t_8
     f: [f32; 4],
+
+    // unused
+    g: [f32; 4],
+    h: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
-        FrameTiming::new(SKETCH_CONFIG.bpm),
+        OscTransportTiming::new(SKETCH_CONFIG.bpm),
     );
 
     let params = ShaderParams {
@@ -72,6 +78,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         d: [0.0; 4],
         e: [0.0; 4],
         f: [0.0; 4],
+        g: [0.0; 4],
+        h: [0.0; 4],
     };
 
     let vertices = create_vertices(0.0);
@@ -115,9 +123,9 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         d: [
             m.controls.get("grid_border_size"),
-            m.controls.get("d2"),
-            m.controls.get("d3"),
-            m.controls.get("d4"),
+            m.controls.get("corner_offset"),
+            m.controls.get("middle_offset"),
+            m.controls.get("middle_size"),
         ],
         e: [
             m.controls.get("corner_t_1"),
@@ -130,6 +138,18 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("corner_t_6"),
             m.controls.get("corner_t_7"),
             m.controls.get("corner_t_8"),
+        ],
+        g: [
+            m.controls.get("g1"),
+            m.controls.get("g2"),
+            m.controls.get("g3"),
+            m.controls.get("g4"),
+        ],
+        h: [
+            m.controls.get("h1"),
+            m.controls.get("h2"),
+            m.controls.get("h3"),
+            m.controls.get("h4"),
         ],
     };
 
