@@ -82,13 +82,8 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let offs = params.g.w;
 
     var position = vert.position;
-    let corner_sum = 
-        abs(vert.center.x) + 
-        abs(vert.center.y) + 
-        abs(vert.center.z);
-    let is_corner = corner_sum > 1.0;
 
-    if is_corner {
+    if is_corner(vert.center) {
         let corner_index = get_corner_index(vert.center);
 
         let is_outer_vertex = 
@@ -125,7 +120,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let scaled_position = position * scale;
     let positioned = scaled_position + vert.center;
 
-    var p = modular_echo(positioned, vert.center);
+    var p = mix(positioned, modular_echo(positioned, vert.center), 0.0);
     p = staggered_offset(p, vert.center, stag);
     p = diagonal_shear(p, vert.center, diag);
     p = radial_bulge(p, vert.center, bulge);
@@ -162,15 +157,16 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     if DEBUG {
-        return vec4f(vout.layer, vout.layer, vout.layer, 1.0);
+        return vec4f(
+            abs(vout.center.x),
+            abs(vout.center.y),
+            abs(vout.center.z),
+            1.0
+        );
     }
 
     if vout.layer == FOREGROUND && DEBUG_CORNERS {
-        let is_corner = 
-            abs(vout.center.x) + 
-            abs(vout.center.y) + 
-            abs(vout.center.z) > 1.0;
-        if is_corner {
+        if is_corner(vout.center) {
             let corner_index = get_corner_index(vout.center);
             let phase = get_corner_phase(corner_index, params);
             let color = (phase + 1.0) * 0.5;
@@ -240,6 +236,17 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     }
 
     return vec4f(foreground_color, 1.0);
+}
+
+fn is_corner(center: vec3f) -> bool {
+    let x_abs = abs(center.x);
+    let y_abs = abs(center.y);
+    let z_abs = abs(center.z);
+    
+    let epsilon = 0.0001;
+    return abs(x_abs - y_abs) < epsilon && 
+           abs(y_abs - z_abs) < epsilon && 
+           abs(x_abs - z_abs) < epsilon;
 }
 
 fn get_bg_noise(

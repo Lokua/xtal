@@ -8,21 +8,21 @@ _vars:
 
 rot_x:
     type: lerp_rel
-    bypass: _
+    bypass: 0.25
     keyframes:
         - [*rx, *TAU]
         - [*rx, 0]
 
 rot_y:
     type: lerp_rel
-    bypass: _
+    bypass: 0.125
     keyframes:
         - [*ry, *TAU]
         - [*ry, 0]
 
 rot_z:
     type: lerp_rel
-    bypass: _
+    bypass: 0
     keyframes:
         - [*rz, *TAU]
         - [*rz, 0]
