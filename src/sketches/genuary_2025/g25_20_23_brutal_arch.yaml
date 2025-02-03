@@ -1,31 +1,31 @@
 _vars:
     PI: &PI 3.14159265359
     TAU: &TAU 6.283185307179586
-    tx: &tx 24
-    ty: &ty 8
-    tz: &tz 36
+    rx: &rx 36
+    ry: &ry 16
+    rz: &rz 36
     gt: &gt 16
 
 rot_x:
     type: lerp_rel
     bypass: _
     keyframes:
-        - [*tx, *TAU]
-        - [*tx, 0]
+        - [*rx, *TAU]
+        - [*rx, 0]
 
 rot_y:
     type: lerp_rel
     bypass: _
     keyframes:
-        - [*ty, *TAU]
-        - [*ty, 0]
+        - [*ry, *TAU]
+        - [*ry, 0]
 
 rot_z:
     type: lerp_rel
     bypass: _
     keyframes:
-        - [*tz, *TAU]
-        - [*tz, 0]
+        - [*rz, *TAU]
+        - [*rz, 0]
 
 z_offset:
     type: slider
@@ -90,7 +90,7 @@ middle_size:
     type: triangle
     beats: 1.5
     phase: 0.5
-    range: [-1.0, 1.0]
+    range: [-0.75, 1.0]
 
 _corner_t_vars:
     ct: &ct 4
@@ -124,29 +124,39 @@ corner_t_8:
     <<: *corner_t_base
     phase: 0.875
 
-# stag_off
-g1:
+stag:
     type: slider
     range: [-1, 1]
-g2:
+
+diag:
     type: slider
     range: [-1, 1]
-g3:
+
+bulge:
     type: slider
     range: [-1, 1]
-# lay_off_amount
-g4:
+
+offs:
     type: slider
-    range: [0, -2]
-h1:
+    range: [0, 1]
+
+bg_noise:
     type: slider
-    range: [-1, 1]
-h2:
+    range: [0, 1]
+
+bg_noise_scale:
     type: slider
-    range: [-1, 1]
+    range: [0, 100]
+
 h3:
     type: slider
-    range: [-1, 1]
 h4:
     type: slider
-    range: [-1, 1]
+i1:
+    type: slider
+i2:
+    type: slider
+i3:
+    type: slider
+i4:
+    type: slider

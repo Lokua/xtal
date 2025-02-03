@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(480),
+    gui_h: Some(540),
 };
 
 const BACKGROUND: f32 = 0.0;
@@ -59,9 +59,14 @@ struct ShaderParams {
     // corner_t_5 - corner_t_8
     f: [f32; 4],
 
-    // unused
+    // stag, diag, bulge, offs
     g: [f32; 4],
+
+    // bg_noise, bg_noise_scale, ..unused
     h: [f32; 4],
+
+    // unused
+    i: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -80,6 +85,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         f: [0.0; 4],
         g: [0.0; 4],
         h: [0.0; 4],
+        i: [0.0; 4],
     };
 
     let vertices = create_vertices(0.0);
@@ -140,16 +146,22 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("corner_t_8"),
         ],
         g: [
-            m.controls.get("g1"),
-            m.controls.get("g2"),
-            m.controls.get("g3"),
-            m.controls.get("g4"),
+            m.controls.get("stag"),
+            m.controls.get("diag"),
+            m.controls.get("bulge"),
+            m.controls.get("offs"),
         ],
         h: [
-            m.controls.get("h1"),
-            m.controls.get("h2"),
+            m.controls.get("bg_noise"),
+            m.controls.get("bg_noise_scale"),
             m.controls.get("h3"),
             m.controls.get("h4"),
+        ],
+        i: [
+            m.controls.get("blend_time"),
+            m.controls.get("i2"),
+            m.controls.get("i3"),
+            m.controls.get("i4"),
         ],
     };
 

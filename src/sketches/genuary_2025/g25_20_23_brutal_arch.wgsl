@@ -40,9 +40,14 @@ struct Params {
     // corner_t_5 - corner_t_8
     f: vec4f,
 
-    // unused
+    // stag, diag, bulge, offs
     g: vec4f,
+
+    // bg_noise, bg_noise_scale
     h: vec4f,
+
+    // unused
+    i: vec4f,
 }
 
 @group(0) @binding(0)
@@ -71,6 +76,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let corner_t = params.d.y;
     let middle_t = params.d.z;
     let middle_size = params.d.w;
+    let stag = params.g.x;
+    let diag = params.g.y;
+    let bulge = params.g.z;
+    let offs = params.g.w;
 
     var position = vert.position;
     let corner_sum = 
@@ -117,12 +126,11 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let positioned = scaled_position + vert.center;
 
     var p = modular_echo(positioned, vert.center);
-    p = staggered_offset(p, vert.center, params.g.x);
-    p = diagonal_shear(p, vert.center, params.g.y);
-    p = radial_bulge(p, vert.center, params.g.z);
-    p = layered_offset(p, vert.center, params.g.w);
+    p = staggered_offset(p, vert.center, stag);
+    p = diagonal_shear(p, vert.center, diag);
+    p = radial_bulge(p, vert.center, bulge);
+    p = layered_offset(p, vert.center, offs);
 
-    // var rotated = rotate_x(glitched, r_x);
     var rotated = rotate_x(p, r_x);
     rotated = rotate_y(rotated, r_y);
     rotated = rotate_z(rotated, r_z);
@@ -170,18 +178,7 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    if vout.layer < FOREGROUND { 
-        // return vec4f(vec3f(0.13), 1.0);
-        return vec4f(vec3f(0.88), 1.0);
-    } 
-
-    let texture_strength = params.b.y;
-    let texture_scale = params.b.z;
-    let grid_contrast = params.c.z;
-    
     let pos = vout.local_pos;
-    let light_dir = normalize(vec3f(0.25, 0.75, -0.75));
-    
     var normal = vec3f(0.0);
     let eps = 0.0001;
     let world_dir = normalize(vout.pos - vout.center);
@@ -192,7 +189,12 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     } else {
         normal = vec3f(0.0, 0.0, sign(pos.z));
     }
+
+    let texture_strength = params.b.y;
+    let texture_scale = params.b.z;
+    let grid_contrast = params.c.z;
     
+    let light_dir = normalize(vec3f(0.25, 0.75, -0.75));
     let ambient = 0.1;
     let diffuse = max(dot(normal, light_dir), 0.0);
     let light = ambient + diffuse * (1.0 - ambient); 
@@ -201,17 +203,59 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     let face_color = vec3f(
         1.0 - abs(normal.x) * face_tint,
         1.0 - abs(normal.y) * face_tint,
-        1.0 - abs(normal.z) * face_tint, 
+        1.0 - abs(normal.z) * face_tint
     );
 
     let subdivision = subdivide_face(pos, normal);
     let texture = concrete_texture(pos * texture_scale, normal, vout.center);
 
-    let color = face_color * light * 
-        (1.0 + texture * texture_strength) * 
-        (grid_contrast + subdivision * (1.0 - grid_contrast));
+    let foreground_color = vec3f(
+        face_color * 
+            light * 
+            (1.0 + texture * texture_strength) * 
+            (grid_contrast + subdivision * (1.0 - grid_contrast)), 
+    );
 
-    return vec4f(color, 1.0);
+    if vout.layer < FOREGROUND {
+        let bg_noise = params.h.x;
+        let bg_noise_scale = params.h.y;
+
+        let blended = mix(
+            get_bg_noise(
+                vout.pos.xy, 
+                foreground_color, 
+                bg_noise, 
+                bg_noise_scale
+            ),
+            get_bg_noise(
+                vout.pos.xy, 
+                foreground_color, 
+                bg_noise, 
+                100.0 - bg_noise_scale
+            ),
+            0.5
+        );
+
+        return vec4f(blended, 1.0);
+    }
+
+    return vec4f(foreground_color, 1.0);
+}
+
+fn get_bg_noise(
+    p: vec2f, 
+    foreground_color: vec3f, 
+    amount: f32, 
+    scale: f32
+) -> vec3f {
+    let noise_value = fbm(p * scale);
+    let background_color = vec3f(0.99);
+
+    return mix(
+        background_color,
+        mix(background_color, foreground_color, noise_value),
+        amount
+    );
 }
 
 fn modular_echo(pos: vec3f, center: vec3f) -> vec3f {
@@ -428,4 +472,19 @@ fn hash(p: vec2f) -> f32 {
 
 fn powf(x: f32, y: f32) -> f32 {
     return sign(x) * exp(log(abs(x)) * y);
+}
+
+fn random_normal(seed: u32, std_dev: f32) -> f32 {
+    let u1 = rand_pcg(seed);
+    let u2 = rand_pcg(seed + 1u);
+    let mag = sqrt(-2.0 * log(u1));
+    let z0 = mag * cos(2.0 * PI * u2);
+    return std_dev * z0;
+}
+
+fn rand_pcg(seed: u32) -> f32 {
+    var state = seed * 747796405u + 2891336453u;
+    var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    var result = (word >> 22u) ^ word;
+    return f32(result) / 4294967295.0;
 }
