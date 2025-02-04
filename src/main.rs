@@ -95,7 +95,6 @@ fn main() {
         "spiral" => run_sketch!(spiral),
         "spiral_lines" => run_sketch!(spiral_lines),
         "wave_fract" => run_sketch!(wave_fract),
-        "wgpu_test" => run_sketch!(wgpu_test),
 
         // --- DEV
         "animation_dev" => run_sketch!(animation_dev),

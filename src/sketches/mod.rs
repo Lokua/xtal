@@ -53,7 +53,6 @@ pub use self::scratch::sand_line;
 pub use self::scratch::shader_experiments;
 pub use self::scratch::vertical;
 pub use self::scratch::vertical_2;
-pub use self::scratch::wgpu_test;
 pub use self::scratch::z_sim;
 
 pub mod templates;
