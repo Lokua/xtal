@@ -3,21 +3,20 @@ use nannou::prelude::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "wgpu_displacement",
-    display_name: "WGPU Displacement",
+    name: "kalos",
+    display_name: "Kalos",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(560),
+    gui_h: Some(580),
 };
 
 #[derive(SketchComponents)]
 pub struct Model {
-    #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     #[allow(dead_code)]
     wr: WindowRect,
@@ -56,7 +55,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate", false),
@@ -119,7 +118,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_full_screen(
         app,
-        to_absolute_path(file!(), "./wgpu_displacement.wgsl"),
+        to_absolute_path(file!(), "kalos.wgsl"),
         &params,
         true,
     );

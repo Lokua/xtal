@@ -24,14 +24,14 @@ const GRID_SIZE: u32 = 16;
 #[sketch(clear_color = "hsla(0.0, 0.0, 0.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     lines: Vec<Vec2>,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::new(vec![
         Control::checkbox("invert", false),

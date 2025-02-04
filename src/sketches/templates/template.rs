@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     radius: f32,
@@ -25,7 +25,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::new(vec![Control::slider(
         "radius",

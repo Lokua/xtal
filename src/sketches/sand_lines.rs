@@ -8,6 +8,8 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "sand_lines",
     display_name: "Sand Lines",
+
+    // The sketch absolutely kills the CPU so is only good for static drawings
     play_mode: PlayMode::ManualAdvance,
     fps: 60.0,
     bpm: 134.0,

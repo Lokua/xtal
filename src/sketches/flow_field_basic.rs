@@ -21,7 +21,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     agents: Vec<Agent>,
@@ -29,7 +29,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::select(

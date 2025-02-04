@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
@@ -46,7 +46,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate_wave1_phase", false),

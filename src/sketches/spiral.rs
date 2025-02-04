@@ -47,14 +47,14 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<()>,
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
         // 1 "pass" = 1 million vertices

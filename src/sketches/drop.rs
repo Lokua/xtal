@@ -18,7 +18,7 @@ const MAX_DROPS: usize = 2500;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
@@ -61,7 +61,7 @@ impl Dropper {
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
     let controls = Controls::new(vec![
         Control::Slider {
             name: "center_min_radius".to_string(),

@@ -23,7 +23,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<OscTransportTiming>,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<Vertex>,
 }
@@ -72,7 +72,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
-        OscTransportTiming::new(SKETCH_CONFIG.bpm),
+        Timing::new(SKETCH_CONFIG.bpm),
     );
 
     let params = ShaderParams {

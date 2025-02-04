@@ -89,15 +89,13 @@ fn main() {
         "flow_field_basic" => run_sketch!(flow_field_basic),
         "heat_mask" => run_sketch!(heat_mask),
         "interference" => run_sketch!(interference),
+        "kalos" => run_sketch!(kalos),
+        "kalos_2" => run_sketch!(kalos_2),
         "sand_lines" => run_sketch!(sand_lines),
         "sierpinski_triangle" => run_sketch!(sierpinski_triangle),
         "spiral" => run_sketch!(spiral),
-        "spiral_2" => run_sketch!(spiral_2),
-        "template" => run_sketch!(template),
-        "template_wgpu" => run_sketch!(template_wgpu),
+        "spiral_lines" => run_sketch!(spiral_lines),
         "wave_fract" => run_sketch!(wave_fract),
-        "wgpu_displacement" => run_sketch!(wgpu_displacement),
-        "wgpu_displacement_2" => run_sketch!(wgpu_displacement_2),
         "wgpu_test" => run_sketch!(wgpu_test),
 
         // --- GENUARY 2025
@@ -138,6 +136,10 @@ fn main() {
 
         // --- TEMPLATES
         "basic_cube_shader_template" => run_sketch!(basic_cube_shader_template),
+        "basic_procedural_shader_template" => {
+            run_sketch!(basic_procedural_shader_template)
+        }
+        "template" => run_sketch!(template),
 
         _ => {
             warn!("Sketch not found, running template");

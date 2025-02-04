@@ -1,7 +1,6 @@
-info:
-    vars:
-        PI: &PI 3.14159265359
-        TAU: &TAU 6.283185307179586
+_vars:
+    PI: &PI 3.14159265359
+    TAU: &TAU 6.283185307179586
 
 rotation:
     type: "slider"

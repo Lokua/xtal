@@ -28,7 +28,7 @@ const CIRCLE_RESOLUTION: f32 = 6.0;
 pub struct Model {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     cached_pattern: String,
     cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
@@ -87,7 +87,7 @@ impl Model {
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = Controls::new(vec![
@@ -452,8 +452,9 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-type AnimationFn<R> =
-    Option<Arc<dyn Fn(&Displacer, &Animation<FrameTiming>, &Controls) -> R + Send + Sync>>;
+type AnimationFn<R> = Option<
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
+>;
 
 struct DisplacerConfig {
     kind: &'static str,
@@ -477,7 +478,11 @@ impl DisplacerConfig {
         }
     }
 
-    pub fn update(&mut self, animation: &Animation<FrameTiming>, controls: &Controls) {
+    pub fn update(
+        &mut self,
+        animation: &Animation<Timing>,
+        controls: &Controls,
+    ) {
         if let Some(position_fn) = &self.position_animation {
             self.displacer.position =
                 position_fn(&self.displacer, animation, controls);

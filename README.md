@@ -23,25 +23,16 @@ controls, and declarative frame-based animation.
 
 -   Export images and capture mp4 videos with the press of a button
 -   Declarative animation interface with times specified in musical beats, e.g.
-    `3.25` represents a duration of 3 beats a 16th note.
--   Sync animations to MIDI using MIDI Clock and Song Position Pointers (to
-    track when a DAW is looping so you can work on or see the animation loop
-    in-time) or a hybrid MIDI Time Code / MIDI Clock system that uses the higher
-    resolution MIDI clock for sync but relies on MTC to detect when a source has
-    jumped or is looping (this is for sources that don't properly send the SPP
-    message). There is even included a special L.OscTransport Max4Live devices
-    that will send transport over OSC which is much more reliable than MIDI
-    clocking.
--   Write animations in code or configure your sketch to use an external TOML
-    file so you can work on animations without restarting the rust program.
-    Or...
--   Automate parameters with MIDI CC, OSC, CV, or even audio with peak, rms, and
+    `3.25` represents a duration of 3 beats and 1 16th note.
+-   Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
+-   Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
     multiband mechanisms all available through a dead simple API
+-   Write animations in code or configure your sketch to use an external yaml
+    file that can be hot-reloaded (similar to live coding - see
+    [Control Scripting](#control-scripting))
 -   Declarative per-sketch UI control definitions with framework agnostic design
 -   Automatic store/recall of GUI control/parameters
--   Hot reloadable WGSL shaders
--   Hot reloadable UI/OSC/Animation declarations. See
-    [Control Scripting](#control-scripting).
+-   Hot reloadable WGSL shaders.
 
 ## Requirements
 
@@ -215,7 +206,7 @@ _vars:
 
 # Available in sketch as `m.controls.get("radius")`
 radius:
-    type: "slider"
+    type: slider
     # Optional, defaults to [0.0, 1.0]
     range: [0.0, 500.0]
     # Optional, defaults to 0.5
@@ -224,22 +215,34 @@ radius:
     # Optional, defaults to 0.0001
     step: 1.0
 
+some_boolean:
+    type: checkbox
+    default: false
+
+select_example:
+    type: select
+    default: foo
+    options:
+        - foo
+        - bar
+        - baz
+
 # Available in the sketch as `m.controls.get("/position_x")`
-# Notice that the OSC address with forward slash is automatically
-# derived from the key.
 position_x:
-    type: "osc"
+    # The OSC address with forward slash is automatically
+    # derived from the key.
+    type: osc
     # Optional, defaults to [0.0, 1.0]
     range: [0.0, 100.0]
     # Optional, defaults to 0.5
     default: 50.0
 
-# Interface to the `Animation#lerp` method that differs from the normal code
-# signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
-# DAW would use and are absolute with respect to the timeline depending on what
-# `TimingSource` is provided to the `ControlScript` constructor.
 hue:
-    type: "lerp_abs"
+    # Interface to the `Animation#lerp` method that differs from the normal code
+    # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
+    # DAW would use and are absolute with respect to the timeline depending on what
+    # `TimingSource` is provided to the `ControlScript` constructor.
+    type: lerp_abs
     # Optional, defaults to 0.0
     delay: 0.0
     keyframes:
@@ -257,13 +260,13 @@ hue:
         # animations. All animation definitions support bypass;
         bypass: _
 
-# Another interface to the same `Animation#lerp` method as above but uses the
-# exact same signature as the code instance for keyframes which is [beats, value].
-# This example and last are 100% equivalent but read quite differently.
-# While the `abs` version can be read as "arrive at this value at this time",
-# the `rel` version should be read as "ramp from this value to the next over this time"
 saturation:
-    type: "lerp_rel"
+    # Another interface to the same `Animation#lerp` method as above but uses the
+    # exact same signature as the code instance for keyframes which is [beats, value].
+    # This example and last are 100% equivalent but read quite differently.
+    # While the `abs` version can be read as "arrive at this value at this time",
+    # the `rel` version should be read as "ramp from this value to the next over this time"
+    type: lerp_rel
     # Optional, defaults to 0.0
     delay: 0.0
     bypass: _
@@ -277,13 +280,13 @@ saturation:
         # duration.
         - [0.0, 0.0]
 
-# A 1:1 interface to the `Animation#r_ramp` method.
 lightness:
-    type: "r_ramp_rel"
+    # A 1:1 interface to the `Animation#r_ramp` method.
+    type: r_ramp_rel
     # Optional, defaults to "linear". Easing options include:
     # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
     # cubic_ease_in_out, sine_ease_in, sine_ease_out, sine_ease_in_out, logarithmic
-    ramp: "linear"
+    ramp: linear
     # Optional, defaults to 0.25 (1/16th note)
     ramp_time: 0.5
     bypass: _
@@ -301,10 +304,14 @@ lightness:
         - [1.0, [0.0, 1.0]]
 
 foo:
-    type: "triangle"
+    # A "ping" animation that linearly ramps from min to max and back to min
+    # as specified in `range` option
+    type: triangle
     beats: 2.0
+    # Optional, defaults to [0.0, 1.0]
     range: [-1.0, 1.0]
-    # phase offset expressed as percentage (0..1) of the above range
+    # Phase offset expressed as percentage (0..1) of the above range.
+    # Optional defaults to 0
     phase: 0.25
     bypass: _
 ```
@@ -324,7 +331,7 @@ foo:
 [p5-link]: https://github.com/Lokua/p5/tree/main
 [just-link]: https://github.com/casey/just
 [blackhole]: https://existential.audio/blackhole/
-[template-link]: src/sketches/template.rs
+[template-link]: src/sketches/templates/template.rs
 [midi-sketch-link]: src/sketches/midi_test.rs
 [module-link]: src/sketches/mod.rs
 [main-link]: src/main.rs

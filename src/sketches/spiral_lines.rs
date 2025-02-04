@@ -3,8 +3,8 @@ use nannou::prelude::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "spiral_2",
-    display_name: "Spiral 2",
+    name: "spiral_lines",
+    display_name: "Spiral | Lines Version",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 120.0,
@@ -48,17 +48,16 @@ struct ShaderParams {
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<()>,
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
-        // 1 "pass" = 1 million vertices
         Control::slider("passes", 1.0, (1.0, 20.0), 1.0),
         Control::slider("n_lines", 64.0, (1.0, 256.0), 1.0),
         Control::slider("points_per_segment", 100.0, (10.0, 20_000.0), 10.0),
@@ -84,8 +83,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider_norm("clip_start", 0.8),
         Control::slider_norm("clip_grade", 0.3),
         Control::Separator {}, // -----------------------------------
-        Control::checkbox("animate_stripe_phase", false),
-        Control::checkbox("invert_animate_stripe_phase", false),
+        // Control::checkbox("animate_stripe_phase", false),
+        // Control::checkbox("invert_animate_stripe_phase", false),
         Control::slider("stripe_amp", 0.0, (0.0, 0.5), 0.0001),
         Control::slider("stripe_freq", 10.0, (0.00, 64.0), 1.0),
         Control::slider_norm("stripe_mix", 0.5),
@@ -115,7 +114,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_procedural(
         app,
-        to_absolute_path(file!(), "./spiral_2.wgsl"),
+        to_absolute_path(file!(), "spiral_lines.wgsl"),
         &params,
         true,
     );

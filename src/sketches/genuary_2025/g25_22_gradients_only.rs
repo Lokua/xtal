@@ -17,8 +17,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
-    animation_script: AnimationScript<FrameTiming>,
+    animation: Animation<Timing>,
+    animation_script: AnimationScript<Timing>,
     controls: Controls,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
@@ -38,7 +38,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let animation_script = AnimationScript::new(
         to_absolute_path(file!(), "./g25_22_gradients_only.toml"),

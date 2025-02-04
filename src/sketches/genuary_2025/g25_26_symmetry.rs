@@ -19,7 +19,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<OscTransportTiming>,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -49,7 +49,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_26_symmetry.yaml"),
-        OscTransportTiming::new(SKETCH_CONFIG.bpm),
+        Timing::new(SKETCH_CONFIG.bpm),
     );
 
     let params = ShaderParams {

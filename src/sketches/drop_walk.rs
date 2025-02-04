@@ -2,6 +2,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// ...Live/2024/2024.02.19 Dumb Out Project/04 - Dumb Out - Video Promo Edit.als
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "drop_walk",
     display_name: "Drop Walk",
@@ -18,7 +20,7 @@ const MAX_DROPS: usize = 5000;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     window_rect: WindowRect,
     max_drops: usize,
@@ -31,7 +33,7 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
     let w = window_rect.w();
     let h = window_rect.h();
 
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::new(vec![
         Control::checkbox("debug_walker", false),

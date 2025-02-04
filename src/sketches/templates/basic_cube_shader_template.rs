@@ -20,7 +20,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<FrameTiming>,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<Vertex>,
 }
@@ -45,7 +45,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
-        FrameTiming::new(SKETCH_CONFIG.bpm),
+        Timing::new(SKETCH_CONFIG.bpm),
     );
 
     let params = ShaderParams {
