@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(540),
+    gui_h: Some(580),
 };
 
 const BACKGROUND: f32 = 0.0;
@@ -130,7 +130,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         d: [
             m.controls.get("grid_border_size"),
             m.controls.get("corner_offset"),
-            m.controls.get("middle_offset"),
+            m.controls.get("d3"),
             m.controls.get("middle_size"),
         ],
         e: [
@@ -158,7 +158,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("h4"),
         ],
         i: [
-            m.controls.get("blend_time"),
+            m.controls.get("i1"),
             m.controls.get("i2"),
             m.controls.get("i3"),
             m.controls.get("i4"),

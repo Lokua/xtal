@@ -1,9 +1,9 @@
 _vars:
     PI: &PI 3.14159265359
     TAU: &TAU 6.283185307179586
-    rx: &rx 36
+    rx: &rx 32
     ry: &ry 16
-    rz: &rz 36
+    rz: &rz 32
     gt: &gt 16
 
 rot_x:
@@ -25,7 +25,7 @@ rot_y:
 
 rot_z:
     type: lerp_rel
-    bypass: _
+    bypass: 0
     keyframes:
         - [*rz, *TAU]
         - [*rz, 0]
@@ -82,18 +82,11 @@ corner_offset:
     type: triangle
     beats: 4
 
-middle_offset:
-    type: triangle
-    bypass: _
-    beats: 4
-    phase: 0
-    range: [-0.25, 1]
-
 middle_size:
     type: triangle
     beats: 1.5
     phase: 0.5
-    range: [-1.0, 0.5]
+    range: [-0.625, 1]
 
 _corner_t_vars:
     ct: &ct 4
@@ -133,7 +126,7 @@ stag:
 
 diag:
     type: slider
-    range: [-1, 1]
+    range: [0, 4]
 
 bulge:
     type: slider
@@ -154,10 +147,16 @@ bg_noise_scale:
 color_spread:
     type: slider
 
+d3:
+    type: slider
 h4:
     type: slider
+
+# torus_twist
 i1:
     type: slider
+    range: [0, 1]
+
 i2:
     type: slider
 i3:
