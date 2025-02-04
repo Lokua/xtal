@@ -97,6 +97,18 @@ fn main() {
         "wave_fract" => run_sketch!(wave_fract),
         "wgpu_test" => run_sketch!(wgpu_test),
 
+        // --- DEV
+        "animation_dev" => run_sketch!(animation_dev),
+        "audio_dev" => run_sketch!(audio_dev),
+        "control_script_dev" => run_sketch!(control_script_dev),
+        "cv_dev" => run_sketch!(cv_dev),
+        "midi_dev" => run_sketch!(midi_dev),
+        "osc_dev" => run_sketch!(osc_dev),
+        "osc_transport_dev" => run_sketch!(osc_transport_dev),
+        "responsive_dev" => run_sketch!(responsive_dev),
+        "wgpu_compute_dev" => run_sketch!(wgpu_compute_dev),
+        "wgpu_dev" => run_sketch!(wgpu_dev),
+
         // --- GENUARY 2025
         "g25_1_horiz_vert" => run_sketch!(g25_1_horiz_vert),
         "g25_2_layers" => run_sketch!(g25_2_layers),
@@ -111,26 +123,16 @@ fn main() {
         "g25_26_symmetry" => run_sketch!(g25_26_symmetry),
 
         // --- SCRATCH
-        "animation_script_test" => run_sketch!(animation_script_test),
-        "animation_test" => run_sketch!(animation_test),
-        "audio_test" => run_sketch!(audio_test),
         "bos" => run_sketch!(bos),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
-        "control_script_test" => run_sketch!(control_script_test),
-        "cv_test" => run_sketch!(cv_test),
         "lin_alg" => run_sketch!(lin_alg),
         "lines" => run_sketch!(lines),
-        "midi_test" => run_sketch!(midi_test),
         "noise" => run_sketch!(noise),
-        "osc_test" => run_sketch!(osc_test),
-        "osc_transport_test" => run_sketch!(osc_transport_test),
         "perlin_loop" => run_sketch!(perlin_loop),
-        "responsive_test" => run_sketch!(responsive_test),
         "sand_line" => run_sketch!(sand_line),
         "shader_experiments" => run_sketch!(shader_experiments),
         "vertical" => run_sketch!(vertical),
         "vertical_2" => run_sketch!(vertical_2),
-        "wgpu_compute_test" => run_sketch!(wgpu_compute_test),
         "z_sim" => run_sketch!(z_sim),
 
         // --- TEMPLATES

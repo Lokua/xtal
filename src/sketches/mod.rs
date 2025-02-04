@@ -14,6 +14,18 @@ pub mod spiral;
 pub mod spiral_lines;
 pub mod wave_fract;
 
+pub mod dev;
+pub use self::dev::animation_dev;
+pub use self::dev::audio_dev;
+pub use self::dev::control_script_dev;
+pub use self::dev::cv_dev;
+pub use self::dev::midi_dev;
+pub use self::dev::osc_dev;
+pub use self::dev::osc_transport_dev;
+pub use self::dev::responsive_dev;
+pub use self::dev::wgpu_compute_dev;
+pub use self::dev::wgpu_dev;
+
 pub mod genuary_2025;
 pub use self::genuary_2025::g25_10_11_12;
 pub use self::genuary_2025::g25_13_triangle;
@@ -28,29 +40,19 @@ pub use self::genuary_2025::g25_2_layers;
 pub use self::genuary_2025::g25_5_isometric;
 
 pub mod scratch;
-pub use self::scratch::animation_script_test;
-pub use self::scratch::animation_test;
-pub use self::scratch::audio_test;
 pub use self::scratch::bos;
 pub use self::scratch::chromatic_aberration;
-pub use self::scratch::control_script_test;
-pub use self::scratch::cv_test;
 pub use self::scratch::displacement_1;
 pub use self::scratch::displacement_1a;
 pub use self::scratch::displacement_2;
 pub use self::scratch::lin_alg;
 pub use self::scratch::lines;
-pub use self::scratch::midi_test;
 pub use self::scratch::noise;
-pub use self::scratch::osc_test;
-pub use self::scratch::osc_transport_test;
 pub use self::scratch::perlin_loop;
-pub use self::scratch::responsive_test;
 pub use self::scratch::sand_line;
 pub use self::scratch::shader_experiments;
 pub use self::scratch::vertical;
 pub use self::scratch::vertical_2;
-pub use self::scratch::wgpu_compute_test;
 pub use self::scratch::wgpu_test;
 pub use self::scratch::z_sim;
 
