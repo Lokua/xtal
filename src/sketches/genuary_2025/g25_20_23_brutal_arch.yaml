@@ -93,7 +93,7 @@ middle_size:
     type: triangle
     beats: 1.5
     phase: 0.5
-    range: [-0.75, 1.0]
+    range: [-1.0, 0.5]
 
 _corner_t_vars:
     ct: &ct 4

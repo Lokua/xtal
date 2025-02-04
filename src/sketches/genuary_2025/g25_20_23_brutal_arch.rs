@@ -134,10 +134,10 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("middle_size"),
         ],
         e: [
-            m.controls.get("corner_t_1"),
-            m.controls.get("corner_t_2"),
-            m.controls.get("corner_t_3"),
-            m.controls.get("corner_t_4"),
+            (m.controls.get("corner_t_1")),
+            (m.controls.get("corner_t_2")),
+            (m.controls.get("corner_t_3")),
+            (m.controls.get("corner_t_4")),
         ],
         f: [
             m.controls.get("corner_t_5"),
