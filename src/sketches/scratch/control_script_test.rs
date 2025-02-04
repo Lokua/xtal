@@ -17,14 +17,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<FrameTiming>,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "control_script_test.yaml"),
-        FrameTiming::new(SKETCH_CONFIG.bpm),
+        Timing::new(SKETCH_CONFIG.bpm),
     );
 
     Model { controls, wr }
@@ -45,7 +45,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 
     let hue = m.controls.get("hue");
     let radius = m.controls.get("radius");
-    let pos_x = m.controls.get("/pos_x");
+    let pos_x = m.controls.get("pos_x");
     let pos_y = m.controls.get("pos_y");
     let radius_small = m.controls.get("radius_small");
     let pos_x2 = m.controls.get("pos_x2");

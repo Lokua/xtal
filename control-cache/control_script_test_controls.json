@@ -1,10 +1,10 @@
 {
   "values": {
-    "radius": {
-      "Float": 178.0
-    },
     "hue": {
-      "Float": 0.29299998
+      "Float": 0.49499997
+    },
+    "radius": {
+      "Float": 106.0
     }
   }
 }

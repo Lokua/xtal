@@ -139,6 +139,10 @@ impl<T: TimingSource> ControlScript<T> {
         if name.starts_with("/") {
             return self.osc_controls.get(name);
         }
+        let osc_name = format!("/{}", name);
+        if self.osc_controls.has(&osc_name) {
+            return self.osc_controls.get(&osc_name);
+        }
 
         if self.controls.has(name) {
             return self.controls.float(name);

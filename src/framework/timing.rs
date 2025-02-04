@@ -15,7 +15,7 @@ use super::prelude::*;
 /// run-time selection of a `TimingSource` via command line argument.
 /// Sketches can bypass the command line argument by using a `TimingSource`
 /// other than this directly.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Timing {
     Frame(FrameTiming),
     Osc(OscTransportTiming),
@@ -63,7 +63,7 @@ pub trait TimingSource: Clone {
     fn beats_to_frames(&self, beats: f32) -> f32;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FrameTiming {
     bpm: f32,
 }
@@ -95,7 +95,7 @@ pub const SONG_POSITION: u8 = 0xF2; // 242
 const PULSES_PER_QUARTER_NOTE: u32 = 24;
 const TICKS_PER_QUARTER_NOTE: u32 = 960;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MidiSongTiming {
     clock_count: Arc<AtomicU32>,
 
@@ -234,7 +234,7 @@ impl TimingSource for MidiSongTiming {
 
 const MTC_QUARTER_FRAME: u8 = 0xF1;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HybridTiming {
     midi_timing: MidiSongTiming,
     bpm: f32,
@@ -423,7 +423,7 @@ impl TimingSource for HybridTiming {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct OscTransportTiming {
     bpm: f32,
     is_playing: Arc<AtomicBool>,

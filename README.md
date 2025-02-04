@@ -181,20 +181,18 @@ and `OscControls` for controlling parameters from an external source,
 comprehensive `Animation` module that can tween or generate random values and
 ramp to/from them at musical intervals. While these parameters are simple to
 setup, it's a bit of pain to have to restart the rust sketch every time you want
-to change an animation or control value. For this reason Lattice provides a
-`ControlScript` helper that uses yaml for configuration and adds these controls
-dynamically and self-updates at runtime when the yaml file is changed. You still
-have to take care to setup the routings in your sketch (e.g.
+to change an animation or control range. For this reason Lattice provides a
+`ControlScript` mechanism that uses yaml for configuration and adds these
+controls dynamically and self-updates at runtime when the yaml file is changed.
+You still have to take care to setup the routings in your sketch (e.g.
 `let radius = model.control_script.get("radius")`), but once these routings are
 in place you are free to edit their ranges, values, timing, etc. See [Control
 Script Test][control-script-test-link] for a working example. See below for
 scripting documentation:
 
-> Note: not all control interfaces or animation methods are supported at this
-> time. If it isn't listed below, it isn't supported yet. Also note that you
-> cannot use an instance of `Controls` and `ControlScript` in a sketch at the
-> same time; you must choose one or the other and it must be attached to the
-> sketch's `Model` as `model.controls`.
+> Note: you cannot use an instance of `Controls` and `ControlScript` in a sketch
+> at the same time; you must choose one or the other and it must be attached to
+> the sketch's `Model` as `model.controls`.
 
 ```yaml
 # Any yaml field that doesn't match an object with a known type
@@ -227,7 +225,9 @@ select_example:
         - bar
         - baz
 
-# Available in the sketch as `m.controls.get("/position_x")`
+# Available in the sketch as `m.controls.get("position_x")`. The OSC
+# address from your sender must be `/position_x` and is currently hardcoded
+# to PORT 2346
 position_x:
     # The OSC address with forward slash is automatically
     # derived from the key.
