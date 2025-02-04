@@ -1,0 +1,22 @@
+{
+  "values": {
+    "second_iterations": {
+      "Float": 3.0
+    },
+    "primary_iterations": {
+      "Float": 4.0
+    },
+    "fourth_iterations": {
+      "Float": 2.0
+    },
+    "scale": {
+      "Float": 0.90999997
+    },
+    "third_iterations": {
+      "Float": 2.0
+    },
+    "y_offset": {
+      "Float": 0.20699999
+    }
+  }
+}

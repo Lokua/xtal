@@ -1,0 +1,67 @@
+{
+  "values": {
+    "i1": {
+      "Float": 0.903
+    },
+    "texture_scale": {
+      "Float": 0.7
+    },
+    "grid_size": {
+      "Float": 8.0
+    },
+    "bg_noise_scale": {
+      "Float": 5.5
+    },
+    "grid_contrast": {
+      "Float": 1.0
+    },
+    "color_spread": {
+      "Float": 0.099999994
+    },
+    "z_offset": {
+      "Float": -3.27
+    },
+    "scale": {
+      "Float": 0.33699998
+    },
+    "bulge": {
+      "Float": 0.0
+    },
+    "echo_threshold": {
+      "Float": 0.562
+    },
+    "grid_border_size": {
+      "Float": 0.12
+    },
+    "i4": {
+      "Float": 0.0
+    },
+    "diag": {
+      "Float": 0.0
+    },
+    "h4": {
+      "Float": 0.0
+    },
+    "texture_strength": {
+      "Float": 1.225
+    },
+    "i3": {
+      "Float": 0.0
+    },
+    "offs": {
+      "Float": 0.0
+    },
+    "d3": {
+      "Float": 0.5
+    },
+    "bg_noise": {
+      "Float": 1.0
+    },
+    "i2": {
+      "Float": 1.0
+    },
+    "stag": {
+      "Float": 0.0
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "values": {
+    "circle_radius_max": {
+      "Float": 2.0
+    },
+    "displacer_radius": {
+      "Float": 204.0
+    },
+    "gradient_spread": {
+      "Float": 0.98999995
+    },
+    "circle_radius_min": {
+      "Float": 0.1
+    },
+    "displacer_strength": {
+      "Float": 94.0
+    }
+  }
+}

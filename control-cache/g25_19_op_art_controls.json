@@ -1,0 +1,25 @@
+{
+  "values": {
+    "wave_bands": {
+      "Float": 2.0
+    },
+    "bg_radius": {
+      "Float": 0.5
+    },
+    "bg_gradient_strength": {
+      "Float": 0.5
+    },
+    "wave_power": {
+      "Float": 5.0
+    },
+    "wave_threshold": {
+      "Float": 0.0
+    },
+    "mix_mode": {
+      "String": "mix"
+    },
+    "bg_invert": {
+      "Bool": false
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "values": {
+    "18274": {
+      "Bool": false
+    },
+    "wave_radial_freq": {
+      "Float": 37.0
+    },
+    "animate_wave_phase": {
+      "Bool": true
+    },
+    "bg_freq": {
+      "Float": 76.0
+    },
+    "bg_gradient_strength": {
+      "Float": 0.69299996
+    },
+    "wave_phase": {
+      "Float": 0.0
+    },
+    "map_mix": {
+      "Float": 0.0
+    },
+    "wave_horiz_freq": {
+      "Float": 21.0
+    },
+    "mix_mode": {
+      "String": "mix"
+    },
+    "bg_invert": {
+      "Bool": false
+    },
+    "wave_threshold": {
+      "Float": 0.65500003
+    },
+    "wave_bands": {
+      "Float": 3.0
+    },
+    "bg_radius": {
+      "Float": 1.0
+    },
+    "70pmf": {
+      "Bool": false
+    },
+    "wave_vert_freq": {
+      "Float": 8.0
+    },
+    "wave_power": {
+      "Float": 0.66999996
+    },
+    "link_axes": {
+      "Bool": true
+    },
+    "reduce_mix": {
+      "Float": 0.56299996
+    }
+  }
+}

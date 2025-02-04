@@ -1,0 +1,90 @@
+{
+  "controls": [
+    {
+      "Checkbox": {
+        "name": "rotate",
+        "value": false
+      }
+    },
+    {
+      "Slider": {
+        "name": "max_rect_length",
+        "value": 10.0,
+        "min": 1.0,
+        "max": 400.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "rect_width",
+        "value": 1.5,
+        "min": 0.5,
+        "max": 10.0,
+        "step": 0.25
+      }
+    },
+    {
+      "Slider": {
+        "name": "noise_scale",
+        "value": 3.0,
+        "min": 0.5,
+        "max": 10.0,
+        "step": 0.1
+      }
+    },
+    {
+      "Slider": {
+        "name": "seed",
+        "value": 3.0,
+        "min": 3.0,
+        "max": 33333.0,
+        "step": 33.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "angle_resolution",
+        "value": 45.0,
+        "min": 3.0,
+        "max": 180.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "time_x",
+        "value": 1.0,
+        "min": 0.01,
+        "max": 10.0,
+        "step": 0.01
+      }
+    }
+  ],
+  "values": {
+    "seed": {
+      "Float": 0.0
+    },
+    "rect_width": {
+      "Float": 7.75
+    },
+    "angle_resolution": {
+      "Float": 170.0
+    },
+    "time_x": {
+      "Float": 7.5499997
+    },
+    "circle_radius": {
+      "Float": 500.0
+    },
+    "noise_scale": {
+      "Float": 9.2
+    },
+    "rotate": {
+      "Bool": true
+    },
+    "max_rect_length": {
+      "Float": 353.0
+    }
+  }
+}

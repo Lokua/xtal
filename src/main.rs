@@ -16,6 +16,7 @@ pub mod framework;
 pub mod runtime;
 mod sketches;
 
+const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 const GUI_WIDTH: u32 = 560;
 
 macro_rules! run_sketch {
@@ -36,8 +37,6 @@ macro_rules! run_sketch {
                 &sketches::$sketch_module::SKETCH_CONFIG,
             )
         })
-        // Doesn't seem to work :(
-        // .loop_mode(LoopMode::Wait)
         .update(|app, model, nannou_update| {
             update::<sketches::$sketch_module::Model>(
                 app,
@@ -586,6 +585,14 @@ fn delete_stored_controls(sketch_name: &str) -> Result<(), Box<dyn Error>> {
 }
 
 fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
+    if STORE_CONTROLS_CACHE_IN_PROJECT {
+        return Some(
+            lattice_project_root()
+                .join("control-cache")
+                .join(format!("{}_controls.json", sketch_name)),
+        );
+    }
+
     lattice_config_dir().map(|config_dir| {
         config_dir
             .join("Controls")

@@ -1,0 +1,13 @@
+{
+  "values": {
+    "mix": {
+      "Float": 0.77
+    },
+    "draw_nannou_rect": {
+      "Bool": false
+    },
+    "grid_mult": {
+      "Float": 25.0
+    }
+  }
+}

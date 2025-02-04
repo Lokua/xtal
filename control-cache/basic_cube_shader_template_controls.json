@@ -1,0 +1,16 @@
+{
+  "values": {
+    "a4": {
+      "Float": 0.0
+    },
+    "z_offset": {
+      "Float": -0.5
+    },
+    "rotation": {
+      "Float": 2.22
+    },
+    "scale": {
+      "Float": 0.205
+    }
+  }
+}

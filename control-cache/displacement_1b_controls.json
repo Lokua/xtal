@@ -1,0 +1,120 @@
+{
+  "controls": [
+    {
+      "Checkbox": {
+        "name": "show_center",
+        "value": true
+      }
+    },
+    {
+      "Checkbox": {
+        "name": "show_corner",
+        "value": false
+      }
+    },
+    {
+      "Slider": {
+        "name": "gradient_spread",
+        "value": 0.5,
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.0001
+      }
+    },
+    {
+      "Slider": {
+        "name": "size_min",
+        "value": 0.1,
+        "min": 0.1,
+        "max": 4.0,
+        "step": 0.1
+      }
+    },
+    {
+      "Slider": {
+        "name": "size_max",
+        "value": 2.5,
+        "min": 0.1,
+        "max": 4.0,
+        "step": 0.1
+      }
+    },
+    {
+      "Slider": {
+        "name": "scaling_power",
+        "value": 3.0,
+        "min": 0.5,
+        "max": 11.0,
+        "step": 0.25
+      }
+    },
+    {
+      "Slider": {
+        "name": "displacer_radius",
+        "value": 210.0,
+        "min": 1.0,
+        "max": 500.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "displacer_strength",
+        "value": 95.0,
+        "min": 1.0,
+        "max": 500.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "corner_radius",
+        "value": 210.0,
+        "min": 1.0,
+        "max": 500.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "corner_strength",
+        "value": 95.0,
+        "min": 1.0,
+        "max": 500.0,
+        "step": 1.0
+      }
+    }
+  ],
+  "values": {
+    "corner_strength": {
+      "Float": 190.0
+    },
+    "scaling_power": {
+      "Float": 6.5
+    },
+    "show_corner": {
+      "Bool": true
+    },
+    "gradient_spread": {
+      "Float": 0.35
+    },
+    "displacer_strength": {
+      "Float": 75.0
+    },
+    "size_min": {
+      "Float": 1.7
+    },
+    "size_max": {
+      "Float": 0.5
+    },
+    "displacer_radius": {
+      "Float": 80.0
+    },
+    "show_center": {
+      "Bool": true
+    },
+    "corner_radius": {
+      "Float": 88.0
+    }
+  }
+}

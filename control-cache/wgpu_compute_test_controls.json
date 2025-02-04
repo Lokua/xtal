@@ -1,0 +1,25 @@
+{
+  "values": {
+    "ref_segments": {
+      "Float": 15.0
+    },
+    "angle_variation": {
+      "Float": 0.875
+    },
+    "show_ref_line": {
+      "Bool": false
+    },
+    "points_per_segment": {
+      "Float": 475.0
+    },
+    "noise_scale": {
+      "Float": 0.021000002
+    },
+    "ref_deviation": {
+      "Float": 0.376
+    },
+    "show_sand_line": {
+      "Bool": true
+    }
+  }
+}

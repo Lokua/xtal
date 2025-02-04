@@ -1,0 +1,111 @@
+{
+  "controls": [
+    {
+      "Checkbox": {
+        "name": "rotate",
+        "value": false
+      }
+    },
+    {
+      "Slider": {
+        "name": "circle_radius",
+        "value": 200.0,
+        "min": 1.0,
+        "max": 500.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "max_rect_length",
+        "value": 10.0,
+        "min": 1.0,
+        "max": 200.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "rect_width",
+        "value": 1.5,
+        "min": 0.5,
+        "max": 5.0,
+        "step": 0.25
+      }
+    },
+    {
+      "Slider": {
+        "name": "noise_scale",
+        "value": 3.0,
+        "min": 0.5,
+        "max": 10.0,
+        "step": 0.1
+      }
+    },
+    {
+      "Slider": {
+        "name": "seed",
+        "value": 3.0,
+        "min": 3.0,
+        "max": 33333.0,
+        "step": 33.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "angle_resolution",
+        "value": 45.0,
+        "min": 15.0,
+        "max": 180.0,
+        "step": 1.0
+      }
+    },
+    {
+      "Slider": {
+        "name": "time_x",
+        "value": 1.0,
+        "min": 0.01,
+        "max": 10.0,
+        "step": 0.01
+      }
+    }
+  ],
+  "values": {
+    "height": {
+      "Float": 7.7000003
+    },
+    "rotate": {
+      "Bool": false
+    },
+    "rect_width": {
+      "Float": 4.5
+    },
+    "noise_scale": {
+      "Float": 3.2
+    },
+    "thinness": {
+      "Float": 1.75
+    },
+    "radius": {
+      "Float": 222.0
+    },
+    "octaves": {
+      "Float": 8.0
+    },
+    "time_x": {
+      "Float": 2.0
+    },
+    "seed": {
+      "Float": 8184.0
+    },
+    "angle_resolution": {
+      "Float": 92.0
+    },
+    "max_rect_length": {
+      "Float": 43.7
+    },
+    "circle_radius": {
+      "Float": 260.0
+    }
+  }
+}

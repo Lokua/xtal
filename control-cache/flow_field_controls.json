@@ -1,0 +1,37 @@
+{
+  "values": {
+    "bg_alpha": {
+      "Float": 0.089999996
+    },
+    "b3": {
+      "Float": 0.0
+    },
+    "b4": {
+      "Float": 0.0
+    },
+    "agent_count": {
+      "Float": 99000.0
+    },
+    "slice_glitch": {
+      "Float": 0.0
+    },
+    "randomize_point_size": {
+      "Bool": true
+    },
+    "b2": {
+      "Float": 0.0
+    },
+    "algorithm": {
+      "String": "cos,sin"
+    },
+    "step_range": {
+      "Float": 35.5
+    },
+    "agent_size": {
+      "Float": 0.0016999999
+    },
+    "displace": {
+      "Float": 0.0
+    }
+  }
+}

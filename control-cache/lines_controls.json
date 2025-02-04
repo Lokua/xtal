@@ -1,0 +1,16 @@
+{
+  "values": {
+    "kernel_passes": {
+      "Float": 4.0
+    },
+    "chaikin_passes": {
+      "Float": 4.0
+    },
+    "deviation": {
+      "Float": 3.6000001
+    },
+    "n_points": {
+      "Float": 42.0
+    }
+  }
+}
