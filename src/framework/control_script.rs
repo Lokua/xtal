@@ -30,10 +30,21 @@ struct ControlConfig {
 
 #[derive(Deserialize, Debug)]
 enum ControlType {
+    // UI controls
     #[serde(rename = "slider")]
     Slider,
+    #[serde(rename = "checkbox")]
+    Checkbox,
+    #[serde(rename = "select")]
+    Select,
+    #[serde(rename = "separator")]
+    Separator,
+
+    // External control
     #[serde(rename = "osc")]
     Osc,
+
+    // Animation
     #[serde(rename = "lerp_abs")]
     LerpAbs,
     #[serde(rename = "lerp_rel")]
@@ -179,6 +190,14 @@ impl<T: TimingSource> ControlScript<T> {
         0.0
     }
 
+    pub fn bool(&self, name: &str) -> bool {
+        return self.controls.bool(name);
+    }
+
+    pub fn string(&self, name: &str) -> String {
+        return self.controls.string(name);
+    }
+
     pub fn update(&mut self) {
         let new_config = {
             if let Ok(mut guard) = self.update_state.state.lock() {
@@ -244,6 +263,34 @@ impl<T: TimingSource> ControlScript<T> {
                     );
 
                     self.controls.add(slider);
+                }
+                ControlType::Checkbox => {
+                    let conf: CheckboxConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let value = current_values
+                        .get(id)
+                        .and_then(ControlValue::as_bool)
+                        .unwrap_or(conf.default);
+
+                    let checkbox = Control::checkbox(id.as_str(), value);
+                    self.controls.add(checkbox);
+                }
+                ControlType::Select => {
+                    let conf: SelectConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let value = current_values
+                        .get(id)
+                        .and_then(ControlValue::as_string)
+                        .unwrap_or(conf.default.as_str());
+
+                    let select =
+                        Control::select(id.as_str(), value, &conf.options);
+                    self.controls.add(select);
+                }
+                ControlType::Separator => {
+                    self.controls.add(Control::dynamic_separator());
                 }
                 ControlType::Osc => {
                     let conf: SliderConfig =
@@ -351,8 +398,6 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: TriangleConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    trace!("raw_conf Triangle: {:?}", conf);
-
                     self.keyframe_sequences.insert(
                         id.to_string(),
                         (
@@ -444,11 +489,25 @@ impl Default for SliderConfig {
     fn default() -> Self {
         Self {
             range: [0.0, 1.0],
-            default: 0.5,
+            default: 0.0,
             step: 0.000_1,
         }
     }
 }
+
+#[derive(Deserialize, Debug)]
+struct CheckboxConfig {
+    default: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct SelectConfig {
+    options: Vec<String>,
+    default: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct Separator {}
 
 #[derive(Deserialize, Debug)]
 #[serde(default)]
@@ -461,7 +520,7 @@ impl Default for OscConfig {
     fn default() -> Self {
         Self {
             range: [0.0, 1.0],
-            default: 0.5,
+            default: 0.0,
         }
     }
 }

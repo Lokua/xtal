@@ -70,6 +70,9 @@ pub enum Control {
         disabled: DisabledFn,
     },
     Separator {},
+    DynamicSeparator {
+        name: String,
+    },
 }
 
 impl Control {
@@ -80,6 +83,7 @@ impl Control {
             Control::Select { name, .. } => name,
             Control::Button { name, .. } => name,
             Control::Separator {} => "",
+            Control::DynamicSeparator { name } => name,
         }
     }
 
@@ -92,6 +96,7 @@ impl Control {
             }
             Control::Button { .. } => ControlValue::Bool(false),
             Control::Separator { .. } => ControlValue::Bool(false),
+            Control::DynamicSeparator { .. } => ControlValue::Bool(false),
         }
     }
 
@@ -100,6 +105,23 @@ impl Control {
             name: name.to_string(),
             value,
             disabled: None,
+        }
+    }
+
+    pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> Control
+    where
+        F: Fn(&Controls) -> bool + 'static,
+    {
+        Control::Checkbox {
+            name: name.to_string(),
+            value,
+            disabled: Some(Box::new(disabled)),
+        }
+    }
+
+    pub fn dynamic_separator() -> Control {
+        Control::DynamicSeparator {
+            name: uuid_5().to_string(),
         }
     }
 
@@ -180,17 +202,6 @@ impl Control {
         }
     }
 
-    pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> Control
-    where
-        F: Fn(&Controls) -> bool + 'static,
-    {
-        Control::Checkbox {
-            name: name.to_string(),
-            value,
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
     fn is_disabled(&self, controls: &Controls) -> bool {
         match self {
             Control::Slider { disabled, .. }
@@ -242,6 +253,10 @@ impl fmt::Debug for Control {
                 f.debug_struct("Button").field("name", name).finish()
             }
             Control::Separator {} => f.debug_struct("Separator").finish(),
+            Control::DynamicSeparator { name, .. } => f
+                .debug_struct("DynamicSeparator")
+                .field("name", name)
+                .finish(),
         }
     }
 }
@@ -546,6 +561,9 @@ pub fn draw_controls(controls: &mut Controls, ui: &mut egui::Ui) -> bool {
                 }
             }
             Control::Separator {} => {
+                ui.separator();
+            }
+            Control::DynamicSeparator { .. } => {
                 ui.separator();
             }
         }
