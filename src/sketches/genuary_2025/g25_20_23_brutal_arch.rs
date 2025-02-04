@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(580),
+    gui_h: Some(620),
 };
 
 const BACKGROUND: f32 = 0.0;

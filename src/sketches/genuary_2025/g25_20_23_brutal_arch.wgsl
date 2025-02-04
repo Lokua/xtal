@@ -76,6 +76,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let corner_t = params.d.y;
     let middle_t = params.d.z;
     let middle_size = params.d.w;
+    let echo_intensity = params.c.y;
     let stag = params.g.x;
     let diag = params.g.y;
     let bulge = params.g.z;
@@ -120,7 +121,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let scaled_position = position * scale;
     let positioned = scaled_position + vert.center;
 
-    var p = mix(positioned, modular_echo(positioned, vert.center), 0.0);
+    var p = modular_echo(positioned, vert.center, echo_intensity);
     p = staggered_offset(p, vert.center, stag);
     p = diagonal_shear(p, vert.center, diag);
     p = radial_bulge(p, vert.center, bulge);
@@ -212,7 +213,7 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     let bg_noise = params.h.x;
     let bg_noise_scale = params.h.y;
 
-    let background_color = mix(
+    var background_color = mix(
         get_bg_noise(
             vout.pos.xy, 
             foreground_color, 
@@ -225,8 +226,9 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
             bg_noise, 
             100.0 - bg_noise_scale
         ),
-        0.5
+        0.75
     );
+    background_color *= vec3f(0.8, 0.95, 0.95);
 
     let final_color = select(
         background_color,
@@ -234,16 +236,12 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         vout.layer >= FOREGROUND
     );
 
-    let processed_color = post(
-        final_color, 
-        vout.pos.xyz, 
-        params.i.w,
-    );
+    let processed_color = post(final_color, vout.pos.xyz);
 
     return vec4f(processed_color, 1.0);
 }
 
-fn post(color: vec3f, pos: vec3f, mix: f32) -> vec3f {
+fn post(color: vec3f, pos: vec3f) -> vec3f {
     return vec3f(
         color.x,
         color.y * 0.97,
@@ -265,15 +263,18 @@ fn is_corner(center: vec3f) -> bool {
 fn get_light(normal: vec3f) -> f32 {
     let spread = params.h.z;
 
+    // light 
     if normal.x > 0.5 || normal.y > 0.5 {
-        return 1.0 - spread;
+        return 0.65 - spread * 0.5;
     }
 
+    // medium
     if normal.x < -0.5 || normal.z < -0.5 {
-        return 0.5;
+        return 0.35;
     }
 
-    return 0.0 + spread;
+    // dark
+    return 0.03 + spread;
 }
 
 fn get_bg_noise(
@@ -292,12 +293,11 @@ fn get_bg_noise(
     );
 }
 
-fn modular_echo(pos: vec3f, center: vec3f) -> vec3f {
+fn modular_echo(pos: vec3f, center: vec3f, mix: f32) -> vec3f {
     let scale = params.b.x;
     let time = params.b.w;
     
     let echo_threshold = params.c.x;
-    let echo_intensity = params.c.y; 
     
     let cube_id = floor(center / scale * 0.5);
     
@@ -311,15 +311,15 @@ fn modular_echo(pos: vec3f, center: vec3f) -> vec3f {
 
     if noise_x > echo_threshold {
         let step_x = floor(noise_x * quantize) / quantize;
-        echo_offset.x = step_x * echo_intensity * scale;
+        echo_offset.x = step_x * mix * scale;
     }
     if noise_y > echo_threshold {
         let step_y = floor(noise_y * quantize) / quantize;
-        echo_offset.y = step_y * echo_intensity * scale;
+        echo_offset.y = step_y * mix * scale;
     }
     if noise_z > echo_threshold {
         let step_z = floor(noise_z * quantize) / quantize;
-        echo_offset.z = step_z * echo_intensity * scale;
+        echo_offset.z = step_z * mix * scale;
     }
     
     let echo_fade = smoothstep(0.0, scale, length(echo_offset));
