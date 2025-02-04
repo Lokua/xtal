@@ -8,21 +8,24 @@ _vars:
 
 rot_x:
     type: lerp_rel
-    bypass: 0.25
+    bypass: _
     keyframes:
         - [*rx, *TAU]
         - [*rx, 0]
 
 rot_y:
     type: lerp_rel
-    bypass: 0.125
+    bypass: _
     keyframes:
         - [*ry, *TAU]
         - [*ry, 0]
+# rot_y:
+#     type: slider
+#     range: [0.0, *TAU]
 
 rot_z:
     type: lerp_rel
-    bypass: 0
+    bypass: _
     keyframes:
         - [*rz, *TAU]
         - [*rz, 0]
@@ -148,8 +151,9 @@ bg_noise_scale:
     type: slider
     range: [0, 100]
 
-h3:
+color_spread:
     type: slider
+
 h4:
     type: slider
 i1:

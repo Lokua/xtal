@@ -43,7 +43,7 @@ struct Params {
     // stag, diag, bulge, offs
     g: vec4f,
 
-    // bg_noise, bg_noise_scale
+    // bg_noise, bg_noise_scale, color_spread, unused
     h: vec4f,
 
     // unused
@@ -189,11 +189,6 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     let texture_strength = params.b.y;
     let texture_scale = params.b.z;
     let grid_contrast = params.c.z;
-    
-    let light_dir = normalize(vec3f(0.25, 0.75, -0.75));
-    let ambient = 0.1;
-    let diffuse = max(dot(normal, light_dir), 0.0);
-    let light = ambient + diffuse * (1.0 - ambient); 
 
     let face_tint = 0.01;
     let face_color = vec3f(
@@ -204,6 +199,7 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
 
     let subdivision = subdivide_face(pos, normal);
     let texture = concrete_texture(pos * texture_scale, normal, vout.center);
+    let light = get_light(normal);
 
     let foreground_color = vec3f(
         face_color * 
@@ -247,6 +243,20 @@ fn is_corner(center: vec3f) -> bool {
     return abs(x_abs - y_abs) < epsilon && 
            abs(y_abs - z_abs) < epsilon && 
            abs(x_abs - z_abs) < epsilon;
+}
+
+fn get_light(normal: vec3f) -> f32 {
+    let spread = params.h.z;
+
+    if normal.x > 0.5 || normal.y > 0.5 {
+        return 1.0 - spread;
+    }
+
+    if normal.x < -0.5 || normal.z < -0.5 {
+        return 0.5;
+    }
+
+    return 0.0 + spread;
 }
 
 fn get_bg_noise(

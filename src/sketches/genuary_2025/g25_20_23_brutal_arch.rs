@@ -62,7 +62,7 @@ struct ShaderParams {
     // stag, diag, bulge, offs
     g: [f32; 4],
 
-    // bg_noise, bg_noise_scale, ..unused
+    // bg_noise, bg_noise_scale, color_spread, unused
     h: [f32; 4],
 
     // unused
@@ -154,7 +154,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         h: [
             m.controls.get("bg_noise"),
             m.controls.get("bg_noise_scale"),
-            m.controls.get("h3"),
+            m.controls.get("color_spread"),
             m.controls.get("h4"),
         ],
         i: [
