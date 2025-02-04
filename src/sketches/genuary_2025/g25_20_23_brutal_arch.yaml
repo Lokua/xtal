@@ -4,7 +4,10 @@ _vars:
     rx: &rx 32
     ry: &ry 16
     rz: &rz 32
-    gt: &gt 16
+    gt: &gt 8
+
+# --------------------------------
+# Animations
 
 rot_x:
     type: lerp_rel
@@ -25,46 +28,6 @@ rot_z:
     keyframes:
         - [*rz, *TAU]
         - [*rz, 0]
-
-z_offset:
-    type: slider
-    range: [-5.0, -0.5]
-    default: 3.0
-
-scale:
-    type: slider
-
-texture_section:
-    type: separator
-
-texture_strength:
-    type: slider
-    range: [0.0, 2.0]
-
-texture_scale:
-    type: slider
-    range: [0.0, 10.0]
-
-glitch_time:
-    type: lerp_rel
-    keyframes:
-        - [*gt, 0.0]
-        - [*gt, 1.0]
-        - [*gt, 0.0]
-
-grid_section:
-    type: separator
-
-grid_contrast:
-    type: slider
-
-grid_size:
-    type: slider
-    range: [0, 16]
-    step: 1.0
-
-grid_border_size:
-    type: slider
 
 corner_offset:
     type: triangle
@@ -108,6 +71,54 @@ corner_t_8:
     <<: *corner_t_base
     phase: 0.875
 
+echo_time:
+    type: lerp_rel
+    keyframes:
+        - [*gt, 0.0]
+        - [*gt, 1.0]
+        - [*gt, 0.0]
+
+# --------------------------------
+
+z_offset:
+    type: slider
+    range: [-5.0, -0.5]
+    default: 3.0
+
+scale:
+    type: slider
+
+# --------------------------------
+
+texture_section:
+    type: separator
+
+texture_strength:
+    type: slider
+    range: [0.0, 2.0]
+
+texture_scale:
+    type: slider
+    range: [0.0, 10.0]
+
+# --------------------------------
+
+grid_section:
+    type: separator
+
+grid_contrast:
+    type: slider
+
+grid_size:
+    type: slider
+    range: [0, 16]
+    step: 1.0
+
+grid_border_size:
+    type: slider
+
+# --------------------------------
+
 fx_section:
     type: separator
 
@@ -133,6 +144,20 @@ offs:
     type: slider
     range: [0, 1]
 
+twist:
+    type: slider
+
+explode:
+    type: slider
+
+wave:
+    type: slider
+
+phase_twist:
+    type: slider
+
+# --------------------------------
+
 color_section:
     type: separator
 
@@ -147,22 +172,12 @@ bg_noise_scale:
 color_spread:
     type: slider
 
+# --------------------------------
+
 unused_section:
     type: separator
 
 d3:
     type: slider
 h4:
-    type: slider
-
-# torus_twist
-i1:
-    type: slider
-    range: [0, 1]
-
-i2:
-    type: slider
-i3:
-    type: slider
-i4:
     type: slider

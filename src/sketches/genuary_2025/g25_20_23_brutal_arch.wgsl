@@ -26,7 +26,7 @@ struct Params {
     // rot_x, rot_y, rot_z, z_offset
     a: vec4f,
 
-    // scale, texture_strength, texture_scale, glitch_time
+    // scale, texture_strength, texture_scale, echo_time
     b: vec4f,
 
     // echo_threshold, echo_intensity, grid_contrast, grid_size
@@ -46,7 +46,7 @@ struct Params {
     // bg_noise, bg_noise_scale, color_spread, unused
     h: vec4f,
 
-    // unused
+    // twist, explode, wave, phase_twist
     i: vec4f,
 }
 
@@ -81,6 +81,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let diag = params.g.y;
     let bulge = params.g.z;
     let offs = params.g.w;
+    let twist_mix = params.i.x;
+    let explode_mix = params.i.y;
+    let wave_mix = params.i.z;
+    let phase_twist_mix = params.i.w;
 
     var position = vert.position;
 
@@ -126,6 +130,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     p = diagonal_shear(p, vert.center, diag);
     p = radial_bulge(p, vert.center, bulge);
     p = layered_offset(p, vert.center, offs);
+    p = twist(p, vert.center, twist_mix);
+    p = explode(p, vert.center, explode_mix);
+    p = wave(p, vert.center, wave_mix);
+    p = phase_twist(p, vert.center, phase_twist_mix);
 
     var rotated = rotate_x(p, r_x);
     rotated = rotate_y(rotated, r_y);
@@ -230,8 +238,17 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     );
     background_color *= vec3f(0.8, 0.95, 0.95);
 
+    let border_size = 0.3;
+    let is_border = 
+        abs(vout.pos.x) > 1.0 - border_size || 
+        abs(vout.pos.y) > 1.0 - border_size;
+
     let final_color = select(
-        background_color,
+        select(
+            background_color,
+            background_color * 0.18,
+            is_border
+        ),
         foreground_color,
         vout.layer >= FOREGROUND
     );
@@ -249,6 +266,12 @@ fn post(color: vec3f, pos: vec3f) -> vec3f {
     );
 }
 
+fn wavefold(x: f32, limit: f32) -> f32 {
+    let normalized = x / limit;
+    let folded = abs(fract(normalized * 0.5) * 2.0 - 1.0);
+    return folded * limit;
+}
+
 fn is_corner(center: vec3f) -> bool {
     let x_abs = abs(center.x);
     let y_abs = abs(center.y);
@@ -256,8 +279,8 @@ fn is_corner(center: vec3f) -> bool {
     
     let epsilon = 0.0001;
     return abs(x_abs - y_abs) < epsilon && 
-           abs(y_abs - z_abs) < epsilon && 
-           abs(x_abs - z_abs) < epsilon;
+        abs(y_abs - z_abs) < epsilon && 
+        abs(x_abs - z_abs) < epsilon;
 }
 
 fn get_light(normal: vec3f) -> f32 {
@@ -265,7 +288,7 @@ fn get_light(normal: vec3f) -> f32 {
 
     // light 
     if normal.x > 0.5 || normal.y > 0.5 {
-        return 0.65 - spread * 0.5;
+        return 0.8 - spread * 0.5;
     }
 
     // medium
@@ -355,6 +378,82 @@ fn radial_bulge(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
 fn layered_offset(pos: vec3f, center: vec3f, intensity: f32) -> vec3f {
     let layer = floor(abs(pos) * 4.0) * 0.5 * sign(center);
     return pos + layer * intensity;
+}
+
+fn twist(pos: vec3f, center: vec3f, mix: f32) -> vec3f {
+    let is_middle = 
+        abs(sign(center).x + 
+        sign(center).y + 
+        sign(center).z) < 2.0;
+        
+    if !is_middle {
+        return pos;
+    }
+
+    let axis = normalize(vec3f(
+        select(0.0, 1.0, abs(center.x) > 0.1),
+        select(0.0, 1.0, abs(center.y) > 0.1),
+        select(0.0, 1.0, abs(center.z) > 0.1)
+    ));
+
+    let angle = length(pos - center) * mix;
+    let rot_pos = rotate_around_axis(pos - center, axis, angle);
+    return rot_pos + center;
+}
+
+fn explode(pos: vec3f, center: vec3f, mix: f32) -> vec3f {
+    let vertical_scale = abs(pos.y - center.y) * 2.0;
+    let horizontal_dist = length(pos.xz - center.xz);
+    let scale_factor = 1.0 + (horizontal_dist + vertical_scale) * mix;
+    let centered_pos = pos - center;
+    let scaled_pos = centered_pos * scale_factor;
+    return scaled_pos + center;
+}
+
+fn wave(pos: vec3f, center: vec3f, mix: f32) -> vec3f {
+    if !is_corner(center) {
+        return pos;
+    }
+
+    let corner_index = get_corner_index(center);
+    var phase = 0.0;
+    
+    switch corner_index {
+        case 0: { phase = params.e.x; }
+        case 1: { phase = params.e.y; }
+        case 2: { phase = params.e.z; }
+        case 3: { phase = params.e.w; }
+        case 4: { phase = params.f.x; }
+        case 5: { phase = params.f.y; }
+        case 6: { phase = params.f.z; }
+        case 7: { phase = params.f.w; }
+        default: { phase = 0.0; }
+    }
+
+    let dist = length(pos - center);
+    let wave = sin(dist + phase) * mix;
+    let dir = normalize(pos - center);
+    let wave_offset = dir * wave;
+    let scale_factor = 1.0 + wave * 0.125;
+    
+    return center + (pos - center) * scale_factor + wave_offset;
+}
+
+fn phase_twist(pos: vec3f, center: vec3f, mix: f32) -> vec3f {
+    let vertical_align = length(pos.xz - center.xz);
+    let falloff = smoothstep(0.5, 0.0, vertical_align);
+    
+    let height_factor = pos.y - center.y;
+    let twist_angle = height_factor * mix * 4.0;
+    
+    let local_pos = pos - center;
+    let twisted_pos = vec3f(
+        local_pos.x * cos(twist_angle) - local_pos.z * sin(twist_angle),
+        local_pos.y,
+        local_pos.x * sin(twist_angle) + local_pos.z * cos(twist_angle)
+    );
+    
+    return center + mix(local_pos, twisted_pos, falloff);
 }
 
 fn subdivide_face(pos: vec3f, normal: vec3f) -> f32 {
@@ -463,6 +562,24 @@ fn rotate_z(p: vec3f, radians: f32) -> vec3f {
         p.x * s + p.y * c,
         p.z
     );
+}
+
+fn rotate_around_axis(p: vec3f, axis: vec3f, angle: f32) -> vec3f {
+    let c = cos(angle);
+    let s = sin(angle);
+    let t = 1.0 - c;
+    
+    let x = axis.x;
+    let y = axis.y;
+    let z = axis.z;
+    
+    let rot = mat3x3f(
+        vec3f(t * x * x + c, t * x * y - s * z, t * x * z + s * y),
+        vec3f(t * x * y + s * z, t * y * y + c, t * y * z - s * x),
+        vec3f(t * x * z - s * y, t * y * z + s * x, t * z * z + c)
+    );
+    
+    return rot * p;
 }
 
 fn noise(p: vec2f) -> f32 {

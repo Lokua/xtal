@@ -45,7 +45,7 @@ struct ShaderParams {
     // rot_x, rot_y, rot_z, scale
     a: [f32; 4],
 
-    // scale, texture_strength, texture_scale, glitch_time
+    // scale, texture_strength, texture_scale, echo_time
     b: [f32; 4],
 
     // echo_threshold, echo_intensity, grid_contrast, grid_size
@@ -65,7 +65,7 @@ struct ShaderParams {
     // bg_noise, bg_noise_scale, color_spread, unused
     h: [f32; 4],
 
-    // unused
+    // twist, explode, wave, phase_twist
     i: [f32; 4],
 }
 
@@ -119,7 +119,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("scale"),
             m.controls.get("texture_strength"),
             m.controls.get("texture_scale"),
-            m.controls.get("glitch_time"),
+            m.controls.get("echo_time"),
         ],
         c: [
             m.controls.get("echo_threshold"),
@@ -158,10 +158,10 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("h4"),
         ],
         i: [
-            m.controls.get("i1"),
-            m.controls.get("i2"),
-            m.controls.get("i3"),
-            m.controls.get("i4"),
+            m.controls.get("twist"),
+            m.controls.get("explode"),
+            m.controls.get("wave"),
+            m.controls.get("phase_twist"),
         ],
     };
 

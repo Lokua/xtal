@@ -1,85 +1,85 @@
 {
   "values": {
-    "isb8n": {
-      "Bool": false
-    },
-    "sg77h": {
-      "Bool": false
-    },
-    "grid_border_size": {
-      "Float": 0.12
-    },
-    "echo_intensity": {
-      "Float": 0.0
-    },
-    "color_spread": {
-      "Float": 0.105
-    },
-    "z_offset": {
-      "Float": -3.27
-    },
-    "diag": {
-      "Float": 0.0
-    },
-    "wmvgq": {
-      "Bool": false
-    },
-    "texture_strength": {
-      "Float": 1.395
-    },
-    "i4": {
-      "Float": 0.19999999
-    },
-    "i3": {
-      "Float": 0.0
-    },
-    "bg_noise_scale": {
-      "Float": 5.5
-    },
-    "d3": {
-      "Float": 0.5
-    },
-    "i2": {
-      "Float": 1.0
-    },
-    "stag": {
-      "Float": 0.0
-    },
     "echo_threshold": {
       "Float": 0.76
+    },
+    "f5784": {
+      "Bool": false
     },
     "offs": {
       "Float": 0.0
     },
-    "0655c": {
+    "yjj6f": {
       "Bool": false
     },
-    "grid_contrast": {
-      "Float": 1.0
+    "phase_twist": {
+      "Float": 0.0
     },
-    "i1": {
-      "Float": 0.903
-    },
-    "scale": {
-      "Float": 0.325
+    "p4391": {
+      "Bool": false
     },
     "grid_size": {
       "Float": 8.0
     },
-    "h4": {
+    "diag": {
       "Float": 0.0
+    },
+    "twist": {
+      "Float": 0.0
+    },
+    "scale": {
+      "Float": 0.30699998
+    },
+    "texture_scale": {
+      "Float": 0.92999995
+    },
+    "grid_border_size": {
+      "Float": 0.12
+    },
+    "z_offset": {
+      "Float": -3.25
+    },
+    "k2u52": {
+      "Bool": false
     },
     "bg_noise": {
       "Float": 1.0
     },
-    "ln0uf": {
+    "sexzr": {
       "Bool": false
+    },
+    "d3": {
+      "Float": 0.0
+    },
+    "explode": {
+      "Float": 0.0
     },
     "bulge": {
       "Float": 0.0
     },
-    "texture_scale": {
-      "Float": 0.92999995
+    "h4": {
+      "Float": 0.0
+    },
+    "echo_intensity": {
+      "Float": 0.0
+    },
+    "stag": {
+      "Float": 0.0
+    },
+    "color_spread": {
+      "Float": 0.114999995
+    },
+    "bg_noise_scale": {
+      "Float": 8.0
+    },
+    "wave": {
+      "Float": 0.0
+    },
+    "texture_strength": {
+      "Float": 0.59
+    },
+    "grid_contrast": {
+      "Float": 1.0
     }
   }
 }
