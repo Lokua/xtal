@@ -154,89 +154,26 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     return out;
 }
 
-// @fragment
-// fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
-//     if DEBUG {
-//         return vec4f(
-//             abs(vout.center.x),
-//             abs(vout.center.y),
-//             abs(vout.center.z),
-//             1.0
-//         );
-//     }
-
-//     if vout.layer == FOREGROUND && DEBUG_CORNERS {
-//         if is_corner(vout.center) {
-//             let corner_index = get_corner_index(vout.center);
-//             let phase = get_corner_phase(corner_index, params);
-//             let color = (phase + 1.0) * 0.5;
-//             return vec4f(0.0, color, color * 0.75, 1.0);
-//         }
-//     }
-
-//     let pos = vout.local_pos;
-//     var normal = vec3f(0.0);
-//     let eps = 0.0001;
-//     let world_dir = normalize(vout.pos - vout.center);
-//     if abs(abs(pos.x) - 0.5) < eps {
-//         normal = vec3f(sign(pos.x), 0.0, 0.0);
-//     } else if abs(abs(pos.y) - 0.5) < eps {
-//         normal = vec3f(0.0, sign(pos.y), 0.0);
-//     } else {
-//         normal = vec3f(0.0, 0.0, sign(pos.z));
-//     }
-
-//     let texture_strength = params.b.y;
-//     let texture_scale = params.b.z;
-//     let grid_contrast = params.c.z;
-
-//     let face_tint = 0.01;
-//     let face_color = vec3f(
-//         1.0 - abs(normal.x) * face_tint,
-//         1.0 - abs(normal.y) * face_tint,
-//         1.0 - abs(normal.z) * face_tint
-//     );
-
-//     let subdivision = subdivide_face(pos, normal);
-//     let texture = concrete_texture(pos * texture_scale, normal, vout.center);
-//     let light = get_light(normal);
-
-//     var foreground_color = vec3f(
-//         face_color * 
-//             light * 
-//             (1.0 + texture * texture_strength) * 
-//             (grid_contrast + subdivision * (1.0 - grid_contrast)), 
-//     );
-
-//     if vout.layer < FOREGROUND {
-//         let bg_noise = params.h.x;
-//         let bg_noise_scale = params.h.y;
-
-//         let blended = mix(
-//             get_bg_noise(
-//                 vout.pos.xy, 
-//                 foreground_color, 
-//                 bg_noise, 
-//                 bg_noise_scale
-//             ),
-//             get_bg_noise(
-//                 vout.pos.xy, 
-//                 foreground_color, 
-//                 bg_noise, 
-//                 100.0 - bg_noise_scale
-//             ),
-//             0.5
-//         );
-
-//         return vec4f(blended, 1.0);
-//     }
-
-//     return vec4f(foreground_color, 1.0);
-// }
-
 @fragment
 fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
-    // First calculate the foreground color as if everything was foreground
+    if DEBUG {
+        return vec4f(
+            abs(vout.center.x),
+            abs(vout.center.y),
+            abs(vout.center.z),
+            1.0
+        );
+    }
+
+    if vout.layer == FOREGROUND && DEBUG_CORNERS {
+        if is_corner(vout.center) {
+            let corner_index = get_corner_index(vout.center);
+            let phase = get_corner_phase(corner_index, params);
+            let color = (phase + 1.0) * 0.5;
+            return vec4f(0.0, color, color * 0.75, 1.0);
+        }
+    }
+    
     let pos = vout.local_pos;
     var normal = vec3f(0.0);
     let eps = 0.0001;
@@ -272,7 +209,6 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
             (grid_contrast + subdivision * (1.0 - grid_contrast))
     );
 
-    // Calculate background color
     let bg_noise = params.h.x;
     let bg_noise_scale = params.h.y;
 
@@ -292,7 +228,6 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         0.5
     );
 
-    // Blend between foreground and background based on layer
     let final_color = select(
         background_color,
         foreground_color,
