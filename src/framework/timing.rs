@@ -1,5 +1,6 @@
 use nannou_osc as osc;
 use std::{
+    env,
     error::Error,
     sync::{
         atomic::{AtomicBool, AtomicU32, Ordering},
@@ -9,6 +10,53 @@ use std::{
 
 use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
+
+/// Wrapper for all `TimingSource` implementations which allows
+/// run-time selection of a `TimingSource` via command line argument.
+/// Sketches can bypass the command line argument by using a `TimingSource`
+/// other than this directly.
+#[derive(Clone)]
+pub enum Timing {
+    Frame(FrameTiming),
+    Osc(OscTransportTiming),
+    Midi(MidiSongTiming),
+    Hybrid(HybridTiming),
+}
+
+impl Timing {
+    pub fn new(bpm: f32) -> Self {
+        let args: Vec<String> = env::args().collect();
+        let timing_arg = args.get(2).map(|s| s.as_str()).unwrap_or("frame");
+        let timing = match timing_arg {
+            "osc" => Timing::Osc(OscTransportTiming::new(bpm)),
+            "midi" => Timing::Midi(MidiSongTiming::new(bpm)),
+            "hybrid" => Timing::Hybrid(HybridTiming::new(bpm)),
+            _ => Timing::Frame(FrameTiming::new(bpm)),
+        };
+        info!("Using {} timing", timing_arg);
+        timing
+    }
+}
+
+impl TimingSource for Timing {
+    fn beats(&self) -> f32 {
+        match self {
+            Timing::Frame(t) => t.beats(),
+            Timing::Osc(t) => t.beats(),
+            Timing::Midi(t) => t.beats(),
+            Timing::Hybrid(t) => t.beats(),
+        }
+    }
+
+    fn beats_to_frames(&self, beats: f32) -> f32 {
+        match self {
+            Timing::Frame(t) => t.beats_to_frames(beats),
+            Timing::Osc(t) => t.beats_to_frames(beats),
+            Timing::Midi(t) => t.beats_to_frames(beats),
+            Timing::Hybrid(t) => t.beats_to_frames(beats),
+        }
+    }
+}
 
 pub trait TimingSource: Clone {
     fn beats(&self) -> f32;

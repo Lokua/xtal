@@ -43,14 +43,6 @@ controls, and declarative frame-based animation.
 -   Hot reloadable UI/OSC/Animation declarations. See
     [Control Scripting](#control-scripting).
 
-### TODO
-
--   [ ] Multichannel audio
-
-## Status
-
-This project is under active development.
-
 ## Requirements
 
 This project has been developed on MacOS, though I'm sure most of it would work
@@ -64,6 +56,47 @@ on other platforms. This project requires or optionally needs:
 
 ## Usage
 
+### Running a sketch
+
+```sh
+cargo run --release -- <sketch>
+# or alternatively
+just start <sketch>
+```
+
+Where `sketch` is a sketch is a file in the src/sketches folder (without the
+extension) and registered in [src/sketches/mod.rs][module-link] as well as
+[src/main.rs][main-link].
+
+Optionally you can pass a `timing` argument after the required `sketch` argument
+to specify what kind of timing system will be used to run animations on sketches
+that support it (this is a new feature so not all sketches are using this
+run-time `Timing` mechansim yet). Available options include:
+
+#### `frame`
+
+Uses Lattice's internal frame system. This is the default and doesn't require
+any external devices to run.
+
+#### `osc`
+
+Requires `assets/L.OscTransport.amxd` to be running in Ableton Live. This
+provides the most reliable syncing mechanism as Ableton does not properly send
+MIDI SPP messages and doesn't support MTC.
+
+#### `midi`
+
+Uses MIDI clock and MIDI Song Position Pointers (SPP) to stay in sync (e.g. when
+a MIDI source loops or you jump to somewhere else in a timeline, you animations
+will jump or loop accordingly). Bitwig properly sends SPP; Ableton does not.
+
+#### `hybrid`
+
+Uses a combination of MIDI clock (for precision) and MIDI Time Code (MTC) to
+stay in sync. This is useful for DAWs that don't support sending SPP but do
+support MTC. Ableton, for example, does not support MTC but you can work around
+that with https://support.showsync.com/sync-tools/livemtc/introduction
+
 ### Creating a new sketch:
 
 1. Copy the [template sketch][template-link] into a new file in sketches folder.
@@ -72,7 +105,7 @@ on other platforms. This project requires or optionally needs:
     pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
        name: "template", // <-- RENAME THIS!
     ```
-3. Add that filename to the [sketches module][module-link]
+3. Add that filename to the [src/sketches/mod.rs][module-link]
 4. Add a match case for the sketch in [src/main.rs][main-link]:
     ```rust
     "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
@@ -293,6 +326,6 @@ foo:
 [blackhole]: https://existential.audio/blackhole/
 [template-link]: src/sketches/template.rs
 [midi-sketch-link]: src/sketches/midi_test.rs
-[module-link]: src/sketches/mod.res
+[module-link]: src/sketches/mod.rs
 [main-link]: src/main.rs
 [control-script-test-link]: src/sketches/scratch/control_script_test.rs

@@ -22,6 +22,7 @@ arboard = "3.4.1"
 bevy_reflect = { version = "0.15.1", features = ["glam"]}
 bytemuck = "1.21.0"
 chrono = "0.4.38"
+clap = { version = "4.5.28", features = ["derive"] }
 cpal = "0.15.3"
 dark-light = "1.1.1"
 derives = { path = "./derives" }

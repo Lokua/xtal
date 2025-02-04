@@ -3,11 +3,10 @@ use nannou::prelude::*;
 use nannou_egui::egui::{self, FontDefinitions, FontFamily};
 use nannou_egui::Egui;
 use std::cell::{Cell, RefCell};
-use std::env;
 use std::error::Error;
-use std::fs;
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Once};
+use std::{env, fs};
 use std::{path::PathBuf, str};
 
 use framework::prelude::*;
@@ -25,6 +24,7 @@ macro_rules! run_sketch {
             "Loading {}",
             sketches::$sketch_module::SKETCH_CONFIG.display_name
         );
+
         frame_controller::ensure_controller(
             sketches::$sketch_module::SKETCH_CONFIG.fps,
         );
