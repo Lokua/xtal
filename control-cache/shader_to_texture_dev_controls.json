@@ -1,0 +1,13 @@
+{
+  "values": {
+    "distort_amount": {
+      "Float": 0.85499996
+    },
+    "mode": {
+      "String": "smooth"
+    },
+    "radius": {
+      "Float": 0.745
+    }
+  }
+}

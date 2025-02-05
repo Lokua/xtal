@@ -4,6 +4,7 @@ use naga;
 use naga::front::wgsl;
 use naga::valid::{Capabilities, ValidationFlags, Validator};
 use nannou::prelude::*;
+use nannou::wgpu;
 use notify::{Event, RecursiveMode, Watcher};
 use std::fs;
 use std::path::PathBuf;
@@ -36,6 +37,8 @@ pub struct GpuState<V: Pod + Zeroable> {
     params_bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffers: Vec<wgpu::VertexBufferLayout<'static>>,
     sample_count: u32,
+    texture_bind_group: wgpu::BindGroup,
+    texture_bind_group_layout: wgpu::BindGroupLayout,
     _marker: std::marker::PhantomData<V>,
 
     // Shaded access for hot reloading
@@ -92,10 +95,37 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             &params_buffer,
         );
 
+        let texture_bind_group_layout =
+            Self::create_texture_bind_group_layout(device);
+
+        let dummy_texture = wgpu::TextureBuilder::new()
+            .size([1, 1])
+            .format(Frame::TEXTURE_FORMAT)
+            .dimension(wgpu::TextureDimension::D2)
+            .usage(
+                wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            )
+            .sample_count(1)
+            .build(device);
+
+        let dummy_view = dummy_texture.view().build();
+
+        let dummy_texture_sampler =
+            device.create_sampler(&wgpu::SamplerDescriptor::default());
+
+        let texture_bind_group = wgpu::BindGroupBuilder::new()
+            .texture_view(&dummy_view)
+            .sampler(&dummy_texture_sampler)
+            .build(device, &texture_bind_group_layout);
+
         let pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Pipeline Layout"),
-                bind_group_layouts: &[&params_bind_group_layout],
+                bind_group_layouts: &[
+                    &params_bind_group_layout,
+                    &texture_bind_group_layout,
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -166,6 +196,8 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             params_bind_group_layout,
             vertex_buffers,
             sample_count,
+            texture_bind_group,
+            texture_bind_group_layout,
             update_state,
             _watcher: watcher,
         }
@@ -241,6 +273,20 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         }
     }
 
+    fn create_texture_bind_group_layout(
+        device: &wgpu::Device,
+    ) -> wgpu::BindGroupLayout {
+        wgpu::BindGroupLayoutBuilder::new()
+            .texture(
+                wgpu::ShaderStages::FRAGMENT,
+                false,
+                wgpu::TextureViewDimension::D2,
+                wgpu::TextureSampleType::Float { filterable: true },
+            )
+            .sampler(wgpu::ShaderStages::FRAGMENT, true)
+            .build(device)
+    }
+
     fn create_render_pipeline(
         state: PipelineCreationState,
     ) -> wgpu::RenderPipeline {
@@ -309,6 +355,36 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             .expect("Failed to start watching shader file");
 
         watcher
+    }
+
+    pub fn set_input_texture(
+        &mut self,
+        app: &App,
+        texture_view: &wgpu::TextureView,
+    ) {
+        let window = app.main_window();
+        let device = window.device();
+
+        let sampler =
+            device.create_sampler(&wgpu::SamplerDescriptor::default());
+
+        self.texture_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &self.texture_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(
+                            texture_view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                ],
+                label: Some("Texture Bind Group"),
+            });
     }
 
     /// This will be called multiple times when we update but it doesn't matter
@@ -441,6 +517,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
 
         if let Some(ref vertex_buffer) = self.vertex_buffer {
             render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
@@ -449,6 +526,66 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             error!("Use render_procedural if not using a vertex buffer");
             panic!();
         }
+    }
+
+    pub fn render_to_texture(&self, app: &App) -> wgpu::TextureView {
+        let window = app.main_window();
+        let device = window.device();
+
+        // Create multisampled texture for rendering
+        let msaa_texture = wgpu::TextureBuilder::new()
+            .size([window.inner_size_pixels().0, window.inner_size_pixels().1])
+            .format(Frame::TEXTURE_FORMAT)
+            .dimension(wgpu::TextureDimension::D2)
+            .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
+            .sample_count(self.sample_count)
+            .build(device);
+
+        // Create non-multisampled texture for resolving and sampling
+        let resolve_texture = wgpu::TextureBuilder::new()
+            .size([window.inner_size_pixels().0, window.inner_size_pixels().1])
+            .format(Frame::TEXTURE_FORMAT)
+            .dimension(wgpu::TextureDimension::D2)
+            .usage(
+                wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            )
+            .sample_count(1)
+            .build(device);
+
+        let msaa_view = msaa_texture.view().build();
+        let resolve_view = resolve_texture.view().build();
+
+        let mut encoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render to Texture Encoder"),
+            });
+
+        {
+            let mut render_pass = wgpu::RenderPassBuilder::new()
+                .color_attachment(&msaa_view, |color| {
+                    color
+                        .load_op(wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT))
+                        .store_op(true)
+                        .resolve_target(Some(&resolve_view))
+                })
+                .begin(&mut encoder);
+
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.params_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
+
+            if let Some(ref vertex_buffer) = self.vertex_buffer {
+                render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                render_pass.draw(0..self.n_vertices, 0..1);
+            } else {
+                render_pass.draw(0..3, 0..1);
+            }
+        }
+
+        window.queue().submit(std::iter::once(encoder.finish()));
+
+        resolve_view
     }
 
     fn infer_vertex_attributes() -> Vec<wgpu::VertexAttribute> {

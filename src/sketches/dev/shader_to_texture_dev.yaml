@@ -1,0 +1,19 @@
+_vars:
+    PI: &PI 3.14159265359
+    TAU: &TAU 6.283185307179586
+
+rotation:
+    type: "slider"
+    range: [0.0, *TAU]
+    default: *PI
+
+z_offset:
+    type: "slider"
+    range: [-5.0, -0.5]
+    default: 3.0
+
+scale:
+    type: "slider"
+
+a4:
+    type: "slider"

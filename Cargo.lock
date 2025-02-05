@@ -2308,6 +2308,7 @@ dependencies = [
  "serial_test",
  "termcolor",
  "toml 0.8.19",
+ "wgpu-types",
  "yaml-merge-keys",
 ]
 

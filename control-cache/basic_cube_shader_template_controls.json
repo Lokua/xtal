@@ -6,11 +6,11 @@
     "z_offset": {
       "Float": -0.5
     },
-    "rotation": {
-      "Float": 2.22
-    },
     "scale": {
-      "Float": 0.205
+      "Float": 0.125
+    },
+    "rotation": {
+      "Float": 2.3999999
     }
   }
 }

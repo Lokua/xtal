@@ -105,6 +105,7 @@ fn main() {
         "osc_dev" => run_sketch!(osc_dev),
         "osc_transport_dev" => run_sketch!(osc_transport_dev),
         "responsive_dev" => run_sketch!(responsive_dev),
+        "shader_to_texture_dev" => run_sketch!(shader_to_texture_dev),
         "wgpu_compute_dev" => run_sketch!(wgpu_compute_dev),
         "wgpu_dev" => run_sketch!(wgpu_dev),
 
