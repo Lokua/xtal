@@ -422,13 +422,14 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
                         let window = app.main_window();
                         let device = window.device();
-
                         let shader_module = device.create_shader_module(shader);
+
                         let pipeline_layout = device.create_pipeline_layout(
                             &wgpu::PipelineLayoutDescriptor {
                                 label: Some("Pipeline Layout"),
                                 bind_group_layouts: &[
-                                    &self.params_bind_group_layout
+                                    &self.params_bind_group_layout,
+                                    &self.texture_bind_group_layout,
                                 ],
                                 push_constant_ranges: &[],
                             },
@@ -531,10 +532,11 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     pub fn render_to_texture(&self, app: &App) -> wgpu::TextureView {
         let window = app.main_window();
         let device = window.device();
+        let size = window.inner_size_pixels();
 
         // Create multisampled texture for rendering
         let msaa_texture = wgpu::TextureBuilder::new()
-            .size([window.inner_size_pixels().0, window.inner_size_pixels().1])
+            .size([size.0, size.1])
             .format(Frame::TEXTURE_FORMAT)
             .dimension(wgpu::TextureDimension::D2)
             .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
@@ -543,7 +545,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         // Create non-multisampled texture for resolving and sampling
         let resolve_texture = wgpu::TextureBuilder::new()
-            .size([window.inner_size_pixels().0, window.inner_size_pixels().1])
+            .size([size.0, size.1])
             .format(Frame::TEXTURE_FORMAT)
             .dimension(wgpu::TextureDimension::D2)
             .usage(
@@ -553,8 +555,22 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             .sample_count(1)
             .build(device);
 
+        let depth_texture = if self.depth_texture.is_some() {
+            Some(
+                wgpu::TextureBuilder::new()
+                    .size([size.0, size.1])
+                    .format(wgpu::TextureFormat::Depth32Float)
+                    .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
+                    .sample_count(self.sample_count)
+                    .build(device),
+            )
+        } else {
+            None
+        };
+
         let msaa_view = msaa_texture.view().build();
         let resolve_view = resolve_texture.view().build();
+        let depth_view = depth_texture.map(|tex| tex.view().build());
 
         let mut encoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -562,14 +578,30 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             });
 
         {
-            let mut render_pass = wgpu::RenderPassBuilder::new()
-                .color_attachment(&msaa_view, |color| {
-                    color
-                        .load_op(wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT))
-                        .store_op(true)
-                        .resolve_target(Some(&resolve_view))
-                })
-                .begin(&mut encoder);
+            let mut render_pass = if let Some(ref depth_view) = depth_view {
+                wgpu::RenderPassBuilder::new()
+                    .color_attachment(&msaa_view, |color| {
+                        color
+                            .load_op(wgpu::LoadOp::Clear(
+                                wgpu::Color::TRANSPARENT,
+                            ))
+                            .store_op(true)
+                            .resolve_target(Some(&resolve_view))
+                    })
+                    .depth_stencil_attachment(&depth_view, |depth| depth)
+                    .begin(&mut encoder)
+            } else {
+                wgpu::RenderPassBuilder::new()
+                    .color_attachment(&msaa_view, |color| {
+                        color
+                            .load_op(wgpu::LoadOp::Clear(
+                                wgpu::Color::TRANSPARENT,
+                            ))
+                            .store_op(true)
+                            .resolve_target(Some(&resolve_view))
+                    })
+                    .begin(&mut encoder)
+            };
 
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.params_bind_group, &[]);

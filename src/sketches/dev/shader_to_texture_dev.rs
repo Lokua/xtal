@@ -1,4 +1,5 @@
 use crate::framework::prelude::*;
+use bevy_reflect::Reflect;
 use nannou::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -13,14 +14,24 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
+const BACKGROUND: f32 = 0.0;
+const FOREGROUND: f32 = 1.0;
+
 #[derive(SketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
-    first_pass_gpu: gpu::GpuState<gpu::BasicPositionVertex>,
-    post_process_gpu: gpu::GpuState<gpu::BasicPositionVertex>,
+    first_pass: gpu::GpuState<Vertex>,
+    second_pass: gpu::GpuState<gpu::BasicPositionVertex>,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
+struct Vertex {
+    position: [f32; 3],
+    layer: f32,
 }
 
 #[repr(C)]
@@ -46,9 +57,10 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
-        Control::select("mode", "smooth", &["smooth", "step"]),
-        Control::slider_norm("radius", 0.5),
-        Control::slider_norm("distort_amount", 0.5),
+        Control::slider_norm("a1", 0.0),
+        Control::slider_norm("a2", 0.0),
+        Control::slider_norm("a3", 0.0),
+        Control::slider_norm("a4", 0.0),
     ]);
 
     let first_pass_params = ShaderParams {
@@ -61,14 +73,20 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    let first_pass_gpu = gpu::GpuState::new_full_screen(
+    let vertices = create_vertices();
+
+    let first_pass = gpu::GpuState::new(
         app,
         to_absolute_path(file!(), "shader_to_texture_dev.wgsl"),
         &first_pass_params,
+        Some(&vertices),
+        wgpu::PrimitiveTopology::TriangleList,
+        Some(wgpu::BlendState::ALPHA_BLENDING),
+        true,
         true,
     );
 
-    let post_process_gpu = gpu::GpuState::new_full_screen(
+    let second_pass = gpu::GpuState::new_full_screen(
         app,
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),
         &post_process_params,
@@ -79,8 +97,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         animation,
         controls,
         wr,
-        first_pass_gpu,
-        post_process_gpu,
+        first_pass,
+        second_pass,
     }
 }
 
@@ -88,30 +106,60 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     let first_pass_params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
-            match m.controls.string("mode").as_str() {
-                "smooth" => 0.0,
-                "step" => 1.0,
-                _ => unreachable!(),
-            },
-            m.controls.float("radius"),
-            0.0,
-            0.0,
+            m.controls.float("a1"),
+            m.controls.float("a2"),
+            m.controls.float("a3"),
+            m.controls.float("a4"),
         ],
     };
 
     let post_process_params = PostProcessParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [app.time, m.controls.float("distort_amount"), 0.0, 0.0],
+        a: [
+            m.controls.float("a1"),
+            m.controls.float("a2"),
+            m.controls.float("a3"),
+            m.controls.float("a4"),
+        ],
     };
 
-    let texture_view = m.first_pass_gpu.render_to_texture(app);
-    m.post_process_gpu.set_input_texture(app, &texture_view);
+    let texture_view = m.first_pass.render_to_texture(app);
+    m.second_pass.set_input_texture(app, &texture_view);
 
-    m.first_pass_gpu.update_params(app, &first_pass_params);
-    m.post_process_gpu.update_params(app, &post_process_params);
+    let vertices = create_vertices();
+    m.first_pass.update(app, &first_pass_params, &vertices);
+    m.second_pass.update_params(app, &post_process_params);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {
     frame.clear(BLACK);
-    m.post_process_gpu.render(&frame);
+    // m.first_pass.render(&frame);
+    m.second_pass.render(&frame);
+}
+
+fn create_vertices() -> Vec<Vertex> {
+    let mut vertices = vec![];
+    vertices.extend(create_fullscreen_quad());
+    vertices.extend(create_cube());
+    vertices
+}
+
+fn create_fullscreen_quad() -> Vec<Vertex> {
+    QUAD_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            layer: BACKGROUND,
+        })
+        .collect()
+}
+
+fn create_cube() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .map(|&position| Vertex {
+            position,
+            layer: FOREGROUND,
+        })
+        .collect()
 }

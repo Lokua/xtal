@@ -1,13 +1,16 @@
 {
   "values": {
-    "distort_amount": {
-      "Float": 0.85499996
+    "a3": {
+      "Float": 0.192
     },
-    "mode": {
-      "String": "smooth"
+    "a2": {
+      "Float": 0.48499998
     },
-    "radius": {
-      "Float": 0.745
+    "a1": {
+      "Float": 0.587
+    },
+    "a4": {
+      "Float": 0.0
     }
   }
 }
