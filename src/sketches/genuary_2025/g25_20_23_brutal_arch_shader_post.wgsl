@@ -10,8 +10,15 @@ struct VertexOutput {
 struct Params {
     // w, h, ..unused
     resolution: vec4f,
-    // unsued
-    a: vec4f,
+
+    // edge_mix, edge_size, edge_thresh, geo_mix
+    z: vec4f,
+
+    // geo_size, geo_offs, ..unused
+    y: vec4f,
+
+    // unused
+    x: vec4f,
 }
 
 @group(0) @binding(0)
@@ -33,7 +40,81 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    var color = textureSample(source_texture, source_sampler, in.uv);
-    color.g = 0.9;
-    return color;
+    let sample = textureSample(source_texture, source_sampler, in.uv);
+    var color = sample.rgb;
+
+    let edge_mix = params.z.x;
+    let geo_mix = params.z.w;
+    let contrast = params.y.z;
+    let brightness = params.y.w;
+
+    color = edge_detect(in.uv, color, edge_mix);
+    color = geometric_explode(in.uv, color, geo_mix);
+
+    let contrast_factor = exp2(contrast * 3.0);
+    color = (color - 0.5) * contrast_factor + 0.5;
+
+    color = select(
+        color * (1.0 - abs(brightness)),
+        color + (1.0 - color) * brightness,
+        brightness >= 0.0
+    );
+
+    return vec4f(color, sample.a);
+}
+
+fn edge_detect(uv: vec2f, color: vec3f, mix_factor: f32) -> vec3f {
+    let edge_size = params.z.y;
+    let edge_thresh = params.z.z;
+
+    let dims = textureDimensions(source_texture);
+    let offset = vec2i(i32(edge_size), i32(edge_size));
+
+    let right = textureLoad(
+        source_texture, 
+        vec2i(uv * vec2f(dims)) + vec2i(offset.x, 0),
+        0
+    );
+    let left = textureLoad(
+        source_texture, 
+        vec2i(uv * vec2f(dims)) - vec2i(offset.x, 0),
+        0
+    );
+    let top = textureLoad(
+        source_texture, 
+        vec2i(uv * vec2f(dims)) + vec2i(0, offset.y),
+        0
+    );
+    let bottom = textureLoad(
+        source_texture, 
+        vec2i(uv * vec2f(dims)) - vec2i(0, offset.y),
+        0
+    );
+    
+    let edge_h = abs(right - left);
+    let edge_v = abs(top - bottom);
+    let edges = sqrt(edge_h * edge_h + edge_v * edge_v);
+    
+    let modified = vec3f(
+        step(edge_thresh, edges.r),
+        step(edge_thresh, edges.g),
+        step(edge_thresh, edges.b)
+    );
+    
+    return mix(color, modified, mix_factor);
+}
+
+fn geometric_explode(uv: vec2f, color: vec3f, mix_factor: f32) -> vec3f {
+    let geo_size = params.y.x;  
+    let geo_offs = params.y.y;
+
+    let block_uv = floor(uv / geo_size);
+    let offset = sin(dot(block_uv, vec2f(12.9898, 78.233))) * geo_offs;
+    let center = vec2f(0.5, 0.5);
+    let dir = normalize(uv - center);
+    let displaced_uv = uv + dir * offset * mix_factor * 0.1;
+    let displaced = textureSample(source_texture, source_sampler, displaced_uv);
+    let block_color = displaced.rgb * (1.0 + offset * 0.);
+    
+    return mix(color, block_color, mix_factor);
 }

@@ -236,7 +236,7 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         ),
         0.75
     );
-    background_color *= vec3f(0.8, 0.95, 0.95);
+    background_color *= vec3f(0.99, 0.98, 0.97);
 
     let border_size = 0.3;
     let is_border = 
@@ -284,20 +284,20 @@ fn is_corner(center: vec3f) -> bool {
 }
 
 fn get_light(normal: vec3f) -> f32 {
-    let spread = params.h.z;
+    let spread = params.h.z * 0.25;
 
     // light 
     if normal.x > 0.5 || normal.y > 0.5 {
-        return 0.8 - spread * 0.5;
+        return 0.5 - spread;
     }
 
     // medium
     if normal.x < -0.5 || normal.z < -0.5 {
-        return 0.35;
+        return 0.25;
     }
 
     // dark
-    return 0.03 + spread;
+    return 0.0 + spread;
 }
 
 fn get_bg_noise(

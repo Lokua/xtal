@@ -2,7 +2,7 @@ use bevy_reflect::Reflect;
 use bytemuck::{Pod, Zeroable};
 use nannou::prelude::*;
 
-use crate::framework::prelude::*;
+use crate::framework::{gpu::BasicPositionVertex, prelude::*};
 
 // b/w ~/Live/2025/Lattice - Inspired by Brutalism
 
@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(620),
+    gui_h: Some(900),
 };
 
 const BACKGROUND: f32 = 0.0;
@@ -26,7 +26,8 @@ const FOREGROUND: f32 = 1.0;
 pub struct Model {
     controls: ControlScript<Timing>,
     wr: WindowRect,
-    gpu: gpu::GpuState<Vertex>,
+    main_shader: gpu::GpuState<Vertex>,
+    post_shader: gpu::GpuState<BasicPositionVertex>,
 }
 
 #[repr(C)]
@@ -70,6 +71,22 @@ struct ShaderParams {
     i: [f32; 4],
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+struct PostShaderParams {
+    // w, h, ..unused
+    resolution: [f32; 4],
+
+    // edge_mix, edge_size, edge_thresh, geo_mix
+    z: [f32; 4],
+
+    // geo_size, geo_offs, ..unused
+    y: [f32; 4],
+
+    // unused
+    x: [f32; 4],
+}
+
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
@@ -89,9 +106,16 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         i: [0.0; 4],
     };
 
+    let post_params = PostShaderParams {
+        resolution: [0.0; 4],
+        z: [0.0; 4],
+        y: [0.0; 4],
+        x: [0.0; 4],
+    };
+
     let vertices = create_vertices(0.0);
 
-    let gpu = gpu::GpuState::new(
+    let main_shader = gpu::GpuState::new(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "g25_20_23_brutal_arch_shader.wgsl"),
@@ -102,8 +126,20 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
         true,
     );
+    let post_shader = gpu::GpuState::new_full_screen(
+        app,
+        wr.resolution_u32(),
+        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader_post.wgsl"),
+        &post_params,
+        true,
+    );
 
-    Model { controls, wr, gpu }
+    Model {
+        controls,
+        wr,
+        main_shader,
+        post_shader,
+    }
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
@@ -167,14 +203,43 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
+    let post_params = PostShaderParams {
+        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
+        z: [
+            m.controls.get("edge_mix"),
+            m.controls.get("edge_size"),
+            m.controls.get("edge_thresh"),
+            m.controls.get("geo_mix"),
+        ],
+        y: [
+            m.controls.get("geo_size"),
+            m.controls.get("geo_offs"),
+            m.controls.get("y3"),
+            m.controls.get("y4"),
+        ],
+        x: [
+            m.controls.get("x1"),
+            m.controls.get("x2"),
+            m.controls.get("x3"),
+            m.controls.get("x4"),
+        ],
+    };
+
     let vertices = create_vertices(m.controls.get("scale"));
 
-    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
+    let window_size = m.wr.resolution_u32();
+
+    m.main_shader.update(app, window_size, &params, &vertices);
+
+    let texture = m.main_shader.render_to_texture(app);
+    m.post_shader.set_input_texture(app, &texture);
+    m.post_shader.update_params(app, window_size, &post_params);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {
     frame.clear(BLACK);
-    m.gpu.render(&frame);
+    // m.main_shader.render(&frame);
+    m.post_shader.render(&frame);
 }
 
 fn create_vertices(scale: f32) -> Vec<Vertex> {

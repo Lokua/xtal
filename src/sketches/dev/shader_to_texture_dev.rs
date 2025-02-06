@@ -49,7 +49,7 @@ struct PostProcessParams {
     // w, h, ..unused
     resolution: [f32; 4],
 
-    // time, distort_amount, ..unused
+    // unused
     a: [f32; 4],
 }
 
