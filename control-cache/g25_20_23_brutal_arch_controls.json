@@ -1,112 +1,112 @@
 {
   "values": {
+    "h4": {
+      "Float": 0.0
+    },
+    "offs": {
+      "Float": 0.0
+    },
+    "edge_size": {
+      "Float": 2.0
+    },
     "bg_noise_scale": {
       "Float": 9.5
     },
-    "d3": {
+    "geo_size": {
+      "Float": 0.575
+    },
+    "twist": {
       "Float": 0.0
     },
-    "diag": {
+    "bulge": {
       "Float": 0.0
     },
-    "bg_noise": {
-      "Float": 1.0
-    },
-    "y3": {
+    "explode": {
       "Float": 0.0
+    },
+    "57g6n": {
+      "Bool": false
+    },
+    "grid_border_size": {
+      "Float": 0.12
+    },
+    "i1a21": {
+      "Bool": false
+    },
+    "stag": {
+      "Float": 0.0
+    },
+    "scale": {
+      "Float": 0.427
+    },
+    "wave": {
+      "Float": 0.026999999
+    },
+    "echo_threshold": {
+      "Float": 0.76
     },
     "texture_scale": {
       "Float": 1.0699999
     },
-    "explode": {
+    "y3": {
+      "Float": 0.0
+    },
+    "texture_strength": {
+      "Float": 2.0
+    },
+    "grid_size": {
+      "Float": 8.0
+    },
+    "phase_twist": {
       "Float": 0.0
     },
     "echo_intensity": {
       "Float": 0.0
     },
+    "diag": {
+      "Float": 0.0
+    },
+    "ye847": {
+      "Bool": false
+    },
+    "bg_noise": {
+      "Float": 1.0
+    },
+    "grid_contrast": {
+      "Float": 1.0
+    },
     "geo_offs": {
       "Float": 4.2
     },
-    "phase_twist": {
+    "color_spread": {
+      "Float": 0.255
+    },
+    "067py": {
+      "Bool": false
+    },
+    "z_offset": {
+      "Float": -4.0
+    },
+    "y4": {
       "Float": 0.0
     },
-    "wave": {
-      "Float": 0.026999999
+    "d3": {
+      "Float": 0.0
     },
-    "geo_size": {
-      "Float": 0.575
+    "k3v40": {
+      "Bool": false
     },
-    "grid_size": {
-      "Float": 8.0
-    },
-    "edge_size": {
-      "Float": 2.0
+    "607cy": {
+      "Bool": false
     },
     "geo_mix": {
       "Float": 0.0
-    },
-    "echo_threshold": {
-      "Float": 0.76
     },
     "edge_thresh": {
       "Float": 0.39999998
     },
     "edge_mix": {
       "Float": 0.0
-    },
-    "scale": {
-      "Float": 0.54499996
-    },
-    "bulge": {
-      "Float": 0.0
-    },
-    "twist": {
-      "Float": 0.0
-    },
-    "5bj40": {
-      "Bool": false
-    },
-    "z_offset": {
-      "Float": -4.0
-    },
-    "cp86c": {
-      "Bool": false
-    },
-    "grid_contrast": {
-      "Float": 1.0
-    },
-    "offs": {
-      "Float": 0.0
-    },
-    "grid_border_size": {
-      "Float": 0.12
-    },
-    "h4": {
-      "Float": 0.0
-    },
-    "stag": {
-      "Float": 0.0
-    },
-    "texture_strength": {
-      "Float": 2.0
-    },
-    "90xhf": {
-      "Bool": false
-    },
-    "416p5": {
-      "Bool": false
-    },
-    "vqsz7": {
-      "Bool": false
-    },
-    "color_spread": {
-      "Float": 0.255
-    },
-    "y4": {
-      "Float": 0.0
-    },
-    "3i3o3": {
-      "Bool": false
     }
   }
 }

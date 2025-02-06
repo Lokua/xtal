@@ -33,7 +33,3 @@ md:
 
 stats:
   sccache --show-stats
-
-# I always forget what this package is called
-loc:
-  tokei .
