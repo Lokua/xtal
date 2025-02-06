@@ -1,4 +1,5 @@
 use bevy_reflect::Reflect;
+use bytemuck::{Pod, Zeroable};
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
@@ -29,7 +30,7 @@ pub struct Model {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, Reflect)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable, Reflect)]
 struct Vertex {
     position: [f32; 3],
     center: [f32; 3],
@@ -37,7 +38,7 @@ struct Vertex {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
 struct ShaderParams {
     // w, h, ..unused
     resolution: [f32; 4],
@@ -70,10 +71,6 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    if let Some(display) = app.primary_monitor() {
-        debug!("display.scale_factor(): {:?}", display.scale_factor());
-    }
-
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),

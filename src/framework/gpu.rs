@@ -50,8 +50,17 @@ pub struct GpuState<V: Pod + Zeroable> {
 }
 
 impl<V: Pod + Zeroable + Typed> GpuState<V> {
-    /// Create a GpuState instance that accepts your own vertices.
-    /// Example at `src/sketches/genuary_2025/g25_18_wind.rs`.
+    /// Creates a new GPU state manager with custom vertex data.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `V` - The vertex type that defines the structure of vertex data sent to the GPU.
+    ///   Must derive `Pod`, `Zeroable`, and `Reflect`. While the implementation uses the
+    ///   `Typed` trait, this is automatically implemented when deriving `Reflect`.
+    /// * `window_size` - The logical width and height of the target window. This
+    ///   will be scaled internally to match the primary display's pixel depth.
+    ///
+    /// See a full example at `src/sketches/genuary_2025/g25_18_wind.rs`.
     /// See the specialized `new_procedural` and `new_full_screen` constructors
     /// for easier to get up and running shaders.
     pub fn new<P: Pod + Zeroable>(
@@ -75,7 +84,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         let update_state = Arc::new(Mutex::new(None));
         let watcher = if watch {
-            Some(Self::setup_shader_watcher(
+            Some(Self::start_shader_watcher(
                 shader_path.clone(),
                 update_state.clone(),
             ))
@@ -335,7 +344,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             })
     }
 
-    fn setup_shader_watcher(
+    fn start_shader_watcher(
         path: PathBuf,
         state: Arc<Mutex<Option<PathBuf>>>,
     ) -> notify::RecommendedWatcher {
@@ -399,78 +408,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             });
     }
 
-    /// This will be called multiple times when we update but it doesn't matter
-    /// since the update_state's content will be none due to `guard.take()`
-    // fn update_shader(&mut self, app: &App) {
-    //     if let Ok(mut guard) = self.update_state.lock() {
-    //         if let Some(path) = guard.take() {
-    //             info!("Reloading shader from {:?}", path);
-
-    //             if let Ok(shader_content) = fs::read_to_string(&path) {
-    //                 let parse_result = wgsl::parse_str(&shader_content);
-
-    //                 if let Ok(module) = parse_result {
-    //                     let mut validator = Validator::new(
-    //                         ValidationFlags::all(),
-    //                         Capabilities::empty(),
-    //                     );
-
-    //                     let validation_result = validator.validate(&module);
-    //                     if let Err(validation_error) = validation_result {
-    //                         error!(
-    //                             "Shader validation failed:\n{:?}",
-    //                             validation_error
-    //                         );
-    //                         return;
-    //                     }
-
-    //                     // If we got here, shader is valid - create the module
-    //                     let shader = wgpu::ShaderModuleDescriptor {
-    //                         label: Some("Hot Reloadable Shader"),
-    //                         source: wgpu::ShaderSource::Wgsl(
-    //                             shader_content.into(),
-    //                         ),
-    //                     };
-
-    //                     let window = app.main_window();
-    //                     let device = window.device();
-    //                     let shader_module = device.create_shader_module(shader);
-
-    //                     let pipeline_layout = device.create_pipeline_layout(
-    //                         &wgpu::PipelineLayoutDescriptor {
-    //                             label: Some("Pipeline Layout"),
-    //                             bind_group_layouts: &[
-    //                                 &self.params_bind_group_layout,
-    //                                 &self.texture_bind_group_layout,
-    //                             ],
-    //                             push_constant_ranges: &[],
-    //                         },
-    //                     );
-
-    //                     let creation_state = PipelineCreationState {
-    //                         device,
-    //                         shader_module: &shader_module,
-    //                         pipeline_layout: &pipeline_layout,
-    //                         vertex_buffers: &self.vertex_buffers,
-    //                         sample_count: self.sample_count,
-    //                         format: Frame::TEXTURE_FORMAT,
-    //                         topology: self.topology,
-    //                         blend: self.blend,
-    //                         depth_stencil: self.depth_stencil.clone(),
-    //                     };
-
-    //                     self.render_pipeline =
-    //                         Self::create_render_pipeline(creation_state);
-
-    //                     info!("Shader pipeline successfully recreated");
-    //                 } else {
-    //                     error!("Failed to parse shader: {:?}", parse_result);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     /// For non-procedural and full-screen shaders when vertices are altered on CPU
     pub fn update<P: Pod>(
         &mut self,
@@ -512,17 +449,11 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let device = window.device();
 
         if vertices.len() as u32 != self.n_vertices {
-            if let Some(_) = self.vertex_buffer {
+            if self.vertex_buffer.is_some() {
                 self.vertex_buffer =
                     Some(Self::create_vertex_buffer(device, vertices));
+                self.n_vertices = vertices.len() as u32;
             }
-
-            // Not sure why this isn't 100% needed.
-            // This works with or without it, but it's not even correct
-            // as it doesn't multiply the length by the actual position data
-            // e.g. len * 6 for quads:
-            //
-            // self.n_vertices = vertices.len() as u32;
         }
 
         window.queue().write_buffer(
@@ -532,6 +463,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         );
     }
 
+    /// Safely checks if the shader code has been modified then updates in it
+    /// in place only if it has. If parsing or validation fails for any reason
+    /// the method will return early and we will keeping using the last version
     fn update_shader(&mut self, app: &App) {
         let path = match self
             .update_state
@@ -614,11 +548,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         self.render_pipeline = Self::create_render_pipeline(creation_state);
     }
 
-    pub fn check_and_handle_resize(
-        &mut self,
-        app: &App,
-        window_size: [u32; 2],
-    ) {
+    fn check_and_handle_resize(&mut self, app: &App, window_size: [u32; 2]) {
         let window = app.main_window();
         let device = window.device();
 
@@ -634,8 +564,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         if self.depth_stencil.is_some()
             && window_size_physical != self.window_size_physical
         {
-            debug!("size changed. rebuilding depth texture");
-
             let texture = wgpu::TextureBuilder::new()
                 .size(window_size_physical)
                 .format(wgpu::TextureFormat::Depth32Float)
@@ -842,9 +770,9 @@ pub const QUAD_COVER_VERTICES: &[BasicPositionVertex] = &[
     },
 ];
 
-/// Specialized impl for shaders that simply need every pixel.
-/// See interference and wave_fract for examples.
 impl GpuState<BasicPositionVertex> {
+    /// Specialized impl for shaders that simply need every pixel.
+    /// See interference and wave_fract for examples.
     pub fn new_full_screen<P: Pod + Zeroable>(
         app: &App,
         window_size: [u32; 2],
@@ -866,9 +794,9 @@ impl GpuState<BasicPositionVertex> {
     }
 }
 
-/// Specialized impl for purly procedural shaders (no vertices).
-/// See spiral.rs for an example.
 impl GpuState<()> {
+    /// Specialized impl for purly procedural shaders (no vertices).
+    /// See spiral.rs for an example.
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,
         window_size: [u32; 2],
