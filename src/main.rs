@@ -78,6 +78,7 @@ fn main() {
     match sketch_name {
         // --- MAIN
         "blob" => run_sketch!(blob),
+        "brutalism" => run_sketch!(brutalism),
         "displacement_1" => run_sketch!(displacement_1),
         "displacement_1a" => run_sketch!(displacement_1a),
         "displacement_2" => run_sketch!(displacement_2),

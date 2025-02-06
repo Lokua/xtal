@@ -5,11 +5,11 @@ use nannou::prelude::*;
 use crate::framework::{gpu::BasicPositionVertex, prelude::*};
 
 // b/w ~/Live/2025/Lattice - Inspired by Brutalism
+// automated version is in sketches/genuary_2025/g25_20_23_brutal_arch
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "g25_20_23_brutal_arch",
-    display_name:
-        "Genuary 20, 23 | Generative Architecture, Inspired by Brutalism",
+    name: "brutalism",
+    display_name: "Inspired by Brutalism",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -86,7 +86,7 @@ struct PostShaderParams {
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
-        to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
+        to_absolute_path(file!(), "brutalism.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),
     );
 
@@ -114,7 +114,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let main_shader = gpu::GpuState::new(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader.wgsl"),
+        to_absolute_path(file!(), "brutalism_shader1.wgsl"),
         &params,
         Some(&vertices),
         wgpu::PrimitiveTopology::TriangleList,
@@ -122,10 +122,11 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
         true,
     );
+
     let post_shader = gpu::GpuState::new_full_screen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader_post.wgsl"),
+        to_absolute_path(file!(), "brutalism_shader2.wgsl"),
         &post_params,
         true,
     );

@@ -1,0 +1,109 @@
+{
+    "values": {
+        "bg_noise": {
+            "Float": 1.0
+        },
+        "offs": {
+            "Float": 0.0
+        },
+        "stag": {
+            "Float": 0.0
+        },
+        "brightness": {
+            "Float": 0.0
+        },
+        "grid_contrast": {
+            "Float": 1.0
+        },
+        "color_spread": {
+            "Float": 0.19
+        },
+        "echo_threshold": {
+            "Float": 0.76
+        },
+        "contrast": {
+            "Float": 0.0
+        },
+        "geo_mix": {
+            "Float": 0.0
+        },
+        "explode": {
+            "Float": 0.0
+        },
+        "edge_size": {
+            "Float": 2.0
+        },
+        "m48b7": {
+            "Bool": false
+        },
+        "geo_size": {
+            "Float": 0.5
+        },
+        "bg_noise_scale": {
+            "Float": 6.0
+        },
+        "phase_twist": {
+            "Float": 0.0
+        },
+        "79c72": {
+            "Bool": false
+        },
+        "grid_border_size": {
+            "Float": 0.12
+        },
+        "texture_strength": {
+            "Float": 2.0
+        },
+        "geo_offs": {
+            "Float": 4.2
+        },
+        "scale": {
+            "Float": 0.475
+        },
+        "echo_intensity": {
+            "Float": 0.0
+        },
+        "edge_thresh": {
+            "Float": 0.39999998
+        },
+        "edge_mix": {
+            "Float": 0.0
+        },
+        "twist": {
+            "Float": 0.0
+        },
+        "0q0f8": {
+            "Bool": false
+        },
+        "corner_translate": {
+            "Float": 0.0
+        },
+        "middle_translate": {
+            "Float": 0.0
+        },
+        "z_offset": {
+            "Float": -3.9099998
+        },
+        "bulge": {
+            "Float": 0.0
+        },
+        "wave": {
+            "Float": 0.0
+        },
+        "diag": {
+            "Float": 0.0
+        },
+        "5q24u": {
+            "Bool": false
+        },
+        "grid_size": {
+            "Float": 8.0
+        },
+        "9d1y7": {
+            "Bool": false
+        },
+        "texture_scale": {
+            "Float": 1.0699999
+        }
+    }
+}

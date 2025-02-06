@@ -1,4 +1,5 @@
 pub mod blob;
+pub mod brutalism;
 pub mod displacement_2a;
 pub mod drop;
 pub mod drop_walk;
