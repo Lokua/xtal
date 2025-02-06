@@ -114,6 +114,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_procedural(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "spiral_lines.wgsl"),
         &params,
         true,
@@ -175,7 +176,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    m.gpu.update_params(app, &params);
+    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

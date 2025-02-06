@@ -115,6 +115,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "g25_18_wind.wgsl"),
         &params,
         Some(&initial_vertices),
@@ -217,7 +218,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ));
     }
 
-    m.gpu.update(app, &params, &vertices);
+    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

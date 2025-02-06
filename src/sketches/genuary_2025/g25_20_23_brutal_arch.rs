@@ -70,6 +70,10 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
+    if let Some(display) = app.primary_monitor() {
+        debug!("display.scale_factor(): {:?}", display.scale_factor());
+    }
+
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),
@@ -92,7 +96,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
-        to_absolute_path(file!(), "g25_20_23_brutal_arch.wgsl"),
+        wr.resolution_u32(),
+        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader.wgsl"),
         &params,
         Some(&vertices),
         wgpu::PrimitiveTopology::TriangleList,
@@ -167,7 +172,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let vertices = create_vertices(m.controls.get("scale"));
 
-    m.gpu.update(app, &params, &vertices);
+    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

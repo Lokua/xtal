@@ -62,6 +62,10 @@ impl WindowRect {
         [self.w(), self.h()]
     }
 
+    pub fn resolution_u32(&self) -> [u32; 2] {
+        [self.w() as u32, self.h() as u32]
+    }
+
     pub fn vec2(&self) -> Vec2 {
         vec2(self.w(), self.h())
     }

@@ -37,6 +37,9 @@ pub struct GpuState<V: Pod + Zeroable> {
     params_bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffers: Vec<wgpu::VertexBufferLayout<'static>>,
     sample_count: u32,
+    window_size_physical: [u32; 2],
+
+    // TODO: these should be optional
     texture_bind_group: wgpu::BindGroup,
     texture_bind_group_layout: wgpu::BindGroupLayout,
     _marker: std::marker::PhantomData<V>,
@@ -53,6 +56,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     /// for easier to get up and running shaders.
     pub fn new<P: Pod + Zeroable>(
         app: &App,
+        window_size_logical: [u32; 2],
         shader_path: PathBuf,
         params: &P,
         vertices: Option<&[V]>,
@@ -82,7 +86,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let window = app.main_window();
         let device = window.device();
         let sample_count = window.msaa_samples();
-        let rect = window.rect();
         let format = Frame::TEXTURE_FORMAT;
         let shader_module = device.create_shader_module(shader);
 
@@ -154,10 +157,18 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             None
         };
 
+        let scale_factor = app
+            .primary_monitor()
+            .expect("Unable to get primary monitor")
+            .scale_factor();
+        let window_size_physical = [
+            (window_size_logical[0] as f64 * scale_factor).round() as u32,
+            (window_size_logical[1] as f64 * scale_factor).round() as u32,
+        ];
+
         let depth_texture = if enable_depth_testing {
             let texture = wgpu::TextureBuilder::new()
-                // Hack: multiply by two since rect isn't pixel_depth aware
-                .size([rect.w() as u32 * 2, rect.h() as u32 * 2])
+                .size(window_size_physical)
                 .format(wgpu::TextureFormat::Depth32Float)
                 .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
                 .sample_count(sample_count)
@@ -196,6 +207,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             params_bind_group_layout,
             vertex_buffers,
             sample_count,
+            window_size_physical,
             texture_bind_group,
             texture_bind_group_layout,
             update_state,
@@ -389,85 +401,98 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
     /// This will be called multiple times when we update but it doesn't matter
     /// since the update_state's content will be none due to `guard.take()`
-    fn update_shader(&mut self, app: &App) {
-        if let Ok(mut guard) = self.update_state.lock() {
-            if let Some(path) = guard.take() {
-                info!("Reloading shader from {:?}", path);
+    // fn update_shader(&mut self, app: &App) {
+    //     if let Ok(mut guard) = self.update_state.lock() {
+    //         if let Some(path) = guard.take() {
+    //             info!("Reloading shader from {:?}", path);
 
-                if let Ok(shader_content) = fs::read_to_string(&path) {
-                    let parse_result = wgsl::parse_str(&shader_content);
+    //             if let Ok(shader_content) = fs::read_to_string(&path) {
+    //                 let parse_result = wgsl::parse_str(&shader_content);
 
-                    if let Ok(module) = parse_result {
-                        let mut validator = Validator::new(
-                            ValidationFlags::all(),
-                            Capabilities::empty(),
-                        );
+    //                 if let Ok(module) = parse_result {
+    //                     let mut validator = Validator::new(
+    //                         ValidationFlags::all(),
+    //                         Capabilities::empty(),
+    //                     );
 
-                        let validation_result = validator.validate(&module);
-                        if let Err(validation_error) = validation_result {
-                            error!(
-                                "Shader validation failed:\n{:?}",
-                                validation_error
-                            );
-                            return;
-                        }
+    //                     let validation_result = validator.validate(&module);
+    //                     if let Err(validation_error) = validation_result {
+    //                         error!(
+    //                             "Shader validation failed:\n{:?}",
+    //                             validation_error
+    //                         );
+    //                         return;
+    //                     }
 
-                        // If we got here, shader is valid - create the module
-                        let shader = wgpu::ShaderModuleDescriptor {
-                            label: Some("Hot Reloadable Shader"),
-                            source: wgpu::ShaderSource::Wgsl(
-                                shader_content.into(),
-                            ),
-                        };
+    //                     // If we got here, shader is valid - create the module
+    //                     let shader = wgpu::ShaderModuleDescriptor {
+    //                         label: Some("Hot Reloadable Shader"),
+    //                         source: wgpu::ShaderSource::Wgsl(
+    //                             shader_content.into(),
+    //                         ),
+    //                     };
 
-                        let window = app.main_window();
-                        let device = window.device();
-                        let shader_module = device.create_shader_module(shader);
+    //                     let window = app.main_window();
+    //                     let device = window.device();
+    //                     let shader_module = device.create_shader_module(shader);
 
-                        let pipeline_layout = device.create_pipeline_layout(
-                            &wgpu::PipelineLayoutDescriptor {
-                                label: Some("Pipeline Layout"),
-                                bind_group_layouts: &[
-                                    &self.params_bind_group_layout,
-                                    &self.texture_bind_group_layout,
-                                ],
-                                push_constant_ranges: &[],
-                            },
-                        );
+    //                     let pipeline_layout = device.create_pipeline_layout(
+    //                         &wgpu::PipelineLayoutDescriptor {
+    //                             label: Some("Pipeline Layout"),
+    //                             bind_group_layouts: &[
+    //                                 &self.params_bind_group_layout,
+    //                                 &self.texture_bind_group_layout,
+    //                             ],
+    //                             push_constant_ranges: &[],
+    //                         },
+    //                     );
 
-                        let creation_state = PipelineCreationState {
-                            device,
-                            shader_module: &shader_module,
-                            pipeline_layout: &pipeline_layout,
-                            vertex_buffers: &self.vertex_buffers,
-                            sample_count: self.sample_count,
-                            format: Frame::TEXTURE_FORMAT,
-                            topology: self.topology,
-                            blend: self.blend,
-                            depth_stencil: self.depth_stencil.clone(),
-                        };
+    //                     let creation_state = PipelineCreationState {
+    //                         device,
+    //                         shader_module: &shader_module,
+    //                         pipeline_layout: &pipeline_layout,
+    //                         vertex_buffers: &self.vertex_buffers,
+    //                         sample_count: self.sample_count,
+    //                         format: Frame::TEXTURE_FORMAT,
+    //                         topology: self.topology,
+    //                         blend: self.blend,
+    //                         depth_stencil: self.depth_stencil.clone(),
+    //                     };
 
-                        self.render_pipeline =
-                            Self::create_render_pipeline(creation_state);
+    //                     self.render_pipeline =
+    //                         Self::create_render_pipeline(creation_state);
 
-                        info!("Shader pipeline successfully recreated");
-                    } else {
-                        error!("Failed to parse shader: {:?}", parse_result);
-                    }
-                }
-            }
-        }
-    }
+    //                     info!("Shader pipeline successfully recreated");
+    //                 } else {
+    //                     error!("Failed to parse shader: {:?}", parse_result);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     /// For non-procedural and full-screen shaders when vertices are altered on CPU
-    pub fn update<P: Pod>(&mut self, app: &App, params: &P, vertices: &[V]) {
+    pub fn update<P: Pod>(
+        &mut self,
+        app: &App,
+        window_size: [u32; 2],
+        params: &P,
+        vertices: &[V],
+    ) {
+        self.check_and_handle_resize(app, window_size);
         self.update_shader(app);
-        self.update_params(app, params);
-        self.update_vertex_buffer(app, vertices);
+        self.update_params(app, window_size, params);
+        self.update_vertex_buffer(app, window_size, vertices);
     }
 
     /// For procedural and full-screen shaders that do not need updated vertices
-    pub fn update_params<P: Pod>(&mut self, app: &App, params: &P) {
+    pub fn update_params<P: Pod>(
+        &mut self,
+        app: &App,
+        window_size: [u32; 2],
+        params: &P,
+    ) {
+        self.check_and_handle_resize(app, window_size);
         self.update_shader(app);
         app.main_window().queue().write_buffer(
             &self.params_buffer,
@@ -476,7 +501,13 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         );
     }
 
-    pub fn update_vertex_buffer(&mut self, app: &App, vertices: &[V]) {
+    pub fn update_vertex_buffer(
+        &mut self,
+        app: &App,
+        window_size: [u32; 2],
+        vertices: &[V],
+    ) {
+        self.check_and_handle_resize(app, window_size);
         let window = app.main_window();
         let device = window.device();
 
@@ -499,6 +530,122 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             0,
             bytemuck::cast_slice(vertices),
         );
+    }
+
+    fn update_shader(&mut self, app: &App) {
+        let path = match self
+            .update_state
+            .lock()
+            .ok()
+            .and_then(|mut guard| guard.take())
+        {
+            None => return,
+            Some(p) => p,
+        };
+
+        info!("Reloading shader from {:?}", path);
+
+        let shader_content = match fs::read_to_string(&path) {
+            Ok(content) => content,
+            Err(_) => return,
+        };
+
+        if let Ok(_) = self.validate_shader(&shader_content) {
+            self.recreate_pipeline(app, &shader_content);
+            info!("Shader pipeline successfully recreated");
+        }
+    }
+
+    fn validate_shader(
+        &self,
+        shader_content: &str,
+    ) -> Result<naga::Module, ()> {
+        let module = match wgsl::parse_str(shader_content) {
+            Err(e) => {
+                error!("Failed to parse shader: {:?}", e);
+                return Err(());
+            }
+            Ok(m) => m,
+        };
+
+        let mut validator =
+            Validator::new(ValidationFlags::all(), Capabilities::empty());
+
+        if let Err(validation_error) = validator.validate(&module) {
+            error!("Shader validation failed:\n{:?}", validation_error);
+            return Err(());
+        }
+
+        Ok(module)
+    }
+
+    fn recreate_pipeline(&mut self, app: &App, shader_content: &str) {
+        let window = app.main_window();
+        let device = window.device();
+
+        let shader = wgpu::ShaderModuleDescriptor {
+            label: Some("Hot Reloadable Shader"),
+            source: wgpu::ShaderSource::Wgsl(shader_content.into()),
+        };
+        let shader_module = device.create_shader_module(shader);
+
+        let pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Pipeline Layout"),
+                bind_group_layouts: &[
+                    &self.params_bind_group_layout,
+                    &self.texture_bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
+
+        let creation_state = PipelineCreationState {
+            device,
+            shader_module: &shader_module,
+            pipeline_layout: &pipeline_layout,
+            vertex_buffers: &self.vertex_buffers,
+            sample_count: self.sample_count,
+            format: Frame::TEXTURE_FORMAT,
+            topology: self.topology,
+            blend: self.blend,
+            depth_stencil: self.depth_stencil.clone(),
+        };
+
+        self.render_pipeline = Self::create_render_pipeline(creation_state);
+    }
+
+    pub fn check_and_handle_resize(
+        &mut self,
+        app: &App,
+        window_size: [u32; 2],
+    ) {
+        let window = app.main_window();
+        let device = window.device();
+
+        let scale_factor = app
+            .primary_monitor()
+            .expect("Unable to get primary monitor")
+            .scale_factor();
+        let window_size_physical = [
+            (window_size[0] as f64 * scale_factor).round() as u32,
+            (window_size[1] as f64 * scale_factor).round() as u32,
+        ];
+
+        if self.depth_stencil.is_some()
+            && window_size_physical != self.window_size_physical
+        {
+            debug!("size changed. rebuilding depth texture");
+
+            let texture = wgpu::TextureBuilder::new()
+                .size(window_size_physical)
+                .format(wgpu::TextureFormat::Depth32Float)
+                .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
+                .sample_count(self.sample_count)
+                .build(device);
+
+            self.depth_texture = Some(texture.view().build());
+            self.window_size_physical = window_size_physical;
+        }
     }
 
     pub fn render(&self, frame: &Frame) {
@@ -532,11 +679,10 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     pub fn render_to_texture(&self, app: &App) -> wgpu::TextureView {
         let window = app.main_window();
         let device = window.device();
-        let size = window.inner_size_pixels();
 
         // Create multisampled texture for rendering
         let msaa_texture = wgpu::TextureBuilder::new()
-            .size([size.0, size.1])
+            .size(self.window_size_physical)
             .format(Frame::TEXTURE_FORMAT)
             .dimension(wgpu::TextureDimension::D2)
             .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
@@ -545,7 +691,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         // Create non-multisampled texture for resolving and sampling
         let resolve_texture = wgpu::TextureBuilder::new()
-            .size([size.0, size.1])
+            .size(self.window_size_physical)
             .format(Frame::TEXTURE_FORMAT)
             .dimension(wgpu::TextureDimension::D2)
             .usage(
@@ -558,7 +704,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let depth_texture = if self.depth_texture.is_some() {
             Some(
                 wgpu::TextureBuilder::new()
-                    .size([size.0, size.1])
+                    .size(self.window_size_physical)
                     .format(wgpu::TextureFormat::Depth32Float)
                     .usage(wgpu::TextureUsages::RENDER_ATTACHMENT)
                     .sample_count(self.sample_count)
@@ -701,12 +847,14 @@ pub const QUAD_COVER_VERTICES: &[BasicPositionVertex] = &[
 impl GpuState<BasicPositionVertex> {
     pub fn new_full_screen<P: Pod + Zeroable>(
         app: &App,
+        window_size: [u32; 2],
         shader_path: PathBuf,
         params: &P,
         watch: bool,
     ) -> Self {
         Self::new(
             app,
+            window_size,
             shader_path,
             params,
             Some(QUAD_COVER_VERTICES),
@@ -723,12 +871,14 @@ impl GpuState<BasicPositionVertex> {
 impl GpuState<()> {
     pub fn new_procedural<P: Pod + Zeroable>(
         app: &App,
+        window_size: [u32; 2],
         shader_path: PathBuf,
         params: &P,
         watch: bool,
     ) -> Self {
         Self::new(
             app,
+            window_size,
             shader_path,
             params,
             None,
@@ -748,6 +898,7 @@ impl GpuState<()> {
             .begin(&mut encoder);
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
         render_pass.draw(0..vertex_count, 0..1);
     }
 }

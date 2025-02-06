@@ -57,6 +57,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "basic_cube_shader_template.wgsl"),
         &params,
         Some(&vertices),
@@ -84,7 +85,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
 
     let vertices = create_vertices();
 
-    m.gpu.update(app, &params, &vertices);
+    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

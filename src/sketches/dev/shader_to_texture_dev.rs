@@ -77,6 +77,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let first_pass = gpu::GpuState::new(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev.wgsl"),
         &first_pass_params,
         Some(&vertices),
@@ -88,6 +89,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let second_pass = gpu::GpuState::new_full_screen(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),
         &post_process_params,
         true,
@@ -127,8 +129,17 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     m.second_pass.set_input_texture(app, &texture_view);
 
     let vertices = create_vertices();
-    m.first_pass.update(app, &first_pass_params, &vertices);
-    m.second_pass.update_params(app, &post_process_params);
+    m.first_pass.update(
+        app,
+        m.wr.resolution_u32(),
+        &first_pass_params,
+        &vertices,
+    );
+    m.second_pass.update_params(
+        app,
+        m.wr.resolution_u32(),
+        &post_process_params,
+    );
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

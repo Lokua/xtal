@@ -89,6 +89,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_full_screen(
         app,
+        wr.resolution_u32(),
         to_absolute_path(file!(), "./g25_19_op_art.wgsl"),
         &params,
         true,
@@ -142,7 +143,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
     };
 
-    m.gpu.update_params(app, &params);
+    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
 }
 
 pub fn view(_app: &App, m: &Model, frame: Frame) {

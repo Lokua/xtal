@@ -1,85 +1,85 @@
 {
   "values": {
-    "echo_threshold": {
-      "Float": 0.76
-    },
-    "f5784": {
+    "28i32": {
       "Bool": false
-    },
-    "offs": {
-      "Float": 0.0
-    },
-    "yjj6f": {
-      "Bool": false
-    },
-    "phase_twist": {
-      "Float": 0.0
-    },
-    "p4391": {
-      "Bool": false
-    },
-    "grid_size": {
-      "Float": 8.0
-    },
-    "diag": {
-      "Float": 0.0
     },
     "twist": {
-      "Float": 0.0
-    },
-    "scale": {
-      "Float": 0.30699998
-    },
-    "texture_scale": {
-      "Float": 0.92999995
-    },
-    "grid_border_size": {
-      "Float": 0.12
-    },
-    "z_offset": {
-      "Float": -3.25
-    },
-    "k2u52": {
-      "Bool": false
-    },
-    "bg_noise": {
-      "Float": 1.0
-    },
-    "sexzr": {
-      "Bool": false
-    },
-    "d3": {
-      "Float": 0.0
-    },
-    "explode": {
-      "Float": 0.0
-    },
-    "bulge": {
-      "Float": 0.0
-    },
-    "h4": {
       "Float": 0.0
     },
     "echo_intensity": {
       "Float": 0.0
     },
+    "bg_noise": {
+      "Float": 1.0
+    },
+    "phase_twist": {
+      "Float": 0.0
+    },
+    "21733": {
+      "Bool": false
+    },
     "stag": {
       "Float": 0.0
     },
-    "color_spread": {
-      "Float": 0.114999995
+    "d3": {
+      "Float": 0.0
     },
-    "bg_noise_scale": {
+    "z_offset": {
+      "Float": -3.48
+    },
+    "grid_contrast": {
+      "Float": 1.0
+    },
+    "bulge": {
+      "Float": 0.0
+    },
+    "explode": {
+      "Float": 0.0
+    },
+    "grid_size": {
       "Float": 8.0
     },
-    "wave": {
-      "Float": 0.0
+    "grid_border_size": {
+      "Float": 0.12
+    },
+    "bg_noise_scale": {
+      "Float": 7.5
     },
     "texture_strength": {
       "Float": 0.59
     },
-    "grid_contrast": {
-      "Float": 1.0
+    "84nu1": {
+      "Bool": false
+    },
+    "0r340": {
+      "Bool": false
+    },
+    "texture_scale": {
+      "Float": 0.92999995
+    },
+    "h4": {
+      "Float": 0.0
+    },
+    "diag": {
+      "Float": 0.0
+    },
+    "wave": {
+      "Float": 0.0
+    },
+    "offs": {
+      "Float": 0.0
+    },
+    "echo_threshold": {
+      "Float": 0.76
+    },
+    "scale": {
+      "Float": 0.30699998
+    },
+    "13b4x": {
+      "Bool": false
+    },
+    "color_spread": {
+      "Float": 0.114999995
     }
   }
 }
