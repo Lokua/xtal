@@ -51,7 +51,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     color = edge_detect(in.uv, color, edge_mix);
     color = geometric_explode(in.uv, color, geo_mix);
 
-    let contrast_factor = exp2(contrast * 3.0);
+    let contrast_factor = exp2(contrast * 2.0);
     color = (color - 0.5) * contrast_factor + 0.5;
 
     color = select(

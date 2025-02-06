@@ -80,7 +80,7 @@ struct PostShaderParams {
     // edge_mix, edge_size, edge_thresh, geo_mix
     z: [f32; 4],
 
-    // geo_size, geo_offs, ..unused
+    // geo_size, geo_offs, contrast, brightness
     y: [f32; 4],
 
     // unused
@@ -214,8 +214,8 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         y: [
             m.controls.get("geo_size"),
             m.controls.get("geo_offs"),
-            m.controls.get("y3"),
-            m.controls.get("y4"),
+            m.controls.get("contrast"),
+            m.controls.get("brightness"),
         ],
         x: [
             m.controls.get("x1"),

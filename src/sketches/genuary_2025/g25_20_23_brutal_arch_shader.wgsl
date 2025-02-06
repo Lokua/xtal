@@ -61,9 +61,11 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     out.center = vert.center;
 
     if vert.layer < FOREGROUND {
-        let p = correct_aspect(vert.position);
-        out.clip_position = vec4f(p.xy, 0.999, 1.0);
-        out.pos = vec3f(p.xy, 0.999);
+        out.clip_position = vec4f(vert.position.xy * 2.0, 0.999, 1.0);
+        out.pos = vec3f(vert.position.xy, 0.999);
+        // let p = correct_aspect(vert.position);
+        // out.clip_position = vec4f(p.xy, 0.999, 1.0);
+        // out.pos = vec3f(p.xy, 0.999);
 
         return out;
     }
@@ -237,11 +239,11 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
         0.75
     );
     background_color *= vec3f(0.99, 0.98, 0.97);
-
-    let border_size = 0.3;
+    
+    let border_size = 0.4;
     let is_border = 
-        abs(vout.pos.x) > 1.0 - border_size || 
-        abs(vout.pos.y) > 1.0 - border_size;
+        abs(vout.pos.x) > border_size || 
+        abs(vout.pos.y) > border_size;
 
     let final_color = select(
         select(

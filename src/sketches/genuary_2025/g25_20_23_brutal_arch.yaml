@@ -174,16 +174,6 @@ color_spread:
 
 # --------------------------------
 
-unused_section:
-    type: separator
-
-d3:
-    type: slider
-h4:
-    type: slider
-
-# --------------------------------
-
 post_processing_section:
     type: separator
 
@@ -214,10 +204,20 @@ geo_offs:
     type: slider
     range: [0, 10]
 
-y3:
+contrast:
     type: slider
     range: [-1, 1]
 
-y4:
+brightness:
     type: slider
     range: [-1, 1]
+
+# --------------------------------
+
+unused_section:
+    type: separator
+
+d3:
+    type: slider
+h4:
+    type: slider
