@@ -51,6 +51,10 @@ impl OscState {
     pub fn has(&self, address: &str) -> bool {
         self.values.contains_key(address)
     }
+
+    pub fn values(&self) -> HashMap<String, f32> {
+        return self.values.clone();
+    }
 }
 
 #[derive(Debug)]
@@ -83,6 +87,11 @@ impl OscControls {
         self.state.lock().unwrap().get(address)
     }
 
+    pub fn set(&self, address: &str, value: f32) {
+        validate_address(address);
+        self.state.lock().unwrap().set(address, value);
+    }
+
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
@@ -108,6 +117,10 @@ impl OscControls {
         self.is_active = true;
 
         Ok(())
+    }
+
+    pub fn values(&self) -> HashMap<String, f32> {
+        return self.state.lock().unwrap().values();
     }
 }
 

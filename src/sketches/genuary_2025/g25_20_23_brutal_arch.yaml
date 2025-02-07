@@ -3,7 +3,7 @@ _vars:
     TAU: &TAU 6.283185307179586
     rx: &rx 32
     ry: &ry 16
-    rz: &rz 32
+    rz: &rz 4
     gt: &gt 8
 
 # Animations ---------------------
@@ -21,31 +21,43 @@ rot_y:
     keyframes:
         - [*ry, *TAU]
         - [*ry, 0]
+
+rot_z_meta:
+    type: osc
+
 rot_z:
     type: lerp_rel
-    bypass: 0
+    bypass: _
     keyframes:
         - [*rz, *TAU]
         - [*rz, 0]
+
+corner_offset_meta:
+    type: osc
 
 corner_offset:
     type: triangle
     beats: 4
     range: [0, 1]
 
+middle_size_meta:
+    type: osc
+
 middle_size:
     type: triangle
     beats: 1.5
-    phase: 0.5
     range: [-0.75, 0.5]
+
+corner_t_meta:
+    type: osc
 
 _corner_t_vars:
     ct: &ct 4
     corner_t_base: &corner_t_base
         type: triangle
+        bypass: _
         beats: 2
         range: [-1.5, 3]
-        bypass: _
 corner_t_1:
     <<: *corner_t_base
     phase: 0
@@ -86,14 +98,14 @@ z_offset:
     default: 3.0
 
 scale:
-    type: slider
+    type: osc
 
 middle_translate:
-    type: slider
+    type: osc
     range: [0, 2]
 
 corner_translate:
-    type: slider
+    type: osc
     range: [-1, 2]
 
 # --------------------------------
@@ -134,15 +146,14 @@ echo_threshold:
     type: slider
 
 echo_intensity:
-    type: slider
+    type: osc
 
 stag:
-    type: slider
+    type: osc
     range: [-1, 1]
-    step: 0.1
 
 diag:
-    type: slider
+    type: osc
     range: [0, 4]
 
 bulge:
@@ -162,7 +173,7 @@ explode:
     type: slider
 
 wave:
-    type: slider
+    type: osc
 
 phase_twist:
     type: slider
@@ -205,7 +216,7 @@ edge_thresh:
     step: 0.0001
 
 geo_mix:
-    type: slider
+    type: osc
 
 geo_size:
     type: slider

@@ -452,13 +452,22 @@ impl Controls {
         let name = control.name().to_string();
         let value = control.value();
 
-        if self.values.contains_key(&name) {
-            loud_panic!("Control '{}' already exists", name);
+        if let Some(index) = self.controls.iter().position(|c| c.name() == name)
+        {
+            self.controls[index] = control;
+        } else {
+            self.controls.push(control);
         }
 
-        self.controls.push(control);
         self.values.insert(name, value);
         self.changed = true;
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Control) -> bool,
+    {
+        self.controls.retain(f);
     }
 }
 

@@ -66,6 +66,8 @@ impl Receiver {
             }
         });
 
+        info!("OSC receiver listening on port {}", OSC_PORT);
+
         Ok(())
     }
 }

@@ -238,9 +238,9 @@ impl<T: TimingSource> ControlScript<T> {
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
         let current_values: ControlValues = self.controls.values().clone();
+        let osc_values: HashMap<String, f32> = self.osc_controls.values();
 
         self.controls = Controls::with_previous(vec![]);
-        self.osc_controls = OscControls::new();
         self.keyframe_sequences.clear();
 
         for (id, maybe_config) in control_configs {
@@ -297,17 +297,29 @@ impl<T: TimingSource> ControlScript<T> {
                     self.controls.add(Control::dynamic_separator());
                 }
                 ControlType::Osc => {
-                    let conf: SliderConfig =
+                    let conf: OscConfig =
                         serde_yml::from_value(config.config.clone())?;
 
+                    let address = format!("/{}", id);
+
+                    let existing_value = if osc_values.contains_key(&address) {
+                        osc_values.get(&address)
+                    } else {
+                        None
+                    };
+
                     let osc_control = OscControlConfig::new(
-                        format!("/{}", id).as_str(),
+                        &address,
                         (conf.range[0], conf.range[1]),
                         conf.default,
                     );
 
                     self.osc_controls
                         .add(&osc_control.address, osc_control.clone());
+
+                    if let Some(value) = existing_value {
+                        self.osc_controls.set(&osc_control.address, *value);
+                    }
                 }
                 ControlType::LerpAbs => {
                     let conf: LerpAbsConfig =

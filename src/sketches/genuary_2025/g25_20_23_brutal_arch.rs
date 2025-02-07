@@ -5,6 +5,7 @@ use nannou::prelude::*;
 use crate::framework::{gpu::BasicPositionVertex, prelude::*};
 
 // b/w ~/Live/2025/Lattice - Inspired by Brutalism
+// Original non-automated version lives at sketches/brutalism
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_20_23_brutal_arch",
@@ -24,7 +25,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<Timing>,
+    controls: ControlScript<OscTransportTiming>,
     wr: WindowRect,
     main_shader: gpu::GpuState<Vertex>,
     post_shader: gpu::GpuState<BasicPositionVertex>,
@@ -87,7 +88,7 @@ struct PostShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::new(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        OscTransportTiming::new(SKETCH_CONFIG.bpm),
     );
 
     let params = ShaderParams {
@@ -114,7 +115,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let main_shader = gpu::GpuState::new(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader.wgsl"),
+        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader1.wgsl"),
         &params,
         Some(&vertices),
         wgpu::PrimitiveTopology::TriangleList,
@@ -125,7 +126,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let post_shader = gpu::GpuState::new_full_screen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader_post.wgsl"),
+        to_absolute_path(file!(), "g25_20_23_brutal_arch_shader2.wgsl"),
         &post_params,
         true,
     );
@@ -141,12 +142,18 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 pub fn update(app: &App, m: &mut Model, _update: Update) {
     m.controls.update();
 
+    // Modulate the modulator
+    let corner_offset_meta = m.controls.get("corner_offset_meta");
+    let corner_t_meta = m.controls.get("corner_t_meta");
+    let middle_size_meta = m.controls.get("middle_size_meta");
+    let rot_z_meta = m.controls.get("rot_z_meta");
+
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
             m.controls.get("rot_x"),
             m.controls.get("rot_y"),
-            m.controls.get("rot_z"),
+            rot_z_meta * m.controls.get("rot_z"),
             m.controls.get("z_offset"),
         ],
         b: [
@@ -163,21 +170,21 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         d: [
             m.controls.get("grid_border_size"),
-            m.controls.get("corner_offset"),
+            corner_offset_meta * m.controls.get("corner_offset"),
             m.controls.get("middle_translate"),
-            m.controls.get("middle_size"),
+            middle_size_meta * m.controls.get("middle_size"),
         ],
         e: [
-            (m.controls.get("corner_t_1")),
-            (m.controls.get("corner_t_2")),
-            (m.controls.get("corner_t_3")),
-            (m.controls.get("corner_t_4")),
+            corner_t_meta * m.controls.get("corner_t_1"),
+            corner_t_meta * m.controls.get("corner_t_2"),
+            corner_t_meta * m.controls.get("corner_t_3"),
+            corner_t_meta * m.controls.get("corner_t_4"),
         ],
         f: [
-            m.controls.get("corner_t_5"),
-            m.controls.get("corner_t_6"),
-            m.controls.get("corner_t_7"),
-            m.controls.get("corner_t_8"),
+            corner_t_meta * m.controls.get("corner_t_5"),
+            corner_t_meta * m.controls.get("corner_t_6"),
+            corner_t_meta * m.controls.get("corner_t_7"),
+            corner_t_meta * m.controls.get("corner_t_8"),
         ],
         g: [
             m.controls.get("stag"),
