@@ -1,3 +1,4 @@
+use bytemuck::{Pod, Zeroable};
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
@@ -16,15 +17,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
 struct ShaderParams {
     // w, h, ..unused
     resolution: [f32; 4],
@@ -37,12 +36,10 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
-
-    let controls = Controls::new(vec![
-        Control::slider_norm("b1", 0.5),
-        Control::slider_norm("b2", 0.5),
-    ]);
+    let controls = ControlScript::new(
+        to_absolute_path(file!(), "blob.yaml"),
+        Timing::new(SKETCH_CONFIG.bpm),
+    );
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -58,24 +55,24 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
-        animation,
-        controls,
-        wr,
-        gpu,
-    }
+    Model { controls, wr, gpu }
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
-            m.animation.ping_pong(1.5),
-            m.animation.ping_pong(2.0),
-            m.animation.ping_pong(3.0),
-            m.animation.ping_pong(4.0),
+            m.controls.get("a1"),
+            m.controls.get("a2"),
+            m.controls.get("a3"),
+            m.controls.get("a4"),
         ],
-        b: [m.controls.float("b1"), m.controls.float("b2"), 0.0, 0.0],
+        b: [
+            m.controls.get("b1"),
+            m.controls.get("b2"),
+            m.controls.get("b3"),
+            m.controls.get("b4"),
+        ],
     };
 
     m.gpu.update_params(app, m.wr.resolution_u32(), &params);

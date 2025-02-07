@@ -1,0 +1,20 @@
+a1:
+    type: triangle
+    beats: 1.5
+a2:
+    type: triangle
+    beats: 2
+a3:
+    type: triangle
+    beats: 3
+a4:
+    type: triangle
+    beats: 4
+b1:
+    type: slider
+b2:
+    type: slider
+b3:
+    type: slider
+b4:
+    type: slider
