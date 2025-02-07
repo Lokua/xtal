@@ -1,23 +1,22 @@
 # lattice
 
 A hobbyist project exploring generative art while learning Rust and
-[nannou][nannou-link].
-
-Stuff like this:
+[nannou][nannou]. like this:
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-627iz.png" alt="displacement_2-627iz">
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
 
-You can see more here on github by looking at the auto generated
-[markdown index](index.md).
+You can see more screenshots here on github by looking at the auto generated
+[markdown index](index.md) or checkout audio-visual compositions on
+[Instagram][insta].
 
 ## Overview
 
-This project aims to port my [p5.js project][p5-link] to Rust for improved
+This project aims to port my [p5.js project][p5] to Rust for improved
 performance. It provides a personal framework around nannou that simplifies
 creating multiple sketches by handling common concerns like window creation, GUI
-controls, and declarative frame-based animation.
+controls, external control, and animation.
 
 ## Features
 
@@ -42,7 +41,7 @@ on other platforms. This project requires or optionally needs:
 -   Rust
 -   Git LFS for screenshot storage (perhaps this is optional? I'm not too
     familiar with Git LFS but I'm using it for this so you might want to too)
--   (optional) [just][just-link] for running commands
+-   (optional) [just][just] for running commands
 -   (optional) ffmpeg available on your path for video exports
 
 ## Usage
@@ -56,8 +55,8 @@ just start <sketch>
 ```
 
 Where `sketch` is a sketch is a file in the src/sketches folder (without the
-extension) and registered in [src/sketches/mod.rs][module-link] as well as
-[src/main.rs][main-link].
+extension) and registered in [src/sketches/mod.rs][module] as well as
+[src/main.rs][main].
 
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
@@ -90,14 +89,14 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 ### Creating a new sketch:
 
-1. Copy the [template sketch][template-link] into a new file in sketches folder.
+1. Copy the [template sketch][template] into a new file in sketches folder.
 2. Rename at a minimum the `SKETCH_CONFIG.name` field at the top of the file:
     ```rust
     pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
        name: "template", // <-- RENAME THIS!
     ```
-3. Add that filename to the [src/sketches/mod.rs][module-link]
-4. Add a match case for the sketch in [src/main.rs][main-link]:
+3. Add that filename to the [src/sketches/mod.rs][module]
+4. Add a match case for the sketch in [src/main.rs][main]:
     ```rust
     "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
     ```
@@ -154,7 +153,7 @@ for controlling a live parameter with that same CC, follow these steps:
    last thing you've clicked)
 5. Press the Space bar to start the transport. This should do it!
 
-See the [midi_test.rs sketch][midi-sketch-link] for an example of how to map a
+See the [midi_test.rs sketch][midi-sketch] for an example of how to map a
 control to something.
 
 > Note: the above instructions are for working without a MIDI controller. When
@@ -187,8 +186,8 @@ controls dynamically and self-updates at runtime when the yaml file is changed.
 You still have to take care to setup the routings in your sketch (e.g.
 `let radius = model.control_script.get("radius")`), but once these routings are
 in place you are free to edit their ranges, values, timing, etc. See [Control
-Script Test][control-script-test-link] for a working example. See below for
-scripting documentation:
+Script Test][control-script-test] for a working example. See below for scripting
+documentation:
 
 > Note: you cannot use an instance of `Controls` and `ControlScript` in a sketch
 > at the same time; you must choose one or the other and it must be attached to
@@ -318,6 +317,7 @@ foo:
 
 ## Resources
 
+-   https://sotrh.github.io/learn-wgpu
 -   https://inconvergent.net/generative/
 -   http://www.complexification.net/
 -   https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
@@ -327,12 +327,13 @@ foo:
 -   https://github.com/jasonwebb/2d-space-colonization-experiments
 -   https://paulbourke.net/geometry/
 
-[nannou-link]: https://github.com/nannou-org/nannou
-[p5-link]: https://github.com/Lokua/p5/tree/main
-[just-link]: https://github.com/casey/just
+[insta]: https://www.instagram.com/lokua/
+[nannou]: https://github.com/nannou-org/nannou
+[p5]: https://github.com/Lokua/p5/tree/main
+[just]: https://github.com/casey/just
 [blackhole]: https://existential.audio/blackhole/
-[template-link]: src/sketches/templates/template.rs
-[midi-sketch-link]: src/sketches/midi_test.rs
-[module-link]: src/sketches/mod.rs
-[main-link]: src/main.rs
-[control-script-test-link]: src/sketches/scratch/control_script_test.rs
+[template]: src/sketches/templates/template.rs
+[midi-sketch]: src/sketches/midi_test.rs
+[module]: src/sketches/mod.rs
+[main]: src/main.rs
+[control-script-test]: src/sketches/scratch/control_script_test.rs
