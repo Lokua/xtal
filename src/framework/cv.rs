@@ -6,9 +6,6 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 
-const CV_DEVICE_NAME: &str = "Lattice16";
-const N_CHANNELS: usize = 16;
-
 #[derive(Clone, Debug)]
 pub struct CvControlConfig {
     pub channel: usize,
@@ -58,13 +55,19 @@ struct CvProcessor {
 impl CvProcessor {
     fn new(buffer_size: usize) -> Self {
         Self {
-            channel_data: vec![Vec::with_capacity(buffer_size); N_CHANNELS],
+            channel_data: vec![
+                Vec::with_capacity(buffer_size);
+                crate::config::CV_DEVICE_CHANNEL_COUNT
+            ],
             buffer_size,
         }
     }
 
     fn add_samples(&mut self, samples: &[f32]) {
-        for (_, chunk) in samples.chunks(N_CHANNELS).enumerate() {
+        for (_, chunk) in samples
+            .chunks(crate::config::CV_DEVICE_CHANNEL_COUNT)
+            .enumerate()
+        {
             for (channel, &sample) in chunk.iter().enumerate() {
                 if let Some(channel_buffer) = self.channel_data.get_mut(channel)
                 {
@@ -113,9 +116,9 @@ impl CvControls {
 
     fn add(&mut self, name: &str, config: CvControlConfig) {
         assert!(
-            config.channel < N_CHANNELS,
+            config.channel < crate::config::CV_DEVICE_CHANNEL_COUNT,
             "Channel must be less than {}",
-            N_CHANNELS
+            crate::config::CV_DEVICE_CHANNEL_COUNT
         );
         self.state.lock().unwrap().set(name, config.default);
         self.configs.insert(name.to_string(), config);
@@ -133,7 +136,11 @@ impl CvControls {
         let host = cpal::default_host();
         let device = host
             .input_devices()?
-            .find(|d| d.name().map(|n| n == CV_DEVICE_NAME).unwrap_or(false))
+            .find(|d| {
+                d.name()
+                    .map(|n| n == crate::config::CV_DEVICE_NAME)
+                    .unwrap_or(false)
+            })
             .expect("CV device not found");
 
         let config = device.default_input_config()?.into();
@@ -172,9 +179,11 @@ pub struct CvControlBuilder {
 
 impl CvControlBuilder {
     pub fn new(fps: f32) -> Self {
-        let sample_rate = 48000;
         Self {
-            controls: CvControls::new(fps, sample_rate),
+            controls: CvControls::new(
+                fps,
+                crate::config::CV_DEVICE_SAMPLE_RATE,
+            ),
         }
     }
 

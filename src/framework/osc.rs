@@ -5,8 +5,6 @@ use std::sync::{Arc, Mutex};
 use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
 
-pub const OSC_PORT: u16 = 2346;
-
 #[derive(Clone, Debug)]
 pub struct OscControlConfig {
     pub address: String,

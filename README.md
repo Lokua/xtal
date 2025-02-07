@@ -16,7 +16,7 @@ You can see more screenshots here on github by looking at the auto generated
 This project aims to port my [p5.js project][p5] to Rust for improved
 performance. It provides a personal framework around nannou that simplifies
 creating multiple sketches by handling common concerns like window creation, GUI
-controls, external control, and animation.
+controls, external control, and musical timing based animation.
 
 ## Features
 
@@ -35,12 +35,10 @@ controls, external control, and animation.
 
 ## Requirements
 
-This project has been developed on MacOS, though I'm sure most of it would work
-on other platforms. This project requires or optionally needs:
+This project has been developed on MacOS. I have no idea how it would run on
+other platforms. The project requires or optionally needs:
 
 -   Rust
--   Git LFS for screenshot storage (perhaps this is optional? I'm not too
-    familiar with Git LFS but I'm using it for this so you might want to too)
 -   (optional) [just][just] for running commands
 -   (optional) ffmpeg available on your path for video exports
 
@@ -54,9 +52,8 @@ cargo run --release -- <sketch>
 just start <sketch>
 ```
 
-Where `sketch` is a sketch is a file in the src/sketches folder (without the
-extension) and registered in [src/sketches/mod.rs][module] as well as
-[src/main.rs][main].
+Where `sketch` is a file in the src/sketches folder (without the extension) and
+registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main].
 
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
@@ -70,14 +67,15 @@ any external devices to run.
 
 #### `osc`
 
-Requires `assets/L.OscTransport.amxd` to be running in Ableton Live. This
-provides the most reliable syncing mechanism as Ableton does not properly send
-MIDI SPP messages and doesn't support MTC.
+Requires [assets/L.OscTransport.amxd][osc-transport] to be running in Ableton
+Live. This provides the most reliable syncing mechanism as Ableton does not
+properly send MIDI SPP messages and doesn't support MTC. See the [OSC](#osc)
+section for more details.
 
 #### `midi`
 
 Uses MIDI clock and MIDI Song Position Pointers (SPP) to stay in sync (e.g. when
-a MIDI source loops or you jump to somewhere else in a timeline, you animations
+a MIDI source loops or you jump to somewhere else in a timeline, your animations
 will jump or loop accordingly). Bitwig properly sends SPP; Ableton does not.
 
 #### `hybrid`
@@ -106,10 +104,11 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 ### Audio
 
-Lattice is hardcoded to read audio from the first input (input 1, or index 0, or
-left channel) on a device named "Lattice". I am currently doing this via
-Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture output
-from DAW. Here are some screenshots of the setup:
+Lattice is hardcoded to read audio from the first input (index 0) on a device
+named "Lattice" (this can be changed by editing the `AUDIO_DEVICE_NAME` constant
+in [src/config.rs][config]). I am currently doing this via Aggregate Device on
+my Mac using [Blackhole 2ch][blackhole] to capture output from my DAW. Here are
+some screenshots of the setup:
 
 **Aggregate Device Setup**
 ![Mac Aggregate Device Setup](assets/aggregate-device-setup.png)
@@ -127,14 +126,16 @@ from DAW. Here are some screenshots of the setup:
 
 ### MIDI
 
-Lattice is hardcoded to accept MIDI on a virtual MIDI device that must be named
-`IAC Driver Lattice In`.
+Lattice is hardcoded to accept MIDI on a device named `IAC Driver Lattice In`.
+You can change this by editing the `MIDI_INPUT_PORT` constant in
+[src/config.rs][config].
 
 ### MIDI Loopback
 
-To control synth parameters in Ableton and Lattice parameters simultaneously,
-you need to enable MIDI loopback by sending MIDI to `Lattice In` and also route
-`Lattice In` back in to Live to control parameters. Here's the routing:
+To automate synth parameters in Ableton and Lattice parameters simultaneously
+from the same UI CC control, you need to enable MIDI loopback by sending MIDI to
+`Lattice In` and also route `Lattice In` back in to Live to control parameters.
+Here's the routing:
 
 ![Live MIDI Preferences](assets/live-midi-prefs.png)
 
@@ -167,9 +168,43 @@ control to something.
 1. In Ableton > Preferences > Record, make sure **Start Transport With Record**
    is set to **Off**
 2. Hit **Q Rec** in Lattice.
-3. Arm tracks in Ableton, arm the transport (Record button)
+3. (optional if no recording audio) Arm tracks in Ableton, arm the transport
+   (Record button)
 4. Now, pressing play in Ableton will also initiate recording in Lattice,
    likewise pressing Stop in Ableton will stop recording in Lattice.
+
+### OSC
+
+While MIDI is greate for controlling parameters in the caes that MIDI controller
+can send 14bit high resolution MIDI, it sucks otherwise (128 values just isn't
+enough precision for smooth parameter automation). For this reason Lattice
+supports OSC and comes with two MaxForLive devices designed to make integration
+with Ableton Live simpler.
+
+#### L.OscTransport
+
+[assets/L.OscTransport.amxd][osc-transport]
+
+![L.OscTransport MaxForLive Device](assets/osc-transport.png)
+
+Place this on any track in Ableton and it will send high precision clock and
+exact transport location to Lattice. This should be preferred over using MIDI
+Timing however you should still make sure MIDI ports between Ableton and Lattice
+are configured properly as Lattice still depends on MIDI clock for starting,
+stopping, and syncing video recordings. The default host and port align with
+what Lattice expects and can be left alone, though you can configure this in
+[src/config.rs][config].
+
+#### L.OscSend
+
+[assets/L.OscSend.amxd][osc-send]
+
+![L.OscSend MaxForLive Device](assets/osc-send.png)
+
+A super basic OSC value sender. While there are much fancier MaxForLive devices
+that can send OSC, the "official" OSC Send device that comes with Ableton's
+Connection Kit does _not_ send high resolution data, which defeats the entire
+purpose!
 
 ### Control Scripting
 
@@ -327,13 +362,16 @@ foo:
 -   https://github.com/jasonwebb/2d-space-colonization-experiments
 -   https://paulbourke.net/geometry/
 
-[insta]: https://www.instagram.com/lokua/
-[nannou]: https://github.com/nannou-org/nannou
 [p5]: https://github.com/Lokua/p5/tree/main
+[nannou]: https://github.com/nannou-org/nannou
+[insta]: https://www.instagram.com/lokua/
 [just]: https://github.com/casey/just
 [blackhole]: https://existential.audio/blackhole/
+[config]: src/config.rs
 [template]: src/sketches/templates/template.rs
 [midi-sketch]: src/sketches/midi_test.rs
 [module]: src/sketches/mod.rs
 [main]: src/main.rs
 [control-script-test]: src/sketches/scratch/control_script_test.rs
+[osc-transport]: assets/L.OscTransport.amxd
+[osc-send]: assets/L.OscSend.amxd

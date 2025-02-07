@@ -12,6 +12,7 @@ use std::{path::PathBuf, str};
 use framework::prelude::*;
 use runtime::prelude::*;
 
+pub mod config;
 pub mod framework;
 pub mod runtime;
 mod sketches;

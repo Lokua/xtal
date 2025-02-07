@@ -5,8 +5,6 @@ use std::thread;
 
 use super::prelude::*;
 
-pub const OSC_PORT: u16 = 2346;
-
 lazy_static::lazy_static! {
     pub static ref SHARED_OSC_RECEIVER: Arc<Receiver> = {
         let receiver = Receiver::new();
@@ -45,7 +43,7 @@ impl Receiver {
     }
 
     pub fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let receiver = osc::Receiver::bind(OSC_PORT)?;
+        let receiver = osc::Receiver::bind(crate::config::OSC_PORT)?;
         let callbacks = self.callbacks.clone();
 
         thread::spawn(move || {
@@ -68,7 +66,7 @@ impl Receiver {
             }
         });
 
-        info!("OSC receiver listening on port {}", OSC_PORT);
+        info!("OSC receiver listening on port {}", crate::config::OSC_PORT);
 
         Ok(())
     }

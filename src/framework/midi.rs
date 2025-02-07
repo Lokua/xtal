@@ -6,12 +6,9 @@ use std::thread;
 
 use super::prelude::*;
 
-pub const INPUT_PORT_NAME: &str = "IAC Driver Lattice In";
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-// MIDI Control Configuration
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {
     pub channel: u8,
@@ -35,9 +32,8 @@ impl MidiControlConfig {
     }
 }
 
-// Store for MIDI values
 #[derive(Default)]
-pub struct MidiState {
+struct MidiState {
     values: HashMap<String, f32>,
 }
 
@@ -57,7 +53,6 @@ impl MidiState {
     }
 }
 
-// Main MIDI Control System
 pub struct MidiControls {
     configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,
@@ -74,7 +69,6 @@ impl MidiControls {
     }
 
     pub fn add(&mut self, name: &str, config: MidiControlConfig) {
-        // Set default value
         self.state.lock().unwrap().set(name, config.default);
         self.configs.insert(name.to_string(), config);
     }
@@ -178,7 +172,10 @@ where
     let in_ports = midi_in.ports();
     let in_port = in_ports
         .iter()
-        .find(|p| midi_in.port_name(p).unwrap_or_default() == INPUT_PORT_NAME)
+        .find(|p| {
+            midi_in.port_name(p).unwrap_or_default()
+                == crate::config::MIDI_INPUT_PORT
+        })
         .expect("Unable to find input port")
         .clone();
 
@@ -200,7 +197,8 @@ where
 
         info!(
             "Connected to {}, connection_purpose: {}",
-            INPUT_PORT_NAME, connection_purpose
+            crate::config::MIDI_INPUT_PORT,
+            connection_purpose
         );
 
         thread::park();

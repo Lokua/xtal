@@ -16,7 +16,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 
 #[derive(SketchComponents)]
@@ -27,7 +26,8 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
+    let audio =
+        Audio::new(crate::config::AUDIO_DEVICE_SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = Controls::new(vec![
         Control::Slider {
