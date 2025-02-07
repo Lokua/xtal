@@ -428,9 +428,11 @@ impl<T: TimingSource> ControlScript<T> {
         trace!("Config populated. controls: {:?}, osc_controls: {:?}, keyframe_sequences: {:?}", 
             self.controls, self.osc_controls, self.keyframe_sequences);
 
-        self.osc_controls
-            .start()
-            .expect("Unable to start OSC receiver");
+        if !self.osc_controls.is_active {
+            self.osc_controls
+                .start()
+                .expect("Unable to start OSC receiver");
+        }
 
         info!("Controls populated");
 
