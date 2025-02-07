@@ -67,7 +67,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         d: [0.0; 4],
     };
 
-    let gpu = gpu::GpuState::new_full_screen(
+    let gpu = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "./shader_experiments.wgsl"),

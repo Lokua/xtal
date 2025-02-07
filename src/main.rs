@@ -139,8 +139,8 @@ fn main() {
 
         // --- TEMPLATES
         "basic_cube_shader_template" => run_sketch!(basic_cube_shader_template),
-        "basic_procedural_shader_template" => {
-            run_sketch!(basic_procedural_shader_template)
+        "fullscreen_shader_template" => {
+            run_sketch!(fullscreen_shader_template)
         }
         "template" => run_sketch!(template),
 

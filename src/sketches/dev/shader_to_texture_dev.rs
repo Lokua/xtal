@@ -87,7 +87,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    let second_pass = gpu::GpuState::new_full_screen(
+    let second_pass = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),

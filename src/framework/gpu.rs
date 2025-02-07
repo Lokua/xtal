@@ -773,7 +773,7 @@ pub const QUAD_COVER_VERTICES: &[BasicPositionVertex] = &[
 impl GpuState<BasicPositionVertex> {
     /// Specialized impl for shaders that simply need every pixel.
     /// See interference and wave_fract for examples.
-    pub fn new_full_screen<P: Pod + Zeroable>(
+    pub fn new_fullscreen<P: Pod + Zeroable>(
         app: &App,
         window_size: [u32; 2],
         shader_path: PathBuf,

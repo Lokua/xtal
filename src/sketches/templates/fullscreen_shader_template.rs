@@ -3,8 +3,8 @@ use nannou::prelude::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "template_wgpu",
-    display_name: "Template: WGPU",
+    name: "fullscreen_shader_tamplte",
+    display_name: "Template | Fullscreen Quad",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -46,10 +46,10 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    let gpu = gpu::GpuState::new_full_screen(
+    let gpu = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "template_wgpu.wgsl"),
+        to_absolute_path(file!(), "fullscreen_shader_tamplte.wgsl"),
         &params,
         true,
     );

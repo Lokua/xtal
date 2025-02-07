@@ -123,7 +123,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    let post_shader = gpu::GpuState::new_full_screen(
+    let post_shader = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "brutalism_shader2.wgsl"),

@@ -48,7 +48,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
-    let gpu = GpuState::new_full_screen(
+    let gpu = GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "./g25_5_isometric.wgsl"),

@@ -123,7 +123,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
         true,
     );
-    let post_shader = gpu::GpuState::new_full_screen(
+    let post_shader = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "g25_20_23_brutal_arch_shader2.wgsl"),

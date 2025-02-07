@@ -59,5 +59,5 @@ pub use self::scratch::z_sim;
 
 pub mod templates;
 pub use self::templates::basic_cube_shader_template;
-pub use self::templates::basic_procedural_shader_template;
+pub use self::templates::fullscreen_shader_template;
 pub use self::templates::template;
