@@ -52,6 +52,17 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
                 default: 0.0,
             },
         )
+        .control_from_config(
+            "chord",
+            AudioControlConfig {
+                channel: 2,
+                slew_config: SlewConfig::default(),
+                preemphasis: 0.0,
+                detect: 0.0,
+                range: (0.0, 700.0),
+                default: 0.0,
+            },
+        )
         .build();
 
     Model {
@@ -89,18 +100,24 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h());
 
-    let a = m.audio.get("bd");
-    let b = m.audio.get("hh");
+    let bd = m.audio.get("bd");
+    let hh = m.audio.get("hh");
+    let chord = m.audio.get("chord");
 
     draw.ellipse()
         .color(rgba(0.02, 0.02, 0.02, 0.9))
-        .radius(a)
-        .x_y(-m.wr.w_(16.0), 0.0);
+        .radius(bd)
+        .x_y(-m.wr.w_(4.0), 0.0);
 
     draw.ellipse()
         .color(rgba(0.5, 0.5, 0.5, 0.9))
-        .radius(b)
-        .x_y(m.wr.w_(16.0), 0.0);
+        .radius(hh)
+        .x_y(m.wr.w_(4.0), 0.0);
+
+    draw.ellipse()
+        .color(rgba(0.8, 0.8, 0.8, 0.9))
+        .radius(chord)
+        .x_y(0.0, 0.0);
 
     draw.to_frame(app, &frame).unwrap();
 }

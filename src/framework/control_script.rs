@@ -43,6 +43,8 @@ enum ControlType {
     // External control
     #[serde(rename = "osc")]
     Osc,
+    #[serde(rename = "audio")]
+    Audio,
 
     // Animation
     #[serde(rename = "lerp_abs")]
@@ -109,6 +111,7 @@ enum KeyframeSequence {
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     osc_controls: OscControls,
+    audio_controls: AudioControls,
     animation: Animation<T>,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     update_state: UpdateState,
@@ -122,6 +125,7 @@ impl<T: TimingSource> ControlScript<T> {
         let mut script = Self {
             controls: Controls::with_previous(vec![]),
             osc_controls: OscControls::new(),
+            audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
             keyframe_sequences: HashMap::new(),
             update_state: UpdateState {
@@ -136,16 +140,17 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
-        if name.starts_with("/") {
-            return self.osc_controls.get(name);
+        if self.controls.has(name) {
+            return self.controls.float(name);
         }
+
         let osc_name = format!("/{}", name);
         if self.osc_controls.has(&osc_name) {
             return self.osc_controls.get(&osc_name);
         }
 
-        if self.controls.has(name) {
-            return self.controls.float(name);
+        if self.audio_controls.has(name) {
+            return self.audio_controls.get(name);
         }
 
         if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
@@ -320,6 +325,21 @@ impl<T: TimingSource> ControlScript<T> {
                     if let Some(value) = existing_value {
                         self.osc_controls.set(&osc_control.address, *value);
                     }
+                }
+                ControlType::Audio => {
+                    let conf: AudioConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let audio_control = AudioControlConfig::new(
+                        conf.channel,
+                        SlewConfig::new(conf.slew[0], conf.slew[1]),
+                        conf.detect,
+                        conf.pre,
+                        (conf.range[0], conf.range[1]),
+                        0.0,
+                    );
+
+                    self.audio_controls.add(id, audio_control);
                 }
                 ControlType::LerpAbs => {
                     let conf: LerpAbsConfig =
@@ -632,6 +652,30 @@ impl Default for TriangleConfig {
             beats: 1.0,
             range: [0.0, 1.0],
             phase: 0.0,
+            bypass: None,
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(default)]
+struct AudioConfig {
+    channel: usize,
+    slew: [f32; 2],
+    pre: f32,
+    detect: f32,
+    range: [f32; 2],
+    bypass: Option<f32>,
+}
+
+impl Default for AudioConfig {
+    fn default() -> Self {
+        Self {
+            channel: 0,
+            slew: [0.0, 0.0],
+            pre: 0.0,
+            detect: 0.0,
+            range: [0.0, 1.0],
             bypass: None,
         }
     }

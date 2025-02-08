@@ -3,36 +3,36 @@ info:
         dummy: &dummy 100.0
 
 radius:
-    type: "slider"
+    type: slider
     range: [0.0, 500.0]
     default: *dummy
 
 hue:
-    type: "slider"
+    type: slider
     default: 0.3
 
 pos_x:
-    type: "osc"
+    type: osc
     range: [-1.0, 1.0]
     default: 0.0
 
 pos_y:
-    type: "lerp_abs"
+    type: lerp_abs
     keyframes:
         - ["0.0.0", 0.0]
         - ["0.1.0", 1.0]
         - ["0.2.0", 0.0]
 
 radius_small:
-    type: "lerp_rel"
+    type: lerp_rel
     keyframes:
         - [1.0, 5.0]
         - [1.0, 100.0]
         - [0.0, 5.0]
 
 pos_x2:
-    type: "r_ramp_rel"
-    ramp: "linear"
+    type: r_ramp_rel
+    ramp: linear
     ramp_time: 0.25
     keyframes:
         - [1.5, [-1.0, -0.5]]
@@ -40,7 +40,14 @@ pos_x2:
         - [1.0, [0.5, 1.0]]
 
 pos_x3:
-    type: "triangle"
+    type: triangle
     beats: 2.0
     range: [-0.5, 0.5]
     phase_offset: 0.0
+
+rect_y:
+    type: audio
+    channel: 0
+    slew: [0.2, 0.95]
+    detect: 0.5
+    pre: 0.0

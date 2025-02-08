@@ -3,6 +3,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Live/2025/Lattice - ControlScript Test
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "control_script_dev",
     display_name: "ControlScript Test",
@@ -41,7 +43,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     draw.rect()
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h())
-        .hsla(0.0, 0.0, 0.02, 0.1);
+        .hsla(0.0, 0.0, 0.02, 0.5);
 
     let hue = m.controls.get("hue");
     let radius = m.controls.get("radius");
@@ -50,6 +52,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let radius_small = m.controls.get("radius_small");
     let pos_x2 = m.controls.get("pos_x2");
     let pos_x3 = m.controls.get("pos_x3");
+    let rect_y = m.controls.get("rect_y");
 
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
@@ -70,6 +73,11 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .color(BLUE)
         .radius(20.0)
         .x_y(pos_x3 * m.wr.hw(), -m.wr.h_(4.0));
+
+    draw.rect()
+        .color(CYAN)
+        .x_y(0.0, map_range(rect_y, 0.0, 1.0, -m.wr.hh(), m.wr.hh()))
+        .w_h(m.wr.w() - 100.0, 30.0);
 
     draw.to_frame(app, &frame).unwrap();
 }

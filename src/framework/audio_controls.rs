@@ -8,6 +8,8 @@ use std::{
 
 use super::prelude::*;
 
+// Live/2025/Lattice Audio Controls Test
+
 const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 /// A function used in [`AudioControls`] to reduce a channel's audio buffer to
@@ -88,8 +90,8 @@ impl AudioControlBuilder {
 
     pub fn build(mut self) -> AudioControls {
         if let Err(e) = self.controls.start() {
-            warn!(
-                "Failed to initialize CV controls: {}. Using default values.",
+            error!(
+                "Failed to initialize audio controls: {}. Using default values.",
                 e
             );
         }
@@ -147,6 +149,10 @@ impl AudioControls {
             .get(name)
             .copied()
             .unwrap_or(0.0)
+    }
+
+    pub fn has(&self, name: &str) -> bool {
+        self.state.lock().unwrap().values.contains_key(name)
     }
 
     pub fn update_control<F>(&mut self, name: &str, f: F)
