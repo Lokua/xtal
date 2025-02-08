@@ -7,30 +7,29 @@ use std::{
 };
 
 use super::prelude::*;
-use crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
-const CHANNEL_COUNT: usize = MULTICHANNEL_AUDIO_DEVICE_COUNT;
+const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 struct AudioControlState {
     configs: HashMap<String, AudioControlConfig>,
     processor: MultichannelAudioProcessor,
-    audio_state: AudioState,
+    values: HashMap<String, f32>,
     previous_values: [f32; CHANNEL_COUNT],
 }
 
 pub struct AudioControls {
+    pub is_active: bool,
     state: Arc<Mutex<AudioControlState>>,
-    is_active: bool,
 }
 
 impl AudioControls {
-    fn new(fps: f32, sample_rate: usize) -> Self {
+    pub fn new(fps: f32, sample_rate: usize) -> Self {
         let buffer_size = (sample_rate as f32 / fps).ceil() as usize;
         let processor = MultichannelAudioProcessor::new(buffer_size);
         Self {
             state: Arc::new(Mutex::new(AudioControlState {
                 configs: HashMap::new(),
-                audio_state: AudioState::new(),
+                values: HashMap::new(),
                 processor,
                 previous_values: [0.0; CHANNEL_COUNT],
             })),
@@ -38,7 +37,8 @@ impl AudioControls {
         }
     }
 
-    fn add(&mut self, name: &str, config: AudioControlConfig) {
+    /// Add a new control. Overwrites any previous control of same name
+    pub fn add(&mut self, name: &str, config: AudioControlConfig) {
         assert!(
             config.channel < CHANNEL_COUNT,
             "Channel must be less than {}",
@@ -48,8 +48,16 @@ impl AudioControls {
         state.configs.insert(name.to_string(), config);
     }
 
+    /// Get the latest slewed and peak limited value by name,
+    /// normalized to range [0, 1]. Returns 0.0 if name isn't found.
     pub fn get(&self, name: &str) -> f32 {
-        self.state.lock().unwrap().audio_state.get(name)
+        self.state
+            .lock()
+            .unwrap()
+            .values
+            .get(name)
+            .copied()
+            .unwrap_or(0.0)
     }
 
     pub fn update_all_slew(&self, slew_config: SlewConfig) {
@@ -57,6 +65,30 @@ impl AudioControls {
         for (_, config) in state.configs.iter_mut() {
             config.slew_config = slew_config;
         }
+    }
+
+    pub fn update_control<F>(&mut self, name: &str, f: F)
+    where
+        F: FnOnce(&mut AudioControlConfig),
+    {
+        let mut state = self.state.lock().unwrap();
+        if let Some(config) = state.configs.get_mut(name) {
+            f(config);
+        }
+    }
+
+    pub fn update_controls<F>(&mut self, f: F)
+    where
+        F: Fn(&mut AudioControlConfig),
+    {
+        let mut state = self.state.lock().unwrap();
+        for config in state.configs.values_mut() {
+            f(config);
+        }
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.is_active
     }
 
     fn start(&mut self) -> Result<(), Box<dyn Error>> {
@@ -76,8 +108,11 @@ impl AudioControls {
                         let previous_sample =
                             state.previous_values[config.channel];
 
-                        let current_sample =
-                            state.processor.channel_value(config.channel);
+                        let current_sample = state.processor.channel_value(
+                            config.channel,
+                            config.preemphasis,
+                            config.detect,
+                        );
 
                         let smoothed = state.processor.follow_envelope(
                             current_sample,
@@ -86,7 +121,11 @@ impl AudioControls {
                         );
 
                         let mapped = map_range(
-                            smoothed, 0.0, 1.0, config.min, config.max,
+                            smoothed,
+                            0.0,
+                            1.0,
+                            config.range.0,
+                            config.range.1,
                         );
 
                         (name.clone(), mapped, config.channel, smoothed)
@@ -94,7 +133,7 @@ impl AudioControls {
                     .collect();
 
                 for (name, mapped, channel, smoothed) in updates {
-                    state.audio_state.set(&name, mapped);
+                    state.values.insert(name, mapped);
                     state.previous_values[channel] = smoothed;
                 }
             },
@@ -129,10 +168,6 @@ impl AudioControls {
 
         Ok((device, stream_config))
     }
-
-    pub fn is_active(&self) -> bool {
-        self.is_active
-    }
 }
 
 pub struct AudioControlBuilder {
@@ -149,36 +184,17 @@ impl AudioControlBuilder {
         }
     }
 
-    pub fn control_mapped(
+    pub fn control_from_config(
         mut self,
         name: &str,
-        channel: usize,
-        slew: (f32, f32),
-        detect: f32,
-        range: (f32, f32),
-        default: f32,
+        config: AudioControlConfig,
     ) -> Self {
-        let config = AudioControlConfig::new(
-            channel,
-            SlewConfig::new(slew.0, slew.1),
-            detect,
-            range,
-            default,
-        );
         self.controls.add(&name, config);
         self
     }
 
-    pub fn control(
-        self,
-        name: &str,
-        channel: usize,
-        slew: (f32, f32),
-        detect: f32,
-        default: f32,
-    ) -> Self {
-        self.control_mapped(name, channel, slew, detect, (-1.0, 1.0), default)
-    }
+    // TODO: control and control_mapped once we have settled on a more
+    // permanent AudioControlConfig API
 
     pub fn build(mut self) -> AudioControls {
         if let Err(e) = self.controls.start() {
@@ -196,13 +212,13 @@ pub struct AudioControlConfig {
     /// The zero-indexed channel number (0 = first channel)
     pub channel: usize,
     pub slew_config: SlewConfig,
+    pub preemphasis: f32,
 
     /// Linearly interpolate between peak and RMS amplitude detection.
     /// 0.0 = peak, 1.0 = RMS
     pub detect: f32,
 
-    pub min: f32,
-    pub max: f32,
+    pub range: (f32, f32),
     pub default: f32,
 }
 
@@ -211,6 +227,7 @@ impl AudioControlConfig {
         channel: usize,
         slew_config: SlewConfig,
         detect: f32,
+        preemphasis: f32,
         range: (f32, f32),
         default: f32,
     ) -> Self {
@@ -218,31 +235,10 @@ impl AudioControlConfig {
             channel,
             slew_config,
             detect,
-            min: range.0,
-            max: range.1,
+            preemphasis,
+            range,
             default,
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct AudioState {
-    values: HashMap<String, f32>,
-}
-
-impl AudioState {
-    pub fn new() -> Self {
-        Self {
-            values: HashMap::new(),
-        }
-    }
-
-    pub fn set(&mut self, name: &str, value: f32) {
-        self.values.insert(name.to_string(), value);
-    }
-
-    pub fn get(&self, name: &str) -> f32 {
-        *self.values.get(name).unwrap_or(&0.0)
     }
 }
 
@@ -280,30 +276,27 @@ impl MultichannelAudioProcessor {
         }
     }
 
-    fn channel_value(&self, channel: usize) -> f32 {
-        self.channel_data
-            .get(channel)
-            .and_then(|data| data.last())
-            .copied()
-            .unwrap_or(0.0)
-    }
-
-    pub fn slew_limit(
+    fn channel_value(
         &self,
-        sample: f32,
-        previous_value: f32,
-        slew_config: SlewConfig,
+        channel: usize,
+        preemphasis: f32,
+        detection_mix: f32,
     ) -> f32 {
-        let coeff = if sample > previous_value {
-            1.0 - slew_config.rise
-        } else {
-            1.0 - slew_config.fall
+        let buffer = match self.channel_data.get(channel) {
+            Some(buf) => buf,
+            None => return 0.0,
         };
 
-        previous_value + coeff * (sample - previous_value)
+        let processed = if preemphasis > 0.0 {
+            Self::apply_preemphasis(buffer, preemphasis)
+        } else {
+            buffer.to_vec()
+        };
+
+        MultichannelAudioProcessor::detect(&processed, detection_mix)
     }
 
-    pub fn follow_envelope(
+    fn follow_envelope(
         &self,
         sample: f32,
         previous_value: f32,
@@ -318,5 +311,62 @@ impl MultichannelAudioProcessor {
         };
 
         previous_value + coeff * (magnitude - previous_value)
+    }
+
+    /// Similar to follow_envelope but keeps audio in its original
+    /// range of [-1, 1]
+    #[allow(dead_code)]
+    fn slew_limit(
+        &self,
+        sample: f32,
+        previous_value: f32,
+        slew_config: SlewConfig,
+    ) -> f32 {
+        let coeff = if sample > previous_value {
+            1.0 - slew_config.rise
+        } else {
+            1.0 - slew_config.fall
+        };
+
+        previous_value + coeff * (sample - previous_value)
+    }
+
+    /// Standard preemphasis filter: `y[n] = x[n] - α * x[n-1]`
+    /// 0.97 is common is it gives about +20dB emphasis starting around 1kHz
+    pub fn apply_preemphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
+        let mut filtered = Vec::with_capacity(buffer.len());
+        filtered.push(buffer[0]);
+
+        for i in 1..buffer.len() {
+            filtered.push(buffer[i] - coefficient * buffer[i - 1]);
+        }
+
+        filtered
+    }
+
+    /// Apply peak or RMS amplitude detection or mix between them,
+    /// - 0.0 = only peak
+    /// - 0.5 = 50/50 blend of peak and rms
+    /// - 1.0 = only rms
+    fn detect(buffer: &[f32], method_mix: f32) -> f32 {
+        if method_mix == 0.0 {
+            return Self::peak(buffer);
+        }
+        if method_mix == 1.0 {
+            return Self::rms(buffer);
+        }
+        let peak = Self::peak(buffer);
+        let rms = Self::rms(buffer);
+
+        return (peak * method_mix) + (rms * (1.0 - method_mix));
+    }
+
+    fn peak(buffer: &[f32]) -> f32 {
+        buffer.iter().fold(f32::MIN, |a, &b| f32::max(a, b))
+    }
+
+    fn rms(buffer: &[f32]) -> f32 {
+        (buffer.iter().map(|&x| x * x).sum::<f32>() / buffer.len() as f32)
+            .sqrt()
     }
 }

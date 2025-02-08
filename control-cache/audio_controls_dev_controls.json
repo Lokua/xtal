@@ -1,10 +1,16 @@
 {
   "values": {
-    "fall": {
-      "Float": 0.895
-    },
     "rise": {
-      "Float": 0.22
+      "Float": 0.427
+    },
+    "fall": {
+      "Float": 0.85999995
+    },
+    "preemphasis": {
+      "Float": 0.743
+    },
+    "detect": {
+      "Float": 0.96
     }
   }
 }

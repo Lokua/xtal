@@ -39,7 +39,7 @@ impl Audio {
         fall: f32,
     ) -> Vec<f32> {
         let audio_processor = self.audio_processor.lock().unwrap();
-        let emphasized = audio_processor.apply_pre_emphasis(pre_emphasis);
+        let emphasized = audio_processor.apply_preemphasis(pre_emphasis);
 
         if self.cutoffs.is_empty() {
             self.cutoffs = audio_processor.generate_mel_cutoffs(
@@ -149,9 +149,9 @@ impl AudioProcessor {
             .sqrt()
     }
 
-    /// Standard pre-emphasis filter: `y[n] = x[n] - α * x[n-1]`
+    /// Standard preemphasis filter: `y[n] = x[n] - α * x[n-1]`
     /// 0.97 is common is it gives about +20dB emphasis starting around 1kHz
-    pub fn apply_pre_emphasis(&self, coefficient: f32) -> Vec<f32> {
+    pub fn apply_preemphasis(&self, coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(self.buffer.len());
         filtered.push(self.buffer[0]);
 

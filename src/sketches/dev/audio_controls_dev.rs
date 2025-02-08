@@ -1,7 +1,7 @@
 use nannou::prelude::*;
 
 use crate::framework::{
-    audio_controls::{AudioControlBuilder, AudioControls},
+    audio_controls::{AudioControlBuilder, AudioControlConfig, AudioControls},
     prelude::*,
 };
 
@@ -13,7 +13,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(150),
+    gui_h: Some(300),
     play_mode: PlayMode::Loop,
 };
 
@@ -26,13 +26,35 @@ pub struct Model {
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let controls = Controls::new(vec![
+        Control::slider_norm("preemphasis", 0.0),
+        Control::slider_norm("detect", 0.0),
         Control::slider_norm("rise", 0.0),
         Control::slider_norm("fall", 0.0),
     ]);
 
     let audio = AudioControlBuilder::new()
-        .control_mapped("bd", 0, (0.5, 0.5), 0.0, (0.0, 400.0), 0.0)
-        .control_mapped("hh", 1, (0.5, 0.5), 0.0, (0.0, 400.0), 0.0)
+        .control_from_config(
+            "bd",
+            AudioControlConfig {
+                channel: 0,
+                slew_config: SlewConfig::default(),
+                preemphasis: 0.0,
+                detect: 0.0,
+                range: (0.0, 700.0),
+                default: 0.0,
+            },
+        )
+        .control_from_config(
+            "hh",
+            AudioControlConfig {
+                channel: 1,
+                slew_config: SlewConfig::default(),
+                preemphasis: 0.0,
+                detect: 0.0,
+                range: (0.0, 700.0),
+                default: 0.0,
+            },
+        )
         .build();
 
     Model {
@@ -43,13 +65,20 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug_throttled!(500, "a: {}, b: {}", m.audio.get("bd"), m.audio.get("hh"));
+    // debug_throttled!(500, "a: {}, b: {}", m.audio.get("bd"), m.audio.get("hh"));
 
     if m.controls.changed() {
-        m.audio.update_all_slew(SlewConfig::new(
-            m.controls.float("rise"),
-            m.controls.float("fall"),
-        ));
+        let preemphasis = m.controls.float("preemphasis");
+        let detect = m.controls.float("detect");
+        let rise = m.controls.float("rise");
+        let fall = m.controls.float("fall");
+
+        m.audio.update_controls(|control| {
+            control.preemphasis = preemphasis;
+            control.detect = detect;
+            control.slew_config.rise = rise;
+            control.slew_config.fall = fall;
+        });
 
         m.controls.mark_unchanged();
     }
@@ -59,7 +88,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let draw = app.draw();
 
     draw.rect()
-        .color(BLACK)
+        .color(WHITE)
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h());
 
@@ -67,12 +96,12 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let b = m.audio.get("hh");
 
     draw.ellipse()
-        .color(rgba(1.0, 0.0, 0.0, 0.5))
+        .color(rgba(0.02, 0.02, 0.02, 0.9))
         .radius(a)
         .x_y(-m.wr.w_(16.0), 0.0);
 
     draw.ellipse()
-        .color(rgba(0.0, 0.0, 1.0, 0.5))
+        .color(rgba(0.5, 0.5, 0.5, 0.9))
         .radius(b)
         .x_y(m.wr.w_(16.0), 0.0);
 
