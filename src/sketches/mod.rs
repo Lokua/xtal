@@ -17,6 +17,7 @@ pub mod wave_fract;
 
 pub mod dev;
 pub use self::dev::animation_dev;
+pub use self::dev::audio_controls_dev;
 pub use self::dev::audio_dev;
 pub use self::dev::control_script_dev;
 pub use self::dev::cv_dev;

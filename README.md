@@ -104,16 +104,19 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 ### Audio
 
-Lattice is hardcoded to read audio from the first input (index 0) on a device
-named "Lattice" (this can be changed by editing the `AUDIO_DEVICE_NAME` constant
-in [src/config.rs][config]). I am currently doing this via Aggregate Device on
-my Mac using [Blackhole 2ch][blackhole] to capture output from my DAW. Here are
-some screenshots of the setup:
+#### Single Channel, Multiband Audio
 
-**Aggregate Device Setup**
+The Audio struct in Lattice is hardcoded to read audio from the first input
+(index 0) on a device named "Lattice" (this can be changed by editing the
+`AUDIO_DEVICE_NAME` constant in [src/config.rs][config]). I am currently doing
+this via Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture
+output from my DAW. Here are some screenshots of the setup:
+
+##### Aggregate Device Setup
+
 ![Mac Aggregate Device Setup](assets/aggregate-device-setup.png)
 
-**Routing Audio to Blackhole 2ch `Out(3/4):In(1/2)`**
+##### Routing Audio to Blackhole 2ch `Out(3/4):In(1/2)`
 
 > Note that Blackhole automatically routes whatever its output channels are to
 > its own input, so sending audio out to Blackhole 3/4 will automatically appear
@@ -123,6 +126,27 @@ some screenshots of the setup:
 > Live's audio preferences)
 
 ![Ableton Live - Blackhole Track Routing](assets/live-blackhole-track-routing.png)
+
+See [src/sketches/dev/audio_dev.rs](src/sketches/dev/audio_dev.rs) for an
+example sketch.
+
+#### Multchannel Audio
+
+Similar to the above, only treats each audio channel as an individual control
+signal with optional slew limiting. Lattice is configured to use an audio device
+named "Lattice16". On my computer I'm using the [16 channel vesion of
+Blackhole][blackhole].
+
+##### Aggregate Device Setup
+
+![Mac Aggregate Device Setup](assets/aggregate-device-multichannel.png)
+
+> In the above setup I use 1-2 ad the main outs and send the multichannel data
+> out to channels 2-18 which then appear on Blackhole channels 1-16
+
+See
+[src/sketches/dev/audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs)
+for an example sketch.
 
 ### MIDI
 

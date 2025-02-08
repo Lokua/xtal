@@ -5,7 +5,7 @@ use rand::Rng;
 use rand::SeedableRng;
 use serde::Deserialize;
 
-use crate::framework::prelude::*;
+use super::prelude::*;
 
 #[derive(Copy, Clone, Debug, Deserialize)]
 pub struct Keyframe {

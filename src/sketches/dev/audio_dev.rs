@@ -39,7 +39,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             disabled: None,
         },
         Control::Slider {
-            name: "rise_rate".to_string(),
+            name: "rise".to_string(),
             value: 0.96,
             min: 0.001,
             max: 1.0,
@@ -47,7 +47,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             disabled: None,
         },
         Control::Slider {
-            name: "fall_rate".to_string(),
+            name: "fall".to_string(),
             value: 0.9,
             min: 0.0,
             max: 1.0,
@@ -69,8 +69,8 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
         30.0,
         10_000.0,
         model.controls.float("pre_emphasis"),
-        model.controls.float("rise_rate"),
-        model.controls.float("fall_rate"),
+        model.controls.float("rise"),
+        model.controls.float("fall"),
     );
 }
 

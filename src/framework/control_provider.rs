@@ -1,5 +1,8 @@
 use super::prelude::*;
 
+/// Shared trait to enable sketches to use either `Controls` or `ControlScript`
+/// instances via a single `Model.controls` struct field and have them
+/// automatically show up in the UI in either case.
 pub trait ControlProvider {
     fn as_controls(&mut self) -> &mut Controls;
     fn get_controls(&self) -> &Vec<Control>;

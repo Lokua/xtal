@@ -6,9 +6,11 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 
+/// Single-channel, multiband audio with configurable FFT bands.
 pub struct Audio {
     audio_processor: Arc<Mutex<AudioProcessor>>,
-    slew_state: SlewState,
+    slew_config: SlewConfig,
+    previous_band_values: Vec<f32>,
     cutoffs: Vec<f32>,
 }
 
@@ -19,14 +21,10 @@ impl Audio {
 
         init_audio(audio_processor.clone()).expect("Unable to init audio");
 
-        let slew_state = SlewState {
-            previous_values: vec![],
-            config: SlewConfig::default(),
-        };
-
         Self {
             audio_processor,
-            slew_state,
+            slew_config: SlewConfig::default(),
+            previous_band_values: vec![],
             cutoffs: vec![],
         }
     }
@@ -37,8 +35,8 @@ impl Audio {
         min_freq: f32,
         max_freq: f32,
         pre_emphasis: f32,
-        rise_rate: f32,
-        fall_rate: f32,
+        rise: f32,
+        fall: f32,
     ) -> Vec<f32> {
         let audio_processor = self.audio_processor.lock().unwrap();
         let emphasized = audio_processor.apply_pre_emphasis(pre_emphasis);
@@ -54,55 +52,52 @@ impl Audio {
         let bands =
             audio_processor.bands_from_buffer(&emphasized, &self.cutoffs);
 
-        self.slew_state.config.rise_rate = rise_rate;
-        self.slew_state.config.fall_rate = fall_rate;
+        self.slew_config.rise = rise;
+        self.slew_config.fall = fall;
 
-        if self.slew_state.previous_values.is_empty() {
-            self.slew_state.previous_values = vec![0.0; n_bands];
+        if self.previous_band_values.is_empty() {
+            self.previous_band_values = vec![0.0; n_bands];
         }
 
         let smoothed = audio_processor.follow_band_envelopes(
             bands,
-            self.slew_state.config,
-            &self.slew_state.previous_values,
+            self.slew_config,
+            &self.previous_band_values,
         );
-        self.slew_state.update(smoothed.clone());
+
+        self.previous_band_values = smoothed.clone();
 
         smoothed
     }
 }
 
+/// Configuration for envelope following behavior, controlling how quickly the
+/// envelope tracks changes in the input signal.
 #[derive(Debug, Clone, Copy)]
 pub struct SlewConfig {
-    pub rise_rate: f32,
-    pub fall_rate: f32,
+    /// Controls smoothing when signal amplitude increases.
+    /// - 0.0 = instant attack (no smoothing)
+    /// - 1.0 = very slow attack (maximum smoothing)
+    pub rise: f32,
+
+    /// Controls smoothing when signal amplitude decreases.
+    /// - 0.0 = instant decay (no smoothing)
+    /// - 1.0 = very slow decay (maximum smoothing)
+    pub fall: f32,
 }
 
 impl Default for SlewConfig {
     fn default() -> Self {
         Self {
-            rise_rate: 0.3,
-            fall_rate: 0.1,
+            rise: 0.15,
+            fall: 0.5,
         }
     }
 }
 
-#[derive(Debug)]
-pub struct SlewState {
-    pub config: SlewConfig,
-    pub previous_values: Vec<f32>,
-}
-
-impl SlewState {
-    pub fn new(num_bands: usize) -> Self {
-        Self {
-            config: SlewConfig::default(),
-            previous_values: vec![0.0; num_bands],
-        }
-    }
-
-    pub fn update(&mut self, new_values: Vec<f32>) {
-        self.previous_values = new_values;
+impl SlewConfig {
+    pub fn new(rise: f32, fall: f32) -> Self {
+        Self { rise, fall }
     }
 }
 
@@ -171,8 +166,6 @@ impl AudioProcessor {
         self.bands_from_buffer(&self.buffer, cutoffs)
     }
 
-    // TODO: call this bands_from_buffer, use that in bands so we
-    // can compose with apply_pre_emphasis etc.
     pub fn bands_from_buffer(
         &self,
         buffer: &Vec<f32>,
@@ -226,52 +219,6 @@ impl AudioProcessor {
         bands
     }
 
-    // TODO: make this linear counterpart to bands_from_buffer: bands_from_buffer_lin
-    pub fn bands_3_lin(&self) -> (f32, f32, f32) {
-        let mut complex_input: Vec<Complex<f32>> =
-            self.buffer.iter().map(|&x| Complex::new(x, 0.0)).collect();
-
-        self.fft.process(&mut complex_input);
-        let freq_resolution = (self.sample_rate / complex_input.len()) as f32;
-
-        let low_band_start = (20.0 / freq_resolution).round() as usize;
-        let low_band_end = (200.0 / freq_resolution).round() as usize;
-        let mid_band_end = (2000.0 / freq_resolution).round() as usize;
-        let high_band_end = (20000.0 / freq_resolution).round() as usize;
-
-        let magnitudes: Vec<f32> = complex_input
-            .iter()
-            .map(|c| (c.norm() / complex_input.len() as f32))
-            .collect();
-
-        let get_band_magnitude = |start: usize, end: usize| -> f32 {
-            // Ensure we don't go above Nyquist frequency
-            magnitudes[start..end.min(magnitudes.len())]
-                .iter()
-                .fold(0.0f32, |acc, &x| acc.max(x))
-        };
-
-        let low_band = get_band_magnitude(low_band_start, low_band_end);
-        let mid_band = get_band_magnitude(low_band_end, mid_band_end);
-        let high_band = get_band_magnitude(mid_band_end, high_band_end);
-
-        let max_magnitude = low_band.max(mid_band).max(high_band);
-
-        let normalize = |x: f32| {
-            if max_magnitude > 0.0 {
-                x / max_magnitude
-            } else {
-                0.0
-            }
-        };
-
-        (
-            normalize(low_band),
-            normalize(mid_band),
-            normalize(high_band),
-        )
-    }
-
     pub fn follow_envelope(
         &self,
         input: &[f32],
@@ -285,17 +232,12 @@ impl AudioProcessor {
             let magnitude = sample.abs();
 
             let coeff = if magnitude > current {
-                config.rise_rate
+                1.0 - config.rise
             } else {
-                config.fall_rate
+                1.0 - config.fall
             };
 
-            if coeff >= 1.0 {
-                current = magnitude
-            } else {
-                current = current + coeff * (magnitude - current);
-            }
-
+            current = current + coeff * (magnitude - current);
             envelope.push(current);
         }
 
@@ -318,9 +260,11 @@ impl AudioProcessor {
             .collect()
     }
 
-    /// Generates logarithmically spaced frequency cutoffs in Hz for the specified number of bands.
-    /// Lower bands have custom spacing to avoid multiple bands mapping to the same fft bin index which results
-    /// in empties. Works OK for <= 32 bands but starts to produce gaps at higher band counts.
+    /// Generates logarithmically spaced frequency cutoffs in Hz for the
+    /// specified number of bands. Lower bands have custom spacing to avoid
+    /// multiple bands mapping to the same fft bin index which results in
+    /// empties. Works OK for <= 32 bands but starts to produce gaps at
+    /// higher band counts.
     ///
     /// # Arguments
     /// * `num_bands` - Number of bands to generate (4, 8, 16, 32, 128, or 256)
@@ -350,7 +294,9 @@ impl AudioProcessor {
 
         // Handle first few bands with fixed minimum widths
         let mut current_freq = min_freq;
-        let transition_freq = 300.0; // Frequency at which we switch to logarithmic spacing
+
+        // Frequency at which we switch to logarithmic spacing
+        let transition_freq = 300.0;
 
         while current_freq < transition_freq && cutoffs.len() < num_bands {
             current_freq += min_band_width;

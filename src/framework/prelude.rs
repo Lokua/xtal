@@ -15,7 +15,7 @@ pub use crate::framework::gpu;
 pub use crate::framework::logging::*;
 pub use crate::framework::midi::*;
 pub use crate::framework::noise::*;
-pub use crate::framework::osc::*;
+pub use crate::framework::osc_controls::*;
 pub use crate::framework::sand_line;
 pub use crate::framework::sketch::*;
 pub use crate::framework::timing::*;

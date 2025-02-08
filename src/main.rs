@@ -100,6 +100,7 @@ fn main() {
 
         // --- DEV
         "animation_dev" => run_sketch!(animation_dev),
+        "audio_controls_dev" => run_sketch!(audio_controls_dev),
         "audio_dev" => run_sketch!(audio_dev),
         "control_script_dev" => run_sketch!(control_script_dev),
         "cv_dev" => run_sketch!(cv_dev),
