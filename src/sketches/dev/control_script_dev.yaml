@@ -51,3 +51,4 @@ rect_y:
     slew: [0.2, 0.95]
     detect: 0.5
     pre: 0.0
+    range: [0, 1]

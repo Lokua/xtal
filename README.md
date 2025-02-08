@@ -293,6 +293,23 @@ position_x:
     # Optional, defaults to 0.5
     default: 50.0
 
+rect_y:
+    # Interface to `AudioControls`; uses multichannel audio
+    # with peak detection and slew limiting
+    type: audio
+    channel: 0
+    # Controls smoothing ([rise, fall]) when signal amplitude increases.
+    # - 0.0 = instant rise/fall (no smoothing)
+    # - 1.0 = very slow rise/fall (maximum smoothing)
+    # defaults to [0, 0]
+    slew: [0.3, 0.9]
+    # Linearly mix between 0=peak detection and 1=RMS peak detection.
+    # Peak is snappier, RMS is smoother but limits amplitude more
+    # defaults to zero
+    detect: 0.0
+    # Optional, defaults to [0.0, 1.0]
+    range: [0.0, 100.0]
+
 hue:
     # Interface to the `Animation#lerp` method that differs from the normal code
     # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
