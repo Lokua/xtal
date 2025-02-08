@@ -34,12 +34,12 @@ impl Audio {
         n_bands: usize,
         min_freq: f32,
         max_freq: f32,
-        pre_emphasis: f32,
+        preemphasis: f32,
         rise: f32,
         fall: f32,
     ) -> Vec<f32> {
         let audio_processor = self.audio_processor.lock().unwrap();
-        let emphasized = audio_processor.apply_preemphasis(pre_emphasis);
+        let emphasized = audio_processor.apply_preemphasis(preemphasis);
 
         if self.cutoffs.is_empty() {
             self.cutoffs = audio_processor.generate_mel_cutoffs(
@@ -139,16 +139,6 @@ impl AudioProcessor {
         }
     }
 
-    pub fn peak(&self) -> f32 {
-        self.buffer.iter().fold(f32::MIN, |a, &b| f32::max(a, b))
-    }
-
-    pub fn rms(&self) -> f32 {
-        (self.buffer.iter().map(|&x| x * x).sum::<f32>()
-            / self.buffer.len() as f32)
-            .sqrt()
-    }
-
     /// Standard preemphasis filter: `y[n] = x[n] - α * x[n-1]`
     /// 0.97 is common is it gives about +20dB emphasis starting around 1kHz
     pub fn apply_preemphasis(&self, coefficient: f32) -> Vec<f32> {
@@ -160,6 +150,16 @@ impl AudioProcessor {
         }
 
         filtered
+    }
+
+    pub fn peak(&self) -> f32 {
+        self.buffer.iter().fold(f32::MIN, |a, &b| f32::max(a, b))
+    }
+
+    pub fn rms(&self) -> f32 {
+        (self.buffer.iter().map(|&x| x * x).sum::<f32>()
+            / self.buffer.len() as f32)
+            .sqrt()
     }
 
     pub fn bands(&self, cutoffs: &Vec<f32>) -> Vec<f32> {

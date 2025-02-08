@@ -1,9 +1,6 @@
 use nannou::prelude::*;
 
-use crate::framework::{
-    audio_controls::{AudioControlBuilder, AudioControlConfig, AudioControls},
-    prelude::*,
-};
+use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "audio_controls_dev",

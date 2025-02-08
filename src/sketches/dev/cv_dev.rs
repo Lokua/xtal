@@ -2,6 +2,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Live/2025/Lattice CV Test
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "cv_test",
     display_name: "CV Test",
@@ -16,21 +18,42 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    cv: CvControls,
+    audio: AudioControls,
     wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let cv = CvControlBuilder::new(SKETCH_CONFIG.fps)
-        .control_mapped("a", 0, (0.0, 400.0), 0.5)
-        .control_mapped("b", 1, (0.0, 400.0), 0.5)
+    let audio = AudioControlBuilder::new()
+        .with_buffer_processor(thru_buffer_processor)
+        .control_from_config(
+            "a",
+            AudioControlConfig {
+                channel: 0,
+                slew_config: SlewConfig::default(),
+                preemphasis: 0.0,
+                detect: 0.0,
+                range: (0.0, 700.0),
+                default: 0.0,
+            },
+        )
+        .control_from_config(
+            "b",
+            AudioControlConfig {
+                channel: 1,
+                slew_config: SlewConfig::default(),
+                preemphasis: 0.0,
+                detect: 0.0,
+                range: (0.0, 700.0),
+                default: 0.0,
+            },
+        )
         .build();
 
-    Model { cv, wr }
+    Model { audio, wr }
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug_throttled!(1_000, "a: {}, b: {}", m.cv.get("a"), m.cv.get("b"));
+    debug_throttled!(1_000, "a: {}, b: {}", m.audio.get("a"), m.audio.get("b"));
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {
@@ -41,8 +64,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h());
 
-    let a = m.cv.get("a");
-    let b = m.cv.get("b");
+    let a = m.audio.get("a");
+    let b = m.audio.get("b");
 
     draw.ellipse()
         .color(rgba(1.0, 0.0, 0.0, 0.5))
