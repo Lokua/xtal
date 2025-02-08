@@ -127,15 +127,14 @@ output from my DAW. Here are some screenshots of the setup:
 
 ![Ableton Live - Blackhole Track Routing](assets/live-blackhole-track-routing.png)
 
-See [src/sketches/dev/audio_dev.rs](src/sketches/dev/audio_dev.rs) for an
-example sketch.
+See [audio_dev.rs](src/sketches/dev/audio_dev.rs) for an example sketch.
 
 #### Multchannel Audio
 
 Similar to the above, only treats each audio channel as an individual control
-signal with optional slew limiting. Lattice is configured to use an audio device
-named "Lattice16". On my computer I'm using the [16 channel vesion of
-Blackhole][blackhole].
+signal with optional slew limiting, suitable for audio-rate or control-rate
+signals. Lattice is configured to use an audio device named "Lattice16". On my
+computer I'm using the [16 channel vesion of Blackhole][blackhole].
 
 ##### Aggregate Device Setup
 
@@ -144,9 +143,8 @@ Blackhole][blackhole].
 > In the above setup I use 1-2 ad the main outs and send the multichannel data
 > out to channels 2-18 which then appear on Blackhole channels 1-16
 
-See
-[src/sketches/dev/audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs)
-for an example sketch.
+See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
+[cv_dev.rs](src/sketches/dev/cv_dev.rs) for an example that uses CV.
 
 ### MIDI
 

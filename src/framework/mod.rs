@@ -5,7 +5,6 @@ pub mod audio_controls;
 pub mod control_provider;
 pub mod control_script;
 pub mod controls;
-pub mod cv;
 pub mod displacer;
 pub mod distance;
 pub mod drop;

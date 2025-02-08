@@ -6,7 +6,6 @@ pub use crate::framework::audio_controls::*;
 pub use crate::framework::control_provider::*;
 pub use crate::framework::control_script::*;
 pub use crate::framework::controls::*;
-pub use crate::framework::cv::*;
 pub use crate::framework::displacer::*;
 pub use crate::framework::distance::*;
 pub use crate::framework::drop::*;
