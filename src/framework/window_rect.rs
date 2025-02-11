@@ -32,14 +32,15 @@ impl WindowRect {
     /// if m.wr.changed() {
     ///   // do stuff
     ///   //...
-    ///   // But don't forget to mark it as changed!
+    ///   // But don't forget to mark it as unchanged or
+    ///   // this block will run every frame!
     ///   m.wr.mark_unchanged()
     /// }
     /// ```
     /// Note that this will always return true the first time it is called
     /// or forever after that until mark_unchanged is called. This
     /// makes the code snippet above function as dual-purpose
-    /// "init" style setup function which for convenience.
+    /// "init" style setup function which is pretty convenient.
     pub fn changed(&self) -> bool {
         (self.current.w() != self.last.w())
             || (self.current.h() != self.last.h())
