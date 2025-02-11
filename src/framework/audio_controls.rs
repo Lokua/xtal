@@ -13,7 +13,7 @@ use super::prelude::*;
 const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 /// A function used in [`AudioControls`] to reduce a channel's audio buffer to
-/// a single value suitable for parameter control. The [`default_processor`]
+/// a single value suitable for parameter control. The [`default_buffer_processor`]
 /// is specifically for audio-rate signals, while [`thru_buffer_processor`]
 /// should be used for control-rate audio signals (CV).
 /// You can also pass you own custom processor.

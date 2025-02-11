@@ -26,7 +26,7 @@ impl WindowRect {
     }
 
     /// Returns true if the window size has changed since the last time
-    /// [`mark_unchanged`] was called. Use this in the `update` function
+    /// [`Self::mark_unchanged`] was called. Use this in the `update` function
     /// when you want to perform an expensive operation only when needed.
     /// ```rust
     /// if m.wr.changed() {
