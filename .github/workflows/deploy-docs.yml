@@ -36,7 +36,8 @@ jobs:
                   RUSTFLAGS: "--cfg doc"
               run:
                   cargo doc --no-deps --document-private-items
-                  --no-default-features
+                  --no-default-features --exclude wayland-scanner --exclude
+                  quote
 
             - name: Add index.html redirect
               run: |
