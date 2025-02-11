@@ -23,13 +23,20 @@ jobs:
               run: sudo apt-get install libxcb-composite0-dev
 
             - name: Install Rust
-              uses: dtolnay/rust-toolchain@stable
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  override: true
 
             - name: Build Documentation
+              uses: actions-rs/cargo@v1
               env:
                   RUSTDOCFLAGS: "--cfg docsrs"
                   RUSTFLAGS: "--cfg doc"
-              run: cargo doc --no-deps --document-private-items
+              with:
+                  command: doc
+                  args: --no-deps --document-private-items
 
             - name: Add index.html redirect
               run: |
