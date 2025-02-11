@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::framework::prelude::*;
+use crate::sketches::shared::displacer::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_2",
@@ -73,8 +74,13 @@ impl Model {
     }
 }
 
-type AnimationFn<R> =
-    Option<Arc<dyn Fn(&Displacer, &Animation<FrameTiming>, &Controls) -> R + Send + Sync>>;
+type AnimationFn<R> = Option<
+    Arc<
+        dyn Fn(&Displacer, &Animation<FrameTiming>, &Controls) -> R
+            + Send
+            + Sync,
+    >,
+>;
 
 struct DisplacerConfig {
     kind: &'static str,
@@ -98,7 +104,11 @@ impl DisplacerConfig {
         }
     }
 
-    pub fn update(&mut self, animation: &Animation<FrameTiming>, controls: &Controls) {
+    pub fn update(
+        &mut self,
+        animation: &Animation<FrameTiming>,
+        controls: &Controls,
+    ) {
         if let Some(position_fn) = &self.position_animation {
             self.displacer.position =
                 position_fn(&self.displacer, animation, controls);

@@ -42,7 +42,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
 fn pattern_a(p: vec2f) -> vec3f {
     let t = pow(1.0 - (p.y + 1.0) * 0.5, 2.0);
-    let a = vec3f(1.0, 0.1, 0.2);
+    let a = vec3f(1.0, 0.1, 0.16);
     let b = vec3f(0.3, 0.0, 0.5);
     return mix(a, b, t);
 }
@@ -71,7 +71,6 @@ fn correct_aspect(position: vec2f) -> vec2f {
     p.x *= aspect;
     return p;
 }
-
 
 fn smin(a: f32, b: f32, k: f32) -> f32 {
     let h = max(k - abs(a - b), 0.0) / k;

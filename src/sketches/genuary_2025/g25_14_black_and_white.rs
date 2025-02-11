@@ -1,3 +1,4 @@
+use bytemuck::{Pod, Zeroable};
 use gpu::GpuState;
 use nannou::prelude::*;
 
@@ -6,7 +7,7 @@ use crate::framework::prelude::*;
 // ~/Documents/Live/2025/2025.01.15 - 2020.01.28 F7 - Lattice Auto
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "g25_14_blank_and_white",
+    name: "g25_14_black_and_white",
     display_name: "Genuary 14: Interference",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -19,15 +20,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<MidiSongTiming>,
-    animation_script: AnimationScript<MidiSongTiming>,
-    controls: Controls,
+    animation: Animation<OscTransportTiming>,
+    controls: ControlScript<OscTransportTiming>,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
 struct ShaderParams {
     // w, h, ..unused
     resolution: [f32; 4],
@@ -49,14 +49,14 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
+    let timing = OscTransportTiming::new(SKETCH_CONFIG.bpm);
 
-    let animation_script = AnimationScript::new(
-        to_absolute_path(file!(), "g25_14_blank_and_white.toml"),
-        animation.clone(),
+    let animation = Animation::new(timing.clone());
+
+    let controls = ControlScript::new(
+        to_absolute_path(file!(), "g25_14_black_and_white.yaml"),
+        timing,
     );
-
-    let controls = Controls::with_previous(vec![]);
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -70,14 +70,13 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let gpu = GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "./g25_14_blank_and_white.wgsl"),
+        to_absolute_path(file!(), "./g25_14_black_and_white.wgsl"),
         &params,
         true,
     );
 
     Model {
         animation,
-        animation_script,
         controls,
         wr,
         gpu,
@@ -85,39 +84,39 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.animation_script.update();
+    m.controls.update();
 
-    let phase_mod = m.animation_script.get("phase_mod");
+    let phase_mod = m.controls.get("phase_mod");
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
-            m.animation_script.get("wave1_freq"),
+            m.controls.get("wave1_freq"),
             0.0, // wave1_angle
-            m.animation_script.get("wave2_freq"),
+            m.controls.get("wave2_freq"),
             0.25, // wave2_angle
         ],
         b: [
             m.animation.r_rmp(&[((0.0, phase_mod), 2.0)], 0.0, 1.0),
             m.animation.r_rmp(&[((0.0, phase_mod), 2.0)], 1.0, 1.0),
-            m.animation_script.get("wave1_y"),
-            m.animation_script.get("wave2_y"),
+            m.controls.get("wave1_y"),
+            m.controls.get("wave2_y"),
         ],
         c: [
             0.0,
-            m.animation_script.get("type_mix"),
+            m.controls.get("type_mix"),
             0.0,
-            m.animation_script.get("checker"),
+            m.controls.get("checker"),
         ],
         d: [
-            m.animation_script.get("curve_x"),
-            m.animation_script.get("curve_y"),
-            m.animation_script.get("wave_distort"),
+            m.controls.get("curve_x"),
+            m.controls.get("curve_y"),
+            m.controls.get("wave_distort"),
             0.0, // smoothing
         ],
         e: [
-            m.animation_script.get("wave1_amp"),
-            m.animation_script.get("wave2_amp"),
+            m.controls.get("wave1_amp"),
+            m.controls.get("wave2_amp"),
             0.0,
             0.0,
         ],

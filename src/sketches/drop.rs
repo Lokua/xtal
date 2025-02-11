@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 
+use super::shared::drop::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

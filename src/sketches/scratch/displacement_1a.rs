@@ -4,6 +4,7 @@ use rayon::prelude::*;
 use std::sync::Arc;
 
 use crate::framework::prelude::*;
+use crate::sketches::shared::displacer::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_1a",

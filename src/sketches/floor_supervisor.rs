@@ -3,6 +3,7 @@ use nannou::prelude::*;
 use rayon::prelude::*;
 use std::sync::Arc;
 
+use super::shared::displacer::*;
 use crate::framework::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

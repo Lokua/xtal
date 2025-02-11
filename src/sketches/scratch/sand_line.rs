@@ -2,6 +2,7 @@ use nannou::color::*;
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
+use crate::sketches::shared::sand_line::*;
 
 // https://github.com/inconvergent/sand-spline/blob/master/main-hlines.py
 
@@ -127,24 +128,22 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
             );
         }
 
-        let sand_line = sand_line::SandLine::new(
+        let sand_line = SandLine::new(
             match noise_strategy.as_str() {
-                "Octave" => Box::new(sand_line::OctaveNoise::new(
+                "Octave" => Box::new(OctaveNoise::new(
                     noise_octaves as u32,
                     noise_persistence,
                 )),
-                _ => Box::new(sand_line::GaussianNoise {}),
+                _ => Box::new(GaussianNoise {}),
             },
             match distribution_strategy.as_str() {
-                "Curved" => {
-                    Box::new(sand_line::CurvedDistribution::new(curvature))
-                }
-                "TrigFn" => Box::new(sand_line::TrigFnDistribution::new(
+                "Curved" => Box::new(CurvedDistribution::new(curvature)),
+                "TrigFn" => Box::new(TrigFnDistribution::new(
                     curvature,
                     *trig_fn_lookup().get(trig_fn_a.as_str()).unwrap(),
                     *trig_fn_lookup().get(trig_fn_b.as_str()).unwrap(),
                 )),
-                _ => Box::new(sand_line::PerpendicularDistribution),
+                _ => Box::new(PerpendicularDistribution),
             },
         );
 

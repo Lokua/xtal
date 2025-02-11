@@ -4,7 +4,7 @@ use nannou::{
 };
 use std::f32::consts::PI;
 
-use super::prelude::*;
+use crate::framework::prelude::*;
 
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop.mjs
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop3.mjs
@@ -16,6 +16,7 @@ pub struct Drop {
     vertices: Vec<Vec2>,
 }
 
+#[allow(dead_code)]
 impl Drop {
     pub fn new(center: Vec2, radius: f32, resolution: usize) -> Self {
         let mut drop = Drop {
@@ -118,6 +119,7 @@ pub struct DropZone {
     pub center: Vec2,
 }
 
+#[allow(dead_code)]
 impl DropZone {
     pub fn new(center: Vec2) -> Self {
         Self { center }

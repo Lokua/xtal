@@ -118,7 +118,7 @@ fn main() {
         "g25_5_isometric" => run_sketch!(g25_5_isometric),
         "g25_10_11_12" => run_sketch!(g25_10_11_12),
         "g25_13_triangle" => run_sketch!(g25_13_triangle),
-        "g25_14_blank_and_white" => run_sketch!(g25_14_blank_and_white),
+        "g25_14_black_and_white" => run_sketch!(g25_14_black_and_white),
         "g25_18_wind" => run_sketch!(g25_18_wind),
         "g25_19_op_art" => run_sketch!(g25_19_op_art),
         "g25_20_23_brutal_arch" => run_sketch!(g25_20_23_brutal_arch),

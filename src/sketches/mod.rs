@@ -32,7 +32,7 @@ pub use self::dev::wgpu_dev;
 pub mod genuary_2025;
 pub use self::genuary_2025::g25_10_11_12;
 pub use self::genuary_2025::g25_13_triangle;
-pub use self::genuary_2025::g25_14_blank_and_white;
+pub use self::genuary_2025::g25_14_black_and_white;
 pub use self::genuary_2025::g25_18_wind;
 pub use self::genuary_2025::g25_19_op_art;
 pub use self::genuary_2025::g25_1_horiz_vert;
@@ -57,6 +57,8 @@ pub use self::scratch::shader_experiments;
 pub use self::scratch::vertical;
 pub use self::scratch::vertical_2;
 pub use self::scratch::z_sim;
+
+pub mod shared;
 
 pub mod templates;
 pub use self::templates::basic_cube_shader_template;

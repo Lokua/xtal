@@ -18,8 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 pub struct Model {
     #[allow(dead_code)]
     animation: Animation<Timing>,
-    animation_script: AnimationScript<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -38,17 +37,13 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let timing = Timing::new(SKETCH_CONFIG.bpm);
+    let animation = Animation::new(timing.clone());
 
-    let animation_script = AnimationScript::new(
-        to_absolute_path(file!(), "./g25_22_gradients_only.toml"),
-        animation.clone(),
+    let controls = ControlScript::new(
+        to_absolute_path(file!(), "./g25_22_gradients_only.yaml"),
+        timing,
     );
-
-    let controls = Controls::new(vec![
-        Control::slider_norm("b1", 0.5),
-        Control::slider_norm("b2", 0.5),
-    ]);
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -66,7 +61,6 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     Model {
         animation,
-        animation_script,
         controls,
         wr,
         gpu,
@@ -74,17 +68,17 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.animation_script.update();
+    m.controls.update();
 
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
-            m.animation.ping_pong(1.5),
-            m.animation.ping_pong(2.0),
-            m.animation.ping_pong(3.0),
-            m.animation.ping_pong(4.0),
+            m.controls.get("t1"),
+            m.controls.get("t2"),
+            m.controls.get("t3"),
+            m.controls.get("t4"),
         ],
-        b: [m.controls.float("b1"), m.controls.float("b2"), 0.0, 0.0],
+        b: [m.controls.get("b1"), m.controls.get("b2"), 0.0, 0.0],
     };
 
     m.gpu.update_params(app, m.wr.resolution_u32(), &params);
