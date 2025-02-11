@@ -1,0 +1,30 @@
+name: Deploy Rust Docs
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+
+            - name: Build Documentation
+              run: cargo doc --no-deps --document-private-items
+
+            - name: Add index.html redirect
+              run: |
+                  echo '<meta http-equiv="refresh" content="0; url=your_project_name/index.html">' > target/doc/index.html
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v4
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./target/doc
