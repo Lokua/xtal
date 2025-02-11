@@ -33,17 +33,21 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
+    // in quadrant order
     let t1 = params.a.x;
     let t2 = params.a.y;
     let t3 = params.a.z;
     let t4 = params.a.w;
-    let b1 = params.b.x;
+    let invert_color = params.b.x;
+    let smoothness = params.b.y;
+    let brightness = params.b.z;
 
     let p = correct_aspect(position);
     let p1 = vec2f(1.0 - t1, 1.0 - t1);
     let p2 = vec2f(1.0 - t2, -1.0 + t2);
     let p3 = vec2f(-1.0 + t3, -1.0 + t3);
     let p4 = vec2f(-1.0 + t4, 1.0 - t4);
+    // center
     let p5 = vec2f(0.0);
 
     let scale = 1.0;
@@ -51,9 +55,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let d2 = length(p - p2) / scale;
     let d3 = length(p - p3) / scale;
     let d4 = length(p - p4) / scale;
-    let d5 = length(p - p5) / (scale * t2);
+    let d5 = length(p - p5) / (scale * 0.5);
 
-    let k = t1;
+    let k = smoothness;
     
     // Mix each corner with the center point
     let mix1 = smin(d1, d5, k);
@@ -66,21 +70,27 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let mix34 = smin(mix3, mix4, k);
     let final_mix = smin(mix12, mix34, k);
 
-    let brightness = 1000.0;
     let d = final_mix * brightness;
 
-    let base_color = vec3f(
-        0.5 + 0.5 * sin(p.x * 1000.0),
-        0.5 + 0.5 * cos(p.y * 1000.0),
-        0.5 + 0.5 * sin((p.x + p.y) * 1000.0)
+    let color_1 = vec3f(
+        0.5 + 0.5 * sin(p.x * 2.0),
+        0.5 + 0.5 * cos(p.y * 2.0),
+        0.5 + 0.5 * sin((p.x + p.y) * 1.0)
     );
+    let color_2 = vec3f(
+        0.5 + 0.5 * sin(p.x * 700.0),
+        0.5 + 0.5 * cos(p.y * 700.0),
+        0.5 + 0.5 * sin((p.x + p.y) * 700.0)
+    );
+    let color_mix = params.b.w;
+    let base_color = mix(color_1, color_2, color_mix);
     
     // For areas where d is small (inside circles), use bright colors
     // For areas where d is large (background), fade to darker
     let circle_brightness = smoothstep(1.0, 0.9, d);
     var color = base_color * (0.3 + 0.99 * circle_brightness); 
     
-    color = mix(color, 1.0 - color, b1);
+    color = mix(color, 1.0 - color, invert_color);
     
     return vec4f(color, 1.0);
 }

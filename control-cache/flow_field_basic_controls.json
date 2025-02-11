@@ -1,0 +1,28 @@
+{
+  "values": {
+    "randomize_point_size": {
+      "Bool": true
+    },
+    "agent_count": {
+      "Float": 6700.0
+    },
+    "step_range": {
+      "Float": 5.1
+    },
+    "noise_vel": {
+      "Float": 0.0162
+    },
+    "algorithm": {
+      "String": "static"
+    },
+    "noise_scale": {
+      "Float": 37.0
+    },
+    "noise_strength": {
+      "Float": 2.0
+    },
+    "bg_alpha": {
+      "Float": 0.096999995
+    }
+  }
+}

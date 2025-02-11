@@ -1,20 +1,42 @@
+# top-right corner
 a1:
     type: triangle
-    beats: 1.5
+    beats: 2
+    phase: 0
+
+# bottom-right corner
 a2:
     type: triangle
     beats: 2
+    phase: 0.25
+
+# bottom-left corner
 a3:
     type: triangle
-    beats: 3
+    beats: 2
+    phase: 0.5
+
+# top-left corner
 a4:
     type: triangle
-    beats: 4
+    beats: 2
+    phase: 0.75
+
+# invert color
 b1:
     type: slider
+    range: [0, 1]
+
+# smoothness
 b2:
     type: slider
+    range: [0, 1]
+
+# brightness? But not really...name TBD
 b3:
     type: slider
+    range: [1, 20]
+
+# color_mix
 b4:
     type: slider

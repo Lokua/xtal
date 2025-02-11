@@ -1,483 +1,100 @@
 {
-  "controls": [
-    {
-      "Checkbox": {
-        "name": "audio_enabled",
-        "value": false
-      }
-    },
-    {
-      "Slider": {
-        "name": "rise_rate",
-        "value": 0.96,
-        "min": 0.001,
-        "max": 1.0,
-        "step": 0.001
-      }
-    },
-    {
-      "Slider": {
-        "name": "fall_rate",
-        "value": 0.9,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.001
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Select": {
-        "name": "pattern",
-        "value": "cos,sin",
-        "options": [
-          "cos,cos",
-          "cos,sin",
-          "cos,tan",
-          "cos,tanh",
-          "cos,sec",
-          "cos,csc",
-          "cos,cot",
-          "cos,sech",
-          "cos,csch",
-          "cos,coth",
-          "sin,cos",
-          "sin,sin",
-          "sin,tan",
-          "sin,tanh",
-          "sin,sec",
-          "sin,csc",
-          "sin,cot",
-          "sin,sech",
-          "sin,csch",
-          "sin,coth",
-          "tan,cos",
-          "tan,sin",
-          "tan,tan",
-          "tan,tanh",
-          "tan,sec",
-          "tan,csc",
-          "tan,cot",
-          "tan,sech",
-          "tan,csch",
-          "tan,coth",
-          "tanh,cos",
-          "tanh,sin",
-          "tanh,tan",
-          "tanh,tanh",
-          "tanh,sec",
-          "tanh,csc",
-          "tanh,cot",
-          "tanh,sech",
-          "tanh,csch",
-          "tanh,coth",
-          "sec,cos",
-          "sec,sin",
-          "sec,tan",
-          "sec,tanh",
-          "sec,sec",
-          "sec,csc",
-          "sec,cot",
-          "sec,sech",
-          "sec,csch",
-          "sec,coth",
-          "csc,cos",
-          "csc,sin",
-          "csc,tan",
-          "csc,tanh",
-          "csc,sec",
-          "csc,csc",
-          "csc,cot",
-          "csc,sech",
-          "csc,csch",
-          "csc,coth",
-          "cot,cos",
-          "cot,sin",
-          "cot,tan",
-          "cot,tanh",
-          "cot,sec",
-          "cot,csc",
-          "cot,cot",
-          "cot,sech",
-          "cot,csch",
-          "cot,coth",
-          "sech,cos",
-          "sech,sin",
-          "sech,tan",
-          "sech,tanh",
-          "sech,sec",
-          "sech,csc",
-          "sech,cot",
-          "sech,sech",
-          "sech,csch",
-          "sech,coth",
-          "csch,cos",
-          "csch,sin",
-          "csch,tan",
-          "csch,tanh",
-          "csch,sec",
-          "csch,csc",
-          "csch,cot",
-          "csch,sech",
-          "csch,csch",
-          "csch,coth",
-          "coth,cos",
-          "coth,sin",
-          "coth,tan",
-          "coth,tanh",
-          "coth,sec",
-          "coth,csc",
-          "coth,cot",
-          "coth,sech",
-          "coth,csch",
-          "coth,coth",
-          "Custo",
-          "Sprial",
-          "Ripple",
-          "VortxFld",
-          "VortxFld2",
-          "FracRipl",
-          "Quantum"
-        ]
-      }
-    },
-    {
-      "Slider": {
-        "name": "scale",
-        "value": 1.0,
-        "min": 0.1,
-        "max": 4.0,
-        "step": 0.1
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "clamp_circle_radii",
-        "value": false
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "animate_frequency",
-        "value": false
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Checkbox": {
-        "name": "quad_restraint",
-        "value": false
-      }
-    },
-    {
-      "Slider": {
-        "name": "qr_lerp",
-        "value": 0.5,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    },
-    {
-      "Slider": {
-        "name": "qr_divisor",
-        "value": 2.0,
-        "min": 0.5,
-        "max": 16.0,
-        "step": 0.125
-      }
-    },
-    {
-      "Slider": {
-        "name": "qr_pos",
-        "value": 1.0,
-        "min": 0.125,
-        "max": 1.0,
-        "step": 0.125
-      }
-    },
-    {
-      "Slider": {
-        "name": "qr_size",
-        "value": 1.0,
-        "min": 0.125,
-        "max": 1.0,
-        "step": 0.125
-      }
-    },
-    {
-      "Select": {
-        "name": "position_animation",
-        "value": "Counter Clockwise",
-        "options": [
-          "None",
-          "Counter Clockwise"
-        ]
-      }
-    },
-    {
-      "Select": {
-        "name": "qr_shape",
-        "value": "Rectangle",
-        "options": [
-          "Rectangle",
-          "Circle",
-          "Ripple",
-          "Spiral"
-        ]
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "quad_1",
-        "value": false
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "quad_2",
-        "value": false
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "quad_3",
-        "value": false
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "quad_4",
-        "value": false
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "quad_influence_or_attract",
-        "value": false
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Checkbox": {
-        "name": "center",
-        "value": true
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "center_influence_or_attract",
-        "value": false
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Select": {
-        "name": "palette",
-        "value": "lightcoral",
-        "options": [
-          "lightcoral",
-          "lightgreen"
-        ]
-      }
-    },
-    {
-      "Slider": {
-        "name": "gradient_spread",
-        "value": 0.99,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    },
-    {
-      "Checkbox": {
-        "name": "color_influence_or_attract",
-        "value": false
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Slider": {
-        "name": "circle_radius_min",
-        "value": 1.0,
-        "min": 0.1,
-        "max": 12.0,
-        "step": 0.1
-      }
-    },
-    {
-      "Slider": {
-        "name": "circle_radius_max",
-        "value": 5.0,
-        "min": 0.1,
-        "max": 12.0,
-        "step": 0.1
-      }
-    },
-    {
-      "Slider": {
-        "name": "displacer_radius",
-        "value": 0.001,
-        "min": 0.0001,
-        "max": 0.01,
-        "step": 0.0001
-      }
-    },
-    {
-      "Slider": {
-        "name": "displacer_strength",
-        "value": 34.0,
-        "min": 0.5,
-        "max": 100.0,
-        "step": 0.5
-      }
-    },
-    {
-      "Slider": {
-        "name": "weave_frequency",
-        "value": 0.03,
-        "min": 0.01,
-        "max": 0.2,
-        "step": 0.001
-      }
-    },
-    {
-      "Slider": {
-        "name": "weave_scale",
-        "value": 0.05,
-        "min": 0.001,
-        "max": 0.1,
-        "step": 0.001
-      }
-    },
-    {
-      "Slider": {
-        "name": "weave_amplitude",
-        "value": 0.001,
-        "min": 0.0001,
-        "max": 0.01,
-        "step": 0.0001
-      }
-    },
-    {
-      "Slider": {
-        "name": "scaling_power",
-        "value": 2.0,
-        "min": 0.25,
-        "max": 9.0,
-        "step": 0.25
-      }
-    }
-  ],
   "values": {
-    "gradient_spread": {
-      "Float": 0.972
-    },
-    "position_animation": {
-      "String": "None"
-    },
-    "circle_radius_max": {
-      "Float": 0.1
-    },
-    "qr_size": {
-      "Float": 0.75
-    },
-    "quad_restraint": {
-      "Bool": false
-    },
-    "animate_frequency": {
-      "Bool": true
+    "scale": {
+      "Float": 0.90000004
     },
     "palette": {
       "String": "lightcoral"
     },
-    "qr_pos": {
-      "Float": 1.0
-    },
-    "center": {
-      "Bool": true
-    },
-    "clamp_circle_radii": {
-      "Bool": true
-    },
-    "quad_2": {
-      "Bool": true
+    "gradient_spread": {
+      "Float": 0.852
     },
     "displacer_radius": {
-      "Float": 0.0033
-    },
-    "weave_amplitude": {
-      "Float": 0.0058999998
-    },
-    "rise_rate": {
-      "Float": 0.87500006
-    },
-    "pattern": {
-      "String": "cos,tan"
-    },
-    "scale": {
-      "Float": 0.6
-    },
-    "quad_3": {
-      "Bool": true
-    },
-    "qr_divisor": {
-      "Float": 3.0
-    },
-    "quad_influence_or_attract": {
-      "Bool": false
-    },
-    "displacer_strength": {
-      "Float": 51.5
-    },
-    "weave_frequency": {
-      "Float": 0.028
-    },
-    "quad_4": {
-      "Bool": true
-    },
-    "weave_scale": {
-      "Float": 0.034
-    },
-    "fall_rate": {
-      "Float": 0.1
-    },
-    "center_influence_or_attract": {
-      "Bool": false
-    },
-    "": {
-      "Bool": false
-    },
-    "color_influence_or_attract": {
-      "Bool": false
-    },
-    "scaling_power": {
-      "Float": 3.0
-    },
-    "qr_lerp": {
-      "Float": 0.18699999
-    },
-    "quad_1": {
-      "Bool": true
-    },
-    "qr_shape": {
-      "String": "Rectangle"
+      "Float": 0.0008
     },
     "audio_enabled": {
       "Bool": false
     },
     "circle_radius_min": {
-      "Float": 3.3
+      "Float": 5.2000003
+    },
+    "qr_pos": {
+      "Float": 0.875
+    },
+    "quad_3": {
+      "Bool": true
+    },
+    "pattern": {
+      "String": "cos,cos"
+    },
+    "qr_size": {
+      "Float": 0.75
+    },
+    "quad_1": {
+      "Bool": true
+    },
+    "quad_2": {
+      "Bool": true
+    },
+    "scaling_power": {
+      "Float": 2.25
+    },
+    "color_influence_or_attract": {
+      "Bool": false
+    },
+    "quad_restraint": {
+      "Bool": true
+    },
+    "weave_scale": {
+      "Float": 0.023000002
+    },
+    "displacer_strength": {
+      "Float": 57.0
+    },
+    "weave_frequency": {
+      "Float": 0.109000005
+    },
+    "quad_influence_or_attract": {
+      "Bool": false
+    },
+    "clamp_circle_radii": {
+      "Bool": true
+    },
+    "animate_frequency": {
+      "Bool": true
+    },
+    "weave_amplitude": {
+      "Float": 0.00049999997
+    },
+    "qr_lerp": {
+      "Float": 0.114999995
+    },
+    "fall_rate": {
+      "Float": 0.1
+    },
+    "position_animation": {
+      "String": "Counter Clockwise"
+    },
+    "center": {
+      "Bool": true
+    },
+    "center_influence_or_attract": {
+      "Bool": false
+    },
+    "qr_shape": {
+      "String": "Rectangle"
+    },
+    "quad_4": {
+      "Bool": true
+    },
+    "rise_rate": {
+      "Float": 0.87500006
+    },
+    "circle_radius_max": {
+      "Float": 0.2
+    },
+    "qr_divisor": {
+      "Float": 3.0
     }
   }
 }

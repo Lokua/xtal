@@ -59,6 +59,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
+    m.controls.update();
+
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
