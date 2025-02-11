@@ -39,7 +39,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
 pub fn update(_app: &App, model: &mut Model, _update: Update) {
     model.lerp = model
         .animation
-        .lerp(&[kf(0.0, 2.0), kf(1.0, 2.0), kf(0.0, KF::END)], 0.0);
+        .lerp(&[kf(0.0, 2.0), kf(1.0, 2.0), kf(0.0, 0.0)], 0.0);
 
     model.ramp =
         model

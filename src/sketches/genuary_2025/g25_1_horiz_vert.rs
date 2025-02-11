@@ -67,10 +67,10 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
 
         let wave = (m.animation.lrp(
             &[
-                (0.0, lrp_time),
-                (1.0, lrp_time),
-                (0.0, lrp_time),
-                (-1.0, lrp_time),
+                kf(0.0, lrp_time),
+                kf(1.0, lrp_time),
+                kf(0.0, lrp_time),
+                kf(-1.0, lrp_time),
             ],
             0.0,
         ))
@@ -137,7 +137,7 @@ pub fn draw_lines(draw: &Draw, m: &Model, anim_delay: f32, _color: Hsla) {
 
             let animated_center = m
                 .animation
-                .lrp(&[(-range, time), (range, time)], anim_delay);
+                .lrp(&[kf(-range, time), kf(range, time)], anim_delay);
 
             let distance_from_center =
                 ((start.x - animated_center) / m.wr.hw()).abs();

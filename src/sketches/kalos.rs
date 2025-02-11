@@ -145,7 +145,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         strength: if m.controls.bool("animate") {
             m.animation.lrp(
                 &[
-                    (
+                    kf(
                         clamp(
                             strength - strength_swing,
                             strength_range.0,
@@ -153,7 +153,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
                         ),
                         1.0,
                     ),
-                    (
+                    kf(
                         clamp(
                             strength + strength_swing,
                             strength_range.0,

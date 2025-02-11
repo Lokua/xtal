@@ -48,11 +48,11 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
 
     m.radius = m.animation.lerp(
         &[
-            KF::new(20.0, 2.0),
-            KF::new(radius_max, 1.0),
-            KF::new(radius_max / 2.0, 0.5),
-            KF::new(radius_max, 0.5),
-            KF::new(20.0, KF::END),
+            kf(20.0, 2.0),
+            kf(radius_max, 1.0),
+            kf(radius_max / 2.0, 0.5),
+            kf(radius_max, 0.5),
+            kf(20.0, 0.0),
         ],
         0.0,
     );

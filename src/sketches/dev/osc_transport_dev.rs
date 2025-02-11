@@ -36,8 +36,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .x_y(0.0, 0.0)
         .w_h(m.wr.w(), m.wr.h());
 
-    let a = m.animation.lrp(&[(0.0, 4.0), (200.0, 4.0)], 0.0);
-    let b = m.animation.lrp(&[(0.0, 2.0), (200.0, 2.0)], 0.0);
+    let a = m.animation.lrp(&[kf(0.0, 4.0), kf(200.0, 4.0)], 0.0);
+    let b = m.animation.lrp(&[kf(0.0, 2.0), kf(200.0, 2.0)], 0.0);
 
     draw.ellipse()
         .color(rgba(1.0, 0.0, 0.0, 0.5))

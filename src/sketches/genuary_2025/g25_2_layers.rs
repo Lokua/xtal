@@ -116,21 +116,21 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             2.0,
             m.animation.lrp(
                 &[
-                    (2.0, 4.0),  // stay
-                    (2.0, 4.0),  // transition
-                    (3.0, 24.0), // stay
-                    (3.0, 6.0),  // transition
+                    kf(2.0, 4.0),  // stay
+                    kf(2.0, 4.0),  // transition
+                    kf(3.0, 24.0), // stay
+                    kf(3.0, 6.0),  // transition
                 ],
                 0.0,
             ),
             m.animation.lrp(
                 &[
-                    (2.0, 4.0), // stay
-                    (2.0, 4.0), // transition
-                    (4.0, 8.0), // stay
-                    (4.0, 8.0), // transition
-                    (8.0, 8.0), // stay
-                    (8.0, 6.0), // transition
+                    kf(2.0, 4.0), // stay
+                    kf(2.0, 4.0), // transition
+                    kf(4.0, 8.0), // stay
+                    kf(4.0, 8.0), // transition
+                    kf(8.0, 8.0), // stay
+                    kf(8.0, 6.0), // transition
                 ],
                 0.0,
             ),

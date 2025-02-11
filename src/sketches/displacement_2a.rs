@@ -66,10 +66,8 @@ impl Model {
         let value = self.controls.float("weave_frequency");
         if self.controls.bool("animate_frequency") {
             map_range(
-                self.animation.lerp(
-                    &[kf(0.0, 16.0), kf(1.0, 16.0), kf(0.0, KF::END)],
-                    0.0,
-                ),
+                self.animation
+                    .lerp(&[kf(0.0, 16.0), kf(1.0, 16.0), kf(0.0, 0.0)], 0.0),
                 0.0,
                 1.0,
                 0.01,
@@ -599,21 +597,21 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let yp = h / 4.0;
             let x = ax.lerp(
                 &[
-                    kf(xp, BEATS),   // Start at right
-                    kf(-xp, BEATS),  // Move to left
-                    kf(-xp, BEATS),  // Stay at left
-                    kf(xp, BEATS),   // Move to right
-                    kf(xp, KF::END), // Complete the cycle
+                    kf(xp, BEATS),  // Start at right
+                    kf(-xp, BEATS), // Move to left
+                    kf(-xp, BEATS), // Stay at left
+                    kf(xp, BEATS),  // Move to right
+                    kf(xp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
                 &[
-                    kf(yp, BEATS),   // Start at top
-                    kf(yp, BEATS),   // Stay at top
-                    kf(-yp, BEATS),  // Move to bottom
-                    kf(-yp, BEATS),  // Stay at bottom
-                    kf(yp, KF::END), // Move back to top
+                    kf(yp, BEATS),  // Start at top
+                    kf(yp, BEATS),  // Stay at top
+                    kf(-yp, BEATS), // Move to bottom
+                    kf(-yp, BEATS), // Stay at bottom
+                    kf(yp, 0.0),    // Move back to top
                 ],
                 0.0,
             );
@@ -626,21 +624,21 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let yp = -h / 4.0;
             let x = ax.lerp(
                 &[
-                    kf(xp, BEATS),   // Start at right
-                    kf(xp, BEATS),   // Stay at right
-                    kf(-xp, BEATS),  // Move to left
-                    kf(-xp, BEATS),  // Stay at left
-                    kf(xp, KF::END), // Complete the cycle
+                    kf(xp, BEATS),  // Start at right
+                    kf(xp, BEATS),  // Stay at right
+                    kf(-xp, BEATS), // Move to left
+                    kf(-xp, BEATS), // Stay at left
+                    kf(xp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
                 &[
-                    kf(yp, BEATS),   // Start at bottom
-                    kf(-yp, BEATS),  // Move to top
-                    kf(-yp, BEATS),  // Stay at top
-                    kf(yp, BEATS),   // Move at bottom
-                    kf(yp, KF::END), // Complete the cycle
+                    kf(yp, BEATS),  // Start at bottom
+                    kf(-yp, BEATS), // Move to top
+                    kf(-yp, BEATS), // Stay at top
+                    kf(yp, BEATS),  // Move at bottom
+                    kf(yp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
@@ -653,21 +651,21 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let yp = -h / 4.0;
             let x = ax.lerp(
                 &[
-                    kf(xp, BEATS),   // Start at left
-                    kf(-xp, BEATS),  // Move to right
-                    kf(-xp, BEATS),  // Stay to right
-                    kf(xp, BEATS),   // Move to left
-                    kf(xp, KF::END), // Complete the cycle
+                    kf(xp, BEATS),  // Start at left
+                    kf(-xp, BEATS), // Move to right
+                    kf(-xp, BEATS), // Stay to right
+                    kf(xp, BEATS),  // Move to left
+                    kf(xp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
                 &[
-                    kf(yp, BEATS),   // Start at bottom
-                    kf(yp, BEATS),   // Move to top
-                    kf(-yp, BEATS),  // Stay at top
-                    kf(-yp, BEATS),  // Move to bottom
-                    kf(yp, KF::END), // Complete the cycle
+                    kf(yp, BEATS),  // Start at bottom
+                    kf(yp, BEATS),  // Move to top
+                    kf(-yp, BEATS), // Stay at top
+                    kf(-yp, BEATS), // Move to bottom
+                    kf(yp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
@@ -680,21 +678,21 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let yp = h / 4.0;
             let x = ax.lerp(
                 &[
-                    kf(xp, BEATS),   // Start at left
-                    kf(xp, BEATS),   // Stay at left
-                    kf(-xp, BEATS),  // Move to right
-                    kf(-xp, BEATS),  // Stay at right
-                    kf(xp, KF::END), // Complete the cycle
+                    kf(xp, BEATS),  // Start at left
+                    kf(xp, BEATS),  // Stay at left
+                    kf(-xp, BEATS), // Move to right
+                    kf(-xp, BEATS), // Stay at right
+                    kf(xp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
                 &[
-                    kf(yp, BEATS),   // Start at top
-                    kf(-yp, BEATS),  // Move to bottom
-                    kf(-yp, BEATS),  // Stay at bottom
-                    kf(yp, BEATS),   // Move to top
-                    kf(yp, KF::END), // Complete the cycle
+                    kf(yp, BEATS),  // Start at top
+                    kf(-yp, BEATS), // Move to bottom
+                    kf(-yp, BEATS), // Stay at bottom
+                    kf(yp, BEATS),  // Move to top
+                    kf(yp, 0.0),    // Complete the cycle
                 ],
                 0.0,
             );

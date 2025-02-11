@@ -14,19 +14,15 @@ pub struct Keyframe {
 }
 
 impl Keyframe {
-    pub const END: f32 = 0.0;
-
     pub fn new(value: f32, duration: f32) -> Self {
         Self { value, duration }
     }
 }
 
-pub type KF = Keyframe;
-
 /// Convenience method to create keyframes without
 /// the verbosity of [`Keyframe::new`]
-pub fn kf(value: f32, duration: f32) -> KF {
-    KF::new(value, duration)
+pub fn kf(value: f32, duration: f32) -> Keyframe {
+    Keyframe::new(value, duration)
 }
 
 #[derive(Clone, Debug)]
@@ -47,12 +43,10 @@ impl KeyframeRandom {
     }
 }
 
-pub type KFR = KeyframeRandom;
-
 /// Convenience method to create keyframes without
 /// the verbosity of [`KeyframeRandom::new`]
-pub fn kfr(range: (f32, f32), duration: f32) -> KFR {
-    KFR::new(range, duration)
+pub fn kfr(range: (f32, f32), duration: f32) -> KeyframeRandom {
+    KeyframeRandom::new(range, duration)
 }
 
 /// Data structure used in conjunction with
@@ -153,8 +147,7 @@ impl<T: TimingSource> Animation<T> {
         should_trigger
     }
 
-    /// Convenience version of lerp that uses array of tuples instead of
-    /// [`Keyframe`] objects. It also automatically adds a final keyframe
+    /// Convenience version of lerp that automatically adds a final keyframe
     /// to ensure a continuous loop back to the first keyframem, since this
     /// is such a common pattern.
     ///
@@ -162,21 +155,21 @@ impl<T: TimingSource> Animation<T> {
     /// ```rust
     /// // from 0 to 1 over 4 beats
     /// // then 1 to 0 over 4 beats
-    /// animation.lrp(&[(0.0, 4.0), (1.0, 4.0)], 0.0);
+    /// animation.lrp(&[kf(0.0, 4.0), kf(1.0, 4.0)], 0.0);
     ///
     /// // Here is the `lerp` equivalent:
     /// animation.lerp(
     ///     &[
-    ///         keyframe::new(0.0, 4.0),
-    ///         keyframe::new(1.0, 4.0),
-    ///         keyframe::new(4.0, Keyframe::END),
+    ///         kf(0.0, 4.0),
+    ///         kf(1.0, 4.0),
+    ///         kf(4.0, 0.0),
     ///     ],
     ///     0.0
     /// );
     /// ```
-    pub fn lrp(&self, kfs: &[(f32, f32)], delay: f32) -> f32 {
-        let mut kfs: Vec<KF> = kfs.iter().map(|k| kf(k.0, k.1)).collect();
-        kfs.push(kf(kfs[0].value, KF::END));
+    pub fn lrp(&self, kfs: &[Keyframe], delay: f32) -> f32 {
+        let mut kfs = Vec::from(kfs);
+        kfs.push(kf(kfs[0].value, 0.0));
         self.lerp(&kfs, delay)
     }
 
@@ -194,9 +187,9 @@ impl<T: TimingSource> Animation<T> {
     ///         keyframe::new(1.0, 4.0),
     ///         // the final keyframe is only to inform the 2nd
     ///         // to last keyframe where it should end; the duration
-    ///         // argument is simply ignored so we use keyframe::END
+    ///         // argument is simply ignored so we use 0.0
     ///         // to be explict about that
-    ///         keyframe::new(0.0, Keyframe::END),
+    ///         keyframe::new(0.0, 0.0),
     ///     ],
     ///     // no delay
     ///     0.0
@@ -249,22 +242,9 @@ impl<T: TimingSource> Animation<T> {
             segment_progress,
         );
 
-        // trace!("current_beat: {}, value: {}", current_beat, value);
+        trace!("current_beat: {}, value: {}", current_beat, value);
 
         value
-    }
-
-    /// Convenience version of r_ramp
-    /// TODO: deprecate me - the unstructured keyframe argument
-    /// proved more unreadable than character convenience was worth
-    pub fn r_rmp(
-        &self,
-        kfs: &[((f32, f32), f32)],
-        delay: f32,
-        ramp_time: f32,
-    ) -> f32 {
-        let kfs: Vec<KFR> = kfs.iter().map(|k| kfr(k.0, k.1)).collect();
-        self.r_ramp(&kfs, delay, ramp_time, linear)
     }
 
     /// Animates through keyframes with stepped transitions and configurable

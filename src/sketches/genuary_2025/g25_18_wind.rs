@@ -185,7 +185,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
             bg_alpha,
-            m.animation.lrp(&[((40.0), 4.0), (70.0, 4.0)], 0.0),
+            m.animation.lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
             m.midi.get("displace"),
             m.midi.get("slice_glitch"),
         ],
