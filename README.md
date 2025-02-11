@@ -1,7 +1,7 @@
 # lattice
 
 A hobbyist project exploring generative art while learning Rust and
-[nannou][nannou]. like this:
+[nannou][nannou]. Stuff like this:
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-627iz.png" alt="displacement_2-627iz">
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
@@ -13,16 +13,24 @@ You can see more screenshots here on github by looking at the auto generated
 
 ## Overview
 
-This project aims to port my [p5.js project][p5] to Rust for improved
-performance. It provides a personal framework around nannou that simplifies
-creating multiple sketches by handling common concerns like window creation, GUI
-controls, external control, and musical timing based animation.
+Whether you're curious about generative art, interested in audio-visual
+performance, or just learning Rust like I am, this project might be worth
+exploring. Originally started as a port of my [p5.js project][p5], it's grown
+into a surprisingly capable framework that handles the tedious parts of creative
+coding - like DAW synchronization, hot-reloading configurations, and
+multi-channel audio processing. While I'm still learning Rust best practices,
+the project offers some useful features for anyone wanting to experiment with
+algorithmic art, especially if you're interested in synchronizing visuals with
+music. It's set up to work with MIDI controllers and clock, OSC, audio input,
+and even shader programming, making it a fun playground for creative coding
+experiments.
 
 ## Features
 
 -   Export images and capture mp4 videos with the press of a button
 -   Declarative animation interface with times specified in musical beats, e.g.
-    `3.25` represents a duration of 3 beats and 1 16th note.
+    `3.25` represents a duration of 3 beats and 1 16th note; `4` means 4 beats
+    or 1 bar.
 -   Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
 -   Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
     multiband mechanisms all available through a dead simple API
@@ -30,8 +38,9 @@ controls, external control, and musical timing based animation.
     file that can be hot-reloaded (similar to live coding - see
     [Control Scripting](#control-scripting))
 -   Declarative per-sketch UI control definitions with framework agnostic design
--   Automatic store/recall of GUI control/parameters
--   Hot reloadable WGSL shaders.
+-   Automatic store/recall of per-sketch GUI controls/parameters that can be
+    source controlled
+-   Hot reloadable WGSL shaders with various templates to simplify setup
 
 ## Requirements
 
@@ -155,9 +164,10 @@ You can change this by editing the `MIDI_INPUT_PORT` constant in
 ### MIDI Loopback
 
 To automate synth parameters in Ableton and Lattice parameters simultaneously
-from the same UI CC control, you need to enable MIDI loopback by sending MIDI to
-`Lattice In` and also route `Lattice In` back in to Live to control parameters.
-Here's the routing:
+from _the same UI CC control in Live_ (as opposed to a physical control, in
+which case you can skip this section), you need to enable MIDI loopback by
+sending MIDI to `Lattice In` and also route `Lattice In` back in to Live to
+control parameters. Here's the routing:
 
 ![Live MIDI Preferences](assets/live-midi-prefs.png)
 
@@ -233,14 +243,14 @@ purpose!
 Lattice provides various interfaces for controlling parameters including
 `Controls` for UI sliders, checkboxes, and selects (dropdowns), `MidiControls`
 and `OscControls` for controlling parameters from an external source,
-`CvControls` and `Audio` for controlling parameters with audio, and a
-comprehensive `Animation` module that can tween or generate random values and
-ramp to/from them at musical intervals. While these parameters are simple to
-setup, it's a bit of pain to have to restart the rust sketch every time you want
-to change an animation or control range. For this reason Lattice provides a
-`ControlScript` mechanism that uses yaml for configuration and adds these
-controls dynamically and self-updates at runtime when the yaml file is changed.
-You still have to take care to setup the routings in your sketch (e.g.
+`AudioControls` for controlling parameters with audio or CV, and a comprehensive
+`Animation` module that can tween or generate random values and ramp to/from
+them at musical intervals. While these parameters are simple to setup, it's a
+bit of pain to have to restart the rust sketch every time you want to change an
+animation or control range. For this reason Lattice provides a `ControlScript`
+mechanism that uses yaml for configuration and adds these controls dynamically
+and self-updates at runtime when the yaml file is changed. You still have to
+take care to setup the routings in your sketch (e.g.
 `let radius = model.control_script.get("radius")`), but once these routings are
 in place you are free to edit their ranges, values, timing, etc. See [Control
 Script Test][control-script-test] for a working example. See below for scripting
