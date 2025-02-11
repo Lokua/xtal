@@ -78,8 +78,8 @@ any external devices to run.
 
 Requires [assets/L.OscTransport.amxd][osc-transport] to be running in Ableton
 Live. This provides the most reliable syncing mechanism as Ableton does not
-properly send MIDI SPP messages and doesn't support MTC. See the [OSC](#osc)
-section for more details.
+properly send MIDI SPP messages and doesn't support MTC. See the
+[OSC](#open-sound-control-osc) section for more details.
 
 #### `midi`
 
@@ -138,18 +138,18 @@ output from my DAW. Here are some screenshots of the setup:
 
 See [audio_dev.rs](src/sketches/dev/audio_dev.rs) for an example sketch.
 
-#### Multchannel Audio
+#### Multichannel Audio
 
 Similar to the above, only treats each audio channel as an individual control
 signal with optional slew limiting, suitable for audio-rate or control-rate
 signals. Lattice is configured to use an audio device named "Lattice16". On my
-computer I'm using the [16 channel vesion of Blackhole][blackhole].
+computer I'm using the [16 channel version of Blackhole][blackhole].
 
 ##### Aggregate Device Setup
 
 ![Mac Aggregate Device Setup](assets/aggregate-device-multichannel.png)
 
-> In the above setup I use 1-2 ad the main outs and send the multichannel data
+> In the above setup I use 1-2 as the main outs and send the multichannel data
 > out to channels 2-18 which then appear on Blackhole channels 1-16
 
 See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
@@ -205,9 +205,9 @@ control to something.
 4. Now, pressing play in Ableton will also initiate recording in Lattice,
    likewise pressing Stop in Ableton will stop recording in Lattice.
 
-### OSC
+### Open Sound Control (OSC)
 
-While MIDI is greate for controlling parameters in the caes that MIDI controller
+While MIDI is grate for controlling parameters in the case that MIDI controller
 can send 14bit high resolution MIDI, it sucks otherwise (128 values just isn't
 enough precision for smooth parameter automation). For this reason Lattice
 supports OSC and comes with two MaxForLive devices designed to make integration
