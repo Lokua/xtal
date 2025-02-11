@@ -144,7 +144,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             if anim_scaling {
                 m.controls.float("scaling_power")
             } else {
-                (a.ping_pong(8.0) + 1.0) * 4.0
+                (a.tri(8.0) + 1.0) * 4.0
             },
             // offset
             a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, linear),
@@ -166,7 +166,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         r: m.controls.float("r"),
         g: m.controls.float("g"),
         b: m.controls.float("b"),
-        offset: a.ping_pong(64.0),
+        offset: a.tri(64.0),
         ring_strength: m.controls.float("ring_strength"),
         ring_harmonics: m.controls.float("ring_harmonics"),
         ring_harm_amt: m.controls.float("ring_harm_amt"),

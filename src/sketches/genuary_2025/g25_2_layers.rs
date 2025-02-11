@@ -93,8 +93,8 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         a: [
             m.controls.float("contrast"),
             m.controls.float("smooth_mix"),
-            m.animation.ping_pong(8.0),
-            m.animation.ping_pong(12.0),
+            m.animation.tri(8.0),
+            m.animation.tri(12.0),
         ],
         b: [
             m.animation.r_ramp(&kfs, 0.0, time * 0.5, ease_in_out),

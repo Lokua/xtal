@@ -255,15 +255,9 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     let params = ComputeParams {
         n_segments,
         points_per_segment,
-        noise_scale: map_range(
-            m.animation.ping_pong(8.0),
-            0.0,
-            1.0,
-            ns_min,
-            ns_max,
-        ),
+        noise_scale: map_range(m.animation.tri(8.0), 0.0, 1.0, ns_min, ns_max),
         angle_variation: map_range(
-            m.animation.ping_pong(3.0),
+            m.animation.tri(3.0),
             0.0,
             1.0,
             angle_min,

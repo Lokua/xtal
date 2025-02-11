@@ -179,7 +179,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
 pub fn update(app: &App, m: &mut Model, _update: Update) {
     let params = ShaderParams {
-        time: m.animation.ping_pong(2.0),
+        time: m.animation.tri(2.0),
         mix: m.controls.float("mix"),
         grid_mult: m.controls.float("grid_mult"),
     };

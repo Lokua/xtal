@@ -78,7 +78,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .color(hsla(0.0, 0.0, 1.0, 0.001));
 
     let circle_radius =
-        model.animation.ping_pong(8.0) * window_rect.w() * (2.0 / 3.0);
+        model.animation.tri(8.0) * window_rect.w() * (2.0 / 3.0);
     let max_rect_length = model.controls.float("max_rect_length");
     let rect_width = model.controls.float("rect_width");
     let noise_scale = model.controls.float("noise_scale");
@@ -88,7 +88,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     let total_segments = (360.0 / angle_increment) as i32;
 
     let draw_rotated = draw.rotate(if model.controls.bool("rotate") {
-        model.animation.loop_progress(32.0) * PI * 2.0
+        model.animation.loop_phase(32.0) * PI * 2.0
     } else {
         0.0
     });
@@ -105,7 +105,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         let rect_length = (noise_value + 1.0) * (max_rect_length / 2.0);
         draw_rotated
             .rect()
-            .color(hsl(0.3, 0.05, model.animation.ping_pong(1.0)))
+            .color(hsl(0.3, 0.05, model.animation.tri(1.0)))
             .x_y(
                 circle_radius * current_angle.cos(),
                 circle_radius * current_angle.sin(),

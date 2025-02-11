@@ -65,35 +65,28 @@ impl<T: TimingSource> Animation<T> {
         Self { timing }
     }
 
-    fn beats(&self) -> f32 {
+    /// Return the number of beats that have elapsed
+    /// since (re)start of this Animation's Timing source
+    pub fn beats(&self) -> f32 {
         self.timing.beats()
     }
 
+    /// Return the number of beats that have elapsed
+    /// since (re)start of this Animation's Timing source,
+    /// converted to frame count
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
         self.timing.beats_to_frames(beats)
     }
 
-    pub fn loop_progress(&self, duration: f32) -> f32 {
+    /// Return a relative phase position from [0, 1] within
+    /// the passed in duration (specified in beats)
+    pub fn loop_phase(&self, duration: f32) -> f32 {
         let total_beats = self.beats();
         (total_beats / duration) % 1.0
     }
 
-    // #[deprecated(note = "Use `triangle` instead")]
-    pub fn ping_pong(&self, duration: f32) -> f32 {
-        self.ping_pong_loop_progress(duration)
-    }
-
-    pub fn ping_pong_loop_progress(&self, duration: f32) -> f32 {
-        let progress = self.loop_progress(duration * 2.0);
-        if progress < 0.5 {
-            progress * 2.0
-        } else {
-            (1.0 - progress) * 2.0
-        }
-    }
-
-    /// Successor to `ping_pong` which cycles through the entire up/down
-    /// range over the course of `duration` (ping_pong would need 2x duration)
+    /// Cycle from 0 to 1 and back to 0 over the passed in duration
+    /// See [`Self::triangle`] for an advanced version with more options
     pub fn tri(&self, duration: f32) -> f32 {
         let x = (self.beats() / duration) % 1.0;
         ternary!(x < 0.5, x, 1.0 - x) * 2.0
@@ -407,48 +400,6 @@ pub mod tests {
 
     #[test]
     #[serial]
-    fn test_ping_pong() {
-        init(0);
-        let a = create_instance();
-
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.0, "1/16");
-
-        init(1);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.25, "2/16");
-
-        init(2);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.5, "3/16");
-
-        init(3);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.75, "4/16");
-
-        init(4);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 1.0, "5/16");
-
-        init(5);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.75, "6/16");
-
-        init(6);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.5, "7/16");
-
-        init(7);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.25, "8/16");
-
-        init(8);
-        let val = a.ping_pong(1.0);
-        assert_eq!(val, 0.0, "9/16");
-    }
-
-    #[test]
-    #[serial]
     fn test_tri() {
         init(0);
         let a = create_instance();
@@ -489,20 +440,6 @@ pub mod tests {
         assert_eq!(val, 0.0, "9/16");
     }
 
-    // #[test]
-    // #[serial]
-    // fn test_tri_mapped() {
-    //     init(0);
-    //     let a = create_instance();
-
-    //     for i in 0..=15 {
-    //         init(i);
-    //         println!("{}: {}", i, a.triangle(4.0, (-1.0, 1.0), 0.125));
-    //     }
-
-    //     assert_eq!(0, 1, "dummy");
-    // }
-
     #[test]
     #[serial]
     fn test_triangle_8beats_positive_offset() {
@@ -520,24 +457,6 @@ pub mod tests {
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
         assert_eq!(val, -0.75, "1st beat - 2nd cycle");
     }
-
-    // #[test]
-    // #[serial]
-    // fn test_triangle_8beats_negative_offset() {
-    //     init(0);
-    //     let a = create_instance();
-
-    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
-    //     assert_eq!(val, -0.75, "1st beat");
-
-    //     init(15);
-    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
-    //     assert_eq!(val, -1.0, "last beat");
-
-    //     init(16);
-    //     let val = a.triangle(4.0, (-1.0, 1.0), -0.125);
-    //     assert_eq!(val, -0.75, "1st beat - 2nd cycle");
-    // }
 
     #[test]
     #[serial]

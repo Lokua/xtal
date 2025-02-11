@@ -127,7 +127,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         d: [
             bool_to_f32(m.controls.bool("bg_invert")),
-            m.animation.ping_pong(8.0) * 2.0 - 1.0,
+            m.animation.tri(8.0) * 2.0 - 1.0,
             match m.controls.string("mix_mode").as_str() {
                 "mix" => 0.0,
                 "min_max" => 1.0,

@@ -71,7 +71,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         resolution: m.wr.resolution(),
         a: m.controls.float("a"),
         b: m.controls.float("b"),
-        t: m.animation.ping_pong(4.0),
+        t: m.animation.tri(4.0),
         _pad: 0.0,
     };
 

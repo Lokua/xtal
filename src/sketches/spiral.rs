@@ -177,7 +177,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         d: [
             m.controls.float("bg_brightness"),
-            m.animation.ping_pong(64.0),
+            m.animation.tri(64.0),
             bool_to_f32(m.controls.bool("invert")),
             bool_to_f32(m.controls.bool("animate_angle_offset")),
         ],
@@ -232,9 +232,9 @@ fn get_phase(m: &Model, param_name: &str, animation_time: f32) -> f32 {
 
     if m.controls.bool(&animate_param) {
         if m.controls.bool(&invert_param) {
-            m.animation.loop_progress(time) * TAU
+            m.animation.loop_phase(time) * TAU
         } else {
-            (1.0 - m.animation.loop_progress(time)) * TAU
+            (1.0 - m.animation.loop_phase(time)) * TAU
         }
     } else {
         m.controls.float(&phase_param)

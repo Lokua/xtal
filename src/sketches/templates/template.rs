@@ -57,7 +57,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         0.0,
     );
 
-    m.hue = m.animation.ping_pong_loop_progress(12.0)
+    m.hue = m.animation.tri(12.0)
 }
 
 pub fn view(app: &App, m: &Model, frame: Frame) {

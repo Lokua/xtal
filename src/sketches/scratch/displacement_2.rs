@@ -61,13 +61,7 @@ impl Model {
     fn weave_frequency(&self) -> f32 {
         let value = self.controls.float("weave_frequency");
         if self.controls.bool("animate_frequency") {
-            map_range(
-                self.animation.ping_pong_loop_progress(32.0),
-                0.0,
-                1.0,
-                0.01,
-                value,
-            )
+            map_range(self.animation.tri(32.0), 0.0, 1.0, 0.01, value)
         } else {
             value
         }

@@ -146,7 +146,7 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
                         })
                         .collect::<Vec<f32>>();
 
-                    multi_lerp(&values, model.animation.ping_pong(24.0))
+                    multi_lerp(&values, model.animation.tri(24.0))
                 }
                 _ => {
                     let func =

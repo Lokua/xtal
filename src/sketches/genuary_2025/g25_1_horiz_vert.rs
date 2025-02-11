@@ -54,7 +54,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
     let spacing = m.wr.w() / (N_LINES as f32 + 1.0);
     let b = m.controls.float("b") * 100.0;
     let line_length = (m.wr.h() / GRID_SIZE as f32) + b;
-    let base_time = m.animation.ping_pong(4.0);
+    let base_time = m.animation.tri(4.0);
     let lrp_time = 4.0;
 
     for i in 0..N_LINES {
@@ -133,7 +133,7 @@ pub fn draw_lines(draw: &Draw, m: &Model, anim_delay: f32, _color: Hsla) {
 
     for chunk in m.lines.chunks(2) {
         if let [start, end] = chunk {
-            let range = m.animation.ping_pong(32.0) * m.wr.hw();
+            let range = m.animation.tri(32.0) * m.wr.hw();
 
             let animated_center = m
                 .animation

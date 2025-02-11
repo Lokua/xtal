@@ -191,7 +191,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         b: [
             m.midi.get("lightning"),
-            m.animation.ping_pong(6.0),
+            m.animation.tri(6.0),
             m.controls.float("b3"),
             m.controls.float("b4"),
         ],

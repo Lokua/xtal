@@ -82,7 +82,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     let total_segments = (360.0 / angle_increment) as i32;
 
     let draw_rotated = draw.rotate(if model.controls.bool("rotate") {
-        model.animation.loop_progress(32.0) * PI * 2.0
+        model.animation.loop_phase(32.0) * PI * 2.0
     } else {
         0.0
     });
