@@ -39,7 +39,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         Control::slider("kernel_passes", 2.0, (1.0, 16.0), 1.0),
     ]);
 
-    let pad = wr.w_(20.0);
+    let pad = wr.w() / 20.0;
 
     Model {
         controls,
@@ -162,7 +162,7 @@ fn generate_slant_points(
     let mut points = vec![];
 
     for i in 0..N_LINES {
-        let base_y = i as f32 * wr.h_(SPACING);
+        let base_y = i as f32 * wr.h() / SPACING;
         let offset_start_y = random_normal(params.deviation);
         let offset_end_y = random_normal(params.deviation);
         let start = vec2(start_x, base_y + offset_start_y);
@@ -184,7 +184,7 @@ fn generate_jerky_points(
 
     for i in 0..N_LINES {
         let mut points = vec![];
-        let base_y = i as f32 * wr.h_(SPACING);
+        let base_y = i as f32 * wr.h() / SPACING;
 
         for j in 0..=params.n_points {
             let x = start_x + (j as f32 * segment_length);
@@ -210,7 +210,7 @@ fn generate_points_using_chaikin_smoothing(
 
     for i in 0..N_LINES {
         let mut points = vec![];
-        let base_y = i as f32 * wr.h_(SPACING);
+        let base_y = i as f32 * wr.h() / SPACING;
 
         for j in 0..=params.n_points {
             let x = start_x + (j as f32 * segment_length);
@@ -237,7 +237,7 @@ fn generate_points_using_kernel_smoothing(
 
     for i in 0..N_LINES {
         let mut points = vec![];
-        let base_y = i as f32 * wr.h_(SPACING);
+        let base_y = i as f32 * wr.h() / SPACING;
 
         for j in 0..=params.n_points {
             let x = start_x + (j as f32 * segment_length);

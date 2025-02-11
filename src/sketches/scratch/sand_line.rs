@@ -115,7 +115,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
             let ref_deviation = m.controls.float("ref_deviation");
             let ref_smooth = m.controls.float("ref_smooth");
 
-            let pad = m.wr.w_(32.0);
+            let pad = m.wr.w() / 32.0;
             let start = vec2(-m.wr.hw() + pad, 0.0);
             let end = vec2(m.wr.hw() - pad, 0.0);
 

@@ -203,7 +203,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
             let ref_segments = m.controls.float("ref_segments");
             let ref_deviation = m.controls.float("ref_deviation");
             let ref_smooth = m.controls.float("ref_smooth");
-            let pad = m.wr.w_(m.controls.float("pad"));
+            let pad = m.wr.w() / m.controls.float("pad");
 
             m.ref_lines = (0..N_LINES)
                 .map(|i| {
@@ -434,7 +434,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let show_ref_line = m.controls.bool("show_ref_line");
     let show_sand_line = m.controls.bool("show_sand_line");
 
-    let pad = m.wr.h_(48.0);
+    let pad = m.wr.h() / 48.0;
     let space = (m.wr.h() - (pad * 2.0)) / (N_LINES as f32 - 1.0);
     let y_off = m.wr.hh() - pad;
 

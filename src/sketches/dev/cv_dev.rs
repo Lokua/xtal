@@ -70,12 +70,12 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     draw.ellipse()
         .color(rgba(1.0, 0.0, 0.0, 0.5))
         .radius(a)
-        .x_y(-m.wr.w_(16.0), 0.0);
+        .x_y(-m.wr.w() / 16.0, 0.0);
 
     draw.ellipse()
         .color(rgba(0.0, 0.0, 1.0, 0.5))
         .radius(b)
-        .x_y(m.wr.w_(16.0), 0.0);
+        .x_y(m.wr.w() / 16.0, 0.0);
 
     draw.to_frame(app, &frame).unwrap();
 }

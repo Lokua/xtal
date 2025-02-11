@@ -1,5 +1,13 @@
 use nannou::prelude::*;
 
+/// A wrapper around nannou's `Rect` that is used to
+/// provide "the" main window to sketches. Development on
+/// nannou v0.19 is frozen and its app.main_window function
+/// is unreliable (it returns the currently focused window,
+/// not the main window). So intead of having to pass a window.id down
+/// to every sketch we provide this rect as a convenience, since
+/// having window dimensions and being able to check if a resize has
+/// happened is a common need.
 pub struct WindowRect {
     current: Rect,
     last: Rect,
@@ -17,6 +25,21 @@ impl WindowRect {
         self.current = rect;
     }
 
+    /// Returns true if the window size has changed since the last time
+    /// [`mark_unchanged`] was called. Use this in the `update` function
+    /// when you want to perform an expensive operation only when needed.
+    /// ```rust
+    /// if m.wr.changed() {
+    ///   // do stuff
+    ///   //...
+    ///   // But don't forget to mark it as changed!
+    ///   m.wr.mark_unchanged()
+    /// }
+    /// ```
+    /// Note that this will always return true the first time it is called
+    /// or forever after that until mark_unchanged is called. This
+    /// makes the code snippet above function as dual-purpose
+    /// "init" style setup function which for convenience.
     pub fn changed(&self) -> bool {
         (self.current.w() != self.last.w())
             || (self.current.h() != self.last.h())
@@ -33,25 +56,22 @@ impl WindowRect {
         self.current.h()
     }
 
+    /// "half width"
     pub fn hw(&self) -> f32 {
         self.current.w() / 2.0
     }
+    /// "half height"
     pub fn hh(&self) -> f32 {
         self.current.h() / 2.0
     }
 
+    /// "quarter width"
     pub fn qw(&self) -> f32 {
         self.current.w() / 4.0
     }
+    /// "quarter height"
     pub fn qh(&self) -> f32 {
         self.current.h() / 4.0
-    }
-
-    pub fn w_(&self, division: f32) -> f32 {
-        self.current.w() / division
-    }
-    pub fn h_(&self, division: f32) -> f32 {
-        self.current.w() / division
     }
 
     pub fn aspect_ratio(&self) -> f32 {

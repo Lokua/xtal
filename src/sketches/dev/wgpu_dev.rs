@@ -219,7 +219,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 
         draw.rect()
             .x_y(0.0, 0.0)
-            .w_h(m.wr.w_(8.0), m.wr.h_(8.0))
+            .w_h(m.wr.w() / 8.0, m.wr.h() / 8.0)
             .color(BLACK);
 
         draw.to_frame(app, &frame).unwrap();

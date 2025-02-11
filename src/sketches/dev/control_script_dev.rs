@@ -67,12 +67,12 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     draw.ellipse()
         .color(RED)
         .radius(50.0)
-        .x_y(pos_x2 * m.wr.hw(), -m.wr.h_(4.0));
+        .x_y(pos_x2 * m.wr.hw(), -m.wr.h() / 4.0);
 
     draw.ellipse()
         .color(BLUE)
         .radius(20.0)
-        .x_y(pos_x3 * m.wr.hw(), -m.wr.h_(4.0));
+        .x_y(pos_x3 * m.wr.hw(), -m.wr.h() / 4.0);
 
     draw.rect()
         .color(CYAN)
