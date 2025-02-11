@@ -32,9 +32,9 @@ jobs:
             - name: Setup cargo config
               run: |
                   mkdir -p .cargo
-                  echo '[patch.crates-io]
-                  quote = "=1.0.33"
-                  wayland-scanner = "=0.28.5"' > .cargo/config.toml
+                  echo '[replace]
+                  "quote:1.0.38" = { version = "1.0.33" }
+                  "wayland-scanner:0.29.5" = { version = "0.28.5" }' > .cargo/config.toml
 
             - name: Build Documentation
               uses: actions-rs/cargo@v1
