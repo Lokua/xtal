@@ -1,99 +1,99 @@
 _vars:
-    TAU: &TAU 6.283185307179586
+  TAU: &TAU 6.283185307179586
 
 animate_wave_phase:
-    type: checkbox
-    default: false
+  type: checkbox
+  default: false
 
 wave_phase:
-    type: slider
-    range: [0.0, *TAU]
-    step: 0.001
+  type: slider
+  range: [0.0, *TAU]
+  step: 0.001
 
 wave_phase_animation:
-    type: lerp_rel
-    keyframes:
-        - [16.0, 0.0]
-        - [16.0, *TAU]
-        - [0.0, 0.0]
+  type: lerp_rel
+  keyframes:
+    - [16.0, 0.0]
+    - [16.0, *TAU]
+    - [0.0, 0.0]
 
 wave_radial_freq:
-    type: slider
-    range: [0.0, 100.0]
-    default: 20.0
-    step: 1.0
+  type: slider
+  range: [0.0, 100.0]
+  default: 20.0
+  step: 1.0
 
 link_axes:
-    type: checkbox
-    default: false
+  type: checkbox
+  default: false
 
 wave_horiz_freq:
-    type: slider
-    range: [0.0, 100.0]
-    default: 20.0
-    step: 1.0
+  type: slider
+  range: [0.0, 100.0]
+  default: 20.0
+  step: 1.0
 
 wave_vert_freq:
-    type: slider
-    range: [0.0, 100.0]
-    default: 20.0
-    step: 1.0
+  type: slider
+  range: [0.0, 100.0]
+  default: 20.0
+  step: 1.0
 
 wave_power:
-    type: slider
-    range: [0.0, 10.0]
-    default: 5.0
-    step: 0.01
+  type: slider
+  range: [0.0, 10.0]
+  default: 5.0
+  step: 0.01
 
 wave_bands:
-    type: slider
-    range: [2.0, 10.0]
-    step: 1.0
+  type: slider
+  range: [2.0, 10.0]
+  step: 1.0
 
 wave_threshold:
-    type: slider
-    range: [-1.0, 1.0]
-    step: 0.001
+  type: slider
+  range: [-1.0, 1.0]
+  step: 0.001
 
 # -----------------
 bg_section:
-    type: separator
+  type: separator
 
 bg_invert:
-    type: checkbox
-    default: false
+  type: checkbox
+  default: false
 
 bg_freq:
-    type: slider
-    range: [0.0, 100.0]
-    default: 10.0
-    step: 1.0
+  type: slider
+  range: [0.0, 100.0]
+  default: 10.0
+  step: 1.0
 
 bg_radius:
-    type: slider
-    default: 0.5
-    step: 0.001
+  type: slider
+  default: 0.5
+  step: 0.001
 
 bg_gradient_strength:
-    type: slider
-    default: 0.5
-    step: 0.001
+  type: slider
+  default: 0.5
+  step: 0.001
 
 # -----------------
 mix_section:
-    type: separator
+  type: separator
 
 reduce_mix:
-    type: slider
-    default: 0.5
-    step: 0.001
+  type: slider
+  default: 0.5
+  step: 0.001
 
 mix_mode:
-    type: select
-    options: [mix, min_max]
-    default: mix
+  type: select
+  options: [mix, min_max]
+  default: mix
 
 map_mix:
-    type: slider
-    default: 0.5
-    step: 0.001
+  type: slider
+  default: 0.5
+  step: 0.001

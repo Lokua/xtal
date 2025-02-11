@@ -27,29 +27,29 @@ experiments.
 
 ## Features
 
--   Export images and capture mp4 videos with the press of a button
--   Declarative animation interface with times specified in musical beats, e.g.
-    `3.25` represents a duration of 3 beats and 1 16th note; `4` means 4 beats
-    or 1 bar.
--   Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
--   Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
-    multiband mechanisms all available through a dead simple API
--   Write animations in code or configure your sketch to use an external yaml
-    file that can be hot-reloaded (similar to live coding - see
-    [Control Scripting](#control-scripting))
--   Declarative per-sketch UI control definitions with framework agnostic design
--   Automatic store/recall of per-sketch GUI controls/parameters that can be
-    source controlled
--   Hot reloadable WGSL shaders with various templates to simplify setup
+- Export images and capture mp4 videos with the press of a button
+- Declarative animation interface with times specified in musical beats, e.g.
+  `3.25` represents a duration of 3 beats and 1 16th note; `4` means 4 beats or
+  1 bar.
+- Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
+- Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
+  multiband mechanisms all available through a dead simple API
+- Write animations in code or configure your sketch to use an external yaml file
+  that can be hot-reloaded (similar to live coding - see
+  [Control Scripting](#control-scripting))
+- Declarative per-sketch UI control definitions with framework agnostic design
+- Automatic store/recall of per-sketch GUI controls/parameters that can be
+  source controlled
+- Hot reloadable WGSL shaders with various templates to simplify setup
 
 ## Requirements
 
 This project has been developed on MacOS. I have no idea how it would run on
 other platforms. The project requires or optionally needs:
 
--   Rust
--   (optional) [just][just] for running commands
--   (optional) ffmpeg available on your path for video exports
+- Rust
+- (optional) [just][just] for running commands
+- (optional) ffmpeg available on your path for video exports
 
 ## Usage
 
@@ -98,15 +98,15 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 1. Copy the [template sketch][template] into a new file in sketches folder.
 2. Rename at a minimum the `SKETCH_CONFIG.name` field at the top of the file:
-    ```rust
-    pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-       name: "template", // <-- RENAME THIS!
-    ```
+   ```rust
+   pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
+      name: "template", // <-- RENAME THIS!
+   ```
 3. Add that filename to the [src/sketches/mod.rs][module]
 4. Add a match case for the sketch in [src/main.rs][main]:
-    ```rust
-    "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
-    ```
+   ```rust
+   "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
+   ```
 5. Run that sketch via command line by `cargo run --release <name>` or
    `just start <name>` where `name` is what you put in your file's
    `SKETCH_CONFIG.name` field.
@@ -401,15 +401,15 @@ foo:
 
 ## Resources
 
--   https://sotrh.github.io/learn-wgpu
--   https://inconvergent.net/generative/
--   http://www.complexification.net/
--   https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
--   https://www.andylomas.com/cellularFormImages.html
--   http://www.complexification.net/gallery/machines/sandstroke/
--   https://thebookofshaders.com/
--   https://github.com/jasonwebb/2d-space-colonization-experiments
--   https://paulbourke.net/geometry/
+- https://sotrh.github.io/learn-wgpu
+- https://inconvergent.net/generative/
+- http://www.complexification.net/
+- https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
+- https://www.andylomas.com/cellularFormImages.html
+- http://www.complexification.net/gallery/machines/sandstroke/
+- https://thebookofshaders.com/
+- https://github.com/jasonwebb/2d-space-colonization-experiments
+- https://paulbourke.net/geometry/
 
 [p5]: https://github.com/Lokua/p5/tree/main
 [nannou]: https://github.com/nannou-org/nannou
