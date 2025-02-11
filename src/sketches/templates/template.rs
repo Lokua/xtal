@@ -47,7 +47,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
     let radius_max = m.controls.float("radius");
 
     m.radius = m.animation.lerp(
-        vec![
+        &[
             KF::new(20.0, 2.0),
             KF::new(radius_max, 1.0),
             KF::new(radius_max / 2.0, 0.5),

@@ -67,11 +67,7 @@ impl Model {
         if self.controls.bool("animate_frequency") {
             map_range(
                 self.animation.lerp(
-                    vec![
-                        KF::new(0.0, 16.0),
-                        KF::new(1.0, 16.0),
-                        KF::new(0.0, KF::END),
-                    ],
+                    &[kf(0.0, 16.0), kf(1.0, 16.0), kf(0.0, KF::END)],
                     0.0,
                 ),
                 0.0,
@@ -602,22 +598,22 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let xp = w / 4.0;
             let yp = h / 4.0;
             let x = ax.lerp(
-                vec![
-                    KF::new(xp, BEATS),   // Start at right
-                    KF::new(-xp, BEATS),  // Move to left
-                    KF::new(-xp, BEATS),  // Stay at left
-                    KF::new(xp, BEATS),   // Move to right
-                    KF::new(xp, KF::END), // Complete the cycle
+                &[
+                    kf(xp, BEATS),   // Start at right
+                    kf(-xp, BEATS),  // Move to left
+                    kf(-xp, BEATS),  // Stay at left
+                    kf(xp, BEATS),   // Move to right
+                    kf(xp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
-                vec![
-                    KF::new(yp, BEATS),   // Start at top
-                    KF::new(yp, BEATS),   // Stay at top
-                    KF::new(-yp, BEATS),  // Move to bottom
-                    KF::new(-yp, BEATS),  // Stay at bottom
-                    KF::new(yp, KF::END), // Move back to top
+                &[
+                    kf(yp, BEATS),   // Start at top
+                    kf(yp, BEATS),   // Stay at top
+                    kf(-yp, BEATS),  // Move to bottom
+                    kf(-yp, BEATS),  // Stay at bottom
+                    kf(yp, KF::END), // Move back to top
                 ],
                 0.0,
             );
@@ -629,22 +625,22 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let xp = w / 4.0;
             let yp = -h / 4.0;
             let x = ax.lerp(
-                vec![
-                    KF::new(xp, BEATS),   // Start at right
-                    KF::new(xp, BEATS),   // Stay at right
-                    KF::new(-xp, BEATS),  // Move to left
-                    KF::new(-xp, BEATS),  // Stay at left
-                    KF::new(xp, KF::END), // Complete the cycle
+                &[
+                    kf(xp, BEATS),   // Start at right
+                    kf(xp, BEATS),   // Stay at right
+                    kf(-xp, BEATS),  // Move to left
+                    kf(-xp, BEATS),  // Stay at left
+                    kf(xp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
-                vec![
-                    KF::new(yp, BEATS),   // Start at bottom
-                    KF::new(-yp, BEATS),  // Move to top
-                    KF::new(-yp, BEATS),  // Stay at top
-                    KF::new(yp, BEATS),   // Move at bottom
-                    KF::new(yp, KF::END), // Complete the cycle
+                &[
+                    kf(yp, BEATS),   // Start at bottom
+                    kf(-yp, BEATS),  // Move to top
+                    kf(-yp, BEATS),  // Stay at top
+                    kf(yp, BEATS),   // Move at bottom
+                    kf(yp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
@@ -656,22 +652,22 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let xp = -w / 4.0;
             let yp = -h / 4.0;
             let x = ax.lerp(
-                vec![
-                    KF::new(xp, BEATS),   // Start at left
-                    KF::new(-xp, BEATS),  // Move to right
-                    KF::new(-xp, BEATS),  // Stay to right
-                    KF::new(xp, BEATS),   // Move to left
-                    KF::new(xp, KF::END), // Complete the cycle
+                &[
+                    kf(xp, BEATS),   // Start at left
+                    kf(-xp, BEATS),  // Move to right
+                    kf(-xp, BEATS),  // Stay to right
+                    kf(xp, BEATS),   // Move to left
+                    kf(xp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
-                vec![
-                    KF::new(yp, BEATS),   // Start at bottom
-                    KF::new(yp, BEATS),   // Move to top
-                    KF::new(-yp, BEATS),  // Stay at top
-                    KF::new(-yp, BEATS),  // Move to bottom
-                    KF::new(yp, KF::END), // Complete the cycle
+                &[
+                    kf(yp, BEATS),   // Start at bottom
+                    kf(yp, BEATS),   // Move to top
+                    kf(-yp, BEATS),  // Stay at top
+                    kf(-yp, BEATS),  // Move to bottom
+                    kf(yp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
@@ -683,22 +679,22 @@ fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
             let xp = -w / 4.0;
             let yp = h / 4.0;
             let x = ax.lerp(
-                vec![
-                    KF::new(xp, BEATS),   // Start at left
-                    KF::new(xp, BEATS),   // Stay at left
-                    KF::new(-xp, BEATS),  // Move to right
-                    KF::new(-xp, BEATS),  // Stay at right
-                    KF::new(xp, KF::END), // Complete the cycle
+                &[
+                    kf(xp, BEATS),   // Start at left
+                    kf(xp, BEATS),   // Stay at left
+                    kf(-xp, BEATS),  // Move to right
+                    kf(-xp, BEATS),  // Stay at right
+                    kf(xp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );
             let y = ax.lerp(
-                vec![
-                    KF::new(yp, BEATS),   // Start at top
-                    KF::new(-yp, BEATS),  // Move to bottom
-                    KF::new(-yp, BEATS),  // Stay at bottom
-                    KF::new(yp, BEATS),   // Move to top
-                    KF::new(yp, KF::END), // Complete the cycle
+                &[
+                    kf(yp, BEATS),   // Start at top
+                    kf(-yp, BEATS),  // Move to bottom
+                    kf(-yp, BEATS),  // Stay at bottom
+                    kf(yp, BEATS),   // Move to top
+                    kf(yp, KF::END), // Complete the cycle
                 ],
                 0.0,
             );

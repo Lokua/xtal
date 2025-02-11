@@ -22,6 +22,9 @@ impl Keyframe {
 }
 
 pub type KF = Keyframe;
+
+/// Convenience method to create keyframes without
+/// the verbosity of [`Keyframe::new`]
 pub fn kf(value: f32, duration: f32) -> KF {
     KF::new(value, duration)
 }
@@ -45,10 +48,15 @@ impl KeyframeRandom {
 }
 
 pub type KFR = KeyframeRandom;
+
+/// Convenience method to create keyframes without
+/// the verbosity of [`KeyframeRandom::new`]
 pub fn kfr(range: (f32, f32), duration: f32) -> KFR {
     KFR::new(range, duration)
 }
 
+/// Data structure used in conjunction with
+/// [`Animation::create_trigger`] and [`Animation::should_trigger`]
 pub struct Trigger {
     every: f32,
     delay: f32,
@@ -92,9 +100,9 @@ impl<T: TimingSource> Animation<T> {
         ternary!(x < 0.5, x, 1.0 - x) * 2.0
     }
 
-    /// A (perhaps non-)standard traingle wave that ping-pongs from `min` to `max` and
-    /// back to `min` in exactly `duration` beats. `phase_offset` in [0.0..1.0]
-    /// shifts our position in that cycle. Only positive offsets are supported.
+    /// Cycle from `min` to `max` and back to `min` in exactly `duration`
+    /// beats. `phase_offset` in [0.0..1.0] shifts our position in that cycle.
+    /// Only positive offsets are supported.
     pub fn triangle(
         &self,
         duration: f32,
@@ -106,8 +114,8 @@ impl<T: TimingSource> Animation<T> {
         map_range(x, 0.0, 1.0, min, max)
     }
 
-    /// Creates a new trigger with specified interval and delay;
-    /// Use with `should_trigger`
+    /// Creates a new [`Trigger`] with specified interval and delay;
+    /// Use with [`Self::should_trigger`].
     pub fn create_trigger(&self, every: f32, delay: f32) -> Trigger {
         if delay >= every {
             panic!("Delay must be less than interval length");
@@ -120,7 +128,16 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
-    /// Checks if a trigger should fire based on current beat position
+    /// Checks if a trigger should fire based on current beat position.
+    /// When used with [`Self::create_trigger`], provides a means
+    /// of executing arbitrary code at specific intervals
+    ///
+    /// ```rust
+    /// // Do something once every 4 bars
+    /// if animation.should_trigger(animation.create_trigger(16.0, 0.0)) {
+    ///   // do stuff
+    /// }
+    /// ```
     pub fn should_trigger(&self, config: &mut Trigger) -> bool {
         let total_beats = self.beats();
         let current_interval = (total_beats / config.every).floor();
@@ -136,15 +153,56 @@ impl<T: TimingSource> Animation<T> {
         should_trigger
     }
 
-    /// Convenience version of lerp that uses array of tuples
+    /// Convenience version of lerp that uses array of tuples instead of
+    /// [`Keyframe`] objects. It also automatically adds a final keyframe
+    /// to ensure a continuous loop back to the first keyframem, since this
+    /// is such a common pattern.
+    ///
+    /// ## Example
+    /// ```rust
+    /// // from 0 to 1 over 4 beats
+    /// // then 1 to 0 over 4 beats
+    /// animation.lrp(&[(0.0, 4.0), (1.0, 4.0)], 0.0);
+    ///
+    /// // Here is the `lerp` equivalent:
+    /// animation.lerp(
+    ///     &[
+    ///         keyframe::new(0.0, 4.0),
+    ///         keyframe::new(1.0, 4.0),
+    ///         keyframe::new(4.0, Keyframe::END),
+    ///     ],
+    ///     0.0
+    /// );
+    /// ```
     pub fn lrp(&self, kfs: &[(f32, f32)], delay: f32) -> f32 {
         let mut kfs: Vec<KF> = kfs.iter().map(|k| kf(k.0, k.1)).collect();
         kfs.push(kf(kfs[0].value, KF::END));
-        self.lerp(kfs, delay)
+        self.lerp(&kfs, delay)
     }
 
     /// Animates through keyframes with continuous linear interpolation
-    pub fn lerp(&self, keyframes: Vec<Keyframe>, delay: f32) -> f32 {
+    ///
+    /// ## Example
+    /// ```rust
+    /// animation.lerp(
+    ///     &[
+    ///         // start at 0 and ramp to the next value (1)
+    ///         // over 4 beats
+    ///         keyframe::new(0.0, 4.0),
+    ///         // start at 1 and ramp down to the next value (0)
+    ///         // over 4 beats
+    ///         keyframe::new(1.0, 4.0),
+    ///         // the final keyframe is only to inform the 2nd
+    ///         // to last keyframe where it should end; the duration
+    ///         // argument is simply ignored so we use keyframe::END
+    ///         // to be explict about that
+    ///         keyframe::new(0.0, Keyframe::END),
+    ///     ],
+    ///     // no delay
+    ///     0.0
+    /// );
+    /// ```
+    pub fn lerp(&self, keyframes: &[Keyframe], delay: f32) -> f32 {
         let total_beats: f32 = keyframes
             .iter()
             .take(keyframes.len() - 1)
@@ -197,6 +255,8 @@ impl<T: TimingSource> Animation<T> {
     }
 
     /// Convenience version of r_ramp
+    /// TODO: deprecate me - the unstructured keyframe argument
+    /// proved more unreadable than character convenience was worth
     pub fn r_rmp(
         &self,
         kfs: &[((f32, f32), f32)],
@@ -207,15 +267,34 @@ impl<T: TimingSource> Animation<T> {
         self.r_ramp(&kfs, delay, ramp_time, linear)
     }
 
-    /// Animates through keyframes with stepped transitions and configurable ramping
-    /// Ramps happen at the start of a segment, so if duration is 1.0 and ramp_time is
-    /// 0.5, the first 1/2 beat will be a ramp from the previous value to this value, then
-    /// another 1/2 beat of the value held. For this reason the first time the keyframe
-    /// sequence is played, there is no initial ramp, because there is no previous value
-    /// to ramp from.
+    /// Animates through keyframes with stepped transitions and configurable
+    /// ramping. Ramps happen at the start of a segment. If duration is 1.0 and
+    /// ramp_time is 0.5, the first 1/2 beat will be a ramp from the previous
+    /// value to this value, then another 1/2 beat of the value held. The first
+    /// time the keyframe sequence is played, there is no initial ramp, because
+    /// there is no previous value to ramp from.
+    ///
+    /// ## Example
+    /// ```rust
+    /// animation.ramp(
+    ///     &[
+    ///         // The first time this animation executes:
+    ///         // stay at 0.0 for 1 beat
+    ///         Keframe::new(0.0, 1.0),
+    ///         // Ramp from 0.0 to 1.0 over 1/2 beat...
+    ///         // then stay at 1.0 for the next 1/2 beat
+    ///         Keframe::new(1.0, 1.0),
+    ///         // Now loop back to 1st keyframe, but this
+    ///         // time ramp from 1.0 to 0.0 over 1/2 beat
+    ///         // then stay there for the remaining 1/2 beat
+    ///     ],
+    ///     0.5,
+    ///     linear  
+    /// );
+    /// ```
     pub fn ramp(
         &self,
-        keyframes: Vec<Keyframe>,
+        keyframes: &[Keyframe],
         delay: f32,
         ramp_time: f32,
         ramp: fn(f32) -> f32,
@@ -277,12 +356,9 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
-    /// Same as `ramp` only uses random ranges intead of explicit values.
-    /// Ramps happen at the start of a segment, so if duration is 1.0 and ramp_time is
-    /// 0.5, the first 1/2 beat will be a ramp from the previous value to this value, then
-    /// another 1/2 beat of the value held. For this reason the first time the keyframe
-    /// sequence is played, there is no initial ramp, because there is no previous value
-    /// to ramp from.
+    /// Same as `ramp` only chooses random values from specified ranges instead
+    /// of constant values. See [`Self::ramp`] for details about how/when
+    /// ramping occurs.
     pub fn r_ramp(
         &self,
         keyframes: &[KeyframeRandom],
@@ -463,8 +539,7 @@ pub mod tests {
     fn test_lerp_returns_initial_value() {
         init(0);
         let a = create_instance();
-        let result = a
-            .lerp(vec![Keyframe::new(99.0, 1.0), Keyframe::new(1.0, 0.0)], 0.0);
+        let result = a.lerp(&[kf(99.0, 1.0), kf(1.0, 0.0)], 0.0);
         assert_eq!(result, 99.0, "returns 0 at frame 0");
     }
 
@@ -473,8 +548,7 @@ pub mod tests {
     fn test_lerp_returns_halfway_point() {
         init(2);
         let a = create_instance();
-        let result =
-            a.lerp(vec![Keyframe::new(0.0, 1.0), Keyframe::new(1.0, 0.0)], 0.0);
+        let result = a.lerp(&[kf(0.0, 1.0), kf(1.0, 0.0)], 0.0);
         assert_eq!(result, 0.5, "returns 0.5 when 1/2 between 0 and 1");
     }
 
@@ -488,14 +562,8 @@ pub mod tests {
         for beats in times {
             let frame_count = a.beats_to_frames(beats) as u32;
             frame_controller::set_frame_count(frame_count);
-            let result = a.lerp(
-                vec![
-                    Keyframe::new(0.0, 1.0),
-                    Keyframe::new(1.0, 1.0),
-                    Keyframe::new(0.0, 0.0),
-                ],
-                0.0,
-            );
+            let result =
+                a.lerp(&[kf(0.0, 1.0), kf(1.0, 1.0), kf(0.0, 0.0)], 0.0);
             assert_eq!(result, 0.5, "returns the last keyframe value");
         }
     }
@@ -563,14 +631,12 @@ pub mod tests {
         let a = create_instance();
 
         // Test at start (frame 0)
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
         assert_eq!(result, 0.0, "should start at initial value");
 
         // Test just before end of first keyframe (frame 7)
         init(7);
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
         println!("Frame 7 result: {}", result);
         assert_eq!(
             result, 0.0,
@@ -579,15 +645,13 @@ pub mod tests {
 
         // Test at exact end of first keyframe (frame 8)
         init(8);
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
         println!("Frame 8 result: {}", result);
         assert_eq!(result, 0.0, "should start ramping after first keyframe");
 
         // Test one frame into ramp (frame 9)
         init(9);
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
         println!("Frame 9 result: {}", result);
         let time_in_segment = 9.0 / a.beats_to_frames(1.0);
         println!("Time in segment at frame 9: {}", time_in_segment);
@@ -599,8 +663,7 @@ pub mod tests {
 
         // Test at end of ramp (frame 10)
         init(10);
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
         println!("Frame 10 result: {}", result);
         assert_eq!(result, 1.0, "should reach final value after ramp");
     }
@@ -610,8 +673,7 @@ pub mod tests {
     fn test_ramp_with_delay() {
         init(0);
         let a = create_instance();
-        let result =
-            a.ramp(vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0)], 1.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 1.0, 0.5, |x| x);
         assert_eq!(result, 0.0, "should return initial value during delay");
     }
 
@@ -621,16 +683,14 @@ pub mod tests {
         init(0);
         let a = create_instance();
 
-        let result =
-            a.ramp(vec![KF::new(1.0, 2.0), KF::new(0.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, |x| x);
         assert_eq!(
             result, 1.0,
             "first cycle should start at value without ramping"
         );
 
         init(17);
-        let result =
-            a.ramp(vec![KF::new(1.0, 2.0), KF::new(0.0, 2.0)], 0.0, 0.5, |x| x);
+        let result = a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, |x| x);
         assert!(
             result > 0.45 && result < 0.55,
             "subsequent cycles should ramp between values"
@@ -644,7 +704,7 @@ pub mod tests {
         let a = create_instance();
 
         let previous_value = a.r_ramp(
-            &[KFR::new((0.0, 1.0), 2.0), KFR::new((2.0, 3.0), 2.0)],
+            &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5, // 0.5 beat delay
             0.5,
             |x| x,
@@ -653,7 +713,7 @@ pub mod tests {
         // Move just past keyframe boundary but still within delay period
         init(9);
         let delayed_value = a.r_ramp(
-            &[KFR::new((0.0, 1.0), 2.0), KFR::new((2.0, 3.0), 2.0)],
+            &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5,
             0.5,
             |x| x,
@@ -671,13 +731,11 @@ pub mod tests {
         init(0);
         let a = create_instance();
 
-        let first_value =
-            a.r_ramp(&[KFR::new((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let first_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
 
         // Move to frame 8 (start of next cycle, still previous value)
         init(8);
-        let previous_value =
-            a.r_ramp(&[KFR::new((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let previous_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
 
         // Values should be the same at start of cycles
         assert_eq!(
@@ -687,11 +745,11 @@ pub mod tests {
 
         // Move to frame 9 (should be halfway through transition)
         init(9);
-        let mid_value = a.r_ramp(&[KFR::new((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let mid_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
 
         // Move to frame 10 (should be at new value)
         init(10);
-        let new_value = a.r_ramp(&[KFR::new((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let new_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
 
         let expected_midpoint = (previous_value + new_value) / 2.0;
         let tolerance = 0.001;
@@ -714,7 +772,7 @@ pub mod tests {
         let a = create_instance();
 
         let value = a.r_ramp(
-            &[KFR::new((0.0, 1.0), 2.0), KFR::new((2.0, 3.0), 2.0)],
+            &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5, // 0.5 beats delay
             1.0, // 1.0 beats ramp time
             |x| x,
@@ -722,8 +780,8 @@ pub mod tests {
 
         // At this point, we should be transitioning from first keyframe value (0.0-1.0)
         // to second keyframe value (2.0-3.0)
-        let first_keyframe_value = KFR::new((0.0, 1.0), 2.0).generate_value(0);
-        let second_keyframe_value = KFR::new((2.0, 3.0), 2.0).generate_value(1);
+        let first_keyframe_value = kfr((0.0, 1.0), 2.0).generate_value(0);
+        let second_keyframe_value = kfr((2.0, 3.0), 2.0).generate_value(1);
 
         let min_expected = first_keyframe_value.min(second_keyframe_value);
         let max_expected = first_keyframe_value.max(second_keyframe_value);
@@ -741,7 +799,7 @@ pub mod tests {
     #[serial]
     fn test_r_ramp_consistent_interpolation() {
         let a = create_instance();
-        let keyframes = vec![KFR::new((0.0, 1.0), 1.0)];
+        let keyframes = vec![kfr((0.0, 1.0), 1.0)];
         let ramp_frames = vec![1, 5, 9, 13, 17, 21, 25, 29, 33, 37];
 
         let mut results = vec![];
@@ -790,11 +848,11 @@ pub mod tests {
     #[test]
     #[serial]
     fn test_r_ramp_osc_transport_timing() {
-        let keyframes = vec![
-            KeyframeRandom::new((0.0, 1.0), 1.5),
-            KeyframeRandom::new((0.0, 1.0), 3.0),
-            KeyframeRandom::new((0.0, 1.0), 2.5),
-            KeyframeRandom::new((0.0, 1.0), 1.0),
+        let keyframes = &[
+            kfr((0.0, 1.0), 1.5),
+            kfr((0.0, 1.0), 3.0),
+            kfr((0.0, 1.0), 2.5),
+            kfr((0.0, 1.0), 1.0),
         ];
 
         let mut timing = OscTransportTiming::new(BPM);
@@ -819,10 +877,10 @@ pub mod tests {
             println!("cycle_float: {}", cycle_float);
             println!("current_cycle: {}", current_cycle);
 
-            let before = animation.r_ramp(&keyframes, 0.0, 0.25, linear);
+            let before = animation.r_ramp(keyframes, 0.0, 0.25, linear);
 
             timing.set_beat_position(beat + 0.1);
-            let after = animation.r_ramp(&keyframes, 0.0, 0.25, linear);
+            let after = animation.r_ramp(keyframes, 0.0, 0.25, linear);
 
             println!("Values: {} -> {}", before, after);
 

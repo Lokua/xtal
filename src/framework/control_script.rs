@@ -162,7 +162,7 @@ impl<T: TimingSource> ControlScript<T> {
                     if let Some(bypass) = conf.bypass {
                         bypass
                     } else {
-                        self.animation.lerp(kfs.clone(), config.delay())
+                        self.animation.lerp(&kfs.clone(), config.delay())
                     }
                 }
                 (

@@ -64,78 +64,15 @@ impl Dropper {
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
     let controls = Controls::new(vec![
-        Control::Slider {
-            name: "center_min_radius".to_string(),
-            value: 2.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "center_max_radius".to_string(),
-            value: 20.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "trbl_min_radius".to_string(),
-            value: 2.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "trbl_max_radius".to_string(),
-            value: 20.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "corner_min_radius".to_string(),
-            value: 2.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "corner_max_radius".to_string(),
-            value: 20.0,
-            min: 1.0,
-            max: 50.0,
-            step: 1.0,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "center_bw_ratio".to_string(),
-            value: 0.5,
-            min: 0.0,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "trbl_bw_ratio".to_string(),
-            value: 0.5,
-            min: 0.0,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "corner_bw_ratio".to_string(),
-            value: 0.5,
-            min: 0.0,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
+        Control::slider("center_min_radius", 2.0, (1.0, 50.0), 1.0),
+        Control::slider("center_max_radius", 20.0, (1.0, 50.0), 1.0),
+        Control::slider("trbl_min_radius", 2.0, (1.0, 50.0), 1.0),
+        Control::slider("trbl_max_radius", 20.0, (1.0, 50.0), 1.0),
+        Control::slider("corner_min_radius", 2.0, (1.0, 50.0), 1.0),
+        Control::slider("corner_max_radius", 20.0, (1.0, 50.0), 1.0),
+        Control::slider("center_bw_ratio", 0.5, (0.0, 1.0), 0.001),
+        Control::slider("trbl_bw_ratio", 0.5, (0.0, 1.0), 0.001),
+        Control::slider("corner_bw_ratio", 0.5, (0.0, 1.0), 0.001),
     ]);
 
     let rect: Rect<f32> = Rect::from_x_y_w_h(
@@ -246,10 +183,9 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let offset = model.animation.lerp(
-        vec![KF::new(1.0, 2.0), KF::new(2.0, 2.0), KF::new(3.0, 2.0)],
-        0.0,
-    );
+    let offset = model
+        .animation
+        .lerp(&[kf(1.0, 2.0), kf(2.0, 2.0), kf(3.0, 2.0)], 0.0);
 
     model.droppers.iter_mut().for_each(|dropper| {
         if model.animation.should_trigger(&mut dropper.trigger) {

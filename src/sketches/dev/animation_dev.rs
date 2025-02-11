@@ -37,22 +37,19 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    model.lerp = model.animation.lerp(
-        vec![KF::new(0.0, 2.0), KF::new(1.0, 2.0), KF::new(0.0, KF::END)],
-        0.0,
-    );
+    model.lerp = model
+        .animation
+        .lerp(&[kf(0.0, 2.0), kf(1.0, 2.0), kf(0.0, KF::END)], 0.0);
 
-    model.ramp = model.animation.ramp(
-        vec![KF::new(0.0, 4.0), KF::new(1.0, 4.0)],
-        0.0,
-        1.0,
-        linear,
-    );
+    model.ramp =
+        model
+            .animation
+            .ramp(&[kf(0.0, 4.0), kf(1.0, 4.0)], 0.0, 1.0, linear);
 
     model.r_ramp =
         model
             .animation
-            .r_ramp(&[KFR::new((0.0, 1.0), 4.0)], 0.0, 1.0, linear);
+            .r_ramp(&[kfr((0.0, 1.0), 4.0)], 0.0, 1.0, linear);
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {
