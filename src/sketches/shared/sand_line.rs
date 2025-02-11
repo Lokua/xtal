@@ -31,13 +31,6 @@ impl SandLine {
         }
     }
 
-    pub fn default() -> Self {
-        Self {
-            noise_strategy: Box::new(GaussianNoise),
-            distribution_strategy: Box::new(PerpendicularDistribution),
-        }
-    }
-
     pub fn generate(
         &self,
         reference_points: &[Vec2],

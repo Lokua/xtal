@@ -35,20 +35,6 @@ impl Displacer {
         Self::new_with_position(vec2(0.0, 0.0))
     }
 
-    pub fn update(&mut self, state: Option<DisplacerState>) {
-        if let Some(state) = state {
-            if let Some(position) = state.position {
-                self.position = position;
-            }
-            if let Some(radius) = state.radius {
-                self.radius = radius;
-            }
-            if let Some(strength) = state.strength {
-                self.strength = strength;
-            }
-        }
-    }
-
     pub fn influence(&self, grid_point: Vec2) -> Vec2 {
         self.core_influence(grid_point, 2.0)
     }
@@ -160,11 +146,4 @@ impl Debug for Displacer {
             .field("custom_distance_fn", &"<function>")
             .finish()
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct DisplacerState {
-    pub position: Option<Vec2>,
-    pub radius: Option<f32>,
-    pub strength: Option<f32>,
 }
