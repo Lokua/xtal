@@ -122,6 +122,11 @@ impl<T: TimingSource> Animation<T> {
             }
         }
 
+        debug!(
+            "beats_elapsed={}, matched bp={:?}, next={:?}",
+            beats_elapsed, breakpoint, next_point
+        );
+
         match (breakpoint, next_point) {
             (Some(bp), None) => bp.value,
             (Some(bp), Some(np)) => {

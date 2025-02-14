@@ -39,16 +39,29 @@ pub fn init_logger() {
         .init();
 }
 
-static WARNED_MESSAGES: Lazy<Mutex<HashSet<String>>> =
+static WARN_MESSAGES: Lazy<Mutex<HashSet<String>>> =
     Lazy::new(|| Mutex::new(HashSet::new()));
 
+// TODO: should be a macro
 pub fn warn_once(message: String) {
-    let mut set = WARNED_MESSAGES.lock().unwrap();
+    let mut set = WARN_MESSAGES.lock().unwrap();
     if set.insert(message.to_string()) {
         warn!("{}", message);
     }
 }
 
+static DEBUG_MESSAGES: Lazy<Mutex<HashSet<String>>> =
+    Lazy::new(|| Mutex::new(HashSet::new()));
+
+// TODO: should be a macro
+pub fn debug_once(message: String) {
+    let mut set = DEBUG_MESSAGES.lock().unwrap();
+    if set.insert(message.to_string()) {
+        debug!("{}", message);
+    }
+}
+
+/// Helper to make panic errors stand out more in logs
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! loud_panic {
@@ -59,22 +72,6 @@ macro_rules! loud_panic {
 }
 
 /// Logs a debug message at most once within a specified time interval.
-///
-/// # Parameters
-/// - `$interval_ms`: The minimum time in milliseconds between log messages
-///   for the same content.
-/// - `$($arg:tt)*`: The debug message and its optional format arguments,
-///   similar to the `log::debug!` macro.
-///
-/// This macro ensures that repeated debug messages are throttled, avoiding
-/// log spam. It uses a global throttle map to track the last logged time
-/// for each unique message.
-///
-/// # Examples
-/// ```rust
-/// debug_throttled!(1000, "This message appears at most once every second.");
-/// debug_throttled!(2000, "Another throttled message: {}", 42);
-/// ```
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! debug_throttled {

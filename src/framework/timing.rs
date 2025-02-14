@@ -515,29 +515,22 @@ impl TimingSource for OscTransportTiming {
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
     bpm: f32,
-    frame_count: u32,
+    beats: f32,
 }
 
 impl ManualTiming {
     pub fn new(bpm: f32) -> Self {
-        Self {
-            bpm,
-            frame_count: 0,
-        }
+        Self { bpm, beats: 0.0 }
     }
 
-    pub fn set_frame_count(&mut self, frame_count: u32) {
-        self.frame_count = frame_count;
-    }
-
-    pub fn set_frame_count_from_beats(&mut self, beats: f32) {
-        self.frame_count = self.beats_to_frames(beats) as u32;
+    pub fn set_beats(&mut self, beats: f32) {
+        self.beats = beats;
     }
 }
 
 impl TimingSource for ManualTiming {
     fn beats(&self) -> f32 {
-        self.frame_count as f32 / self.beats_to_frames(1.0)
+        self.beats
     }
 
     fn beats_to_frames(&self, beats: f32) -> f32 {

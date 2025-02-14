@@ -59,7 +59,7 @@ pub struct Trigger {
 
 #[derive(Clone, Debug)]
 pub struct Animation<T: TimingSource> {
-    timing: T,
+    pub timing: T,
 }
 
 impl<T: TimingSource> Animation<T> {

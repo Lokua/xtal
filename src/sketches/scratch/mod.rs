@@ -1,4 +1,5 @@
 pub mod bos;
+pub mod breakpoints_vis;
 pub mod chromatic_aberration;
 pub mod displacement_1;
 pub mod displacement_1a;
