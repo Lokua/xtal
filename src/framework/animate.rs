@@ -1,7 +1,7 @@
 use super::prelude::*;
 
-/// Split implemetation file for Animation::animate,
-/// since that file is getting a bit large.
+// Split implemetation file for Animation::animate,
+// since that file is getting a bit large.
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -79,6 +79,8 @@ pub enum Mode {
 }
 
 impl<T: TimingSource> Animation<T> {
+    /// An advanced animation method modelled on DAW automation lanes.
+    /// See src/sketches/scratch/breakpoints_vis.rs for a demonstration
     pub fn animate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
         assert!(breakpoints.len() >= 1, "At least 1 breakpoint is required");
         assert!(
@@ -122,11 +124,6 @@ impl<T: TimingSource> Animation<T> {
             }
         }
 
-        debug!(
-            "beats_elapsed={}, matched bp={:?}, next={:?}",
-            beats_elapsed, breakpoint, next_point
-        );
-
         match (breakpoint, next_point) {
             (Some(bp), None) => bp.value,
             (Some(bp), Some(np)) => {
@@ -155,12 +152,9 @@ impl<T: TimingSource> Animation<T> {
                             let phase_in_cycle = beats_elapsed * frequency;
                             let mut m = (phase_in_cycle + phase_offset) % 1.0;
 
-                            // Convert phase to bipolar triangle wave [-1, 1]
                             m = if m < 0.5 {
-                                // First half: 0 to 1 to 0
                                 4.0 * m - 1.0
                             } else {
-                                // Second half: 0 to -1 to 0
                                 3.0 - 4.0 * m
                             };
 
