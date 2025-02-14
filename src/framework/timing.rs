@@ -21,6 +21,7 @@ pub enum Timing {
     Osc(OscTransportTiming),
     Midi(MidiSongTiming),
     Hybrid(HybridTiming),
+    Manual(ManualTiming),
 }
 
 impl Timing {
@@ -45,6 +46,7 @@ impl TimingSource for Timing {
             Timing::Osc(t) => t.beats(),
             Timing::Midi(t) => t.beats(),
             Timing::Hybrid(t) => t.beats(),
+            Timing::Manual(t) => t.beats(),
         }
     }
 
@@ -54,6 +56,7 @@ impl TimingSource for Timing {
             Timing::Osc(t) => t.beats_to_frames(beats),
             Timing::Midi(t) => t.beats_to_frames(beats),
             Timing::Hybrid(t) => t.beats_to_frames(beats),
+            Timing::Manual(t) => t.beats_to_frames(beats),
         }
     }
 }
@@ -497,6 +500,44 @@ impl OscTransportTiming {
 impl TimingSource for OscTransportTiming {
     fn beats(&self) -> f32 {
         self.get_position_in_beats()
+    }
+
+    fn beats_to_frames(&self, beats: f32) -> f32 {
+        let seconds_per_beat = 60.0 / self.bpm;
+        let total_seconds = beats * seconds_per_beat;
+        total_seconds * frame_controller::fps()
+    }
+}
+
+/// Allows sketches to visualize animations statically
+/// by manually providing frame_count or beat position,
+/// for example visualizing breakpoints.
+#[derive(Clone, Debug)]
+pub struct ManualTiming {
+    bpm: f32,
+    frame_count: u32,
+}
+
+impl ManualTiming {
+    pub fn new(bpm: f32) -> Self {
+        Self {
+            bpm,
+            frame_count: 0,
+        }
+    }
+
+    pub fn set_frame_count(&mut self, frame_count: u32) {
+        self.frame_count = frame_count;
+    }
+
+    pub fn set_frame_count_from_beats(&mut self, beats: f32) {
+        self.frame_count = self.beats_to_frames(beats) as u32;
+    }
+}
+
+impl TimingSource for ManualTiming {
+    fn beats(&self) -> f32 {
+        self.frame_count as f32 / self.beats_to_frames(1.0)
     }
 
     fn beats_to_frames(&self, beats: f32) -> f32 {
