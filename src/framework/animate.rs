@@ -13,8 +13,14 @@ pub struct Breakpoint {
 #[derive(Debug)]
 pub enum Transition {
     Step,
-    Ramp { easing: Easing },
-    Wave { shape: Shape },
+    Ramp {
+        easing: Easing,
+    },
+    Wave {
+        shape: Shape,
+        amplitude: f32,
+        frequency: f32,
+    },
     End,
 }
 
@@ -30,8 +36,27 @@ impl Breakpoint {
     pub fn step(position: f32, value: f32) -> Self {
         Self::new(Transition::Step, position, value)
     }
+
     pub fn ramp(position: f32, value: f32, easing: Easing) -> Self {
         Self::new(Transition::Ramp { easing }, position, value)
+    }
+
+    pub fn wave(
+        position: f32,
+        value: f32,
+        shape: Shape,
+        frequency: f32,
+        amplitude: f32,
+    ) -> Self {
+        Self::new(
+            Transition::Wave {
+                shape,
+                frequency,
+                amplitude,
+            },
+            position,
+            value,
+        )
     }
 
     pub fn end(position: f32, value: f32) -> Self {
@@ -42,8 +67,8 @@ impl Breakpoint {
 #[derive(Debug, PartialEq)]
 pub enum Shape {
     Sine,
-    Saw, // SawUp, SawDown?
     Triangle,
+    Saw, // SawUp, SawDown?
     Square,
 }
 
@@ -61,17 +86,11 @@ impl<T: TimingSource> Animation<T> {
             "First breakpoint must be 0.0"
         );
 
-        // TODO: validate positions are not duplicates?
-        // TODO: validate positions always increase?
-
         if breakpoints.len() == 1 {
             return breakpoints[0].value;
         }
 
-        let total_beats = breakpoints
-            .iter()
-            .skip(1)
-            .fold(0.0, |acc, bp| acc + bp.position);
+        let total_beats = breakpoints.last().unwrap().position;
 
         let beats_elapsed = ternary!(
             mode == Mode::Loop,
@@ -109,16 +128,37 @@ impl<T: TimingSource> Animation<T> {
                 Transition::Step => bp.value,
                 Transition::Ramp { easing } => {
                     let duration = np.position - bp.position;
-                    let progress_within_duration = beats_elapsed % duration;
-                    easing.apply(lerp(
-                        bp.value,
-                        np.value,
-                        progress_within_duration,
-                    ))
+                    let t = (beats_elapsed / duration) % 1.0;
+                    let value = lerp(bp.value, np.value, t);
+                    easing.apply(value)
                 }
-                Transition::Wave { .. } => {
-                    unimplemented!()
-                }
+                Transition::Wave {
+                    shape,
+                    frequency,
+                    amplitude,
+                } => match shape {
+                    Shape::Sine => unimplemented!(),
+                    Shape::Triangle => {
+                        // TODO: optimize by skipping math when next step value
+                        // is same as the previous?
+                        let duration = np.position - bp.position;
+                        let t = (beats_elapsed / duration) % 1.0;
+                        let value = lerp(bp.value, np.value, t);
+
+                        // So our triangle starts 1/4 cycle in at 0
+                        // and start/connect segments smoothly
+                        // WIP: I have no idea how to calculate this properly
+                        let phase_offset = 0.25;
+                        let mut m =
+                            ((beats_elapsed / frequency) + phase_offset) % 1.0;
+                        m = ternary!(m < 0.5, m, 1.0 - m) * 4.0 - 1.0;
+                        m *= amplitude;
+
+                        value + m
+                    }
+                    Shape::Saw => unimplemented!(),
+                    Shape::Square => unimplemented!(),
+                },
                 Transition::End => {
                     loud_panic!("Somehow we've moved beyond the end")
                 }
@@ -270,5 +310,50 @@ mod tests {
 
         init(8);
         assert_eq!(x(), 10.0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_wave_triangle() {
+        init(0);
+        let a = create_instance();
+        let x = || {
+            a.animate(
+                &[
+                    Breakpoint::wave(0.0, 0.0, Shape::Triangle, 0.25, 0.25),
+                    Breakpoint::end(2.0, 1.0),
+                ],
+                Mode::Once,
+            )
+        };
+
+        for frame in 0..=7 {
+            init(frame);
+            debug!("{}", x());
+        }
+
+        init(0);
+        assert_eq!(x(), 0.0);
+
+        init(1);
+        assert_eq!(x(), 0.125 + 0.25); // 0.375
+
+        init(2);
+        assert_eq!(x(), 0.25);
+
+        init(3);
+        assert_eq!(x(), 0.375 - 0.25); // 0.125
+
+        init(4);
+        assert_eq!(x(), 0.5);
+
+        init(5);
+        assert_eq!(x(), 0.625 + 0.25); // 0.875
+
+        init(6);
+        assert_eq!(x(), 0.75);
+
+        init(7);
+        assert_eq!(x(), 0.875 - 0.25); //0.625
     }
 }

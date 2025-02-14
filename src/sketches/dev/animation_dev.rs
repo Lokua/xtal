@@ -88,7 +88,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
                     &[
                         Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                         Breakpoint::ramp(2.0, 1.0, Easing::Linear),
-                        Breakpoint::ramp(4.0, 0.0, Easing::Linear),
+                        Breakpoint::end(4.0, 0.0),
                     ],
                     Mode::Loop,
                 ),
@@ -103,6 +103,32 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .no_fill()
         .stroke_weight(2.0)
         .stroke(rgb(component_value, 0.0, 0.0));
+
+    // should match the 1st and 3rd quarters of the above cycle
+    draw.ellipse()
+        .x_y(
+            map_range(
+                model.animation.animate(
+                    &[
+                        Breakpoint::ramp(0.0, 0.0, Easing::Linear),
+                        Breakpoint::step(1.0, 0.5),
+                        Breakpoint::ramp(1.5, 0.5, Easing::Linear),
+                        Breakpoint::ramp(2.0, 1.0, Easing::Linear),
+                        Breakpoint::step(3.0, 0.5),
+                        Breakpoint::ramp(3.5, 0.5, Easing::Linear),
+                        Breakpoint::end(4.0, 0.0),
+                    ],
+                    Mode::Loop,
+                ),
+                0.0,
+                1.0,
+                -edge,
+                edge,
+            ),
+            hh / 4.0,
+        )
+        .radius(radius * 0.333)
+        .color(rgb(component_value, component_value, 0.0));
 
     draw.ellipse()
         .x_y(map_range(model.ramp, 0.0, 1.0, -edge, edge), 0.0)
