@@ -141,6 +141,7 @@ fn create_wave_lane(animation: &mut Animation<ManualTiming>) -> Lane {
             ],
             Mode::Once,
         );
+        let value = clamp(value, 0.0, 1.0);
         points.push((position, value));
     }
 

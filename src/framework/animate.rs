@@ -126,48 +126,45 @@ impl<T: TimingSource> Animation<T> {
 
         match (breakpoint, next_point) {
             (Some(bp), None) => bp.value,
-            (Some(bp), Some(np)) => {
-                match &bp.kind {
-                    Transition::Step => bp.value,
-                    Transition::Ramp { easing } => {
+            (Some(bp), Some(np)) => match &bp.kind {
+                Transition::Step => bp.value,
+                Transition::Ramp { easing } => {
+                    let duration = np.position - bp.position;
+                    let t = (beats_elapsed / duration) % 1.0;
+                    let value = lerp(bp.value, np.value, t);
+                    easing.apply(value)
+                }
+                Transition::Wave {
+                    shape,
+                    frequency,
+                    amplitude,
+                } => match shape {
+                    Shape::Sine => unimplemented!(),
+                    Shape::Triangle => {
                         let duration = np.position - bp.position;
                         let t = (beats_elapsed / duration) % 1.0;
                         let value = lerp(bp.value, np.value, t);
-                        easing.apply(value)
+
+                        let phase_offset = 0.25;
+                        let phase_in_cycle = beats_elapsed / frequency;
+                        let mut mod_wave =
+                            (phase_in_cycle + phase_offset) % 1.0;
+
+                        mod_wave = if mod_wave < 0.5 {
+                            4.0 * mod_wave - 1.0
+                        } else {
+                            3.0 - 4.0 * mod_wave
+                        };
+
+                        value + (mod_wave * amplitude)
                     }
-                    Transition::Wave {
-                        shape,
-                        frequency,
-                        amplitude,
-                    } => match shape {
-                        Shape::Sine => unimplemented!(),
-                        Shape::Triangle => {
-                            // TODO: optimize by skipping math when next step value
-                            // is same as the previous?
-                            let duration = np.position - bp.position;
-                            let t = (beats_elapsed / duration) % 1.0;
-                            let value = lerp(bp.value, np.value, t);
-
-                            let phase_offset = 0.25;
-                            let phase_in_cycle = beats_elapsed * frequency;
-                            let mut m = (phase_in_cycle + phase_offset) % 1.0;
-
-                            m = if m < 0.5 {
-                                4.0 * m - 1.0
-                            } else {
-                                3.0 - 4.0 * m
-                            };
-
-                            value + (m * amplitude)
-                        }
-                        Shape::Saw => unimplemented!(),
-                        Shape::Square => unimplemented!(),
-                    },
-                    Transition::End => {
-                        loud_panic!("Somehow we've moved beyond the end")
-                    }
+                    Shape::Saw => unimplemented!(),
+                    Shape::Square => unimplemented!(),
+                },
+                Transition::End => {
+                    loud_panic!("Somehow we've moved beyond the end")
                 }
-            }
+            },
             _ => {
                 warn!("Could not match any breakpoints");
                 0.0
@@ -349,6 +346,6 @@ mod tests {
 
         // And back around
         init(4);
-        assert_eq!(x(), 1.0);
+        assert_eq!(x(), 0.0);
     }
 }
