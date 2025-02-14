@@ -11,6 +11,11 @@ use std::{
 use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
 
+pub trait TimingSource: Clone {
+    fn beats(&self) -> f32;
+    fn bpm(&self) -> f32;
+}
+
 /// Wrapper for all `TimingSource` implementations which allows
 /// run-time selection of a `TimingSource` via command line argument.
 /// Sketches can bypass the command line argument by using a `TimingSource`
@@ -40,6 +45,16 @@ impl Timing {
 }
 
 impl TimingSource for Timing {
+    fn bpm(&self) -> f32 {
+        match self {
+            Timing::Frame(t) => t.bpm(),
+            Timing::Osc(t) => t.bpm(),
+            Timing::Midi(t) => t.bpm(),
+            Timing::Hybrid(t) => t.bpm(),
+            Timing::Manual(t) => t.bpm(),
+        }
+    }
+
     fn beats(&self) -> f32 {
         match self {
             Timing::Frame(t) => t.beats(),
@@ -49,21 +64,6 @@ impl TimingSource for Timing {
             Timing::Manual(t) => t.beats(),
         }
     }
-
-    fn beats_to_frames(&self, beats: f32) -> f32 {
-        match self {
-            Timing::Frame(t) => t.beats_to_frames(beats),
-            Timing::Osc(t) => t.beats_to_frames(beats),
-            Timing::Midi(t) => t.beats_to_frames(beats),
-            Timing::Hybrid(t) => t.beats_to_frames(beats),
-            Timing::Manual(t) => t.beats_to_frames(beats),
-        }
-    }
-}
-
-pub trait TimingSource: Clone {
-    fn beats(&self) -> f32;
-    fn beats_to_frames(&self, beats: f32) -> f32;
 }
 
 #[derive(Clone, Debug)]
@@ -78,14 +78,14 @@ impl FrameTiming {
 }
 
 impl TimingSource for FrameTiming {
-    fn beats(&self) -> f32 {
-        frame_controller::frame_count() as f32 / self.beats_to_frames(1.0)
+    fn bpm(&self) -> f32 {
+        self.bpm
     }
 
-    fn beats_to_frames(&self, beats: f32) -> f32 {
+    fn beats(&self) -> f32 {
         let seconds_per_beat = 60.0 / self.bpm;
-        let total_seconds = beats * seconds_per_beat;
-        total_seconds * frame_controller::fps()
+        let frames_per_beat = seconds_per_beat * frame_controller::fps();
+        frame_controller::frame_count() as f32 / frames_per_beat
     }
 }
 
@@ -208,7 +208,7 @@ impl MidiSongTiming {
         }
     }
 
-    fn get_position_in_beats(&self) -> f32 {
+    fn beats(&self) -> f32 {
         let clock_offset = self.clock_count.load(Ordering::Relaxed) as f32
             / PULSES_PER_QUARTER_NOTE as f32;
 
@@ -224,14 +224,12 @@ impl MidiSongTiming {
 }
 
 impl TimingSource for MidiSongTiming {
-    fn beats(&self) -> f32 {
-        self.get_position_in_beats()
+    fn bpm(&self) -> f32 {
+        self.bpm
     }
 
-    fn beats_to_frames(&self, beats: f32) -> f32 {
-        let bpm = self.bpm;
-        let seconds_per_beat = 60.0 / bpm;
-        beats * seconds_per_beat * frame_controller::fps()
+    fn beats(&self) -> f32 {
+        self.beats()
     }
 }
 
@@ -411,18 +409,18 @@ impl HybridTiming {
         }
     }
 
-    fn get_position_in_beats(&self) -> f32 {
+    fn beats(&self) -> f32 {
         self.midi_timing.beats()
     }
 }
 
 impl TimingSource for HybridTiming {
-    fn beats(&self) -> f32 {
-        self.get_position_in_beats()
+    fn bpm(&self) -> f32 {
+        self.bpm
     }
 
-    fn beats_to_frames(&self, beats: f32) -> f32 {
-        self.midi_timing.beats_to_frames(beats)
+    fn beats(&self) -> f32 {
+        self.beats()
     }
 }
 
@@ -484,7 +482,7 @@ impl OscTransportTiming {
         Ok(())
     }
 
-    fn get_position_in_beats(&self) -> f32 {
+    fn beats(&self) -> f32 {
         if !self.is_playing.load(Ordering::Acquire) {
             return 0.0;
         }
@@ -498,20 +496,18 @@ impl OscTransportTiming {
 }
 
 impl TimingSource for OscTransportTiming {
-    fn beats(&self) -> f32 {
-        self.get_position_in_beats()
+    fn bpm(&self) -> f32 {
+        self.bpm
     }
 
-    fn beats_to_frames(&self, beats: f32) -> f32 {
-        let seconds_per_beat = 60.0 / self.bpm;
-        let total_seconds = beats * seconds_per_beat;
-        total_seconds * frame_controller::fps()
+    fn beats(&self) -> f32 {
+        self.beats()
     }
 }
 
-/// Allows sketches to visualize animations statically
-/// by manually providing frame_count or beat position,
-/// for example visualizing breakpoints.
+/// Allows sketches to visualize animations statically by manually providing
+/// what beat we're on. This is especially useful for visualing
+/// [`crate::framework::Animation::Breakpoints`] sequences
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
     bpm: f32,
@@ -529,25 +525,23 @@ impl ManualTiming {
 }
 
 impl TimingSource for ManualTiming {
-    fn beats(&self) -> f32 {
-        self.beats
+    fn bpm(&self) -> f32 {
+        self.bpm
     }
 
-    fn beats_to_frames(&self, beats: f32) -> f32 {
-        let seconds_per_beat = 60.0 / self.bpm;
-        let total_seconds = beats * seconds_per_beat;
-        total_seconds * frame_controller::fps()
+    fn beats(&self) -> f32 {
+        self.beats
     }
 }
 
 #[cfg(test)]
 pub trait TestTiming {
-    fn set_beat_position(&mut self, beat: f32);
+    fn set_beats(&mut self, beat: f32);
 }
 
 #[cfg(test)]
 impl TestTiming for OscTransportTiming {
-    fn set_beat_position(&mut self, beat: f32) {
+    fn set_beats(&mut self, beat: f32) {
         let bars = (beat / 4.0).floor();
         let remaining_beats = beat - (bars * 4.0);
         let beats = remaining_beats.floor();
@@ -563,16 +557,6 @@ impl TestTiming for OscTransportTiming {
 mod tests {
     use super::*;
     use serial_test::serial;
-
-    #[test]
-    #[serial]
-    fn test_frame_timing_conversion() {
-        let timing = FrameTiming::new(120.0);
-
-        // At 120 BPM, one beat = 0.5 seconds
-        // At 24 FPS, 0.5 seconds = 12 frames
-        assert_eq!(timing.beats_to_frames(1.0), 12.0);
-    }
 
     #[test]
     #[serial]

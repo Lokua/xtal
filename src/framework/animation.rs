@@ -77,7 +77,9 @@ impl<T: TimingSource> Animation<T> {
     /// since (re)start of this Animation's Timing source,
     /// converted to frame count
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
-        self.timing.beats_to_frames(beats)
+        let seconds_per_beat = 60.0 / self.timing.bpm();
+        let total_seconds = beats * seconds_per_beat;
+        total_seconds * frame_controller::fps()
     }
 
     /// Return a relative phase position from [0, 1] within
@@ -855,7 +857,7 @@ pub mod tests {
         let transition_points = vec![1.5, 4.5, 7.0, 8.0];
 
         for &beat in &transition_points {
-            timing.set_beat_position(beat);
+            timing.set_beats(beat);
             let total_beats =
                 keyframes.iter().map(|kf| kf.duration).sum::<f32>();
             let beats_elapsed = timing.beats();
@@ -872,7 +874,7 @@ pub mod tests {
 
             let before = animation.r_ramp(keyframes, 0.0, 0.25, Easing::Linear);
 
-            timing.set_beat_position(beat + 0.1);
+            timing.set_beats(beat + 0.1);
             let after = animation.r_ramp(keyframes, 0.0, 0.25, Easing::Linear);
 
             println!("Values: {} -> {}", before, after);
