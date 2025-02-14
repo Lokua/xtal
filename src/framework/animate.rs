@@ -10,37 +10,26 @@ pub struct Breakpoint {
     pub value: f32,
 }
 
-#[derive(Debug)]
-pub enum Transition {
-    Step,
-    Ramp {
-        easing: Easing,
-    },
-    Wave {
-        shape: Shape,
-        amplitude: f32,
-        frequency: f32,
-    },
-    End,
-}
-
 impl Breakpoint {
-    pub fn new(kind: Transition, position: f32, value: f32) -> Self {
-        Self {
-            kind,
-            position,
-            value,
-        }
-    }
-
+    /// Create a step that will be held at `value` until the next breakpoint.
     pub fn step(position: f32, value: f32) -> Self {
         Self::new(Transition::Step, position, value)
     }
 
+    /// Create a step that will curve from this `value` to the next breakpoint's
+    /// value with adjustable easing.
     pub fn ramp(position: f32, value: f32, easing: Easing) -> Self {
         Self::new(Transition::Ramp { easing }, position, value)
     }
 
+    /// Creates a linear ramp from this `value` to the next breakpoint's value
+    /// with amplitude modulation applied over it. Like position, `frequency` is
+    /// expressed in beats. `amplitude` represents how much above and below the
+    /// base interpolated value the modulation will add or subtract depending on
+    /// its phase. The modulation wave is phase shifted to always start and end
+    /// at or very close to zero to ensure smooth transitions between segments.
+    /// Note that this method can produce values outside of the otherwise
+    /// normalized [0, 1], so clamping or folding the result is reccommended.
     pub fn wave(
         position: f32,
         value: f32,
@@ -59,9 +48,38 @@ impl Breakpoint {
         )
     }
 
+    /// The last breakpoint in any sequence represents the final value and is
+    /// never actually entered. Technically any kind of breakpoint can be used
+    /// at the end and will be interperated exactly the same way (only value and
+    /// position will be used to mark the end of a sequence), but this is
+    /// provided for code clarity as it reads better. If you are using
+    /// [`Mode::Loop`] it's a good idea to make the value of this endpoint match
+    /// the first value to avoid discontinuity (unless you want that of course).
     pub fn end(position: f32, value: f32) -> Self {
         Self::new(Transition::End, position, value)
     }
+
+    fn new(kind: Transition, position: f32, value: f32) -> Self {
+        Self {
+            kind,
+            position,
+            value,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Transition {
+    Step,
+    Ramp {
+        easing: Easing,
+    },
+    Wave {
+        shape: Shape,
+        amplitude: f32,
+        frequency: f32,
+    },
+    End,
 }
 
 #[derive(Debug, PartialEq)]
