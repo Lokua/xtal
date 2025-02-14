@@ -124,45 +124,51 @@ impl<T: TimingSource> Animation<T> {
 
         match (breakpoint, next_point) {
             (Some(bp), None) => bp.value,
-            (Some(bp), Some(np)) => match &bp.kind {
-                Transition::Step => bp.value,
-                Transition::Ramp { easing } => {
-                    let duration = np.position - bp.position;
-                    let t = (beats_elapsed / duration) % 1.0;
-                    let value = lerp(bp.value, np.value, t);
-                    easing.apply(value)
-                }
-                Transition::Wave {
-                    shape,
-                    frequency,
-                    amplitude,
-                } => match shape {
-                    Shape::Sine => unimplemented!(),
-                    Shape::Triangle => {
-                        // TODO: optimize by skipping math when next step value
-                        // is same as the previous?
+            (Some(bp), Some(np)) => {
+                match &bp.kind {
+                    Transition::Step => bp.value,
+                    Transition::Ramp { easing } => {
                         let duration = np.position - bp.position;
                         let t = (beats_elapsed / duration) % 1.0;
                         let value = lerp(bp.value, np.value, t);
-
-                        // So our triangle starts 1/4 cycle in at 0
-                        // and start/connect segments smoothly
-                        // WIP: I have no idea how to calculate this properly
-                        let phase_offset = 0.25;
-                        let mut m =
-                            ((beats_elapsed / frequency) + phase_offset) % 1.0;
-                        m = ternary!(m < 0.5, m, 1.0 - m) * 4.0 - 1.0;
-                        m *= amplitude;
-
-                        value + m
+                        easing.apply(value)
                     }
-                    Shape::Saw => unimplemented!(),
-                    Shape::Square => unimplemented!(),
-                },
-                Transition::End => {
-                    loud_panic!("Somehow we've moved beyond the end")
+                    Transition::Wave {
+                        shape,
+                        frequency,
+                        amplitude,
+                    } => match shape {
+                        Shape::Sine => unimplemented!(),
+                        Shape::Triangle => {
+                            // TODO: optimize by skipping math when next step value
+                            // is same as the previous?
+                            let duration = np.position - bp.position;
+                            let t = (beats_elapsed / duration) % 1.0;
+                            let value = lerp(bp.value, np.value, t);
+
+                            let phase_offset = 0.25;
+                            let phase_in_cycle = beats_elapsed * frequency;
+                            let mut m = (phase_in_cycle + phase_offset) % 1.0;
+
+                            // Convert phase to bipolar triangle wave [-1, 1]
+                            m = if m < 0.5 {
+                                // First half: 0 to 1 to 0
+                                4.0 * m - 1.0
+                            } else {
+                                // Second half: 0 to -1 to 0
+                                3.0 - 4.0 * m
+                            };
+
+                            value + (m * amplitude)
+                        }
+                        Shape::Saw => unimplemented!(),
+                        Shape::Square => unimplemented!(),
+                    },
+                    Transition::End => {
+                        loud_panic!("Somehow we've moved beyond the end")
+                    }
                 }
-            },
+            }
             _ => {
                 warn!("Could not match any breakpoints");
                 0.0
@@ -314,46 +320,36 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_wave_triangle() {
-        init(0);
+    fn test_wave_triangle_simple() {
         let a = create_instance();
         let x = || {
             a.animate(
                 &[
-                    Breakpoint::wave(0.0, 0.0, Shape::Triangle, 0.25, 0.25),
-                    Breakpoint::end(2.0, 1.0),
+                    Breakpoint::wave(0.0, 0.0, Shape::Triangle, 1.0, 0.5),
+                    Breakpoint::end(1.0, 1.0),
                 ],
-                Mode::Once,
+                Mode::Loop,
             )
         };
 
-        for frame in 0..=7 {
-            init(frame);
-            debug!("{}", x());
-        }
-
+        // 0 beats
         init(0);
         assert_eq!(x(), 0.0);
 
+        // 0.25 beats, base 0.25 + wave 0.5 = 0.75
         init(1);
-        assert_eq!(x(), 0.125 + 0.25); // 0.375
-
-        init(2);
-        assert_eq!(x(), 0.25);
-
-        init(3);
-        assert_eq!(x(), 0.375 - 0.25); // 0.125
-
-        init(4);
-        assert_eq!(x(), 0.5);
-
-        init(5);
-        assert_eq!(x(), 0.625 + 0.25); // 0.875
-
-        init(6);
         assert_eq!(x(), 0.75);
 
-        init(7);
-        assert_eq!(x(), 0.875 - 0.25); //0.625
+        // 0.5 beats, base 0.5 + wave 0.0 = 0.5
+        init(2);
+        assert_eq!(x(), 0.5);
+
+        // 0.75 beats, base 0.75 + wave -0.5 = 0.25
+        init(3);
+        assert_eq!(x(), 0.25);
+
+        // And back around
+        init(4);
+        assert_eq!(x(), 1.0);
     }
 }
