@@ -97,15 +97,15 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.animation.tri(12.0),
         ],
         b: [
-            m.animation.r_ramp(&kfs, 0.0, time * 0.5, ease_in_out),
-            m.animation.r_ramp(&kfs, 0.5, time * 0.5, ease_in_out),
-            m.animation.r_ramp(&kfs, 0.1, time * 0.5, ease_in_out),
+            m.animation.r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
+            m.animation.r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
+            m.animation.r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
             m.controls.float("post_mix"),
         ],
         c: [
-            m.animation.r_ramp(&kfs, 0.0, time * 0.5, ease_in_out),
-            m.animation.r_ramp(&kfs, 0.5, time * 0.5, ease_in_out),
-            m.animation.r_ramp(&kfs, 0.1, time * 0.5, ease_in_out),
+            m.animation.r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
+            m.animation.r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
+            m.animation.r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
             0.0,
         ],
         d: [

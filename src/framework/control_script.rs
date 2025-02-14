@@ -176,7 +176,7 @@ impl<T: TimingSource> ControlScript<T> {
                             kfs,
                             conf.delay,
                             conf.ramp_time,
-                            str_to_fn_unary(conf.ramp.as_str()),
+                            Easing::from_str(conf.ramp.as_str()).unwrap(),
                         )
                     }
                 }

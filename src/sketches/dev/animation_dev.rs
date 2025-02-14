@@ -41,15 +41,19 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
         .animation
         .lerp(&[kf(0.0, 2.0), kf(1.0, 2.0), kf(0.0, 0.0)], 0.0);
 
-    model.ramp =
-        model
-            .animation
-            .ramp(&[kf(0.0, 4.0), kf(1.0, 4.0)], 0.0, 1.0, linear);
+    model.ramp = model.animation.ramp(
+        &[kf(0.0, 4.0), kf(1.0, 4.0)],
+        0.0,
+        1.0,
+        Easing::Linear,
+    );
 
-    model.r_ramp =
-        model
-            .animation
-            .r_ramp(&[kfr((0.0, 1.0), 4.0)], 0.0, 1.0, linear);
+    model.r_ramp = model.animation.r_ramp(
+        &[kfr((0.0, 1.0), 4.0)],
+        0.0,
+        1.0,
+        Easing::Linear,
+    );
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {
@@ -75,6 +79,30 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .x_y(map_range(model.lerp, 0.0, 1.0, -edge, edge), hh / 2.0)
         .radius(radius)
         .color(rgb(component_value, 0.0, 0.0));
+
+    // This should be identical to the above in movement
+    draw.ellipse()
+        .x_y(
+            map_range(
+                model.animation.animate(
+                    &[
+                        Breakpoint::ramp(0.0, 0.0, Easing::Linear),
+                        Breakpoint::ramp(2.0, 1.0, Easing::Linear),
+                        Breakpoint::ramp(4.0, 0.0, Easing::Linear),
+                    ],
+                    Mode::Loop,
+                ),
+                0.0,
+                1.0,
+                -edge,
+                edge,
+            ),
+            hh / 2.0,
+        )
+        .radius(radius * 1.25)
+        .no_fill()
+        .stroke_weight(2.0)
+        .stroke(rgb(component_value, 0.0, 0.0));
 
     draw.ellipse()
         .x_y(map_range(model.ramp, 0.0, 1.0, -edge, edge), 0.0)

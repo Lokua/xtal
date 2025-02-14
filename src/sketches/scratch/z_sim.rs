@@ -75,12 +75,18 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     let max_possible_dist = hw.max(hh);
 
     let center = vec2(
-        model
-            .animation
-            .r_ramp(&[kfr((-hw, hw), 2.0)], 0.0, 1.0, linear),
-        model
-            .animation
-            .r_ramp(&[kfr((-hh, hh), 1.0)], 0.0, 0.5, linear),
+        model.animation.r_ramp(
+            &[kfr((-hw, hw), 2.0)],
+            0.0,
+            1.0,
+            Easing::Linear,
+        ),
+        model.animation.r_ramp(
+            &[kfr((-hh, hh), 1.0)],
+            0.0,
+            0.5,
+            Easing::Linear,
+        ),
     );
 
     for point in model.grid.iter() {

@@ -410,6 +410,7 @@ foo:
 - https://thebookofshaders.com/
 - https://github.com/jasonwebb/2d-space-colonization-experiments
 - https://paulbourke.net/geometry/
+- https://easings.net/
 
 [p5]: https://github.com/Lokua/p5/tree/main
 [nannou]: https://github.com/nannou-org/nannou

@@ -132,13 +132,13 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
         [
             // radius
-            a.r_ramp(&[kfr(r_range, dur)], delay, dur * 0.5, linear),
+            a.r_ramp(&[kfr(r_range, dur)], delay, dur * 0.5, Easing::Linear),
             // strength
             a.r_ramp(
                 &[kfr(s_range, dur * 1.5)],
                 delay + 1.0,
                 dur * 0.75,
-                linear,
+                Easing::Linear,
             ),
             // scaling_power
             if anim_scaling {
@@ -147,7 +147,7 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
                 (a.tri(8.0) + 1.0) * 4.0
             },
             // offset
-            a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, linear),
+            a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, Easing::Linear),
         ]
     };
 

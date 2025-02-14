@@ -1,4 +1,5 @@
 pub use crate::debug_throttled;
+pub use crate::framework::animate::*;
 pub use crate::framework::animation::*;
 pub use crate::framework::audio::*;
 pub use crate::framework::audio_controls::*;

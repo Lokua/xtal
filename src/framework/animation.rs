@@ -277,7 +277,7 @@ impl<T: TimingSource> Animation<T> {
         keyframes: &[Keyframe],
         delay: f32,
         ramp_time: f32,
-        ramp: fn(f32) -> f32,
+        ramp: Easing,
     ) -> f32 {
         if keyframes.is_empty() {
             return 0.0;
@@ -327,7 +327,7 @@ impl<T: TimingSource> Animation<T> {
 
         let ramp_progress = time_in_segment / ramp_time;
         let clamped_progress = ramp_progress.clamp(0.0, 1.0);
-        let eased_progress = ramp(clamped_progress);
+        let eased_progress = ramp.apply(clamped_progress);
 
         if time_in_segment <= ramp_time {
             lerp(previous_value, current_keyframe.value, eased_progress)
@@ -344,7 +344,8 @@ impl<T: TimingSource> Animation<T> {
         keyframes: &[KeyframeRandom],
         delay: f32,
         ramp_time: f32,
-        ramp: fn(f32) -> f32,
+        ramp: Easing,
+        // ramp: fn(f32) -> f32,
     ) -> f32 {
         if keyframes.is_empty() {
             return 0.0;
@@ -413,7 +414,7 @@ impl<T: TimingSource> Animation<T> {
         let adjusted_beats = beat_in_segment - delay_beats;
         let ramp_progress = adjusted_beats / ramp_time;
         let clamped_progress = ramp_progress.clamp(0.0, 1.0);
-        let eased_progress = ramp(clamped_progress);
+        let eased_progress = ramp.apply(clamped_progress);
 
         let value = if adjusted_beats <= ramp_time {
             lerp(previous_value, current_value, eased_progress)
@@ -450,7 +451,7 @@ pub mod tests {
         frame_controller::set_frame_count(frame_count);
     }
 
-    fn create_instance() -> Animation<FrameTiming> {
+    pub fn create_instance() -> Animation<FrameTiming> {
         Animation::new(FrameTiming::new(BPM))
     }
 
@@ -611,12 +612,14 @@ pub mod tests {
         let a = create_instance();
 
         // Test at start (frame 0)
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, Easing::Linear);
         assert_eq!(result, 0.0, "should start at initial value");
 
         // Test just before end of first keyframe (frame 7)
         init(7);
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, Easing::Linear);
         println!("Frame 7 result: {}", result);
         assert_eq!(
             result, 0.0,
@@ -625,13 +628,15 @@ pub mod tests {
 
         // Test at exact end of first keyframe (frame 8)
         init(8);
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, Easing::Linear);
         println!("Frame 8 result: {}", result);
         assert_eq!(result, 0.0, "should start ramping after first keyframe");
 
         // Test one frame into ramp (frame 9)
         init(9);
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, Easing::Linear);
         println!("Frame 9 result: {}", result);
         let time_in_segment = 9.0 / a.beats_to_frames(1.0);
         println!("Time in segment at frame 9: {}", time_in_segment);
@@ -643,7 +648,8 @@ pub mod tests {
 
         // Test at end of ramp (frame 10)
         init(10);
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 0.0, 0.5, Easing::Linear);
         println!("Frame 10 result: {}", result);
         assert_eq!(result, 1.0, "should reach final value after ramp");
     }
@@ -653,7 +659,8 @@ pub mod tests {
     fn test_ramp_with_delay() {
         init(0);
         let a = create_instance();
-        let result = a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 1.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(0.0, 2.0), kf(1.0, 2.0)], 1.0, 0.5, Easing::Linear);
         assert_eq!(result, 0.0, "should return initial value during delay");
     }
 
@@ -663,14 +670,16 @@ pub mod tests {
         init(0);
         let a = create_instance();
 
-        let result = a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, Easing::Linear);
         assert_eq!(
             result, 1.0,
             "first cycle should start at value without ramping"
         );
 
         init(17);
-        let result = a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, |x| x);
+        let result =
+            a.ramp(&[kf(1.0, 2.0), kf(0.0, 2.0)], 0.0, 0.5, Easing::Linear);
         assert!(
             result > 0.45 && result < 0.55,
             "subsequent cycles should ramp between values"
@@ -687,7 +696,7 @@ pub mod tests {
             &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5, // 0.5 beat delay
             0.5,
-            |x| x,
+            Easing::Linear,
         );
 
         // Move just past keyframe boundary but still within delay period
@@ -696,7 +705,7 @@ pub mod tests {
             &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5,
             0.5,
-            |x| x,
+            Easing::Linear,
         );
 
         assert_eq!(
@@ -711,11 +720,13 @@ pub mod tests {
         init(0);
         let a = create_instance();
 
-        let first_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let first_value =
+            a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, Easing::Linear);
 
         // Move to frame 8 (start of next cycle, still previous value)
         init(8);
-        let previous_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let previous_value =
+            a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, Easing::Linear);
 
         // Values should be the same at start of cycles
         assert_eq!(
@@ -725,11 +736,13 @@ pub mod tests {
 
         // Move to frame 9 (should be halfway through transition)
         init(9);
-        let mid_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let mid_value =
+            a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, Easing::Linear);
 
         // Move to frame 10 (should be at new value)
         init(10);
-        let new_value = a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, |x| x);
+        let new_value =
+            a.r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 0.5, Easing::Linear);
 
         let expected_midpoint = (previous_value + new_value) / 2.0;
         let tolerance = 0.001;
@@ -755,7 +768,7 @@ pub mod tests {
             &[kfr((0.0, 1.0), 2.0), kfr((2.0, 3.0), 2.0)],
             0.5, // 0.5 beats delay
             1.0, // 1.0 beats ramp time
-            |x| x,
+            Easing::Linear,
         );
 
         // At this point, we should be transitioning from first keyframe value (0.0-1.0)
@@ -786,7 +799,7 @@ pub mod tests {
 
         for frame in 0..40 {
             init(frame);
-            let value = a.r_ramp(&keyframes, 0.0, 0.5, linear);
+            let value = a.r_ramp(&keyframes, 0.0, 0.5, Easing::Linear);
             results.push((frame, value));
         }
 
@@ -857,10 +870,10 @@ pub mod tests {
             println!("cycle_float: {}", cycle_float);
             println!("current_cycle: {}", current_cycle);
 
-            let before = animation.r_ramp(keyframes, 0.0, 0.25, linear);
+            let before = animation.r_ramp(keyframes, 0.0, 0.25, Easing::Linear);
 
             timing.set_beat_position(beat + 0.1);
-            let after = animation.r_ramp(keyframes, 0.0, 0.25, linear);
+            let after = animation.r_ramp(keyframes, 0.0, 0.25, Easing::Linear);
 
             println!("Values: {} -> {}", before, after);
 

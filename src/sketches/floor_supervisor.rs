@@ -275,13 +275,13 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                             &[kfr((1.0, 500.0), 8.0)],
                             0.0,
                             4.0,
-                            linear,
+                            Easing::Linear,
                         ));
                         config.displacer.set_radius(m.animation.r_ramp(
                             &[kfr((1.0, 500.0), 12.0)],
                             1.0,
                             3.0,
-                            linear,
+                            Easing::Linear,
                         ));
                     } else {
                         config.displacer.set_strength(center_radius);
@@ -301,13 +301,13 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                             &[kfr((1.0, 500.0), 4.0)],
                             0.0,
                             4.0,
-                            linear,
+                            Easing::Linear,
                         ));
                         config.displacer.set_radius(m.animation.r_ramp(
                             &[kfr((1.0, 500.0), 8.0)],
                             1.0,
                             3.0,
-                            linear,
+                            Easing::Linear,
                         ));
                     } else {
                         config.displacer.set_strength(corner_radius);
@@ -327,13 +327,13 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                             &[kfr((1.0, 500.0), 16.0)],
                             0.0,
                             6.0,
-                            linear,
+                            Easing::Linear,
                         ));
                         config.displacer.set_radius(m.animation.r_ramp(
                             &[kfr((1.0, 500.0), 24.0)],
                             2.0,
                             18.0,
-                            linear,
+                            Easing::Linear,
                         ));
                     } else {
                         config.displacer.set_strength(trbl_radius);
@@ -391,7 +391,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                 max_mag,
                 0.1,
                 size_max,
-                ease_out,
+                ease_out_quad,
             );
 
             (*point + total_displacement, radius, triangle_height, color)

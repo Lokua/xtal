@@ -97,10 +97,18 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             0.25, // wave2_angle
         ],
         b: [
-            m.animation
-                .r_ramp(&[kfr((0.0, phase_mod), 2.0)], 0.0, 1.0, linear),
-            m.animation
-                .r_ramp(&[kfr((0.0, phase_mod), 2.0)], 1.0, 1.0, linear),
+            m.animation.r_ramp(
+                &[kfr((0.0, phase_mod), 2.0)],
+                0.0,
+                1.0,
+                Easing::Linear,
+            ),
+            m.animation.r_ramp(
+                &[kfr((0.0, phase_mod), 2.0)],
+                1.0,
+                1.0,
+                Easing::Linear,
+            ),
             m.controls.get("wave1_y"),
             m.controls.get("wave2_y"),
         ],

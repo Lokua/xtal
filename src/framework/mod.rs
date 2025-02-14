@@ -1,3 +1,4 @@
+pub mod animate;
 pub mod animation;
 pub mod audio;
 pub mod audio_controls;

@@ -119,14 +119,22 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
         ],
         b: [
             if m.controls.bool("animate_wave1_phase") {
-                m.animation
-                    .r_ramp(&[kfr((0.0, 1.0), 2.0)], 0.0, 1.0, linear)
+                m.animation.r_ramp(
+                    &[kfr((0.0, 1.0), 2.0)],
+                    0.0,
+                    1.0,
+                    Easing::Linear,
+                )
             } else {
                 m.controls.float("wave1_phase")
             },
             if m.controls.bool("animate_wave2_phase") {
-                m.animation
-                    .r_ramp(&[kfr((0.0, 1.0), 2.0)], 1.0, 1.0, linear)
+                m.animation.r_ramp(
+                    &[kfr((0.0, 1.0), 2.0)],
+                    1.0,
+                    1.0,
+                    Easing::Linear,
+                )
             } else {
                 m.controls.float("wave2_phase")
             },
