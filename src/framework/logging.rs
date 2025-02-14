@@ -1,7 +1,6 @@
 use env_logger::{Builder, Env};
 use log::LevelFilter;
-use once_cell::sync::Lazy;
-use std::{collections::HashSet, io::Write, sync::Mutex};
+use std::io::Write;
 use termcolor::{Color, ColorSpec, WriteColor};
 
 pub use log::{debug, error, info, trace, warn};
@@ -39,30 +38,45 @@ pub fn init_logger() {
         .init();
 }
 
-static WARN_MESSAGES: Lazy<Mutex<HashSet<String>>> =
-    Lazy::new(|| Mutex::new(HashSet::new()));
+#[macro_export]
+macro_rules! warn_once {
+   ($($arg:tt)+) => {{
+       use lazy_static::lazy_static;
+       use std::collections::HashSet;
+       use std::sync::Mutex;
 
-// TODO: should be a macro
-pub fn warn_once(message: String) {
-    let mut set = WARN_MESSAGES.lock().unwrap();
-    if set.insert(message.to_string()) {
-        warn!("{}", message);
-    }
+       lazy_static! {
+           static ref SEEN: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+       }
+
+       let message = format!($($arg)+);
+       let mut set = SEEN.lock().unwrap();
+       if set.insert(message.to_string()) {
+           log::warn!("{}", message);
+       }
+   }}
 }
 
-static DEBUG_MESSAGES: Lazy<Mutex<HashSet<String>>> =
-    Lazy::new(|| Mutex::new(HashSet::new()));
+#[macro_export]
+macro_rules! debug_once {
+   ($($arg:tt)+) => {{
+       use lazy_static::lazy_static;
+       use std::collections::HashSet;
+       use std::sync::Mutex;
 
-// TODO: should be a macro
-pub fn debug_once(message: String) {
-    let mut set = DEBUG_MESSAGES.lock().unwrap();
-    if set.insert(message.to_string()) {
-        debug!("{}", message);
-    }
+       lazy_static! {
+           static ref SEEN: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+       }
+
+       let message = format!($($arg)+);
+       let mut set = SEEN.lock().unwrap();
+       if set.insert(message.to_string()) {
+           log::debug!("{}", message);
+       }
+   }}
 }
 
 /// Helper to make panic errors stand out more in logs
-#[allow(unused_macros)]
 #[macro_export]
 macro_rules! loud_panic {
     ($($arg:tt)*) => {{

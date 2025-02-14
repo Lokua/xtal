@@ -57,7 +57,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let point_color = rgb(1.0, 0.4, 0.1);
 
     for (lane_index, lane) in m.lanes.iter().enumerate() {
-        debug_once(format!("lane: {:?}", lane));
+        debug_once!("lane: {:?}", lane);
 
         let y_offset = m.wr.top()
             - (track_height / 2.0)

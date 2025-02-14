@@ -1,3 +1,4 @@
+pub use crate::debug_once;
 pub use crate::debug_throttled;
 pub use crate::framework::animate::*;
 pub use crate::framework::animation::*;
@@ -21,4 +22,5 @@ pub use crate::framework::window_rect::*;
 pub use crate::loud_panic;
 pub use crate::string_vec;
 pub use crate::ternary;
+pub use crate::warn_once;
 pub use derives::*;

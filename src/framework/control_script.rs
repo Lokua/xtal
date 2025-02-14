@@ -195,7 +195,7 @@ impl<T: TimingSource> ControlScript<T> {
             };
         }
 
-        warn_once(format!("No control named {}. Defaulting to 0.0", name));
+        warn_once!("No control named {}. Defaulting to 0.0", name);
         0.0
     }
 
