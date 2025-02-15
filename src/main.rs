@@ -129,7 +129,6 @@ fn main() {
         // --- SCRATCH
         "bos" => run_sketch!(bos),
         "breakpoints" => run_sketch!(breakpoints),
-        "breakpoints_vis" => run_sketch!(breakpoints_vis),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
         "lin_alg" => run_sketch!(lin_alg),
         "lines" => run_sketch!(lines),

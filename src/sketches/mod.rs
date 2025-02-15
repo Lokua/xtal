@@ -45,7 +45,6 @@ pub use self::genuary_2025::g25_5_isometric;
 pub mod scratch;
 pub use self::scratch::bos;
 pub use self::scratch::breakpoints;
-pub use self::scratch::breakpoints_vis;
 pub use self::scratch::chromatic_aberration;
 pub use self::scratch::displacement_1;
 pub use self::scratch::displacement_1a;
