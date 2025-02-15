@@ -149,8 +149,9 @@ impl<T: TimingSource> Animation<T> {
                 Transition::Ramp { easing } => {
                     let duration = np.position - bp.position;
                     let t = (beats_elapsed / duration) % 1.0;
-                    let value = lerp(bp.value, np.value, t);
-                    easing.apply(value)
+                    let eased_t = easing.apply(t);
+                    let value = lerp(bp.value, np.value, eased_t);
+                    value
                 }
                 Transition::Wave {
                     shape,
@@ -365,5 +366,26 @@ mod tests {
         // And back around
         init(4);
         assert_eq!(x(), 0.0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_step_to_ramp_edge_case() {
+        let a = create_instance();
+        let x = || {
+            a.animate(
+                &[
+                    Breakpoint::step(0.0, 0.0),
+                    Breakpoint::step(0.5, 1.0),
+                    Breakpoint::ramp(1.0, 0.5, Easing::EaseInExpo),
+                    Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.25, 0.25),
+                    Breakpoint::end(2.0, 0.0),
+                ],
+                Mode::Once,
+            )
+        };
+
+        init(4);
+        assert_eq!(x(), 0.5);
     }
 }

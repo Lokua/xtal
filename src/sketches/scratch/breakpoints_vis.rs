@@ -34,6 +34,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         create_ramp_lane(&mut animation),
         create_wave_lane(&mut animation),
         create_step_lane(&mut animation),
+        kitchen_sink(&mut animation),
     ];
 
     Model { wr, lanes }
@@ -50,15 +51,13 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .w_h(m.wr.w(), m.wr.h())
         .color(gray(0.06));
 
-    let track_height = 200.0;
+    let track_height = 150.0;
     let track_padding = 20.0;
     let lane_padding = 8.0;
     let vertical_offset = track_height + track_padding;
     let point_color = rgb(1.0, 0.4, 0.1);
 
     for (lane_index, lane) in m.lanes.iter().enumerate() {
-        debug_once!("lane: {:?}", lane);
-
         let y_offset = m.wr.top()
             - (track_height / 2.0)
             - track_padding
@@ -141,87 +140,86 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 }
 
 fn create_ramp_lane(animation: &mut Animation<ManualTiming>) -> Lane {
-    let mut points = vec![];
-
-    let beat_step = TOTAL_BEATS / N_POINTS as f32;
-
-    // We use =N_POINTS so there is 1 extra point to complete the loop
-    for i in 0..=N_POINTS {
-        let position = i as f32 * beat_step;
-        animation.timing.set_beats(position);
-        let value = animation.animate(
-            &[
-                Breakpoint::ramp(0.0, 0.0, Easing::EaseInQuad),
-                Breakpoint::ramp(TOTAL_BEATS / 2.0, 1.0, Easing::EaseInQuad),
-                Breakpoint::end(TOTAL_BEATS, 0.0),
-            ],
-            Mode::Once,
-        );
-        points.push((position, value));
-    }
-
-    points
+    create_graph(
+        animation,
+        &[
+            Breakpoint::ramp(0.0, 0.0, Easing::EaseInQuad),
+            Breakpoint::ramp(TOTAL_BEATS / 2.0, 1.0, Easing::EaseInQuad),
+            Breakpoint::end(TOTAL_BEATS, 0.0),
+        ],
+    )
 }
 
 fn create_wave_lane(animation: &mut Animation<ManualTiming>) -> Lane {
-    let mut points = vec![];
-
-    let beat_step = TOTAL_BEATS / N_POINTS as f32;
     let frequency = 0.125;
     let amplitude = 0.125;
-
-    // We use =N_POINTS so there is 1 extra point to complete the loop
-    for i in 0..=N_POINTS {
-        let position = i as f32 * beat_step;
-        animation.timing.set_beats(position);
-        let value = animation.animate(
-            &[
-                Breakpoint::wave(
-                    0.0,
-                    0.0,
-                    Shape::Triangle,
-                    frequency,
-                    amplitude,
-                ),
-                Breakpoint::wave(
-                    TOTAL_BEATS / 2.0,
-                    1.0,
-                    Shape::Triangle,
-                    frequency,
-                    amplitude,
-                ),
-                Breakpoint::end(TOTAL_BEATS, 0.0),
-            ],
-            Mode::Once,
-        );
-        let value = clamp(value, 0.0, 1.0);
-        points.push((position, value));
-    }
-
-    points
+    create_graph(
+        animation,
+        &[
+            Breakpoint::wave(0.0, 0.0, Shape::Triangle, frequency, amplitude),
+            Breakpoint::wave(
+                TOTAL_BEATS / 2.0,
+                1.0,
+                Shape::Triangle,
+                frequency,
+                amplitude,
+            ),
+            Breakpoint::end(TOTAL_BEATS, 0.0),
+        ],
+    )
 }
 
-fn create_step_lane(_animation: &mut Animation<ManualTiming>) -> Lane {
-    let mut points = vec![];
-    let breakpoints = [
-        Breakpoint::step(0.0, 0.0),
-        Breakpoint::step(TOTAL_BEATS / 4.0, 0.5),
-        Breakpoint::step(TOTAL_BEATS / 2.0, 1.0),
-        Breakpoint::end(TOTAL_BEATS, 0.0),
-    ];
+fn create_step_lane(animation: &mut Animation<ManualTiming>) -> Lane {
+    create_graph(
+        animation,
+        &[
+            Breakpoint::step(0.0, 0.0),
+            Breakpoint::step(TOTAL_BEATS / 4.0, 0.5),
+            Breakpoint::step(TOTAL_BEATS / 2.0, 1.0),
+            Breakpoint::end(TOTAL_BEATS, 0.0),
+        ],
+    )
+}
 
-    // For each breakpoint (except the last), create points for the horizontal line
-    // and the vertical transition to the next value
+fn kitchen_sink(animation: &mut Animation<ManualTiming>) -> Lane {
+    create_graph(
+        animation,
+        &[
+            Breakpoint::step(0.0, 0.0),
+            Breakpoint::step(0.5, 1.0),
+            Breakpoint::ramp(1.0, 0.5, Easing::EaseInExpo),
+            Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.25, 0.25),
+            Breakpoint::end(2.0, 0.0),
+        ],
+    )
+}
+
+fn create_graph(
+    animation: &mut Animation<ManualTiming>,
+    breakpoints: &[Breakpoint],
+) -> Lane {
+    let mut points = vec![];
+    let beat_step = TOTAL_BEATS / N_POINTS as f32;
+
     for i in 0..breakpoints.len() - 1 {
         let current = &breakpoints[i];
         let next = &breakpoints[i + 1];
 
-        // Start of current step
-        points.push((current.position, current.value));
-        // End of current step (just before transition)
-        points.push((next.position, current.value));
-        // Start of next step (after vertical transition)
-        points.push((next.position, next.value));
+        if matches!(current.kind, Transition::Step) {
+            // Handle steps with explicit vertical transitions
+            points.push((current.position, current.value));
+            points.push((next.position, current.value));
+            points.push((next.position, next.value));
+        } else {
+            let segment_points =
+                ((next.position - current.position) / beat_step) as usize;
+            for j in 0..=segment_points {
+                let position = current.position + j as f32 * beat_step;
+                animation.timing.set_beats(position);
+                let value = animation.animate(breakpoints, Mode::Once);
+                points.push((position, value));
+            }
+        }
     }
 
     points
