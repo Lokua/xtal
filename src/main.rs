@@ -55,15 +55,16 @@ macro_rules! run_sketch {
             )
         })
         .event(|app, model, event| {
-            if let Event::WindowEvent {
-                id: _,
-                simple: Some(event),
-            } = event
-            {
-                if let KeyPressed(key) = event {
+            match event {
+                Event::WindowEvent {
+                    simple: Some(KeyPressed(key)),
+                    ..
+                } => {
                     on_key_pressed(app, model, key);
                 }
+                _ => {}
             }
+            model.sketch_model.event(app, &event);
         })
         .run();
     }};

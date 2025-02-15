@@ -55,7 +55,6 @@ pub enum PlayMode {
 /// A trait all Lattice sketches must implement. Use with
 /// `#[derive(SketchComponents)]` which allows you to declare only the fields
 /// you need and skip having to implement any of these.
-///
 pub trait SketchModel {
     fn controls(&mut self) -> Option<&mut impl ControlProvider> {
         None::<&mut Controls>
@@ -74,4 +73,6 @@ pub trait SketchModel {
             window_rect.set_current(rect);
         }
     }
+
+    fn event(&mut self, _app: &App, _event: &Event) {}
 }

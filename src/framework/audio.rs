@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 
+/// **⚠️ Experimental**
 /// Single-channel, multiband audio with configurable FFT bands.
 pub struct Audio {
     audio_processor: Arc<Mutex<AudioProcessor>>,
