@@ -5,7 +5,7 @@ use std::f32::consts::PI;
 /// [Robert Penner](http://robertpenner.com/easing/), the guy who _literally_
 /// wrote the book on easings.
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Easing {
     Linear,
 
@@ -64,6 +64,60 @@ const C4: f32 = (2.0 * PI) / 3.0;
 const C5: f32 = (2.0 * PI) / 4.5;
 
 impl Easing {
+    pub const FUNCTION_NAMES: &[&str] = &[
+        "linear",
+        "ease_in",
+        "ease_out",
+        "ease_in_out",
+        "ease_in_quad",
+        "ease_out_quad",
+        "ease_in_out_quad",
+        "ease_in_cubic",
+        "ease_out_cubic",
+        "ease_in_out_cubic",
+        "ease_in_quart",
+        "ease_out_quart",
+        "ease_in_out_quart",
+        "ease_in_quint",
+        "ease_out_quint",
+        "ease_in_out_quint",
+        "ease_in_sine",
+        "ease_out_sine",
+        "ease_in_out_sine",
+        "ease_in_expo",
+        "ease_out_expo",
+        "ease_in_out_expo",
+        "ease_in_circ",
+        "ease_out_circ",
+        "ease_in_out_circ",
+        "ease_in_back",
+        "ease_out_back",
+        "ease_in_out_back",
+        "ease_in_elastic",
+        "ease_out_elastic",
+        "ease_in_out_elastic",
+        "ease_in_bounce",
+        "ease_out_bounce",
+        "ease_in_out_bounce",
+        "logarithmic",
+        "custom",
+        "exponential",
+        "sigmoid",
+    ];
+
+    /// Returns a dynamically filtered list of unary function names. Useful for
+    /// cases when you are selecting easings dynamically and don't want to deal
+    /// with edge cases of custom or parametric easings.
+    pub fn unary_function_names() -> Vec<&'static str> {
+        Self::FUNCTION_NAMES
+            .iter()
+            .copied()
+            .filter(|&name| {
+                name != "custom" && name != "exponential" && name != "sigmoid"
+            })
+            .collect()
+    }
+
     pub fn apply(&self, t: f32) -> f32 {
         match self {
             Self::Linear => linear(t),
@@ -110,6 +164,9 @@ impl Easing {
     pub fn from_str(name: &str) -> Option<Self> {
         match name {
             "linear" => Some(Self::Linear),
+            "ease_in" => Some(Self::EaseIn),
+            "ease_out" => Some(Self::EaseOut),
+            "ease_in_out" => Some(Self::EaseInOut),
             "ease_in_quad" => Some(Self::EaseInQuad),
             "ease_out_quad" => Some(Self::EaseOutQuad),
             "ease_in_out_quad" => Some(Self::EaseInOutQuad),
@@ -140,9 +197,58 @@ impl Easing {
             "ease_in_bounce" => Some(Self::EaseInBounce),
             "ease_out_bounce" => Some(Self::EaseOutBounce),
             "ease_in_out_bounce" => Some(Self::EaseInOutBounce),
+            "logarithmic" => Some(Self::Logarithmic),
+
+            "custom" => unimplemented!(),
+
             "exponential" => Some(Self::Exponential(2.0)),
             "sigmoid" => Some(Self::Sigmoid(5.0)),
             _ => None,
+        }
+    }
+
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            Self::Linear => "linear",
+            Self::EaseIn => "ease_in",
+            Self::EaseOut => "ease_out",
+            Self::EaseInOut => "ease_in_out",
+            Self::EaseInQuad => "ease_in_quad",
+            Self::EaseOutQuad => "ease_out_quad",
+            Self::EaseInOutQuad => "ease_in_out_quad",
+            Self::EaseInCubic => "ease_in_cubic",
+            Self::EaseOutCubic => "ease_out_cubic",
+            Self::EaseInOutCubic => "ease_in_out_cubic",
+            Self::EaseInQuart => "ease_in_quart",
+            Self::EaseOutQuart => "ease_out_quart",
+            Self::EaseInOutQuart => "ease_in_out_quart",
+            Self::EaseInQuint => "ease_in_quint",
+            Self::EaseOutQuint => "ease_out_quint",
+            Self::EaseInOutQuint => "ease_in_out_quint",
+            Self::EaseInSine => "ease_in_sine",
+            Self::EaseOutSine => "ease_out_sine",
+            Self::EaseInOutSine => "ease_in_out_sine",
+            Self::EaseInExpo => "ease_in_expo",
+            Self::EaseOutExpo => "ease_out_expo",
+            Self::EaseInOutExpo => "ease_in_out_expo",
+            Self::EaseInCirc => "ease_in_circ",
+            Self::EaseOutCirc => "ease_out_circ",
+            Self::EaseInOutCirc => "ease_in_out_circ",
+            Self::EaseInBack => "ease_in_back",
+            Self::EaseOutBack => "ease_out_back",
+            Self::EaseInOutBack => "ease_in_out_back",
+            Self::EaseInElastic => "ease_in_elastic",
+            Self::EaseOutElastic => "ease_out_elastic",
+            Self::EaseInOutElastic => "ease_in_out_elastic",
+            Self::EaseInBounce => "ease_in_bounce",
+            Self::EaseOutBounce => "ease_out_bounce",
+            Self::EaseInOutBounce => "ease_in_out_bounce",
+            Self::Logarithmic => "logarithmic",
+
+            Self::Custom(_) => "custom",
+
+            Self::Exponential(_) => "exponential",
+            Self::Sigmoid(_) => "sigmoid",
         }
     }
 }

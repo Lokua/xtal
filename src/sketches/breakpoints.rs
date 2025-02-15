@@ -11,7 +11,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(150),
+    gui_h: Some(200),
 };
 
 const TOTAL_BEATS: f32 = 2.0;
@@ -34,52 +34,53 @@ struct LaneSegment {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    wr: WindowRect,
+    animation: Animation<ManualTiming>,
+    controls: Controls,
     lanes: Vec<Vec<Breakpoint>>,
     segments: Vec<Vec<LaneSegment>>,
+    wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let mut animation = Animation::new(ManualTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(ManualTiming::new(SKETCH_CONFIG.bpm));
 
-    let lanes = vec![
-        create_ramp_lane(),
-        create_wave_lane(),
-        create_step_lane(),
-        kitchen_sink(),
-    ];
-
-    let segments = compute_all_segments(&lanes, &mut animation, &wr);
+    let controls = Controls::new(vec![
+        Control::select("easing", "linear", &Easing::unary_function_names()),
+        Control::select(
+            "wave_easing",
+            "linear",
+            &Easing::unary_function_names(),
+        ),
+    ]);
 
     Model {
+        animation,
+        controls,
+        lanes: vec![],
+        segments: vec![],
         wr,
-        lanes,
-        segments,
     }
 }
 
-fn compute_all_segments(
-    lanes: &[Vec<Breakpoint>],
-    animation: &mut Animation<ManualTiming>,
-    wr: &WindowRect,
-) -> Vec<Vec<LaneSegment>> {
-    let vertical_offset = TRACK_HEIGHT + TRACK_PADDING;
+pub fn update(_app: &App, m: &mut Model, _update: Update) {
+    if m.controls.changed() {
+        let easing = Easing::from_str(&m.controls.string("easing")).unwrap();
+        let wave_easing =
+            Easing::from_str(&m.controls.string("wave_easing")).unwrap();
 
-    lanes
-        .iter()
-        .enumerate()
-        .map(|(lane_index, breakpoints)| {
-            let y_offset = wr.top()
-                - (TRACK_HEIGHT / 2.0)
-                - TRACK_PADDING
-                - (lane_index as f32 * vertical_offset);
+        let lanes = vec![
+            create_ramp_lane(easing.clone()),
+            create_wave_lane(wave_easing.clone()),
+            create_step_lane(),
+            kitchen_sink(easing, wave_easing),
+        ];
 
-            create_lane_segments(breakpoints, animation, y_offset, wr.hw())
-        })
-        .collect()
+        m.segments = create_segments(&lanes, &mut m.animation, &m.wr);
+        m.lanes = lanes;
+
+        m.controls.mark_unchanged();
+    }
 }
-
-pub fn update(_app: &App, _m: &mut Model, _update: Update) {}
 
 pub fn view(app: &App, m: &Model, frame: Frame) {
     let draw = app.draw();
@@ -141,6 +142,27 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
+fn create_segments(
+    lanes: &[Vec<Breakpoint>],
+    animation: &mut Animation<ManualTiming>,
+    wr: &WindowRect,
+) -> Vec<Vec<LaneSegment>> {
+    let vertical_offset = TRACK_HEIGHT + TRACK_PADDING;
+
+    lanes
+        .iter()
+        .enumerate()
+        .map(|(lane_index, breakpoints)| {
+            let y_offset = wr.top()
+                - (TRACK_HEIGHT / 2.0)
+                - TRACK_PADDING
+                - (lane_index as f32 * vertical_offset);
+
+            create_lane_segments(breakpoints, animation, y_offset, wr.hw())
+        })
+        .collect()
+}
+
 fn create_lane_segments(
     breakpoints: &[Breakpoint],
     animation: &mut Animation<ManualTiming>,
@@ -176,7 +198,6 @@ fn create_lane_segments(
                     let mut points = Vec::new();
 
                     for i in 0..=CURVE_RESOLUTION {
-                        // let current_pos = current.position + (i as f32 * step);
                         let current_pos =
                             current.position + (i as f32 * step) + (step / 2.0);
                         animation.timing.set_beats(current_pos);
@@ -228,25 +249,33 @@ fn map_to_track(
     pt2(x, y)
 }
 
-fn create_ramp_lane() -> Vec<Breakpoint> {
+fn create_ramp_lane(easing: Easing) -> Vec<Breakpoint> {
     vec![
-        Breakpoint::ramp(0.0, 0.0, Easing::EaseInQuint),
-        Breakpoint::ramp(TOTAL_BEATS / 2.0, 1.0, Easing::EaseOutBounce),
+        Breakpoint::ramp(0.0, 0.0, easing.clone()),
+        Breakpoint::ramp(TOTAL_BEATS / 2.0, 1.0, easing),
         Breakpoint::end(TOTAL_BEATS, 0.0),
     ]
 }
 
-fn create_wave_lane() -> Vec<Breakpoint> {
+fn create_wave_lane(easing: Easing) -> Vec<Breakpoint> {
     let frequency = 0.125;
     let amplitude = 0.125;
     vec![
-        Breakpoint::wave(0.0, 0.0, Shape::Triangle, frequency, amplitude),
+        Breakpoint::wave(
+            0.0,
+            0.0,
+            Shape::Triangle,
+            frequency,
+            amplitude,
+            easing.clone(),
+        ),
         Breakpoint::wave(
             TOTAL_BEATS / 2.0,
             1.0,
             Shape::Triangle,
             frequency,
             amplitude,
+            easing,
         ),
         Breakpoint::end(TOTAL_BEATS, 0.0),
     ]
@@ -261,13 +290,13 @@ fn create_step_lane() -> Vec<Breakpoint> {
     ]
 }
 
-fn kitchen_sink() -> Vec<Breakpoint> {
+fn kitchen_sink(easing: Easing, wave_easing: Easing) -> Vec<Breakpoint> {
     vec![
         Breakpoint::step(0.0, 0.0),
-        Breakpoint::ramp(0.25, 0.0, Easing::Linear),
+        Breakpoint::ramp(0.25, 0.0, easing.clone()),
         Breakpoint::step(0.5, 1.0),
-        Breakpoint::ramp(1.0, 0.5, Easing::EaseIn),
-        Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.125, 0.125),
+        Breakpoint::ramp(1.0, 0.5, easing),
+        Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.125, 0.125, wave_easing),
         Breakpoint::end(2.0, 0.0),
     ]
 }

@@ -1,4 +1,5 @@
 pub mod blob;
+pub mod breakpoints;
 pub mod brutalism;
 pub mod displacement_2a;
 pub mod drop;
@@ -44,7 +45,6 @@ pub use self::genuary_2025::g25_5_isometric;
 
 pub mod scratch;
 pub use self::scratch::bos;
-pub use self::scratch::breakpoints;
 pub use self::scratch::chromatic_aberration;
 pub use self::scratch::displacement_1;
 pub use self::scratch::displacement_1a;

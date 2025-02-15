@@ -80,10 +80,8 @@ fn main() {
     match sketch_name {
         // --- MAIN
         "blob" => run_sketch!(blob),
+        "breakpoints" => run_sketch!(breakpoints),
         "brutalism" => run_sketch!(brutalism),
-        "displacement_1" => run_sketch!(displacement_1),
-        "displacement_1a" => run_sketch!(displacement_1a),
-        "displacement_2" => run_sketch!(displacement_2),
         "displacement_2a" => run_sketch!(displacement_2a),
         "drop" => run_sketch!(drop),
         "drop_walk" => run_sketch!(drop_walk),
@@ -128,8 +126,10 @@ fn main() {
 
         // --- SCRATCH
         "bos" => run_sketch!(bos),
-        "breakpoints" => run_sketch!(breakpoints),
         "chromatic_aberration" => run_sketch!(chromatic_aberration),
+        "displacement_1" => run_sketch!(displacement_1),
+        "displacement_1a" => run_sketch!(displacement_1a),
+        "displacement_2" => run_sketch!(displacement_2),
         "lin_alg" => run_sketch!(lin_alg),
         "lines" => run_sketch!(lines),
         "noise" => run_sketch!(noise),

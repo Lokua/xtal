@@ -36,12 +36,14 @@ impl Breakpoint {
         shape: Shape,
         frequency: f32,
         amplitude: f32,
+        easing: Easing,
     ) -> Self {
         Self::new(
             Transition::Wave {
                 shape,
                 frequency,
                 amplitude,
+                easing,
             },
             position,
             value,
@@ -78,6 +80,7 @@ pub enum Transition {
         shape: Shape,
         amplitude: f32,
         frequency: f32,
+        easing: Easing,
     },
     End,
 }
@@ -148,20 +151,20 @@ impl<T: TimingSource> Animation<T> {
                 Transition::Step => bp.value,
                 Transition::Ramp { easing } => {
                     let duration = np.position - bp.position;
-                    let t = (beats_elapsed / duration) % 1.0;
-                    let eased_t = easing.apply(t);
-                    let value = lerp(bp.value, np.value, eased_t);
+                    let t = easing.apply((beats_elapsed / duration) % 1.0);
+                    let value = lerp(bp.value, np.value, t);
                     value
                 }
                 Transition::Wave {
                     shape,
                     frequency,
                     amplitude,
+                    easing,
                 } => match shape {
                     Shape::Sine => unimplemented!(),
                     Shape::Triangle => {
                         let duration = np.position - bp.position;
-                        let t = (beats_elapsed / duration) % 1.0;
+                        let t = easing.apply((beats_elapsed / duration) % 1.0);
                         let value = lerp(bp.value, np.value, t);
 
                         let phase_offset = 0.25;
@@ -340,7 +343,14 @@ mod tests {
         let x = || {
             a.animate(
                 &[
-                    Breakpoint::wave(0.0, 0.0, Shape::Triangle, 1.0, 0.5),
+                    Breakpoint::wave(
+                        0.0,
+                        0.0,
+                        Shape::Triangle,
+                        1.0,
+                        0.5,
+                        Easing::Linear,
+                    ),
                     Breakpoint::end(1.0, 1.0),
                 ],
                 Mode::Loop,
@@ -378,7 +388,14 @@ mod tests {
                     Breakpoint::step(0.0, 0.0),
                     Breakpoint::step(0.5, 1.0),
                     Breakpoint::ramp(1.0, 0.5, Easing::EaseInExpo),
-                    Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.25, 0.25),
+                    Breakpoint::wave(
+                        1.5,
+                        1.0,
+                        Shape::Triangle,
+                        0.25,
+                        0.25,
+                        Easing::Linear,
+                    ),
                     Breakpoint::end(2.0, 0.0),
                 ],
                 Mode::Once,
