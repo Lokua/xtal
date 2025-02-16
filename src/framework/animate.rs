@@ -24,21 +24,23 @@ impl Breakpoint {
 
     /// Creates a linear ramp from this `value` to the next breakpoint's value
     /// with amplitude modulation applied over it and finalized by various
-    /// clamping modes and easing algorithms to sculpt extremely complex curves.
-    /// Like position, `frequency` is expressed in beats. `amplitude` represents
-    /// how much above and below the base interpolated value the modulation will
-    /// add or subtract depending on its phase. For [`Shape::Sine`] and
-    /// [`Shape::Triangle`], the modulation wave is phase shifted to always
-    /// start and end at or very close to zero to ensure smooth transitions
-    /// between segments (this is not the case for [`Shape::Square`] because
-    /// discontinuities are unavoidable). The `width` parameter controls the
-    /// [`Shape::Square`] duty cycle. For `Sine` and `Triangle` shapes, it will
-    /// skew the peaks, for example when applied to a tiangle a `width` of 0.0
-    /// will produce a downwards saw while 1.0 will produce an upwards one -
-    /// applied to sine is just a slightly more rounded version of the same. For
-    /// all shapes a value of 0.5 will produce the natural wave. Beware this
-    /// method can produce values outside of the otherwise normalized \[0, 1\]
-    /// range when the `constrain` parameter is set to [`Constrain::None`].
+    /// clamping modes and easing algorithms that together can produce extremely
+    /// complex curves. Like position, `frequency` is expressed in beats.
+    /// `amplitude` represents how much above and below the base interpolated
+    /// value the modulation will add or subtract depending on its phase.
+    /// Negative amplitudes can be used to invert the modulation. For
+    /// [`Shape::Sine`] and [`Shape::Triangle`], the modulation wave is phase
+    /// shifted to always start and end at or very close to zero to ensure
+    /// smooth transitions between segments (this is not the case for
+    /// [`Shape::Square`] because discontinuities are unavoidable). The `width`
+    /// parameter controls the [`Shape::Square`] duty cycle. For `Sine` and
+    /// `Triangle` shapes, it will skew the peaks, for example when applied to a
+    /// tiangle a `width` of 0.0 will produce a downwards saw while 1.0 will
+    /// produce an upwards one - applied to sine is just a slightly more rounded
+    /// version of the same. For all shapes a value of 0.5 will produce the
+    /// natural wave. Beware this method can produce values outside of the
+    /// otherwise normalized \[0, 1\] range when the `constrain` parameter is
+    /// set to [`Constrain::None`].
     pub fn wave(
         position: f32,
         value: f32,

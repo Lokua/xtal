@@ -52,6 +52,8 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             &Easing::unary_function_names(),
         ),
         Control::select("wave_shape", "sine", &["sine", "triangle", "square"]),
+        Control::slider("wave_amplitude", 0.125, (-1.0, 1.0), 0.001),
+        Control::slider("wave_frequency", 0.25, (0.0, 1.0), 0.0125),
         Control::slider("wave_width", 0.5, (0.0, 1.0), 0.01),
         Control::select(
             "wave_clamp_method",
@@ -78,17 +80,29 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let shape = Shape::from_str(&m.controls.string("wave_shape"));
         let clamp_method = m.controls.string("wave_clamp_method");
         let constrain = Constrain::from_str(&clamp_method, 0.0, 1.0);
+        let amplitude = m.controls.float("wave_amplitude");
+        let frequency = m.controls.float("wave_frequency");
 
         let lanes = vec![
             create_ramp_lane(easing.clone()),
+            create_step_lane(),
             create_wave_lane(
                 shape.clone(),
                 wave_easing.clone(),
                 width,
                 constrain.clone(),
+                amplitude,
+                frequency,
             ),
-            create_step_lane(),
-            kitchen_sink(easing, shape, wave_easing, width, constrain),
+            kitchen_sink(
+                easing,
+                shape,
+                wave_easing,
+                width,
+                constrain,
+                amplitude,
+                frequency,
+            ),
         ];
 
         m.segments = create_segments(&lanes, &mut m.animation, &m.wr);
@@ -273,14 +287,23 @@ fn create_ramp_lane(easing: Easing) -> Vec<Breakpoint> {
     ]
 }
 
+fn create_step_lane() -> Vec<Breakpoint> {
+    vec![
+        Breakpoint::step(0.0, 0.0),
+        Breakpoint::step(TOTAL_BEATS / 4.0, 0.5),
+        Breakpoint::step(TOTAL_BEATS / 2.0, 1.0),
+        Breakpoint::end(TOTAL_BEATS, 0.0),
+    ]
+}
+
 fn create_wave_lane(
     shape: Shape,
     easing: Easing,
     width: f32,
     constrain: Constrain,
+    amplitude: f32,
+    frequency: f32,
 ) -> Vec<Breakpoint> {
-    let frequency = 0.125;
-    let amplitude = 0.125;
     vec![
         Breakpoint::wave(
             0.0,
@@ -306,21 +329,14 @@ fn create_wave_lane(
     ]
 }
 
-fn create_step_lane() -> Vec<Breakpoint> {
-    vec![
-        Breakpoint::step(0.0, 0.0),
-        Breakpoint::step(TOTAL_BEATS / 4.0, 0.5),
-        Breakpoint::step(TOTAL_BEATS / 2.0, 1.0),
-        Breakpoint::end(TOTAL_BEATS, 0.0),
-    ]
-}
-
 fn kitchen_sink(
     easing: Easing,
     shape: Shape,
     wave_easing: Easing,
     width: f32,
     constrain: Constrain,
+    amplitude: f32,
+    frequency: f32,
 ) -> Vec<Breakpoint> {
     vec![
         Breakpoint::step(0.0, 0.0),
@@ -331,9 +347,9 @@ fn kitchen_sink(
             1.5,
             1.0,
             shape,
-            0.125,
+            frequency,
             width,
-            0.125,
+            amplitude,
             wave_easing,
             constrain,
         ),
