@@ -57,12 +57,6 @@ pub enum Easing {
     Sigmoid(f32),
 }
 
-const C1: f32 = 1.70158;
-const C2: f32 = C1 * 1.525;
-const C3: f32 = C1 + 1.0;
-const C4: f32 = (2.0 * PI) / 3.0;
-const C5: f32 = (2.0 * PI) / 4.5;
-
 impl Easing {
     pub const FUNCTION_NAMES: &[&str] = &[
         "linear",
@@ -252,6 +246,12 @@ impl Easing {
         }
     }
 }
+
+const C1: f32 = 1.70158;
+const C2: f32 = C1 * 1.525;
+const C3: f32 = C1 + 1.0;
+const C4: f32 = (2.0 * PI) / 3.0;
+const C5: f32 = (2.0 * PI) / 4.5;
 
 pub fn linear(t: f32) -> f32 {
     t

@@ -23,20 +23,22 @@ impl Breakpoint {
     }
 
     /// Creates a linear ramp from this `value` to the next breakpoint's value
-    /// with amplitude modulation applied over it. Like position, `frequency` is
-    /// expressed in beats. `amplitude` represents how much above and below the
-    /// base interpolated value the modulation will add or subtract depending on
-    /// its phase. For [`Shape::Sine`] and [`Shape::Triangle`], the modulation
-    /// wave is phase shifted to always start and end at or very close to zero
-    /// to ensure smooth transitions between segments (this is not the case for
-    /// [`Shape::Square`] because discontinuities are unavoidable). The `width`
-    /// parameter controls the [`Shape::Square`] duty cycle. For `Sine` and
-    /// `Triangle` shapes, it will skew the peaks, for example when applied to a
-    /// tiangle a `width` of 0.0 will produce a downwards saw while 1.0 will
-    /// produce an upwards one - applied to sine is just a slightly more rounded
-    /// version of the same. Beware this method can produce values outside of
-    /// the otherwise normalized [0, 1] domain of the base ramp, so clamping or
-    /// folding the result is reccommended.
+    /// with amplitude modulation applied over it and finalized by various
+    /// clamping modes and easing algorithms to sculpt extremely complex curves.
+    /// Like position, `frequency` is expressed in beats. `amplitude` represents
+    /// how much above and below the base interpolated value the modulation will
+    /// add or subtract depending on its phase. For [`Shape::Sine`] and
+    /// [`Shape::Triangle`], the modulation wave is phase shifted to always
+    /// start and end at or very close to zero to ensure smooth transitions
+    /// between segments (this is not the case for [`Shape::Square`] because
+    /// discontinuities are unavoidable). The `width` parameter controls the
+    /// [`Shape::Square`] duty cycle. For `Sine` and `Triangle` shapes, it will
+    /// skew the peaks, for example when applied to a tiangle a `width` of 0.0
+    /// will produce a downwards saw while 1.0 will produce an upwards one -
+    /// applied to sine is just a slightly more rounded version of the same. For
+    /// all shapes a value of 0.5 will produce the natural wave. Beware this
+    /// method can produce values outside of the otherwise normalized \[0, 1\]
+    /// range when the `constrain` parameter is set to [`Constrain::None`].
     pub fn wave(
         position: f32,
         value: f32,
@@ -45,6 +47,7 @@ impl Breakpoint {
         width: f32,
         amplitude: f32,
         easing: Easing,
+        constrain: Constrain,
     ) -> Self {
         Self::new(
             Kind::Wave {
@@ -53,6 +56,7 @@ impl Breakpoint {
                 width,
                 amplitude,
                 easing,
+                constrain,
             },
             position,
             value,
@@ -65,7 +69,7 @@ impl Breakpoint {
     /// position will be used to mark the end of a sequence), but this is
     /// provided for code clarity as it reads better. If you are using
     /// [`Mode::Loop`] it's a good idea to make the value of this endpoint match
-    /// the first value to avoid discontinuity (unless you want that of course).
+    /// the first value to avoid discontinuity (unless you want that).
     pub fn end(position: f32, value: f32) -> Self {
         Self::new(Kind::End, position, value)
     }
@@ -91,6 +95,7 @@ pub enum Kind {
         width: f32,
         frequency: f32,
         easing: Easing,
+        constrain: Constrain,
     },
     End,
 }
@@ -100,6 +105,35 @@ pub enum Shape {
     Sine,
     Triangle,
     Square,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Constrain {
+    None,
+    Clamp(f32, f32),
+    Fold(f32, f32),
+    Wrap(f32, f32),
+}
+
+impl Constrain {
+    pub fn from_str(method: &str, min: f32, max: f32) -> Self {
+        match method.to_lowercase().as_str() {
+            "none" => Self::None,
+            "clamp" => Self::Clamp(min, max),
+            "fold" => Self::Fold(min, max),
+            "wrap" => Self::Wrap(min, max),
+            _ => loud_panic!("No constrain method {} exists.", method),
+        }
+    }
+
+    pub fn apply(&self, value: f32) -> f32 {
+        match self {
+            Self::None => value,
+            Self::Clamp(min, max) => constrain::clamp(value, *min, *max),
+            Self::Fold(min, max) => constrain::fold(value, *min, *max),
+            Self::Wrap(min, max) => constrain::wrap(value, *min, *max),
+        }
+    }
 }
 
 impl Shape {
@@ -178,6 +212,7 @@ impl<T: TimingSource> Animation<T> {
                     width,
                     amplitude,
                     easing,
+                    constrain,
                 } => match shape {
                     Shape::Sine => {
                         let value = ramp(p1, p2, beats_elapsed, easing.clone());
@@ -185,7 +220,7 @@ impl<T: TimingSource> Animation<T> {
                         let phase_in_cycle = beats_elapsed / frequency;
                         let mod_wave = (TWO_PI * phase_in_cycle).sin();
 
-                        value + (mod_wave * amplitude)
+                        constrain.apply(value + (mod_wave * amplitude))
                     }
                     Shape::Triangle => {
                         let value = ramp(p1, p2, beats_elapsed, easing.clone());
@@ -201,7 +236,7 @@ impl<T: TimingSource> Animation<T> {
                             3.0 - 4.0 * mod_wave
                         };
 
-                        value + (mod_wave * amplitude)
+                        constrain.apply(value + (mod_wave * amplitude))
                     }
                     Shape::Square => {
                         let value = ramp(p1, p2, beats_elapsed, easing.clone());
@@ -213,7 +248,7 @@ impl<T: TimingSource> Animation<T> {
                             -1.0
                         };
 
-                        value + (mod_wave * amplitude)
+                        constrain.apply(value + (mod_wave * amplitude))
                     }
                 },
                 Kind::End => {
@@ -396,6 +431,7 @@ mod tests {
                         0.5,
                         0.5,
                         Easing::Linear,
+                        Constrain::None,
                     ),
                     Breakpoint::end(1.0, 1.0),
                 ],
@@ -442,6 +478,7 @@ mod tests {
                         0.5,
                         0.25,
                         Easing::Linear,
+                        Constrain::None,
                     ),
                     Breakpoint::end(2.0, 0.0),
                 ],

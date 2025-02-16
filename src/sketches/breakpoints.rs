@@ -77,16 +77,21 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let width = m.controls.float("wave_width");
         let shape = Shape::from_str(&m.controls.string("wave_shape"));
         let clamp_method = m.controls.string("wave_clamp_method");
+        let constrain = Constrain::from_str(&clamp_method, 0.0, 1.0);
 
         let lanes = vec![
             create_ramp_lane(easing.clone()),
-            create_wave_lane(shape.clone(), wave_easing.clone(), width),
+            create_wave_lane(
+                shape.clone(),
+                wave_easing.clone(),
+                width,
+                constrain.clone(),
+            ),
             create_step_lane(),
-            kitchen_sink(easing, shape, wave_easing, width),
+            kitchen_sink(easing, shape, wave_easing, width, constrain),
         ];
 
-        m.segments =
-            create_segments(&lanes, &mut m.animation, &m.wr, &clamp_method);
+        m.segments = create_segments(&lanes, &mut m.animation, &m.wr);
         m.lanes = lanes;
 
         m.controls.mark_unchanged();
@@ -141,7 +146,6 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
                 breakpoint.value,
                 y_offset,
                 m.wr.hw(),
-                &m.controls.string("wave_clamp_method"),
             );
 
             draw.ellipse()
@@ -158,7 +162,6 @@ fn create_segments(
     lanes: &[Vec<Breakpoint>],
     animation: &mut Animation<ManualTiming>,
     wr: &WindowRect,
-    clamp_method: &str,
 ) -> Vec<Vec<LaneSegment>> {
     let vertical_offset = TRACK_HEIGHT + TRACK_PADDING;
 
@@ -171,13 +174,7 @@ fn create_segments(
                 - TRACK_PADDING
                 - (lane_index as f32 * vertical_offset);
 
-            create_lanes(
-                breakpoints,
-                animation,
-                y_offset,
-                wr.hw(),
-                &clamp_method,
-            )
+            create_lanes(breakpoints, animation, y_offset, wr.hw())
         })
         .collect()
 }
@@ -187,7 +184,6 @@ fn create_lanes(
     animation: &mut Animation<ManualTiming>,
     y_offset: f32,
     half_width: f32,
-    clamp_method: &str,
 ) -> Vec<LaneSegment> {
     let mut segments = Vec::new();
 
@@ -203,14 +199,12 @@ fn create_lanes(
                         current.value,
                         y_offset,
                         half_width,
-                        &clamp_method,
                     );
                     let end = map_to_track(
                         next.position,
                         next.value,
                         y_offset,
                         half_width,
-                        &clamp_method,
                     );
 
                     let mid = pt2(end.x, start.y);
@@ -230,7 +224,6 @@ fn create_lanes(
                             value,
                             y_offset,
                             half_width,
-                            &clamp_method,
                         ));
                     }
                     points
@@ -252,7 +245,6 @@ fn map_to_track(
     value: f32,
     track_offset: f32,
     half_width: f32,
-    clamp_method: &str,
 ) -> Point2 {
     let track_half_width = half_width - TRACK_PADDING;
     let x = map_range(
@@ -264,13 +256,7 @@ fn map_to_track(
     );
     let y = track_offset
         + map_range(
-            match clamp_method {
-                "none" => value,
-                "clamp" => constrain::clamp(value, 0.0, 1.0),
-                "fold" => constrain::fold(value, 0.0, 1.0),
-                "wrap" => constrain::wrap(value, 0.0, 1.0),
-                _ => loud_panic!("No clamp method named {}", clamp_method),
-            },
+            value,
             0.0,
             1.0,
             -TRACK_HEIGHT / 2.0 + LANE_PADDING,
@@ -291,6 +277,7 @@ fn create_wave_lane(
     shape: Shape,
     easing: Easing,
     width: f32,
+    constrain: Constrain,
 ) -> Vec<Breakpoint> {
     let frequency = 0.125;
     let amplitude = 0.125;
@@ -303,6 +290,7 @@ fn create_wave_lane(
             width,
             amplitude,
             easing.clone(),
+            constrain.clone(),
         ),
         Breakpoint::wave(
             TOTAL_BEATS / 2.0,
@@ -312,6 +300,7 @@ fn create_wave_lane(
             width,
             amplitude,
             easing,
+            constrain,
         ),
         Breakpoint::end(TOTAL_BEATS, 0.0),
     ]
@@ -331,13 +320,23 @@ fn kitchen_sink(
     shape: Shape,
     wave_easing: Easing,
     width: f32,
+    constrain: Constrain,
 ) -> Vec<Breakpoint> {
     vec![
         Breakpoint::step(0.0, 0.0),
         Breakpoint::ramp(0.25, 0.0, easing.clone()),
         Breakpoint::step(0.5, 1.0),
         Breakpoint::ramp(1.0, 0.5, easing),
-        Breakpoint::wave(1.5, 1.0, shape, 0.125, width, 0.125, wave_easing),
+        Breakpoint::wave(
+            1.5,
+            1.0,
+            shape,
+            0.125,
+            width,
+            0.125,
+            wave_easing,
+            constrain,
+        ),
         Breakpoint::end(2.0, 0.0),
     ]
 }
