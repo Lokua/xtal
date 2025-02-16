@@ -1,77 +1,55 @@
 #!/bin/bash
-set -e  # Exit on any error
+set -e
+
+echo "Starting documentation deployment..."
 
 # Save the current branch name
 current_branch=$(git branch --show-current)
+echo "Current branch: $current_branch"
 
-# Ensure we're in the root of the project
-if [ ! -f "Cargo.toml" ]; then
-    echo "Error: Cargo.toml not found. Please run this script from the root of your Rust project."
-    exit 1
-fi
-
-# Generate the documentation
-echo "Generating documentation..."
-cargo doc --release --no-deps || {
-    echo "Error: Documentation generation failed"
-    exit 1
+# Generate docs for both the main app and derives
+echo "Generating documentation for main app and derives crate..."
+cargo doc --release --no-deps -p lattice -p derives || {
+   echo "Error: Documentation generation failed"
+   exit 1
 }
+echo "Documentation generated successfully"
 
-# Create and switch to a temporary branch
-echo "Creating temporary branch for documentation..."
+echo "Creating temporary directory for docs..."
+temp_dir=$(mktemp -d)
+echo "Temporary directory created at: $temp_dir"
+cp -r target/doc/* "$temp_dir"
+echo "Documentation copied to temporary directory"
+
+# Create the new branch
+echo "Creating new gh-pages-temp branch..."
 git checkout --orphan gh-pages-temp
 
-# Clear the working directory (remove all tracked files)
+# Clear the working directory
+echo "Clearing working directory..."
 git rm -rf .
 
-# Copy the generated docs to the root
-echo "Copying documentation files..."
-cp -r target/doc/* .
+# Copy the docs back
+echo "Copying documentation back from temporary directory..."
+cp -r "$temp_dir"/* .
+rm -rf "$temp_dir"
+echo "Temporary directory cleaned up"
 
-# Get the crate name from Cargo.toml
-crate_name=$(grep '^name = ' Cargo.toml | cut -d '"' -f 2)
-if [ -z "$crate_name" ]; then
-    echo "Error: Could not determine crate name from Cargo.toml"
-    git checkout "$current_branch"
-    exit 1
-fi
-
-# Rename the crate index to index.html if it doesn't exist
-if [ ! -f index.html ]; then
-    if [ -f "$crate_name/index.html" ]; then
-        echo "Creating root index.html..."
-        mv "$crate_name/index.html" index.html
-    else
-        echo "Warning: Could not find $crate_name/index.html"
-    fi
-fi
-
-# Add all the files
+# Add and commit
+echo "Committing documentation..."
 git add .
+git commit -m "Update documentation"
 
-# Commit the changes
-git commit -m "docs: generate" || {
-    echo "Error: No changes to commit or commit failed"
-    git checkout "$current_branch"
-    exit 1
-}
-
-# Delete the old gh-pages branch and rename the temporary one
+# Replace gh-pages branch
 echo "Updating gh-pages branch..."
 git branch -D gh-pages || true
 git branch -m gh-pages
-
-# Force push to update the gh-pages branch
 echo "Pushing to GitHub..."
-git push -f origin gh-pages || {
-    echo "Error: Failed to push to GitHub"
-    git checkout "$current_branch"
-    exit 1
-}
+git push -f origin gh-pages
 
-# Switch back to the original branch
-echo "Cleaning up..."
+# Return to original branch
+echo "Returning to original branch: $current_branch"
 git checkout "$current_branch"
 
-echo "Documentation successfully deployed to gh-pages branch!"
+echo "Documentation deployment complete!"
 echo "Please ensure GitHub Pages is configured to deploy from the gh-pages branch in your repository settings."
