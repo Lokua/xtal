@@ -741,6 +741,7 @@ impl Default for AutomateConfig {
 struct BreakpointConfig {
     position: f32,
     value: f32,
+    #[serde(flatten)]
     kind: KindConfig,
 }
 
@@ -748,14 +749,43 @@ impl From<BreakpointConfig> for Breakpoint {
     fn from(config: BreakpointConfig) -> Self {
         match config.kind {
             KindConfig::Step => Breakpoint::step(config.position, config.value),
+            KindConfig::Ramp { easing } => Breakpoint::ramp(
+                config.position,
+                config.value,
+                Easing::from_str(&easing).unwrap(),
+            ),
+            KindConfig::End => Breakpoint::end(config.position, config.value),
         }
     }
 }
 
 #[derive(Clone, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "kind")]
 enum KindConfig {
     Step,
+    Ramp {
+        #[serde(default = "default_easing")]
+        easing: String,
+    },
+    // Wave {
+    //     shape: Shape,
+    //     amplitude: f32,
+    //     width: f32,
+    //     frequency: f32,
+    //     easing: Easing,
+    //     constrain: Constrain,
+    // },
+    // RandomSmooth {
+    //     frequency: f32,
+    //     amplitude: f32,
+    //     easing: Easing,
+    //     constrain: Constrain,
+    // },
+    End,
+}
+
+fn default_easing() -> String {
+    "linear".to_string()
 }
 
 #[derive(Debug)]

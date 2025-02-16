@@ -56,12 +56,15 @@ rect_y:
 line:
   type: automate
   breakpoints:
-    - kind: step
-      position: 0.0
+    - position: 0.0
       value: 0.25
-    - kind: step
-      position: 1.0
+      kind: step
+    - position: 1.0
+      value: 0.25
+      kind: ramp
+    - position: 2.0
       value: 0.75
-    - kind: step
-      position: 2.0
-      value: 0.0
+      kind: ramp
+    - position: 3.0
+      value: 0.25
+      kind: end
