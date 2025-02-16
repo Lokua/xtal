@@ -1,13 +1,15 @@
-//! Supporting types for the [`Animation::animate`] method.
-//!
-//! This module provides the breakpoint animation system for creating complex
-//! automation curves, similar to those found in DAWs.
+//! Supporting types for the [`Animation::animate`] method, providing a
+//! breakpoint animation system for creating complex automation curves, similar
+//! to those found in DAWs, yet with some special tricks of its own.
 
 use nannou::math::map_range;
 use std::f32::EPSILON;
 
 use super::prelude::*;
 
+/// The core structure need to configure segments for the
+/// [`Animation::animate`] method. See the various constructors such as
+/// [`Breakpoint::step`], [`Breakpoint::ramp`], etc. for in depth details.
 #[derive(Debug)]
 pub struct Breakpoint {
     pub kind: Kind,
@@ -192,8 +194,17 @@ pub enum Mode {
 }
 
 impl<T: TimingSource> Animation<T> {
-    /// An advanced animation method modelled on DAW automation lanes.
-    /// See src/sketches/scratch/breakpoints_vis.rs for a demonstration
+    /// An advanced animation method modelled on DAW automation lanes. It is
+    /// capable of producing the same results as just about every other
+    /// animation method yet is more powerful, but as such requires a bit more
+    /// configuration. While other animation methods are focused on one style of
+    /// keyframe/transition, `animate` allows many different types of
+    /// transitions defined by a list of [`Breakpoint`], each with its own
+    /// configurable[`Kind`]. See [breakpoints] for a static visualization of
+    /// the kinds of curves `animate` can produce.
+    ///
+    /// [breakpoints]:
+    ///     https://github.com/Lokua/lattice/blob/main/src/sketches/breakpoints.rs
     pub fn animate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
         assert!(breakpoints.len() >= 1, "At least 1 breakpoint is required");
         assert!(

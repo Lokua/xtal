@@ -35,7 +35,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             AudioControlConfig {
                 channel: 0,
                 slew_config: SlewConfig::default(),
-                preemphasis: 0.0,
+                pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
                 default: 0.0,
@@ -46,7 +46,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             AudioControlConfig {
                 channel: 1,
                 slew_config: SlewConfig::default(),
-                preemphasis: 0.0,
+                pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
                 default: 0.0,
@@ -57,7 +57,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             AudioControlConfig {
                 channel: 2,
                 slew_config: SlewConfig::default(),
-                preemphasis: 0.0,
+                pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
                 default: 0.0,
@@ -82,7 +82,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let fall = m.controls.float("fall");
 
         m.audio.update_controls(|control| {
-            control.preemphasis = preemphasis;
+            control.pre_emphasis = preemphasis;
             control.detect = detect;
             control.slew_config.rise = rise;
             control.slew_config.fall = fall;

@@ -1,25 +1,25 @@
 {
   "values": {
-    "wave_shape": {
-      "String": "sine"
-    },
-    "wave_amplitude": {
-      "Float": 0.18
-    },
-    "wave_width": {
-      "Float": 0.32999998
-    },
-    "wave_easing": {
-      "String": "ease_out"
-    },
     "wave_frequency": {
       "Float": 0.25
     },
-    "wave_clamp_method": {
-      "String": "clamp"
-    },
     "easing": {
       "String": "ease_in_out_bounce"
+    },
+    "wave_easing": {
+      "String": "linear"
+    },
+    "wave_amplitude": {
+      "Float": 0.15
+    },
+    "wave_shape": {
+      "String": "square"
+    },
+    "wave_width": {
+      "Float": 0.5
+    },
+    "wave_clamp_method": {
+      "String": "clamp"
     }
   }
 }

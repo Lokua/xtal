@@ -1,3 +1,25 @@
+//! A timing abstraction built to allow various syncing mechanisms for Lattice's
+//! [`Animation`][animation] system, including:
+//!
+//! - Internal frame counting
+//! - External MIDI Clock with SPP support
+//! - External MIDI Time Code
+//! - External Hybrid mechanism utilizing both MIDI Clock and MTC for when SPP
+//!   isn't supported
+//! - External OSC for syncing specifically with Ableton Live via MaxForLive
+//!   (preferred)
+//! - Manual timing for generating visualizations of animation sequences
+//!   statically
+//!
+//! The core abstraction is the [`Timing`] enum which wraps various
+//! [`TimingSource`] implementations. In all cases you must provide a `bpm`
+//! parameter as like the [`Animation`] module, time is provided in musical
+//! _beats_, e.g. 1.0 = 1 quarter note, 0.5 = 1 eight note, and so on. This
+//! provides the most intuitive way to write animations that are in sync with
+//! music.
+//!
+//! [animation]: crate::framework::animation
+
 use nannou_osc as osc;
 use std::{
     env,
@@ -424,6 +446,14 @@ impl TimingSource for HybridTiming {
     }
 }
 
+/// Uses the Open Sound Protocol to sync with Ableton Live via the
+/// L.OSCTransport.amxd MaxForLive device included in this project's source code
+/// on [GitHub][github]. See the project README's [OSC][osc] section for more
+/// information.
+///
+/// [github]: https://github.com/Lokua/lattice
+/// [osc]:
+///     https://github.com/Lokua/lattice/tree/main?tab=readme-ov-file#open-sound-control-osc
 #[derive(Clone, Debug)]
 pub struct OscTransportTiming {
     bpm: f32,
@@ -506,8 +536,8 @@ impl TimingSource for OscTransportTiming {
 }
 
 /// Allows sketches to visualize animations statically by manually providing
-/// what beat we're on. This is especially useful for visualing
-/// [`crate::framework::Animation::Breakpoints`] sequences
+/// what beat we're on. This is especially useful for visualizing
+/// [`crate::framework::animate::Breakpoint`] sequences
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
     bpm: f32,

@@ -1,3 +1,6 @@
+//! Provides a means of controlling sketch parameters with the various Lattice
+//! control systems from an external yaml file that can be hot-reloaded.
+
 use indexmap::IndexMap;
 use notify::{Event, RecursiveMode, Watcher};
 use serde::{Deserialize, Deserializer};

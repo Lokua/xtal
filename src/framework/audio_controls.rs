@@ -1,3 +1,7 @@
+//! Control sketch parameters with audio signals. Supports any number of
+//! channels of the device you can specify in
+//! [`crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME`].
+
 use cpal::{traits::*, Device, StreamConfig};
 use nannou::math::map_range;
 use std::{
@@ -20,16 +24,16 @@ const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 pub type BufferProcessor =
     fn(buffer: &[f32], config: &AudioControlConfig) -> f32;
 
-/// The defualt processor used in [`AudioControls`] that applies a preemphasis
+/// The default processor used in [`AudioControls`] that applies a pre-emphasis
 /// filter to the incoming buffer then reduces that buffer into a single usable
 /// value via peak or RMS amplitude detection.
 pub fn default_buffer_processor(
     buffer: &[f32],
     config: &AudioControlConfig,
 ) -> f32 {
-    let emphasized = MultichannelAudioProcessor::apply_preemphasis(
+    let emphasized = MultichannelAudioProcessor::apply_pre_emphasis(
         buffer,
-        config.preemphasis,
+        config.pre_emphasis,
     );
     let smoothed =
         MultichannelAudioProcessor::detect(&emphasized, config.detect);
@@ -266,10 +270,10 @@ pub struct AudioControlConfig {
 
     pub slew_config: SlewConfig,
 
-    /// The preemphasis factor to apply to the audio signal.
+    /// The pre-emphasis factor to apply to the audio signal.
     /// A higher value results in more emphasis on high frequencies.
-    /// See [`MultichannelAudioProcessor::apply_preemphasis`] for more details
-    pub preemphasis: f32,
+    /// See [`MultichannelAudioProcessor::apply_pre_emphasis`] for more details
+    pub pre_emphasis: f32,
 
     /// Linearly interpolate between peak and RMS amplitude detection.
     /// 0.0 = peak, 1.0 = RMS
@@ -284,7 +288,7 @@ impl AudioControlConfig {
         channel: usize,
         slew_config: SlewConfig,
         detect: f32,
-        preemphasis: f32,
+        pre_emphasis: f32,
         range: (f32, f32),
         default: f32,
     ) -> Self {
@@ -292,7 +296,7 @@ impl AudioControlConfig {
             channel,
             slew_config,
             detect,
-            preemphasis,
+            pre_emphasis,
             range,
             default,
         }
@@ -374,14 +378,14 @@ impl MultichannelAudioProcessor {
         previous_value + coeff * (sample - previous_value)
     }
 
-    /// Standard preemphasis filter `y[n] = x[n] - α * x[n-1]` that amplifies high
+    /// Standard pre-emphasis filter `y[n] = x[n] - α * x[n-1]` that amplifies high
     /// frequencies relative to low frequencies by subtracting a portion of the
     /// previous sample. It boosts high frequencies indirectly rather than
     /// explicitly cutting low frequencies with a sharp cutoff like a classical
     /// HPF. 0.97 is common as it gives about +20dB emphasis starting around 1kHz.
     /// See freq-response-preemphasis.png in the repo's assets folder for more
     /// details.
-    pub fn apply_preemphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
+    pub fn apply_pre_emphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(buffer.len());
         filtered.push(buffer[0]);
 

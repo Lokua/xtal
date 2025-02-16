@@ -1,3 +1,5 @@
+//! A generic abstraction over UI control structures
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{self, Debug};

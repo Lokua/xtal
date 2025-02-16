@@ -1,3 +1,96 @@
+//! Animation module providing timing-synchronized animation and transition
+//! controls.
+//!
+//! This module offers a flexible system for creating time-based animations that
+//! are synchronized to musical time (beats) through various timing sources. The
+//! core animation system supports:
+//!
+//! - Beat-synchronized timing with support for various clock sources (MIDI,
+//!   OSC, manual)
+//! - Simple oscillations and phase-based animations
+//! - Linear and eased transitions between keyframes
+//! - Complex automation curves with configurable breakpoints
+//! - Randomized transitions with constraints
+//!
+//! # Musical Timing
+//!
+//! All animations are synchronized to musical time expressed in beats, where
+//! one beat equals one quarter note. The animation system can be driven by
+//! different timing sources (Frame, MIDI, OSC) that provide the current beat
+//! position, allowing animations to stay in sync with external music software
+//! or hardware.
+//!
+//! # Basic Usage
+//!
+//! ```rust
+//! use animation::{Animation, TimingSource};
+//!
+//! let animation = Animation::new(timing);
+//!
+//! // Simple oscillation between 0-1 over 4 beats
+//! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
+//!
+//! // Triangle wave oscillation between ranges
+//! let value = animation.triangle(
+//!     4.0,           // Duration in beats
+//!     (0.0, 100.0),  // Min/max range
+//!     0.0,           // Phase offset
+//! );
+//! ```
+//!
+//! # Keyframe Animations
+//!
+//! ```rust
+//! use animation::{Animation, Keyframe, kf};
+//!
+//! // Ramp between values with configurable easing
+//! let value = animation.ramp(
+//!     &[
+//!         kf(0.0, 1.0),     // Start at 0.0, hold for 1 beat
+//!         kf(1.0, 1.0),     // Ramp to 1.0 over 1 beat
+//!         kf(0.0, 0.0),     // Return to 0.0
+//!     ],
+//!     0.5,                  // Ramp time in beats
+//!     Easing::Linear        // Easing function
+//! );
+//! ```
+//!
+//! # Advanced Automation
+//!
+//! The [`Animation::animate`] method provides DAW-style automation curves with
+//! multiple breakpoint types and transition modes:
+//!
+//! ```rust
+//! use animation::{Animation, Breakpoint, Mode, Shape, Constrain};
+//!
+//! let value = animation.animate(
+//!     &[
+//!         // Start with a step change
+//!         Breakpoint::step(0.0, 0.0),
+//!         // Ramp with exponential easing
+//!         Breakpoint::ramp(1.0, 1.0, Easing::EaseInExpo),
+//!         // Add amplitude modulation
+//!         Breakpoint::wave(
+//!             2.0,            // Position in beats
+//!             0.5,            // Base value
+//!             Shape::Sine,    // Modulation shape
+//!             0.25,           // Frequency in beats
+//!             0.5,            // Width
+//!             0.25,           // Amplitude
+//!             Easing::Linear,
+//!             Constrain::None,
+//!         ),
+//!         // Mark end of sequence
+//!         Breakpoint::end(4.0, 0.0),
+//!     ],
+//!     Mode::Loop
+//! );
+//! ```
+//!
+//! The module supports both one-shot and looping animations, with precise
+//! control over timing, transitions, and modulation. All animations
+//! automatically sync to the provided timing source's beat position.
+
 use nannou::math::map_range;
 use nannou::rand;
 use rand::rngs::StdRng;

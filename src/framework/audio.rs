@@ -1,3 +1,6 @@
+//! **⚠️ Experimental**
+//! Receive single-channel, multiband audio with configurable FFT bands.
+
 use cpal::traits::*;
 use cpal::BuildStreamError;
 use rustfft::num_complex::Complex;
