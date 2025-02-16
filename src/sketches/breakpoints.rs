@@ -342,6 +342,14 @@ fn kitchen_sink(
         Breakpoint::step(0.0, 0.0),
         Breakpoint::ramp(0.25, 0.0, easing.clone()),
         Breakpoint::step(0.5, 1.0),
+        Breakpoint::random_smooth(
+            0.75,
+            0.0,
+            frequency,
+            amplitude,
+            easing.clone(),
+            constrain.clone(),
+        ),
         Breakpoint::ramp(1.0, 0.5, easing),
         Breakpoint::wave(
             1.5,

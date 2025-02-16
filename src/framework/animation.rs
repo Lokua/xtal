@@ -36,7 +36,7 @@ impl KeyframeRandom {
         Self { range, duration }
     }
 
-    fn generate_value(&self, seed: u64) -> f32 {
+    pub fn generate_value(&self, seed: u64) -> f32 {
         let mut rng = StdRng::seed_from_u64(seed);
         let random = rng.gen::<f32>();
         self.range.0 + (self.range.1 - self.range.0) * random
@@ -150,7 +150,7 @@ impl<T: TimingSource> Animation<T> {
     }
 
     /// Convenience version of lerp that automatically adds a final keyframe
-    /// to ensure a continuous loop back to the first keyframem, since this
+    /// to ensure a continuous loop back to the first keyframe, since this
     /// is such a common pattern.
     ///
     /// ## Example
@@ -190,7 +190,7 @@ impl<T: TimingSource> Animation<T> {
     ///         // the final keyframe is only to inform the 2nd
     ///         // to last keyframe where it should end; the duration
     ///         // argument is simply ignored so we use 0.0
-    ///         // to be explict about that
+    ///         // to be explicit about that
     ///         keyframe::new(0.0, 0.0),
     ///     ],
     ///     // no delay
@@ -262,10 +262,10 @@ impl<T: TimingSource> Animation<T> {
     ///     &[
     ///         // The first time this animation executes:
     ///         // stay at 0.0 for 1 beat
-    ///         Keframe::new(0.0, 1.0),
+    ///         Keyframe::new(0.0, 1.0),
     ///         // Ramp from 0.0 to 1.0 over 1/2 beat...
     ///         // then stay at 1.0 for the next 1/2 beat
-    ///         Keframe::new(1.0, 1.0),
+    ///         Keyframe::new(1.0, 1.0),
     ///         // Now loop back to 1st keyframe, but this
     ///         // time ramp from 1.0 to 0.0 over 1/2 beat
     ///         // then stay there for the remaining 1/2 beat

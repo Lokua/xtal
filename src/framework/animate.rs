@@ -1,3 +1,9 @@
+use std::f32::EPSILON;
+
+use nannou::math::map_range;
+use nannou::rand::rngs::StdRng;
+use nannou::rand::{Rng, SeedableRng};
+
 use super::prelude::*;
 
 // Split implementation file for Animation struct since that file is getting a
@@ -65,6 +71,26 @@ impl Breakpoint {
         )
     }
 
+    pub fn random_smooth(
+        position: f32,
+        value: f32,
+        frequency: f32,
+        amplitude: f32,
+        easing: Easing,
+        constrain: Constrain,
+    ) -> Self {
+        Self::new(
+            Kind::RandomSmooth {
+                frequency,
+                amplitude,
+                easing,
+                constrain,
+            },
+            position,
+            value,
+        )
+    }
+
     /// The last breakpoint in any sequence represents the final value and is
     /// never actually entered. Technically any kind of breakpoint can be used
     /// at the end and will be interpreted exactly the same way (only value and
@@ -96,6 +122,12 @@ pub enum Kind {
         amplitude: f32,
         width: f32,
         frequency: f32,
+        easing: Easing,
+        constrain: Constrain,
+    },
+    RandomSmooth {
+        frequency: f32,
+        amplitude: f32,
         easing: Easing,
         constrain: Constrain,
     },
@@ -257,6 +289,28 @@ impl<T: TimingSource> Animation<T> {
                         constrain.apply(value + (mod_wave * amplitude))
                     }
                 },
+                Kind::RandomSmooth {
+                    frequency,
+                    amplitude,
+                    easing,
+                    constrain,
+                } => {
+                    let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                    let mod_t = (beats_elapsed / frequency) % 1.0;
+                    let seed = beats_elapsed * mod_t * value;
+                    let mut rng = StdRng::seed_from_u64((seed * 100.0) as u64);
+                    let random = rng.gen::<f32>();
+                    constrain.apply(
+                        value
+                            + map_range(
+                                random,
+                                0.0,
+                                1.0,
+                                -amplitude,
+                                amplitude + EPSILON,
+                            ),
+                    )
+                }
                 Kind::End => {
                     loud_panic!("Somehow we've moved beyond the end")
                 }

@@ -1,25 +1,25 @@
 {
   "values": {
+    "wave_easing": {
+      "String": "linear"
+    },
     "wave_amplitude": {
-      "Float": -0.31
+      "Float": 0.05
     },
     "wave_frequency": {
-      "Float": 0.22500001
-    },
-    "easing": {
-      "String": "linear"
+      "Float": 0.75
     },
     "wave_width": {
       "Float": 0.5
     },
-    "wave_clamp_method": {
-      "String": "wrap"
-    },
     "wave_shape": {
       "String": "square"
     },
-    "wave_easing": {
+    "easing": {
       "String": "linear"
+    },
+    "wave_clamp_method": {
+      "String": "none"
     }
   }
 }
