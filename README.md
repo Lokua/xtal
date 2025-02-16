@@ -67,7 +67,7 @@ registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main].
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
 that support it (this is a new feature so not all sketches are using this
-run-time `Timing` mechansim yet). Available options include:
+run-time `Timing` mechanism yet). Available options include:
 
 #### `frame`
 
@@ -268,6 +268,10 @@ documentation:
 _vars:
     example_var: &example_var 33.0
 
+
+# --- UI CONTROLS
+# ---------------
+
 # Available in sketch as `m.controls.get("radius")`
 radius:
     type: slider
@@ -291,6 +295,9 @@ select_example:
         - bar
         - baz
 
+# --- OSC
+# -------
+
 # Available in the sketch as `m.controls.get("position_x")`. The OSC
 # address from your sender must be `/position_x` and is currently hardcoded
 # to PORT 2346
@@ -302,6 +309,9 @@ position_x:
     range: [0.0, 100.0]
     # Optional, defaults to 0.5
     default: 50.0
+
+# --- AUDIO
+# ---------
 
 rect_y:
     # Interface to `AudioControls`; uses multichannel audio
@@ -320,8 +330,70 @@ rect_y:
     # Optional, defaults to [0.0, 1.0]
     range: [0.0, 100.0]
 
+# --- ANIMATION
+# -------------
+
+y_offset:
+  # Interface to `Animation::automate`. This is the spiritual successor to
+  # all following animation methods and produces much of the same results
+  # and more.
+  type: automate
+  # loop or once (holds the last value), defaults to loop
+  mode: loop
+  # automate supports 5 different breakpoint types:
+  breakpoints:
+
+    # Step: stay at this position until the next breakpoint
+    - kind: step
+      position: 0.0
+      value: 0.0
+
+    # Ramp: ramp from this value to the next breakpoint's value with
+    # optional easing
+    - kind: ramp
+      position: 1.0
+      value: 0.0
+      # Other options listed in src/framework/easings.rs (defaults to linear)
+      easing: linear
+
+    # Wave: like ramp, with a secondary amplitude modulation
+    # added on top of it
+    - kind: wave
+      position: 2.0
+      value: 1.0
+      # Like position is expressed in beats (defaults to 0.25)
+      frequency: 0.25
+      # How much above and below the base ramp to add/subtract
+      # (defaults to 0.25)
+      amplitude: 0.25
+      # For square controls duty cycle; for sine and triangle skews the wave.
+      # With triangle shape, 0.0 produces a downwards saw, 1.0 an upwards one,
+      # and 0.5 will produce the regular triangle. Sine is similarly transformed
+      # into a saw-like asymmetric shape.
+      width: 0.5
+      # sine, triangle, or square (defaults to sine)
+      shape: sine
+      easing: linear
+      # none, clamp, fold, or wrap (defaults to none)
+      constrain: none
+
+    # Like the wave type only uses perlin noise to deviate from the base ramp
+    - kind: random_smooth
+      position: 3.0
+      value: 0.0
+      frequency: 0.25
+      amplitude: 0.25
+
+    # A special breakpoint added for semantic clarity. It is identical to the
+    # step kind. In this example it just represents what the previous breakpoint
+    # will ramp to. In the case of mode=loop, this segment will never be entered;
+    # for mode=once this represents the final value that will be held indefinitely
+    - kind: end
+      position: 4.0
+      value: 1.0
+
 hue:
-    # Interface to the `Animation#lerp` method that differs from the normal code
+    # Interface to the `Animation::lerp` method that differs from the normal code
     # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
     # DAW would use and are absolute with respect to the timeline depending on what
     # `TimingSource` is provided to the `ControlScript` constructor.
@@ -344,7 +416,7 @@ hue:
         bypass: _
 
 saturation:
-    # Another interface to the same `Animation#lerp` method as above but uses the
+    # Another interface to the same `Animation::lerp` method as above but uses the
     # exact same signature as the code instance for keyframes which is [beats, value].
     # This example and last are 100% equivalent but read quite differently.
     # While the `abs` version can be read as "arrive at this value at this time",
@@ -364,7 +436,7 @@ saturation:
         - [0.0, 0.0]
 
 lightness:
-    # A 1:1 interface to the `Animation#r_ramp` method.
+    # A 1:1 interface to the `Animation::r_ramp` method.
     type: r_ramp_rel
     # Optional, defaults to "linear". Easing options include:
     # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
@@ -379,7 +451,7 @@ lightness:
         # for the 1st cycle was 0.2 and the 2nd cycle was 0.7: When the animation is
         # started it will stay at 0.2 for the first 1/2 of a beat, then over the next 1/2
         # beat it will ramp to 0.7. If `ramp_time` was 0.25, it would stay at 0.2 for the
-        # duration of a dotted eigth note, then ramp to 0.7 over a single 16th.
+        # duration of a dotted eighth note, then ramp to 0.7 over a single 16th.
         # Note that only the first keyframe is held; all subsequent cycles will always be
         # ramped to (ramp happens at the end of a cycle and happens within that cycle's
         # duration; this is why the first cycle starts static until its ramp phase -
@@ -387,7 +459,7 @@ lightness:
         - [1.0, [0.0, 1.0]]
 
 foo:
-    # A "ping" animation that linearly ramps from min to max and back to min
+    # A "ping pong" animation that linearly ramps from min to max and back to min
     # as specified in `range` option
     type: triangle
     beats: 2.0

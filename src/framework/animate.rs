@@ -1,4 +1,4 @@
-//! Supporting types for the [`Animation::animate`] method, providing a
+//! Supporting types for the [`Animation::automate`] method, providing a
 //! breakpoint animation system for creating complex automation curves, similar
 //! to those found in DAWs, yet with some special tricks of its own.
 
@@ -9,7 +9,7 @@ use std::str::FromStr;
 use super::prelude::*;
 
 /// The core structure need to configure segments for the
-/// [`Animation::animate`] method. See the various constructors such as
+/// [`Animation::automate`] method. See the various constructors such as
 /// [`Breakpoint::step`], [`Breakpoint::ramp`], etc. for in depth details.
 #[derive(Clone, Debug)]
 pub struct Breakpoint {
@@ -217,14 +217,14 @@ impl<T: TimingSource> Animation<T> {
     /// capable of producing the same results as just about every other
     /// animation method yet is more powerful, but as such requires a bit more
     /// configuration. While other animation methods are focused on one style of
-    /// keyframe/transition, `animate` allows many different types of
+    /// keyframe/transition, `automate` allows many different types of
     /// transitions defined by a list of [`Breakpoint`], each with its own
     /// configurable[`Kind`]. See [breakpoints] for a static visualization of
-    /// the kinds of curves `animate` can produce.
+    /// the kinds of curves `automate` can produce.
     ///
     /// [breakpoints]:
     ///     https://github.com/Lokua/lattice/blob/main/src/sketches/breakpoints.rs
-    pub fn animate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
+    pub fn automate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
         assert!(breakpoints.len() >= 1, "At least 1 breakpoint is required");
         assert!(
             breakpoints[0].position == 0.0,
@@ -387,7 +387,7 @@ mod tests {
     fn test_breakpoint_step_init() {
         init(0);
         let a = create_instance();
-        let x = a.animate(&[Breakpoint::step(0.0, 44.0)], Mode::Once);
+        let x = a.automate(&[Breakpoint::step(0.0, 44.0)], Mode::Once);
         assert_eq!(x, 44.0, "Returns initial value");
     }
 
@@ -396,7 +396,7 @@ mod tests {
     fn test_breakpoint_step_2nd() {
         init(4);
         let a = create_instance();
-        let x = a.animate(
+        let x = a.automate(
             &[Breakpoint::step(0.0, 10.0), Breakpoint::step(1.0, 20.0)],
             Mode::Once,
         );
@@ -408,7 +408,7 @@ mod tests {
     fn test_breakpoint_step_last() {
         init(100);
         let a = create_instance();
-        let x = a.animate(
+        let x = a.automate(
             &[Breakpoint::step(0.0, 10.0), Breakpoint::step(1.0, 20.0)],
             Mode::Once,
         );
@@ -426,10 +426,10 @@ mod tests {
             Breakpoint::end(2.0, 0.0),
         ];
         let a = create_instance();
-        let x = a.animate(breakpoints, Mode::Loop);
+        let x = a.automate(breakpoints, Mode::Loop);
         assert_eq!(x, 20.0, "Returns 2nd stage");
         init(8);
-        let x = a.animate(breakpoints, Mode::Loop);
+        let x = a.automate(breakpoints, Mode::Loop);
         assert_eq!(x, 10.0, "Returns 1st stage when looping back around");
     }
 
@@ -438,7 +438,7 @@ mod tests {
     fn test_breakpoint_step_midway() {
         init(2);
         let a = create_instance();
-        let x = a.animate(
+        let x = a.automate(
             &[
                 Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                 Breakpoint::end(1.0, 1.0),
@@ -453,7 +453,7 @@ mod tests {
     fn test_breakpoint_step_last_16th() {
         init(3);
         let a = create_instance();
-        let x = a.animate(
+        let x = a.automate(
             &[
                 Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                 Breakpoint::end(1.0, 1.0),
@@ -468,7 +468,7 @@ mod tests {
     fn test_breakpoint_step_last_16th_loop() {
         init(7);
         let a = create_instance();
-        let x = a.animate(
+        let x = a.automate(
             &[
                 Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                 Breakpoint::end(1.0, 1.0),
@@ -483,7 +483,7 @@ mod tests {
     fn test_step_then_ramp() {
         let a = create_instance();
         let x = || {
-            a.animate(
+            a.automate(
                 &[
                     Breakpoint::step(0.0, 10.0),
                     Breakpoint::ramp(1.0, 20.0, Easing::Linear),
@@ -520,7 +520,7 @@ mod tests {
     fn test_wave_triangle_simple() {
         let a = create_instance();
         let x = || {
-            a.animate(
+            a.automate(
                 &[
                     Breakpoint::wave(
                         0.0,
@@ -564,7 +564,7 @@ mod tests {
     fn test_step_to_ramp_edge_case() {
         let a = create_instance();
         let x = || {
-            a.animate(
+            a.automate(
                 &[
                     Breakpoint::step(0.0, 0.0),
                     Breakpoint::step(0.5, 1.0),

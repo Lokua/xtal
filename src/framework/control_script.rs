@@ -209,7 +209,7 @@ impl<T: TimingSource> ControlScript<T> {
                     if let Some(bypass) = conf.bypass {
                         bypass
                     } else {
-                        self.animation.animate(breakpoints, Mode::Loop)
+                        self.animation.automate(breakpoints, Mode::Loop)
                     }
                 }
                 _ => unimplemented!(),
@@ -774,6 +774,19 @@ impl From<BreakpointConfig> for Breakpoint {
                 Easing::from_str(&easing).unwrap(),
                 Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
             ),
+            KindConfig::RandomSmooth {
+                frequency,
+                amplitude,
+                easing,
+                constrain,
+            } => Breakpoint::random_smooth(
+                config.position,
+                config.value,
+                frequency,
+                amplitude,
+                Easing::from_str(&easing).unwrap(),
+                Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
+            ),
             KindConfig::End => Breakpoint::end(config.position, config.value),
         }
     }
@@ -784,7 +797,7 @@ impl From<BreakpointConfig> for Breakpoint {
 enum KindConfig {
     Step,
     Ramp {
-        #[serde(default = "default_easing")]
+        #[serde(default = "default_easing", alias = "ease")]
         easing: String,
     },
     Wave {
@@ -796,17 +809,21 @@ enum KindConfig {
         amplitude: f32,
         #[serde(default = "default_width")]
         width: f32,
-        #[serde(default = "default_easing")]
+        #[serde(default = "default_easing", alias = "ease")]
         easing: String,
-        #[serde(default = "default_constrain")]
+        #[serde(default = "default_constrain", alias = "cons")]
         constrain: String,
     },
-    // RandomSmooth {
-    //     frequency: f32,
-    //     amplitude: f32,
-    //     easing: Easing,
-    //     constrain: Constrain,
-    // },
+    RandomSmooth {
+        #[serde(default = "default_frequency", alias = "freq")]
+        frequency: f32,
+        #[serde(default = "default_amplitude", alias = "amp")]
+        amplitude: f32,
+        #[serde(default = "default_easing", alias = "ease")]
+        easing: String,
+        #[serde(default = "default_constrain", alias = "cons")]
+        constrain: String,
+    },
     End,
 }
 

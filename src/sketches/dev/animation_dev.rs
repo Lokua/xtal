@@ -84,7 +84,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     draw.ellipse()
         .x_y(
             map_range(
-                model.animation.animate(
+                model.animation.automate(
                     &[
                         Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                         Breakpoint::ramp(2.0, 1.0, Easing::Linear),
@@ -108,7 +108,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     draw.ellipse()
         .x_y(
             map_range(
-                model.animation.animate(
+                model.animation.automate(
                     &[
                         Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                         Breakpoint::step(1.0, 0.5),
@@ -140,7 +140,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     draw.ellipse()
         .x_y(
             map_range(
-                model.animation.animate(
+                model.animation.automate(
                     &[
                         Breakpoint::random_smooth(
                             0.0,

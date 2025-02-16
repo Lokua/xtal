@@ -240,7 +240,7 @@ fn create_lanes(
                         let current_pos =
                             current.position + (i as f32 * step) + (step / 2.0);
                         animation.timing.set_beats(current_pos);
-                        let value = animation.animate(breakpoints, Mode::Once);
+                        let value = animation.automate(breakpoints, Mode::Once);
 
                         points.push(map_to_track(
                             current_pos,
