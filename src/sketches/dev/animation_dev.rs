@@ -135,6 +135,43 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .radius(radius)
         .color(rgb(0.0, component_value, 0.0));
 
+    let random_freq = 1.0;
+    let random_amp = 0.125;
+    draw.ellipse()
+        .x_y(
+            map_range(
+                model.animation.animate(
+                    &[
+                        Breakpoint::random_smooth(
+                            0.0,
+                            0.0,
+                            random_freq,
+                            random_amp,
+                            Easing::Linear,
+                            Constrain::Clamp(0.0, 1.0),
+                        ),
+                        Breakpoint::random_smooth(
+                            2.0,
+                            1.0,
+                            random_freq,
+                            random_amp,
+                            Easing::Linear,
+                            Constrain::Clamp(0.0, 1.0),
+                        ),
+                        Breakpoint::end(4.0, 0.0),
+                    ],
+                    Mode::Loop,
+                ),
+                0.0,
+                1.0,
+                -edge,
+                edge,
+            ),
+            -hh / 4.0,
+        )
+        .radius(radius * 0.333)
+        .color(rgb(0.0, component_value, component_value));
+
     draw.ellipse()
         .x_y(map_range(model.r_ramp, 0.0, 1.0, -edge, edge), -hh / 2.0)
         .radius(radius)

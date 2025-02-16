@@ -1,10 +1,12 @@
+//! Supporting types for the [`Animation::animate`] method.
+//!
+//! This module provides the breakpoint animation system for creating complex
+//! automation curves, similar to those found in DAWs.
+
 use nannou::math::map_range;
 use std::f32::EPSILON;
 
 use super::prelude::*;
-
-// Split implementation file for Animation struct since that file is getting a
-// bit large.
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -20,7 +22,7 @@ impl Breakpoint {
     }
 
     /// Create a step that will curve from this `value` to the next breakpoint's
-    /// value with adjustable easing.
+    /// value with adjustable easing. `position` is expressed in beats.
     pub fn ramp(position: f32, value: f32, easing: Easing) -> Self {
         Self::new(Kind::Ramp { easing }, position, value)
     }
@@ -68,6 +70,11 @@ impl Breakpoint {
         )
     }
 
+    /// # ⚠️ Experimental
+    /// Similar to [`Self::wave`], only uses Perlin noise to amplitude modulate
+    /// the base curve. Useful for adding jitter when `frequency` is shorter
+    /// than the duration of this point's `position` and the next; larger values
+    /// equal to that duration or longer are much smoother.
     pub fn random_smooth(
         position: f32,
         value: f32,
@@ -293,12 +300,16 @@ impl<T: TimingSource> Animation<T> {
                     constrain,
                 } => {
                     let value = ramp(p1, p2, beats_elapsed, easing.clone());
-                    let p = (beats_elapsed / frequency) % 1.0;
-                    let seed = ((p1.position + 9.0) * 10_000.0) as u32;
-                    let noise = PerlinNoise::new(seed);
+
+                    let seed = ((p1.position + 9.0) * 63_579.0
+                        + p2.position * 100.0)
+                        as u32;
                     let noise_scale = 2.5;
-                    let random_value =
-                        noise.get([p * noise_scale, value * noise_scale]);
+                    let x = (beats_elapsed / frequency) % 1.0;
+                    let y = value;
+                    let random_value = PerlinNoise::new(seed)
+                        .get([x * noise_scale, y * noise_scale]);
+
                     let random_mapped = map_range(
                         random_value,
                         -1.0,
@@ -306,7 +317,7 @@ impl<T: TimingSource> Animation<T> {
                         -amplitude,
                         amplitude + EPSILON,
                     );
-                    // TODO: lerp?
+
                     constrain.apply(value + random_mapped)
                 }
                 Kind::End => {
