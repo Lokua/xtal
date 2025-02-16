@@ -266,7 +266,7 @@ documentation:
 # aliases/anchors (variables) and prefix with underscore to make it
 # explicit
 _vars:
-    example_var: &example_var 33.0
+  example_var: &example_var 33.0
 
 
 # --- UI CONTROLS
@@ -274,26 +274,26 @@ _vars:
 
 # Available in sketch as `m.controls.get("radius")`
 radius:
-    type: slider
-    # Optional, defaults to [0.0, 1.0]
-    range: [0.0, 500.0]
-    # Optional, defaults to 0.5
-    # (here we are referencing the example_var declared in the `info` section)
-    default: *example_var
-    # Optional, defaults to 0.0001
-    step: 1.0
+  type: slider
+  # Optional, defaults to [0.0, 1.0]
+  range: [0.0, 500.0]
+  # Optional, defaults to 0.5
+  # (here we are referencing the example_var declared in the `info` section)
+  default: *example_var
+  # Optional, defaults to 0.0001
+  step: 1.0
 
 some_boolean:
-    type: checkbox
-    default: false
+  type: checkbox
+  default: false
 
 select_example:
-    type: select
-    default: foo
-    options:
-        - foo
-        - bar
-        - baz
+  type: select
+  default: foo
+  options:
+    - foo
+    - bar
+    - baz
 
 # --- OSC
 # -------
@@ -302,33 +302,33 @@ select_example:
 # address from your sender must be `/position_x` and is currently hardcoded
 # to PORT 2346
 position_x:
-    # The OSC address with forward slash is automatically
-    # derived from the key.
-    type: osc
-    # Optional, defaults to [0.0, 1.0]
-    range: [0.0, 100.0]
-    # Optional, defaults to 0.5
-    default: 50.0
+  # The OSC address with forward slash is automatically
+  # derived from the key.
+  type: osc
+  # Optional, defaults to [0.0, 1.0]
+  range: [0.0, 100.0]
+  # Optional, defaults to 0.5
+  default: 50.0
 
 # --- AUDIO
 # ---------
 
 rect_y:
-    # Interface to `AudioControls`; uses multichannel audio
-    # with peak detection and slew limiting
-    type: audio
-    channel: 0
-    # Controls smoothing ([rise, fall]) when signal amplitude increases.
-    # - 0.0 = instant rise/fall (no smoothing)
-    # - 1.0 = very slow rise/fall (maximum smoothing)
-    # defaults to [0, 0]
-    slew: [0.3, 0.9]
-    # Linearly mix between 0=peak detection and 1=RMS peak detection.
-    # Peak is snappier, RMS is smoother but limits amplitude more
-    # defaults to zero
-    detect: 0.0
-    # Optional, defaults to [0.0, 1.0]
-    range: [0.0, 100.0]
+  # Interface to `AudioControls`; uses multichannel audio
+  # with peak detection and slew limiting
+  type: audio
+  channel: 0
+  # Controls smoothing ([rise, fall]) when signal amplitude increases.
+  # - 0.0 = instant rise/fall (no smoothing)
+  # - 1.0 = very slow rise/fall (maximum smoothing)
+  # defaults to [0, 0]
+  slew: [0.3, 0.9]
+  # Linearly mix between 0=peak detection and 1=RMS peak detection.
+  # Peak is snappier, RMS is smoother but limits amplitude more
+  # defaults to zero
+  detect: 0.0
+  # Optional, defaults to [0.0, 1.0]
+  range: [0.0, 100.0]
 
 # --- ANIMATION
 # -------------
@@ -342,7 +342,6 @@ y_offset:
   mode: loop
   # automate supports 5 different breakpoint types:
   breakpoints:
-
     # Step: stay at this position until the next breakpoint
     - kind: step
       position: 0.0
@@ -393,82 +392,82 @@ y_offset:
       value: 1.0
 
 hue:
-    # Interface to the `Animation::lerp` method that differs from the normal code
-    # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
-    # DAW would use and are absolute with respect to the timeline depending on what
-    # `TimingSource` is provided to the `ControlScript` constructor.
-    type: lerp_abs
-    # Optional, defaults to 0.0
-    delay: 0.0
-    keyframes:
-        # beats, bars, and 16ths are zero indexed!
-        #...start at 0 then...
-        - ["0.0.0", 0.0]
-        # ramp to 1 over the duration from 0 to the 2nd beat, then...
-        - ["0.1.0", 1.0]
-        # ramp back down to 0.0 from the 2nd to the start of the 3rd beat
-        - ["0.2.0", 0.0]
-        # ^ the above creates a perfect 2 beat loop and will continue looping.
-        # `bypass`, if omitted or is not a number will simply be ignored,
-        # however if it is a number will be used instead of the animation.
-        # This is great for testing, debugging, of even "live coding" to mute
-        # animations. All animation definitions support bypass;
-        bypass: _
+  # Interface to the `Animation::lerp` method that differs from the normal code
+  # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
+  # DAW would use and are absolute with respect to the timeline depending on what
+  # `TimingSource` is provided to the `ControlScript` constructor.
+  type: lerp_abs
+  # Optional, defaults to 0.0
+  delay: 0.0
+  keyframes:
+    # beats, bars, and 16ths are zero indexed!
+    #...start at 0 then...
+    - ["0.0.0", 0.0]
+    # ramp to 1 over the duration from 0 to the 2nd beat, then...
+    - ["0.1.0", 1.0]
+    # ramp back down to 0.0 from the 2nd to the start of the 3rd beat
+    - ["0.2.0", 0.0]
+    # ^ the above creates a perfect 2 beat loop and will continue looping.
+    # `bypass`, if omitted or is not a number will simply be ignored,
+    # however if it is a number will be used instead of the animation.
+    # This is great for testing, debugging, of even "live coding" to mute
+    # animations. All animation definitions support bypass;
+    bypass: _
 
 saturation:
-    # Another interface to the same `Animation::lerp` method as above but uses the
-    # exact same signature as the code instance for keyframes which is [beats, value].
-    # This example and last are 100% equivalent but read quite differently.
-    # While the `abs` version can be read as "arrive at this value at this time",
-    # the `rel` version should be read as "ramp from this value to the next over this time"
-    type: lerp_rel
-    # Optional, defaults to 0.0
-    delay: 0.0
-    bypass: _
-    keyframes:
-        # Ramp from 0.0 to the next keyframe value (1.0) over 1 beat
-        - [1.0, 0.0]
-        # etc...
-        - [1.0, 1.0]
-        # By convention I always set the duration of the last keyframe to 0.0
-        # Since it represents the last arrival value and doesn't really have a
-        # duration.
-        - [0.0, 0.0]
+  # Another interface to the same `Animation::lerp` method as above but uses the
+  # exact same signature as the code instance for keyframes which is [beats, value].
+  # This example and last are 100% equivalent but read quite differently.
+  # While the `abs` version can be read as "arrive at this value at this time",
+  # the `rel` version should be read as "ramp from this value to the next over this time"
+  type: lerp_rel
+  # Optional, defaults to 0.0
+  delay: 0.0
+  bypass: _
+  keyframes:
+    # Ramp from 0.0 to the next keyframe value (1.0) over 1 beat
+    - [1.0, 0.0]
+    # etc...
+    - [1.0, 1.0]
+    # By convention I always set the duration of the last keyframe to 0.0
+    # Since it represents the last arrival value and doesn't really have a
+    # duration.
+    - [0.0, 0.0]
 
 lightness:
-    # A 1:1 interface to the `Animation::r_ramp` method.
-    type: r_ramp_rel
-    # Optional, defaults to "linear". Easing options include:
-    # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
-    # cubic_ease_in_out, sine_ease_in, sine_ease_out, sine_ease_in_out, logarithmic
-    ramp: linear
-    # Optional, defaults to 0.25 (1/16th note)
-    ramp_time: 0.5
-    bypass: _
-    keyframes:
-        # Every beat, pick a random value between 0.0 and 1.0, and ramp to it
-        # over `ramp_time` beats. So for example let's say the random number generated
-        # for the 1st cycle was 0.2 and the 2nd cycle was 0.7: When the animation is
-        # started it will stay at 0.2 for the first 1/2 of a beat, then over the next 1/2
-        # beat it will ramp to 0.7. If `ramp_time` was 0.25, it would stay at 0.2 for the
-        # duration of a dotted eighth note, then ramp to 0.7 over a single 16th.
-        # Note that only the first keyframe is held; all subsequent cycles will always be
-        # ramped to (ramp happens at the end of a cycle and happens within that cycle's
-        # duration; this is why the first cycle starts static until its ramp phase -
-        # this is because there was no previous cycle that could ramp to it)
-        - [1.0, [0.0, 1.0]]
+  # A 1:1 interface to the `Animation::r_ramp` method.
+  type: r_ramp_rel
+  # Optional, defaults to "linear". Easing options include:
+  # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
+  # cubic_ease_in_out, sine_ease_in, sine_ease_out, sine_ease_in_out, logarithmic
+  ramp: linear
+  # Optional, defaults to 0.25 (1/16th note)
+  ramp_time: 0.5
+  bypass: _
+  keyframes:
+    # Every beat, pick a random value between 0.0 and 1.0, and ramp to it
+    # over `ramp_time` beats. So for example let's say the random number generated
+    # for the 1st cycle was 0.2 and the 2nd cycle was 0.7: When the animation is
+    # started it will stay at 0.2 for the first 1/2 of a beat, then over the next 1/2
+    # beat it will ramp to 0.7. If `ramp_time` was 0.25, it would stay at 0.2 for the
+    # duration of a dotted eighth note, then ramp to 0.7 over a single 16th.
+    # Note that only the first keyframe is held; all subsequent cycles will always be
+    # ramped to (ramp happens at the end of a cycle and happens within that cycle's
+    # duration; this is why the first cycle starts static until its ramp phase -
+    # this is because there was no previous cycle that could ramp to it)
+    - [1.0, [0.0, 1.0]]
 
 foo:
-    # A "ping pong" animation that linearly ramps from min to max and back to min
-    # as specified in `range` option
-    type: triangle
-    beats: 2.0
-    # Optional, defaults to [0.0, 1.0]
-    range: [-1.0, 1.0]
-    # Phase offset expressed as percentage (0..1) of the above range.
-    # Optional defaults to 0
-    phase: 0.25
-    bypass: _
+  # A "ping pong" animation that linearly ramps from min to max and back to min
+  # as specified in `range` option
+  type: triangle
+  beats: 2.0
+  # Optional, defaults to [0.0, 1.0]
+  range: [-1.0, 1.0]
+  # Phase offset expressed as percentage (0..1) of the above range.
+  # Optional defaults to 0
+  phase: 0.25
+  bypass: _
 ```
 
 ## Resources
