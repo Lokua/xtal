@@ -50,7 +50,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
         Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
         Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
-        Control::slider_norm("bg_alpha", 0.02),
+        Control::slide("bg_alpha", 0.02),
     ]);
 
     Model {

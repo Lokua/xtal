@@ -50,14 +50,14 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let disable = |_controls: &Controls| true;
 
     let controls = Controls::with_previous(vec![
-        Control::slider_norm("smooth_mix", 0.5),
+        Control::slide("smooth_mix", 0.5),
         Control::slider("contrast", 1.5, (0.1, 5.0), 0.1),
         Control::Separator {},
         Control::slider_x("g1", 2.0, (2.0, 32.0), 1.0, disable),
         Control::slider_x("g2", 4.0, (2.0, 32.0), 1.0, disable),
         Control::slider_x("g3", 8.0, (2.0, 32.0), 1.0, disable),
         Control::Separator {},
-        Control::slider_norm("post_mix", 0.5),
+        Control::slide("post_mix", 0.5),
     ]);
 
     let params = ShaderParams {

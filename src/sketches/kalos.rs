@@ -67,7 +67,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider("corner_strength", 0.5, (0.0, 5.0), 0.001),
         Control::Separator {},
         Control::slider("scaling_power", 1.0, (0.01, 20.0), 0.01),
-        Control::slider_norm("offset", 0.2),
+        Control::slide("offset", 0.2),
         Control::slider("ring_strength", 20.0, (1.0, 100.0), 0.01),
         Control::slider("angular_variation", 4.0, (1.0, 45.0), 1.0),
         Control::Separator {},
@@ -84,12 +84,12 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         }),
         Control::Separator {},
         Control::checkbox("auto_hue_shift", false),
-        Control::slider_norm("r", 0.5),
-        Control::slider_norm("g", 0.0),
-        Control::slider_norm("b", 1.0),
+        Control::slide("r", 0.5),
+        Control::slide("g", 0.0),
+        Control::slide("b", 1.0),
         Control::Separator {},
-        Control::slider_norm("threshold", 0.5),
-        Control::slider_norm("mix", 0.5),
+        Control::slide("threshold", 0.5),
+        Control::slide("mix", 0.5),
     ]);
 
     let params = ShaderParams {

@@ -80,17 +80,17 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider("circle_force", 0.5, (0.001, 5.0), 0.001),
         Control::slider("circle_phase", 0.0, (0.0, TAU), 0.1),
         Control::Separator {}, // -----------------------------------
-        Control::slider_norm("clip_start", 0.8),
-        Control::slider_norm("clip_grade", 0.3),
+        Control::slide("clip_start", 0.8),
+        Control::slide("clip_grade", 0.3),
         Control::Separator {}, // -----------------------------------
         // Control::checkbox("animate_stripe_phase", false),
         // Control::checkbox("invert_animate_stripe_phase", false),
         Control::slider("stripe_amp", 0.0, (0.0, 0.5), 0.0001),
         Control::slider("stripe_freq", 10.0, (0.00, 64.0), 1.0),
-        Control::slider_norm("stripe_mix", 0.5),
-        Control::slider_norm("stripe_step", 0.0),
-        Control::slider_norm("stripe_min", 0.0),
-        Control::slider_norm("stripe_max", 1.0),
+        Control::slide("stripe_mix", 0.5),
+        Control::slide("stripe_step", 0.0),
+        Control::slide("stripe_min", 0.0),
+        Control::slide("stripe_max", 1.0),
         Control::slider_x(
             "stripe_phase",
             0.0,

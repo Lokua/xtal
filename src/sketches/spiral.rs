@@ -68,8 +68,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider("angle_variation", 0.2, (0.0, TAU), 0.1),
         Control::checkbox("offset_mult_10", false),
         Control::slider("offset_mult", 0.9, (0.0, 10.0), 0.001),
-        Control::slider_norm("circle_r_min", 0.5),
-        Control::slider_norm("circle_r_max", 0.9),
+        Control::slide("circle_r_min", 0.5),
+        Control::slide("circle_r_max", 0.9),
         Control::Separator {}, // -----------------------------------
         Control::checkbox("invert", false),
         Control::checkbox("animate_bg", false),

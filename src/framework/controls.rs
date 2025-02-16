@@ -4,269 +4,16 @@ use std::fmt::{self, Debug};
 
 use super::prelude::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub enum ControlValue {
-    Float(f32),
-    Bool(bool),
-    String(String),
-}
-
-impl ControlValue {
-    pub fn as_float(&self) -> Option<f32> {
-        if let ControlValue::Float(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    pub fn as_bool(&self) -> Option<bool> {
-        if let ControlValue::Bool(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    pub fn as_string(&self) -> Option<&str> {
-        if let ControlValue::String(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-}
-
-type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
-
-#[derive(Serialize, Deserialize)]
-pub enum Control {
-    Slider {
-        name: String,
-        value: f32,
-        min: f32,
-        max: f32,
-        step: f32,
-        #[serde(skip)]
-        disabled: DisabledFn,
-    },
-    Checkbox {
-        name: String,
-        value: bool,
-        #[serde(skip)]
-        disabled: DisabledFn,
-    },
-    Select {
-        name: String,
-        value: String,
-        options: Vec<String>,
-        #[serde(skip)]
-        disabled: DisabledFn,
-    },
-    Button {
-        name: String,
-        #[serde(skip)]
-        disabled: DisabledFn,
-    },
-    Separator {},
-    DynamicSeparator {
-        name: String,
-    },
-}
-
-impl Control {
-    pub fn name(&self) -> &str {
-        match self {
-            Control::Slider { name, .. } => name,
-            Control::Checkbox { name, .. } => name,
-            Control::Select { name, .. } => name,
-            Control::Button { name, .. } => name,
-            Control::Separator {} => "",
-            Control::DynamicSeparator { name } => name,
-        }
-    }
-
-    pub fn value(&self) -> ControlValue {
-        match self {
-            Control::Slider { value, .. } => ControlValue::Float(*value),
-            Control::Checkbox { value, .. } => ControlValue::Bool(*value),
-            Control::Select { value, .. } => {
-                ControlValue::String(value.clone())
-            }
-            Control::Button { .. } => ControlValue::Bool(false),
-            Control::Separator { .. } => ControlValue::Bool(false),
-            Control::DynamicSeparator { .. } => ControlValue::Bool(false),
-        }
-    }
-
-    pub fn checkbox(name: &str, value: bool) -> Control {
-        Control::Checkbox {
-            name: name.to_string(),
-            value,
-            disabled: None,
-        }
-    }
-
-    pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> Control
-    where
-        F: Fn(&Controls) -> bool + 'static,
-    {
-        Control::Checkbox {
-            name: name.to_string(),
-            value,
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
-    pub fn dynamic_separator() -> Control {
-        Control::DynamicSeparator {
-            name: uuid_5().to_string(),
-        }
-    }
-
-    pub fn select<S>(name: &str, value: &str, options: &[S]) -> Control
-    where
-        S: AsRef<str>,
-    {
-        Control::Select {
-            name: name.into(),
-            value: value.into(),
-            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
-            disabled: None,
-        }
-    }
-
-    pub fn select_x<S, F>(
-        name: &str,
-        value: &str,
-        options: &[S],
-        disabled: F,
-    ) -> Control
-    where
-        S: AsRef<str>,
-        F: Fn(&Controls) -> bool + 'static,
-    {
-        Control::Select {
-            name: name.into(),
-            value: value.into(),
-            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
-    pub fn slider(
-        name: &str,
-        value: f32,
-        range: (f32, f32),
-        step: f32,
-    ) -> Control {
-        Control::Slider {
-            name: name.to_string(),
-            value,
-            min: range.0,
-            max: range.1,
-            step,
-            disabled: None,
-        }
-    }
-
-    pub fn slider_norm(name: &str, value: f32) -> Control {
-        Control::Slider {
-            name: name.to_string(),
-            value,
-            min: 0.0,
-            max: 1.0,
-            step: 0.0001,
-            disabled: None,
-        }
-    }
-
-    pub fn slider_x<F>(
-        name: &str,
-        value: f32,
-        range: (f32, f32),
-        step: f32,
-        disabled: F,
-    ) -> Control
-    where
-        F: Fn(&Controls) -> bool + 'static,
-    {
-        Control::Slider {
-            name: name.to_string(),
-            value,
-            min: range.0,
-            max: range.1,
-            step,
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
-    pub fn is_disabled(&self, controls: &Controls) -> bool {
-        match self {
-            Control::Slider { disabled, .. }
-            | Control::Button { disabled, .. }
-            | Control::Checkbox { disabled, .. }
-            | Control::Select { disabled, .. } => {
-                disabled.as_ref().map_or(false, |f| f(controls))
-            }
-            _ => false,
-        }
-    }
-}
-
-impl fmt::Debug for Control {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Control::Slider {
-                name,
-                value,
-                min,
-                max,
-                step,
-                ..
-            } => f
-                .debug_struct("Slider")
-                .field("name", name)
-                .field("value", value)
-                .field("min", min)
-                .field("max", max)
-                .field("step", step)
-                .finish(),
-            Control::Checkbox { name, value, .. } => f
-                .debug_struct("Checkbox")
-                .field("name", name)
-                .field("value", value)
-                .finish(),
-            Control::Select {
-                name,
-                value,
-                options,
-                ..
-            } => f
-                .debug_struct("Select")
-                .field("name", name)
-                .field("value", value)
-                .field("options", options)
-                .finish(),
-            Control::Button { name, .. } => {
-                f.debug_struct("Button").field("name", name).finish()
-            }
-            Control::Separator {} => f.debug_struct("Separator").finish(),
-            Control::DynamicSeparator { name, .. } => f
-                .debug_struct("DynamicSeparator")
-                .field("name", name)
-                .finish(),
-        }
-    }
-}
-
-pub type ControlValues = HashMap<String, ControlValue>;
-
 #[derive(Serialize, Deserialize)]
 pub struct SerializedControls {
     pub values: HashMap<String, ControlValue>,
 }
 
+pub type ControlValues = HashMap<String, ControlValue>;
+
+/// A generic abstraction over UI controls that sketches can directly interact
+/// with without being coupled to a specific UI framework. See
+/// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
 #[derive(Serialize, Deserialize)]
 pub struct Controls {
     controls: Vec<Control>,
@@ -484,5 +231,262 @@ impl fmt::Debug for Controls {
         }
 
         debug_struct.finish()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum ControlValue {
+    Float(f32),
+    Bool(bool),
+    String(String),
+}
+
+impl ControlValue {
+    pub fn as_float(&self) -> Option<f32> {
+        if let ControlValue::Float(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        if let ControlValue::Bool(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_string(&self) -> Option<&str> {
+        if let ControlValue::String(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
+type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
+
+#[derive(Serialize, Deserialize)]
+pub enum Control {
+    Slider {
+        name: String,
+        value: f32,
+        min: f32,
+        max: f32,
+        step: f32,
+        #[serde(skip)]
+        disabled: DisabledFn,
+    },
+    Checkbox {
+        name: String,
+        value: bool,
+        #[serde(skip)]
+        disabled: DisabledFn,
+    },
+    Select {
+        name: String,
+        value: String,
+        options: Vec<String>,
+        #[serde(skip)]
+        disabled: DisabledFn,
+    },
+    Button {
+        name: String,
+        #[serde(skip)]
+        disabled: DisabledFn,
+    },
+    Separator {},
+    DynamicSeparator {
+        name: String,
+    },
+}
+
+impl Control {
+    pub fn name(&self) -> &str {
+        match self {
+            Control::Slider { name, .. } => name,
+            Control::Checkbox { name, .. } => name,
+            Control::Select { name, .. } => name,
+            Control::Button { name, .. } => name,
+            Control::Separator {} => "",
+            Control::DynamicSeparator { name } => name,
+        }
+    }
+
+    pub fn value(&self) -> ControlValue {
+        match self {
+            Control::Slider { value, .. } => ControlValue::Float(*value),
+            Control::Checkbox { value, .. } => ControlValue::Bool(*value),
+            Control::Select { value, .. } => {
+                ControlValue::String(value.clone())
+            }
+            Control::Button { .. } => ControlValue::Bool(false),
+            Control::Separator { .. } => ControlValue::Bool(false),
+            Control::DynamicSeparator { .. } => ControlValue::Bool(false),
+        }
+    }
+
+    pub fn checkbox(name: &str, value: bool) -> Control {
+        Control::Checkbox {
+            name: name.to_string(),
+            value,
+            disabled: None,
+        }
+    }
+
+    pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> Control
+    where
+        F: Fn(&Controls) -> bool + 'static,
+    {
+        Control::Checkbox {
+            name: name.to_string(),
+            value,
+            disabled: Some(Box::new(disabled)),
+        }
+    }
+
+    pub fn dynamic_separator() -> Control {
+        Control::DynamicSeparator {
+            name: uuid_5().to_string(),
+        }
+    }
+
+    pub fn select<S>(name: &str, value: &str, options: &[S]) -> Control
+    where
+        S: AsRef<str>,
+    {
+        Control::Select {
+            name: name.into(),
+            value: value.into(),
+            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
+            disabled: None,
+        }
+    }
+
+    pub fn select_x<S, F>(
+        name: &str,
+        value: &str,
+        options: &[S],
+        disabled: F,
+    ) -> Control
+    where
+        S: AsRef<str>,
+        F: Fn(&Controls) -> bool + 'static,
+    {
+        Control::Select {
+            name: name.into(),
+            value: value.into(),
+            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
+            disabled: Some(Box::new(disabled)),
+        }
+    }
+
+    pub fn slider(
+        name: &str,
+        value: f32,
+        range: (f32, f32),
+        step: f32,
+    ) -> Control {
+        Control::Slider {
+            name: name.to_string(),
+            value,
+            min: range.0,
+            max: range.1,
+            step,
+            disabled: None,
+        }
+    }
+
+    /// Convenience version of [`Self::slider`] with default [0.0, 1.0] range.
+    pub fn slide(name: &str, value: f32) -> Control {
+        Control::Slider {
+            name: name.to_string(),
+            value,
+            min: 0.0,
+            max: 1.0,
+            step: 0.0001,
+            disabled: None,
+        }
+    }
+
+    pub fn slider_x<F>(
+        name: &str,
+        value: f32,
+        range: (f32, f32),
+        step: f32,
+        disabled: F,
+    ) -> Control
+    where
+        F: Fn(&Controls) -> bool + 'static,
+    {
+        Control::Slider {
+            name: name.to_string(),
+            value,
+            min: range.0,
+            max: range.1,
+            step,
+            disabled: Some(Box::new(disabled)),
+        }
+    }
+
+    pub fn is_disabled(&self, controls: &Controls) -> bool {
+        match self {
+            Control::Slider { disabled, .. }
+            | Control::Button { disabled, .. }
+            | Control::Checkbox { disabled, .. }
+            | Control::Select { disabled, .. } => {
+                disabled.as_ref().map_or(false, |f| f(controls))
+            }
+            _ => false,
+        }
+    }
+}
+
+impl fmt::Debug for Control {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                ..
+            } => f
+                .debug_struct("Slider")
+                .field("name", name)
+                .field("value", value)
+                .field("min", min)
+                .field("max", max)
+                .field("step", step)
+                .finish(),
+            Control::Checkbox { name, value, .. } => f
+                .debug_struct("Checkbox")
+                .field("name", name)
+                .field("value", value)
+                .finish(),
+            Control::Select {
+                name,
+                value,
+                options,
+                ..
+            } => f
+                .debug_struct("Select")
+                .field("name", name)
+                .field("value", value)
+                .field("options", options)
+                .finish(),
+            Control::Button { name, .. } => {
+                f.debug_struct("Button").field("name", name).finish()
+            }
+            Control::Separator {} => f.debug_struct("Separator").finish(),
+            Control::DynamicSeparator { name, .. } => f
+                .debug_struct("DynamicSeparator")
+                .field("name", name)
+                .finish(),
+        }
     }
 }

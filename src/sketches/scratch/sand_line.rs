@@ -79,7 +79,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             controls.string("distribution_strategy") != "TrigFn"
         }),
         Control::Separator {},
-        Control::slider_norm("alpha", 0.5),
+        Control::slide("alpha", 0.5),
     ]);
 
     Model {

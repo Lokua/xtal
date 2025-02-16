@@ -38,7 +38,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let controls = Controls::with_previous(vec![
         Control::select("mode", "smooth", &["smooth", "step"]),
-        Control::slider_norm("radius", 0.5),
+        Control::slide("radius", 0.5),
     ]);
 
     let params = ShaderParams {

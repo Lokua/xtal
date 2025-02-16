@@ -44,9 +44,9 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
         Control::slider("drop_max_radius", 20.0, (1.0, 50.0), 1.0),
         Control::Separator {},
         Control::select("palette", "millenial", &["millenial", "gen_x"]),
-        Control::slider_norm("color_ratio", 0.5),
-        Control::slider_norm("lightness_min", 0.0),
-        Control::slider_norm("lightness_max", 1.0),
+        Control::slide("color_ratio", 0.5),
+        Control::slide("lightness_min", 0.0),
+        Control::slide("lightness_max", 1.0),
     ]);
 
     let step_size = controls.float("step_size");

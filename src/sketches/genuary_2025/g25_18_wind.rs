@@ -80,13 +80,13 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         ),
         Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
         Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
-        Control::slider_norm("bg_alpha", 0.02),
+        Control::slide("bg_alpha", 0.02),
         Control::Separator {},
-        Control::slider_norm("displace", 0.00),
-        Control::slider_norm("slice_glitch", 0.00),
-        Control::slider_norm("b2", 0.00),
-        Control::slider_norm("b3", 0.00),
-        Control::slider_norm("b4", 0.00),
+        Control::slide("displace", 0.00),
+        Control::slide("slice_glitch", 0.00),
+        Control::slide("b2", 0.00),
+        Control::slide("b3", 0.00),
+        Control::slide("b4", 0.00),
     ]);
 
     let midi = MidiControlBuilder::new()

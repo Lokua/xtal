@@ -11,11 +11,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(200),
+    gui_h: Some(400),
 };
 
 const TOTAL_BEATS: f32 = 2.0;
-const CURVE_RESOLUTION: usize = 128;
+const CURVE_RESOLUTION: usize = 512;
 const TRACK_HEIGHT: f32 = 150.0;
 const TRACK_PADDING: f32 = 20.0;
 const LANE_PADDING: f32 = 8.0;
@@ -51,6 +51,13 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "linear",
             &Easing::unary_function_names(),
         ),
+        Control::select("wave_shape", "sine", &["sine", "triangle", "square"]),
+        Control::slider("wave_width", 0.5, (0.0, 1.0), 0.01),
+        Control::select(
+            "wave_clamp_method",
+            "clamp",
+            &["none", "clamp", "fold", "wrap"],
+        ),
     ]);
 
     Model {
@@ -67,15 +74,19 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let easing = Easing::from_str(&m.controls.string("easing")).unwrap();
         let wave_easing =
             Easing::from_str(&m.controls.string("wave_easing")).unwrap();
+        let width = m.controls.float("wave_width");
+        let shape = Shape::from_str(&m.controls.string("wave_shape"));
+        let clamp_method = m.controls.string("wave_clamp_method");
 
         let lanes = vec![
             create_ramp_lane(easing.clone()),
-            create_wave_lane(wave_easing.clone()),
+            create_wave_lane(shape.clone(), wave_easing.clone(), width),
             create_step_lane(),
-            kitchen_sink(easing, wave_easing),
+            kitchen_sink(easing, shape, wave_easing, width),
         ];
 
-        m.segments = create_segments(&lanes, &mut m.animation, &m.wr);
+        m.segments =
+            create_segments(&lanes, &mut m.animation, &m.wr, &clamp_method);
         m.lanes = lanes;
 
         m.controls.mark_unchanged();
@@ -130,6 +141,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
                 breakpoint.value,
                 y_offset,
                 m.wr.hw(),
+                &m.controls.string("wave_clamp_method"),
             );
 
             draw.ellipse()
@@ -146,6 +158,7 @@ fn create_segments(
     lanes: &[Vec<Breakpoint>],
     animation: &mut Animation<ManualTiming>,
     wr: &WindowRect,
+    clamp_method: &str,
 ) -> Vec<Vec<LaneSegment>> {
     let vertical_offset = TRACK_HEIGHT + TRACK_PADDING;
 
@@ -158,16 +171,23 @@ fn create_segments(
                 - TRACK_PADDING
                 - (lane_index as f32 * vertical_offset);
 
-            create_lane_segments(breakpoints, animation, y_offset, wr.hw())
+            create_lanes(
+                breakpoints,
+                animation,
+                y_offset,
+                wr.hw(),
+                &clamp_method,
+            )
         })
         .collect()
 }
 
-fn create_lane_segments(
+fn create_lanes(
     breakpoints: &[Breakpoint],
     animation: &mut Animation<ManualTiming>,
     y_offset: f32,
     half_width: f32,
+    clamp_method: &str,
 ) -> Vec<LaneSegment> {
     let mut segments = Vec::new();
 
@@ -177,18 +197,20 @@ fn create_lane_segments(
             let step = segment_duration / CURVE_RESOLUTION as f32;
 
             let points = match current.kind {
-                Transition::Step => {
+                Kind::Step => {
                     let start = map_to_track(
                         current.position,
                         current.value,
                         y_offset,
                         half_width,
+                        &clamp_method,
                     );
                     let end = map_to_track(
                         next.position,
                         next.value,
                         y_offset,
                         half_width,
+                        &clamp_method,
                     );
 
                     let mid = pt2(end.x, start.y);
@@ -208,6 +230,7 @@ fn create_lane_segments(
                             value,
                             y_offset,
                             half_width,
+                            &clamp_method,
                         ));
                     }
                     points
@@ -216,7 +239,7 @@ fn create_lane_segments(
 
             segments.push(LaneSegment {
                 points,
-                is_step: matches!(current.kind, Transition::Step),
+                is_step: matches!(current.kind, Kind::Step),
             });
         }
     }
@@ -229,6 +252,7 @@ fn map_to_track(
     value: f32,
     track_offset: f32,
     half_width: f32,
+    clamp_method: &str,
 ) -> Point2 {
     let track_half_width = half_width - TRACK_PADDING;
     let x = map_range(
@@ -240,7 +264,13 @@ fn map_to_track(
     );
     let y = track_offset
         + map_range(
-            value.clamp(0.0, 1.0),
+            match clamp_method {
+                "none" => value,
+                "clamp" => constrain::clamp(value, 0.0, 1.0),
+                "fold" => constrain::fold(value, 0.0, 1.0),
+                "wrap" => constrain::wrap(value, 0.0, 1.0),
+                _ => loud_panic!("No clamp method named {}", clamp_method),
+            },
             0.0,
             1.0,
             -TRACK_HEIGHT / 2.0 + LANE_PADDING,
@@ -257,23 +287,29 @@ fn create_ramp_lane(easing: Easing) -> Vec<Breakpoint> {
     ]
 }
 
-fn create_wave_lane(easing: Easing) -> Vec<Breakpoint> {
+fn create_wave_lane(
+    shape: Shape,
+    easing: Easing,
+    width: f32,
+) -> Vec<Breakpoint> {
     let frequency = 0.125;
     let amplitude = 0.125;
     vec![
         Breakpoint::wave(
             0.0,
             0.0,
-            Shape::Triangle,
+            shape.clone(),
             frequency,
+            width,
             amplitude,
             easing.clone(),
         ),
         Breakpoint::wave(
             TOTAL_BEATS / 2.0,
             1.0,
-            Shape::Triangle,
+            shape,
             frequency,
+            width,
             amplitude,
             easing,
         ),
@@ -290,13 +326,18 @@ fn create_step_lane() -> Vec<Breakpoint> {
     ]
 }
 
-fn kitchen_sink(easing: Easing, wave_easing: Easing) -> Vec<Breakpoint> {
+fn kitchen_sink(
+    easing: Easing,
+    shape: Shape,
+    wave_easing: Easing,
+    width: f32,
+) -> Vec<Breakpoint> {
     vec![
         Breakpoint::step(0.0, 0.0),
         Breakpoint::ramp(0.25, 0.0, easing.clone()),
         Breakpoint::step(0.5, 1.0),
         Breakpoint::ramp(1.0, 0.5, easing),
-        Breakpoint::wave(1.5, 1.0, Shape::Triangle, 0.125, 0.125, wave_easing),
+        Breakpoint::wave(1.5, 1.0, shape, 0.125, width, 0.125, wave_easing),
         Breakpoint::end(2.0, 0.0),
     ]
 }

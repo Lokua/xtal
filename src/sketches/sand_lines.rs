@@ -144,7 +144,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         Control::checkbox("curve_wtf", false),
         Control::slider_x("curve_exp", 1.0, (0.1, 11.0), 0.1, disable_curve),
         Control::Separator {},
-        Control::slider_norm("alpha", 0.5),
+        Control::slide("alpha", 0.5),
     ]);
 
     Model {

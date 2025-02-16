@@ -38,8 +38,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
-        Control::slider_norm("a", 0.5),
-        Control::slider_norm("b", 0.5),
+        Control::slide("a", 0.5),
+        Control::slide("b", 0.5),
     ]);
 
     let params = ShaderParams {

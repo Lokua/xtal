@@ -38,25 +38,25 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
-        Control::slider_norm("a1", 0.5),
-        Control::slider_norm("a2", 0.5),
-        Control::slider_norm("a3", 0.5),
-        Control::slider_norm("a4", 0.5),
+        Control::slide("a1", 0.5),
+        Control::slide("a2", 0.5),
+        Control::slide("a3", 0.5),
+        Control::slide("a4", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("b1", 0.5),
-        Control::slider_norm("b2", 0.5),
-        Control::slider_norm("b3", 0.5),
-        Control::slider_norm("b4", 0.5),
+        Control::slide("b1", 0.5),
+        Control::slide("b2", 0.5),
+        Control::slide("b3", 0.5),
+        Control::slide("b4", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("c1", 0.5),
-        Control::slider_norm("c2", 0.5),
-        Control::slider_norm("c3", 0.5),
-        Control::slider_norm("c4", 0.5),
+        Control::slide("c1", 0.5),
+        Control::slide("c2", 0.5),
+        Control::slide("c3", 0.5),
+        Control::slide("c4", 0.5),
         Control::Separator {}, // -------------------
-        Control::slider_norm("d1", 0.5),
-        Control::slider_norm("d2", 0.5),
-        Control::slider_norm("d3", 0.5),
-        Control::slider_norm("d4", 0.5),
+        Control::slide("d1", 0.5),
+        Control::slide("d2", 0.5),
+        Control::slide("d3", 0.5),
+        Control::slide("d4", 0.5),
     ]);
 
     let params = ShaderParams {

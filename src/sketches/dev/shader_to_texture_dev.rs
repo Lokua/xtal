@@ -57,10 +57,10 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::with_previous(vec![
-        Control::slider_norm("a1", 0.0),
-        Control::slider_norm("a2", 0.0),
-        Control::slider_norm("a3", 0.0),
-        Control::slider_norm("a4", 0.0),
+        Control::slide("a1", 0.0),
+        Control::slide("a2", 0.0),
+        Control::slide("a3", 0.0),
+        Control::slide("a4", 0.0),
     ]);
 
     let first_pass_params = ShaderParams {

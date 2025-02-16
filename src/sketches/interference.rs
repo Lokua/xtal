@@ -51,7 +51,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate_wave1_phase", false),
         Control::slider("wave1_amp", 1.0, (0.0, 2.0), 0.001),
-        Control::slider_norm("wave1_frequency", 0.02),
+        Control::slide("wave1_frequency", 0.02),
         Control::slider("wave1_angle", 0.0, (0.0, 1.0), 0.125),
         Control::slider_x(
             "wave1_phase",
@@ -60,11 +60,11 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
             0.0001,
             |controls: &Controls| controls.bool("animate_wave1_phase"),
         ),
-        Control::slider_norm("wave1_y_influence", 0.5),
+        Control::slide("wave1_y_influence", 0.5),
         Control::Separator {}, // ------------------------------------------
         Control::checkbox("animate_wave2_phase", false),
         Control::slider("wave2_amp", 1.0, (0.0, 2.0), 0.001),
-        Control::slider_norm("wave2_frequency", 0.02),
+        Control::slide("wave2_frequency", 0.02),
         Control::slider("wave2_angle", 0.0, (0.0, 1.0), 0.125),
         Control::slider_x(
             "wave2_phase",
@@ -73,14 +73,14 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
             0.0001,
             |controls: &Controls| controls.bool("animate_wave2_phase"),
         ),
-        Control::slider_norm("wave2_y_influence", 0.5),
+        Control::slide("wave2_y_influence", 0.5),
         Control::Separator {}, // ------------------------------------------
         Control::checkbox("checkerboard", false),
-        Control::slider_norm("type_mix", 0.0),
+        Control::slide("type_mix", 0.0),
         Control::slider("curve_freq_x", 0.3, (0.0, 2.0), 0.001),
         Control::slider("curve_freq_y", 0.3, (0.0, 2.0), 0.001),
-        Control::slider_norm("wave_distort", 0.4),
-        Control::slider_norm("smoothing", 0.5),
+        Control::slide("wave_distort", 0.4),
+        Control::slide("smoothing", 0.5),
     ]);
 
     let params = ShaderParams {

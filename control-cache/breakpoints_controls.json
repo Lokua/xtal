@@ -1,10 +1,19 @@
 {
   "values": {
-    "easing": {
-      "String": "ease_in_out_bounce"
-    },
     "wave_easing": {
-      "String": "ease_in_out_bounce"
+      "String": "linear"
+    },
+    "wave_width": {
+      "Float": 0.0
+    },
+    "wave_clamp_method": {
+      "String": "clamp"
+    },
+    "wave_shape": {
+      "String": "triangle"
+    },
+    "easing": {
+      "String": "ease_in_bounce"
     }
   }
 }

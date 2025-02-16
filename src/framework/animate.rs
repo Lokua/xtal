@@ -1,11 +1,11 @@
 use super::prelude::*;
 
-// Split implemetation file for Animation::animate,
-// since that file is getting a bit large.
+// Split implemetation file for Animation struct since that file is getting a
+// bit large.
 
 #[derive(Debug)]
 pub struct Breakpoint {
-    pub kind: Transition,
+    pub kind: Kind,
     pub position: f32,
     pub value: f32,
 }
@@ -13,35 +13,44 @@ pub struct Breakpoint {
 impl Breakpoint {
     /// Create a step that will be held at `value` until the next breakpoint.
     pub fn step(position: f32, value: f32) -> Self {
-        Self::new(Transition::Step, position, value)
+        Self::new(Kind::Step, position, value)
     }
 
     /// Create a step that will curve from this `value` to the next breakpoint's
     /// value with adjustable easing.
     pub fn ramp(position: f32, value: f32, easing: Easing) -> Self {
-        Self::new(Transition::Ramp { easing }, position, value)
+        Self::new(Kind::Ramp { easing }, position, value)
     }
 
     /// Creates a linear ramp from this `value` to the next breakpoint's value
     /// with amplitude modulation applied over it. Like position, `frequency` is
     /// expressed in beats. `amplitude` represents how much above and below the
     /// base interpolated value the modulation will add or subtract depending on
-    /// its phase. The modulation wave is phase shifted to always start and end
-    /// at or very close to zero to ensure smooth transitions between segments.
-    /// Note that this method can produce values outside of the otherwise
-    /// normalized [0, 1], so clamping or folding the result is reccommended.
+    /// its phase. For [`Shape::Sine`] and [`Shape::Triangle`], the modulation
+    /// wave is phase shifted to always start and end at or very close to zero
+    /// to ensure smooth transitions between segments (this is not the case for
+    /// [`Shape::Square`] because discontinuities are unavoidable). The `width`
+    /// parameter controls the [`Shape::Square`] duty cycle. For `Sine` and
+    /// `Triangle` shapes, it will skew the peaks, for example when applied to a
+    /// tiangle a `width` of 0.0 will produce a downwards saw while 1.0 will
+    /// produce an upwards one - applied to sine is just a slightly more rounded
+    /// version of the same. Beware this method can produce values outside of
+    /// the otherwise normalized [0, 1] domain of the base ramp, so clamping or
+    /// folding the result is reccommended.
     pub fn wave(
         position: f32,
         value: f32,
         shape: Shape,
         frequency: f32,
+        width: f32,
         amplitude: f32,
         easing: Easing,
     ) -> Self {
         Self::new(
-            Transition::Wave {
+            Kind::Wave {
                 shape,
                 frequency,
+                width,
                 amplitude,
                 easing,
             },
@@ -58,10 +67,10 @@ impl Breakpoint {
     /// [`Mode::Loop`] it's a good idea to make the value of this endpoint match
     /// the first value to avoid discontinuity (unless you want that of course).
     pub fn end(position: f32, value: f32) -> Self {
-        Self::new(Transition::End, position, value)
+        Self::new(Kind::End, position, value)
     }
 
-    fn new(kind: Transition, position: f32, value: f32) -> Self {
+    fn new(kind: Kind, position: f32, value: f32) -> Self {
         Self {
             kind,
             position,
@@ -71,7 +80,7 @@ impl Breakpoint {
 }
 
 #[derive(Debug)]
-pub enum Transition {
+pub enum Kind {
     Step,
     Ramp {
         easing: Easing,
@@ -79,18 +88,29 @@ pub enum Transition {
     Wave {
         shape: Shape,
         amplitude: f32,
+        width: f32,
         frequency: f32,
         easing: Easing,
     },
     End,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Shape {
     Sine,
     Triangle,
-    Saw, // SawUp, SawDown?
     Square,
+}
+
+impl Shape {
+    pub fn from_str(shape: &str) -> Shape {
+        match shape.to_lowercase().as_str() {
+            "sine" => Shape::Sine,
+            "triangle" => Shape::Triangle,
+            "square" => Shape::Square,
+            _ => loud_panic!("No shape {} exists.", shape),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -146,33 +166,36 @@ impl<T: TimingSource> Animation<T> {
         }
 
         match (breakpoint, next_point) {
-            (Some(bp), None) => bp.value,
-            (Some(bp), Some(np)) => match &bp.kind {
-                Transition::Step => bp.value,
-                Transition::Ramp { easing } => {
-                    let duration = np.position - bp.position;
-                    let t = easing.apply((beats_elapsed / duration) % 1.0);
-                    let value = lerp(bp.value, np.value, t);
-                    value
+            (Some(p1), None) => p1.value,
+            (Some(p1), Some(p2)) => match &p1.kind {
+                Kind::Step => p1.value,
+                Kind::Ramp { easing } => {
+                    ramp(p1, p2, beats_elapsed, easing.clone())
                 }
-                Transition::Wave {
+                Kind::Wave {
                     shape,
                     frequency,
+                    width,
                     amplitude,
                     easing,
                 } => match shape {
-                    Shape::Sine => unimplemented!(),
+                    Shape::Sine => {
+                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
+
+                        let phase_in_cycle = beats_elapsed / frequency;
+                        let mod_wave = (TWO_PI * phase_in_cycle).sin();
+
+                        value + (mod_wave * amplitude)
+                    }
                     Shape::Triangle => {
-                        let duration = np.position - bp.position;
-                        let t = easing.apply((beats_elapsed / duration) % 1.0);
-                        let value = lerp(bp.value, np.value, t);
+                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
 
                         let phase_offset = 0.25;
                         let phase_in_cycle = beats_elapsed / frequency;
                         let mut mod_wave =
                             (phase_in_cycle + phase_offset) % 1.0;
 
-                        mod_wave = if mod_wave < 0.5 {
+                        mod_wave = if mod_wave < *width {
                             4.0 * mod_wave - 1.0
                         } else {
                             3.0 - 4.0 * mod_wave
@@ -180,10 +203,20 @@ impl<T: TimingSource> Animation<T> {
 
                         value + (mod_wave * amplitude)
                     }
-                    Shape::Saw => unimplemented!(),
-                    Shape::Square => unimplemented!(),
+                    Shape::Square => {
+                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                        let phase_in_cycle = beats_elapsed / frequency;
+
+                        let mod_wave = if (phase_in_cycle % 1.0) < *width {
+                            1.0
+                        } else {
+                            -1.0
+                        };
+
+                        value + (mod_wave * amplitude)
+                    }
                 },
-                Transition::End => {
+                Kind::End => {
                     loud_panic!("Somehow we've moved beyond the end")
                 }
             },
@@ -193,6 +226,18 @@ impl<T: TimingSource> Animation<T> {
             }
         }
     }
+}
+
+fn ramp(
+    p1: &Breakpoint,
+    p2: &Breakpoint,
+    beats_elapsed: f32,
+    easing: Easing,
+) -> f32 {
+    let duration = p2.position - p1.position;
+    let t = easing.apply((beats_elapsed / duration) % 1.0);
+    let value = lerp(p1.value, p2.value, t);
+    value
 }
 
 #[cfg(test)]
@@ -349,6 +394,7 @@ mod tests {
                         Shape::Triangle,
                         1.0,
                         0.5,
+                        0.5,
                         Easing::Linear,
                     ),
                     Breakpoint::end(1.0, 1.0),
@@ -393,6 +439,7 @@ mod tests {
                         1.0,
                         Shape::Triangle,
                         0.25,
+                        0.5,
                         0.25,
                         Easing::Linear,
                     ),

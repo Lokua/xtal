@@ -42,7 +42,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let controls = Controls::with_previous(vec![
         Control::slider("scale", 1.0, (0.0001, 2.0), 0.0001),
-        Control::slider_norm("y_offset", 0.3),
+        Control::slide("y_offset", 0.3),
     ]);
 
     let params = ShaderParams {

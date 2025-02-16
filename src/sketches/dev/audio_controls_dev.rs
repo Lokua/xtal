@@ -23,10 +23,10 @@ pub struct Model {
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let controls = Controls::new(vec![
-        Control::slider_norm("preemphasis", 0.0),
-        Control::slider_norm("detect", 0.0),
-        Control::slider_norm("rise", 0.0),
-        Control::slider_norm("fall", 0.0),
+        Control::slide("preemphasis", 0.0),
+        Control::slide("detect", 0.0),
+        Control::slide("rise", 0.0),
+        Control::slide("fall", 0.0),
     ]);
 
     let audio = AudioControlBuilder::new()

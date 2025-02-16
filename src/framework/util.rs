@@ -286,6 +286,63 @@ pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
     start + (end - start) * t
 }
 
+/// Utilites to contain a value within a range
+pub mod constrain {
+    /// Clamp a value between min and max
+    pub fn clamp(value: f32, min: f32, max: f32) -> f32 {
+        nannou::prelude::clamp(value, min, max)
+    }
+
+    /// Clamp a value between min and max such that values that overshoot are
+    /// mirrored back in, e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.8`
+    pub fn fold(value: f32, min: f32, max: f32) -> f32 {
+        if min == max {
+            return min;
+        }
+        if value == max {
+            return max;
+        }
+
+        let range = max - min;
+        let value = value - min;
+        let distance = value.abs();
+
+        let cycles = (distance / range).floor();
+        let remainder = distance % range;
+
+        if cycles as i32 % 2 == 0 {
+            if value >= 0.0 {
+                min + remainder
+            } else {
+                max - remainder
+            }
+        } else {
+            if value >= 0.0 {
+                max - remainder
+            } else {
+                min + remainder
+            }
+        }
+    }
+
+    /// Clamp a value between min and max such that values that overshoot enter
+    /// from the opposite bound  e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.2`
+    pub fn wrap(value: f32, min: f32, max: f32) -> f32 {
+        if min == max {
+            return min;
+        }
+        if value == max {
+            return max;
+        }
+
+        let range = max - min;
+        let value = value - min;
+
+        let wrapped = value - (value / range).floor() * range;
+        min + wrapped
+    }
+}
+
 pub fn rect_contains_point(rect: &Rect, point: &Vec2) -> bool {
     rect.left() <= point.x
         && point.x <= rect.right()

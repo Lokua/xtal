@@ -35,10 +35,10 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 
     let controls = Controls::new(vec![
         Control::checkbox("invert", false),
-        Control::slider_norm("a", 0.5),
-        Control::slider_norm("b", 0.5),
+        Control::slide("a", 0.5),
+        Control::slide("b", 0.5),
         Control::slider("aberration", 0.5, (0.0, 100.0), 1.0),
-        Control::slider_norm("background_alpha", 1.0),
+        Control::slide("background_alpha", 1.0),
     ]);
 
     Model {

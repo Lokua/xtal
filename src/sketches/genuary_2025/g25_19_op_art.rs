@@ -58,8 +58,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slider("wave_threshold", 0.0, (-1.0, 1.0), 0.001),
         Control::Separator {}, // -------------------
         Control::checkbox("bg_invert", false),
-        Control::slider_norm("bg_radius", 0.5),
-        Control::slider_norm("bg_gradient_strength", 0.5),
+        Control::slide("bg_radius", 0.5),
+        Control::slide("bg_gradient_strength", 0.5),
         Control::Separator {}, // -------------------
         Control::select("mix_mode", "mix", &["mix", "min_max"]),
     ]);
