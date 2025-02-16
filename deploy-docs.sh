@@ -18,6 +18,8 @@ echo "Documentation generated successfully"
 echo "Creating temporary directory for docs..."
 temp_dir=$(mktemp -d)
 echo "Temporary directory created at: $temp_dir"
+
+# Copy the generated docs to temp directory
 cp -r target/doc/* "$temp_dir"
 echo "Documentation copied to temporary directory"
 
@@ -37,11 +39,28 @@ git rm -rf .
 echo "Copying documentation back from temporary directory..."
 cp -r "$temp_dir"/* .
 
-echo "Setting up root index.html..."
-if [ ! -f index.html ] && [ -f your_app_name/index.html ]; then
-    cp your_app_name/index.html index.html
-fi
+# Create a proper root index.html that redirects to the main crate
+echo "Creating root index.html with proper redirect..."
+cat > index.html << EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting to lattice documentation</title>
+    <meta http-equiv="refresh" content="0; URL=lattice/">
+    <link rel="canonical" href="lattice/">
+  </head>
+  <body>
+    <p>Redirecting to <a href="lattice/">lattice documentation</a>...</p>
+  </body>
+</html>
+EOF
 
+# Add .nojekyll file to prevent GitHub Pages from trying to process the site with Jekyll
+echo "Adding .nojekyll file..."
+touch .nojekyll
+
+# Clean up temporary directory
 rm -rf "$temp_dir"
 echo "Temporary directory cleaned up"
 
