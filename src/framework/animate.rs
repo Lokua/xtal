@@ -1,8 +1,5 @@
-use std::f32::EPSILON;
-
 use nannou::math::map_range;
-use nannou::rand::rngs::StdRng;
-use nannou::rand::{Rng, SeedableRng};
+use std::f32::EPSILON;
 
 use super::prelude::*;
 
@@ -296,20 +293,21 @@ impl<T: TimingSource> Animation<T> {
                     constrain,
                 } => {
                     let value = ramp(p1, p2, beats_elapsed, easing.clone());
-                    let mod_t = (beats_elapsed / frequency) % 1.0;
-                    let seed = beats_elapsed * mod_t * value;
-                    let mut rng = StdRng::seed_from_u64((seed * 100.0) as u64);
-                    let random = rng.gen::<f32>();
-                    constrain.apply(
-                        value
-                            + map_range(
-                                random,
-                                0.0,
-                                1.0,
-                                -amplitude,
-                                amplitude + EPSILON,
-                            ),
-                    )
+                    let p = (beats_elapsed / frequency) % 1.0;
+                    let seed = ((p1.position + 9.0) * 10_000.0) as u32;
+                    let noise = PerlinNoise::new(seed);
+                    let noise_scale = 2.5;
+                    let random_value =
+                        noise.get([p * noise_scale, value * noise_scale]);
+                    let random_mapped = map_range(
+                        random_value,
+                        -1.0,
+                        1.0,
+                        -amplitude,
+                        amplitude + EPSILON,
+                    );
+                    // TODO: lerp?
+                    constrain.apply(value + random_mapped)
                 }
                 Kind::End => {
                     loud_panic!("Somehow we've moved beyond the end")

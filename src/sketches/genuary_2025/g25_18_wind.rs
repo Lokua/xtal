@@ -36,7 +36,7 @@ struct ShaderParams {
     // bg_alpha, bg_anim, displace, slice_glitch
     a: [f32; 4],
 
-    // lightning, ...unsued
+    // lightning, ...unused
     b: [f32; 4],
 }
 

@@ -9,7 +9,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     fps: 60.0,
     bpm: 134.0,
     w: 700,
-    h: 700,
+    h: 1244,
     gui_w: None,
     gui_h: Some(400),
 };
@@ -90,6 +90,12 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                 shape.clone(),
                 wave_easing.clone(),
                 width,
+                constrain.clone(),
+                amplitude,
+                frequency,
+            ),
+            create_random_lane(
+                wave_easing.clone(),
                 constrain.clone(),
                 amplitude,
                 frequency,
@@ -329,6 +335,33 @@ fn create_wave_lane(
     ]
 }
 
+fn create_random_lane(
+    easing: Easing,
+    constrain: Constrain,
+    amplitude: f32,
+    frequency: f32,
+) -> Vec<Breakpoint> {
+    vec![
+        Breakpoint::random_smooth(
+            0.0,
+            0.0,
+            frequency,
+            amplitude,
+            easing.clone(),
+            constrain.clone(),
+        ),
+        Breakpoint::random_smooth(
+            TOTAL_BEATS / 2.0,
+            1.0,
+            frequency,
+            amplitude,
+            easing.clone(),
+            constrain.clone(),
+        ),
+        Breakpoint::end(TOTAL_BEATS, 0.0),
+    ]
+}
+
 fn kitchen_sink(
     easing: Easing,
     shape: Shape,
@@ -361,6 +394,6 @@ fn kitchen_sink(
             wave_easing,
             constrain,
         ),
-        Breakpoint::end(2.0, 0.0),
+        Breakpoint::end(TOTAL_BEATS, 0.0),
     ]
 }
