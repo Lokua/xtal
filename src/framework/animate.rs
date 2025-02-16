@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-// Split implemetation file for Animation struct since that file is getting a
+// Split implementation file for Animation struct since that file is getting a
 // bit large.
 
 #[derive(Debug)]
@@ -35,12 +35,12 @@ impl Breakpoint {
     /// [`Shape::Square`] because discontinuities are unavoidable). The `width`
     /// parameter controls the [`Shape::Square`] duty cycle. For `Sine` and
     /// `Triangle` shapes, it will skew the peaks, for example when applied to a
-    /// tiangle a `width` of 0.0 will produce a downwards saw while 1.0 will
-    /// produce an upwards one - applied to sine is just a slightly more rounded
-    /// version of the same. For all shapes a value of 0.5 will produce the
-    /// natural wave. Beware this method can produce values outside of the
-    /// otherwise normalized \[0, 1\] range when the `constrain` parameter is
-    /// set to [`Constrain::None`].
+    /// triangle a `width` of 0.0 will produce a downwards saw while 1.0 will
+    /// produce an upwards one - applied to sine is a similarly skewed,
+    /// asymmetric wave. For all shapes a value of 0.5 will produce the natural
+    /// wave. Beware this method can produce values outside of the otherwise
+    /// normalized \[0, 1\] range when the `constrain` parameter is set to
+    /// [`Constrain::None`].
     pub fn wave(
         position: f32,
         value: f32,
@@ -67,7 +67,7 @@ impl Breakpoint {
 
     /// The last breakpoint in any sequence represents the final value and is
     /// never actually entered. Technically any kind of breakpoint can be used
-    /// at the end and will be interperated exactly the same way (only value and
+    /// at the end and will be interpreted exactly the same way (only value and
     /// position will be used to mark the end of a sequence), but this is
     /// provided for code clarity as it reads better. If you are using
     /// [`Mode::Loop`] it's a good idea to make the value of this endpoint match
@@ -220,7 +220,11 @@ impl<T: TimingSource> Animation<T> {
                         let value = ramp(p1, p2, beats_elapsed, easing.clone());
 
                         let phase_in_cycle = beats_elapsed / frequency;
-                        let mod_wave = (TWO_PI * phase_in_cycle).sin();
+
+                        let t = phase_in_cycle % 1.0;
+                        let m = 2.0 * (width - 0.5);
+                        let mod_wave =
+                            ((TWO_PI * t) + m * (TWO_PI * t).sin()).sin();
 
                         constrain.apply(value + (mod_wave * amplitude))
                     }
