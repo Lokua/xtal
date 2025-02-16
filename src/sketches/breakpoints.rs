@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::framework::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
@@ -77,9 +79,10 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let wave_easing =
             Easing::from_str(&m.controls.string("wave_easing")).unwrap();
         let width = m.controls.float("wave_width");
-        let shape = Shape::from_str(&m.controls.string("wave_shape"));
+        let shape = Shape::from_str(&m.controls.string("wave_shape")).unwrap();
         let clamp_method = m.controls.string("wave_clamp_method");
-        let constrain = Constrain::from_str(&clamp_method, 0.0, 1.0);
+        let constrain =
+            Constrain::try_from((clamp_method.as_str(), 0.0, 1.0)).unwrap();
         let amplitude = m.controls.float("wave_amplitude");
         let frequency = m.controls.float("wave_frequency");
 

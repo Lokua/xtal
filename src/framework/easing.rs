@@ -4,6 +4,9 @@
 //! wrote the book on easings.
 
 use std::f32::consts::PI;
+use std::fmt::{Display, Formatter};
+use std::result::Result;
+use std::str::FromStr;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Easing {
@@ -154,55 +157,62 @@ impl Easing {
             Self::Sigmoid(steepness) => sigmoid(t, *steepness),
         }
     }
+}
 
-    pub fn from_str(name: &str) -> Option<Self> {
+impl FromStr for Easing {
+    type Err = String;
+
+    fn from_str(name: &str) -> Result<Self, Self::Err> {
         match name {
-            "linear" => Some(Self::Linear),
-            "ease_in" => Some(Self::EaseIn),
-            "ease_out" => Some(Self::EaseOut),
-            "ease_in_out" => Some(Self::EaseInOut),
-            "ease_in_quad" => Some(Self::EaseInQuad),
-            "ease_out_quad" => Some(Self::EaseOutQuad),
-            "ease_in_out_quad" => Some(Self::EaseInOutQuad),
-            "ease_in_cubic" => Some(Self::EaseInCubic),
-            "ease_out_cubic" => Some(Self::EaseOutCubic),
-            "ease_in_out_cubic" => Some(Self::EaseInOutCubic),
-            "ease_in_quart" => Some(Self::EaseInQuart),
-            "ease_out_quart" => Some(Self::EaseOutQuart),
-            "ease_in_out_quart" => Some(Self::EaseInOutQuart),
-            "ease_in_quint" => Some(Self::EaseInQuint),
-            "ease_out_quint" => Some(Self::EaseOutQuint),
-            "ease_in_out_quint" => Some(Self::EaseInOutQuint),
-            "ease_in_sine" => Some(Self::EaseInSine),
-            "ease_out_sine" => Some(Self::EaseOutSine),
-            "ease_in_out_sine" => Some(Self::EaseInOutSine),
-            "ease_in_expo" => Some(Self::EaseInExpo),
-            "ease_out_expo" => Some(Self::EaseOutExpo),
-            "ease_in_out_expo" => Some(Self::EaseInOutExpo),
-            "ease_in_circ" => Some(Self::EaseInCirc),
-            "ease_out_circ" => Some(Self::EaseOutCirc),
-            "ease_in_out_circ" => Some(Self::EaseInOutCirc),
-            "ease_in_back" => Some(Self::EaseInBack),
-            "ease_out_back" => Some(Self::EaseOutBack),
-            "ease_in_out_back" => Some(Self::EaseInOutBack),
-            "ease_in_elastic" => Some(Self::EaseInElastic),
-            "ease_out_elastic" => Some(Self::EaseOutElastic),
-            "ease_in_out_elastic" => Some(Self::EaseInOutElastic),
-            "ease_in_bounce" => Some(Self::EaseInBounce),
-            "ease_out_bounce" => Some(Self::EaseOutBounce),
-            "ease_in_out_bounce" => Some(Self::EaseInOutBounce),
-            "logarithmic" => Some(Self::Logarithmic),
+            "linear" => Ok(Self::Linear),
+            "ease_in" => Ok(Self::EaseIn),
+            "ease_out" => Ok(Self::EaseOut),
+            "ease_in_out" => Ok(Self::EaseInOut),
+            "ease_in_quad" => Ok(Self::EaseInQuad),
+            "ease_out_quad" => Ok(Self::EaseOutQuad),
+            "ease_in_out_quad" => Ok(Self::EaseInOutQuad),
+            "ease_in_cubic" => Ok(Self::EaseInCubic),
+            "ease_out_cubic" => Ok(Self::EaseOutCubic),
+            "ease_in_out_cubic" => Ok(Self::EaseInOutCubic),
+            "ease_in_quart" => Ok(Self::EaseInQuart),
+            "ease_out_quart" => Ok(Self::EaseOutQuart),
+            "ease_in_out_quart" => Ok(Self::EaseInOutQuart),
+            "ease_in_quint" => Ok(Self::EaseInQuint),
+            "ease_out_quint" => Ok(Self::EaseOutQuint),
+            "ease_in_out_quint" => Ok(Self::EaseInOutQuint),
+            "ease_in_sine" => Ok(Self::EaseInSine),
+            "ease_out_sine" => Ok(Self::EaseOutSine),
+            "ease_in_out_sine" => Ok(Self::EaseInOutSine),
+            "ease_in_expo" => Ok(Self::EaseInExpo),
+            "ease_out_expo" => Ok(Self::EaseOutExpo),
+            "ease_in_out_expo" => Ok(Self::EaseInOutExpo),
+            "ease_in_circ" => Ok(Self::EaseInCirc),
+            "ease_out_circ" => Ok(Self::EaseOutCirc),
+            "ease_in_out_circ" => Ok(Self::EaseInOutCirc),
+            "ease_in_back" => Ok(Self::EaseInBack),
+            "ease_out_back" => Ok(Self::EaseOutBack),
+            "ease_in_out_back" => Ok(Self::EaseInOutBack),
+            "ease_in_elastic" => Ok(Self::EaseInElastic),
+            "ease_out_elastic" => Ok(Self::EaseOutElastic),
+            "ease_in_out_elastic" => Ok(Self::EaseInOutElastic),
+            "ease_in_bounce" => Ok(Self::EaseInBounce),
+            "ease_out_bounce" => Ok(Self::EaseOutBounce),
+            "ease_in_out_bounce" => Ok(Self::EaseInOutBounce),
+            "logarithmic" => Ok(Self::Logarithmic),
 
             "custom" => unimplemented!(),
 
-            "exponential" => Some(Self::Exponential(2.0)),
-            "sigmoid" => Some(Self::Sigmoid(5.0)),
-            _ => None,
+            "exponential" => Ok(Self::Exponential(2.0)),
+            "sigmoid" => Ok(Self::Sigmoid(5.0)),
+
+            _ => Err(format!("Unknown easing function: {}", name)),
         }
     }
+}
 
-    pub fn to_str(&self) -> &'static str {
-        match self {
+impl Display for Easing {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        let s = match self {
             Self::Linear => "linear",
             Self::EaseIn => "ease_in",
             Self::EaseOut => "ease_out",
@@ -243,7 +253,9 @@ impl Easing {
 
             Self::Exponential(_) => "exponential",
             Self::Sigmoid(_) => "sigmoid",
-        }
+        };
+
+        write!(f, "{}", s)
     }
 }
 

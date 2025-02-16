@@ -9,6 +9,7 @@ use std::{
     error::Error,
     fmt, fs,
     path::PathBuf,
+    str::FromStr,
     sync::{Arc, Mutex},
 };
 use yaml_merge_keys::merge_keys_serde_yml;
@@ -739,7 +740,9 @@ impl Default for AutomateConfig {
 
 #[derive(Clone, Deserialize, Debug)]
 struct BreakpointConfig {
+    #[serde(alias = "pos", alias = "x")]
     position: f32,
+    #[serde(alias = "val", alias = "y")]
     value: f32,
     #[serde(flatten)]
     kind: KindConfig,
@@ -754,6 +757,23 @@ impl From<BreakpointConfig> for Breakpoint {
                 config.value,
                 Easing::from_str(&easing).unwrap(),
             ),
+            KindConfig::Wave {
+                shape,
+                frequency,
+                amplitude,
+                width,
+                easing,
+                constrain,
+            } => Breakpoint::wave(
+                config.position,
+                config.value,
+                Shape::from_str(shape.as_str()).unwrap(),
+                frequency,
+                width,
+                amplitude,
+                Easing::from_str(&easing).unwrap(),
+                Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
+            ),
             KindConfig::End => Breakpoint::end(config.position, config.value),
         }
     }
@@ -767,14 +787,20 @@ enum KindConfig {
         #[serde(default = "default_easing")]
         easing: String,
     },
-    // Wave {
-    //     shape: Shape,
-    //     amplitude: f32,
-    //     width: f32,
-    //     frequency: f32,
-    //     easing: Easing,
-    //     constrain: Constrain,
-    // },
+    Wave {
+        #[serde(default = "default_shape")]
+        shape: String,
+        #[serde(default = "default_frequency", alias = "freq")]
+        frequency: f32,
+        #[serde(default = "default_amplitude", alias = "amp")]
+        amplitude: f32,
+        #[serde(default = "default_width")]
+        width: f32,
+        #[serde(default = "default_easing")]
+        easing: String,
+        #[serde(default = "default_constrain")]
+        constrain: String,
+    },
     // RandomSmooth {
     //     frequency: f32,
     //     amplitude: f32,
@@ -786,6 +812,21 @@ enum KindConfig {
 
 fn default_easing() -> String {
     "linear".to_string()
+}
+fn default_shape() -> String {
+    "sine".to_string()
+}
+fn default_constrain() -> String {
+    "none".to_string()
+}
+fn default_frequency() -> f32 {
+    0.25
+}
+fn default_amplitude() -> f32 {
+    0.25
+}
+fn default_width() -> f32 {
+    0.5
 }
 
 #[derive(Debug)]

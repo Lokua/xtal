@@ -4,6 +4,7 @@
 
 use nannou::math::map_range;
 use std::f32::EPSILON;
+use std::str::FromStr;
 
 use super::prelude::*;
 
@@ -147,6 +148,19 @@ pub enum Shape {
     Square,
 }
 
+impl FromStr for Shape {
+    type Err = String;
+
+    fn from_str(shape: &str) -> Result<Self, Self::Err> {
+        match shape.to_lowercase().as_str() {
+            "sine" => Ok(Shape::Sine),
+            "triangle" => Ok(Shape::Triangle),
+            "square" => Ok(Shape::Square),
+            _ => Err(format!("No shape {} exists.", shape)),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Constrain {
     None,
@@ -156,6 +170,7 @@ pub enum Constrain {
 }
 
 impl Constrain {
+    #[deprecated(note = "Use try_from instead")]
     pub fn from_str(method: &str, min: f32, max: f32) -> Self {
         match method.to_lowercase().as_str() {
             "none" => Self::None,
@@ -175,14 +190,18 @@ impl Constrain {
         }
     }
 }
+impl TryFrom<(&str, f32, f32)> for Constrain {
+    type Error = String;
 
-impl Shape {
-    pub fn from_str(shape: &str) -> Shape {
-        match shape.to_lowercase().as_str() {
-            "sine" => Shape::Sine,
-            "triangle" => Shape::Triangle,
-            "square" => Shape::Square,
-            _ => loud_panic!("No shape {} exists.", shape),
+    fn try_from(
+        (method, min, max): (&str, f32, f32),
+    ) -> Result<Self, Self::Error> {
+        match method.to_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "clamp" => Ok(Self::Clamp(min, max)),
+            "fold" => Ok(Self::Fold(min, max)),
+            "wrap" => Ok(Self::Wrap(min, max)),
+            _ => Err(format!("No constrain method {} exists.", method)),
         }
     }
 }

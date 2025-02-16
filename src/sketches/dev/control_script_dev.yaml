@@ -54,17 +54,40 @@ rect_y:
   range: [0, 1]
 
 line:
+  _line_freq: &line_freq 1.0
+  _line_amp: &line_amp 0.125
   type: automate
   breakpoints:
     - position: 0.0
       value: 0.25
       kind: step
+
     - position: 1.0
       value: 0.25
       kind: ramp
+
     - position: 2.0
       value: 0.75
       kind: ramp
+
     - position: 3.0
+      value: 0.1
+      kind: wave
+      shape: sine
+      frequency: *line_freq
+      amplitude: *line_amp
+      easing: linear
+      constrain: clamp
+
+    - position: 6.0
+      value: 0.9
+      kind: wave
+      shape: sine
+      freq: *line_freq
+      amp: *line_amp
+      easing: linear
+      constrain: clamp
+
+    - position: 5.0
       value: 0.25
       kind: end
