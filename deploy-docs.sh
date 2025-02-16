@@ -21,6 +21,10 @@ echo "Temporary directory created at: $temp_dir"
 cp -r target/doc/* "$temp_dir"
 echo "Documentation copied to temporary directory"
 
+# Clean up .DS_Store files before switching branches
+echo "Cleaning up .DS_Store files..."
+find . -name ".DS_Store" -delete
+
 # Create the new branch
 echo "Creating new gh-pages-temp branch..."
 git checkout --orphan gh-pages-temp
@@ -32,6 +36,12 @@ git rm -rf .
 # Copy the docs back
 echo "Copying documentation back from temporary directory..."
 cp -r "$temp_dir"/* .
+
+echo "Setting up root index.html..."
+if [ ! -f index.html ] && [ -f your_app_name/index.html ]; then
+    cp your_app_name/index.html index.html
+fi
+
 rm -rf "$temp_dir"
 echo "Temporary directory cleaned up"
 
