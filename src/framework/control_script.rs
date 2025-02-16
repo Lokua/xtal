@@ -58,6 +58,8 @@ enum ControlType {
     RRampRel,
     #[serde(rename = "triangle")]
     Triangle,
+    #[serde(rename = "automate")]
+    Automate,
 }
 
 type ConfigFile = IndexMap<String, MaybeControlConfig>;
@@ -78,6 +80,7 @@ enum AnimationConfig {
     Lerp(LerpConfig),
     RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
+    Automate(AutomateConfig),
 }
 impl AnimationConfig {
     pub fn delay(&self) -> f32 {
@@ -100,6 +103,9 @@ impl fmt::Debug for AnimationConfig {
             AnimationConfig::Triangle(x) => {
                 f.debug_tuple("AnimationConfig::Triangle").field(x).finish()
             }
+            AnimationConfig::Automate(x) => {
+                f.debug_tuple("AnimationConfig::Automate").field(x).finish()
+            }
         }
     }
 }
@@ -108,6 +114,7 @@ impl fmt::Debug for AnimationConfig {
 enum KeyframeSequence {
     Linear(Vec<Keyframe>),
     Random(Vec<KeyframeRandom>),
+    Breakpoints(Vec<Breakpoint>),
     None,
 }
 
@@ -192,6 +199,16 @@ impl<T: TimingSource> ControlScript<T> {
                             (conf.range[0], conf.range[1]),
                             conf.phase,
                         )
+                    }
+                }
+                (
+                    AnimationConfig::Automate(conf),
+                    KeyframeSequence::Breakpoints(breakpoints),
+                ) => {
+                    if let Some(bypass) = conf.bypass {
+                        bypass
+                    } else {
+                        self.animation.animate(breakpoints, Mode::Loop)
                     }
                 }
                 _ => unimplemented!(),
@@ -445,6 +462,25 @@ impl<T: TimingSource> ControlScript<T> {
                         ),
                     );
                 }
+                ControlType::Automate => {
+                    let conf: AutomateConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let breakpoints = conf
+                        .breakpoints
+                        .iter()
+                        .cloned()
+                        .map(Breakpoint::from)
+                        .collect();
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::Automate(conf),
+                            KeyframeSequence::Breakpoints(breakpoints),
+                        ),
+                    );
+                }
             }
         }
 
@@ -682,6 +718,44 @@ impl Default for AudioConfig {
             bypass: None,
         }
     }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(default)]
+struct AutomateConfig {
+    breakpoints: Vec<BreakpointConfig>,
+    #[serde(deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
+}
+
+impl Default for AutomateConfig {
+    fn default() -> Self {
+        Self {
+            breakpoints: Vec::new(),
+            bypass: None,
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+struct BreakpointConfig {
+    position: f32,
+    value: f32,
+    kind: KindConfig,
+}
+
+impl From<BreakpointConfig> for Breakpoint {
+    fn from(config: BreakpointConfig) -> Self {
+        match config.kind {
+            KindConfig::Step => Breakpoint::step(config.position, config.value),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+enum KindConfig {
+    Step,
 }
 
 #[derive(Debug)]

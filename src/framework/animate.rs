@@ -10,7 +10,7 @@ use super::prelude::*;
 /// The core structure need to configure segments for the
 /// [`Animation::animate`] method. See the various constructors such as
 /// [`Breakpoint::step`], [`Breakpoint::ramp`], etc. for in depth details.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Breakpoint {
     pub kind: Kind,
     pub position: f32,
@@ -117,7 +117,7 @@ impl Breakpoint {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Kind {
     Step,
     Ramp {

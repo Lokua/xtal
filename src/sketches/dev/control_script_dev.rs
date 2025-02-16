@@ -53,6 +53,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let pos_x2 = m.controls.get("pos_x2");
     let pos_x3 = m.controls.get("pos_x3");
     let rect_y = m.controls.get("rect_y");
+    let line = m.controls.get("line");
 
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
@@ -78,6 +79,11 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .color(CYAN)
         .x_y(0.0, map_range(rect_y, 0.0, 1.0, -m.wr.hh(), m.wr.hh()))
         .w_h(m.wr.w() - 100.0, 30.0);
+
+    draw.rect()
+        .color(MAGENTA)
+        .x_y(0.0, map_range(line, 0.0, 1.0, -m.wr.hh(), m.wr.hh()))
+        .w_h(m.wr.w(), 20.0);
 
     draw.to_frame(app, &frame).unwrap();
 }
