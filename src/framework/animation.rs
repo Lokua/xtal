@@ -23,47 +23,29 @@
 //! # Basic Usage
 //!
 //! ```rust
-//! use animation::{Animation, TimingSource};
-//!
-//! let animation = Animation::new(timing);
+//! let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 //!
 //! // Simple oscillation between 0-1 over 4 beats
 //! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
 //!
 //! // Triangle wave oscillation between ranges
 //! let value = animation.triangle(
-//!     4.0,           // Duration in beats
-//!     (0.0, 100.0),  // Min/max range
-//!     0.0,           // Phase offset
-//! );
-//! ```
-//!
-//! # Keyframe Animations
-//!
-//! ```rust
-//! use animation::{Animation, Keyframe, kf};
-//!
-//! // Ramp between values with configurable easing
-//! let value = animation.ramp(
-//!     &[
-//!         kf(0.0, 1.0),     // Start at 0.0, hold for 1 beat
-//!         kf(1.0, 1.0),     // Ramp to 1.0 over 1 beat
-//!         kf(0.0, 0.0),     // Return to 0.0
-//!     ],
-//!     0.5,                  // Ramp time in beats
-//!     Easing::Linear        // Easing function
+//!     // Duration in beats
+//!     4.0,
+//!     // Min/max range
+//!     (0.0, 100.0),  
+//!     // Phase offset
+//!     0.0,           
 //! );
 //! ```
 //!
 //! # Advanced Automation
 //!
-//! The [`Animation::animate`] method provides DAW-style automation curves with
+//! The [`Animation::automate`] method provides DAW-style automation curves with
 //! multiple breakpoint types and transition modes:
 //!
 //! ```rust
-//! use animation::{Animation, Breakpoint, Mode, Shape, Constrain};
-//!
-//! let value = animation.animate(
+//! let value = animation.automate(
 //!     &[
 //!         // Start with a step change
 //!         Breakpoint::step(0.0, 0.0),
@@ -71,12 +53,17 @@
 //!         Breakpoint::ramp(1.0, 1.0, Easing::EaseInExpo),
 //!         // Add amplitude modulation
 //!         Breakpoint::wave(
-//!             2.0,            // Position in beats
-//!             0.5,            // Base value
-//!             Shape::Sine,    // Modulation shape
-//!             0.25,           // Frequency in beats
-//!             0.5,            // Width
-//!             0.25,           // Amplitude
+//!             // Position in beats
+//!             2.0,
+//!             // Base value
+//!             0.5,
+//!             Shape::Sine,
+//!             // Frequency in beats
+//!             0.25,
+//!             // Width
+//!             0.5,
+//!             // Amplitude
+//!             0.25,
 //!             Easing::Linear,
 //!             Constrain::None,
 //!         ),
@@ -98,6 +85,7 @@ use rand::Rng;
 use rand::SeedableRng;
 use serde::Deserialize;
 
+use super::frame_controller;
 use super::prelude::*;
 
 #[derive(Copy, Clone, Debug, Deserialize)]
@@ -166,9 +154,7 @@ impl<T: TimingSource> Animation<T> {
         self.timing.beats()
     }
 
-    /// Return the number of beats that have elapsed
-    /// since (re)start of this Animation's Timing source,
-    /// converted to frame count
+    /// Convert `beats` to frame count
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
         let seconds_per_beat = 60.0 / self.timing.bpm();
         let total_seconds = beats * seconds_per_beat;

@@ -9,7 +9,6 @@ pub use crate::framework::control_script::*;
 pub use crate::framework::controls::*;
 pub use crate::framework::distance::*;
 pub use crate::framework::easing::*;
-pub use crate::framework::frame_controller;
 pub use crate::framework::gpu;
 pub use crate::framework::logging::*;
 pub use crate::framework::midi::*;

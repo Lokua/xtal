@@ -16,114 +16,11 @@ use yaml_merge_keys::merge_keys_serde_yml;
 
 use super::prelude::*;
 
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-enum MaybeControlConfig {
-    Control(ControlConfig),
-    #[allow(dead_code)]
-    Other(serde_yml::Value),
-}
-
-#[derive(Deserialize, Debug)]
-struct ControlConfig {
-    #[serde(rename = "type")]
-    control_type: ControlType,
-    #[serde(flatten)]
-    config: serde_yml::Value,
-}
-
-#[derive(Deserialize, Debug)]
-enum ControlType {
-    // UI controls
-    #[serde(rename = "slider")]
-    Slider,
-    #[serde(rename = "checkbox")]
-    Checkbox,
-    #[serde(rename = "select")]
-    Select,
-    #[serde(rename = "separator")]
-    Separator,
-
-    // External control
-    #[serde(rename = "osc")]
-    Osc,
-    #[serde(rename = "audio")]
-    Audio,
-
-    // Animation
-    #[serde(rename = "lerp_abs")]
-    LerpAbs,
-    #[serde(rename = "lerp_rel")]
-    LerpRel,
-    #[serde(rename = "r_ramp_rel")]
-    RRampRel,
-    #[serde(rename = "triangle")]
-    Triangle,
-    #[serde(rename = "automate")]
-    Automate,
-}
-
-type ConfigFile = IndexMap<String, MaybeControlConfig>;
-
-struct UpdateState {
-    _watcher: notify::RecommendedWatcher,
-    state: Arc<Mutex<Option<ConfigFile>>>,
-}
-impl fmt::Debug for UpdateState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("UpdateState")
-            .field("state", &self.state)
-            .finish()
-    }
-}
-
-enum AnimationConfig {
-    Lerp(LerpConfig),
-    RRampRel(RRampRelConfig),
-    Triangle(TriangleConfig),
-    Automate(AutomateConfig),
-}
-impl AnimationConfig {
-    pub fn delay(&self) -> f32 {
-        match self {
-            AnimationConfig::Lerp(x) => x.delay,
-            AnimationConfig::RRampRel(x) => x.delay,
-            _ => 0.0,
-        }
-    }
-}
-impl fmt::Debug for AnimationConfig {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AnimationConfig::Lerp(x) => {
-                f.debug_tuple("AnimationConfig::LerpAbs").field(x).finish()
-            }
-            AnimationConfig::RRampRel(x) => {
-                f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
-            }
-            AnimationConfig::Triangle(x) => {
-                f.debug_tuple("AnimationConfig::Triangle").field(x).finish()
-            }
-            AnimationConfig::Automate(x) => {
-                f.debug_tuple("AnimationConfig::Automate").field(x).finish()
-            }
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum KeyframeSequence {
-    Linear(Vec<Keyframe>),
-    Random(Vec<KeyframeRandom>),
-    Breakpoints(Vec<Breakpoint>),
-    None,
-}
-
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
+    pub animation: Animation<T>,
     osc_controls: OscControls,
     audio_controls: AudioControls,
-    animation: Animation<T>,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     update_state: UpdateState,
 }
@@ -553,6 +450,109 @@ impl<T: TimingSource + fmt::Debug> fmt::Debug for ControlScript<T> {
             .field("update_state", &self.update_state)
             .finish()
     }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+enum MaybeControlConfig {
+    Control(ControlConfig),
+    #[allow(dead_code)]
+    Other(serde_yml::Value),
+}
+
+#[derive(Deserialize, Debug)]
+struct ControlConfig {
+    #[serde(rename = "type")]
+    control_type: ControlType,
+    #[serde(flatten)]
+    config: serde_yml::Value,
+}
+
+#[derive(Deserialize, Debug)]
+enum ControlType {
+    // UI controls
+    #[serde(rename = "slider")]
+    Slider,
+    #[serde(rename = "checkbox")]
+    Checkbox,
+    #[serde(rename = "select")]
+    Select,
+    #[serde(rename = "separator")]
+    Separator,
+
+    // External control
+    #[serde(rename = "osc")]
+    Osc,
+    #[serde(rename = "audio")]
+    Audio,
+
+    // Animation
+    #[serde(rename = "lerp_abs")]
+    LerpAbs,
+    #[serde(rename = "lerp_rel")]
+    LerpRel,
+    #[serde(rename = "r_ramp_rel")]
+    RRampRel,
+    #[serde(rename = "triangle")]
+    Triangle,
+    #[serde(rename = "automate")]
+    Automate,
+}
+
+type ConfigFile = IndexMap<String, MaybeControlConfig>;
+
+struct UpdateState {
+    _watcher: notify::RecommendedWatcher,
+    state: Arc<Mutex<Option<ConfigFile>>>,
+}
+impl fmt::Debug for UpdateState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UpdateState")
+            .field("state", &self.state)
+            .finish()
+    }
+}
+
+enum AnimationConfig {
+    Lerp(LerpConfig),
+    RRampRel(RRampRelConfig),
+    Triangle(TriangleConfig),
+    Automate(AutomateConfig),
+}
+impl AnimationConfig {
+    pub fn delay(&self) -> f32 {
+        match self {
+            AnimationConfig::Lerp(x) => x.delay,
+            AnimationConfig::RRampRel(x) => x.delay,
+            _ => 0.0,
+        }
+    }
+}
+impl fmt::Debug for AnimationConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AnimationConfig::Lerp(x) => {
+                f.debug_tuple("AnimationConfig::LerpAbs").field(x).finish()
+            }
+            AnimationConfig::RRampRel(x) => {
+                f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
+            }
+            AnimationConfig::Triangle(x) => {
+                f.debug_tuple("AnimationConfig::Triangle").field(x).finish()
+            }
+            AnimationConfig::Automate(x) => {
+                f.debug_tuple("AnimationConfig::Automate").field(x).finish()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum KeyframeSequence {
+    Linear(Vec<Keyframe>),
+    Random(Vec<KeyframeRandom>),
+    Breakpoints(Vec<Breakpoint>),
+    None,
 }
 
 #[derive(Deserialize, Debug)]

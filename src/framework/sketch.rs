@@ -1,5 +1,6 @@
 use nannou::prelude::*;
 
+use super::control_provider::ControlProvider;
 use super::prelude::*;
 
 /// A configuration that all sketches must export in order to integrate
@@ -11,7 +12,7 @@ pub struct SketchConfig {
     /// The name that will show up in the title bar of the window
     pub display_name: &'static str,
 
-    /// The frame rate that will be provided to the global framecount provider
+    /// The frame rate that will be provided to the global frame-count provider
     /// to keep everything including animations in sync
     pub fps: f32,
 
@@ -30,7 +31,7 @@ pub struct SketchConfig {
     pub gui_w: Option<u32>,
 
     /// The height of the control window. I've been unable to derive this
-    /// from the number of controls - there is some weird kwirk in the version
+    /// from the number of controls - there is some weird quirk in the version
     /// of egui that ships with nannou, so until we get around that this must be
     /// provided and increased manually as your count of controls grows
     pub gui_h: Option<u32>,
@@ -52,9 +53,6 @@ pub enum PlayMode {
     ManualAdvance,
 }
 
-/// A trait all Lattice sketches must implement. Use with
-/// `#[derive(SketchComponents)]` which allows you to declare only the fields
-/// you need and skip having to implement any of these.
 pub trait SketchModel {
     fn controls(&mut self) -> Option<&mut impl ControlProvider> {
         None::<&mut Controls>

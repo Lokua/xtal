@@ -9,6 +9,7 @@ use std::sync::{mpsc, Once};
 use std::{env, fs};
 use std::{path::PathBuf, str};
 
+use framework::frame_controller;
 use framework::prelude::*;
 use runtime::prelude::*;
 

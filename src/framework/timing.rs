@@ -13,10 +13,10 @@
 //!
 //! The core abstraction is the [`Timing`] enum which wraps various
 //! [`TimingSource`] implementations. In all cases you must provide a `bpm`
-//! parameter as like the [`Animation`] module, time is provided in musical
-//! _beats_, e.g. 1.0 = 1 quarter note, 0.5 = 1 eight note, and so on. This
-//! provides the most intuitive way to write animations that are in sync with
-//! music.
+//! parameter as like the [`Animation`][animation] module, time is provided in
+//! musical _beats_, e.g. 1.0 = 1 quarter note, 0.5 = 1 eight note, and so on.
+//! This provides the most intuitive way to write animations that are in sync
+//! with music.
 //!
 //! [animation]: crate::framework::animation
 
@@ -30,6 +30,7 @@ use std::{
     },
 };
 
+use super::frame_controller;
 use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
 
@@ -38,7 +39,7 @@ pub trait TimingSource: Clone {
     fn bpm(&self) -> f32;
 }
 
-/// Wrapper for all `TimingSource` implementations which allows
+/// Wrapper for all [`TimingSource`] implementations which allows
 /// run-time selection of a `TimingSource` via command line argument.
 /// Sketches can bypass the command line argument by using a `TimingSource`
 /// other than this directly.

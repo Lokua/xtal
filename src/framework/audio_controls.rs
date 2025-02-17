@@ -1,6 +1,8 @@
 //! Control sketch parameters with audio signals. Supports any number of
 //! channels of the device you can specify in
-//! [`crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME`].
+//! [`MULTICHANNEL_AUDIO_DEVICE_NAME`][device].
+//!
+//! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
 
 use cpal::{traits::*, Device, StreamConfig};
 use nannou::math::map_range;
@@ -10,6 +12,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use super::frame_controller;
 use super::prelude::*;
 
 // Live/2025/Lattice Audio Controls Test
@@ -326,15 +329,12 @@ impl MultichannelAudioProcessor {
             }
         }
 
+        // Ensure buffers are filled to their exact size
         for channel_buffer in &mut self.channel_data {
             if channel_buffer.len() > self.buffer_size {
                 channel_buffer
                     .drain(0..(channel_buffer.len() - self.buffer_size));
             }
-
-            // Deal with race condition of sketch update requesting data
-            // before the buffer is full.
-            // "Provided FFT buffer was too small. Expected len = 1600, got len = 1536"
             while channel_buffer.len() < self.buffer_size {
                 channel_buffer.push(0.0);
             }
