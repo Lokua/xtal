@@ -84,7 +84,12 @@ impl Breakpoint {
     }
 
     /// Create a step chosen randomly from the passed in `amplitude` which
-    /// specifies the range of possible deviation from `value`
+    /// specifies the range of possible deviation from `value`.
+    ///
+    /// > TIP: you can make this a smooth random by applying a
+    /// [`SlewLimiter`][slew] to the output:
+    ///
+    /// [slew]: crate::framework::slew_limiter
     pub fn random(position: f32, value: f32, amplitude: f32) -> Self {
         Self::new(Kind::Random { amplitude }, position, value)
     }

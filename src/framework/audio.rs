@@ -9,6 +9,37 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 
+/// Configuration for envelope following behavior, controlling how quickly the
+/// envelope tracks changes in the input signal.
+/// TODO: deprecate and move to SlewLimiter
+#[derive(Debug, Clone, Copy)]
+pub struct SlewConfig {
+    /// Controls smoothing when signal amplitude increases.
+    /// - 0.0 = instant attack (no smoothing)
+    /// - 1.0 = very slow attack (maximum smoothing)
+    pub rise: f32,
+
+    /// Controls smoothing when signal amplitude decreases.
+    /// - 0.0 = instant decay (no smoothing)
+    /// - 1.0 = very slow decay (maximum smoothing)
+    pub fall: f32,
+}
+
+impl SlewConfig {
+    pub fn new(rise: f32, fall: f32) -> Self {
+        Self { rise, fall }
+    }
+}
+
+impl Default for SlewConfig {
+    fn default() -> Self {
+        Self {
+            rise: 0.15,
+            fall: 0.5,
+        }
+    }
+}
+
 /// **⚠️ Experimental**
 /// Single-channel, multiband audio with configurable FFT bands.
 pub struct Audio {
@@ -38,12 +69,12 @@ impl Audio {
         n_bands: usize,
         min_freq: f32,
         max_freq: f32,
-        preemphasis: f32,
+        pre_emphasis: f32,
         rise: f32,
         fall: f32,
     ) -> Vec<f32> {
         let audio_processor = self.audio_processor.lock().unwrap();
-        let emphasized = audio_processor.apply_preemphasis(preemphasis);
+        let emphasized = audio_processor.apply_pre_emphasis(pre_emphasis);
 
         if self.cutoffs.is_empty() {
             self.cutoffs = audio_processor.generate_mel_cutoffs(
@@ -75,37 +106,7 @@ impl Audio {
     }
 }
 
-/// Configuration for envelope following behavior, controlling how quickly the
-/// envelope tracks changes in the input signal.
-#[derive(Debug, Clone, Copy)]
-pub struct SlewConfig {
-    /// Controls smoothing when signal amplitude increases.
-    /// - 0.0 = instant attack (no smoothing)
-    /// - 1.0 = very slow attack (maximum smoothing)
-    pub rise: f32,
-
-    /// Controls smoothing when signal amplitude decreases.
-    /// - 0.0 = instant decay (no smoothing)
-    /// - 1.0 = very slow decay (maximum smoothing)
-    pub fall: f32,
-}
-
-impl Default for SlewConfig {
-    fn default() -> Self {
-        Self {
-            rise: 0.15,
-            fall: 0.5,
-        }
-    }
-}
-
-impl SlewConfig {
-    pub fn new(rise: f32, fall: f32) -> Self {
-        Self { rise, fall }
-    }
-}
-
-pub struct AudioProcessor {
+struct AudioProcessor {
     sample_rate: usize,
     buffer: Vec<f32>,
     buffer_size: usize,
@@ -143,9 +144,9 @@ impl AudioProcessor {
         }
     }
 
-    /// Standard preemphasis filter: `y[n] = x[n] - α * x[n-1]`
+    /// Standard pre-emphasis filter: `y[n] = x[n] - α * x[n-1]`
     /// 0.97 is common is it gives about +20dB emphasis starting around 1kHz
-    pub fn apply_preemphasis(&self, coefficient: f32) -> Vec<f32> {
+    pub fn apply_pre_emphasis(&self, coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(self.buffer.len());
         filtered.push(self.buffer[0]);
 
@@ -156,16 +157,19 @@ impl AudioProcessor {
         filtered
     }
 
+    #[allow(dead_code)]
     pub fn peak(&self) -> f32 {
         self.buffer.iter().fold(f32::MIN, |a, &b| f32::max(a, b))
     }
 
+    #[allow(dead_code)]
     pub fn rms(&self) -> f32 {
         (self.buffer.iter().map(|&x| x * x).sum::<f32>()
             / self.buffer.len() as f32)
             .sqrt()
     }
 
+    #[allow(dead_code)]
     pub fn bands(&self, cutoffs: &Vec<f32>) -> Vec<f32> {
         self.bands_from_buffer(&self.buffer, cutoffs)
     }
@@ -277,6 +281,7 @@ impl AudioProcessor {
     ///
     /// # Returns
     /// Vector of frequency cutoffs in Hz as usize values
+    #[allow(dead_code)]
     pub fn generate_cutoffs(
         &self,
         num_bands: usize,
@@ -366,7 +371,7 @@ impl AudioProcessor {
     }
 }
 
-pub fn init_audio(
+fn init_audio(
     shared_audio: Arc<Mutex<AudioProcessor>>,
 ) -> Result<(), BuildStreamError> {
     let audio_host = cpal::default_host();
@@ -418,7 +423,7 @@ pub fn init_audio(
 
                 audio_processor.add_samples(&data);
             },
-            move |err| error!("An error occured on steam: {}", err),
+            move |err| error!("An error occurred on steam: {}", err),
             None,
         )?,
         sample_format => {

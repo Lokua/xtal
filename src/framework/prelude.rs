@@ -15,6 +15,7 @@ pub use crate::framework::midi::*;
 pub use crate::framework::noise::*;
 pub use crate::framework::osc_controls::*;
 pub use crate::framework::sketch::*;
+pub use crate::framework::slew_limiter::*;
 pub use crate::framework::timing::*;
 pub use crate::framework::util::*;
 pub use crate::framework::window_rect::*;

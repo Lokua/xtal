@@ -17,6 +17,46 @@ use super::prelude::*;
 
 const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
+#[derive(Clone, Debug)]
+pub struct AudioControlConfig {
+    /// The zero-indexed channel number (0 = first channel)
+    pub channel: usize,
+
+    pub slew_config: SlewConfig,
+
+    /// The pre-emphasis factor to apply to the audio signal.
+    /// A higher value results in more emphasis on high frequencies.
+    /// See [`MultichannelAudioProcessor::apply_pre_emphasis`] for more details
+    pub pre_emphasis: f32,
+
+    /// Linearly interpolate between peak and RMS amplitude detection.
+    /// 0.0 = peak, 1.0 = RMS
+    pub detect: f32,
+
+    pub range: (f32, f32),
+    pub default: f32,
+}
+
+impl AudioControlConfig {
+    pub fn new(
+        channel: usize,
+        slew_config: SlewConfig,
+        detect: f32,
+        pre_emphasis: f32,
+        range: (f32, f32),
+        default: f32,
+    ) -> Self {
+        Self {
+            channel,
+            slew_config,
+            detect,
+            pre_emphasis,
+            range,
+            default,
+        }
+    }
+}
+
 /// A function used in [`AudioControls`] to reduce a channel's audio buffer to
 /// a single value suitable for parameter control. The [`default_buffer_processor`]
 /// is specifically for audio-rate signals, while [`thru_buffer_processor`]
@@ -49,59 +89,6 @@ pub fn thru_buffer_processor(
     _config: &AudioControlConfig,
 ) -> f32 {
     *buffer.last().unwrap_or(&0.0)
-}
-
-pub struct AudioControlBuilder {
-    controls: AudioControls,
-}
-
-impl AudioControlBuilder {
-    pub fn new() -> Self {
-        Self {
-            controls: AudioControls::new(
-                frame_controller::fps(),
-                crate::config::MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE,
-                default_buffer_processor,
-            ),
-        }
-    }
-
-    /// See [`BufferProcessor`]
-    pub fn with_buffer_processor(
-        mut self,
-        buffer_processor: BufferProcessor,
-    ) -> Self {
-        self.controls.buffer_processor = buffer_processor;
-        self
-    }
-
-    /// See [`AudioControlConfig`]
-    pub fn control_from_config(
-        mut self,
-        name: &str,
-        config: AudioControlConfig,
-    ) -> Self {
-        self.controls.add(&name, config);
-        self
-    }
-
-    pub fn control() -> Self {
-        todo!()
-    }
-
-    pub fn control_mapped() -> Self {
-        todo!()
-    }
-
-    pub fn build(mut self) -> AudioControls {
-        if let Err(e) = self.controls.start() {
-            error!(
-                "Failed to initialize audio controls: {}. Using default values.",
-                e
-            );
-        }
-        self.controls
-    }
 }
 
 struct AudioControlState {
@@ -264,43 +251,56 @@ impl AudioControls {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct AudioControlConfig {
-    /// The zero-indexed channel number (0 = first channel)
-    pub channel: usize,
-
-    pub slew_config: SlewConfig,
-
-    /// The pre-emphasis factor to apply to the audio signal.
-    /// A higher value results in more emphasis on high frequencies.
-    /// See [`MultichannelAudioProcessor::apply_pre_emphasis`] for more details
-    pub pre_emphasis: f32,
-
-    /// Linearly interpolate between peak and RMS amplitude detection.
-    /// 0.0 = peak, 1.0 = RMS
-    pub detect: f32,
-
-    pub range: (f32, f32),
-    pub default: f32,
+pub struct AudioControlBuilder {
+    controls: AudioControls,
 }
 
-impl AudioControlConfig {
-    pub fn new(
-        channel: usize,
-        slew_config: SlewConfig,
-        detect: f32,
-        pre_emphasis: f32,
-        range: (f32, f32),
-        default: f32,
-    ) -> Self {
+impl AudioControlBuilder {
+    pub fn new() -> Self {
         Self {
-            channel,
-            slew_config,
-            detect,
-            pre_emphasis,
-            range,
-            default,
+            controls: AudioControls::new(
+                frame_controller::fps(),
+                crate::config::MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE,
+                default_buffer_processor,
+            ),
         }
+    }
+
+    /// See [`BufferProcessor`]
+    pub fn with_buffer_processor(
+        mut self,
+        buffer_processor: BufferProcessor,
+    ) -> Self {
+        self.controls.buffer_processor = buffer_processor;
+        self
+    }
+
+    /// See [`AudioControlConfig`]
+    pub fn control_from_config(
+        mut self,
+        name: &str,
+        config: AudioControlConfig,
+    ) -> Self {
+        self.controls.add(&name, config);
+        self
+    }
+
+    pub fn control() -> Self {
+        todo!()
+    }
+
+    pub fn control_mapped() -> Self {
+        todo!()
+    }
+
+    pub fn build(mut self) -> AudioControls {
+        if let Err(e) = self.controls.start() {
+            error!(
+                "Failed to initialize audio controls: {}. Using default values.",
+                e
+            );
+        }
+        self.controls
     }
 }
 
@@ -381,7 +381,7 @@ impl MultichannelAudioProcessor {
     /// previous sample. It boosts high frequencies indirectly rather than
     /// explicitly cutting low frequencies with a sharp cutoff like a classical
     /// HPF. 0.97 is common as it gives about +20dB emphasis starting around 1kHz.
-    /// See freq-response-preemphasis.png in the repo's assets folder for more
+    /// See freq-response-pre-emphasis.png in the repo's assets folder for more
     /// details.
     pub fn apply_pre_emphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(buffer.len());

@@ -23,6 +23,8 @@ pub struct Model {
     lerp: f32,
     ramp: f32,
     r_ramp: f32,
+    random_anim: f32,
+    slew_limiter: SlewLimiter,
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
@@ -33,6 +35,8 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         lerp: 0.0,
         ramp: 0.0,
         r_ramp: 0.0,
+        random_anim: 0.0,
+        slew_limiter: SlewLimiter::default(),
     }
 }
 
@@ -54,6 +58,16 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
         1.0,
         Easing::Linear,
     );
+
+    let random_anim = model.animation.automate(
+        &[
+            Breakpoint::random(0.0, 0.5, 0.5),
+            Breakpoint::random(2.0, 0.5, 0.5),
+        ],
+        Mode::Loop,
+    );
+    model.random_anim =
+        model.slew_limiter.slew_with_rates(random_anim, 0.8, 0.8);
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {
@@ -186,19 +200,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     // DARK TURQUOISE BALL
     draw.ellipse()
         .x_y(
-            map_range(
-                model.animation.automate(
-                    &[
-                        Breakpoint::random(0.0, 0.5, 0.25),
-                        Breakpoint::random(1.0, 0.5, 0.25),
-                    ],
-                    Mode::Loop,
-                ),
-                0.0,
-                1.0,
-                -edge,
-                edge,
-            ),
+            map_range(model.random_anim, 0.0, 1.0, -edge, edge),
             -hh + hh / 8.0,
         )
         .radius(radius * 0.333)
