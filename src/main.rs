@@ -82,6 +82,7 @@ fn main() {
         // --- MAIN
         "blob" => run_sketch!(blob),
         "breakpoints" => run_sketch!(breakpoints),
+        "breakpoints_2" => run_sketch!(breakpoints_2),
         "brutalism" => run_sketch!(brutalism),
         "displacement_2a" => run_sketch!(displacement_2a),
         "drop" => run_sketch!(drop),

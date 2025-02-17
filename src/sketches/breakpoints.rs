@@ -40,6 +40,7 @@ pub struct Model {
     controls: Controls,
     lanes: Vec<Vec<Breakpoint>>,
     segments: Vec<Vec<LaneSegment>>,
+    slew_limiter: SlewLimiter,
     wr: WindowRect,
 }
 
@@ -62,6 +63,9 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "clamp",
             &["none", "clamp", "fold", "wrap"],
         ),
+        Control::Separator {},
+        Control::slide("slew_rise", 0.0),
+        Control::slide("slew_fall", 0.0),
     ]);
 
     Model {
@@ -70,6 +74,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         lanes: vec![],
         segments: vec![],
         wr,
+        slew_limiter: SlewLimiter::new(0.0, 0.0, 0.0),
     }
 }
 
@@ -85,6 +90,10 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
             Constrain::try_from((clamp_method.as_str(), 0.0, 1.0)).unwrap();
         let amplitude = m.controls.float("wave_amplitude");
         let frequency = m.controls.float("wave_frequency");
+        let rise = m.controls.float("slew_rise");
+        let fall = m.controls.float("slew_fall");
+
+        m.slew_limiter.set_rates(rise, fall);
 
         let lanes = vec![
             create_ramp_lane(easing.clone()),
@@ -114,7 +123,12 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
             ),
         ];
 
-        m.segments = create_segments(&lanes, &mut m.animation, &m.wr);
+        m.segments = create_segments(
+            &lanes,
+            &mut m.animation,
+            &m.wr,
+            &mut m.slew_limiter,
+        );
         m.lanes = lanes;
 
         m.controls.mark_unchanged();
@@ -185,6 +199,7 @@ fn create_segments(
     lanes: &[Vec<Breakpoint>],
     animation: &mut Animation<ManualTiming>,
     wr: &WindowRect,
+    mut slew_limiter: &mut SlewLimiter,
 ) -> Vec<Vec<LaneSegment>> {
     let vertical_offset = TRACK_HEIGHT + TRACK_PADDING;
 
@@ -197,7 +212,13 @@ fn create_segments(
                 - TRACK_PADDING
                 - (lane_index as f32 * vertical_offset);
 
-            create_lanes(breakpoints, animation, y_offset, wr.hw())
+            create_lanes(
+                breakpoints,
+                animation,
+                y_offset,
+                wr.hw(),
+                &mut slew_limiter,
+            )
         })
         .collect()
 }
@@ -207,6 +228,7 @@ fn create_lanes(
     animation: &mut Animation<ManualTiming>,
     y_offset: f32,
     half_width: f32,
+    slew_limiter: &mut SlewLimiter,
 ) -> Vec<LaneSegment> {
     let mut segments = Vec::new();
 
@@ -241,6 +263,7 @@ fn create_lanes(
                             current.position + (i as f32 * step) + (step / 2.0);
                         animation.timing.set_beats(current_pos);
                         let value = animation.automate(breakpoints, Mode::Once);
+                        let value = slew_limiter.slew(value);
 
                         points.push(map_to_track(
                             current_pos,

@@ -1,0 +1,13 @@
+{
+  "values": {
+    "fall": {
+      "Float": 0.97999996
+    },
+    "slew": {
+      "Bool": false
+    },
+    "rise": {
+      "Float": 0.988
+    }
+  }
+}

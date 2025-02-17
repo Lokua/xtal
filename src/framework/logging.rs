@@ -80,8 +80,8 @@ macro_rules! debug_once {
 #[macro_export]
 macro_rules! loud_panic {
     ($($arg:tt)*) => {{
-        error!($($arg)*);
-        panic!($($arg)*);
+        error!("\n\n{}\n\n", format!($($arg)*));
+        panic!("\n\n{}\n\n", format!($($arg)*));
     }};
 }
 

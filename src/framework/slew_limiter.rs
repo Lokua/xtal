@@ -10,6 +10,7 @@ pub struct SlewLimiter {
     /// - 0.0 = instant decay (no smoothing)
     /// - 1.0 = very slow decay (maximum smoothing)
     fall: f32,
+
     previous_value: f32,
 }
 
@@ -53,8 +54,8 @@ impl Default for SlewLimiter {
     fn default() -> Self {
         Self {
             previous_value: 0.0,
-            rise: 0.25,
-            fall: 0.25,
+            rise: 0.0,
+            fall: 0.0,
         }
     }
 }

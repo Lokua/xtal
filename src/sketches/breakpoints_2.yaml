@@ -1,0 +1,43 @@
+_vars:
+  easing: &easing ease_in_bounce
+
+slew:
+  type: checkbox
+
+rise:
+  type: slider
+
+fall:
+  type: slider
+
+points:
+  type: automate
+  mode: loop
+  breakpoints:
+    - position: 0.0
+      value: 0.0
+      kind: step
+
+    - position: 1.0
+      value: 1.0
+      kind: ramp
+      easing: *easing
+
+    - position: 2.0
+      value: 0.0
+      kind: ramp
+      easing: *easing
+
+    - position: 3.0
+      value: 1.0
+      kind: wave
+      shape: sine
+      freq: 0.25
+      width: 0.5
+      amp: 0.25
+      easing: *easing
+      constrain: clamp
+
+    - position: 4.0
+      value: 0.0
+      kind: end

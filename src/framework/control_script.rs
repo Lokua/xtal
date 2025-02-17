@@ -106,7 +106,10 @@ impl<T: TimingSource> ControlScript<T> {
                     if let Some(bypass) = conf.bypass {
                         bypass
                     } else {
-                        self.animation.automate(breakpoints, Mode::Loop)
+                        self.animation.automate(
+                            breakpoints,
+                            Mode::from_str(&conf.mode).unwrap(),
+                        )
                     }
                 }
                 _ => unimplemented!(),
@@ -125,6 +128,21 @@ impl<T: TimingSource> ControlScript<T> {
         return self.controls.string(name);
     }
 
+    pub fn breakpoints(&self, name: &str) -> Vec<Breakpoint> {
+        if let Some(keyframe_sequence) = self.keyframe_sequences.get(name) {
+            match keyframe_sequence {
+                (_, KeyframeSequence::Breakpoints(breakpoints)) => {
+                    breakpoints.clone()
+                }
+                _ => {
+                    loud_panic!("No breakpoints for name: {}", name)
+                }
+            }
+        } else {
+            loud_panic!("No breakpoints for name: {}", name)
+        }
+    }
+
     pub fn update(&mut self) {
         let new_config = {
             if let Ok(mut guard) = self.update_state.state.lock() {
@@ -139,6 +157,16 @@ impl<T: TimingSource> ControlScript<T> {
                 error!("Failed to apply new configuration: {:?}", e);
             }
         }
+    }
+
+    pub fn changed(&self) -> bool {
+        self.controls.changed()
+    }
+    pub fn any_changed_in(&self, names: &[&str]) -> bool {
+        self.controls.any_changed_in(names)
+    }
+    pub fn mark_unchanged(&mut self) {
+        self.controls.mark_unchanged();
     }
 
     fn import_script(&mut self, path: &PathBuf) -> Result<(), Box<dyn Error>> {
@@ -391,6 +419,8 @@ impl<T: TimingSource> ControlScript<T> {
                 .expect("Unable to start OSC receiver");
         }
 
+        self.controls.mark_changed();
+
         info!("Controls populated");
 
         Ok(())
@@ -574,8 +604,15 @@ impl Default for SliderConfig {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(default)]
 struct CheckboxConfig {
     default: bool,
+}
+
+impl Default for CheckboxConfig {
+    fn default() -> Self {
+        Self { default: false }
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -697,42 +734,25 @@ impl Default for TriangleConfig {
     }
 }
 
-#[derive(Clone, Deserialize, Debug)]
-#[serde(default)]
-struct AudioConfig {
-    channel: usize,
-    slew: [f32; 2],
-    pre: f32,
-    detect: f32,
-    range: [f32; 2],
-    bypass: Option<f32>,
-}
-
-impl Default for AudioConfig {
-    fn default() -> Self {
-        Self {
-            channel: 0,
-            slew: [0.0, 0.0],
-            pre: 0.0,
-            detect: 0.0,
-            range: [0.0, 1.0],
-            bypass: None,
-        }
-    }
-}
-
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct AutomateConfig {
     breakpoints: Vec<BreakpointConfig>,
+    #[serde(default = "default_mode")]
+    mode: String,
     #[serde(deserialize_with = "deserialize_number_or_none")]
     bypass: Option<f32>,
+}
+
+fn default_mode() -> String {
+    "loop".to_string()
 }
 
 impl Default for AutomateConfig {
     fn default() -> Self {
         Self {
             breakpoints: Vec::new(),
+            mode: "loop".to_string(),
             bypass: None,
         }
     }
@@ -788,6 +808,30 @@ impl From<BreakpointConfig> for Breakpoint {
                 Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
             ),
             KindConfig::End => Breakpoint::end(config.position, config.value),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(default)]
+struct AudioConfig {
+    channel: usize,
+    slew: [f32; 2],
+    pre: f32,
+    detect: f32,
+    range: [f32; 2],
+    bypass: Option<f32>,
+}
+
+impl Default for AudioConfig {
+    fn default() -> Self {
+        Self {
+            channel: 0,
+            slew: [0.0, 0.0],
+            pre: 0.0,
+            detect: 0.0,
+            range: [0.0, 1.0],
+            bypass: None,
         }
     }
 }

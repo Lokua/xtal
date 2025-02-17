@@ -6,236 +6,6 @@ use std::fmt::{self, Debug};
 
 use super::prelude::*;
 
-#[derive(Serialize, Deserialize)]
-pub struct SerializedControls {
-    pub values: HashMap<String, ControlValue>,
-}
-
-pub type ControlValues = HashMap<String, ControlValue>;
-
-/// A generic abstraction over UI controls that sketches can directly interact
-/// with without being coupled to a specific UI framework. See
-/// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
-#[derive(Serialize, Deserialize)]
-pub struct Controls {
-    controls: Vec<Control>,
-    values: ControlValues,
-    #[serde(skip)]
-    changed: bool,
-    #[serde(skip)]
-    save_previous: bool,
-    #[serde(skip)]
-    previous_values: ControlValues,
-}
-
-impl Controls {
-    pub fn new(controls: Vec<Control>) -> Self {
-        let values: ControlValues = controls
-            .iter()
-            .map(|control| (control.name().to_string(), control.value()))
-            .collect();
-
-        Self {
-            controls,
-            values,
-            changed: true,
-            save_previous: false,
-            previous_values: ControlValues::new(),
-        }
-    }
-
-    pub fn with_previous(controls: Vec<Control>) -> Self {
-        let values: ControlValues = controls
-            .iter()
-            .map(|control| (control.name().to_string(), control.value()))
-            .collect();
-
-        Self {
-            controls,
-            values,
-            changed: true,
-            save_previous: true,
-            previous_values: ControlValues::new(),
-        }
-    }
-
-    pub fn get_controls(&self) -> &Vec<Control> {
-        &self.controls
-    }
-
-    pub fn values(&self) -> &ControlValues {
-        &self.values
-    }
-
-    pub fn previous_values(&self) -> &ControlValues {
-        &self.previous_values
-    }
-
-    pub fn has(&self, name: &str) -> bool {
-        self.values.contains_key(name)
-    }
-
-    pub fn float(&self, name: &str) -> f32 {
-        self.check_contains_key(name);
-        self.values
-            .get(name)
-            .and_then(ControlValue::as_float)
-            .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a float", name)
-            })
-    }
-
-    pub fn bool(&self, name: &str) -> bool {
-        self.check_contains_key(name);
-        self.values
-            .get(name)
-            .and_then(ControlValue::as_bool)
-            .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a bool", name)
-            })
-    }
-
-    pub fn string(&self, name: &str) -> String {
-        self.check_contains_key(name);
-        self.values
-            .get(name)
-            .and_then(ControlValue::as_string)
-            .map(ToOwned::to_owned)
-            .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a string", name)
-            })
-    }
-
-    fn check_contains_key(&self, key: &str) {
-        if !self.values.contains_key(key) {
-            loud_panic!("Control {} does not exist", key);
-        }
-    }
-
-    pub fn changed(&self) -> bool {
-        self.changed
-    }
-
-    pub fn any_changed_in(&self, names: &[&str]) -> bool {
-        if !self.save_previous {
-            loud_panic!(
-                "Cannot check previous values when `save_previous` is false"
-            );
-        }
-
-        if self.previous_values.is_empty() {
-            return true;
-        }
-
-        for name in names {
-            self.check_contains_key(name);
-            if let Some(current) = self.values.get(*name) {
-                if let Some(previous) = self.previous_values.get(*name) {
-                    if current != previous {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        false
-    }
-
-    pub fn update_value(&mut self, name: &str, value: ControlValue) {
-        if let Some(old_value) = self.values.get(name) {
-            if *old_value != value {
-                self.changed = true;
-                self.values.insert(name.to_string(), value);
-            }
-        }
-    }
-
-    pub fn mark_unchanged(&mut self) {
-        self.changed = false;
-        if self.save_previous {
-            self.previous_values = self.values.clone();
-        }
-    }
-
-    pub fn get_original_config(&self, name: &str) -> Option<&Control> {
-        self.controls.iter().find(|control| control.name() == name)
-    }
-
-    pub fn slider_range(&self, name: &str) -> (f32, f32) {
-        self.get_original_config(name)
-            .and_then(|control| match control {
-                Control::Slider { min, max, .. } => Some((*min, *max)),
-                _ => None,
-            })
-            .unwrap_or_else(|| loud_panic!("Unable to find range for {}", name))
-    }
-
-    pub fn to_serialized(&self) -> SerializedControls {
-        let filtered_values: HashMap<String, ControlValue> = self
-            .values
-            .iter()
-            .filter(|(key, _)| !key.is_empty())
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        SerializedControls {
-            values: filtered_values,
-        }
-    }
-
-    pub fn from_serialized(
-        serialized: SerializedControls,
-        controls: Vec<Control>,
-    ) -> Self {
-        Self {
-            controls,
-            values: serialized.values,
-            changed: true,
-            save_previous: false,
-            previous_values: HashMap::new(),
-        }
-    }
-
-    pub fn add(&mut self, control: Control) {
-        let name = control.name().to_string();
-        let value = control.value();
-
-        if let Some(index) = self.controls.iter().position(|c| c.name() == name)
-        {
-            self.controls[index] = control;
-        } else {
-            self.controls.push(control);
-        }
-
-        self.values.insert(name, value);
-        self.changed = true;
-    }
-
-    pub fn retain<F>(&mut self, f: F)
-    where
-        F: FnMut(&Control) -> bool,
-    {
-        self.controls.retain(f);
-    }
-}
-
-impl fmt::Debug for Controls {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut debug_struct = f.debug_struct("Controls");
-
-        debug_struct.field("controls", &self.controls);
-        debug_struct.field("values", &self.values);
-        debug_struct.field("changed", &self.changed);
-        debug_struct.field("save_previous", &self.save_previous);
-
-        if self.save_previous {
-            debug_struct.field("previous_values", &self.previous_values);
-        }
-
-        debug_struct.finish()
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ControlValue {
     Float(f32),
@@ -490,5 +260,308 @@ impl fmt::Debug for Control {
                 .field("name", name)
                 .finish(),
         }
+    }
+}
+
+pub type ControlValues = HashMap<String, ControlValue>;
+
+#[derive(Serialize, Deserialize)]
+pub struct SerializedControls {
+    pub values: HashMap<String, ControlValue>,
+}
+
+/// A generic abstraction over UI controls that sketches can directly interact
+/// with without being coupled to a specific UI framework. See
+/// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
+#[derive(Serialize, Deserialize)]
+pub struct Controls {
+    controls: Vec<Control>,
+    values: ControlValues,
+    #[serde(skip)]
+    change_tracker: ChangeTracker,
+}
+
+impl Controls {
+    pub fn new(controls: Vec<Control>) -> Self {
+        let values: ControlValues = controls
+            .iter()
+            .map(|control| (control.name().to_string(), control.value()))
+            .collect();
+
+        Self {
+            controls,
+            values,
+            change_tracker: ChangeTracker::new(false),
+        }
+    }
+
+    pub fn with_previous(controls: Vec<Control>) -> Self {
+        let values: ControlValues = controls
+            .iter()
+            .map(|control| (control.name().to_string(), control.value()))
+            .collect();
+
+        Self {
+            controls,
+            values,
+            change_tracker: ChangeTracker::new(true),
+        }
+    }
+
+    pub fn get_controls(&self) -> &Vec<Control> {
+        &self.controls
+    }
+
+    pub fn values(&self) -> &ControlValues {
+        &self.values
+    }
+
+    pub fn has(&self, name: &str) -> bool {
+        self.values.contains_key(name)
+    }
+
+    pub fn float(&self, name: &str) -> f32 {
+        self.check_contains_key(name);
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_float)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a float", name)
+            })
+    }
+
+    pub fn bool(&self, name: &str) -> bool {
+        self.check_contains_key(name);
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_bool)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a bool", name)
+            })
+    }
+
+    pub fn string(&self, name: &str) -> String {
+        self.check_contains_key(name);
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_string)
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| {
+                loud_panic!("Control '{}' exists but is not a string", name)
+            })
+    }
+
+    fn check_contains_key(&self, key: &str) {
+        if !self.values.contains_key(key) {
+            loud_panic!("Control {} does not exist", key);
+        }
+    }
+
+    pub fn changed(&self) -> bool {
+        self.change_tracker.changed()
+    }
+    pub fn any_changed_in(&self, names: &[&str]) -> bool {
+        self.change_tracker.any_changed_in(names, &self.values)
+    }
+    pub fn mark_unchanged(&mut self) {
+        self.change_tracker.mark_unchanged(&self.values);
+    }
+    pub fn mark_changed(&mut self) {
+        self.change_tracker.mark_changed();
+    }
+
+    pub fn update_value(&mut self, name: &str, value: ControlValue) {
+        if let Some(old_value) = self.values.get(name) {
+            if *old_value != value {
+                self.change_tracker.mark_changed();
+                self.values.insert(name.to_string(), value);
+            }
+        }
+    }
+
+    pub fn get_original_config(&self, name: &str) -> Option<&Control> {
+        self.controls.iter().find(|control| control.name() == name)
+    }
+
+    pub fn slider_range(&self, name: &str) -> (f32, f32) {
+        self.get_original_config(name)
+            .and_then(|control| match control {
+                Control::Slider { min, max, .. } => Some((*min, *max)),
+                _ => None,
+            })
+            .unwrap_or_else(|| loud_panic!("Unable to find range for {}", name))
+    }
+
+    pub fn to_serialized(&self) -> SerializedControls {
+        let filtered_values: HashMap<String, ControlValue> = self
+            .values
+            .iter()
+            .filter(|(key, _)| !key.is_empty())
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+
+        SerializedControls {
+            values: filtered_values,
+        }
+    }
+
+    pub fn from_serialized(
+        serialized: SerializedControls,
+        controls: Vec<Control>,
+    ) -> Self {
+        Self {
+            controls,
+            values: serialized.values,
+            change_tracker: ChangeTracker::new(false),
+        }
+    }
+
+    pub fn add(&mut self, control: Control) {
+        let name = control.name().to_string();
+        let value = control.value();
+
+        if let Some(index) = self.controls.iter().position(|c| c.name() == name)
+        {
+            self.controls[index] = control;
+        } else {
+            self.controls.push(control);
+        }
+
+        self.values.insert(name, value);
+        self.change_tracker.mark_changed();
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Control) -> bool,
+    {
+        self.controls.retain(f);
+    }
+}
+
+impl fmt::Debug for Controls {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut debug_struct = f.debug_struct("Controls");
+        debug_struct.field("controls", &self.controls);
+        debug_struct.field("values", &self.values);
+        debug_struct.finish()
+    }
+}
+
+struct ChangeTracker {
+    save_previous: bool,
+    changed: bool,
+    previous_values: ControlValues,
+}
+
+impl ChangeTracker {
+    pub fn new(save_previous: bool) -> Self {
+        Self {
+            changed: true,
+            save_previous,
+            previous_values: ControlValues::new(),
+        }
+    }
+
+    pub fn changed(&self) -> bool {
+        self.check_can_save_previous();
+        self.changed
+    }
+
+    pub fn any_changed_in(
+        &self,
+        names: &[&str],
+        values: &ControlValues,
+    ) -> bool {
+        self.check_can_save_previous();
+
+        if self.previous_values.is_empty() {
+            for name in names {
+                if !values.contains_key(*name) {
+                    loud_panic!("Control {} does not exist", name);
+                }
+            }
+            return true;
+        }
+
+        for name in names {
+            for name in names {
+                if !values.contains_key(*name) {
+                    loud_panic!("Control {} does not exist", name);
+                }
+            }
+            if let Some(current) = values.get(*name) {
+                if let Some(previous) = self.previous_values.get(*name) {
+                    if current != previous {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn mark_unchanged(&mut self, latest_values: &ControlValues) {
+        self.check_can_save_previous();
+        self.changed = false;
+        self.previous_values = latest_values.clone();
+    }
+
+    pub fn mark_changed(&mut self) {
+        self.changed = true;
+    }
+
+    fn check_can_save_previous(&self) {
+        if !self.save_previous {
+            loud_panic!(
+                "Cannot check previous values when `save_previous` is false"
+            );
+        }
+    }
+}
+
+impl Default for ChangeTracker {
+    fn default() -> Self {
+        Self::new(false)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_controls_changed() {
+        let mut controls =
+            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+        assert!(controls.changed());
+        controls.mark_unchanged();
+        assert!(!controls.changed());
+    }
+
+    #[test]
+    fn test_any_changed_in() {
+        let mut controls =
+            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+
+        assert!(controls.any_changed_in(&["foo"]));
+        controls.mark_unchanged();
+        assert!(!controls.any_changed_in(&["foo"]));
+
+        controls.update_value("foo", ControlValue::Float(0.7));
+        assert!(controls.any_changed_in(&["foo"]));
+    }
+
+    #[test]
+    fn test_mark_unchanged() {
+        let mut controls =
+            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+
+        controls.update_value("foo", ControlValue::Float(0.7));
+        assert!(controls.changed());
+
+        controls.mark_unchanged();
+        assert!(!controls.changed());
     }
 }

@@ -216,6 +216,18 @@ pub enum Mode {
     Once,
 }
 
+impl FromStr for Mode {
+    type Err = String;
+
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode.to_lowercase().as_str() {
+            "loop" => Ok(Mode::Loop),
+            "once" => Ok(Mode::Once),
+            _ => Err(format!("No mode {} exists.", mode)),
+        }
+    }
+}
+
 impl<T: TimingSource> Animation<T> {
     /// An advanced animation method modelled on DAW automation lanes. It is
     /// capable of producing the same results as just about every other
