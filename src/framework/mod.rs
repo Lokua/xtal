@@ -1,7 +1,7 @@
-pub mod animate;
 pub mod animation;
 pub mod audio;
 pub mod audio_controls;
+pub mod automate;
 pub mod control_provider;
 pub mod control_script;
 pub mod controls;

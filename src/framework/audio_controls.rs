@@ -15,8 +15,6 @@ use std::{
 use super::frame_controller;
 use super::prelude::*;
 
-// Live/2025/Lattice Audio Controls Test
-
 const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 /// A function used in [`AudioControls`] to reduce a channel's audio buffer to

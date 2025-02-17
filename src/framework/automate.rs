@@ -3,6 +3,8 @@
 //! to those found in DAWs, yet with some special tricks of its own.
 
 use nannou::math::map_range;
+use nannou::rand::rngs::StdRng;
+use nannou::rand::{Rng, SeedableRng};
 use std::f32::EPSILON;
 use std::str::FromStr;
 
@@ -19,6 +21,14 @@ pub struct Breakpoint {
 }
 
 impl Breakpoint {
+    pub fn new(kind: Kind, position: f32, value: f32) -> Self {
+        Self {
+            kind,
+            position,
+            value,
+        }
+    }
+
     /// Create a step that will be held at `value` until the next breakpoint.
     pub fn step(position: f32, value: f32) -> Self {
         Self::new(Kind::Step, position, value)
@@ -73,6 +83,12 @@ impl Breakpoint {
         )
     }
 
+    /// Create a step chosen randomly from the passed in `amplitude` which
+    /// specifies the range of possible deviation from `value`
+    pub fn random(position: f32, value: f32, amplitude: f32) -> Self {
+        Self::new(Kind::Random { amplitude }, position, value)
+    }
+
     /// # ⚠️ Experimental
     /// Similar to [`Self::wave`], only uses Perlin noise to amplitude modulate
     /// the base curve. Useful for adding jitter when `frequency` is shorter
@@ -108,14 +124,6 @@ impl Breakpoint {
     pub fn end(position: f32, value: f32) -> Self {
         Self::new(Kind::End, position, value)
     }
-
-    fn new(kind: Kind, position: f32, value: f32) -> Self {
-        Self {
-            kind,
-            position,
-            value,
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -132,6 +140,9 @@ pub enum Kind {
         easing: Easing,
         constrain: Constrain,
     },
+    Random {
+        amplitude: f32,
+    },
     RandomSmooth {
         frequency: f32,
         amplitude: f32,
@@ -147,7 +158,6 @@ pub enum Shape {
     Triangle,
     Square,
 }
-
 impl FromStr for Shape {
     type Err = String;
 
@@ -170,17 +180,6 @@ pub enum Constrain {
 }
 
 impl Constrain {
-    #[deprecated(note = "Use try_from instead")]
-    pub fn from_str(method: &str, min: f32, max: f32) -> Self {
-        match method.to_lowercase().as_str() {
-            "none" => Self::None,
-            "clamp" => Self::Clamp(min, max),
-            "fold" => Self::Fold(min, max),
-            "wrap" => Self::Wrap(min, max),
-            _ => loud_panic!("No constrain method {} exists.", method),
-        }
-    }
-
     pub fn apply(&self, value: f32) -> f32 {
         match self {
             Self::None => value,
@@ -219,7 +218,7 @@ impl<T: TimingSource> Animation<T> {
     /// configuration. While other animation methods are focused on one style of
     /// keyframe/transition, `automate` allows many different types of
     /// transitions defined by a list of [`Breakpoint`], each with its own
-    /// configurable[`Kind`]. See [breakpoints] for a static visualization of
+    /// configurable [`Kind`]. See [breakpoints] for a static visualization of
     /// the kinds of curves `automate` can produce.
     ///
     /// [breakpoints]:
@@ -272,7 +271,7 @@ impl<T: TimingSource> Animation<T> {
             (Some(p1), Some(p2)) => match &p1.kind {
                 Kind::Step => p1.value,
                 Kind::Ramp { easing } => {
-                    ramp(p1, p2, beats_elapsed, easing.clone())
+                    Self::create_ramp(p1, p2, beats_elapsed, easing.clone())
                 }
                 Kind::Wave {
                     shape,
@@ -283,7 +282,12 @@ impl<T: TimingSource> Animation<T> {
                     constrain,
                 } => match shape {
                     Shape::Sine => {
-                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                        let value = Self::create_ramp(
+                            p1,
+                            p2,
+                            beats_elapsed,
+                            easing.clone(),
+                        );
 
                         let phase_in_cycle = beats_elapsed / frequency;
 
@@ -295,7 +299,12 @@ impl<T: TimingSource> Animation<T> {
                         constrain.apply(value + (mod_wave * amplitude))
                     }
                     Shape::Triangle => {
-                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                        let value = Self::create_ramp(
+                            p1,
+                            p2,
+                            beats_elapsed,
+                            easing.clone(),
+                        );
 
                         let phase_offset = 0.25;
                         let phase_in_cycle = beats_elapsed / frequency;
@@ -311,7 +320,12 @@ impl<T: TimingSource> Animation<T> {
                         constrain.apply(value + (mod_wave * amplitude))
                     }
                     Shape::Square => {
-                        let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                        let value = Self::create_ramp(
+                            p1,
+                            p2,
+                            beats_elapsed,
+                            easing.clone(),
+                        );
                         let phase_in_cycle = beats_elapsed / frequency;
 
                         let mod_wave = if (phase_in_cycle % 1.0) < *width {
@@ -323,21 +337,41 @@ impl<T: TimingSource> Animation<T> {
                         constrain.apply(value + (mod_wave * amplitude))
                     }
                 },
+                Kind::Random { amplitude } => {
+                    let loop_count = (self.beats() / p2.position).floor();
+                    let seed = (p1.position
+                        + p2.position
+                        + p1.value
+                        + amplitude
+                        + loop_count) as u64;
+                    let mut rng = StdRng::seed_from_u64(seed);
+                    let y = p1.value;
+                    let value = rng.gen_range(y - amplitude..=y + amplitude);
+                    value
+                }
                 Kind::RandomSmooth {
                     frequency,
                     amplitude,
                     easing,
                     constrain,
                 } => {
-                    let value = ramp(p1, p2, beats_elapsed, easing.clone());
+                    let value = Self::create_ramp(
+                        p1,
+                        p2,
+                        beats_elapsed,
+                        easing.clone(),
+                    );
 
-                    let seed = ((p1.position + 9.0) * 63_579.0
-                        + p2.position * 100.0)
-                        as u32;
-                    let noise_scale = 2.5;
                     let x = (beats_elapsed / frequency) % 1.0;
                     let y = value;
-                    let random_value = PerlinNoise::new(seed)
+                    let loop_count = (self.beats() / p2.position).floor();
+                    let seed = (p1.position
+                        + p2.position
+                        + p1.value
+                        + amplitude
+                        + loop_count) as u64;
+                    let noise_scale = 2.5;
+                    let random_value = PerlinNoise::new(seed as u32)
                         .get([x * noise_scale, y * noise_scale]);
 
                     let random_mapped = map_range(
@@ -360,18 +394,18 @@ impl<T: TimingSource> Animation<T> {
             }
         }
     }
-}
 
-fn ramp(
-    p1: &Breakpoint,
-    p2: &Breakpoint,
-    beats_elapsed: f32,
-    easing: Easing,
-) -> f32 {
-    let duration = p2.position - p1.position;
-    let t = easing.apply((beats_elapsed / duration) % 1.0);
-    let value = lerp(p1.value, p2.value, t);
-    value
+    fn create_ramp(
+        p1: &Breakpoint,
+        p2: &Breakpoint,
+        beats_elapsed: f32,
+        easing: Easing,
+    ) -> f32 {
+        let duration = p2.position - p1.position;
+        let t = easing.apply((beats_elapsed / duration) % 1.0);
+        let value = lerp(p1.value, p2.value, t);
+        value
+    }
 }
 
 #[cfg(test)]

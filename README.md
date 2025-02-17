@@ -376,6 +376,12 @@ y_offset:
       # none, clamp, fold, or wrap (defaults to none)
       constrain: none
 
+    # Stepped random
+    - kind: random
+      position: 4.0
+      value: 0.5
+      amplitude: 0.5
+
     # Like the wave type only uses perlin noise to deviate from the base ramp
     - kind: random_smooth
       position: 3.0
@@ -383,12 +389,13 @@ y_offset:
       frequency: 0.25
       amplitude: 0.25
 
+
     # A special breakpoint added for semantic clarity. It is identical to the
     # step kind. In this example it just represents what the previous breakpoint
     # will ramp to. In the case of mode=loop, this segment will never be entered;
     # for mode=once this represents the final value that will be held indefinitely
     - kind: end
-      position: 4.0
+      position: 5.0
       value: 1.0
 
 hue:

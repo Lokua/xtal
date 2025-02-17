@@ -75,11 +75,13 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
     let edge = hw - radius;
     let component_value = PHI_F32 - 1.0;
 
+    // RED BALL
     draw.ellipse()
         .x_y(map_range(model.lerp, 0.0, 1.0, -edge, edge), hh / 2.0)
         .radius(radius)
         .color(rgb(component_value, 0.0, 0.0));
 
+    // RED RING
     // This should be identical to the above in movement
     draw.ellipse()
         .x_y(
@@ -104,6 +106,7 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .stroke_weight(2.0)
         .stroke(rgb(component_value, 0.0, 0.0));
 
+    // YELLOW BALL
     // should match the 1st and 3rd quarters of the above cycle
     draw.ellipse()
         .x_y(
@@ -130,11 +133,13 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .radius(radius * 0.333)
         .color(rgb(component_value, component_value, 0.0));
 
+    // GREEN BALL
     draw.ellipse()
         .x_y(map_range(model.ramp, 0.0, 1.0, -edge, edge), 0.0)
         .radius(radius)
         .color(rgb(0.0, component_value, 0.0));
 
+    // TURQUOISE BALL
     let random_freq = 1.0;
     let random_amp = 0.125;
     draw.ellipse()
@@ -172,10 +177,32 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
         .radius(radius * 0.333)
         .color(rgb(0.0, component_value, component_value));
 
+    // BLUE BALL
     draw.ellipse()
         .x_y(map_range(model.r_ramp, 0.0, 1.0, -edge, edge), -hh / 2.0)
         .radius(radius)
         .color(rgb(0.0, 0.0, component_value));
+
+    // DARK TURQUOISE BALL
+    draw.ellipse()
+        .x_y(
+            map_range(
+                model.animation.automate(
+                    &[
+                        Breakpoint::random(0.0, 0.5, 0.25),
+                        Breakpoint::random(1.0, 0.5, 0.25),
+                    ],
+                    Mode::Loop,
+                ),
+                0.0,
+                1.0,
+                -edge,
+                edge,
+            ),
+            -hh + hh / 8.0,
+        )
+        .radius(radius * 0.333)
+        .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
 
     draw.to_frame(app, &frame).unwrap();
 }
