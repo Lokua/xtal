@@ -1,5 +1,7 @@
 _vars:
-  easing: &easing ease_in_bounce
+  easing: &easing ease_in_out
+
+# --------------------------------
 
 slew:
   type: checkbox
@@ -9,6 +11,28 @@ rise:
 
 fall:
   type: slider
+
+# --------------------------------
+
+hyst_section:
+  type: separator
+
+hyst:
+  type: checkbox
+
+lower_threshold:
+  type: slider
+
+upper_threshold:
+  type: slider
+
+output_low:
+  type: slider
+
+output_high:
+  type: slider
+
+# --------------------------------
 
 points:
   type: automate
@@ -32,9 +56,9 @@ points:
       value: 1.0
       kind: wave
       shape: sine
-      freq: 0.25
+      freq: 0.5
       width: 0.5
-      amp: 0.25
+      amp: 0.125
       easing: *easing
       constrain: clamp
 

@@ -23,6 +23,7 @@ pub struct Model {
     breakpoints: Vec<Breakpoint>,
     points: Vec<[f32; 2]>,
     slew_limiter: SlewLimiter,
+    hysteresis: Hysteresis,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
@@ -34,6 +35,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     );
 
     let slew_limiter = SlewLimiter::default();
+    let hysteresis = Hysteresis::with_pass_through(0.3, 0.7, 0.0, 1.0);
 
     Model {
         animation,
@@ -42,6 +44,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         breakpoints: vec![],
         points: vec![],
         slew_limiter,
+        hysteresis,
     }
 }
 
@@ -49,19 +52,25 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
     m.controls.update();
 
     if m.controls.changed() {
-        debug!("changed");
         m.breakpoints = m.controls.breakpoints("points");
+
         let slew = m.controls.bool("slew");
         let rise = m.controls.get("rise");
         let fall = m.controls.get("fall");
-
         m.slew_limiter.set_rates(rise, fall);
+
+        let hyst = m.controls.bool("hyst");
+        m.hysteresis.lower_threshold = m.controls.get("lower_threshold");
+        m.hysteresis.upper_threshold = m.controls.get("upper_threshold");
+        m.hysteresis.output_low = m.controls.get("output_low");
+        m.hysteresis.output_high = m.controls.get("output_high");
 
         m.points = create_points(
             &mut m.animation,
             &m.breakpoints,
             1024 * 2,
             ternary!(slew, Some(&mut m.slew_limiter), None),
+            ternary!(hyst, Some(&mut m.hysteresis), None),
         );
 
         m.controls.mark_unchanged();
@@ -115,6 +124,7 @@ fn create_points(
     breakpoints: &[Breakpoint],
     n_points: usize,
     mut slew_limiter: Option<&mut SlewLimiter>,
+    mut hysteresis: Option<&mut Hysteresis>,
 ) -> Vec<[f32; 2]> {
     let mut points: Vec<[f32; 2]> = vec![];
     let total_beats = breakpoints.last().unwrap().position;
@@ -122,7 +132,7 @@ fn create_points(
     for t in 0..n_points {
         animation.timing.set_beats(t as f32 * step);
         let anim = animation.automate(breakpoints, Mode::Once);
-        let processed = post_pipeline(anim, &mut slew_limiter);
+        let processed = post_pipeline(anim, &mut slew_limiter, &mut hysteresis);
         points.push([animation.beats(), processed]);
     }
     points
@@ -131,9 +141,14 @@ fn create_points(
 fn post_pipeline(
     value: f32,
     slew_limiter: &mut Option<&mut SlewLimiter>,
+    hysteresis: &mut Option<&mut Hysteresis>,
 ) -> f32 {
+    let mut value = value;
     if let Some(slew) = slew_limiter {
-        return slew.slew(value);
+        value = slew.slew(value);
+    }
+    if let Some(hyst) = hysteresis {
+        value = hyst.apply(value)
     }
     value
 }
