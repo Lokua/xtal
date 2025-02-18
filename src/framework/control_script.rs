@@ -22,6 +22,7 @@ pub struct ControlScript<T: TimingSource> {
     osc_controls: OscControls,
     audio_controls: AudioControls,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
+    modulations: HashMap<String, Vec<String>>,
     update_state: UpdateState,
 }
 
@@ -36,6 +37,7 @@ impl<T: TimingSource> ControlScript<T> {
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
             keyframe_sequences: HashMap::new(),
+            modulations: HashMap::new(),
             update_state: UpdateState {
                 state: state.clone(),
                 _watcher: Self::setup_watcher(path.clone(), state_clone),
@@ -48,6 +50,16 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
+        let value = self.get_raw(name);
+
+        self.modulations.get(name).map_or(value, |modulators| {
+            modulators.into_iter().fold(value, |modulated, modulator| {
+                modulated * self.get_raw(modulator)
+            })
+        })
+    }
+
+    fn get_raw(&self, name: &str) -> f32 {
         if self.controls.has(name) {
             return self.controls.float(name);
         }
@@ -129,18 +141,15 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn breakpoints(&self, name: &str) -> Vec<Breakpoint> {
-        if let Some(keyframe_sequence) = self.keyframe_sequences.get(name) {
-            match keyframe_sequence {
-                (_, KeyframeSequence::Breakpoints(breakpoints)) => {
-                    breakpoints.clone()
+        self.keyframe_sequences
+            .get(name)
+            .and_then(|(_, sequence)| match sequence {
+                KeyframeSequence::Breakpoints(breakpoints) => {
+                    Some(breakpoints.clone())
                 }
-                _ => {
-                    loud_panic!("No breakpoints for name: {}", name)
-                }
-            }
-        } else {
-            loud_panic!("No breakpoints for name: {}", name)
-        }
+                _ => None,
+            })
+            .unwrap_or_else(|| loud_panic!("No breakpoints for name: {}", name))
     }
 
     pub fn update(&mut self) {
@@ -193,6 +202,7 @@ impl<T: TimingSource> ControlScript<T> {
 
         self.controls = Controls::with_previous(vec![]);
         self.keyframe_sequences.clear();
+        self.modulations.clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
@@ -407,6 +417,15 @@ impl<T: TimingSource> ControlScript<T> {
                         ),
                     );
                 }
+                ControlType::Modulation => {
+                    let conf: ModulationConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.modulations
+                        .entry(conf.carrier)
+                        .or_default()
+                        .push(conf.modulator);
+                }
             }
         }
 
@@ -527,6 +546,10 @@ enum ControlType {
     Triangle,
     #[serde(rename = "automate")]
     Automate,
+
+    // Modulation
+    #[serde(rename = "mod")]
+    Modulation,
 }
 
 type ConfigFile = IndexMap<String, MaybeControlConfig>;
@@ -583,6 +606,12 @@ enum KeyframeSequence {
     Random(Vec<KeyframeRandom>),
     Breakpoints(Vec<Breakpoint>),
     None,
+}
+
+#[derive(Debug)]
+struct ParsedKeyframe {
+    beats: f32,
+    value: f32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -890,10 +919,10 @@ fn default_width() -> f32 {
     0.5
 }
 
-#[derive(Debug)]
-struct ParsedKeyframe {
-    beats: f32,
-    value: f32,
+#[derive(Clone, Deserialize, Debug)]
+struct ModulationConfig {
+    carrier: String,
+    modulator: String,
 }
 
 fn deserialize_number_or_none<'de, D>(

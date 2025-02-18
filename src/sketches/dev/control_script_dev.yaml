@@ -23,6 +23,7 @@ pos_y:
     - ['0.1.0', 1.0]
     - ['0.2.0', 0.0]
 
+# white ball
 radius_small:
   type: lerp_rel
   keyframes:
@@ -97,3 +98,11 @@ line:
     - position: 24.0
       value: 0.9
       kind: end
+
+radius_small_amt:
+  type: slider
+
+radius_small_modulation:
+  type: mod
+  carrier: radius_small
+  modulator: radius_small_amt
