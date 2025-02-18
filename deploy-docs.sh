@@ -19,9 +19,13 @@ echo "Creating temporary directory for docs..."
 temp_dir=$(mktemp -d)
 echo "Temporary directory created at: $temp_dir"
 
-# Copy the generated docs to temp directory
-cp -r target/doc/* "$temp_dir"
-echo "Documentation copied to temporary directory"
+# More selective copying - exclude binary and implementation files
+echo "Copying documentation to temporary directory..."
+rsync -av --exclude '*.bin' \
+         --exclude '*.impl' \
+         --exclude 'implementors' \
+         --exclude '*.desc' \
+         target/doc/* "$temp_dir/"
 
 # Clean up .DS_Store files before switching branches
 echo "Cleaning up .DS_Store files..."
@@ -31,9 +35,10 @@ find . -name ".DS_Store" -delete
 echo "Creating new gh-pages-temp branch..."
 git checkout --orphan gh-pages-temp
 
-# Clear the working directory
+# Clear the working directory completely
 echo "Clearing working directory..."
 git rm -rf .
+git clean -fd
 
 # Copy the docs back
 echo "Copying documentation back from temporary directory..."
@@ -60,7 +65,7 @@ EOF
 echo "Adding .nojekyll file..."
 touch .nojekyll
 
-# Clean up temporary directory
+# Clean up temporary directory 
 rm -rf "$temp_dir"
 echo "Temporary directory cleaned up"
 
@@ -76,9 +81,10 @@ git branch -m gh-pages
 echo "Pushing to GitHub..."
 git push -f origin gh-pages
 
-# Return to original branch
+# Return to original branch and clean up
 echo "Returning to original branch: $current_branch"
 git checkout "$current_branch"
+git clean -fd  # Clean up any leftover files
 
 echo "Documentation deployment complete!"
-echo "Please ensure GitHub Pages is configured to deploy from the gh-pages branch in your repository settings."
+echo "Please ensure GitHub Pages is configured to deploy from the gh-pages branch in your repository settings." 
