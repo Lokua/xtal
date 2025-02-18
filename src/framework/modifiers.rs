@@ -1,4 +1,7 @@
-//! Signal processing effects
+//! Signal processing effects designed to operate on the results of
+//! [`Animation`][animation] methods but may be suitable for other domains.
+//!
+//! [animation]: crate::framework::animation
 
 use std::f32::consts::{FRAC_PI_2, PI};
 
@@ -163,8 +166,8 @@ impl Default for Hysteresis {
 /// ⚠️ Experimental
 #[derive(Debug, Clone)]
 pub struct WaveFolder {
-    /// Suggested range: 0.0 to 10.0
-    /// - 0.0-1.0: gain reduction
+    /// Suggested range: 1.0 to 10.0
+    /// - <1.0: Bypassed
     /// - 1.0: unity gain
     /// - 2.0-4.0: typical folding range
     /// - 4.0-10.0: extreme folding
@@ -244,6 +247,9 @@ impl WaveFolder {
     }
 
     fn fold_once(&self, input: f32) -> f32 {
+        if self.gain <= 1.0 {
+            return input;
+        }
         // Comments assume the following settings unless noted otherwise:
         // - input: 0.7
         // - range: [0, 1]
@@ -454,6 +460,70 @@ impl Default for Saturator {
     fn default() -> Self {
         Self {
             drive: 1.0,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
+/// Implements ring modulation by combining a carrier and modulator signal.
+#[derive(Debug, Clone)]
+pub struct RingModulator {
+    /// Controls the blend between carrier and modulated signal
+    /// - 0.0: outputs carrier signal
+    /// - 0.5: outputs true ring modulation (carrier * modulator)
+    /// - 1.0: outputs modulator signal
+    pub mix: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl RingModulator {
+    pub fn new(depth: f32, range: (f32, f32)) -> Self {
+        Self { mix: depth, range }
+    }
+
+    #[doc(alias = "modulate")]
+    pub fn apply(&self, carrier: f32, modulator: f32) -> f32 {
+        self.modulate(carrier, modulator)
+    }
+
+    pub fn modulate(&self, carrier: f32, modulator: f32) -> f32 {
+        let (min, max) = self.range;
+        let range = max - min;
+        let midpoint = min + range / 2.0;
+
+        // Center signals around zero for multiplication
+        // Scale to -1 to +1
+        let carrier_centered = (carrier - midpoint) * 2.0;
+        // Scale to -1 to +1
+        let modulator_centered = (modulator - midpoint) * 2.0;
+
+        let ring_mod = carrier_centered * modulator_centered;
+
+        // Interpolate between carrier, ring mod, and modulator based on depth
+        let result = if self.mix <= 0.5 {
+            // Blend between carrier (0.0) and ring mod (0.5)
+            let t = self.mix * 2.0;
+            carrier_centered * (1.0 - t) + ring_mod * t
+        } else {
+            // Blend between ring mod (0.5) and modulator (1.0)
+            let t = (self.mix - 0.5) * 2.0;
+            ring_mod * (1.0 - t) + modulator_centered * t
+        };
+
+        ((result / 2.0) + midpoint).clamp(min, max)
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for RingModulator {
+    fn default() -> Self {
+        Self {
+            mix: 0.5, // Default to true ring modulation
             range: (0.0, 1.0),
         }
     }

@@ -1,76 +1,85 @@
 {
   "values": {
+    "output_high": {
+      "Float": 0.838
+    },
+    "a6fr6": {
+      "Bool": false
+    },
+    "3td59": {
+      "Bool": false
+    },
     "fold": {
       "Bool": true
     },
-    "rise": {
-      "Float": 0.868
-    },
-    "output_low": {
-      "Float": 0.232
-    },
-    "slew": {
-      "Bool": false
-    },
-    "hyst": {
+    "rm": {
       "Bool": true
     },
-    "52x57": {
-      "Bool": false
+    "rm_mix": {
+      "Float": 0.5
     },
     "sat": {
       "Bool": true
     },
-    "fold_bias": {
-      "Float": 0.0
-    },
-    "fall": {
-      "Float": 0.95199996
-    },
-    "quant_step": {
-      "Float": 0.0625
-    },
-    "fold_shape": {
-      "Float": 1.9
-    },
-    "7759n": {
-      "Bool": false
-    },
-    "sat_drive": {
-      "Float": 2.1000001
-    },
-    "1m98g": {
-      "Bool": false
-    },
     "fold_iterations": {
       "Float": 1.0
     },
-    "n_points": {
-      "Float": 10816.0
+    "lower_threshold": {
+      "Float": 0.285
     },
-    "fold_symmetry": {
-      "Float": 1.0
+    "output_low": {
+      "Float": 0.232
+    },
+    "sat_drive": {
+      "Float": 3.5
+    },
+    "fall": {
+      "Float": 0.908
+    },
+    "upper_threshold": {
+      "Float": 0.75
+    },
+    "jb235": {
+      "Bool": false
     },
     "fold_gain": {
-      "Float": 4.2000003
-    },
-    "output_high": {
-      "Float": 0.81299996
-    },
-    "lower_threshold": {
-      "Float": 0.20199999
+      "Float": 1.8000001
     },
     "hyst_pass_through": {
       "Bool": true
     },
-    "upper_threshold": {
-      "Float": 0.79499996
+    "slew": {
+      "Bool": false
+    },
+    "q7tyo": {
+      "Bool": false
+    },
+    "rise": {
+      "Float": 0.98499995
+    },
+    "fold_symmetry": {
+      "Float": 1.0
     },
     "quant": {
       "Bool": false
     },
-    "hw9o1": {
+    "fold_bias": {
+      "Float": 0.0
+    },
+    "9d26l": {
       "Bool": false
+    },
+    "hyst": {
+      "Bool": false
+    },
+    "quant_step": {
+      "Float": 0.05
+    },
+    "fold_shape": {
+      "Float": 1.0
+    },
+    "n_points": {
+      "Float": 10816.0
     }
   }
 }
