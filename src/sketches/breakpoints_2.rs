@@ -108,12 +108,14 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .color(gray(0.1));
 
     let track_height = m.wr.h() / 4.0;
+    let track_h_margin = 12.0;
+    let track_v_margin = 12.0;
     let track_h_padding = 12.0;
-    let track_v_padding = 12.0;
-    let track_height_with_padding = track_height - (track_v_padding * 2.0);
+    let track_v_padding = 4.0;
+    let track_height_with_margin = track_height - (track_v_margin * 2.0);
 
     let get_y_offset = |i: usize| {
-        (m.wr.h() / 2.0) - (track_height * (i as f32 + 0.5)) + track_v_padding
+        (m.wr.h() / 2.0) - (track_height * (i as f32 + 0.5)) + track_v_margin
     };
 
     // Draw track backgrounds for each lane
@@ -122,8 +124,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 
         draw.rect()
             .x_y(0.0, y_offset)
-            .w_h(m.wr.w() - track_h_padding, track_height_with_padding)
-            .color(gray(0.2));
+            .w_h(m.wr.w() - track_h_margin, track_height_with_margin)
+            .color(gray(0.15));
     }
 
     // Draw points for each lane
@@ -145,8 +147,8 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
                             point[1],
                             0.0,
                             1.0,
-                            -(track_height_with_padding / 2.0),
-                            track_height_with_padding / 2.0,
+                            -(track_height_with_margin / 2.0) + track_v_padding,
+                            track_height_with_margin / 2.0 - track_v_padding,
                         ),
                 )
                 .radius(1.0)

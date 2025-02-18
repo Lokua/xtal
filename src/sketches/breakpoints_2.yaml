@@ -66,12 +66,14 @@ fold_iterations:
 fold_symmetry:
   type: slider
   default: 1
-  range: [0, 10]
+  range: [0, 5]
+  step: 0.125
 
 fold_bias:
   type: slider
   default: 1
   range: [-1, 1]
+  step: 0.1
 
 fold_shape:
   type: slider

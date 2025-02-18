@@ -146,37 +146,44 @@ impl Default for Hysteresis {
 /// ⚠️ Experimental
 #[derive(Debug, Clone)]
 pub struct WaveFolder {
-    // Range: 0.0 to 10.0
-    // 0.0-1.0: gain reduction
-    // 1.0: unity gain
-    // 2.0-4.0: typical folding range
-    // 4.0-10.0: extreme folding
+    /// Suggested range: 0.0 to 10.0
+    /// - 0.0-1.0: gain reduction
+    /// - 1.0: unity gain
+    /// - 2.0-4.0: typical folding range
+    /// - 4.0-10.0: extreme folding
     pub gain: f32,
 
-    // Range: 1 to 8
-    // 1-2: subtle harmonics
-    // 3-4: moderate complexity
-    // 5+: extreme/digital sound
+    /// Suggested range: 1 to 8
+    /// - 1-2: subtle harmonics
+    /// - 3-4: moderate complexity
+    /// - 5+: extreme/digital sound
     pub iterations: usize,
 
-    // Range: 0.1 to 10.0
-    // 1.0: perfectly symmetric
-    // <1.0: negative side folds less
-    // >1.0: negative side folds more
+    /// changes the relative intensity of folding above vs below the center
+    /// point by scaling the positive and negative portions differently.
+    ///
+    /// Suggested range: 0.5 to 2.0
+    /// - 1.0: perfectly symmetric
+    /// - <1.0: negative side folds less
+    /// - >1.0: negative side folds more
     pub symmetry: f32,
 
-    // Range: -1.0 to 1.0
-    // 0.0: no DC offset
-    // ±0.1-0.3: subtle asymmetry
-    // ±0.5-1.0: extreme asymmetry
+    /// Shifts the center point of folding, effectively moving the "zero
+    /// crossing" point.
+    ///
+    /// Suggested range: -1.0 to 1.0
+    /// - 0.0: no DC offset
+    /// - ±0.1-0.3: subtle asymmetry
+    /// - ±0.5-1.0: extreme asymmetry
     pub bias: f32,
 
-    // Range: 0.1 to 4.0
-    // <1.0: softer folding curves
-    // 1.0: linear folding
-    // >1.0: sharper folding edges
+    /// Suggested range: 0.1 to 4.0
+    /// - <1.0: softer folding curves
+    /// - 1.0: linear folding
+    /// - >1.0: sharper folding edges
     pub shape: f32,
 
+    /// The (assumed) domain and range of the input and output signal
     range: (f32, f32),
 }
 
@@ -228,14 +235,24 @@ impl WaveFolder {
         let amped = centered * self.gain;
         let normalized = amped / half_range;
 
+        // Apply bias to shift the folding center
+        let biased = normalized + self.bias;
+
+        // Apply asymmetry before folding
+        let asymmetric = if normalized > 0.0 {
+            biased * self.symmetry
+        } else {
+            biased / self.symmetry
+        };
+
         // Reflect at boundaries
-        let cycles = normalized.abs().floor() as i32;
-        let remainder = normalized.abs() - cycles as f32;
+        let cycles = asymmetric.abs().floor() as i32;
+        let remainder = asymmetric.abs() - cycles as f32;
 
         let folded = if cycles % 2 == 0 {
-            remainder * normalized.signum()
+            remainder * asymmetric.signum()
         } else {
-            (1.0 - remainder) * normalized.signum()
+            (1.0 - remainder) * asymmetric.signum()
         };
 
         folded * half_range + midpoint
