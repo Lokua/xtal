@@ -4,6 +4,7 @@ use std::f32::consts::PI;
 
 use super::prelude::*;
 
+/// Limits the rate of change (slew rate) of a signal
 pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
     /// - 0.0 = instant attack (no smoothing)
@@ -70,20 +71,29 @@ impl Default for SlewLimiter {
 }
 
 #[derive(PartialEq)]
-pub enum HysteresisState {
+enum HysteresisState {
     High,
     Low,
 }
 
+/// Implements a Schmitt trigger with configurable thresholds that outputs:
+/// - `output_high` when input rises above `upper_threshold`
+/// - `output_low` when input falls below `lower_threshold`
+/// - previous output when input is between thresholds
+/// - input value when between thresholds and `pass_through` is true
 pub struct Hysteresis {
-    state: HysteresisState,
+    /// When true, allows values that are between the upper and lower thresholds
+    /// to pass through. When false, binary hysteresis is applied
     pub pass_through: bool,
     pub upper_threshold: f32,
     pub lower_threshold: f32,
-    /// The value to output when state is [`HysteresisState::High`]
+
+    /// The value to output when input is above the upper threshold`
     pub output_high: f32,
-    /// The value to output when state is [`HysteresisState::Low`]
+
+    /// The value to output when input is below the lower threshold
     pub output_low: f32,
+    state: HysteresisState,
 }
 
 impl Hysteresis {
@@ -327,8 +337,59 @@ impl Default for WaveFolder {
     }
 }
 
+/// Discretizes continuous input values into fixed steps, creating stair-case
+/// transitions.
+///
+/// For example, with a step size of 0.25 in range (0.0, 1.0):
+/// - Input 0.12 -> Output 0.0
+/// - Input 0.26 -> Output 0.25
+/// - Input 0.51 -> Output 0.50
+#[derive(Debug, Clone)]
+pub struct Quantizer {
+    /// The size of each discrete step
+    pub step: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl Quantizer {
+    pub fn new(step: f32, range: (f32, f32)) -> Self {
+        Self { step, range }
+    }
+
+    #[doc(alias = "quantize")]
+    pub fn apply(&self, input: f32) -> f32 {
+        self.quantize(input)
+    }
+
+    pub fn quantize(&self, input: f32) -> f32 {
+        let (min, max) = self.range;
+        let range = max - min;
+        let normalized = (input - min) / range;
+        let steps = (normalized / self.step).round();
+        // Convert back to step-based value and denormalize
+        let quantized = (steps * self.step) * range + min;
+        quantized.clamp(min, max)
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for Quantizer {
+    fn default() -> Self {
+        Self {
+            step: 0.25,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
 #[cfg(test)]
-mod util_tests {
+mod tests {
+    use super::Quantizer;
     use super::WaveFolder;
     use crate::framework::util::tests::approx_eq;
 
@@ -348,5 +409,22 @@ mod util_tests {
     fn test_wave_folder_comments_case() {
         let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
         approx_eq(wf.fold(0.7), 0.8);
+    }
+
+    #[test]
+    fn test_quantizer_default() {
+        let quantizer = Quantizer::default();
+        approx_eq(quantizer.quantize(0.12), 0.0);
+        approx_eq(quantizer.quantize(0.26), 0.25);
+        approx_eq(quantizer.quantize(0.51), 0.50);
+        approx_eq(quantizer.quantize(0.88), 1.0);
+    }
+
+    #[test]
+    fn test_quantizer_custom() {
+        let quantizer = Quantizer::new(0.2, (-1.0, 1.0));
+        approx_eq(quantizer.quantize(0.3), 0.2);
+        approx_eq(quantizer.quantize(-0.35), -0.4);
+        approx_eq(quantizer.quantize(0.95), 1.0);
     }
 }

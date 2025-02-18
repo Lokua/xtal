@@ -82,6 +82,19 @@ fold_shape:
   step: 0.1
 
 # --------------------------------
+quant_section:
+  type: separator
+
+quant:
+  type: checkbox
+
+quant_step:
+  type: slider
+  default: 0.5
+  range: [0, 1]
+  step: 0.0125
+
+# --------------------------------
 
 points:
   type: automate
