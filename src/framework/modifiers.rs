@@ -1,5 +1,7 @@
 //! Signal processing effects
 
+use std::f32::consts::PI;
+
 use super::prelude::*;
 
 pub struct SlewLimiter {
@@ -177,8 +179,11 @@ pub struct WaveFolder {
     /// - ±0.5-1.0: extreme asymmetry
     pub bias: f32,
 
-    /// Suggested range: 0.1 to 4.0
-    /// - <1.0: softer folding curves
+    /// Suggested range: -2.0 to 2.0 (values below -2.0 are hard capped)
+    /// - < 0.0: softer folding curves
+    /// - -1.0: perfectly sine-shaped folds
+    /// - < -2.0: introduces intermediary folds but slight loss in overall
+    ///   amplitude around ~-2.5
     /// - 1.0: linear folding
     /// - >1.0: sharper folding edges
     pub shape: f32,
@@ -224,38 +229,85 @@ impl WaveFolder {
     }
 
     fn fold_once(&self, input: f32) -> f32 {
+        // Comments assume the following settings unless noted otherwise:
+        // - input: 0.7
+        // - range: [0, 1]
+        // - gain: 2.0
+        // - bias: 0.0 (none)
+        // - symmetry: 1.0 (symmetric)
+        // - shape: 0.0 (linear)
+        // ---------------------
         let (min, max) = self.range;
-        let range = max - min;
 
-        // Center by subtracting the midpoint
+        let range = max - min; // 1.0
+
+        // Center around 0.0 by subtracting the midpoint
+        // [0, 1] becomes [-0.5, 0.5]
+
+        // 0.5
         let half_range = range / 2.0;
+        // 0.5
         let midpoint = min + half_range;
+        // 0.7 - 0.5 = 0.2
         let centered = input - midpoint;
 
+        // 0.2 * 2.0 = 0.4
         let amped = centered * self.gain;
+
+        // 0.4 / 0.5 = 0.8
         let normalized = amped / half_range;
 
         // Apply bias to shift the folding center
+        // 0.8 + 0.0 = 0.8
         let biased = normalized + self.bias;
 
         // Apply asymmetry before folding
         let asymmetric = if normalized > 0.0 {
+            // 0.8 * 1.0 = 0.8
             biased * self.symmetry
         } else {
             biased / self.symmetry
         };
 
-        // Reflect at boundaries
-        let cycles = asymmetric.abs().floor() as i32;
-        let remainder = asymmetric.abs() - cycles as f32;
+        // The folding logic
 
-        let folded = if cycles % 2 == 0 {
+        // floor(0.8) = 0
+        let cycles = asymmetric.abs().floor() as i32;
+        // 0.8 - 0 = 0.8
+        let remainder = asymmetric.abs() - cycles as f32;
+        let pre_shaped = if cycles % 2 == 0 {
+            // 0.8 * 1.0 = 0.8
             remainder * asymmetric.signum()
         } else {
             (1.0 - remainder) * asymmetric.signum()
         };
 
-        folded * half_range + midpoint
+        // Apply shaping - negative values smooth, positive values sharpen
+        let shaped = if self.shape < 0.0 {
+            // Smoother folds using sine, scaled by abs(shape)
+            let sine_shaped = (pre_shaped * PI / 2.0).sin();
+            if self.shape < -1.0 {
+                // Cap at -2.0. Values below "explode"
+                let intensity = (-self.shape).min(2.0);
+                let extra_shape = (pre_shaped * PI * intensity).sin();
+
+                // Blend while maintaining as much amplitude as possible
+                sine_shaped * (2.0 - intensity)
+                    + extra_shape * (intensity - 1.0)
+            } else {
+                // Original smooth blend for -1.0 to 0.0
+                pre_shaped * (1.0 + self.shape) + sine_shaped * (-self.shape)
+            }
+        } else if self.shape > 0.0 {
+            let power = 1.0 + self.shape;
+            pre_shaped.abs().powf(power) * pre_shaped.signum()
+        } else {
+            // Linear at 0.0
+            pre_shaped
+        };
+
+        // 0.8 * 0.5 + 0.5 = 0.8
+        shaped * half_range + midpoint
     }
 }
 
@@ -275,20 +327,26 @@ impl Default for WaveFolder {
     }
 }
 
-// #[cfg(test)]
-// mod util_tests {
-//     use super::WaveFolder;
-//     use crate::framework::util::tests::approx_eq;
+#[cfg(test)]
+mod util_tests {
+    use super::WaveFolder;
+    use crate::framework::util::tests::approx_eq;
 
-//     #[test]
-//     fn test_wave_folder() {
-//         let wf = WaveFolder::default();
-//         approx_eq(wf.fold(1.2), 0.8);
-//     }
+    #[test]
+    fn test_wave_folder() {
+        let wf = WaveFolder::default();
+        approx_eq(wf.fold(1.2), 0.8);
+    }
 
-//     #[test]
-//     fn test_wave_folder_gain() {
-//         let wf = WaveFolder::new(2.0, 1, 0.0, 1.0);
-//         approx_eq(wf.fold(0.5), 1.0);
-//     }
-// }
+    #[test]
+    fn test_wave_folder_gain() {
+        let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
+        approx_eq(wf.fold(0.5), 1.0);
+    }
+
+    #[test]
+    fn test_wave_folder_comments_case() {
+        let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
+        approx_eq(wf.fold(0.7), 0.8);
+    }
+}

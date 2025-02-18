@@ -6,7 +6,7 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "breakpoints_2",
     display_name: "Breakpoints 2",
-    play_mode: PlayMode::Loop,
+    play_mode: PlayMode::Advance,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
