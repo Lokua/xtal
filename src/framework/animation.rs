@@ -512,7 +512,7 @@ impl<T: TimingSource> Animation<T> {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub mod animation_tests {
     use super::*;
     use serial_test::serial;
     use std::sync::Once;

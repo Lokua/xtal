@@ -25,6 +25,11 @@ impl SlewLimiter {
         }
     }
 
+    #[doc(alias = "slew")]
+    pub fn apply(&mut self, value: f32) -> f32 {
+        self.slew(value)
+    }
+
     pub fn slew(&mut self, value: f32) -> f32 {
         self.slew_with_rates(value, self.rise, self.fall)
     }
@@ -70,7 +75,7 @@ pub enum HysteresisState {
 
 pub struct Hysteresis {
     state: HysteresisState,
-    pass_through: bool,
+    pub pass_through: bool,
     pub upper_threshold: f32,
     pub lower_threshold: f32,
     /// The value to output when state is [`HysteresisState::High`]
@@ -137,3 +142,136 @@ impl Default for Hysteresis {
         Hysteresis::new(0.3, 0.7, 0.0, 1.0)
     }
 }
+
+/// ⚠️ Experimental
+#[derive(Debug, Clone)]
+pub struct WaveFolder {
+    // Range: 0.0 to 10.0
+    // 0.0-1.0: gain reduction
+    // 1.0: unity gain
+    // 2.0-4.0: typical folding range
+    // 4.0-10.0: extreme folding
+    pub gain: f32,
+
+    // Range: 1 to 8
+    // 1-2: subtle harmonics
+    // 3-4: moderate complexity
+    // 5+: extreme/digital sound
+    pub iterations: usize,
+
+    // Range: 0.1 to 10.0
+    // 1.0: perfectly symmetric
+    // <1.0: negative side folds less
+    // >1.0: negative side folds more
+    pub symmetry: f32,
+
+    // Range: -1.0 to 1.0
+    // 0.0: no DC offset
+    // ±0.1-0.3: subtle asymmetry
+    // ±0.5-1.0: extreme asymmetry
+    pub bias: f32,
+
+    // Range: 0.1 to 4.0
+    // <1.0: softer folding curves
+    // 1.0: linear folding
+    // >1.0: sharper folding edges
+    pub shape: f32,
+
+    range: (f32, f32),
+}
+
+impl WaveFolder {
+    pub fn new(
+        gain: f32,
+        iterations: usize,
+        symmetry: f32,
+        bias: f32,
+        shape: f32,
+        range: (f32, f32),
+    ) -> Self {
+        WaveFolder {
+            gain,
+            iterations,
+            symmetry,
+            bias,
+            shape,
+            range,
+        }
+    }
+
+    #[doc(alias = "fold")]
+    pub fn apply(&self, input: f32) -> f32 {
+        let mut output = input;
+        for _ in 0..self.iterations {
+            output = self.fold_once(output);
+        }
+        output
+    }
+
+    pub fn fold(&self, input: f32) -> f32 {
+        self.apply(input)
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+
+    fn fold_once(&self, input: f32) -> f32 {
+        let (min, max) = self.range;
+        let range = max - min;
+
+        // Center by subtracting the midpoint
+        let half_range = range / 2.0;
+        let midpoint = min + half_range;
+        let centered = input - midpoint;
+
+        let amped = centered * self.gain;
+        let normalized = amped / half_range;
+
+        // Reflect at boundaries
+        let cycles = normalized.abs().floor() as i32;
+        let remainder = normalized.abs() - cycles as f32;
+
+        let folded = if cycles % 2 == 0 {
+            remainder * normalized.signum()
+        } else {
+            (1.0 - remainder) * normalized.signum()
+        };
+
+        folded * half_range + midpoint
+    }
+}
+
+impl Default for WaveFolder {
+    fn default() -> Self {
+        Self {
+            gain: 1.0,
+            iterations: 1,
+            // Symmetric folding
+            symmetry: 1.0,
+            // No DC offset
+            bias: 0.0,
+            // Linear folding
+            shape: 1.0,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
+// #[cfg(test)]
+// mod util_tests {
+//     use super::WaveFolder;
+//     use crate::framework::util::tests::approx_eq;
+
+//     #[test]
+//     fn test_wave_folder() {
+//         let wf = WaveFolder::default();
+//         approx_eq(wf.fold(1.2), 0.8);
+//     }
+
+//     #[test]
+//     fn test_wave_folder_gain() {
+//         let wf = WaveFolder::new(2.0, 1, 0.0, 1.0);
+//         approx_eq(wf.fold(0.5), 1.0);
+//     }
+// }

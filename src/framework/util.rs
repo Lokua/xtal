@@ -286,7 +286,7 @@ pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
     start + (end - start) * t
 }
 
-/// Utilites to contain a value within a range
+/// Utilities to contain a value within a range
 pub mod constrain {
     /// Clamp a value between min and max
     pub fn clamp(value: f32, min: f32, max: f32) -> f32 {
@@ -555,10 +555,10 @@ pub fn parse_bar_beat_16th(time_str: &str) -> Result<f32, Box<dyn Error>> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
-    fn approx_eq(a: f32, b: f32) -> bool {
+    pub fn approx_eq(a: f32, b: f32) -> bool {
         (a - b).abs() < 0.001
     }
 

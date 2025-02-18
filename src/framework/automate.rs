@@ -431,7 +431,7 @@ mod tests {
     use serial_test::serial;
 
     // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
-    use crate::framework::animation::tests::{create_instance, init};
+    use crate::framework::animation::animation_tests::{create_instance, init};
 
     #[test]
     #[serial]
