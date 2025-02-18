@@ -47,11 +47,6 @@ impl SlewLimiter {
         slewed
     }
 
-    pub fn set_rates(&mut self, rise: f32, fall: f32) {
-        self.rise = rise;
-        self.fall = fall;
-    }
-
     pub fn slew_pure(
         previous_value: f32,
         value: f32,
@@ -65,6 +60,11 @@ impl SlewLimiter {
                 ease_in_out_expo(fall)
             );
         previous_value + coeff * (value - previous_value)
+    }
+
+    pub fn set_rates(&mut self, rise: f32, fall: f32) {
+        self.rise = rise;
+        self.fall = fall;
     }
 }
 

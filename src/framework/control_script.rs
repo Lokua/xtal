@@ -16,6 +16,10 @@ use yaml_merge_keys::merge_keys_serde_yml;
 
 use super::prelude::*;
 
+//------------------------------------------------------------------------------
+// Core Types & Implementations
+//------------------------------------------------------------------------------
+
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
@@ -424,7 +428,10 @@ impl<T: TimingSource> ControlScript<T> {
                     self.modulations
                         .entry(conf.carrier)
                         .or_default()
-                        .push(conf.modulator);
+                        .extend(conf.modulators);
+                }
+                ControlType::Effects => {
+                    todo!()
                 }
             }
         }
@@ -501,6 +508,25 @@ impl<T: TimingSource + fmt::Debug> fmt::Debug for ControlScript<T> {
     }
 }
 
+struct UpdateState {
+    _watcher: notify::RecommendedWatcher,
+    state: Arc<Mutex<Option<ConfigFile>>>,
+}
+
+impl fmt::Debug for UpdateState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UpdateState")
+            .field("state", &self.state)
+            .finish()
+    }
+}
+
+//------------------------------------------------------------------------------
+// Configuration Types
+//------------------------------------------------------------------------------
+
+type ConfigFile = IndexMap<String, MaybeControlConfig>;
+
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 enum MaybeControlConfig {
@@ -547,24 +573,16 @@ enum ControlType {
     #[serde(rename = "automate")]
     Automate,
 
-    // Modulation
+    // Modulation & Effects
     #[serde(rename = "mod")]
     Modulation,
+    #[serde(rename = "effect")]
+    Effects,
 }
 
-type ConfigFile = IndexMap<String, MaybeControlConfig>;
-
-struct UpdateState {
-    _watcher: notify::RecommendedWatcher,
-    state: Arc<Mutex<Option<ConfigFile>>>,
-}
-impl fmt::Debug for UpdateState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("UpdateState")
-            .field("state", &self.state)
-            .finish()
-    }
-}
+//------------------------------------------------------------------------------
+// Animation Types
+//------------------------------------------------------------------------------
 
 enum AnimationConfig {
     Lerp(LerpConfig),
@@ -572,6 +590,7 @@ enum AnimationConfig {
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
 }
+
 impl AnimationConfig {
     pub fn delay(&self) -> f32 {
         match self {
@@ -581,6 +600,7 @@ impl AnimationConfig {
         }
     }
 }
+
 impl fmt::Debug for AnimationConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -608,11 +628,11 @@ enum KeyframeSequence {
     None,
 }
 
-#[derive(Debug)]
-struct ParsedKeyframe {
-    beats: f32,
-    value: f32,
-}
+//------------------------------------------------------------------------------
+// Configuration Types
+//------------------------------------------------------------------------------
+
+// --- UI Controls
 
 #[derive(Deserialize, Debug)]
 #[serde(default)]
@@ -653,6 +673,8 @@ struct SelectConfig {
 #[derive(Deserialize, Debug)]
 struct Separator {}
 
+// --- External Controls
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct OscConfig {
@@ -668,6 +690,32 @@ impl Default for OscConfig {
         }
     }
 }
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(default)]
+struct AudioConfig {
+    channel: usize,
+    slew: [f32; 2],
+    pre: f32,
+    detect: f32,
+    range: [f32; 2],
+    bypass: Option<f32>,
+}
+
+impl Default for AudioConfig {
+    fn default() -> Self {
+        Self {
+            channel: 0,
+            slew: [0.0, 0.0],
+            pre: 0.0,
+            detect: 0.0,
+            range: [0.0, 1.0],
+            bypass: None,
+        }
+    }
+}
+
+// --- Animation Controls
 
 #[derive(Clone, Debug)]
 struct LerpConfig {
@@ -842,30 +890,6 @@ impl From<BreakpointConfig> for Breakpoint {
 }
 
 #[derive(Clone, Deserialize, Debug)]
-#[serde(default)]
-struct AudioConfig {
-    channel: usize,
-    slew: [f32; 2],
-    pre: f32,
-    detect: f32,
-    range: [f32; 2],
-    bypass: Option<f32>,
-}
-
-impl Default for AudioConfig {
-    fn default() -> Self {
-        Self {
-            channel: 0,
-            slew: [0.0, 0.0],
-            pre: 0.0,
-            detect: 0.0,
-            range: [0.0, 1.0],
-            bypass: None,
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 enum KindConfig {
     Step,
@@ -900,29 +924,22 @@ enum KindConfig {
     End,
 }
 
-fn default_easing() -> String {
-    "linear".to_string()
-}
-fn default_shape() -> String {
-    "sine".to_string()
-}
-fn default_constrain() -> String {
-    "none".to_string()
-}
-fn default_frequency() -> f32 {
-    0.25
-}
-fn default_amplitude() -> f32 {
-    0.25
-}
-fn default_width() -> f32 {
-    0.5
-}
+// --- Modulation & Effects
 
 #[derive(Clone, Deserialize, Debug)]
 struct ModulationConfig {
     carrier: String,
-    modulator: String,
+    modulators: Vec<String>,
+}
+
+//------------------------------------------------------------------------------
+// Helper Types & Functions
+//------------------------------------------------------------------------------
+
+#[derive(Debug)]
+struct ParsedKeyframe {
+    beats: f32,
+    value: f32,
 }
 
 fn deserialize_number_or_none<'de, D>(
@@ -942,4 +959,23 @@ where
         Ok(NumericOrOther::Num(n)) => Ok(Some(n)),
         _ => Ok(None),
     }
+}
+
+fn default_easing() -> String {
+    "linear".to_string()
+}
+fn default_shape() -> String {
+    "sine".to_string()
+}
+fn default_constrain() -> String {
+    "none".to_string()
+}
+fn default_frequency() -> f32 {
+    0.25
+}
+fn default_amplitude() -> f32 {
+    0.25
+}
+fn default_width() -> f32 {
+    0.5
 }

@@ -105,4 +105,4 @@ radius_small_amt:
 radius_small_modulation:
   type: mod
   carrier: radius_small
-  modulator: radius_small_amt
+  modulators: [radius_small_amt]

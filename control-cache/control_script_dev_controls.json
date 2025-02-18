@@ -1,13 +1,13 @@
 {
   "values": {
-    "hue": {
-      "Float": 0.3
-    },
     "radius": {
       "Float": 100.0
     },
+    "hue": {
+      "Float": 0.3
+    },
     "radius_small_amt": {
-      "Float": 0.45499998
+      "Float": 0.167
     }
   }
 }
