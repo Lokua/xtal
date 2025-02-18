@@ -1,6 +1,6 @@
 //! Signal processing effects
 
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_2, PI};
 
 use super::prelude::*;
 
@@ -55,7 +55,12 @@ impl SlewLimiter {
         rise: f32,
         fall: f32,
     ) -> f32 {
-        let coeff = ternary!(value > previous_value, 1.0 - rise, 1.0 - fall);
+        let coeff = 1.0
+            - ternary!(
+                value > previous_value,
+                ease_in_out_expo(rise),
+                ease_in_out_expo(fall)
+            );
         previous_value + coeff * (value - previous_value)
     }
 }
@@ -387,9 +392,87 @@ impl Default for Quantizer {
     }
 }
 
+/// Applies smooth saturation to a signal, creating a soft roll-off as values
+/// approach the range boundaries. Higher drive values create more aggressive
+/// saturation effects.
+///
+/// Note: WIP - this is just tanh clipping at this point
+#[derive(Debug, Clone)]
+pub struct Saturator {
+    /// Controls the intensity of the saturation effect. Higher values push more
+    /// of the signal into the saturated region.
+    /// - 0.0: no saturation (pure pass-through)
+    /// - >0.0 & <1.0: experimental WIP easing between dry signal and saturation
+    /// - 1.0: subtle saturation
+    /// - 2.0-4.0: moderate saturation
+    /// - 4.0+: aggressive saturation
+    pub drive: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl Saturator {
+    pub fn new(drive: f32, range: (f32, f32)) -> Self {
+        Self { drive, range }
+    }
+
+    #[doc(alias = "saturate")]
+    pub fn apply(&self, input: f32) -> f32 {
+        self.saturate(input)
+    }
+
+    pub fn saturate(&self, input: f32) -> f32 {
+        if self.drive == 0.0 {
+            return input;
+        }
+        let (min, max) = self.range;
+        let range = max - min;
+        let midpoint = min + range / 2.0;
+
+        // Center around 0 and normalize to roughly -1 to 1
+        let normalized = 2.0 * (input - midpoint) / range;
+
+        let saturated = if self.drive < 1.0 {
+            let saturated = normalized.tanh();
+            let eased_drive = ease_out_expo(self.drive);
+            normalized * (1.0 - eased_drive) + saturated * eased_drive
+        } else {
+            (normalized * self.drive).tanh()
+        };
+
+        // Denormalize and recenter
+        saturated * (range / 2.0) + midpoint
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for Saturator {
+    fn default() -> Self {
+        Self {
+            drive: 1.0,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
+/// Assumes all parameters are within normalized range
+pub fn equal_power_crossfade(a: f32, b: f32, mix: f32) -> f32 {
+    let t = mix.clamp(0.0, 1.0);
+
+    let a_gain = ((1.0 - t) * FRAC_PI_2).cos();
+    let b_gain = (t * FRAC_PI_2).sin();
+
+    a * a_gain + b * b_gain
+}
+
 #[cfg(test)]
 mod tests {
     use super::Quantizer;
+    use super::Saturator;
     use super::WaveFolder;
     use crate::framework::util::tests::approx_eq;
 
@@ -426,5 +509,29 @@ mod tests {
         approx_eq(quantizer.quantize(0.3), 0.2);
         approx_eq(quantizer.quantize(-0.35), -0.4);
         approx_eq(quantizer.quantize(0.95), 1.0);
+    }
+
+    #[test]
+    fn test_saturator_center_unchanged() {
+        let saturator = Saturator::default();
+        // Center point should pass through unchanged
+        approx_eq(saturator.saturate(0.5), 0.5);
+    }
+
+    #[test]
+    fn test_saturator_symmetry() {
+        let saturator = Saturator::new(2.0, (0.0, 1.0));
+        let high = saturator.saturate(0.8);
+        let low = saturator.saturate(0.2);
+        // Should be equidistant from center
+        approx_eq(0.5 - low, high - 0.5);
+    }
+
+    #[test]
+    fn test_saturator_range() {
+        let saturator = Saturator::new(4.0, (-1.0, 1.0));
+        // Even with high drive, should stay within range
+        assert!(saturator.saturate(2.0) <= 1.0);
+        assert!(saturator.saturate(-2.0) >= -1.0);
     }
 }

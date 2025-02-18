@@ -3,26 +3,44 @@
     "fold": {
       "Bool": true
     },
-    "fold_shape": {
-      "Float": -1.1
+    "rise": {
+      "Float": 0.868
     },
-    "hyst_pass_through": {
+    "output_low": {
+      "Float": 0.232
+    },
+    "slew": {
+      "Bool": false
+    },
+    "hyst": {
       "Bool": true
+    },
+    "52x57": {
+      "Bool": false
+    },
+    "sat": {
+      "Bool": true
+    },
+    "fold_bias": {
+      "Float": 0.0
+    },
+    "fall": {
+      "Float": 0.95199996
     },
     "quant_step": {
       "Float": 0.0625
     },
-    "57kfc": {
+    "fold_shape": {
+      "Float": 1.9
+    },
+    "7759n": {
       "Bool": false
     },
-    "4dt3s": {
+    "sat_drive": {
+      "Float": 2.1000001
+    },
+    "1m98g": {
       "Bool": false
-    },
-    "lower_threshold": {
-      "Float": 0.29799998
-    },
-    "fold_bias": {
-      "Float": -0.0
     },
     "fold_iterations": {
       "Float": 1.0
@@ -30,38 +48,29 @@
     "n_points": {
       "Float": 10816.0
     },
-    "hyst": {
-      "Bool": false
-    },
-    "fold_gain": {
-      "Float": 2.4
-    },
-    "slew": {
-      "Bool": false
-    },
-    "output_low": {
-      "Float": 0.0
-    },
-    "output_high": {
-      "Float": 1.0
-    },
-    "upper_threshold": {
-      "Float": 0.708
-    },
-    "2a3v0": {
-      "Bool": false
-    },
-    "rise": {
-      "Float": 0.98499995
-    },
-    "quant": {
-      "Bool": true
-    },
-    "fall": {
-      "Float": 0.97999996
-    },
     "fold_symmetry": {
       "Float": 1.0
+    },
+    "fold_gain": {
+      "Float": 4.2000003
+    },
+    "output_high": {
+      "Float": 0.81299996
+    },
+    "lower_threshold": {
+      "Float": 0.20199999
+    },
+    "hyst_pass_through": {
+      "Bool": true
+    },
+    "upper_threshold": {
+      "Float": 0.79499996
+    },
+    "quant": {
+      "Bool": false
+    },
+    "hw9o1": {
+      "Bool": false
     }
   }
 }

@@ -95,6 +95,19 @@ quant_step:
   step: 0.0125
 
 # --------------------------------
+sat_section:
+  type: separator
+
+sat:
+  type: checkbox
+
+sat_drive:
+  type: slider
+  default: 1.0
+  range: [0, 10]
+  step: 0.1
+
+# --------------------------------
 
 points:
   type: automate

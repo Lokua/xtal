@@ -25,6 +25,7 @@ pub struct Model {
     hysteresis: Hysteresis,
     wave_folder: WaveFolder,
     quantizer: Quantizer,
+    saturator: Saturator,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
@@ -36,9 +37,10 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     );
 
     let slew_limiter = SlewLimiter::default();
-    let hysteresis = Hysteresis::new(0.3, 0.7, 0.0, 1.0);
+    let hysteresis = Hysteresis::default();
     let wave_folder = WaveFolder::default();
     let quantizer = Quantizer::default();
+    let saturator = Saturator::default();
 
     Model {
         animation,
@@ -49,6 +51,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         hysteresis,
         wave_folder,
         quantizer,
+        saturator,
     }
 }
 
@@ -79,6 +82,9 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
         let quant = m.controls.bool("quant");
         m.quantizer.step = m.controls.get("quant_step");
 
+        let sat = m.controls.bool("sat");
+        m.saturator.drive = m.controls.get("sat_drive");
+
         let n_points = m.controls.get("n_points").floor() as usize;
 
         m.lanes.clear();
@@ -91,6 +97,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                 ternary!(hyst, Some(&mut m.hysteresis), None),
                 ternary!(fold, Some(&mut m.wave_folder), None),
                 ternary!(quant, Some(&mut m.quantizer), None),
+                ternary!(sat, Some(&mut m.saturator), None),
             ),
             create_points(
                 &mut m.animation,
@@ -100,6 +107,7 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
                 ternary!(hyst, Some(&mut m.hysteresis), None),
                 ternary!(fold, Some(&mut m.wave_folder), None),
                 ternary!(quant, Some(&mut m.quantizer), None),
+                ternary!(sat, Some(&mut m.saturator), None),
             ),
         ]);
 
@@ -175,6 +183,7 @@ fn create_points(
     mut hysteresis: Option<&mut Hysteresis>,
     mut wave_folder: Option<&mut WaveFolder>,
     mut quantizer: Option<&mut Quantizer>,
+    mut saturator: Option<&mut Saturator>,
 ) -> Vec<[f32; 2]> {
     let mut points: Vec<[f32; 2]> = vec![];
     let total_beats = breakpoints.last().unwrap().position;
@@ -188,6 +197,7 @@ fn create_points(
             &mut hysteresis,
             &mut wave_folder,
             &mut quantizer,
+            &mut saturator,
         );
         points.push([animation.beats(), processed]);
     }
@@ -200,6 +210,7 @@ fn post_pipeline(
     hysteresis: &mut Option<&mut Hysteresis>,
     wave_folder: &mut Option<&mut WaveFolder>,
     quantizer: &mut Option<&mut Quantizer>,
+    saturator: &mut Option<&mut Saturator>,
 ) -> f32 {
     let mut value = value;
     if let Some(slew) = slew_limiter {
@@ -213,6 +224,9 @@ fn post_pipeline(
     }
     if let Some(quant) = quantizer {
         value = quant.apply(value);
+    }
+    if let Some(sat) = saturator {
+        value = sat.apply(value);
     }
     value
 }
