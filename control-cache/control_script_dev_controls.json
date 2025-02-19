@@ -1,13 +1,16 @@
 {
   "values": {
-    "radius": {
-      "Float": 100.0
+    "bg_alpha": {
+      "Float": 0.907
+    },
+    "hue": {
+      "Float": 0.322
     },
     "radius_small_amt": {
       "Float": 1.0
     },
-    "hue": {
-      "Float": 0.3
+    "radius": {
+      "Float": 67.0
     }
   }
 }

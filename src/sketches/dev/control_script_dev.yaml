@@ -2,6 +2,9 @@ info:
   vars:
     dummy: &dummy 100.0
 
+bg_alpha:
+  type: slider
+
 radius:
   type: slider
   range: [0.0, 500.0]
@@ -91,13 +94,16 @@ line:
       value: 0.9
       kind: end
 
-# white ball
 radius_small:
+  _description: white ball
   type: lerp_rel
   keyframes:
     - [1.0, 5.0]
     - [1.0, 100.0]
     - [0.0, 5.0]
+
+radius_small_amt:
+  type: slider
 
 radius_small_folder:
   type: effect
@@ -105,10 +111,59 @@ radius_small_folder:
   gain: 2.0
   range: [5, 100]
 
-radius_small_amt:
-  type: slider
-
 radius_small_modulation:
   type: mod
   source: radius_small
-  modulators: [radius_small_amt, radius_small_folder]
+  modulators:
+    - radius_small_folder
+    - radius_small_amt
+
+red_ball_radius:
+  type: automate
+  mode: loop
+  breakpoints:
+    - kind: random
+      position: 0.0
+      value: 100.0
+      amplitude: 50.0
+    - kind: end
+      position: 1.0
+      value: 0.0
+
+red_ball_radius_hyst:
+  type: effect
+  kind: hysteresis
+  lower_threshold: 75
+  upper_threshold: 125
+  output_low: 50
+  output_high: 200
+  pass_through: true
+red_ball_radius_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.7
+  fall: 0.7
+red_ball_radius_quant:
+  type: effect
+  kind: quantizer
+  step: 0.125
+  range: [50, 150]
+red_ball_radius_rm:
+  type: effect
+  kind: ring_modulator
+  mix: 0.5
+  modulator: rm_mod
+  range: [10, 150]
+rm_mod:
+  type: triangle
+  beats: 1.0
+  range: [50, 150]
+
+red_ball_radius_mods:
+  type: mod
+  source: red_ball_radius
+  modulators:
+    - red_ball_radius_hyst
+    - red_ball_radius_slew
+    - red_ball_radius_quant
+    - red_ball_radius_rm

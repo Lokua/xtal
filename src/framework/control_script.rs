@@ -27,7 +27,7 @@ pub struct ControlScript<T: TimingSource> {
     audio_controls: AudioControls,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
-    effects: HashMap<String, Effect>,
+    effects: HashMap<String, (EffectConfig, Effect)>,
     update_state: UpdateState,
 }
 
@@ -61,16 +61,48 @@ impl<T: TimingSource> ControlScript<T> {
         let value = self.get_raw(name);
 
         self.modulations.get(name).map_or(value, |modulators| {
-            modulators.into_iter().fold(value, |modulated, modulator| {
-                if self.effects.contains_key(modulator) {
-                    match self.effects.get(modulator).unwrap() {
-                        Effect::WaveFolder(fx) => fx.apply(modulated),
-                        _ => unimplemented!(),
+            modulators
+                .into_iter()
+                .fold(value, |modulated_value, modulator| {
+                    if self.effects.contains_key(modulator) {
+                        let (effect_config, effect) =
+                            self.effects.get(modulator).unwrap();
+
+                        if let (
+                            EffectConfig {
+                                kind:
+                                    EffectKind::RingModulator { modulator, .. },
+                                ..
+                            },
+                            Effect::RingModulator(m),
+                        ) = (effect_config, effect)
+                        {
+                            let modulator_signal = self.get_raw(modulator);
+                            m.apply(modulated_value, modulator_signal)
+                        } else {
+                            match effect {
+                                Effect::Hysteresis(m) => {
+                                    m.apply(modulated_value)
+                                }
+                                Effect::Quantizer(m) => {
+                                    m.apply(modulated_value)
+                                }
+                                Effect::RingModulator(_) => unreachable!(),
+                                Effect::Saturator(m) => {
+                                    m.apply(modulated_value)
+                                }
+                                Effect::SlewLimiter(m) => {
+                                    m.apply(modulated_value)
+                                }
+                                Effect::WaveFolder(m) => {
+                                    m.apply(modulated_value)
+                                }
+                            }
+                        }
+                    } else {
+                        modulated_value * self.get_raw(modulator)
                     }
-                } else {
-                    modulated * self.get_raw(modulator)
-                }
-            })
+                })
         })
     }
 
@@ -445,7 +477,10 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: EffectConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    self.effects.insert(id.to_string(), Effect::from(conf));
+                    self.effects.insert(
+                        id.to_string(),
+                        (conf.clone(), Effect::from(conf)),
+                    );
                 }
             }
         }
@@ -881,6 +916,9 @@ impl From<BreakpointConfig> for Breakpoint {
                 Easing::from_str(&easing).unwrap(),
                 Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
             ),
+            KindConfig::Random { amplitude } => {
+                Breakpoint::random(config.position, config.value, amplitude)
+            }
             KindConfig::RandomSmooth {
                 frequency,
                 amplitude,
@@ -920,6 +958,10 @@ enum KindConfig {
         easing: String,
         #[serde(alias = "cons", default = "default_none_string")]
         constrain: String,
+    },
+    Random {
+        #[serde(alias = "amp", default = "default_f32_0_25")]
+        amplitude: f32,
     },
     RandomSmooth {
         #[serde(alias = "freq", default = "default_f32_0_25")]
@@ -961,6 +1003,31 @@ impl From<EffectConfig> for Effect {
             } => Effect::WaveFolder(WaveFolder::new(
                 gain, iterations, symmetry, bias, shape, range,
             )),
+            EffectKind::SlewLimiter { rise, fall } => {
+                Effect::SlewLimiter(SlewLimiter::new(rise, fall))
+            }
+            EffectKind::Saturator { drive, range } => {
+                Effect::Saturator(Saturator::new(drive, range))
+            }
+            EffectKind::Hysteresis {
+                lower_threshold,
+                upper_threshold,
+                output_low,
+                output_high,
+                pass_through,
+            } => Effect::Hysteresis(Hysteresis::new(
+                lower_threshold,
+                upper_threshold,
+                output_low,
+                output_high,
+                pass_through,
+            )),
+            EffectKind::Quantizer { step, range } => {
+                Effect::Quantizer(Quantizer::new(step, range))
+            }
+            EffectKind::RingModulator { mix, range, .. } => {
+                Effect::RingModulator(RingModulator::new(mix, range))
+            }
         }
     }
 }
@@ -968,6 +1035,53 @@ impl From<EffectConfig> for Effect {
 #[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 enum EffectKind {
+    #[serde(alias = "hyst", alias = "hys")]
+    Hysteresis {
+        #[serde(default = "default_f32_0_3")]
+        lower_threshold: f32,
+        #[serde(default = "default_f32_0_7")]
+        upper_threshold: f32,
+        #[serde(default = "default_f32_0")]
+        output_low: f32,
+        #[serde(default = "default_f32_1")]
+        output_high: f32,
+        #[serde(default = "default_false")]
+        pass_through: bool,
+    },
+
+    #[serde(alias = "quant")]
+    Quantizer {
+        #[serde(default = "default_f32_0_25")]
+        step: f32,
+        #[serde(default = "default_normalized_range")]
+        range: (f32, f32),
+    },
+
+    #[serde(alias = "rm", alias = "ring")]
+    RingModulator {
+        #[serde(default = "default_f32_0")]
+        mix: f32,
+        #[serde(default = "default_normalized_range")]
+        range: (f32, f32),
+        modulator: String,
+    },
+
+    #[serde(alias = "saturate", alias = "sat")]
+    Saturator {
+        #[serde(default = "default_f32_1")]
+        drive: f32,
+        #[serde(default = "default_normalized_range")]
+        range: (f32, f32),
+    },
+
+    #[serde(alias = "slew")]
+    SlewLimiter {
+        #[serde(default = "default_f32_0")]
+        rise: f32,
+        #[serde(default = "default_f32_0")]
+        fall: f32,
+    },
+
     #[serde(alias = "fold")]
     WaveFolder {
         #[serde(default = "default_f32_1")]
@@ -1019,12 +1133,6 @@ where
 fn default_iterations() -> usize {
     1
 }
-fn default_f32_1() -> f32 {
-    1.0
-}
-fn default_f32_0() -> f32 {
-    0.0
-}
 fn default_normalized_range() -> (f32, f32) {
     (0.0, 1.0)
 }
@@ -1040,8 +1148,23 @@ fn default_shape() -> String {
 fn default_none_string() -> String {
     "none".to_string()
 }
+fn default_false() -> bool {
+    false
+}
+fn default_f32_0() -> f32 {
+    0.0
+}
+fn default_f32_1() -> f32 {
+    1.0
+}
 fn default_f32_0_25() -> f32 {
     0.25
+}
+fn default_f32_0_3() -> f32 {
+    0.3
+}
+fn default_f32_0_7() -> f32 {
+    0.7
 }
 fn default_f32_0_5() -> f32 {
     0.5

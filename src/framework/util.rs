@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
+use std::f32::EPSILON;
 use std::path::PathBuf;
 
 use geom::Ellipse;
@@ -373,7 +374,7 @@ pub fn safe_range(min: f32, max: f32) -> (f32, f32) {
     let a = if max < min { max } else { min };
     let mut b = if min > max { min } else { max };
     if a == b {
-        b += 0.0001;
+        b += EPSILON;
     }
     (a, b)
 }

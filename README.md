@@ -269,8 +269,9 @@ _vars:
   example_var: &example_var 33.0
 
 
-# --- UI CONTROLS
-# ---------------
+# -----------------------------------------------------------------------------
+# UI CONTROLS
+# -----------------------------------------------------------------------------
 
 # Available in sketch as `m.controls.get("radius")`
 radius:
@@ -295,8 +296,9 @@ select_example:
     - bar
     - baz
 
-# --- OSC
-# -------
+# -----------------------------------------------------------------------------
+# OSC
+# -----------------------------------------------------------------------------
 
 # Available in the sketch as `m.controls.get("position_x")`. The OSC
 # address from your sender must be `/position_x` and is currently hardcoded
@@ -310,8 +312,9 @@ position_x:
   # Optional, defaults to 0.5
   default: 50.0
 
-# --- AUDIO
-# ---------
+# -----------------------------------------------------------------------------
+# AUDIO
+# -----------------------------------------------------------------------------
 
 rect_y:
   # Interface to `AudioControls`; uses multichannel audio
@@ -330,8 +333,9 @@ rect_y:
   # Optional, defaults to [0.0, 1.0]
   range: [0.0, 100.0]
 
-# --- ANIMATION
-# -------------
+# -----------------------------------------------------------------------------
+# ANIMATION
+# -----------------------------------------------------------------------------
 
 y_offset:
   # Interface to `Animation::automate`. This is the spiritual successor to
@@ -398,6 +402,93 @@ y_offset:
       position: 5.0
       value: 1.0
 
+foo:
+  # A "ping pong" animation that linearly ramps from min to max and back to min
+  # as specified in `range` option
+  type: triangle
+  beats: 2.0
+  # Optional, defaults to [0.0, 1.0]
+  range: [-1.0, 1.0]
+  # Phase offset expressed as percentage (0..1) of the above range.
+  # Optional defaults to 0
+  phase: 0.25
+  bypass: _
+
+# -----------------------------------------------------------------------------
+# MODULATION
+# -----------------------------------------------------------------------------
+
+toto:
+  # the modulation type can be used to take any declared control (source)
+  # and multiply or alter its output value by other controls or effects
+  type: mod
+  source: foo
+  modulators:
+    # See the effects section
+    - wave_folder
+    # For the triangle animation foo defined above, a modulating slider of with
+    # range [0, 1] will act as an attenuator
+    - some_slider
+
+# For the following
+
+# -----------------------------------------------------------------------------
+# EFFECTS
+# -----------------------------------------------------------------------------
+
+# Effects can only act as modulators in a type: mod definition, not sources.
+# The following effect examples list the field defaults.
+
+hysteresis_example:
+  type: effect
+  kind: hysteresis
+  lower_threshold: 0.3
+  upper_threshold: 0.7
+  output_low: 0.0
+  output_high: 1.0
+  pass_through: false
+
+quantizer_example:
+  type: effect
+  kind: quantizer
+  step: 0.25
+  range: [0.0, 1.0]
+
+ring_modulator_example:
+  # Note that there is no "carrier" because the modulator signal
+  # will be applied to the `source` field defined in a `mod` config.
+  type: effect
+  kind: ring_modulator
+  mix: 0.0
+  modulator: some_other_control
+
+saturator_example:
+  type: effect
+  kind: saturator
+  drive: 1.0
+  range: [0.0, 1.0]
+
+slew_limiter_example:
+  type: effect
+  kind: slew_limiter
+  rise: 0.0
+  fall: 0.0
+
+wave_folder_example:
+  type: effect
+  kind: wave_folder
+  gain: 1.0
+  iterations: 1
+  symmetry: 1.0
+  bias: 0.0
+  shape: 1.0
+  range: [0.0, 1.0]
+
+
+# -----------------------------------------------------------------------------
+# ANIMATION (older methods likely to be removed as automate can do it all now)
+# -----------------------------------------------------------------------------
+
 hue:
   # Interface to the `Animation::lerp` method that differs from the normal code
   # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
@@ -463,18 +554,6 @@ lightness:
     # duration; this is why the first cycle starts static until its ramp phase -
     # this is because there was no previous cycle that could ramp to it)
     - [1.0, [0.0, 1.0]]
-
-foo:
-  # A "ping pong" animation that linearly ramps from min to max and back to min
-  # as specified in `range` option
-  type: triangle
-  beats: 2.0
-  # Optional, defaults to [0.0, 1.0]
-  range: [-1.0, 1.0]
-  # Phase offset expressed as percentage (0..1) of the above range.
-  # Optional defaults to 0
-  phase: 0.25
-  bypass: _
 ```
 
 ## Resources

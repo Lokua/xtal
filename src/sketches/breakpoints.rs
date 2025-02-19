@@ -74,7 +74,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         lanes: vec![],
         segments: vec![],
         wr,
-        slew_limiter: SlewLimiter::new(0.0, 0.0, 0.0),
+        slew_limiter: SlewLimiter::default(),
     }
 }
 

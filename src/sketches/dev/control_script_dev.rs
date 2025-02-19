@@ -40,10 +40,12 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let draw = app.draw();
 
     // background
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h())
-        .hsla(0.0, 0.0, 0.02, 0.5);
+    draw.rect().x_y(0.0, 0.0).w_h(m.wr.w(), m.wr.h()).hsla(
+        0.0,
+        0.0,
+        0.02,
+        m.controls.get("bg_alpha"),
+    );
 
     let hue = m.controls.get("hue");
     let radius = m.controls.get("radius");
@@ -54,6 +56,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
     let pos_x3 = m.controls.get("pos_x3");
     let rect_y = m.controls.get("rect_y");
     let line = m.controls.get("line");
+    let red_ball_radius = m.controls.get("red_ball_radius");
 
     draw.ellipse()
         .color(hsl(hue, 0.5, 0.5))
@@ -67,7 +70,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 
     draw.ellipse()
         .color(RED)
-        .radius(50.0)
+        .radius(red_ball_radius)
         .x_y(pos_x2 * m.wr.hw(), -m.wr.h() / 4.0);
 
     draw.ellipse()

@@ -3,13 +3,10 @@
 //!
 //! [animation]: crate::framework::animation
 
+use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use super::prelude::*;
-
-// pub trait Applicator {
-//     fn apply(&self, input: f32) -> f32;
-// }
 
 pub enum Effect {
     Hysteresis(Hysteresis),
@@ -18,6 +15,262 @@ pub enum Effect {
     Saturator(Saturator),
     SlewLimiter(SlewLimiter),
     WaveFolder(WaveFolder),
+}
+
+#[derive(PartialEq)]
+enum HysteresisState {
+    High,
+    Low,
+}
+
+/// Implements a Schmitt trigger with configurable thresholds that outputs:
+/// - `output_high` when input rises above `upper_threshold`
+/// - `output_low` when input falls below `lower_threshold`
+/// - previous output when input is between thresholds
+/// - input value when between thresholds and `pass_through` is true
+pub struct Hysteresis {
+    /// When true, allows values that are between the upper and lower thresholds
+    /// to pass through. When false, binary hysteresis is applied
+    pub pass_through: bool,
+    pub upper_threshold: f32,
+    pub lower_threshold: f32,
+
+    /// The value to output when input is above the upper threshold`
+    pub output_high: f32,
+
+    /// The value to output when input is below the lower threshold
+    pub output_low: f32,
+    state: RefCell<HysteresisState>,
+}
+
+impl Hysteresis {
+    pub fn new(
+        lower_threshold: f32,
+        upper_threshold: f32,
+        output_low: f32,
+        output_high: f32,
+        pass_through: bool,
+    ) -> Self {
+        let (lower_threshold, upper_threshold) =
+            safe_range(lower_threshold, upper_threshold);
+        Self {
+            state: RefCell::new(HysteresisState::Low),
+            lower_threshold,
+            upper_threshold,
+            output_low,
+            output_high,
+            pass_through,
+        }
+    }
+
+    pub fn apply(&self, input: f32) -> f32 {
+        if input >= self.upper_threshold {
+            self.state.replace(HysteresisState::High);
+        } else if input <= self.lower_threshold {
+            self.state.replace(HysteresisState::Low);
+        } else if self.pass_through {
+            return input;
+        }
+        ternary!(
+            *self.state.borrow() == HysteresisState::Low,
+            self.output_low,
+            self.output_high
+        )
+    }
+}
+
+impl Default for Hysteresis {
+    fn default() -> Self {
+        Self {
+            lower_threshold: 0.3,
+            upper_threshold: 0.7,
+            output_low: 0.0,
+            output_high: 0.0,
+            pass_through: false,
+            state: RefCell::new(HysteresisState::Low),
+        }
+    }
+}
+
+/// Discretizes continuous input values into fixed steps, creating stair-case
+/// transitions.
+///
+/// For example, with a step size of 0.25 in range (0.0, 1.0):
+/// - Input 0.12 -> Output 0.0
+/// - Input 0.26 -> Output 0.25
+/// - Input 0.51 -> Output 0.50
+#[derive(Debug, Clone)]
+pub struct Quantizer {
+    /// The size of each discrete step
+    pub step: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl Quantizer {
+    pub fn new(step: f32, range: (f32, f32)) -> Self {
+        Self { step, range }
+    }
+
+    #[doc(alias = "quantize")]
+    pub fn apply(&self, input: f32) -> f32 {
+        self.quantize(input)
+    }
+
+    pub fn quantize(&self, input: f32) -> f32 {
+        let (min, max) = self.range;
+        let range = max - min;
+        let normalized = (input - min) / range;
+        let steps = (normalized / self.step).round();
+        // Convert back to step-based value and denormalize
+        let quantized = (steps * self.step) * range + min;
+        quantized.clamp(min, max)
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for Quantizer {
+    fn default() -> Self {
+        Self {
+            step: 0.25,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
+/// Implements ring modulation by combining a carrier and modulator signal.
+#[derive(Debug, Clone)]
+pub struct RingModulator {
+    /// Controls the blend between carrier and modulated signal
+    /// - 0.0: outputs carrier signal
+    /// - 0.5: outputs true ring modulation (carrier * modulator)
+    /// - 1.0: outputs modulator signal
+    pub mix: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl RingModulator {
+    pub fn new(depth: f32, range: (f32, f32)) -> Self {
+        Self { mix: depth, range }
+    }
+
+    #[doc(alias = "modulate")]
+    pub fn apply(&self, carrier: f32, modulator: f32) -> f32 {
+        self.modulate(carrier, modulator)
+    }
+
+    pub fn modulate(&self, carrier: f32, modulator: f32) -> f32 {
+        let (min, max) = self.range;
+        let range = max - min;
+        let midpoint = min + range / 2.0;
+
+        // Center signals around zero for multiplication
+        // Scale to -1 to +1
+        let carrier_centered = (carrier - midpoint) * 2.0;
+        // Scale to -1 to +1
+        let modulator_centered = (modulator - midpoint) * 2.0;
+
+        let ring_mod = carrier_centered * modulator_centered;
+
+        // Interpolate between carrier, ring mod, and modulator based on depth
+        let result = if self.mix <= 0.5 {
+            // Blend between carrier (0.0) and ring mod (0.5)
+            let t = self.mix * 2.0;
+            carrier_centered * (1.0 - t) + ring_mod * t
+        } else {
+            // Blend between ring mod (0.5) and modulator (1.0)
+            let t = (self.mix - 0.5) * 2.0;
+            ring_mod * (1.0 - t) + modulator_centered * t
+        };
+
+        ((result / 2.0) + midpoint).clamp(min, max)
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for RingModulator {
+    fn default() -> Self {
+        Self {
+            mix: 0.5,
+            range: (0.0, 1.0),
+        }
+    }
+}
+
+/// Applies smooth saturation to a signal, creating a soft roll-off as values
+/// approach the range boundaries. Higher drive values create more aggressive
+/// saturation effects.
+///
+/// Note: WIP - this is just tanh clipping at this point
+#[derive(Debug, Clone)]
+pub struct Saturator {
+    /// Controls the intensity of the saturation effect. Higher values push more
+    /// of the signal into the saturated region.
+    /// - 0.0: no saturation (pure pass-through)
+    /// - >0.0 & <1.0: experimental WIP easing between dry signal and saturation
+    /// - 1.0: subtle saturation
+    /// - 2.0-4.0: moderate saturation
+    /// - 4.0+: aggressive saturation
+    pub drive: f32,
+
+    /// The (assumed) domain and range of the input and output signal
+    range: (f32, f32),
+}
+
+impl Saturator {
+    pub fn new(drive: f32, range: (f32, f32)) -> Self {
+        Self { drive, range }
+    }
+
+    #[doc(alias = "saturate")]
+    pub fn apply(&self, input: f32) -> f32 {
+        self.saturate(input)
+    }
+
+    pub fn saturate(&self, input: f32) -> f32 {
+        if self.drive == 0.0 {
+            return input;
+        }
+        let (min, max) = self.range;
+        let range = max - min;
+        let midpoint = min + range / 2.0;
+
+        // Center around 0 and normalize to roughly -1 to 1
+        let normalized = 2.0 * (input - midpoint) / range;
+
+        let saturated = if self.drive < 1.0 {
+            let saturated = normalized.tanh();
+            let eased_drive = ease_out_expo(self.drive);
+            normalized * (1.0 - eased_drive) + saturated * eased_drive
+        } else {
+            (normalized * self.drive).tanh()
+        };
+
+        // Denormalize and recenter
+        saturated * (range / 2.0) + midpoint
+    }
+
+    pub fn set_range(&mut self, range: (f32, f32)) {
+        self.range = range;
+    }
+}
+
+impl Default for Saturator {
+    fn default() -> Self {
+        Self {
+            drive: 1.0,
+            range: (0.0, 1.0),
+        }
+    }
 }
 
 /// Limits the rate of change (slew rate) of a signal
@@ -32,31 +285,32 @@ pub struct SlewLimiter {
     /// - 1.0 = very slow decay (maximum smoothing)
     fall: f32,
 
-    previous_value: f32,
+    previous_value: RefCell<f32>,
 }
 
 impl SlewLimiter {
-    pub fn new(previous_value: f32, rise: f32, fall: f32) -> Self {
+    pub fn new(rise: f32, fall: f32) -> Self {
         Self {
-            previous_value,
+            previous_value: RefCell::new(0.0),
             rise,
             fall,
         }
     }
 
-    pub fn apply(&mut self, value: f32) -> f32 {
+    pub fn apply(&self, value: f32) -> f32 {
         self.slew(value)
     }
 
     #[doc(alias = "apply")]
-    pub fn slew(&mut self, value: f32) -> f32 {
+    pub fn slew(&self, value: f32) -> f32 {
         self.slew_with_rates(value, self.rise, self.fall)
     }
 
     /// Stateful version that takes new rates but doesn't save them
-    pub fn slew_with_rates(&mut self, value: f32, rise: f32, fall: f32) -> f32 {
-        let slewed = Self::slew_pure(self.previous_value, value, rise, fall);
-        self.previous_value = slewed;
+    pub fn slew_with_rates(&self, value: f32, rise: f32, fall: f32) -> f32 {
+        let slewed =
+            Self::slew_pure(*self.previous_value.borrow(), value, rise, fall);
+        self.previous_value.replace(slewed);
         slewed
     }
 
@@ -84,95 +338,10 @@ impl SlewLimiter {
 impl Default for SlewLimiter {
     fn default() -> Self {
         Self {
-            previous_value: 0.0,
+            previous_value: RefCell::new(0.0),
             rise: 0.0,
             fall: 0.0,
         }
-    }
-}
-
-#[derive(PartialEq)]
-enum HysteresisState {
-    High,
-    Low,
-}
-
-/// Implements a Schmitt trigger with configurable thresholds that outputs:
-/// - `output_high` when input rises above `upper_threshold`
-/// - `output_low` when input falls below `lower_threshold`
-/// - previous output when input is between thresholds
-/// - input value when between thresholds and `pass_through` is true
-pub struct Hysteresis {
-    /// When true, allows values that are between the upper and lower thresholds
-    /// to pass through. When false, binary hysteresis is applied
-    pub pass_through: bool,
-    pub upper_threshold: f32,
-    pub lower_threshold: f32,
-
-    /// The value to output when input is above the upper threshold`
-    pub output_high: f32,
-
-    /// The value to output when input is below the lower threshold
-    pub output_low: f32,
-    state: HysteresisState,
-}
-
-impl Hysteresis {
-    pub fn new(
-        lower_threshold: f32,
-        upper_threshold: f32,
-        output_low: f32,
-        output_high: f32,
-    ) -> Self {
-        assert!(
-            lower_threshold < upper_threshold,
-            "Upper threshold must be greater than lower threshold"
-        );
-        Self {
-            state: HysteresisState::Low,
-            pass_through: false,
-            lower_threshold,
-            upper_threshold,
-            output_low,
-            output_high,
-        }
-    }
-
-    pub fn with_pass_through(
-        lower_threshold: f32,
-        upper_threshold: f32,
-        output_low: f32,
-        output_high: f32,
-    ) -> Self {
-        let mut instance = Self::new(
-            lower_threshold,
-            upper_threshold,
-            output_low,
-            output_high,
-        );
-        instance.pass_through = true;
-        instance
-    }
-
-    pub fn apply(&mut self, input: f32) -> f32 {
-        if input >= self.upper_threshold {
-            self.state = HysteresisState::High;
-        } else if input <= self.lower_threshold {
-            self.state = HysteresisState::Low;
-        } else if self.pass_through {
-            return input;
-        }
-        ternary!(
-            self.state == HysteresisState::Low,
-            self.output_low,
-            self.output_high
-        )
-    }
-}
-
-impl Default for Hysteresis {
-    fn default() -> Self {
-        Hysteresis::new(0.3, 0.7, 0.0, 1.0)
     }
 }
 
@@ -356,187 +525,6 @@ impl Default for WaveFolder {
             bias: 0.0,
             // Linear folding
             shape: 1.0,
-            range: (0.0, 1.0),
-        }
-    }
-}
-
-/// Discretizes continuous input values into fixed steps, creating stair-case
-/// transitions.
-///
-/// For example, with a step size of 0.25 in range (0.0, 1.0):
-/// - Input 0.12 -> Output 0.0
-/// - Input 0.26 -> Output 0.25
-/// - Input 0.51 -> Output 0.50
-#[derive(Debug, Clone)]
-pub struct Quantizer {
-    /// The size of each discrete step
-    pub step: f32,
-
-    /// The (assumed) domain and range of the input and output signal
-    range: (f32, f32),
-}
-
-impl Quantizer {
-    pub fn new(step: f32, range: (f32, f32)) -> Self {
-        Self { step, range }
-    }
-
-    #[doc(alias = "quantize")]
-    pub fn apply(&self, input: f32) -> f32 {
-        self.quantize(input)
-    }
-
-    pub fn quantize(&self, input: f32) -> f32 {
-        let (min, max) = self.range;
-        let range = max - min;
-        let normalized = (input - min) / range;
-        let steps = (normalized / self.step).round();
-        // Convert back to step-based value and denormalize
-        let quantized = (steps * self.step) * range + min;
-        quantized.clamp(min, max)
-    }
-
-    pub fn set_range(&mut self, range: (f32, f32)) {
-        self.range = range;
-    }
-}
-
-impl Default for Quantizer {
-    fn default() -> Self {
-        Self {
-            step: 0.25,
-            range: (0.0, 1.0),
-        }
-    }
-}
-
-/// Applies smooth saturation to a signal, creating a soft roll-off as values
-/// approach the range boundaries. Higher drive values create more aggressive
-/// saturation effects.
-///
-/// Note: WIP - this is just tanh clipping at this point
-#[derive(Debug, Clone)]
-pub struct Saturator {
-    /// Controls the intensity of the saturation effect. Higher values push more
-    /// of the signal into the saturated region.
-    /// - 0.0: no saturation (pure pass-through)
-    /// - >0.0 & <1.0: experimental WIP easing between dry signal and saturation
-    /// - 1.0: subtle saturation
-    /// - 2.0-4.0: moderate saturation
-    /// - 4.0+: aggressive saturation
-    pub drive: f32,
-
-    /// The (assumed) domain and range of the input and output signal
-    range: (f32, f32),
-}
-
-impl Saturator {
-    pub fn new(drive: f32, range: (f32, f32)) -> Self {
-        Self { drive, range }
-    }
-
-    #[doc(alias = "saturate")]
-    pub fn apply(&self, input: f32) -> f32 {
-        self.saturate(input)
-    }
-
-    pub fn saturate(&self, input: f32) -> f32 {
-        if self.drive == 0.0 {
-            return input;
-        }
-        let (min, max) = self.range;
-        let range = max - min;
-        let midpoint = min + range / 2.0;
-
-        // Center around 0 and normalize to roughly -1 to 1
-        let normalized = 2.0 * (input - midpoint) / range;
-
-        let saturated = if self.drive < 1.0 {
-            let saturated = normalized.tanh();
-            let eased_drive = ease_out_expo(self.drive);
-            normalized * (1.0 - eased_drive) + saturated * eased_drive
-        } else {
-            (normalized * self.drive).tanh()
-        };
-
-        // Denormalize and recenter
-        saturated * (range / 2.0) + midpoint
-    }
-
-    pub fn set_range(&mut self, range: (f32, f32)) {
-        self.range = range;
-    }
-}
-
-impl Default for Saturator {
-    fn default() -> Self {
-        Self {
-            drive: 1.0,
-            range: (0.0, 1.0),
-        }
-    }
-}
-
-/// Implements ring modulation by combining a carrier and modulator signal.
-#[derive(Debug, Clone)]
-pub struct RingModulator {
-    /// Controls the blend between carrier and modulated signal
-    /// - 0.0: outputs carrier signal
-    /// - 0.5: outputs true ring modulation (carrier * modulator)
-    /// - 1.0: outputs modulator signal
-    pub mix: f32,
-
-    /// The (assumed) domain and range of the input and output signal
-    range: (f32, f32),
-}
-
-impl RingModulator {
-    pub fn new(depth: f32, range: (f32, f32)) -> Self {
-        Self { mix: depth, range }
-    }
-
-    #[doc(alias = "modulate")]
-    pub fn apply(&self, carrier: f32, modulator: f32) -> f32 {
-        self.modulate(carrier, modulator)
-    }
-
-    pub fn modulate(&self, carrier: f32, modulator: f32) -> f32 {
-        let (min, max) = self.range;
-        let range = max - min;
-        let midpoint = min + range / 2.0;
-
-        // Center signals around zero for multiplication
-        // Scale to -1 to +1
-        let carrier_centered = (carrier - midpoint) * 2.0;
-        // Scale to -1 to +1
-        let modulator_centered = (modulator - midpoint) * 2.0;
-
-        let ring_mod = carrier_centered * modulator_centered;
-
-        // Interpolate between carrier, ring mod, and modulator based on depth
-        let result = if self.mix <= 0.5 {
-            // Blend between carrier (0.0) and ring mod (0.5)
-            let t = self.mix * 2.0;
-            carrier_centered * (1.0 - t) + ring_mod * t
-        } else {
-            // Blend between ring mod (0.5) and modulator (1.0)
-            let t = (self.mix - 0.5) * 2.0;
-            ring_mod * (1.0 - t) + modulator_centered * t
-        };
-
-        ((result / 2.0) + midpoint).clamp(min, max)
-    }
-
-    pub fn set_range(&mut self, range: (f32, f32)) {
-        self.range = range;
-    }
-}
-
-impl Default for RingModulator {
-    fn default() -> Self {
-        Self {
-            mix: 0.5, // Default to true ring modulation
             range: (0.0, 1.0),
         }
     }
