@@ -23,14 +23,6 @@ pos_y:
     - ['0.1.0', 1.0]
     - ['0.2.0', 0.0]
 
-# white ball
-radius_small:
-  type: lerp_rel
-  keyframes:
-    - [1.0, 5.0]
-    - [1.0, 100.0]
-    - [0.0, 5.0]
-
 pos_x2:
   type: r_ramp_rel
   ramp: linear
@@ -99,10 +91,24 @@ line:
       value: 0.9
       kind: end
 
+# white ball
+radius_small:
+  type: lerp_rel
+  keyframes:
+    - [1.0, 5.0]
+    - [1.0, 100.0]
+    - [0.0, 5.0]
+
+radius_small_folder:
+  type: effect
+  kind: fold
+  gain: 2.0
+  range: [5, 100]
+
 radius_small_amt:
   type: slider
 
 radius_small_modulation:
   type: mod
-  carrier: radius_small
-  modulators: [radius_small_amt]
+  source: radius_small
+  modulators: [radius_small_amt, radius_small_folder]

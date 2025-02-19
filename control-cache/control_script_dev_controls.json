@@ -3,11 +3,11 @@
     "radius": {
       "Float": 100.0
     },
+    "radius_small_amt": {
+      "Float": 1.0
+    },
     "hue": {
       "Float": 0.3
-    },
-    "radius_small_amt": {
-      "Float": 0.167
     }
   }
 }

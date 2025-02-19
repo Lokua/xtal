@@ -27,6 +27,7 @@ pub struct ControlScript<T: TimingSource> {
     audio_controls: AudioControls,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
+    effects: HashMap<String, Effect>,
     update_state: UpdateState,
 }
 
@@ -42,14 +43,17 @@ impl<T: TimingSource> ControlScript<T> {
             animation: Animation::new(timing),
             keyframe_sequences: HashMap::new(),
             modulations: HashMap::new(),
+            effects: HashMap::new(),
             update_state: UpdateState {
                 state: state.clone(),
                 _watcher: Self::setup_watcher(path.clone(), state_clone),
             },
         };
+
         script
             .import_script(&path)
             .expect("Unable to import script");
+
         script
     }
 
@@ -58,7 +62,14 @@ impl<T: TimingSource> ControlScript<T> {
 
         self.modulations.get(name).map_or(value, |modulators| {
             modulators.into_iter().fold(value, |modulated, modulator| {
-                modulated * self.get_raw(modulator)
+                if self.effects.contains_key(modulator) {
+                    match self.effects.get(modulator).unwrap() {
+                        Effect::WaveFolder(fx) => fx.apply(modulated),
+                        _ => unimplemented!(),
+                    }
+                } else {
+                    modulated * self.get_raw(modulator)
+                }
             })
         })
     }
@@ -426,12 +437,15 @@ impl<T: TimingSource> ControlScript<T> {
                         serde_yml::from_value(config.config.clone())?;
 
                     self.modulations
-                        .entry(conf.carrier)
+                        .entry(conf.source)
                         .or_default()
                         .extend(conf.modulators);
                 }
                 ControlType::Effects => {
-                    todo!()
+                    let conf: EffectConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.effects.insert(id.to_string(), Effect::from(conf));
                 }
             }
         }
@@ -821,10 +835,6 @@ struct AutomateConfig {
     bypass: Option<f32>,
 }
 
-fn default_mode() -> String {
-    "loop".to_string()
-}
-
 impl Default for AutomateConfig {
     fn default() -> Self {
         Self {
@@ -898,27 +908,27 @@ enum KindConfig {
         easing: String,
     },
     Wave {
-        #[serde(default = "default_shape")]
+        #[serde(alias = "shape", default = "default_shape")]
         shape: String,
-        #[serde(default = "default_frequency", alias = "freq")]
+        #[serde(alias = "freq", default = "default_f32_0_25")]
         frequency: f32,
-        #[serde(default = "default_amplitude", alias = "amp")]
+        #[serde(alias = "amp", default = "default_f32_0_25")]
         amplitude: f32,
-        #[serde(default = "default_width")]
+        #[serde(alias = "width", default = "default_f32_0_5")]
         width: f32,
-        #[serde(default = "default_easing", alias = "ease")]
+        #[serde(alias = "ease", default = "default_easing")]
         easing: String,
-        #[serde(default = "default_constrain", alias = "cons")]
+        #[serde(alias = "cons", default = "default_none_string")]
         constrain: String,
     },
     RandomSmooth {
-        #[serde(default = "default_frequency", alias = "freq")]
+        #[serde(alias = "freq", default = "default_f32_0_25")]
         frequency: f32,
-        #[serde(default = "default_amplitude", alias = "amp")]
+        #[serde(alias = "amp", default = "default_f32_0_25")]
         amplitude: f32,
-        #[serde(default = "default_easing", alias = "ease")]
+        #[serde(alias = "ease", default = "default_easing")]
         easing: String,
-        #[serde(default = "default_constrain", alias = "cons")]
+        #[serde(alias = "cons", default = "default_none_string")]
         constrain: String,
     },
     End,
@@ -928,8 +938,53 @@ enum KindConfig {
 
 #[derive(Clone, Deserialize, Debug)]
 struct ModulationConfig {
-    carrier: String,
+    source: String,
     modulators: Vec<String>,
+}
+
+#[derive(Clone, Deserialize, Debug)]
+struct EffectConfig {
+    #[serde(flatten)]
+    kind: EffectKind,
+}
+
+impl From<EffectConfig> for Effect {
+    fn from(config: EffectConfig) -> Self {
+        match config.kind {
+            EffectKind::WaveFolder {
+                gain,
+                iterations,
+                symmetry,
+                bias,
+                shape,
+                range,
+            } => Effect::WaveFolder(WaveFolder::new(
+                gain, iterations, symmetry, bias, shape, range,
+            )),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+enum EffectKind {
+    #[serde(alias = "fold")]
+    WaveFolder {
+        #[serde(default = "default_f32_1")]
+        gain: f32,
+        #[serde(alias = "iter", default = "default_iterations")]
+        iterations: usize,
+        #[serde(alias = "sym", default = "default_f32_1")]
+        symmetry: f32,
+        #[serde(default = "default_f32_0")]
+        bias: f32,
+        #[serde(default = "default_f32_1")]
+        shape: f32,
+
+        // TODO: make Option and consider None to mean "adaptive range"?
+        #[serde(default = "default_normalized_range")]
+        range: (f32, f32),
+    },
 }
 
 //------------------------------------------------------------------------------
@@ -961,21 +1016,33 @@ where
     }
 }
 
+fn default_iterations() -> usize {
+    1
+}
+fn default_f32_1() -> f32 {
+    1.0
+}
+fn default_f32_0() -> f32 {
+    0.0
+}
+fn default_normalized_range() -> (f32, f32) {
+    (0.0, 1.0)
+}
+fn default_mode() -> String {
+    "loop".to_string()
+}
 fn default_easing() -> String {
     "linear".to_string()
 }
 fn default_shape() -> String {
     "sine".to_string()
 }
-fn default_constrain() -> String {
+fn default_none_string() -> String {
     "none".to_string()
 }
-fn default_frequency() -> f32 {
+fn default_f32_0_25() -> f32 {
     0.25
 }
-fn default_amplitude() -> f32 {
-    0.25
-}
-fn default_width() -> f32 {
+fn default_f32_0_5() -> f32 {
     0.5
 }

@@ -7,6 +7,19 @@ use std::f32::consts::{FRAC_PI_2, PI};
 
 use super::prelude::*;
 
+// pub trait Applicator {
+//     fn apply(&self, input: f32) -> f32;
+// }
+
+pub enum Effect {
+    Hysteresis(Hysteresis),
+    Quantizer(Quantizer),
+    RingModulator(RingModulator),
+    Saturator(Saturator),
+    SlewLimiter(SlewLimiter),
+    WaveFolder(WaveFolder),
+}
+
 /// Limits the rate of change (slew rate) of a signal
 pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
@@ -31,11 +44,11 @@ impl SlewLimiter {
         }
     }
 
-    #[doc(alias = "slew")]
     pub fn apply(&mut self, value: f32) -> f32 {
         self.slew(value)
     }
 
+    #[doc(alias = "apply")]
     pub fn slew(&mut self, value: f32) -> f32 {
         self.slew_with_rates(value, self.rise, self.fall)
     }
