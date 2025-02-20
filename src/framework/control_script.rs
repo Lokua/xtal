@@ -60,50 +60,48 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn get(&self, name: &str) -> f32 {
         let value = self.get_raw(name);
 
-        self.modulations.get(name).map_or(value, |modulators| {
-            modulators
-                .into_iter()
-                .fold(value, |modulated_value, modulator| {
-                    if self.effects.contains_key(modulator) {
-                        let (effect_config, effect) =
-                            self.effects.get(modulator).unwrap();
+        match self.modulations.get(name) {
+            None => value,
+            Some(modulators) => self.apply_modulators(value, modulators),
+        }
+    }
 
-                        if let (
-                            EffectConfig {
-                                kind:
-                                    EffectKind::RingModulator { modulator, .. },
-                                ..
-                            },
-                            Effect::RingModulator(m),
-                        ) = (effect_config, effect)
-                        {
-                            let modulator_signal = self.get_raw(modulator);
-                            m.apply(modulated_value, modulator_signal)
-                        } else {
-                            match effect {
-                                Effect::Hysteresis(m) => {
-                                    m.apply(modulated_value)
-                                }
-                                Effect::Quantizer(m) => {
-                                    m.apply(modulated_value)
-                                }
-                                Effect::RingModulator(_) => unreachable!(),
-                                Effect::Saturator(m) => {
-                                    m.apply(modulated_value)
-                                }
-                                Effect::SlewLimiter(m) => {
-                                    m.apply(modulated_value)
-                                }
-                                Effect::WaveFolder(m) => {
-                                    m.apply(modulated_value)
-                                }
-                            }
-                        }
-                    } else {
-                        modulated_value * self.get_raw(modulator)
-                    }
-                })
+    fn apply_modulators(
+        &self,
+        initial_value: f32,
+        modulators: &Vec<String>,
+    ) -> f32 {
+        modulators.iter().fold(initial_value, |value, modulator| {
+            self.apply_modulator(value, modulator)
         })
+    }
+
+    fn apply_modulator(&self, value: f32, modulator: &str) -> f32 {
+        if !self.effects.contains_key(modulator) {
+            return value * self.get_raw(modulator);
+        }
+
+        let (config, effect) = self.effects.get(modulator).unwrap();
+
+        if let (
+            EffectConfig {
+                kind: EffectKind::RingModulator { modulator, .. },
+                ..
+            },
+            Effect::RingModulator(m),
+        ) = (config, effect)
+        {
+            return m.apply(value, self.get_raw(modulator));
+        }
+
+        match effect {
+            Effect::Hysteresis(m) => m.apply(value),
+            Effect::Quantizer(m) => m.apply(value),
+            Effect::RingModulator(_) => unreachable!(),
+            Effect::Saturator(m) => m.apply(value),
+            Effect::SlewLimiter(m) => m.apply(value),
+            Effect::WaveFolder(m) => m.apply(value),
+        }
     }
 
     fn get_raw(&self, name: &str) -> f32 {

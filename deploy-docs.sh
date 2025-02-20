@@ -85,7 +85,9 @@ git push -f origin gh-pages
 echo "Returning to original branch: $current_branch"
 git checkout "$current_branch"
 git clean -fd  # Clean up any leftover files
-find . -type d -empty -delete  # Remove all empty directories
+
+# Remove all empty directories, processing deepest first
+find . -depth -type d -empty -delete 
 
 echo "Documentation deployment complete!"
 echo "Please ensure GitHub Pages is configured to deploy from the gh-pages branch in your repository settings." 
