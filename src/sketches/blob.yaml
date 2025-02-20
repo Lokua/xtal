@@ -83,6 +83,12 @@ center_y_mod:
     - center_y_slew
     - center_y_fold
 
+# this alone adds phase cancellation to t1-4 -
+# q1 moves out the most, q4 the least...
+# we take advantage of that by mixing with outer_scale_2
+
+_outer_scale_range: &outer_scale_range 1.5
+
 outer_scale:
   type: automate
   breakpoints:
@@ -93,12 +99,48 @@ outer_scale:
 
     - kind: ramp
       position: 2.0
-      value: 1.5
+      value: *outer_scale_range
       easing: ease_out
 
     - kind: end
       position: 4.0
       value: 0.0
+
+outer_scale_2:
+  var: d4
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.0
+      easing: ease_in
+
+    - kind: ramp
+      position: 3.0
+      value: *outer_scale_range
+      easing: ease_out
+
+    - kind: end
+      position: 6.0
+      value: 0.0
+
+outer_scale_modifier:
+  type: effect
+  kind: quant
+  step: 0.25
+  range: [0, 1.0]
+
+outer_scale_mod_1:
+  type: mod
+  source: outer_scale
+  modulators:
+    - outer_scale_modifier
+
+outer_scale_mod_2:
+  type: mod
+  source: outer_scale_2
+  modulators:
+    - outer_scale_modifier
 
 bd:
   type: audio
@@ -114,8 +156,13 @@ chord:
   detect: 0.0
   range: [0.7, 1.0]
 
-hh:
+outer_size:
   var: d2
+  type: slider
+  range: [0, 0.4]
+
+outer_pos_t_mix:
+  var: d3
   type: slider
 
 _: _

@@ -1,19 +1,22 @@
 {
   "values": {
-    "smoothness": {
-      "Float": 0.71
-    },
-    "blur": {
-      "Float": 11.099999
-    },
-    "color_mix": {
-      "Float": 0.84499997
-    },
-    "hh": {
-      "Float": 1.0
-    },
     "invert": {
       "Float": 0.0
+    },
+    "outer_pos_t_mix": {
+      "Float": 0.5
+    },
+    "color_mix": {
+      "Float": 0.765
+    },
+    "smoothness": {
+      "Float": 0.552
+    },
+    "blur": {
+      "Float": 10.849999
+    },
+    "outer_size": {
+      "Float": 0.083
     }
   }
 }

@@ -40,7 +40,7 @@ struct ShaderParams {
     // t_long, center_y, outer_scale, bd
     c: [f32; 4],
 
-    // chord, ...
+    // chord, outer_size, ...
     d: [f32; 4],
 }
 

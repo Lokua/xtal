@@ -22,7 +22,7 @@ struct Params {
     // t_long, center_y, outer_scale, bd
     c: vec4f,
 
-    // chord, ...
+    // chord, outer_size, outer_pos_t_mix, unused
     d: vec4f,
 }
 
@@ -53,22 +53,47 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let outer_scale = params.c.z;
     let bd = params.c.w;
     let chord = params.d.x;
-    let hh = params.d.y;
+    let outer_size = 1.0 - params.d.y;
+    let outer_pos_t_mix = params.d.z;
+    let outer_scale_2 = params.d.w;
 
     let p = correct_aspect(position);
-    let os = outer_scale;
-    let p1 = vec2f((1.0 - t1) * os, (1.0 - t1) * os);
-    let p2 = vec2f((1.0 - t2) * os, -1.0 + t2 * os);
-    let p3 = vec2f((-1.0 + t3) * os, (-1.0 + t3) * os);
-    let p4 = vec2f((-1.0 + t4) * os, (1.0 - t4) * os);
+    let os = mix(outer_scale, outer_scale_2, outer_pos_t_mix);
+    var p1: vec2f;
+    var p2: vec2f;
+    var p3: vec2f;
+    var p4: vec2f;
+    if true {
+        p1 = vec2f((1.0 - t1) * os, (1.0 - t1) * os);
+        p2 = vec2f((1.0 - t2) * os, (-1.0 + t2 )* os);
+        p3 = vec2f((-1.0 + t3) * os, (-1.0 + t3) * os);
+        p4 = vec2f((-1.0 + t4) * os, (1.0 - t4) * os);
+    } else {
+        p1 = vec2f(
+            (1.0 - mix(t4, t1, outer_pos_t_mix)) * os, 
+            (1.0 - mix(t3, t1, outer_pos_t_mix)) * os
+        );
+        p2 = vec2f(
+            (1.0 - mix(t2, t2, outer_pos_t_mix)) * os,
+            (-1.0 + mix(t1, t2, outer_pos_t_mix)) * os
+        );
+        p3 = vec2f(
+            (-1.0 + mix(t4, t3, outer_pos_t_mix)) * os,
+            (-1.0 + mix(t3, t3, outer_pos_t_mix)) * os
+        );
+        p4 = vec2f(
+            (-1.0 + mix(t2, t4, outer_pos_t_mix)) * os,
+            (1.0 - mix(t1, t4, outer_pos_t_mix)) * os
+        );
+    }
     // center
     let p5 = vec2f(0.0, center_y);
 
     let scale = 1.0;
-    let d1 = length(p - p1) / scale;
-    let d2 = length(p - p2) / scale;
-    let d3 = length(p - p3) / scale;
-    let d4 = length(p - p4) / scale;
+    let d1 = length(p - p1) / scale * outer_size;
+    let d2 = length(p - p2) / scale * outer_size;
+    let d3 = length(p - p3) / scale * outer_size;
+    let d4 = length(p - p4) / scale * outer_size;
     let d5 = length(p - p5) / (scale * 0.5);
 
     let k = smoothness;
@@ -108,7 +133,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     
     color = mix(color, 1.0 - color, invert_color);
     
-    return vec4f(color, hh);
+    return vec4f(color, 1.0);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {
