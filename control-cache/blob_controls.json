@@ -1,15 +1,18 @@
 {
   "values": {
-    "b3": {
-      "Float": 6.95
+    "smoothness": {
+      "Float": 0.71
     },
-    "b2": {
-      "Float": 0.55799997
+    "blur": {
+      "Float": 11.099999
     },
-    "b4": {
-      "Float": 0.92499995
+    "color_mix": {
+      "Float": 0.84499997
     },
-    "b1": {
+    "hh": {
+      "Float": 1.0
+    },
+    "invert": {
       "Float": 0.0
     }
   }

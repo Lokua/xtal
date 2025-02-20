@@ -3,6 +3,9 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// Live/2025.02.19 Blob
+// Run with `osc` timing
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "blob",
     display_name: "Blob",
@@ -31,8 +34,14 @@ struct ShaderParams {
     // t1, t2, t3, t4
     a: [f32; 4],
 
-    // b1, b2, ..unused
+    // invert, center_size, smoothness, color_mix
     b: [f32; 4],
+
+    // t_long, center_y, outer_scale, bd
+    c: [f32; 4],
+
+    // chord, ...
+    d: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -45,6 +54,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         resolution: [0.0; 4],
         a: [0.0; 4],
         b: [0.0; 4],
+        c: [0.0; 4],
+        d: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_fullscreen(
@@ -64,16 +75,28 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
     let params = ShaderParams {
         resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
         a: [
-            m.controls.get("a1"),
-            m.controls.get("a2"),
-            m.controls.get("a3"),
-            m.controls.get("a4"),
+            m.controls.get("t1"),
+            m.controls.get("t2"),
+            m.controls.get("t3"),
+            m.controls.get("t4"),
         ],
         b: [
-            m.controls.get("b1"),
-            m.controls.get("b2"),
-            m.controls.get("b3"),
-            m.controls.get("b4"),
+            m.controls.get("invert"),
+            m.controls.get("smoothness"),
+            m.controls.get("blur"),
+            m.controls.get("color_mix"),
+        ],
+        c: [
+            m.controls.get("t_long"),
+            m.controls.get("center_y"),
+            m.controls.get("outer_scale"),
+            m.controls.get("bd"),
+        ],
+        d: [
+            m.controls.get("chord"),
+            m.controls.get("d2"),
+            m.controls.get("d3"),
+            m.controls.get("d4"),
         ],
     };
 

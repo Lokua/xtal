@@ -16,8 +16,14 @@ struct Params {
     // t1, t2, t3, t4
     a: vec4f,
 
-    // b1, b2, ..unused
+    // invert, center_size, smoothness, color_mix
     b: vec4f,
+
+    // t_long, center_y, outer_scale, bd
+    c: vec4f,
+
+    // chord, ...
+    d: vec4f,
 }
 
 @group(0) @binding(0)
@@ -33,22 +39,30 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    // in quadrant order
+    // in quadrant order; t1=q1 and so on clockwise
     let t1 = params.a.x;
     let t2 = params.a.y;
     let t3 = params.a.z;
     let t4 = params.a.w;
     let invert_color = params.b.x;
     let smoothness = params.b.y;
-    let brightness = params.b.z;
+    let blur = params.b.z;
+    let color_mix = params.b.w;
+    let t_long = params.c.x;
+    let center_y = params.c.y;
+    let outer_scale = params.c.z;
+    let bd = params.c.w;
+    let chord = params.d.x;
+    let hh = params.d.y;
 
     let p = correct_aspect(position);
-    let p1 = vec2f(1.0 - t1, 1.0 - t1);
-    let p2 = vec2f(1.0 - t2, -1.0 + t2);
-    let p3 = vec2f(-1.0 + t3, -1.0 + t3);
-    let p4 = vec2f(-1.0 + t4, 1.0 - t4);
+    let os = outer_scale;
+    let p1 = vec2f((1.0 - t1) * os, (1.0 - t1) * os);
+    let p2 = vec2f((1.0 - t2) * os, -1.0 + t2 * os);
+    let p3 = vec2f((-1.0 + t3) * os, (-1.0 + t3) * os);
+    let p4 = vec2f((-1.0 + t4) * os, (1.0 - t4) * os);
     // center
-    let p5 = vec2f(0.0);
+    let p5 = vec2f(0.0, center_y);
 
     let scale = 1.0;
     let d1 = length(p - p1) / scale;
@@ -70,19 +84,21 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let mix34 = smin(mix3, mix4, k);
     let final_mix = smin(mix12, mix34, k);
 
-    let d = final_mix * brightness;
+    let d = final_mix * blur;
 
     let color_1 = vec3f(
         0.5 + 0.5 * sin(p.x * 2.0),
         0.5 + 0.5 * cos(p.y * 2.0),
         0.5 + 0.5 * sin((p.x + p.y) * 1.0)
     );
+    let t_long_bipolar = t_long * 2.0 - 1.0;
+    let grid_resolution = 700.0 + (t_long_bipolar * 50.0);
     let color_2 = vec3f(
-        0.5 + 0.5 * sin(p.x * 700.0),
-        0.5 + 0.5 * cos(p.y * 700.0),
-        0.5 + 0.5 * sin((p.x + p.y) * 700.0)
+        0.5 + 0.5 * sin(p.x * grid_resolution),
+        0.5 + 0.5 * cos(p.y * grid_resolution),
+        0.5 + 0.5 * sin((p.x + p.y) * grid_resolution)
     );
-    let color_mix = params.b.w;
+    
     let base_color = mix(color_1, color_2, color_mix);
     
     // For areas where d is small (inside circles), use bright colors
@@ -92,7 +108,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     
     color = mix(color, 1.0 - color, invert_color);
     
-    return vec4f(color, 1.0);
+    return vec4f(color, hh);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {

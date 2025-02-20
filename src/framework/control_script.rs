@@ -28,6 +28,8 @@ pub struct ControlScript<T: TimingSource> {
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: HashMap<String, (EffectConfig, Effect)>,
+    aliases: HashMap<String, String>,
+    persisted_config_fields: HashMap<String, PersistedConfigFields>,
     update_state: UpdateState,
 }
 
@@ -44,6 +46,8 @@ impl<T: TimingSource> ControlScript<T> {
             keyframe_sequences: HashMap::new(),
             modulations: HashMap::new(),
             effects: HashMap::new(),
+            aliases: HashMap::new(),
+            persisted_config_fields: HashMap::new(),
             update_state: UpdateState {
                 state: state.clone(),
                 _watcher: Self::setup_watcher(path.clone(), state_clone),
@@ -58,12 +62,17 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
+        let name = &self.resolve_name(name);
         let value = self.get_raw(name);
 
         match self.modulations.get(name) {
             None => value,
             Some(modulators) => self.apply_modulators(value, modulators),
         }
+    }
+
+    fn resolve_name(&self, name: &str) -> String {
+        self.aliases.get(name).cloned().unwrap_or(name.to_string())
     }
 
     fn apply_modulators(
@@ -105,6 +114,15 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn get_raw(&self, name: &str) -> f32 {
+        if let Some(bypass) = self
+            .persisted_config_fields
+            .get(name)
+            .map(|p| p.bypass)
+            .flatten()
+        {
+            return bypass;
+        }
+
         if self.controls.has(name) {
             return self.controls.float(name);
         }
@@ -121,54 +139,35 @@ impl<T: TimingSource> ControlScript<T> {
         if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
             return match (config, sequence) {
                 (
-                    AnimationConfig::Lerp(conf),
+                    AnimationConfig::LerpRel(_),
                     KeyframeSequence::Linear(kfs),
-                ) => {
-                    if let Some(bypass) = conf.bypass {
-                        bypass
-                    } else {
-                        self.animation.lerp(&kfs.clone(), config.delay())
-                    }
-                }
+                ) => self.animation.lerp(&kfs.clone(), config.delay()),
+                (
+                    AnimationConfig::LerpAbs(_),
+                    KeyframeSequence::Linear(kfs),
+                ) => self.animation.lerp(&kfs.clone(), config.delay()),
                 (
                     AnimationConfig::RRampRel(conf),
                     KeyframeSequence::Random(kfs),
-                ) => {
-                    if let Some(bypass) = conf.bypass {
-                        bypass
-                    } else {
-                        self.animation.r_ramp(
-                            kfs,
-                            conf.delay,
-                            conf.ramp_time,
-                            Easing::from_str(conf.ramp.as_str()).unwrap(),
-                        )
-                    }
-                }
+                ) => self.animation.r_ramp(
+                    kfs,
+                    conf.delay,
+                    conf.ramp_time,
+                    Easing::from_str(conf.ramp.as_str()).unwrap(),
+                ),
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
-                    if let Some(bypass) = conf.bypass {
-                        bypass
-                    } else {
-                        self.animation.triangle(
-                            conf.beats,
-                            (conf.range[0], conf.range[1]),
-                            conf.phase,
-                        )
-                    }
+                    self.animation.triangle(
+                        conf.beats,
+                        (conf.range[0], conf.range[1]),
+                        conf.phase,
+                    )
                 }
                 (
                     AnimationConfig::Automate(conf),
                     KeyframeSequence::Breakpoints(breakpoints),
-                ) => {
-                    if let Some(bypass) = conf.bypass {
-                        bypass
-                    } else {
-                        self.animation.automate(
-                            breakpoints,
-                            Mode::from_str(&conf.mode).unwrap(),
-                        )
-                    }
-                }
+                ) => self
+                    .animation
+                    .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
                 _ => unimplemented!(),
             };
         }
@@ -248,12 +247,31 @@ impl<T: TimingSource> ControlScript<T> {
         self.controls = Controls::with_previous(vec![]);
         self.keyframe_sequences.clear();
         self.modulations.clear();
+        self.aliases.clear();
+        self.persisted_config_fields.clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
                 MaybeControlConfig::Control(config) => config,
                 MaybeControlConfig::Other(_) => continue,
             };
+
+            if let Some(v) = config.config.get("var").and_then(|v| v.as_str()) {
+                self.aliases.insert(v.to_string(), id.to_string());
+            }
+
+            let bypass = config
+                .config
+                .get("bypass")
+                .and_then(|b| b.as_f64())
+                .map(|b| b as f32);
+
+            if bypass.is_some()
+            /* || possible_future_field.etc.is_some() */
+            {
+                self.persisted_config_fields
+                    .insert(id.to_string(), PersistedConfigFields { bypass });
+            }
 
             match config.control_type {
                 ControlType::Slider => {
@@ -373,10 +391,7 @@ impl<T: TimingSource> ControlScript<T> {
                     self.keyframe_sequences.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::Lerp(LerpConfig {
-                                delay: conf.delay,
-                                bypass: conf.bypass,
-                            }),
+                            AnimationConfig::LerpAbs(conf),
                             KeyframeSequence::Linear(keyframes),
                         ),
                     );
@@ -403,10 +418,7 @@ impl<T: TimingSource> ControlScript<T> {
                     self.keyframe_sequences.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::Lerp(LerpConfig {
-                                delay: conf.delay,
-                                bypass: conf.bypass,
-                            }),
+                            AnimationConfig::LerpRel(conf),
                             KeyframeSequence::Linear(keyframes),
                         ),
                     );
@@ -627,12 +639,27 @@ enum ControlType {
     Effects,
 }
 
+#[allow(dead_code)]
+#[derive(Clone, Deserialize, Debug, Default)]
+struct Shared {
+    #[serde(default, deserialize_with = "deserialize_number_or_none")]
+    bypass: Option<f32>,
+    #[serde(default)]
+    var: Option<String>,
+}
+
+struct PersistedConfigFields {
+    bypass: Option<f32>,
+}
+
 //------------------------------------------------------------------------------
 // Animation Types
 //------------------------------------------------------------------------------
 
+#[derive(Debug)]
 enum AnimationConfig {
-    Lerp(LerpConfig),
+    LerpRel(LerpRelConfig),
+    LerpAbs(LerpAbsConfig),
     RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
@@ -641,28 +668,10 @@ enum AnimationConfig {
 impl AnimationConfig {
     pub fn delay(&self) -> f32 {
         match self {
-            AnimationConfig::Lerp(x) => x.delay,
+            AnimationConfig::LerpRel(x) => x.delay,
+            AnimationConfig::LerpAbs(x) => x.delay,
             AnimationConfig::RRampRel(x) => x.delay,
             _ => 0.0,
-        }
-    }
-}
-
-impl fmt::Debug for AnimationConfig {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AnimationConfig::Lerp(x) => {
-                f.debug_tuple("AnimationConfig::LerpAbs").field(x).finish()
-            }
-            AnimationConfig::RRampRel(x) => {
-                f.debug_tuple("AnimationConfig::RRampRel").field(x).finish()
-            }
-            AnimationConfig::Triangle(x) => {
-                f.debug_tuple("AnimationConfig::Triangle").field(x).finish()
-            }
-            AnimationConfig::Automate(x) => {
-                f.debug_tuple("AnimationConfig::Automate").field(x).finish()
-            }
         }
     }
 }
@@ -684,6 +693,9 @@ enum KeyframeSequence {
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct SliderConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     range: [f32; 2],
     default: f32,
     step: f32,
@@ -692,6 +704,7 @@ struct SliderConfig {
 impl Default for SliderConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             range: [0.0, 1.0],
             default: 0.0,
             step: 0.000_1,
@@ -702,17 +715,26 @@ impl Default for SliderConfig {
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct CheckboxConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     default: bool,
 }
 
 impl Default for CheckboxConfig {
     fn default() -> Self {
-        Self { default: false }
+        Self {
+            shared: Shared::default(),
+            default: false,
+        }
     }
 }
 
 #[derive(Deserialize, Debug)]
 struct SelectConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     options: Vec<String>,
     default: String,
 }
@@ -725,6 +747,9 @@ struct Separator {}
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct OscConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     range: [f32; 2],
     default: f32,
 }
@@ -732,6 +757,7 @@ struct OscConfig {
 impl Default for OscConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             range: [0.0, 1.0],
             default: 0.0,
         }
@@ -741,6 +767,9 @@ impl Default for OscConfig {
 #[derive(Clone, Deserialize, Debug)]
 #[serde(default)]
 struct AudioConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     channel: usize,
     slew: [f32; 2],
     pre: f32,
@@ -752,6 +781,7 @@ struct AudioConfig {
 impl Default for AudioConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             channel: 0,
             slew: [0.0, 0.0],
             pre: 0.0,
@@ -764,52 +794,51 @@ impl Default for AudioConfig {
 
 // --- Animation Controls
 
-#[derive(Clone, Debug)]
-struct LerpConfig {
-    delay: f32,
-    bypass: Option<f32>,
-}
-
 #[derive(Clone, Deserialize, Debug)]
 struct LerpAbsConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     #[serde(default)]
     delay: f32,
     keyframes: Vec<(String, f32)>,
-    #[serde(default, deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
 }
 
 impl Default for LerpAbsConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             delay: 0.0,
             keyframes: Vec::new(),
-            bypass: None,
         }
     }
 }
 
 #[derive(Clone, Deserialize, Debug)]
 struct LerpRelConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     #[serde(default)]
     delay: f32,
     keyframes: Vec<(f32, f32)>,
-    #[serde(default, deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
 }
 
 impl Default for LerpRelConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             delay: 0.0,
             keyframes: Vec::new(),
-            bypass: None,
         }
     }
 }
 
 #[derive(Clone, Deserialize, Debug)]
 struct RRampRelConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     #[serde(default)]
     delay: f32,
     #[serde(default)]
@@ -817,8 +846,6 @@ struct RRampRelConfig {
     #[serde(default = "default_ramp")]
     ramp: String,
     keyframes: Vec<(f32, (f32, f32))>,
-    #[serde(default, deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
 }
 
 fn default_ramp() -> String {
@@ -828,11 +855,11 @@ fn default_ramp() -> String {
 impl Default for RRampRelConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             delay: 0.0,
             ramp: "linear".to_string(),
             ramp_time: 0.25,
             keyframes: Vec::new(),
-            bypass: None,
         }
     }
 }
@@ -840,20 +867,21 @@ impl Default for RRampRelConfig {
 #[derive(Clone, Deserialize, Debug)]
 #[serde(default)]
 struct TriangleConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     beats: f32,
     range: [f32; 2],
     phase: f32,
-    #[serde(deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
 }
 
 impl Default for TriangleConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             beats: 1.0,
             range: [0.0, 1.0],
             phase: 0.0,
-            bypass: None,
         }
     }
 }
@@ -861,19 +889,20 @@ impl Default for TriangleConfig {
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 struct AutomateConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     breakpoints: Vec<BreakpointConfig>,
     #[serde(default = "default_mode")]
     mode: String,
-    #[serde(deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
 }
 
 impl Default for AutomateConfig {
     fn default() -> Self {
         Self {
+            shared: Shared::default(),
             breakpoints: Vec::new(),
             mode: "loop".to_string(),
-            bypass: None,
         }
     }
 }
@@ -978,12 +1007,18 @@ enum KindConfig {
 
 #[derive(Clone, Deserialize, Debug)]
 struct ModulationConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     source: String,
     modulators: Vec<String>,
 }
 
 #[derive(Clone, Deserialize, Debug)]
 struct EffectConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
     #[serde(flatten)]
     kind: EffectKind,
 }

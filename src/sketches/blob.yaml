@@ -1,42 +1,121 @@
 # top-right corner
-a1:
+t1:
   type: triangle
   beats: 2
   phase: 0
 
 # bottom-right corner
-a2:
+t2:
   type: triangle
   beats: 2
   phase: 0.25
 
 # bottom-left corner
-a3:
+t3:
   type: triangle
   beats: 2
   phase: 0.5
 
 # top-left corner
-a4:
+t4:
   type: triangle
   beats: 2
   phase: 0.75
 
-# invert color
-b1:
+invert:
   type: slider
   range: [0, 1]
 
-# smoothness
-b2:
+# center size
+smoothness:
   type: slider
   range: [0, 1]
 
-# brightness? But not really...name TBD
-b3:
+blur:
   type: slider
   range: [1, 20]
 
-# color_mix
-b4:
+color_mix:
   type: slider
+
+t_long:
+  type: triangle
+
+center_y:
+  type: automate
+  mode: loop
+  bypass: _
+  breakpoints:
+    - kind: random
+      position: 0.0
+      value: 0.0
+      amplitude: 0.0
+
+    - kind: random
+      position: 2.0
+      value: 0.0
+      amplitude: 2.0
+
+    - kind: end
+      position: 4.0
+      value: 0.0
+
+center_y_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
+
+center_y_fold:
+  type: effect
+  kind: wave_folder
+  gain: 2.0
+  iterations: 1
+  symmetry: 1.0
+  bias: 0.0
+  shape: -1.0
+  range: [-1, 1]
+
+center_y_mod:
+  type: mod
+  source: center_y
+  modulators:
+    - center_y_slew
+    - center_y_fold
+
+outer_scale:
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.0
+      easing: ease_in
+
+    - kind: ramp
+      position: 2.0
+      value: 1.5
+      easing: ease_out
+
+    - kind: end
+      position: 4.0
+      value: 0.0
+
+bd:
+  type: audio
+  channel: 0
+  slew: [0.5, 0.5]
+  detect: 0.0
+  range: [0.7, 1.0]
+
+chord:
+  type: audio
+  channel: 2
+  slew: [0.5, 0.5]
+  detect: 0.0
+  range: [0.7, 1.0]
+
+hh:
+  var: d2
+  type: slider
+
+_: _
