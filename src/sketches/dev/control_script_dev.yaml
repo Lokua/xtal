@@ -167,3 +167,16 @@ red_ball_radius_mods:
     - red_ball_radius_slew
     - red_ball_radius_quant
     - red_ball_radius_rm
+
+hot_anim:
+  type: test_anim
+  field: $hot_source
+
+hot_source:
+  type: triangle
+  beats: 4
+
+hot_effect:
+  type: effect
+  kind: test
+  param: $hot_anim

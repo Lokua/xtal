@@ -5,7 +5,8 @@ use indexmap::IndexMap;
 use notify::{Event, RecursiveMode, Watcher};
 use serde::{Deserialize, Deserializer};
 use std::{
-    collections::HashMap,
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
     error::Error,
     fmt, fs,
     path::PathBuf,
@@ -13,6 +14,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 use yaml_merge_keys::merge_keys_serde_yml;
+
+use crate::framework::frame_controller;
 
 use super::prelude::*;
 
@@ -27,9 +30,12 @@ pub struct ControlScript<T: TimingSource> {
     audio_controls: AudioControls,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
-    effects: HashMap<String, (EffectConfig, Effect)>,
+    effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
     aliases: HashMap<String, String>,
     persisted_config_fields: HashMap<String, PersistedConfigFields>,
+    node_graph: NodeGraph,
+    node_execution_order: Option<Vec<String>>,
+    eval_cache: RefCell<HashMap<String, (u32, f32)>>,
     update_state: UpdateState,
 }
 
@@ -45,9 +51,12 @@ impl<T: TimingSource> ControlScript<T> {
             animation: Animation::new(timing),
             keyframe_sequences: HashMap::new(),
             modulations: HashMap::new(),
-            effects: HashMap::new(),
+            effects: RefCell::new(HashMap::new()),
             aliases: HashMap::new(),
             persisted_config_fields: HashMap::new(),
+            node_graph: NodeGraph::new(),
+            node_execution_order: None,
+            eval_cache: RefCell::new(HashMap::new()),
             update_state: UpdateState {
                 state: state.clone(),
                 _watcher: Self::setup_watcher(path.clone(), state_clone),
@@ -63,6 +72,47 @@ impl<T: TimingSource> ControlScript<T> {
 
     pub fn get(&self, name: &str) -> f32 {
         let name = &self.resolve_name(name);
+
+        if let Some(bypass) = self
+            .persisted_config_fields
+            .get(name)
+            .map(|p| p.bypass)
+            .flatten()
+        {
+            return bypass;
+        }
+
+        if self.node_execution_order.is_some()
+            && self.node_graph.contains_key(name)
+        {
+            let frame_count = frame_controller::frame_count();
+
+            if let Some(order) = &self.node_execution_order {
+                for node in order.iter() {
+                    if node == name {
+                        debug!("get; node == name {}; breaking", node);
+                        break;
+                    }
+                    {
+                        let eval_cache = self.eval_cache.borrow();
+                        if eval_cache.contains_key(node) {
+                            let cached_frame_count =
+                                eval_cache.get(node).unwrap().0;
+                            if cached_frame_count == frame_count {
+                                debug!("get; {} is cached. moving along", node);
+                                continue;
+                            }
+                        }
+                    }
+                    let value = self.get_raw(node);
+                    debug!("get; node={} raw_value: {}", node, value);
+                    self.eval_cache
+                        .borrow_mut()
+                        .insert(node.clone(), (frame_count, value));
+                }
+            }
+        }
+
         let value = self.get_raw(name);
 
         match self.modulations.get(name) {
@@ -86,19 +136,18 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn apply_modulator(&self, value: f32, modulator: &str) -> f32 {
-        if !self.effects.contains_key(modulator) {
+        let mut effects = self.effects.borrow_mut();
+
+        if !effects.contains_key(modulator) {
             return value * self.get_raw(modulator);
         }
 
-        let (config, effect) = self.effects.get(modulator).unwrap();
+        let (config, effect) = effects.get_mut(modulator).unwrap();
 
         if let (
-            EffectConfig {
-                kind: EffectKind::RingModulator { modulator, .. },
-                ..
-            },
+            EffectKind::RingModulator { modulator, .. },
             Effect::RingModulator(m),
-        ) = (config, effect)
+        ) = (&config.kind, &mut *effect)
         {
             return m.apply(value, self.get_raw(modulator));
         }
@@ -106,22 +155,31 @@ impl<T: TimingSource> ControlScript<T> {
         match effect {
             Effect::Hysteresis(m) => m.apply(value),
             Effect::Quantizer(m) => m.apply(value),
-            Effect::RingModulator(_) => unreachable!(),
             Effect::Saturator(m) => m.apply(value),
             Effect::SlewLimiter(m) => m.apply(value),
             Effect::WaveFolder(m) => m.apply(value),
+            Effect::TestEffect(m) => {
+                if let Some(params) = self.node_graph.get("hot_effect") {
+                    for (param_name, param_value) in params.iter() {
+                        m.set_param(
+                            &param_name,
+                            match param_value {
+                                ParamValue::Cold(x) => *x,
+                                ParamValue::Hot(name) => self.get_raw(&name),
+                            },
+                        );
+                    }
+                }
+                m.apply(value)
+            }
+            // special case already handled above
+            Effect::RingModulator(_) => panic!(),
         }
     }
 
     fn get_raw(&self, name: &str) -> f32 {
-        if let Some(bypass) = self
-            .persisted_config_fields
-            .get(name)
-            .map(|p| p.bypass)
-            .flatten()
-        {
-            return bypass;
-        }
+        let frame_count = frame_controller::frame_count();
+        debug!("frame_count: {}", frame_count);
 
         if self.controls.has(name) {
             return self.controls.float(name);
@@ -168,6 +226,19 @@ impl<T: TimingSource> ControlScript<T> {
                 ) => self
                     .animation
                     .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
+                (AnimationConfig::TestAnim(conf), KeyframeSequence::None) => {
+                    // We need to somehow abstract this as this will need to happen
+                    // for every single top-level f32 on the conf for every single
+                    // animation type
+                    let field = match &conf.field {
+                        ParamValue::Cold(x) => *x,
+                        ParamValue::Hot(node) => {
+                            let cache = self.eval_cache.borrow();
+                            cache.get(node).unwrap().1
+                        }
+                    };
+                    field + 100.0
+                }
                 _ => unimplemented!(),
             };
         }
@@ -249,12 +320,21 @@ impl<T: TimingSource> ControlScript<T> {
         self.modulations.clear();
         self.aliases.clear();
         self.persisted_config_fields.clear();
+        self.node_graph.clear();
+        self.node_execution_order = None;
+        self.eval_cache.borrow_mut().clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
                 MaybeControlConfig::Control(config) => config,
                 MaybeControlConfig::Other(_) => continue,
             };
+
+            let hot_params = self.find_hot_params(&config.config);
+
+            if !hot_params.is_empty() {
+                self.node_graph.insert(id.to_string(), hot_params);
+            }
 
             if let Some(v) = config.config.get("var").and_then(|v| v.as_str()) {
                 self.aliases.insert(v.to_string(), id.to_string());
@@ -487,16 +567,29 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: EffectConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    self.effects.insert(
+                    self.effects.borrow_mut().insert(
                         id.to_string(),
                         (conf.clone(), Effect::from(conf)),
+                    );
+                }
+                ControlType::TestAnim => {
+                    let conf: TestAnimConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::TestAnim(conf),
+                            KeyframeSequence::None,
+                        ),
                     );
                 }
             }
         }
 
-        trace!("Config populated. controls: {:?}, osc_controls: {:?}, keyframe_sequences: {:?}", 
-            self.controls, self.osc_controls, self.keyframe_sequences);
+        self.node_execution_order = self.sort_dep_graph();
+
+        trace!("node_graph: {:#?}", self.node_graph);
 
         if !self.osc_controls.is_active {
             self.osc_controls
@@ -509,6 +602,97 @@ impl<T: TimingSource> ControlScript<T> {
         info!("Controls populated");
 
         Ok(())
+    }
+
+    fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
+        let mut node_values = Node::new();
+
+        if let Some(obj) = raw_config.as_mapping() {
+            for (key, value) in obj {
+                if let Ok(param) =
+                    serde_yml::from_value::<ParamValue>(value.clone())
+                {
+                    if let ParamValue::Hot(_) = param {
+                        let k = key.as_str().unwrap().to_string();
+                        node_values.insert(k, param);
+                    }
+                }
+                // here is we'd recursively check for nested hots if we
+                // ever want to support that in the future
+            }
+        }
+
+        node_values
+    }
+
+    fn sort_dep_graph(&self) -> Option<Vec<String>> {
+        let (graph, mut in_degree) = self.build_dep_graph();
+
+        let mut queue: VecDeque<String> = VecDeque::new();
+        let mut sorted_order: Vec<String> = Vec::new();
+
+        for (node, &degree) in &in_degree {
+            if degree == 0 {
+                queue.push_back(node.clone());
+            }
+        }
+
+        while let Some(node) = queue.pop_front() {
+            sorted_order.push(node.clone());
+
+            if let Some(deps) = graph.get(&node) {
+                for dep in deps {
+                    if let Some(count) = in_degree.get_mut(dep) {
+                        *count -= 1;
+                        if *count == 0 {
+                            queue.push_back(dep.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        if sorted_order.len() == in_degree.len() {
+            Some(sorted_order)
+        } else {
+            warn!(
+                "cycle detected. sorted_order: {:?}, in_degree: {:?}",
+                sorted_order, in_degree
+            );
+            None
+        }
+    }
+
+    fn build_dep_graph(
+        &self,
+    ) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
+        // { dependency: [dependents] }
+        let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+        let mut in_degree: HashMap<String, usize> = HashMap::new();
+
+        // node_graph = { "hot_effect": { param: Hot("hot_anim") }, ... }
+        // node_name = "hot_effect"
+        // node = { param: Hot("hot_anim") }
+        for (node_name, params) in self.node_graph.iter() {
+            // value = Hot("hot_anim")
+            for (_, value) in params.iter() {
+                // hot_value = "hot_anim"
+                if let ParamValue::Hot(hot_value) = value {
+                    in_degree.entry(hot_value.clone()).or_insert(0);
+
+                    // graph = { "hot_anim": ["hot_effect"] }
+                    // "hot_effect depends on hot_anim"
+                    graph
+                        .entry(hot_value.clone())
+                        .or_default()
+                        .push(node_name.clone());
+
+                    *in_degree.entry(node_name.clone()).or_insert(0) += 1;
+                }
+            }
+        }
+
+        (graph, in_degree)
     }
 
     fn setup_watcher(
@@ -631,6 +815,8 @@ enum ControlType {
     Triangle,
     #[serde(rename = "automate")]
     Automate,
+    #[serde(rename = "test_anim")]
+    TestAnim,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -652,6 +838,79 @@ struct PersistedConfigFields {
     bypass: Option<f32>,
 }
 
+#[derive(Clone, Debug)]
+enum ParamValue {
+    Cold(f32),
+    Hot(String),
+}
+
+impl From<ParamValue> for f32 {
+    fn from(param: ParamValue) -> f32 {
+        match param {
+            ParamValue::Cold(x) => x,
+            ParamValue::Hot(_) => 0.0,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ParamValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        #[serde(untagged)]
+        enum RawParam {
+            Number(f32),
+            String(String),
+        }
+
+        let value = RawParam::deserialize(deserializer)?;
+        match value {
+            RawParam::Number(n) => Ok(ParamValue::Cold(n)),
+            RawParam::String(s) if s.starts_with('$') => {
+                Ok(ParamValue::Hot(s[1..].to_string()))
+            }
+            RawParam::String(s) => Err(serde::de::Error::custom(format!(
+                "Expected number or string starting with '$', got '{}'",
+                s
+            ))),
+        }
+    }
+}
+
+// { "symmetry": Param::Hot("t1") }
+type Node = HashMap<String, ParamValue>;
+
+// { "object_name": { "symmetry": Param::Hot("t1") } } }
+type NodeGraph = HashMap<String, Node>;
+
+trait ParamHost {
+    fn supported_hot_params(&self) -> Vec<&'static str>;
+    fn set_param(&mut self, name: &str, value: f32);
+}
+
+impl ParamHost for TestEffect {
+    fn supported_hot_params(&self) -> Vec<&'static str> {
+        vec!["param"]
+    }
+    fn set_param(&mut self, name: &str, value: f32) {
+        match name {
+            "param" => self.param = value,
+            _ => {
+                warn!("TestEffect does not support param name {}", name)
+            }
+        }
+    }
+}
+
+impl ParamHost for TestAnimConfig {
+    fn supported_hot_params(&self) -> Vec<&'static str> {
+        vec!["field"]
+    }
+    fn set_param(&mut self, _name: &str, _value: f32) {}
+}
+
 //------------------------------------------------------------------------------
 // Animation Types
 //------------------------------------------------------------------------------
@@ -663,6 +922,7 @@ enum AnimationConfig {
     RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
+    TestAnim(TestAnimConfig),
 }
 
 impl AnimationConfig {
@@ -1003,6 +1263,11 @@ enum KindConfig {
     End,
 }
 
+#[derive(Clone, Deserialize, Debug)]
+struct TestAnimConfig {
+    field: ParamValue,
+}
+
 // --- Modulation & Effects
 
 #[derive(Clone, Deserialize, Debug)]
@@ -1026,22 +1291,6 @@ struct EffectConfig {
 impl From<EffectConfig> for Effect {
     fn from(config: EffectConfig) -> Self {
         match config.kind {
-            EffectKind::WaveFolder {
-                gain,
-                iterations,
-                symmetry,
-                bias,
-                shape,
-                range,
-            } => Effect::WaveFolder(WaveFolder::new(
-                gain, iterations, symmetry, bias, shape, range,
-            )),
-            EffectKind::SlewLimiter { rise, fall } => {
-                Effect::SlewLimiter(SlewLimiter::new(rise, fall))
-            }
-            EffectKind::Saturator { drive, range } => {
-                Effect::Saturator(Saturator::new(drive, range))
-            }
             EffectKind::Hysteresis {
                 lower_threshold,
                 upper_threshold,
@@ -1061,6 +1310,25 @@ impl From<EffectConfig> for Effect {
             EffectKind::RingModulator { mix, range, .. } => {
                 Effect::RingModulator(RingModulator::new(mix, range))
             }
+            EffectKind::Saturator { drive, range } => {
+                Effect::Saturator(Saturator::new(drive, range))
+            }
+            EffectKind::SlewLimiter { rise, fall } => {
+                Effect::SlewLimiter(SlewLimiter::new(rise, fall))
+            }
+            EffectKind::WaveFolder {
+                gain,
+                iterations,
+                symmetry,
+                bias,
+                shape,
+                range,
+            } => Effect::WaveFolder(WaveFolder::new(
+                gain, iterations, symmetry, bias, shape, range,
+            )),
+            EffectKind::Test { param } => Effect::TestEffect(TestEffect {
+                param: f32::from(param),
+            }),
         }
     }
 }
@@ -1132,6 +1400,9 @@ enum EffectKind {
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
+
+    #[serde(alias = "test")]
+    Test { param: ParamValue },
 }
 
 //------------------------------------------------------------------------------
@@ -1201,4 +1472,29 @@ fn default_f32_0_7() -> f32 {
 }
 fn default_f32_0_5() -> f32 {
     0.5
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
+    use crate::framework::animation::animation_tests::{init, BPM};
+
+    fn create_instance() -> ControlScript<FrameTiming> {
+        ControlScript::new(
+            to_absolute_path(file!(), "control_script.yaml"),
+            FrameTiming::new(BPM),
+        )
+    }
+
+    #[test]
+    #[serial]
+    fn test_parameter_modulation() {
+        let controls = create_instance();
+
+        init(8);
+        assert_eq!(controls.get("hot_anim"), 1701.0);
+    }
 }

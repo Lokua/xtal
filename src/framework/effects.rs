@@ -15,6 +15,23 @@ pub enum Effect {
     Saturator(Saturator),
     SlewLimiter(SlewLimiter),
     WaveFolder(WaveFolder),
+    TestEffect(TestEffect),
+}
+
+pub struct TestEffect {
+    pub param: f32,
+}
+
+impl TestEffect {
+    pub fn apply(&self, input: f32) -> f32 {
+        input + self.param + 1_000.0
+    }
+}
+
+impl Default for TestEffect {
+    fn default() -> Self {
+        Self { param: 0.0 }
+    }
 }
 
 #[derive(PartialEq)]
