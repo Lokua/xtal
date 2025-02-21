@@ -17,7 +17,10 @@ test *ARGS:
   RUST_LOG=lattice=trace cargo test -- {{ARGS}}
   
 test-debug *ARGS:
-  RUST_LOG=lattice=trace cargo test -- {{ARGS}}
+  RUST_LOG=lattice=debug cargo test -- {{ARGS}}
+
+test-verbose *ARGS:
+  RUST_LOG=lattice=trace cargo test -- --show-output {{ARGS}}  
 
 generate-markdown-index:
   cargo run -p image-markdown --release

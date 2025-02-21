@@ -125,7 +125,7 @@ impl<T: TimingSource> ControlScript<T> {
                     continue;
                 }
 
-                self.eval_cache.store(name, frame_count, self.get_raw(name));
+                self.get_raw(name);
             }
         }
     }
@@ -160,7 +160,6 @@ impl<T: TimingSource> ControlScript<T> {
         match effect {
             Effect::Hysteresis(m) => {
                 self.update_effect_params(m, modulator);
-                debug!("[apply_modulator] hysteresis: {:?}", m);
                 m.apply(value)
             }
             Effect::Quantizer(m) => {
@@ -197,21 +196,37 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn get_raw(&self, name: &str) -> f32 {
+        let frame_count = frame_controller::frame_count();
+
+        if self.eval_cache.has(name, frame_count) {
+            trace!(
+                "Returning cached value for {}, frame: {}",
+                name,
+                frame_count
+            );
+            let (_, value) = self.eval_cache.get(name).unwrap();
+            return value;
+        }
+
+        trace!("Computing new value for {}, frame: {}", name, frame_count);
+
+        let mut value = None;
+
         if self.controls.has(name) {
-            return self.controls.float(name);
+            value = Some(self.controls.float(name));
         }
 
         let osc_name = format!("/{}", name);
         if self.osc_controls.has(&osc_name) {
-            return self.osc_controls.get(&osc_name);
+            value = Some(self.osc_controls.get(&osc_name));
         }
 
         if self.audio_controls.has(name) {
-            return self.audio_controls.get(name);
+            value = Some(self.audio_controls.get(name));
         }
 
         if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
-            return match (config, sequence) {
+            let v = match (config, sequence) {
                 (
                     AnimationConfig::LerpRel(_),
                     KeyframeSequence::Linear(kfs),
@@ -245,10 +260,18 @@ impl<T: TimingSource> ControlScript<T> {
                     .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
                 _ => unimplemented!(),
             };
+
+            value = Some(v);
         }
 
-        warn_once!("No control named {}. Defaulting to 0.0", name);
-        0.0
+        if value.is_some() {
+            let value = value.unwrap();
+            self.eval_cache.store(name, frame_count, value);
+            return value;
+        } else {
+            warn_once!("No control named {}. Defaulting to 0.0", name);
+            return 0.0;
+        }
     }
 
     fn resolve_animation_config_params<P: Set + Clone>(
@@ -256,7 +279,6 @@ impl<T: TimingSource> ControlScript<T> {
         config: &P,
         node_name: &str,
     ) -> P {
-        debug!("Resolving params for {}", node_name);
         let mut config = config.clone();
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
@@ -735,8 +757,8 @@ triangle:
   type: triangle
   beats: 4
   phase: $slider
-  
-            "#,
+
+                "#,
         );
 
         init(0);

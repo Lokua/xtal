@@ -29,6 +29,10 @@ impl EvalCache {
             .insert(name.to_string(), (frame, value));
     }
 
+    pub fn get(&self, name: &str) -> Option<(Frame, CachedValue)> {
+        self.cache.borrow().get(name).and_then(|x| Some(x.clone()))
+    }
+
     pub fn clear(&self) {
         self.cache.borrow_mut().clear();
     }

@@ -106,7 +106,7 @@ pub trait FromColdParams: Default + Set {
                                 if let Some(value) =
                                     inner_value.try_downcast_ref::<f32>()
                                 {
-                                    trace!("setting {}: {}", field_name, value);
+                                    // trace!("setting {}: {}", field_name, value);
                                     instance.set(field_name, *value);
                                 }
                             }
