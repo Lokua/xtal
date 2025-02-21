@@ -33,6 +33,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
+    debug_throttled!(500, "test_anim: {}", m.controls.get("test_anim"));
     m.controls.update();
 }
 
