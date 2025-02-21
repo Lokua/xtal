@@ -34,12 +34,10 @@ impl Receiver {
         F: Fn(&osc::Message) + Send + Sync + 'static,
     {
         let mut callbacks = self.callbacks.lock().unwrap();
-        debug!("callback count: {}", callbacks.len());
         let address_callbacks = callbacks
             .entry(address.to_string())
             .or_insert_with(Vec::new);
         address_callbacks.push(Box::new(callback));
-        debug!("address_callbacks count: {}", address_callbacks.len());
     }
 
     pub fn start(&self) -> Result<(), Box<dyn std::error::Error>> {

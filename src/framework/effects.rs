@@ -15,26 +15,9 @@ pub enum Effect {
     Saturator(Saturator),
     SlewLimiter(SlewLimiter),
     WaveFolder(WaveFolder),
-    TestEffect(TestEffect),
 }
 
-pub struct TestEffect {
-    pub param: f32,
-}
-
-impl TestEffect {
-    pub fn apply(&self, input: f32) -> f32 {
-        input + self.param + 1_000.0
-    }
-}
-
-impl Default for TestEffect {
-    fn default() -> Self {
-        Self { param: 0.0 }
-    }
-}
-
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum HysteresisState {
     High,
     Low,
@@ -45,6 +28,7 @@ enum HysteresisState {
 /// - `output_low` when input falls below `lower_threshold`
 /// - previous output when input is between thresholds
 /// - input value when between thresholds and `pass_through` is true
+#[derive(Debug, Clone)]
 pub struct Hysteresis {
     /// When true, allows values that are between the upper and lower thresholds
     /// to pass through. When false, binary hysteresis is applied
@@ -291,6 +275,7 @@ impl Default for Saturator {
 }
 
 /// Limits the rate of change (slew rate) of a signal
+#[derive(Debug, Clone)]
 pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
     /// - 0.0 = instant attack (no smoothing)

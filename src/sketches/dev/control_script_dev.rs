@@ -24,7 +24,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),
     );

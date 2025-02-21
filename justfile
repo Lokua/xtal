@@ -15,15 +15,9 @@ trace-module MODULE *ARGS:
 # To test a single module, pass the module name e.g. just test my::module
 test *ARGS:
   RUST_LOG=lattice=trace cargo test -- {{ARGS}}
-
-test-trace *ARGS:
-  just test --nocapture {{ARGS}}
-
-test-trace-solo *ARGS:
-  RUST_LOG=lattice=trace cargo test {{ARGS}} -- --nocapture
-
-# test-1-thread *ARGS:
-#   RUST_LOG=lattice=trace cargo test -- --test-threads=1 {{ARGS}}
+  
+test-debug *ARGS:
+  RUST_LOG=lattice=trace cargo test -- {{ARGS}}
 
 generate-markdown-index:
   cargo run -p image-markdown --release

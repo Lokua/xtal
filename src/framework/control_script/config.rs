@@ -1,11 +1,12 @@
 //! Deserialization types needed for converting the Lattice yaml format into
 //! controls
 
+use bevy_reflect::Reflect;
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
-use super::param_mod::{ParamValue, SetFromParam};
+use super::param_mod::{ParamValue, Set};
 use crate::framework::prelude::*;
 
 //------------------------------------------------------------------------------
@@ -59,8 +60,6 @@ pub enum ControlType {
     Triangle,
     #[serde(rename = "automate")]
     Automate,
-    #[serde(rename = "test_anim")]
-    TestAnim,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -70,7 +69,7 @@ pub enum ControlType {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Deserialize, Debug, Default)]
+#[derive(Clone, Deserialize, Debug, Default, Reflect)]
 struct Shared {
     #[serde(default, deserialize_with = "deserialize_number_or_none")]
     pub bypass: Option<f32>,
@@ -197,7 +196,6 @@ pub enum AnimationConfig {
     RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
-    TestAnim(TestAnimConfig),
 }
 
 impl AnimationConfig {
@@ -307,7 +305,7 @@ impl Default for TriangleConfig {
     }
 }
 
-impl SetFromParam for TriangleConfig {
+impl Set for TriangleConfig {
     fn set(&mut self, name: &str, value: f32) {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
@@ -342,9 +340,7 @@ impl Default for AutomateConfig {
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct BreakpointConfig {
-    #[serde(alias = "pos", alias = "x")]
     pub position: f32,
-    #[serde(alias = "val", alias = "y")]
     pub value: f32,
     #[serde(flatten)]
     pub kind: KindConfig,
@@ -402,54 +398,38 @@ impl From<BreakpointConfig> for Breakpoint {
 pub enum KindConfig {
     Step,
     Ramp {
-        #[serde(default = "default_easing", alias = "ease")]
+        #[serde(default = "default_easing")]
         easing: String,
     },
     Wave {
-        #[serde(alias = "shape", default = "default_shape")]
+        #[serde(default = "default_shape")]
         shape: String,
-        #[serde(alias = "freq", default = "default_f32_0_25")]
+        #[serde(default = "default_f32_0_25")]
         frequency: f32,
-        #[serde(alias = "amp", default = "default_f32_0_25")]
+        #[serde(default = "default_f32_0_25")]
         amplitude: f32,
-        #[serde(alias = "width", default = "default_f32_0_5")]
+        #[serde(default = "default_f32_0_5")]
         width: f32,
-        #[serde(alias = "ease", default = "default_easing")]
+        #[serde(default = "default_easing")]
         easing: String,
-        #[serde(alias = "cons", default = "default_none_string")]
+        #[serde(default = "default_none_string")]
         constrain: String,
     },
     Random {
-        #[serde(alias = "amp", default = "default_f32_0_25")]
+        #[serde(default = "default_f32_0_25")]
         amplitude: f32,
     },
     RandomSmooth {
-        #[serde(alias = "freq", default = "default_f32_0_25")]
+        #[serde(default = "default_f32_0_25")]
         frequency: f32,
-        #[serde(alias = "amp", default = "default_f32_0_25")]
+        #[serde(default = "default_f32_0_25")]
         amplitude: f32,
-        #[serde(alias = "ease", default = "default_easing")]
+        #[serde(default = "default_easing")]
         easing: String,
-        #[serde(alias = "cons", default = "default_none_string")]
+        #[serde(default = "default_none_string")]
         constrain: String,
     },
     End,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct TestAnimConfig {
-    pub field: ParamValue,
-}
-
-impl SetFromParam for TestAnimConfig {
-    fn set(&mut self, name: &str, value: f32) {
-        match name {
-            "field" => self.field = ParamValue::Cold(value),
-            _ => {
-                warn!("TestAnimConfig does not support param name {}", name)
-            }
-        }
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -465,7 +445,7 @@ pub struct ModulationConfig {
     pub modulators: Vec<String>,
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug, Reflect)]
 pub struct EffectConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
@@ -517,17 +497,13 @@ impl From<EffectConfig> for Effect {
                 shape.as_float(),
                 range,
             )),
-            EffectKind::Test { param } => Effect::TestEffect(TestEffect {
-                param: f32::from(param),
-            }),
         }
     }
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug, Reflect)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum EffectKind {
-    #[serde(alias = "hyst", alias = "hys")]
     Hysteresis {
         #[serde(default = "default_param_value_0_3")]
         lower_threshold: ParamValue,
@@ -541,7 +517,7 @@ pub enum EffectKind {
         pass_through: bool,
     },
 
-    #[serde(alias = "quant")]
+    #[serde()]
     Quantizer {
         #[serde(default = "default_param_value_0_25")]
         step: ParamValue,
@@ -549,7 +525,6 @@ pub enum EffectKind {
         range: (f32, f32),
     },
 
-    #[serde(alias = "rm", alias = "ring")]
     RingModulator {
         #[serde(default = "default_param_value_0")]
         mix: ParamValue,
@@ -558,7 +533,6 @@ pub enum EffectKind {
         modulator: String,
     },
 
-    #[serde(alias = "saturate", alias = "sat")]
     Saturator {
         #[serde(default = "default_param_value_1")]
         drive: ParamValue,
@@ -566,7 +540,6 @@ pub enum EffectKind {
         range: (f32, f32),
     },
 
-    #[serde(alias = "slew")]
     SlewLimiter {
         #[serde(default = "default_param_value_0")]
         rise: ParamValue,
@@ -574,13 +547,13 @@ pub enum EffectKind {
         fall: ParamValue,
     },
 
-    #[serde(alias = "fold")]
+    #[serde()]
     WaveFolder {
         #[serde(default = "default_param_value_1")]
         gain: ParamValue,
-        #[serde(alias = "iter", default = "default_iterations")]
+        #[serde(default = "default_iterations")]
         iterations: usize,
-        #[serde(alias = "sym", default = "default_param_value_1")]
+        #[serde(default = "default_param_value_1")]
         symmetry: ParamValue,
         #[serde(default = "default_param_value_0")]
         bias: ParamValue,
@@ -590,9 +563,6 @@ pub enum EffectKind {
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
-
-    #[serde(alias = "test")]
-    Test { param: ParamValue },
 }
 
 //------------------------------------------------------------------------------

@@ -85,7 +85,7 @@ struct PostShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),
     );

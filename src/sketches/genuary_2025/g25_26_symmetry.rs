@@ -47,7 +47,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_26_symmetry.yaml"),
         Timing::new(SKETCH_CONFIG.bpm),
     );

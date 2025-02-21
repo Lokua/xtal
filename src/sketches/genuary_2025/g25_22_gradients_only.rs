@@ -40,7 +40,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let timing = Timing::new(SKETCH_CONFIG.bpm);
     let animation = Animation::new(timing.clone());
 
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "./g25_22_gradients_only.yaml"),
         timing,
     );

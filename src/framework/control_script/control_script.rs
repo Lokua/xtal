@@ -13,19 +13,21 @@ use std::{
 };
 use yaml_merge_keys::merge_keys_serde_yml;
 
-use crate::framework::frame_controller;
-use crate::framework::{control_script::config::SliderConfig, prelude::*};
+use crate::framework::{
+    control_script::{config::SliderConfig, param_mod::FromColdParams},
+    frame_controller,
+    prelude::*,
+};
 
 use super::{
     config::{
         AnimationConfig, AudioConfig, AutomateConfig, CheckboxConfig,
         ConfigFile, ControlType, EffectConfig, EffectKind, KeyframeSequence,
         LerpAbsConfig, LerpRelConfig, MaybeControlConfig, ModulationConfig,
-        OscConfig, RRampRelConfig, SelectConfig, TestAnimConfig,
-        TriangleConfig,
+        OscConfig, RRampRelConfig, SelectConfig, TriangleConfig,
     },
     dep_graph::{DepGraph, Node},
-    param_mod::{ParamValue, SetFromParam},
+    param_mod::{ParamValue, Set},
 };
 
 pub struct ControlScript<T: TimingSource> {
@@ -40,14 +42,11 @@ pub struct ControlScript<T: TimingSource> {
     bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
     eval_cache: RefCell<HashMap<String, (u32, f32)>>,
-    update_state: UpdateState,
+    update_state: Option<UpdateState>,
 }
 
 impl<T: TimingSource> ControlScript<T> {
-    pub fn new(path: PathBuf, timing: T) -> Self {
-        let state = Arc::new(Mutex::new(None));
-        let state_clone = state.clone();
-
+    pub fn new(yaml_str: &str, timing: T) -> Self {
         let mut script = Self {
             controls: Controls::with_previous(vec![]),
             osc_controls: OscControls::new(),
@@ -60,15 +59,31 @@ impl<T: TimingSource> ControlScript<T> {
             bypassed: HashMap::new(),
             eval_cache: RefCell::new(HashMap::new()),
             dep_graph: DepGraph::new(),
-            update_state: UpdateState {
-                state: state.clone(),
-                _watcher: Self::setup_watcher(path.clone(), state_clone),
-            },
+            update_state: None,
         };
 
+        let config =
+            Self::parse_from_str(yaml_str).expect("Unable to parse yaml");
         script
-            .import_script(&path)
-            .expect("Unable to import script");
+            .populate_controls(&config)
+            .expect("Unable to populate controls");
+
+        script
+    }
+
+    pub fn from_path(path: PathBuf, timing: T) -> Self {
+        let state = Arc::new(Mutex::new(None));
+        let state_clone = state.clone();
+
+        let file_content =
+            fs::read_to_string(&path).expect("Unable to read file");
+
+        let mut script = Self::new(&file_content, timing);
+
+        script.update_state = Some(UpdateState {
+            state: state.clone(),
+            _watcher: Self::setup_watcher(path.clone(), state_clone),
+        });
 
         script
     }
@@ -157,6 +172,7 @@ impl<T: TimingSource> ControlScript<T> {
         match effect {
             Effect::Hysteresis(m) => {
                 self.update_effect_params(m, modulator);
+                debug!("[apply_modulator] hysteresis: {:?}", m);
                 m.apply(value)
             }
             Effect::Quantizer(m) => {
@@ -175,20 +191,12 @@ impl<T: TimingSource> ControlScript<T> {
                 self.update_effect_params(m, modulator);
                 m.apply(value)
             }
-            Effect::TestEffect(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
             // special case already handled above
             Effect::RingModulator(_) => panic!(),
         }
     }
 
-    fn update_effect_params(
-        &self,
-        effect: &mut impl SetFromParam,
-        node_name: &str,
-    ) {
+    fn update_effect_params(&self, effect: &mut impl Set, node_name: &str) {
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
                 let value = match param_value {
@@ -235,8 +243,6 @@ impl<T: TimingSource> ControlScript<T> {
                 ),
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
                     let conf = self.resolve_animation_config_params(conf, name);
-                    debug!("Triangle animation with beats: {:?}, range: {:?}, phase: {:?}", 
-                        conf.beats, conf.range, conf.phase);
                     self.animation.triangle(
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
@@ -249,10 +255,6 @@ impl<T: TimingSource> ControlScript<T> {
                 ) => self
                     .animation
                     .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
-                (AnimationConfig::TestAnim(conf), KeyframeSequence::None) => {
-                    let conf = self.resolve_animation_config_params(conf, name);
-                    conf.field.as_float() + 100.0
-                }
                 _ => unimplemented!(),
             };
         }
@@ -261,7 +263,7 @@ impl<T: TimingSource> ControlScript<T> {
         0.0
     }
 
-    fn resolve_animation_config_params<P: SetFromParam + Clone>(
+    fn resolve_animation_config_params<P: Set + Clone>(
         &self,
         config: &P,
         node_name: &str,
@@ -302,8 +304,12 @@ impl<T: TimingSource> ControlScript<T> {
 
     pub fn update(&mut self) {
         let new_config = {
-            if let Ok(mut guard) = self.update_state.state.lock() {
-                guard.take()
+            if let Some(update_state) = &self.update_state {
+                if let Ok(mut guard) = update_state.state.lock() {
+                    guard.take()
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -326,18 +332,17 @@ impl<T: TimingSource> ControlScript<T> {
         self.controls.mark_unchanged();
     }
 
-    fn import_script(&mut self, path: &PathBuf) -> Result<(), Box<dyn Error>> {
-        let config = Self::parse_config(path)?;
-        self.populate_controls(&config)?;
-        Ok(())
-    }
-
-    fn parse_config(path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
-        let file_content = fs::read_to_string(path)?;
-        let raw_config = serde_yml::from_str(&file_content)?;
+    fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {
+        let raw_config = serde_yml::from_str(&yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;
         let config: ConfigFile = serde_yml::from_value(merged_config)?;
-        trace!("Parsed config: {:?}", config);
+        // trace!("Parsed config: {:?}", config);
+        Ok(config)
+    }
+
+    fn parse_from_path(path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
+        let file_content = fs::read_to_string(path)?;
+        let config = Self::parse_from_str(&file_content)?;
         Ok(config)
     }
 
@@ -595,22 +600,32 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: EffectConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    self.effects.borrow_mut().insert(
-                        id.to_string(),
-                        (conf.clone(), Effect::from(conf)),
-                    );
-                }
-                ControlType::TestAnim => {
-                    let conf: TestAnimConfig =
-                        serde_yml::from_value(config.config.clone())?;
-
-                    self.keyframe_sequences.insert(
-                        id.to_string(),
-                        (
-                            AnimationConfig::TestAnim(conf),
-                            KeyframeSequence::None,
+                    let effect = match conf.kind {
+                        EffectKind::Hysteresis { .. } => Effect::Hysteresis(
+                            Hysteresis::from_cold_params(&conf),
                         ),
-                    );
+                        EffectKind::Quantizer { .. } => Effect::Quantizer(
+                            Quantizer::from_cold_params(&conf),
+                        ),
+                        EffectKind::RingModulator { .. } => {
+                            Effect::RingModulator(
+                                RingModulator::from_cold_params(&conf),
+                            )
+                        }
+                        EffectKind::Saturator { .. } => Effect::Saturator(
+                            Saturator::from_cold_params(&conf),
+                        ),
+                        EffectKind::SlewLimiter { .. } => Effect::SlewLimiter(
+                            SlewLimiter::from_cold_params(&conf),
+                        ),
+                        EffectKind::WaveFolder { .. } => Effect::WaveFolder(
+                            WaveFolder::from_cold_params(&conf),
+                        ),
+                    };
+
+                    self.effects
+                        .borrow_mut()
+                        .insert(id.to_string(), (conf.clone(), effect));
                 }
             }
         }
@@ -674,7 +689,7 @@ impl<T: TimingSource> ControlScript<T> {
 
             info!("{:?} changed. Attempting to reload configuration.", path);
 
-            match Self::parse_config(&path) {
+            match Self::parse_from_path(&path) {
                 Ok(new_config) => {
                     if let Ok(mut guard) = state.lock() {
                         info!("Loaded new configuration");
@@ -715,19 +730,70 @@ mod tests {
     // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
     use crate::framework::animation::animation_tests::{init, BPM};
 
-    fn create_instance() -> ControlScript<FrameTiming> {
-        ControlScript::new(
-            to_absolute_path(file!(), "control_script.yaml"),
-            FrameTiming::new(BPM),
-        )
+    fn create_instance(yaml: &str) -> ControlScript<FrameTiming> {
+        ControlScript::new(yaml, FrameTiming::new(BPM))
     }
 
     #[test]
     #[serial]
     fn test_parameter_modulation() {
-        let controls = create_instance();
+        let controls = create_instance(
+            r#"
+slider:
+  type: slider
+  default: 0.5
+
+triangle:
+  type: triangle
+  beats: 4
+  phase: $slider
+            "#,
+        );
 
         init(0);
-        assert_eq!(controls.get("test_triangle"), 0.5);
+        assert_eq!(
+            controls.get("triangle"),
+            0.5,
+            "[slider->0.5] * [triangle->1.0]"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_parameter_modulation_effect() {
+        let controls = create_instance(
+            r#"
+triangle:
+  type: triangle
+  beats: 4
+
+slider:
+  type: slider
+  default: 0.33
+
+effect:
+  type: effect
+  kind: hysteresis
+  upper_threshold: 0.55
+  lower_threshold: 0.1
+  output_low: 0
+  output_high: $slider
+
+test_mod:
+  type: mod 
+  source: triangle 
+  modulators:
+    - effect
+
+
+            "#,
+        );
+
+        init(6);
+        assert_eq!(
+            controls.get("triangle"),
+            0.33,
+            "[triangle->0.75] -> [slider->effect.hi]"
+        );
     }
 }

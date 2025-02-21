@@ -53,7 +53,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let animation = Animation::new(timing.clone());
 
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_14_black_and_white.yaml"),
         timing,
     );
