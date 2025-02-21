@@ -1,22 +1,31 @@
-hot_anim:
-  type: test_anim
-  field: $hot_source
+# hot_anim:
+#   type: test_anim
+#   field: $hot_source
 
-hot_anim_2:
-  type: test_anim
-  field: 500.0
+# hot_anim_2:
+#   type: test_anim
+#   field: 500.0
 
-hot_source:
+# hot_source:
+#   type: triangle
+#   beats: 4
+
+# hot_effect:
+#   type: effect
+#   kind: test
+#   param: $hot_anim_2
+
+# hot_mod:
+#   type: mod
+#   source: hot_anim
+#   modulators:
+#     - hot_effect
+
+test_slider:
+  type: slider
+  default: 0.5
+
+test_triangle:
   type: triangle
   beats: 4
-
-hot_effect:
-  type: effect
-  kind: test
-  param: $hot_anim_2
-
-hot_mod:
-  type: mod
-  source: hot_anim
-  modulators:
-    - hot_effect
+  phase: $test_slider

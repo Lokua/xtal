@@ -159,17 +159,7 @@ impl<T: TimingSource> ControlScript<T> {
             Effect::SlewLimiter(m) => m.apply(value),
             Effect::WaveFolder(m) => m.apply(value),
             Effect::TestEffect(m) => {
-                if let Some(params) = self.node_graph.get("hot_effect") {
-                    for (param_name, param_value) in params.iter() {
-                        m.set_param(
-                            &param_name,
-                            match param_value {
-                                ParamValue::Cold(x) => *x,
-                                ParamValue::Hot(name) => self.get_raw(&name),
-                            },
-                        );
-                    }
-                }
+                self.update_effect_params(m, modulator);
                 m.apply(value)
             }
             // special case already handled above
@@ -177,10 +167,23 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
-    fn get_raw(&self, name: &str) -> f32 {
-        let frame_count = frame_controller::frame_count();
-        debug!("frame_count: {}", frame_count);
+    fn update_effect_params(
+        &self,
+        effect: &mut impl ParamHost,
+        node_name: &str,
+    ) {
+        if let Some(params) = self.node_graph.get(node_name) {
+            for (param_name, param_value) in params.iter() {
+                let value = match param_value {
+                    ParamValue::Cold(value) => *value,
+                    ParamValue::Hot(name) => self.get_raw(name),
+                };
+                effect.set_param(param_name, value);
+            }
+        }
+    }
 
+    fn get_raw(&self, name: &str) -> f32 {
         if self.controls.has(name) {
             return self.controls.float(name);
         }
@@ -214,10 +217,13 @@ impl<T: TimingSource> ControlScript<T> {
                     Easing::from_str(conf.ramp.as_str()).unwrap(),
                 ),
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    debug!("Triangle animation with beats: {:?}, range: {:?}, phase: {:?}", 
+                        conf.beats, conf.range, conf.phase);
                     self.animation.triangle(
-                        conf.beats,
+                        conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
-                        conf.phase,
+                        conf.phase.as_float(),
                     )
                 }
                 (
@@ -227,17 +233,8 @@ impl<T: TimingSource> ControlScript<T> {
                     .animation
                     .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
                 (AnimationConfig::TestAnim(conf), KeyframeSequence::None) => {
-                    // We need to somehow abstract this as this will need to happen
-                    // for every single top-level f32 on the conf for every single
-                    // animation type
-                    let field = match &conf.field {
-                        ParamValue::Cold(x) => *x,
-                        ParamValue::Hot(node) => {
-                            let cache = self.eval_cache.borrow();
-                            cache.get(node).unwrap().1
-                        }
-                    };
-                    field + 100.0
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    conf.field.as_float() + 100.0
                 }
                 _ => unimplemented!(),
             };
@@ -245,6 +242,25 @@ impl<T: TimingSource> ControlScript<T> {
 
         warn_once!("No control named {}. Defaulting to 0.0", name);
         0.0
+    }
+
+    fn resolve_animation_config_params<P: ParamHost + Clone>(
+        &self,
+        config: &P,
+        node_name: &str,
+    ) -> P {
+        debug!("Resolving params for {}", node_name);
+        let mut config = config.clone();
+        if let Some(params) = self.node_graph.get(node_name) {
+            for (param_name, param_value) in params.iter() {
+                let value = match param_value {
+                    ParamValue::Cold(value) => *value,
+                    ParamValue::Hot(name) => self.get_raw(name),
+                };
+                config.set_param(param_name, value);
+            }
+        }
+        config
     }
 
     pub fn bool(&self, name: &str) -> bool {
@@ -844,6 +860,17 @@ enum ParamValue {
     Hot(String),
 }
 
+impl ParamValue {
+    fn as_float(&self) -> f32 {
+        match self {
+            ParamValue::Cold(x) => *x,
+            ParamValue::Hot(_) => {
+                loud_panic!("Cannot get float from ParamValue::Hot")
+            }
+        }
+    }
+}
+
 impl From<ParamValue> for f32 {
     fn from(param: ParamValue) -> f32 {
         match param {
@@ -886,14 +913,10 @@ type Node = HashMap<String, ParamValue>;
 type NodeGraph = HashMap<String, Node>;
 
 trait ParamHost {
-    fn supported_hot_params(&self) -> Vec<&'static str>;
     fn set_param(&mut self, name: &str, value: f32);
 }
 
 impl ParamHost for TestEffect {
-    fn supported_hot_params(&self) -> Vec<&'static str> {
-        vec!["param"]
-    }
     fn set_param(&mut self, name: &str, value: f32) {
         match name {
             "param" => self.param = value,
@@ -902,13 +925,6 @@ impl ParamHost for TestEffect {
             }
         }
     }
-}
-
-impl ParamHost for TestAnimConfig {
-    fn supported_hot_params(&self) -> Vec<&'static str> {
-        vec!["field"]
-    }
-    fn set_param(&mut self, _name: &str, _value: f32) {}
 }
 
 //------------------------------------------------------------------------------
@@ -1130,18 +1146,30 @@ struct TriangleConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
-    beats: f32,
+    beats: ParamValue,
     range: [f32; 2],
-    phase: f32,
+    phase: ParamValue,
 }
 
 impl Default for TriangleConfig {
     fn default() -> Self {
         Self {
             shared: Shared::default(),
-            beats: 1.0,
+            beats: ParamValue::Cold(1.0),
             range: [0.0, 1.0],
-            phase: 0.0,
+            phase: ParamValue::Cold(0.0),
+        }
+    }
+}
+
+impl ParamHost for TriangleConfig {
+    fn set_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            "phase" => self.phase = ParamValue::Cold(value),
+            _ => {
+                warn!("{} is not a supported ParamValue", name)
+            }
         }
     }
 }
@@ -1266,6 +1294,17 @@ enum KindConfig {
 #[derive(Clone, Deserialize, Debug)]
 struct TestAnimConfig {
     field: ParamValue,
+}
+
+impl ParamHost for TestAnimConfig {
+    fn set_param(&mut self, name: &str, value: f32) {
+        match name {
+            "field" => self.field = ParamValue::Cold(value),
+            _ => {
+                warn!("TestAnimConfig does not support param name {}", name)
+            }
+        }
+    }
 }
 
 // --- Modulation & Effects
@@ -1494,7 +1533,7 @@ mod tests {
     fn test_parameter_modulation() {
         let controls = create_instance();
 
-        init(8);
-        assert_eq!(controls.get("hot_anim"), 1701.0);
+        init(0);
+        assert_eq!(controls.get("test_triangle"), 0.5);
     }
 }
