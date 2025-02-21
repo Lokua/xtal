@@ -295,12 +295,12 @@ pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
     /// - 0.0 = instant attack (no smoothing)
     /// - 1.0 = very slow attack (maximum smoothing)
-    rise: f32,
+    pub rise: f32,
 
     /// Controls smoothing when signal amplitude decreases.
     /// - 0.0 = instant decay (no smoothing)
     /// - 1.0 = very slow decay (maximum smoothing)
-    fall: f32,
+    pub fall: f32,
 
     previous_value: RefCell<f32>,
 }
