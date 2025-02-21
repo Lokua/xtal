@@ -28,10 +28,6 @@ use super::{
     param_mod::{ParamValue, SetFromParam},
 };
 
-//------------------------------------------------------------------------------
-// Core Types & Implementations
-//------------------------------------------------------------------------------
-
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
@@ -85,29 +81,7 @@ impl<T: TimingSource> ControlScript<T> {
         }
 
         if self.dep_graph.has_dependents(name) {
-            let frame_count = frame_controller::frame_count();
-
-            if let Some(order) = &self.dep_graph.order() {
-                for node in order.iter() {
-                    if node == name {
-                        break;
-                    }
-                    {
-                        let eval_cache = self.eval_cache.borrow();
-                        if eval_cache.contains_key(node) {
-                            let cached_frame_count =
-                                eval_cache.get(node).unwrap().0;
-                            if cached_frame_count == frame_count {
-                                continue;
-                            }
-                        }
-                    }
-                    let value = self.get_raw(node);
-                    self.eval_cache
-                        .borrow_mut()
-                        .insert(node.clone(), (frame_count, value));
-                }
-            }
+            self.run_dependencies(name);
         }
 
         let value = self.get_raw(name);
@@ -120,6 +94,37 @@ impl<T: TimingSource> ControlScript<T> {
 
     fn resolve_name(&self, name: &str) -> String {
         self.aliases.get(name).cloned().unwrap_or(name.to_string())
+    }
+
+    fn run_dependencies(&self, target_name: &str) {
+        if let Some(order) = &self.dep_graph.order() {
+            let frame_count = frame_controller::frame_count();
+
+            for name in order.iter() {
+                if name == target_name {
+                    break;
+                }
+
+                if self.is_node_cached(name, frame_count) {
+                    continue;
+                }
+
+                self.cache_node_value(name, frame_count, self.get_raw(name));
+            }
+        }
+    }
+
+    fn is_node_cached(&self, name: &str, frame_count: u32) -> bool {
+        self.eval_cache
+            .borrow()
+            .get(name)
+            .map_or(false, |&(cached_frame, _)| cached_frame == frame_count)
+    }
+
+    fn cache_node_value(&self, name: &str, frame_count: u32, value: f32) {
+        self.eval_cache
+            .borrow_mut()
+            .insert(name.to_string(), (frame_count, value));
     }
 
     fn apply_modulators(

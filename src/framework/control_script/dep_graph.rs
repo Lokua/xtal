@@ -24,6 +24,8 @@ impl DepGraph {
         }
     }
 
+    /// Builds the final eval_order list using Kahn’s Algorithm (topological
+    /// sort).
     pub fn build_graph(&mut self) {
         let (graph, mut in_degree) = self.create_reverse_dep_graph_and_order();
 

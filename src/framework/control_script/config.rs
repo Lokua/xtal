@@ -1,3 +1,6 @@
+//! Deserialization types needed for converting the Lattice yaml format into
+//! controls
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
