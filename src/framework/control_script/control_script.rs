@@ -1,24 +1,32 @@
 //! Provides a means of controlling sketch parameters with the various Lattice
 //! control systems from an external yaml file that can be hot-reloaded.
 
-use indexmap::IndexMap;
 use notify::{Event, RecursiveMode, Watcher};
-use serde::{Deserialize, Deserializer};
 use std::{
+    cell::RefCell,
     collections::HashMap,
     error::Error,
-    fmt, fs,
+    fs,
     path::PathBuf,
     str::FromStr,
     sync::{Arc, Mutex},
 };
 use yaml_merge_keys::merge_keys_serde_yml;
 
-use super::prelude::*;
+use crate::framework::frame_controller;
+use crate::framework::{control_script::config::SliderConfig, prelude::*};
 
-//------------------------------------------------------------------------------
-// Core Types & Implementations
-//------------------------------------------------------------------------------
+use super::{
+    config::{
+        AnimationConfig, AudioConfig, AutomateConfig, CheckboxConfig,
+        ConfigFile, ControlType, EffectConfig, EffectKind, KeyframeSequence,
+        LerpAbsConfig, LerpRelConfig, MaybeControlConfig, ModulationConfig,
+        OscConfig, RRampRelConfig, SelectConfig, TestAnimConfig,
+        TriangleConfig,
+    },
+    dep_graph::{DepGraph, Node},
+    param_mod::{ParamValue, SetFromParam},
+};
 
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
@@ -27,9 +35,11 @@ pub struct ControlScript<T: TimingSource> {
     audio_controls: AudioControls,
     keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
-    effects: HashMap<String, (EffectConfig, Effect)>,
+    effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
     aliases: HashMap<String, String>,
-    persisted_config_fields: HashMap<String, PersistedConfigFields>,
+    bypassed: HashMap<String, Option<f32>>,
+    dep_graph: DepGraph,
+    eval_cache: RefCell<HashMap<String, (u32, f32)>>,
     update_state: UpdateState,
 }
 
@@ -45,9 +55,11 @@ impl<T: TimingSource> ControlScript<T> {
             animation: Animation::new(timing),
             keyframe_sequences: HashMap::new(),
             modulations: HashMap::new(),
-            effects: HashMap::new(),
+            effects: RefCell::new(HashMap::new()),
             aliases: HashMap::new(),
-            persisted_config_fields: HashMap::new(),
+            bypassed: HashMap::new(),
+            eval_cache: RefCell::new(HashMap::new()),
+            dep_graph: DepGraph::new(),
             update_state: UpdateState {
                 state: state.clone(),
                 _watcher: Self::setup_watcher(path.clone(), state_clone),
@@ -63,6 +75,15 @@ impl<T: TimingSource> ControlScript<T> {
 
     pub fn get(&self, name: &str) -> f32 {
         let name = &self.resolve_name(name);
+
+        if let Some(bypass) = self.bypassed.get(name).and_then(|x| *x) {
+            return bypass;
+        }
+
+        if self.dep_graph.has_dependents(name) {
+            self.run_dependencies(name);
+        }
+
         let value = self.get_raw(name);
 
         match self.modulations.get(name) {
@@ -73,6 +94,37 @@ impl<T: TimingSource> ControlScript<T> {
 
     fn resolve_name(&self, name: &str) -> String {
         self.aliases.get(name).cloned().unwrap_or(name.to_string())
+    }
+
+    fn run_dependencies(&self, target_name: &str) {
+        if let Some(order) = &self.dep_graph.order() {
+            let frame_count = frame_controller::frame_count();
+
+            for name in order.iter() {
+                if name == target_name {
+                    break;
+                }
+
+                if self.is_node_cached(name, frame_count) {
+                    continue;
+                }
+
+                self.cache_node_value(name, frame_count, self.get_raw(name));
+            }
+        }
+    }
+
+    fn is_node_cached(&self, name: &str, frame_count: u32) -> bool {
+        self.eval_cache
+            .borrow()
+            .get(name)
+            .map_or(false, |&(cached_frame, _)| cached_frame == frame_count)
+    }
+
+    fn cache_node_value(&self, name: &str, frame_count: u32, value: f32) {
+        self.eval_cache
+            .borrow_mut()
+            .insert(name.to_string(), (frame_count, value));
     }
 
     fn apply_modulators(
@@ -86,43 +138,69 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn apply_modulator(&self, value: f32, modulator: &str) -> f32 {
-        if !self.effects.contains_key(modulator) {
+        let mut effects = self.effects.borrow_mut();
+
+        if !effects.contains_key(modulator) {
             return value * self.get_raw(modulator);
         }
 
-        let (config, effect) = self.effects.get(modulator).unwrap();
+        let (config, effect) = effects.get_mut(modulator).unwrap();
 
         if let (
-            EffectConfig {
-                kind: EffectKind::RingModulator { modulator, .. },
-                ..
-            },
+            EffectKind::RingModulator { modulator, .. },
             Effect::RingModulator(m),
-        ) = (config, effect)
+        ) = (&config.kind, &mut *effect)
         {
             return m.apply(value, self.get_raw(modulator));
         }
 
         match effect {
-            Effect::Hysteresis(m) => m.apply(value),
-            Effect::Quantizer(m) => m.apply(value),
-            Effect::RingModulator(_) => unreachable!(),
-            Effect::Saturator(m) => m.apply(value),
-            Effect::SlewLimiter(m) => m.apply(value),
-            Effect::WaveFolder(m) => m.apply(value),
+            Effect::Hysteresis(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            Effect::Quantizer(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            Effect::Saturator(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            Effect::SlewLimiter(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            Effect::WaveFolder(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            Effect::TestEffect(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
+            // special case already handled above
+            Effect::RingModulator(_) => panic!(),
+        }
+    }
+
+    fn update_effect_params(
+        &self,
+        effect: &mut impl SetFromParam,
+        node_name: &str,
+    ) {
+        if let Some(params) = self.dep_graph.node(node_name) {
+            for (param_name, param_value) in params.iter() {
+                let value = match param_value {
+                    ParamValue::Cold(value) => *value,
+                    ParamValue::Hot(name) => self.get_raw(name),
+                };
+                effect.set(param_name, value);
+            }
         }
     }
 
     fn get_raw(&self, name: &str) -> f32 {
-        if let Some(bypass) = self
-            .persisted_config_fields
-            .get(name)
-            .map(|p| p.bypass)
-            .flatten()
-        {
-            return bypass;
-        }
-
         if self.controls.has(name) {
             return self.controls.float(name);
         }
@@ -156,10 +234,13 @@ impl<T: TimingSource> ControlScript<T> {
                     Easing::from_str(conf.ramp.as_str()).unwrap(),
                 ),
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    debug!("Triangle animation with beats: {:?}, range: {:?}, phase: {:?}", 
+                        conf.beats, conf.range, conf.phase);
                     self.animation.triangle(
-                        conf.beats,
+                        conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
-                        conf.phase,
+                        conf.phase.as_float(),
                     )
                 }
                 (
@@ -168,12 +249,35 @@ impl<T: TimingSource> ControlScript<T> {
                 ) => self
                     .animation
                     .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
+                (AnimationConfig::TestAnim(conf), KeyframeSequence::None) => {
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    conf.field.as_float() + 100.0
+                }
                 _ => unimplemented!(),
             };
         }
 
         warn_once!("No control named {}. Defaulting to 0.0", name);
         0.0
+    }
+
+    fn resolve_animation_config_params<P: SetFromParam + Clone>(
+        &self,
+        config: &P,
+        node_name: &str,
+    ) -> P {
+        debug!("Resolving params for {}", node_name);
+        let mut config = config.clone();
+        if let Some(params) = self.dep_graph.node(node_name) {
+            for (param_name, param_value) in params.iter() {
+                let value = match param_value {
+                    ParamValue::Cold(value) => *value,
+                    ParamValue::Hot(name) => self.get_raw(name),
+                };
+                config.set(param_name, value);
+            }
+        }
+        config
     }
 
     pub fn bool(&self, name: &str) -> bool {
@@ -248,13 +352,20 @@ impl<T: TimingSource> ControlScript<T> {
         self.keyframe_sequences.clear();
         self.modulations.clear();
         self.aliases.clear();
-        self.persisted_config_fields.clear();
+        self.bypassed.clear();
+        self.dep_graph.clear();
+        self.eval_cache.borrow_mut().clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
                 MaybeControlConfig::Control(config) => config,
                 MaybeControlConfig::Other(_) => continue,
             };
+
+            let hot_params = self.find_hot_params(&config.config);
+            if !hot_params.is_empty() {
+                self.dep_graph.insert_node(id, hot_params);
+            }
 
             if let Some(v) = config.config.get("var").and_then(|v| v.as_str()) {
                 self.aliases.insert(v.to_string(), id.to_string());
@@ -266,11 +377,8 @@ impl<T: TimingSource> ControlScript<T> {
                 .and_then(|b| b.as_f64())
                 .map(|b| b as f32);
 
-            if bypass.is_some()
-            /* || possible_future_field.etc.is_some() */
-            {
-                self.persisted_config_fields
-                    .insert(id.to_string(), PersistedConfigFields { bypass });
+            if bypass.is_some() {
+                self.bypassed.insert(id.to_string(), bypass);
             }
 
             match config.control_type {
@@ -487,16 +595,28 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: EffectConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    self.effects.insert(
+                    self.effects.borrow_mut().insert(
                         id.to_string(),
                         (conf.clone(), Effect::from(conf)),
+                    );
+                }
+                ControlType::TestAnim => {
+                    let conf: TestAnimConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.keyframe_sequences.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::TestAnim(conf),
+                            KeyframeSequence::None,
+                        ),
                     );
                 }
             }
         }
 
-        trace!("Config populated. controls: {:?}, osc_controls: {:?}, keyframe_sequences: {:?}", 
-            self.controls, self.osc_controls, self.keyframe_sequences);
+        self.dep_graph.build_graph();
+        trace!("node_graph: {:#?}", self.dep_graph.graph());
 
         if !self.osc_controls.is_active {
             self.osc_controls
@@ -509,6 +629,27 @@ impl<T: TimingSource> ControlScript<T> {
         info!("Controls populated");
 
         Ok(())
+    }
+
+    fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
+        let mut node_values = Node::new();
+
+        if let Some(obj) = raw_config.as_mapping() {
+            for (key, value) in obj {
+                if let Ok(param) =
+                    serde_yml::from_value::<ParamValue>(value.clone())
+                {
+                    if let ParamValue::Hot(_) = param {
+                        let k = key.as_str().unwrap().to_string();
+                        node_values.insert(k, param);
+                    }
+                }
+                // here is we'd recursively check for nested hots if we
+                // ever want to support that in the future
+            }
+        }
+
+        node_values
     }
 
     fn setup_watcher(
@@ -555,588 +696,10 @@ impl<T: TimingSource> ControlScript<T> {
     }
 }
 
-impl<T: TimingSource + fmt::Debug> fmt::Debug for ControlScript<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ControlScript")
-            .field("controls", &self.controls)
-            .field("osc_controls", &self.osc_controls)
-            .field("animation", &self.animation)
-            .field("keyframe_sequences", &self.keyframe_sequences)
-            .field("update_state", &self.update_state)
-            .finish()
-    }
-}
-
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
 }
-
-impl fmt::Debug for UpdateState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("UpdateState")
-            .field("state", &self.state)
-            .finish()
-    }
-}
-
-//------------------------------------------------------------------------------
-// Configuration Types
-//------------------------------------------------------------------------------
-
-type ConfigFile = IndexMap<String, MaybeControlConfig>;
-
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-enum MaybeControlConfig {
-    Control(ControlConfig),
-    #[allow(dead_code)]
-    Other(serde_yml::Value),
-}
-
-#[derive(Deserialize, Debug)]
-struct ControlConfig {
-    #[serde(rename = "type")]
-    control_type: ControlType,
-    #[serde(flatten)]
-    config: serde_yml::Value,
-}
-
-#[derive(Deserialize, Debug)]
-enum ControlType {
-    // UI controls
-    #[serde(rename = "slider")]
-    Slider,
-    #[serde(rename = "checkbox")]
-    Checkbox,
-    #[serde(rename = "select")]
-    Select,
-    #[serde(rename = "separator")]
-    Separator,
-
-    // External control
-    #[serde(rename = "osc")]
-    Osc,
-    #[serde(rename = "audio")]
-    Audio,
-
-    // Animation
-    #[serde(rename = "lerp_abs")]
-    LerpAbs,
-    #[serde(rename = "lerp_rel")]
-    LerpRel,
-    #[serde(rename = "r_ramp_rel")]
-    RRampRel,
-    #[serde(rename = "triangle")]
-    Triangle,
-    #[serde(rename = "automate")]
-    Automate,
-
-    // Modulation & Effects
-    #[serde(rename = "mod")]
-    Modulation,
-    #[serde(rename = "effect")]
-    Effects,
-}
-
-#[allow(dead_code)]
-#[derive(Clone, Deserialize, Debug, Default)]
-struct Shared {
-    #[serde(default, deserialize_with = "deserialize_number_or_none")]
-    bypass: Option<f32>,
-    #[serde(default)]
-    var: Option<String>,
-}
-
-struct PersistedConfigFields {
-    bypass: Option<f32>,
-}
-
-//------------------------------------------------------------------------------
-// Animation Types
-//------------------------------------------------------------------------------
-
-#[derive(Debug)]
-enum AnimationConfig {
-    LerpRel(LerpRelConfig),
-    LerpAbs(LerpAbsConfig),
-    RRampRel(RRampRelConfig),
-    Triangle(TriangleConfig),
-    Automate(AutomateConfig),
-}
-
-impl AnimationConfig {
-    pub fn delay(&self) -> f32 {
-        match self {
-            AnimationConfig::LerpRel(x) => x.delay,
-            AnimationConfig::LerpAbs(x) => x.delay,
-            AnimationConfig::RRampRel(x) => x.delay,
-            _ => 0.0,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum KeyframeSequence {
-    Linear(Vec<Keyframe>),
-    Random(Vec<KeyframeRandom>),
-    Breakpoints(Vec<Breakpoint>),
-    None,
-}
-
-//------------------------------------------------------------------------------
-// Configuration Types
-//------------------------------------------------------------------------------
-
-// --- UI Controls
-
-#[derive(Deserialize, Debug)]
-#[serde(default)]
-struct SliderConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    range: [f32; 2],
-    default: f32,
-    step: f32,
-}
-
-impl Default for SliderConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            range: [0.0, 1.0],
-            default: 0.0,
-            step: 0.000_1,
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(default)]
-struct CheckboxConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    default: bool,
-}
-
-impl Default for CheckboxConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            default: false,
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-struct SelectConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    options: Vec<String>,
-    default: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct Separator {}
-
-// --- External Controls
-
-#[derive(Deserialize, Debug)]
-#[serde(default)]
-struct OscConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    range: [f32; 2],
-    default: f32,
-}
-
-impl Default for OscConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            range: [0.0, 1.0],
-            default: 0.0,
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-#[serde(default)]
-struct AudioConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    channel: usize,
-    slew: [f32; 2],
-    pre: f32,
-    detect: f32,
-    range: [f32; 2],
-    bypass: Option<f32>,
-}
-
-impl Default for AudioConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            channel: 0,
-            slew: [0.0, 0.0],
-            pre: 0.0,
-            detect: 0.0,
-            range: [0.0, 1.0],
-            bypass: None,
-        }
-    }
-}
-
-// --- Animation Controls
-
-#[derive(Clone, Deserialize, Debug)]
-struct LerpAbsConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    delay: f32,
-    keyframes: Vec<(String, f32)>,
-}
-
-impl Default for LerpAbsConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            keyframes: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-struct LerpRelConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    delay: f32,
-    keyframes: Vec<(f32, f32)>,
-}
-
-impl Default for LerpRelConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            keyframes: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-struct RRampRelConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    delay: f32,
-    #[serde(default)]
-    ramp_time: f32,
-    #[serde(default = "default_ramp")]
-    ramp: String,
-    keyframes: Vec<(f32, (f32, f32))>,
-}
-
-fn default_ramp() -> String {
-    "linear".to_string()
-}
-
-impl Default for RRampRelConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            ramp: "linear".to_string(),
-            ramp_time: 0.25,
-            keyframes: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-#[serde(default)]
-struct TriangleConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    beats: f32,
-    range: [f32; 2],
-    phase: f32,
-}
-
-impl Default for TriangleConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            beats: 1.0,
-            range: [0.0, 1.0],
-            phase: 0.0,
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(default)]
-struct AutomateConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    breakpoints: Vec<BreakpointConfig>,
-    #[serde(default = "default_mode")]
-    mode: String,
-}
-
-impl Default for AutomateConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            breakpoints: Vec::new(),
-            mode: "loop".to_string(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-struct BreakpointConfig {
-    #[serde(alias = "pos", alias = "x")]
-    position: f32,
-    #[serde(alias = "val", alias = "y")]
-    value: f32,
-    #[serde(flatten)]
-    kind: KindConfig,
-}
-
-impl From<BreakpointConfig> for Breakpoint {
-    fn from(config: BreakpointConfig) -> Self {
-        match config.kind {
-            KindConfig::Step => Breakpoint::step(config.position, config.value),
-            KindConfig::Ramp { easing } => Breakpoint::ramp(
-                config.position,
-                config.value,
-                Easing::from_str(&easing).unwrap(),
-            ),
-            KindConfig::Wave {
-                shape,
-                frequency,
-                amplitude,
-                width,
-                easing,
-                constrain,
-            } => Breakpoint::wave(
-                config.position,
-                config.value,
-                Shape::from_str(shape.as_str()).unwrap(),
-                frequency,
-                width,
-                amplitude,
-                Easing::from_str(&easing).unwrap(),
-                Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
-            ),
-            KindConfig::Random { amplitude } => {
-                Breakpoint::random(config.position, config.value, amplitude)
-            }
-            KindConfig::RandomSmooth {
-                frequency,
-                amplitude,
-                easing,
-                constrain,
-            } => Breakpoint::random_smooth(
-                config.position,
-                config.value,
-                frequency,
-                amplitude,
-                Easing::from_str(&easing).unwrap(),
-                Constrain::try_from((constrain.as_str(), 0.0, 1.0)).unwrap(),
-            ),
-            KindConfig::End => Breakpoint::end(config.position, config.value),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-enum KindConfig {
-    Step,
-    Ramp {
-        #[serde(default = "default_easing", alias = "ease")]
-        easing: String,
-    },
-    Wave {
-        #[serde(alias = "shape", default = "default_shape")]
-        shape: String,
-        #[serde(alias = "freq", default = "default_f32_0_25")]
-        frequency: f32,
-        #[serde(alias = "amp", default = "default_f32_0_25")]
-        amplitude: f32,
-        #[serde(alias = "width", default = "default_f32_0_5")]
-        width: f32,
-        #[serde(alias = "ease", default = "default_easing")]
-        easing: String,
-        #[serde(alias = "cons", default = "default_none_string")]
-        constrain: String,
-    },
-    Random {
-        #[serde(alias = "amp", default = "default_f32_0_25")]
-        amplitude: f32,
-    },
-    RandomSmooth {
-        #[serde(alias = "freq", default = "default_f32_0_25")]
-        frequency: f32,
-        #[serde(alias = "amp", default = "default_f32_0_25")]
-        amplitude: f32,
-        #[serde(alias = "ease", default = "default_easing")]
-        easing: String,
-        #[serde(alias = "cons", default = "default_none_string")]
-        constrain: String,
-    },
-    End,
-}
-
-// --- Modulation & Effects
-
-#[derive(Clone, Deserialize, Debug)]
-struct ModulationConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    source: String,
-    modulators: Vec<String>,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-struct EffectConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(flatten)]
-    kind: EffectKind,
-}
-
-impl From<EffectConfig> for Effect {
-    fn from(config: EffectConfig) -> Self {
-        match config.kind {
-            EffectKind::WaveFolder {
-                gain,
-                iterations,
-                symmetry,
-                bias,
-                shape,
-                range,
-            } => Effect::WaveFolder(WaveFolder::new(
-                gain, iterations, symmetry, bias, shape, range,
-            )),
-            EffectKind::SlewLimiter { rise, fall } => {
-                Effect::SlewLimiter(SlewLimiter::new(rise, fall))
-            }
-            EffectKind::Saturator { drive, range } => {
-                Effect::Saturator(Saturator::new(drive, range))
-            }
-            EffectKind::Hysteresis {
-                lower_threshold,
-                upper_threshold,
-                output_low,
-                output_high,
-                pass_through,
-            } => Effect::Hysteresis(Hysteresis::new(
-                lower_threshold,
-                upper_threshold,
-                output_low,
-                output_high,
-                pass_through,
-            )),
-            EffectKind::Quantizer { step, range } => {
-                Effect::Quantizer(Quantizer::new(step, range))
-            }
-            EffectKind::RingModulator { mix, range, .. } => {
-                Effect::RingModulator(RingModulator::new(mix, range))
-            }
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-#[serde(rename_all = "snake_case", tag = "kind")]
-enum EffectKind {
-    #[serde(alias = "hyst", alias = "hys")]
-    Hysteresis {
-        #[serde(default = "default_f32_0_3")]
-        lower_threshold: f32,
-        #[serde(default = "default_f32_0_7")]
-        upper_threshold: f32,
-        #[serde(default = "default_f32_0")]
-        output_low: f32,
-        #[serde(default = "default_f32_1")]
-        output_high: f32,
-        #[serde(default = "default_false")]
-        pass_through: bool,
-    },
-
-    #[serde(alias = "quant")]
-    Quantizer {
-        #[serde(default = "default_f32_0_25")]
-        step: f32,
-        #[serde(default = "default_normalized_range")]
-        range: (f32, f32),
-    },
-
-    #[serde(alias = "rm", alias = "ring")]
-    RingModulator {
-        #[serde(default = "default_f32_0")]
-        mix: f32,
-        #[serde(default = "default_normalized_range")]
-        range: (f32, f32),
-        modulator: String,
-    },
-
-    #[serde(alias = "saturate", alias = "sat")]
-    Saturator {
-        #[serde(default = "default_f32_1")]
-        drive: f32,
-        #[serde(default = "default_normalized_range")]
-        range: (f32, f32),
-    },
-
-    #[serde(alias = "slew")]
-    SlewLimiter {
-        #[serde(default = "default_f32_0")]
-        rise: f32,
-        #[serde(default = "default_f32_0")]
-        fall: f32,
-    },
-
-    #[serde(alias = "fold")]
-    WaveFolder {
-        #[serde(default = "default_f32_1")]
-        gain: f32,
-        #[serde(alias = "iter", default = "default_iterations")]
-        iterations: usize,
-        #[serde(alias = "sym", default = "default_f32_1")]
-        symmetry: f32,
-        #[serde(default = "default_f32_0")]
-        bias: f32,
-        #[serde(default = "default_f32_1")]
-        shape: f32,
-
-        // TODO: make Option and consider None to mean "adaptive range"?
-        #[serde(default = "default_normalized_range")]
-        range: (f32, f32),
-    },
-}
-
-//------------------------------------------------------------------------------
-// Helper Types & Functions
-//------------------------------------------------------------------------------
 
 #[derive(Debug)]
 struct ParsedKeyframe {
@@ -1144,61 +707,27 @@ struct ParsedKeyframe {
     value: f32,
 }
 
-fn deserialize_number_or_none<'de, D>(
-    deserializer: D,
-) -> Result<Option<f32>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum NumericOrOther {
-        Num(f32),
-        Other(()),
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
+    use crate::framework::animation::animation_tests::{init, BPM};
+
+    fn create_instance() -> ControlScript<FrameTiming> {
+        ControlScript::new(
+            to_absolute_path(file!(), "control_script.yaml"),
+            FrameTiming::new(BPM),
+        )
     }
 
-    match NumericOrOther::deserialize(deserializer) {
-        Ok(NumericOrOther::Num(n)) => Ok(Some(n)),
-        _ => Ok(None),
-    }
-}
+    #[test]
+    #[serial]
+    fn test_parameter_modulation() {
+        let controls = create_instance();
 
-fn default_iterations() -> usize {
-    1
-}
-fn default_normalized_range() -> (f32, f32) {
-    (0.0, 1.0)
-}
-fn default_mode() -> String {
-    "loop".to_string()
-}
-fn default_easing() -> String {
-    "linear".to_string()
-}
-fn default_shape() -> String {
-    "sine".to_string()
-}
-fn default_none_string() -> String {
-    "none".to_string()
-}
-fn default_false() -> bool {
-    false
-}
-fn default_f32_0() -> f32 {
-    0.0
-}
-fn default_f32_1() -> f32 {
-    1.0
-}
-fn default_f32_0_25() -> f32 {
-    0.25
-}
-fn default_f32_0_3() -> f32 {
-    0.3
-}
-fn default_f32_0_7() -> f32 {
-    0.7
-}
-fn default_f32_0_5() -> f32 {
-    0.5
+        init(0);
+        assert_eq!(controls.get("test_triangle"), 0.5);
+    }
 }
