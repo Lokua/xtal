@@ -27,6 +27,7 @@ use super::{
         OscConfig, RRampRelConfig, SelectConfig, TriangleConfig,
     },
     dep_graph::{DepGraph, Node},
+    eval_cache::EvalCache,
     param_mod::{ParamValue, Set},
 };
 
@@ -41,7 +42,7 @@ pub struct ControlScript<T: TimingSource> {
     aliases: HashMap<String, String>,
     bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
-    eval_cache: RefCell<HashMap<String, (u32, f32)>>,
+    eval_cache: EvalCache,
     update_state: Option<UpdateState>,
 }
 
@@ -57,7 +58,7 @@ impl<T: TimingSource> ControlScript<T> {
             effects: RefCell::new(HashMap::new()),
             aliases: HashMap::new(),
             bypassed: HashMap::new(),
-            eval_cache: RefCell::new(HashMap::new()),
+            eval_cache: EvalCache::new(),
             dep_graph: DepGraph::new(),
             update_state: None,
         };
@@ -120,26 +121,13 @@ impl<T: TimingSource> ControlScript<T> {
                     break;
                 }
 
-                if self.is_node_cached(name, frame_count) {
+                if self.eval_cache.has(name, frame_count) {
                     continue;
                 }
 
-                self.cache_node_value(name, frame_count, self.get_raw(name));
+                self.eval_cache.store(name, frame_count, self.get_raw(name));
             }
         }
-    }
-
-    fn is_node_cached(&self, name: &str, frame_count: u32) -> bool {
-        self.eval_cache
-            .borrow()
-            .get(name)
-            .map_or(false, |&(cached_frame, _)| cached_frame == frame_count)
-    }
-
-    fn cache_node_value(&self, name: &str, frame_count: u32, value: f32) {
-        self.eval_cache
-            .borrow_mut()
-            .insert(name.to_string(), (frame_count, value));
     }
 
     fn apply_modulators(
@@ -359,7 +347,7 @@ impl<T: TimingSource> ControlScript<T> {
         self.aliases.clear();
         self.bypassed.clear();
         self.dep_graph.clear();
-        self.eval_cache.borrow_mut().clear();
+        self.eval_cache.clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
@@ -747,6 +735,7 @@ triangle:
   type: triangle
   beats: 4
   phase: $slider
+  
             "#,
         );
 
@@ -784,7 +773,6 @@ test_mod:
   source: triangle 
   modulators:
     - effect
-
 
             "#,
         );
