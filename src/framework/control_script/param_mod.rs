@@ -19,7 +19,7 @@
 use bevy_reflect::{Reflect, ReflectRef};
 use serde::{Deserialize, Deserializer};
 
-use super::config::EffectConfig;
+use super::config::{BreakpointConfig, EffectConfig};
 use crate::framework::prelude::*;
 
 #[derive(Clone, Debug, Reflect)]
@@ -83,7 +83,7 @@ impl<'de> Deserialize<'de> for ParamValue {
 }
 
 /// Trait used for instantiating an Effect variant from an EffectConfig instance.
-pub trait FromColdParams: Default + Set {
+pub trait FromColdParams: Default + SetFromParamValue {
     /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a newly
     /// created Effect instance. Will use the Effect's default instead of
     /// [`ParamValue::Hot`] since those are swapped in during [`ControlScript::get`].
@@ -107,7 +107,9 @@ pub trait FromColdParams: Default + Set {
                                     inner_value.try_downcast_ref::<f32>()
                                 {
                                     // trace!("setting {}: {}", field_name, value);
-                                    instance.set(field_name, *value);
+                                    instance.set_from_param_value(
+                                        field_name, *value,
+                                    );
                                 }
                             }
                         }
@@ -121,18 +123,19 @@ pub trait FromColdParams: Default + Set {
 }
 
 impl FromColdParams for Hysteresis {}
+impl FromColdParams for Math {}
 impl FromColdParams for Quantizer {}
 impl FromColdParams for RingModulator {}
 impl FromColdParams for Saturator {}
 impl FromColdParams for SlewLimiter {}
 impl FromColdParams for WaveFolder {}
 
-pub trait Set {
-    fn set(&mut self, name: &str, value: f32);
+pub trait SetFromParamValue {
+    fn set_from_param_value(&mut self, name: &str, value: f32);
 }
 
-impl Set for Hysteresis {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for Hysteresis {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "lower_threshold" => self.lower_threshold = value,
             "upper_threshold" => self.upper_threshold = value,
@@ -143,8 +146,17 @@ impl Set for Hysteresis {
     }
 }
 
-impl Set for Quantizer {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for Math {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
+        match name {
+            "value" => self.value = value,
+            _ => warn!("Math does not support param name {}", name),
+        }
+    }
+}
+
+impl SetFromParamValue for Quantizer {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "step" => self.step = value,
             _ => warn!("Quantizer does not support param name {}", name),
@@ -152,8 +164,8 @@ impl Set for Quantizer {
     }
 }
 
-impl Set for RingModulator {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for RingModulator {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "mix" => self.mix = value,
             _ => warn!("RingModulator does not support param name {}", name),
@@ -161,8 +173,8 @@ impl Set for RingModulator {
     }
 }
 
-impl Set for Saturator {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for Saturator {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "drive" => self.drive = value,
             _ => warn!("Saturator does not support param name {}", name),
@@ -170,8 +182,8 @@ impl Set for Saturator {
     }
 }
 
-impl Set for SlewLimiter {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for SlewLimiter {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "rise" => self.rise = value,
             "fall" => self.fall = value,
@@ -180,14 +192,72 @@ impl Set for SlewLimiter {
     }
 }
 
-impl Set for WaveFolder {
-    fn set(&mut self, name: &str, value: f32) {
+impl SetFromParamValue for WaveFolder {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
         match name {
             "gain" => self.gain = value,
             "symmetry" => self.symmetry = value,
             "bias" => self.bias = value,
             "shape" => self.shape = value,
             _ => warn!("WaveFolder does not support param name {}", name),
+        }
+    }
+}
+
+impl From<BreakpointConfig> for Breakpoint {
+    fn from(config: BreakpointConfig) -> Self {
+        let mut breakpoint = Breakpoint {
+            position: config.position,
+            value: match &config.value {
+                ParamValue::Cold(v) => *v,
+                ParamValue::Hot(_) => 0.0,
+            },
+            // Temporary, will be replaced
+            kind: Kind::Step,
+        };
+
+        let kind_reflect: &dyn Reflect = &config.kind;
+        if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
+            let variant_name = enum_ref.variant_name();
+            breakpoint.kind = Kind::default_for_variant(variant_name);
+
+            for field_index in 0..enum_ref.field_len() {
+                if let Some(field_value) = enum_ref.field_at(field_index) {
+                    let field_name =
+                        enum_ref.name_at(field_index).unwrap_or("");
+
+                    if let ReflectRef::Enum(param_enum) =
+                        field_value.reflect_ref()
+                    {
+                        if param_enum.variant_name() == "Cold" {
+                            if let Some(param_field) = param_enum.field_at(0) {
+                                if let Some(value) =
+                                    param_field.try_downcast_ref::<f32>()
+                                {
+                                    breakpoint.set_from_param_value(
+                                        field_name, *value,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        breakpoint
+    }
+}
+
+impl SetFromParamValue for Breakpoint {
+    fn set_from_param_value(&mut self, name: &str, value: f32) {
+        if name == "value" {
+            self.value = value;
+            return;
+        }
+
+        match self.kind {
+            _ => {}
         }
     }
 }

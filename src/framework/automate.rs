@@ -157,6 +157,34 @@ pub enum Kind {
     End,
 }
 
+impl Kind {
+    pub fn default_for_variant(variant: &str) -> Self {
+        match variant {
+            "Step" => Kind::Step,
+            "Ramp" => Kind::Ramp {
+                easing: Easing::Linear,
+            },
+            "Wave" => Kind::Wave {
+                shape: Shape::Sine,
+                frequency: 0.25,
+                width: 0.5,
+                amplitude: 0.25,
+                easing: Easing::Linear,
+                constrain: Constrain::None,
+            },
+            "Random" => Kind::Random { amplitude: 0.25 },
+            "RandomSmooth" => Kind::RandomSmooth {
+                frequency: 0.25,
+                amplitude: 0.25,
+                easing: Easing::Linear,
+                constrain: Constrain::None,
+            },
+            "End" => Kind::End,
+            _ => panic!("Unknown breakpoint kind variant: {}", variant),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Shape {
     Sine,

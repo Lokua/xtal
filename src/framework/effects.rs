@@ -5,11 +5,13 @@
 
 use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
+use std::str::FromStr;
 
 use super::prelude::*;
 
 pub enum Effect {
     Hysteresis(Hysteresis),
+    Math(Math),
     Quantizer(Quantizer),
     RingModulator(RingModulator),
     Saturator(Saturator),
@@ -89,6 +91,52 @@ impl Default for Hysteresis {
             output_high: 0.0,
             pass_through: false,
             state: RefCell::new(HysteresisState::Low),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Op {
+    Add,
+    Mult,
+}
+
+impl FromStr for Op {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "add" => Ok(Op::Add),
+            "mult" => Ok(Op::Mult),
+            _ => Err(format!("No op named {}", s)),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Math {
+    pub op: Op,
+    pub value: f32,
+}
+
+impl Math {
+    pub fn new(op: Op, value: f32) -> Self {
+        Self { op, value }
+    }
+
+    pub fn apply(&self, input: f32) -> f32 {
+        match self.op {
+            Op::Add => self.value + input,
+            Op::Mult => self.value * input,
+        }
+    }
+}
+
+impl Default for Math {
+    fn default() -> Self {
+        Self {
+            op: Op::Add,
+            value: 1.0,
         }
     }
 }

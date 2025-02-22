@@ -28,7 +28,7 @@ use super::{
     },
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
-    param_mod::{ParamValue, Set},
+    param_mod::{ParamValue, SetFromParamValue},
 };
 
 pub struct ControlScript<T: TimingSource> {
@@ -162,6 +162,10 @@ impl<T: TimingSource> ControlScript<T> {
                 self.update_effect_params(m, modulator);
                 m.apply(value)
             }
+            Effect::Math(m) => {
+                self.update_effect_params(m, modulator);
+                m.apply(value)
+            }
             Effect::Quantizer(m) => {
                 self.update_effect_params(m, modulator);
                 m.apply(value)
@@ -183,14 +187,18 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
-    fn update_effect_params(&self, effect: &mut impl Set, node_name: &str) {
+    fn update_effect_params(
+        &self,
+        effect: &mut impl SetFromParamValue,
+        node_name: &str,
+    ) {
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
                 let value = match param_value {
                     ParamValue::Cold(value) => *value,
                     ParamValue::Hot(name) => self.get_raw(name),
                 };
-                effect.set(param_name, value);
+                effect.set_from_param_value(param_name, value);
             }
         }
     }
@@ -274,7 +282,7 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
-    fn resolve_animation_config_params<P: Set + Clone>(
+    fn resolve_animation_config_params<P: SetFromParamValue + Clone>(
         &self,
         config: &P,
         node_name: &str,
@@ -286,7 +294,7 @@ impl<T: TimingSource> ControlScript<T> {
                     ParamValue::Cold(value) => *value,
                     ParamValue::Hot(name) => self.get_raw(name),
                 };
-                config.set(param_name, value);
+                config.set_from_param_value(param_name, value);
             }
         }
         config
@@ -614,6 +622,9 @@ impl<T: TimingSource> ControlScript<T> {
                         EffectKind::Hysteresis { .. } => Effect::Hysteresis(
                             Hysteresis::from_cold_params(&conf),
                         ),
+                        EffectKind::Math { .. } => {
+                            Effect::Math(Math::from_cold_params(&conf))
+                        }
                         EffectKind::Quantizer { .. } => Effect::Quantizer(
                             Quantizer::from_cold_params(&conf),
                         ),
@@ -804,6 +815,33 @@ test_mod:
             controls.get("triangle"),
             0.33,
             "[triangle->0.75] -> [slider->effect.hi]"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_parameter_modulation_breakpoint() {
+        let controls = create_instance(
+            r#"
+
+slider: 
+  type: slider 
+  default: 40
+
+automate:
+  type: automate 
+  breakpoints:
+    - position: 0
+      value: $slider
+      kind: step 
+            "#,
+        );
+
+        init(0);
+        assert_eq!(
+            controls.get("automate"),
+            130.0,
+            "[automate.0.value]<-[$slider@30]"
         );
     }
 }
