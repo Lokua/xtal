@@ -137,20 +137,20 @@ pub enum Kind {
     Ramp {
         easing: Easing,
     },
-    Wave {
-        shape: Shape,
-        amplitude: f32,
-        width: f32,
-        frequency: f32,
-        easing: Easing,
-        constrain: Constrain,
-    },
     Random {
         amplitude: f32,
     },
     RandomSmooth {
         frequency: f32,
         amplitude: f32,
+        easing: Easing,
+        constrain: Constrain,
+    },
+    Wave {
+        shape: Shape,
+        amplitude: f32,
+        width: f32,
+        frequency: f32,
         easing: Easing,
         constrain: Constrain,
     },
@@ -164,17 +164,17 @@ impl Kind {
             "Ramp" => Kind::Ramp {
                 easing: Easing::Linear,
             },
-            "Wave" => Kind::Wave {
-                shape: Shape::Sine,
+            "Random" => Kind::Random { amplitude: 0.25 },
+            "RandomSmooth" => Kind::RandomSmooth {
                 frequency: 0.25,
-                width: 0.5,
                 amplitude: 0.25,
                 easing: Easing::Linear,
                 constrain: Constrain::None,
             },
-            "Random" => Kind::Random { amplitude: 0.25 },
-            "RandomSmooth" => Kind::RandomSmooth {
+            "Wave" => Kind::Wave {
+                shape: Shape::Sine,
                 frequency: 0.25,
+                width: 0.5,
                 amplitude: 0.25,
                 easing: Easing::Linear,
                 constrain: Constrain::None,

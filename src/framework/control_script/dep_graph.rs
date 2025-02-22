@@ -6,11 +6,12 @@ use crate::framework::prelude::*;
 /// { "symmetry" -> Param::Hot("t1"), ... }
 pub type Node = HashMap<String, ParamValue>;
 
-/// "object_name" -> { "symmetry" -> Param::Hot("t1"), ... }
+/// "t2" -> { "symmetry" -> Param::Hot("t1"), ... }
 pub type Graph = HashMap<String, Node>;
 
 pub type EvalOrder = Option<Vec<String>>;
 
+#[derive(Debug)]
 pub struct DepGraph {
     graph: Graph,
     eval_order: EvalOrder,
@@ -19,9 +20,35 @@ pub struct DepGraph {
 impl DepGraph {
     pub fn new() -> Self {
         Self {
-            graph: HashMap::new(),
+            graph: Graph::new(),
             eval_order: None,
         }
+    }
+
+    pub fn has_dependents(&self, name: &str) -> bool {
+        self.eval_order.is_some() && self.graph.contains_key(name)
+    }
+
+    pub fn node(&self, name: &str) -> Option<&Node> {
+        self.graph.get(name)
+    }
+
+    pub fn insert_node(&mut self, name: &str, node: Node) {
+        self.graph.insert(name.to_string(), node);
+    }
+
+    pub fn order(&self) -> &EvalOrder {
+        &self.eval_order
+    }
+
+    #[allow(unused)]
+    pub fn graph(&self) -> &Graph {
+        &self.graph
+    }
+
+    pub fn clear(&mut self) {
+        self.graph.clear();
+        self.eval_order = None;
     }
 
     /// Builds the final eval_order list using Kahn’s Algorithm (topological
@@ -94,30 +121,5 @@ impl DepGraph {
         }
 
         (graph, in_degree)
-    }
-
-    pub fn has_dependents(&self, name: &str) -> bool {
-        self.eval_order.is_some() && self.graph.contains_key(name)
-    }
-
-    pub fn node(&self, name: &str) -> Option<&Node> {
-        self.graph.get(name)
-    }
-
-    pub fn insert_node(&mut self, name: &str, node: Node) {
-        self.graph.insert(name.to_string(), node);
-    }
-
-    pub fn order(&self) -> &EvalOrder {
-        &self.eval_order
-    }
-
-    pub fn graph(&self) -> &Graph {
-        &self.graph
-    }
-
-    pub fn clear(&mut self) {
-        self.graph.clear();
-        self.eval_order = None;
     }
 }

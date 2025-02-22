@@ -19,7 +19,7 @@
 use bevy_reflect::{Reflect, ReflectRef};
 use serde::{Deserialize, Deserializer};
 
-use super::config::{BreakpointConfig, EffectConfig};
+use super::config::{BreakpointConfig, EffectConfig, TriangleConfig};
 use crate::framework::prelude::*;
 
 #[derive(Clone, Debug, Reflect)]
@@ -82,8 +82,12 @@ impl<'de> Deserialize<'de> for ParamValue {
     }
 }
 
+//------------------------------------------------------------------------------
+// Effects
+//------------------------------------------------------------------------------
+
 /// Trait used for instantiating an Effect variant from an EffectConfig instance.
-pub trait FromColdParams: Default + SetFromParamValue {
+pub trait FromColdParams: Default + SetFromParam {
     /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a newly
     /// created Effect instance. Will use the Effect's default instead of
     /// [`ParamValue::Hot`] since those are swapped in during [`ControlScript::get`].
@@ -107,9 +111,7 @@ pub trait FromColdParams: Default + SetFromParamValue {
                                     inner_value.try_downcast_ref::<f32>()
                                 {
                                     // trace!("setting {}: {}", field_name, value);
-                                    instance.set_from_param_value(
-                                        field_name, *value,
-                                    );
+                                    instance.set_from_param(field_name, *value);
                                 }
                             }
                         }
@@ -130,12 +132,12 @@ impl FromColdParams for Saturator {}
 impl FromColdParams for SlewLimiter {}
 impl FromColdParams for WaveFolder {}
 
-pub trait SetFromParamValue {
-    fn set_from_param_value(&mut self, name: &str, value: f32);
+pub trait SetFromParam {
+    fn set_from_param(&mut self, name: &str, value: f32);
 }
 
-impl SetFromParamValue for Hysteresis {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for Hysteresis {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "lower_threshold" => self.lower_threshold = value,
             "upper_threshold" => self.upper_threshold = value,
@@ -146,8 +148,8 @@ impl SetFromParamValue for Hysteresis {
     }
 }
 
-impl SetFromParamValue for Math {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for Math {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "value" => self.value = value,
             _ => warn!("Math does not support param name {}", name),
@@ -155,8 +157,8 @@ impl SetFromParamValue for Math {
     }
 }
 
-impl SetFromParamValue for Quantizer {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for Quantizer {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "step" => self.step = value,
             _ => warn!("Quantizer does not support param name {}", name),
@@ -164,8 +166,8 @@ impl SetFromParamValue for Quantizer {
     }
 }
 
-impl SetFromParamValue for RingModulator {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for RingModulator {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "mix" => self.mix = value,
             _ => warn!("RingModulator does not support param name {}", name),
@@ -173,8 +175,8 @@ impl SetFromParamValue for RingModulator {
     }
 }
 
-impl SetFromParamValue for Saturator {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for Saturator {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "drive" => self.drive = value,
             _ => warn!("Saturator does not support param name {}", name),
@@ -182,8 +184,8 @@ impl SetFromParamValue for Saturator {
     }
 }
 
-impl SetFromParamValue for SlewLimiter {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for SlewLimiter {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "rise" => self.rise = value,
             "fall" => self.fall = value,
@@ -192,14 +194,30 @@ impl SetFromParamValue for SlewLimiter {
     }
 }
 
-impl SetFromParamValue for WaveFolder {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for WaveFolder {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "gain" => self.gain = value,
             "symmetry" => self.symmetry = value,
             "bias" => self.bias = value,
             "shape" => self.shape = value,
             _ => warn!("WaveFolder does not support param name {}", name),
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// Animation
+//------------------------------------------------------------------------------
+
+impl SetFromParam for TriangleConfig {
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            "phase" => self.phase = ParamValue::Cold(value),
+            _ => {
+                warn!("{} is not a supported ParamValue", name)
+            }
         }
     }
 }
@@ -234,9 +252,8 @@ impl From<BreakpointConfig> for Breakpoint {
                                 if let Some(value) =
                                     param_field.try_downcast_ref::<f32>()
                                 {
-                                    breakpoint.set_from_param_value(
-                                        field_name, *value,
-                                    );
+                                    breakpoint
+                                        .set_from_param(field_name, *value);
                                 }
                             }
                         }
@@ -249,15 +266,58 @@ impl From<BreakpointConfig> for Breakpoint {
     }
 }
 
-impl SetFromParamValue for Breakpoint {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
+impl SetFromParam for Breakpoint {
+    fn set_from_param(&mut self, name: &str, value: f32) {
         if name == "value" {
             self.value = value;
             return;
         }
 
-        match self.kind {
-            _ => {}
+        let path_segments: Vec<&str> = name.split(".").collect();
+
+        if path_segments.len() == 3 && path_segments[0] == "breakpoints" {
+            let key = path_segments[2];
+
+            let result = match self.kind {
+                Kind::Step => match key {
+                    "value" => Ok(self.value = value),
+                    _ => Err(()),
+                },
+                Kind::Random {
+                    ref mut amplitude, ..
+                } => match key {
+                    "value" => Ok(self.value = value),
+                    "amplitude" => Ok(*amplitude = value),
+                    _ => Err(()),
+                },
+                Kind::RandomSmooth {
+                    ref mut amplitude,
+                    ref mut frequency,
+                    ..
+                } => match key {
+                    "value" => Ok(self.value = value),
+                    "amplitude" => Ok(*amplitude = value),
+                    "frequency" => Ok(*frequency = value),
+                    _ => Err(()),
+                },
+                Kind::Wave {
+                    ref mut amplitude,
+                    ref mut frequency,
+                    ref mut width,
+                    ..
+                } => match key {
+                    "value" => Ok(self.value = value),
+                    "amplitude" => Ok(*amplitude = value),
+                    "width" => Ok(*width = value),
+                    "frequency" => Ok(*frequency = value),
+                    _ => Err(()),
+                },
+                _ => Err(()),
+            };
+
+            if result.is_err() {
+                error!("Could not set {}: {}", name, value);
+            }
         }
     }
 }

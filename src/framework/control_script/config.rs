@@ -5,7 +5,7 @@ use bevy_reflect::Reflect;
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer};
 
-use super::param_mod::{ParamValue, SetFromParamValue};
+use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
 
 //------------------------------------------------------------------------------
@@ -282,7 +282,7 @@ impl Default for RRampRelConfig {
     }
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct TriangleConfig {
     #[allow(dead_code)]
@@ -304,19 +304,7 @@ impl Default for TriangleConfig {
     }
 }
 
-impl SetFromParamValue for TriangleConfig {
-    fn set_from_param_value(&mut self, name: &str, value: f32) {
-        match name {
-            "beats" => self.beats = ParamValue::Cold(value),
-            "phase" => self.phase = ParamValue::Cold(value),
-            _ => {
-                warn!("{} is not a supported ParamValue", name)
-            }
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct AutomateConfig {
     #[allow(dead_code)]

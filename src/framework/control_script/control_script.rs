@@ -28,7 +28,7 @@ use super::{
     },
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
-    param_mod::{ParamValue, SetFromParamValue},
+    param_mod::{ParamValue, SetFromParam},
 };
 
 pub struct ControlScript<T: TimingSource> {
@@ -182,14 +182,13 @@ impl<T: TimingSource> ControlScript<T> {
                 self.update_effect_params(m, modulator);
                 m.apply(value)
             }
-            // special case already handled above
             Effect::RingModulator(_) => panic!(),
         }
     }
 
     fn update_effect_params(
         &self,
-        effect: &mut impl SetFromParamValue,
+        effect: &mut impl SetFromParam,
         node_name: &str,
     ) {
         if let Some(params) = self.dep_graph.node(node_name) {
@@ -198,7 +197,7 @@ impl<T: TimingSource> ControlScript<T> {
                     ParamValue::Cold(value) => *value,
                     ParamValue::Hot(name) => self.get_raw(name),
                 };
-                effect.set_from_param_value(param_name, value);
+                effect.set_from_param(param_name, value);
             }
         }
     }
@@ -263,9 +262,15 @@ impl<T: TimingSource> ControlScript<T> {
                 (
                     AnimationConfig::Automate(conf),
                     KeyframeSequence::Breakpoints(breakpoints),
-                ) => self
-                    .animation
-                    .automate(breakpoints, Mode::from_str(&conf.mode).unwrap()),
+                ) => {
+                    let breakpoints =
+                        self.resolve_breakpoint_params(name, breakpoints);
+
+                    self.animation.automate(
+                        &breakpoints,
+                        Mode::from_str(&conf.mode).unwrap(),
+                    )
+                }
                 _ => unimplemented!(),
             };
 
@@ -282,19 +287,68 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
-    fn resolve_animation_config_params<P: SetFromParamValue + Clone>(
+    fn resolve_breakpoint_params(
+        &self,
+        node_name: &str,
+        breakpoints: &Vec<Breakpoint>,
+    ) -> Vec<Breakpoint> {
+        trace!(
+            "\n[resolve_breakpoint_params]\nbreakpoints: {:#?}\ndep_graph: {:#?}",
+            breakpoints,
+            self.dep_graph
+        );
+
+        let mut breakpoints = breakpoints.clone();
+
+        if let Some(params) = self.dep_graph.node(node_name) {
+            for (param_name, param_value) in params.iter() {
+                let path_segments: Vec<&str> = param_name.split(".").collect();
+
+                if path_segments.len() < 3 {
+                    error!("Unrecognized keypath format: {}", param_name);
+                    continue;
+                }
+
+                if let Some(index) = path_segments[1].parse::<usize>().ok() {
+                    let value = match param_value {
+                        ParamValue::Cold(value) => *value,
+                        ParamValue::Hot(name) => self.get_raw(name),
+                    };
+
+                    breakpoints[index].set_from_param(&param_name, value);
+                }
+            }
+        }
+
+        trace!("\nbreakpoints (after): {:#?}", breakpoints);
+
+        breakpoints
+    }
+
+    fn resolve_animation_config_params<
+        P: SetFromParam + Clone + std::fmt::Debug,
+    >(
         &self,
         config: &P,
         node_name: &str,
     ) -> P {
         let mut config = config.clone();
+        trace!("[resolve] config: {:?}, node_name: {}", config, node_name);
+
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
+                trace!(
+                    "[resolve] param_name: {}, param_value: {:?}",
+                    param_name,
+                    param_value
+                );
+
                 let value = match param_value {
                     ParamValue::Cold(value) => *value,
                     ParamValue::Hot(name) => self.get_raw(name),
                 };
-                config.set_from_param_value(param_name, value);
+
+                config.set_from_param(param_name, value);
             }
         }
         config
@@ -652,7 +706,7 @@ impl<T: TimingSource> ControlScript<T> {
         }
 
         self.dep_graph.build_graph();
-        trace!("node_graph: {:#?}", self.dep_graph.graph());
+        trace!("node_graph: {:#?}", self.dep_graph);
 
         if !self.osc_controls.is_active {
             self.osc_controls
@@ -668,24 +722,44 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
-        let mut node_values = Node::new();
+        let mut hot_params = Node::new();
 
-        if let Some(obj) = raw_config.as_mapping() {
-            for (key, value) in obj {
-                if let Ok(param) =
-                    serde_yml::from_value::<ParamValue>(value.clone())
-                {
-                    if let ParamValue::Hot(_) = param {
-                        let k = key.as_str().unwrap().to_string();
-                        node_values.insert(k, param);
+        let obj = match raw_config.as_mapping() {
+            Some(mapping) => mapping,
+            None => return hot_params,
+        };
+
+        for (key, value) in obj {
+            let key_str = key.as_str().unwrap().to_string();
+
+            if let Some(param) = self.try_parse_hot_param(value) {
+                hot_params.insert(key_str, param);
+                continue;
+            }
+
+            if let Some(sequence) = value.as_sequence() {
+                for (index, item) in sequence.iter().enumerate() {
+                    let node = self.find_hot_params(item);
+
+                    for (k, value) in node.iter() {
+                        let keypath = format!("{}.{}.{}", key_str, index, k);
+                        let node = Node::from([(keypath, value.clone())]);
+                        hot_params.extend(node);
                     }
                 }
-                // here is we'd recursively check for nested hots if we
-                // ever want to support that in the future
             }
         }
 
-        node_values
+        hot_params
+    }
+
+    fn try_parse_hot_param(
+        &self,
+        value: &serde_yml::Value,
+    ) -> Option<ParamValue> {
+        serde_yml::from_value::<ParamValue>(value.clone())
+            .ok()
+            .filter(|param| matches!(param, ParamValue::Hot(_)))
     }
 
     fn setup_watcher(
@@ -840,8 +914,8 @@ automate:
         init(0);
         assert_eq!(
             controls.get("automate"),
-            130.0,
-            "[automate.0.value]<-[$slider@30]"
+            40.0,
+            "[automate.0.value]<-[$slider@40]"
         );
     }
 }
