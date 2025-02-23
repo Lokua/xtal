@@ -32,7 +32,7 @@ pub struct Model {
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let timing = ManualTiming::new(SKETCH_CONFIG.bpm);
     let animation = Animation::new(timing.clone());
-    let controls = ControlScript::new(
+    let controls = ControlScript::from_path(
         to_absolute_path(file!(), "breakpoints_2.yaml"),
         timing,
     );

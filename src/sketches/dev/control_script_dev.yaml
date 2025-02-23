@@ -1,47 +1,85 @@
-info:
-  vars:
-    dummy: &dummy 100.0
+# ------------------------------------------------------------------------------
+#  Center Circle
+# ------------------------------------------------------------------------------
 
 bg_alpha:
   type: slider
 
-radius:
+# ------------------------------------------------------------------------------
+#  Center Circle
+# ------------------------------------------------------------------------------
+
+center_section:
+  type: separator
+
+show_center_circle:
+  type: checkbox
+  default: true
+
+center_radius:
+  _var_test: &var_test 100.0
   type: slider
   range: [0.0, 500.0]
-  default: *dummy
+  default: *var_test
 
-hue:
+center_hue:
   type: slider
   default: 0.3
 
-pos_x:
+# ------------------------------------------------------------------------------
+#  White Circle
+# ------------------------------------------------------------------------------
+
+white_circle_section:
+  type: separator
+
+show_white_circle:
+  type: checkbox
+  default: true
+
+white_pos_x:
   type: osc
   range: [-1.0, 1.0]
   default: 0.0
 
-pos_y:
-  type: lerp_abs
-  keyframes:
-    - ['0.0.0', 0.0]
-    - ['0.1.0', 1.0]
-    - ['0.2.0', 0.0]
-
-pos_x2:
-  type: r_ramp_rel
-  ramp: linear
-  ramp_time: 0.25
-  keyframes:
-    - [1.5, [-1.0, -0.5]]
-    - [1.5, [-0.25, 0.25]]
-    - [1.0, [0.5, 1.0]]
-
-pos_x3:
+white_pos_y:
   type: triangle
-  beats: 2.0
-  range: [-0.5, 0.5]
-  phase_offset: 0.0
+  beats: 2
 
-rect_y:
+white_radius:
+  type: triangle
+  beats: 8
+  range: [5, 200]
+
+white_radius_amt:
+  type: slider
+
+white_radius_folder:
+  type: effect
+  kind: wave_folder
+  gain: 10.0
+  symmetry: 1.5
+  range: [10, 180]
+
+white_radius_modulation:
+  type: mod
+  source: white_radius
+  modulators:
+    - white_radius_folder
+    - white_radius_amt
+
+# ------------------------------------------------------------------------------
+#  Audio
+# ------------------------------------------------------------------------------
+
+audio_section:
+  type: separator
+
+show_audio:
+  type: checkbox
+  default: true
+
+audio_rect_y:
   type: audio
   channel: 0
   slew: [0.2, 0.95]
@@ -49,7 +87,18 @@ rect_y:
   pre: 0.0
   range: [0, 1]
 
-line:
+# ------------------------------------------------------------------------------
+#  Automate / Breakpoints
+# ------------------------------------------------------------------------------
+
+breakpoints_section:
+  type: separator
+
+show_breakpoints:
+  type: checkbox
+  default: true
+
+breakpoints_line:
   _line_freq: &line_freq 1.0
   _line_amp: &line_amp 0.125
   type: automate
@@ -94,43 +143,44 @@ line:
       value: 0.9
       kind: end
 
-radius_small:
-  _description: white ball
-  type: lerp_rel
+# ------------------------------------------------------------------------------
+#  Red Ball
+# ------------------------------------------------------------------------------
+
+red_circle_section:
+  type: separator
+
+show_red_circle:
+  type: checkbox
+  default: true
+
+red_circle_pos_x:
+  bypass: _
+  type: r_ramp_rel
+  ramp: linear
+  ramp_time: 0.25
   keyframes:
-    - [1.0, 5.0]
-    - [1.0, 100.0]
-    - [0.0, 5.0]
+    - [1.5, [-1.0, -0.5]]
+    - [1.5, [-0.25, 0.25]]
+    - [1.0, [0.5, 1.0]]
 
-radius_small_amt:
-  type: slider
-
-radius_small_folder:
-  type: effect
-  kind: fold
-  gain: 2.0
-  range: [5, 100]
-
-radius_small_modulation:
-  type: mod
-  source: radius_small
-  modulators:
-    - radius_small_folder
-    - radius_small_amt
-
-red_ball_radius:
+red_circle_radius:
   type: automate
   mode: loop
   breakpoints:
     - kind: random
       position: 0.0
       value: 100.0
-      amplitude: 50.0
-    - kind: end
+      amplitude: 100.0
+    - kind: random
       position: 1.0
+      value: 100.0
+      amplitude: 100.0
+    - kind: end
+      position: 2.0
       value: 0.0
 
-red_ball_radius_hyst:
+red_circle_radius_hyst:
   type: effect
   kind: hysteresis
   lower_threshold: 75
@@ -138,45 +188,36 @@ red_ball_radius_hyst:
   output_low: 50
   output_high: 200
   pass_through: true
-red_ball_radius_slew:
+
+red_circle_radius_slew:
   type: effect
   kind: slew_limiter
-  rise: 0.7
-  fall: 0.7
-red_ball_radius_quant:
+  rise: 0.5
+  fall: 0.5
+
+red_circle_radius_quant:
   type: effect
   kind: quantizer
   step: 0.125
   range: [50, 150]
-red_ball_radius_rm:
+
+red_circle_radius_rm:
   type: effect
   kind: ring_modulator
   mix: 0.5
   modulator: rm_mod
   range: [10, 150]
+
 rm_mod:
   type: triangle
   beats: 1.0
   range: [50, 150]
 
-red_ball_radius_mods:
+red_circle_radius_mods:
   type: mod
-  source: red_ball_radius
+  source: red_circle_radius
   modulators:
-    - red_ball_radius_hyst
-    - red_ball_radius_slew
-    - red_ball_radius_quant
-    - red_ball_radius_rm
-
-hot_anim:
-  type: test_anim
-  field: $hot_source
-
-hot_source:
-  type: triangle
-  beats: 4
-
-hot_effect:
-  type: effect
-  kind: test
-  param: $hot_anim
+    # - red_circle_radius_hyst
+    # - red_circle_radius_slew
+    # - red_circle_radius_quant
+    # - red_circle_radius_rm

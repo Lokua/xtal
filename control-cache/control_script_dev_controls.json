@@ -1,16 +1,46 @@
 {
   "values": {
+    "show_red_circle": {
+      "Bool": false
+    },
+    "center_hue": {
+      "Float": 0.0
+    },
+    "show_audio": {
+      "Bool": false
+    },
+    "41odi": {
+      "Bool": false
+    },
+    "show_breakpoints": {
+      "Bool": false
+    },
+    "show_white_circle": {
+      "Bool": true
+    },
+    "s18g3": {
+      "Bool": false
+    },
+    "nx1pv": {
+      "Bool": false
+    },
+    "show_center_circle": {
+      "Bool": false
+    },
     "bg_alpha": {
-      "Float": 0.907
+      "Float": 0.973
     },
-    "hue": {
-      "Float": 0.322
-    },
-    "radius_small_amt": {
+    "white_radius_amt": {
       "Float": 1.0
     },
-    "radius": {
-      "Float": 67.0
+    "fj6r3": {
+      "Bool": false
+    },
+    "084dg": {
+      "Bool": false
+    },
+    "center_radius": {
+      "Float": 125.0
     }
   }
 }

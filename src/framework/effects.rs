@@ -5,36 +5,22 @@
 
 use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
+use std::str::FromStr;
 
 use super::prelude::*;
 
+#[derive(Debug)]
 pub enum Effect {
     Hysteresis(Hysteresis),
+    Math(Math),
     Quantizer(Quantizer),
     RingModulator(RingModulator),
     Saturator(Saturator),
     SlewLimiter(SlewLimiter),
     WaveFolder(WaveFolder),
-    TestEffect(TestEffect),
 }
 
-pub struct TestEffect {
-    pub param: f32,
-}
-
-impl TestEffect {
-    pub fn apply(&self, input: f32) -> f32 {
-        input + self.param + 1_000.0
-    }
-}
-
-impl Default for TestEffect {
-    fn default() -> Self {
-        Self { param: 0.0 }
-    }
-}
-
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum HysteresisState {
     High,
     Low,
@@ -45,6 +31,7 @@ enum HysteresisState {
 /// - `output_low` when input falls below `lower_threshold`
 /// - previous output when input is between thresholds
 /// - input value when between thresholds and `pass_through` is true
+#[derive(Debug, Clone)]
 pub struct Hysteresis {
     /// When true, allows values that are between the upper and lower thresholds
     /// to pass through. When false, binary hysteresis is applied
@@ -105,6 +92,52 @@ impl Default for Hysteresis {
             output_high: 0.0,
             pass_through: false,
             state: RefCell::new(HysteresisState::Low),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Op {
+    Add,
+    Mult,
+}
+
+impl FromStr for Op {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "add" => Ok(Op::Add),
+            "mult" => Ok(Op::Mult),
+            _ => Err(format!("No op named {}", s)),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Math {
+    pub op: Op,
+    pub value: f32,
+}
+
+impl Math {
+    pub fn new(op: Op, value: f32) -> Self {
+        Self { op, value }
+    }
+
+    pub fn apply(&self, input: f32) -> f32 {
+        match self.op {
+            Op::Add => self.value + input,
+            Op::Mult => self.value * input,
+        }
+    }
+}
+
+impl Default for Math {
+    fn default() -> Self {
+        Self {
+            op: Op::Add,
+            value: 1.0,
         }
     }
 }
@@ -291,6 +324,7 @@ impl Default for Saturator {
 }
 
 /// Limits the rate of change (slew rate) of a signal
+#[derive(Debug, Clone)]
 pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
     /// - 0.0 = instant attack (no smoothing)

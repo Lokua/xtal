@@ -137,14 +137,6 @@ pub enum Kind {
     Ramp {
         easing: Easing,
     },
-    Wave {
-        shape: Shape,
-        amplitude: f32,
-        width: f32,
-        frequency: f32,
-        easing: Easing,
-        constrain: Constrain,
-    },
     Random {
         amplitude: f32,
     },
@@ -154,7 +146,43 @@ pub enum Kind {
         easing: Easing,
         constrain: Constrain,
     },
+    Wave {
+        shape: Shape,
+        amplitude: f32,
+        width: f32,
+        frequency: f32,
+        easing: Easing,
+        constrain: Constrain,
+    },
     End,
+}
+
+impl Kind {
+    pub fn default_for_variant(variant: &str) -> Self {
+        match variant {
+            "Step" => Kind::Step,
+            "Ramp" => Kind::Ramp {
+                easing: Easing::Linear,
+            },
+            "Random" => Kind::Random { amplitude: 0.25 },
+            "RandomSmooth" => Kind::RandomSmooth {
+                frequency: 0.25,
+                amplitude: 0.25,
+                easing: Easing::Linear,
+                constrain: Constrain::None,
+            },
+            "Wave" => Kind::Wave {
+                shape: Shape::Sine,
+                frequency: 0.25,
+                width: 0.5,
+                amplitude: 0.25,
+                easing: Easing::Linear,
+                constrain: Constrain::None,
+            },
+            "End" => Kind::End,
+            _ => panic!("Unknown breakpoint kind variant: {}", variant),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
