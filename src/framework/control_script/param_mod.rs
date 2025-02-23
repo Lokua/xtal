@@ -136,6 +136,10 @@ pub trait SetFromParam {
     fn set_from_param(&mut self, name: &str, value: f32);
 }
 
+fn warn_for(effect: &str, field: &str) {
+    warn!("{} does not support field: {}", effect, field);
+}
+
 impl SetFromParam for Hysteresis {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
@@ -143,7 +147,7 @@ impl SetFromParam for Hysteresis {
             "upper_threshold" => self.upper_threshold = value,
             "output_low" => self.output_low = value,
             "output_high" => self.output_high = value,
-            _ => warn!("Hysteresis does not support param name {}", name),
+            _ => warn_for("Hysteresis", name),
         }
     }
 }
@@ -152,7 +156,7 @@ impl SetFromParam for Math {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "value" => self.value = value,
-            _ => warn!("Math does not support param name {}", name),
+            _ => warn_for("Math", name),
         }
     }
 }
@@ -161,7 +165,7 @@ impl SetFromParam for Quantizer {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "step" => self.step = value,
-            _ => warn!("Quantizer does not support param name {}", name),
+            _ => warn_for("Quantizer", name),
         }
     }
 }
@@ -170,7 +174,7 @@ impl SetFromParam for RingModulator {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "mix" => self.mix = value,
-            _ => warn!("RingModulator does not support param name {}", name),
+            _ => warn_for("RingModulator", name),
         }
     }
 }
@@ -179,7 +183,7 @@ impl SetFromParam for Saturator {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "drive" => self.drive = value,
-            _ => warn!("Saturator does not support param name {}", name),
+            _ => warn_for("Saturator", name),
         }
     }
 }
@@ -189,7 +193,7 @@ impl SetFromParam for SlewLimiter {
         match name {
             "rise" => self.rise = value,
             "fall" => self.fall = value,
-            _ => warn!("SlewLimiter does not support param name {}", name),
+            _ => warn_for("SlewLimiter", name),
         }
     }
 }
@@ -201,7 +205,7 @@ impl SetFromParam for WaveFolder {
             "symmetry" => self.symmetry = value,
             "bias" => self.bias = value,
             "shape" => self.shape = value,
-            _ => warn!("WaveFolder does not support param name {}", name),
+            _ => warn_for("WaveFolder", name),
         }
     }
 }
@@ -215,9 +219,7 @@ impl SetFromParam for TriangleConfig {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
             "phase" => self.phase = ParamValue::Cold(value),
-            _ => {
-                warn!("{} is not a supported ParamValue", name)
-            }
+            _ => warn_for("Triangle", name),
         }
     }
 }
@@ -230,7 +232,6 @@ impl From<BreakpointConfig> for Breakpoint {
                 ParamValue::Cold(v) => *v,
                 ParamValue::Hot(_) => 0.0,
             },
-            // Temporary, will be replaced
             kind: Kind::Step,
         };
 
@@ -316,7 +317,7 @@ impl SetFromParam for Breakpoint {
             };
 
             if result.is_err() {
-                error!("Could not set {}: {}", name, value);
+                warn_for("Breakpoint", name);
             }
         }
     }

@@ -9,6 +9,7 @@ use std::str::FromStr;
 
 use super::prelude::*;
 
+#[derive(Debug)]
 pub enum Effect {
     Hysteresis(Hysteresis),
     Math(Math),

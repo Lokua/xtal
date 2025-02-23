@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(300),
+    gui_h: Some(500),
 };
 
 #[derive(SketchComponents)]
@@ -33,7 +33,6 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 }
 
 pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug_throttled!(500, "test_anim: {}", m.controls.get("test_anim"));
     m.controls.update();
 }
 
@@ -48,46 +47,64 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         m.controls.get("bg_alpha"),
     );
 
-    let hue = m.controls.get("hue");
-    let radius = m.controls.get("radius");
-    let pos_x = m.controls.get("pos_x");
-    let pos_y = m.controls.get("pos_y");
-    let radius_small = m.controls.get("radius_small");
-    let pos_x2 = m.controls.get("pos_x2");
-    let pos_x3 = m.controls.get("pos_x3");
-    let rect_y = m.controls.get("rect_y");
-    let line = m.controls.get("line");
-    let red_ball_radius = m.controls.get("red_ball_radius");
+    if m.controls.bool("show_center_circle") {
+        draw.ellipse()
+            .color(hsl(m.controls.get("center_hue"), 0.5, 0.5))
+            .radius(m.controls.get("center_radius"))
+            .x_y(0.0, 0.0);
+    }
 
-    draw.ellipse()
-        .color(hsl(hue, 0.5, 0.5))
-        .radius(radius)
-        .x_y(0.0, 0.0);
+    if m.controls.bool("show_white_circle") {
+        draw.ellipse()
+            .color(WHITE)
+            .radius(m.controls.get("white_radius"))
+            .x_y(
+                m.controls.get("white_pos_x") * m.wr.hw(),
+                m.controls.get("white_pos_y") * m.wr.hh(),
+            );
+    }
 
-    draw.ellipse()
-        .color(WHITE)
-        .radius(radius_small)
-        .x_y(pos_x * m.wr.hw(), pos_y * m.wr.hh());
+    if m.controls.bool("show_audio") {
+        draw.rect()
+            .color(CYAN)
+            .x_y(
+                0.0,
+                map_range(
+                    m.controls.get("audio_rect_y"),
+                    0.0,
+                    1.0,
+                    -m.wr.hh(),
+                    m.wr.hh(),
+                ),
+            )
+            .w_h(m.wr.w() - 100.0, 30.0);
+    }
 
-    draw.ellipse()
-        .color(RED)
-        .radius(red_ball_radius)
-        .x_y(pos_x2 * m.wr.hw(), -m.wr.h() / 4.0);
+    if m.controls.bool("show_breakpoints") {
+        draw.rect()
+            .color(MAGENTA)
+            .x_y(
+                0.0,
+                map_range(
+                    m.controls.get("breakpoints_line"),
+                    0.0,
+                    1.0,
+                    -m.wr.hh(),
+                    m.wr.hh(),
+                ),
+            )
+            .w_h(m.wr.w(), 20.0);
+    }
 
-    draw.ellipse()
-        .color(BLUE)
-        .radius(20.0)
-        .x_y(pos_x3 * m.wr.hw(), -m.wr.h() / 4.0);
-
-    draw.rect()
-        .color(CYAN)
-        .x_y(0.0, map_range(rect_y, 0.0, 1.0, -m.wr.hh(), m.wr.hh()))
-        .w_h(m.wr.w() - 100.0, 30.0);
-
-    draw.rect()
-        .color(MAGENTA)
-        .x_y(0.0, map_range(line, 0.0, 1.0, -m.wr.hh(), m.wr.hh()))
-        .w_h(m.wr.w(), 20.0);
+    if m.controls.bool("show_red_circle") {
+        draw.ellipse()
+            .color(RED)
+            .radius(m.controls.get("red_circle_radius"))
+            .x_y(
+                m.controls.get("red_circle_pos_x") * m.wr.hw(),
+                -m.wr.h() / 4.0,
+            );
+    }
 
     draw.to_frame(app, &frame).unwrap();
 }

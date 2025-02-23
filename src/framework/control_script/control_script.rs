@@ -149,41 +149,49 @@ impl<T: TimingSource> ControlScript<T> {
 
         let (config, effect) = effects.get_mut(modulator).unwrap();
 
-        if let (
+        let modulated = if let (
             EffectKind::RingModulator { modulator, .. },
             Effect::RingModulator(m),
         ) = (&config.kind, &mut *effect)
         {
-            return m.apply(value, self.get_raw(modulator));
-        }
+            m.apply(value, self.get_raw(modulator))
+        } else {
+            match effect {
+                Effect::Hysteresis(m) => {
+                    self.update_effect_params(m, modulator);
+                    m.apply(value)
+                }
+                Effect::Math(m) => {
+                    self.update_effect_params(m, modulator);
+                    m.apply(value)
+                }
+                Effect::Quantizer(m) => {
+                    self.update_effect_params(m, modulator);
+                    m.apply(value)
+                }
+                Effect::Saturator(m) => {
+                    self.update_effect_params(m, modulator);
+                    m.apply(value)
+                }
+                Effect::SlewLimiter(m) => {
+                    self.update_effect_params(m, modulator);
+                    m.apply(value)
+                }
+                Effect::WaveFolder(m) => {
+                    self.update_effect_params(m, modulator);
+                    debug!("[apply_modulator] effect: {:?}", m);
+                    m.apply(value)
+                }
+                Effect::RingModulator(_) => panic!(),
+            }
+        };
 
-        match effect {
-            Effect::Hysteresis(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::Math(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::Quantizer(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::Saturator(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::SlewLimiter(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::WaveFolder(m) => {
-                self.update_effect_params(m, modulator);
-                m.apply(value)
-            }
-            Effect::RingModulator(_) => panic!(),
-        }
+        debug!(
+            "[apply_modulator] modulator: {}, value: {}, modulated: {}",
+            modulator, value, modulated
+        );
+
+        modulated
     }
 
     fn update_effect_params(
@@ -207,15 +215,19 @@ impl<T: TimingSource> ControlScript<T> {
 
         if self.eval_cache.has(name, frame_count) {
             trace!(
-                "Returning cached value for {}, frame: {}",
+                "[get] (frame: {}) Returning cached value for {}",
+                frame_count,
                 name,
-                frame_count
             );
             let (_, value) = self.eval_cache.get(name).unwrap();
             return value;
         }
 
-        trace!("Computing new value for {}, frame: {}", name, frame_count);
+        trace!(
+            "[get] (frame: {}) Computing new value for {}",
+            frame_count,
+            name
+        );
 
         let mut value = None;
 
@@ -673,29 +685,45 @@ impl<T: TimingSource> ControlScript<T> {
                         serde_yml::from_value(config.config.clone())?;
 
                     let effect = match conf.kind {
-                        EffectKind::Hysteresis { .. } => Effect::Hysteresis(
-                            Hysteresis::from_cold_params(&conf),
-                        ),
-                        EffectKind::Math { .. } => {
-                            Effect::Math(Math::from_cold_params(&conf))
+                        EffectKind::Hysteresis { pass_through, .. } => {
+                            let mut effect =
+                                Hysteresis::from_cold_params(&conf);
+                            effect.pass_through = pass_through;
+                            Effect::Hysteresis(effect)
                         }
-                        EffectKind::Quantizer { .. } => Effect::Quantizer(
-                            Quantizer::from_cold_params(&conf),
-                        ),
-                        EffectKind::RingModulator { .. } => {
-                            Effect::RingModulator(
-                                RingModulator::from_cold_params(&conf),
-                            )
+                        EffectKind::Math { ref op, .. } => {
+                            let mut effect = Math::from_cold_params(&conf);
+                            effect.op = Op::from_str(&op).unwrap();
+                            Effect::Math(effect)
                         }
-                        EffectKind::Saturator { .. } => Effect::Saturator(
-                            Saturator::from_cold_params(&conf),
-                        ),
+                        EffectKind::Quantizer { range, .. } => {
+                            let mut effect = Quantizer::from_cold_params(&conf);
+                            effect.set_range(range);
+                            Effect::Quantizer(effect)
+                        }
+                        EffectKind::RingModulator { range, .. } => {
+                            let mut effect =
+                                RingModulator::from_cold_params(&conf);
+                            effect.set_range(range);
+                            Effect::RingModulator(effect)
+                        }
+                        EffectKind::Saturator { range, .. } => {
+                            let mut effect = Saturator::from_cold_params(&conf);
+                            effect.set_range(range);
+                            Effect::Saturator(effect)
+                        }
                         EffectKind::SlewLimiter { .. } => Effect::SlewLimiter(
                             SlewLimiter::from_cold_params(&conf),
                         ),
-                        EffectKind::WaveFolder { .. } => Effect::WaveFolder(
-                            WaveFolder::from_cold_params(&conf),
-                        ),
+                        EffectKind::WaveFolder {
+                            iterations, range, ..
+                        } => {
+                            let mut effect =
+                                WaveFolder::from_cold_params(&conf);
+                            effect.iterations = iterations;
+                            effect.set_range(range);
+                            Effect::WaveFolder(effect)
+                        }
                     };
 
                     self.effects
