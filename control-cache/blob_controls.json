@@ -1,43 +1,40 @@
 {
   "values": {
-    "m6x4f": {
+    "center_size": {
+      "Float": 4.17
+    },
+    "ms73c": {
       "Bool": false
-    },
-    "outer_size": {
-      "Float": 0.65
-    },
-    "color_mix": {
-      "Float": 0.848
-    },
-    "59hb7": {
-      "Bool": false
-    },
-    "blur": {
-      "Float": 20.0
-    },
-    "dist_morph": {
-      "Float": 0.0
     },
     "smoothness": {
       "Float": 0.573
     },
-    "invert": {
-      "Float": 0.0
-    },
-    "l0294": {
-      "Bool": false
-    },
     "outer_pos_t_mix": {
       "Float": 0.5
     },
-    "dist_speed": {
+    "outer_size": {
+      "Float": 0.57
+    },
+    "color_mix": {
+      "Float": 0.848
+    },
+    "clamp_min": {
+      "Float": -1.0
+    },
+    "107uh": {
+      "Bool": false
+    },
+    "invert": {
       "Float": 0.0
     },
-    "center_size": {
-      "Float": 5.0
+    "blur": {
+      "Float": 20.0
     },
-    "rot_speed": {
-      "Float": 1.545
+    "57mq5": {
+      "Bool": false
+    },
+    "dist_morph": {
+      "Float": 0.0
     }
   }
 }

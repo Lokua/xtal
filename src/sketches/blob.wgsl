@@ -25,7 +25,7 @@ struct Params {
     // unused, outer_size, outer_pos_t_mix, outer_scale_2
     d: vec4f,
 
-    // rot_angle, rot_speed, morph, unused
+    // rot_angle, bd, clamp_mix, clamp_max
     e: vec4f,
     f: vec4f,
 }
@@ -61,7 +61,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let outer_scale_2 = params.d.w;
     let center_size = params.c.w;
     let rot_angle = params.e.x;
-    let rot_speed = params.e.y;
+    let bd = params.e.y;
+    let clamp_min = params.e.z;
+    let clamp_max = params.e.w;
 
     var p = correct_aspect(position);
 
@@ -80,6 +82,23 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     var p4 = vec2f((-1.0 + p4xt) * os, (1.0 - p4yt) * os);
     // center
     var p5 = vec2f(0.0, center_y);
+
+    p1 = vec2f(
+        clamp(p1.x, clamp_min, clamp_max), 
+        clamp(p1.y, clamp_min, clamp_max)
+    );
+    p2 = vec2f(
+        clamp(p2.x, clamp_min, clamp_max), 
+        clamp(p2.y, clamp_min, clamp_max)
+    );
+    p3 = vec2f(
+        clamp(p3.x, clamp_min, clamp_max), 
+        clamp(p3.y, clamp_min, clamp_max)
+    );
+    p4 = vec2f(
+        clamp(p4.x, clamp_min, clamp_max), 
+        clamp(p4.y, clamp_min, clamp_max)
+    );
 
     let angle = rot_angle * TAU;
     p1 = rotate_point(p1, angle);
@@ -127,12 +146,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     );
     
     let base_color = mix(color_1, color_2, color_mix);
+
+    // How much we're in the center
+    let center_influence = smoothstep(1.0 - bd, 0.0, d5);
+    let center_color = vec3f(1.0);
+    let CENTER_OFF = 0.0;
+    var color = mix(base_color, center_color, center_influence * CENTER_OFF);
     
     // For areas where d is small (inside circles), use bright colors
     // For areas where d is large (background), fade to darker
     let circle_brightness = smoothstep(1.0, 0.9, d);
-    var color = base_color * (0.3 + 0.99 * circle_brightness); 
-    
+    color = color * (0.3 + 0.99 * circle_brightness); 
     color = mix(color, 1.0 - color, invert_color);
     
     return vec4f(color, 1.0);

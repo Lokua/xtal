@@ -434,7 +434,7 @@ impl<T: TimingSource> Animation<T> {
                 }
             },
             _ => {
-                warn!("Could not match any breakpoints");
+                warn_once!("Could not match breakpoint {:?}", breakpoint);
                 0.0
             }
         }

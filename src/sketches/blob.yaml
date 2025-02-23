@@ -29,6 +29,10 @@ t4:
   beats: 2
   phase: 0.75
 
+# ------------------------------------------------------------------------------
+#  Corner Properties
+# ------------------------------------------------------------------------------
+
 outer_size:
   var: d2
   type: slider
@@ -79,24 +83,6 @@ outer_scale_2:
       position: 6.0
       value: 0.0
 
-outer_scale_modifier:
-  type: effect
-  kind: quantizer
-  step: 0.25
-  range: [0, 1.0]
-
-outer_scale_mod_1:
-  type: mod
-  source: outer_scale
-  modulators:
-    - outer_scale_modifier
-
-outer_scale_mod_2:
-  type: mod
-  source: outer_scale_2
-  modulators:
-    - outer_scale_modifier
-
 # ------------------------------------------------------------------------------
 #  Center
 # ------------------------------------------------------------------------------
@@ -122,8 +108,23 @@ center_y:
       value: 0.0
       amplitude: 2.0
 
-    - kind: end
+    - kind: random
       position: 4.0
+      value: 0.0
+      amplitude: 2.0
+
+    - kind: random
+      position: 5.0
+      value: 0.0
+      amplitude: 2.0
+
+    - kind: random
+      position: 6.0
+      value: 0.0
+      amplitude: 2.0
+
+    - kind: end
+      position: 12.0
       value: 0.0
 
 center_y_slew:
@@ -189,13 +190,6 @@ color_mix:
 transform_separator:
   type: separator
 
-d1:
-  type: audio
-  channel: 2
-  slew: [0.5, 0.5]
-  detect: 0.0
-  range: [0.7, 1.0]
-
 rot_angle:
   var: e1
   type: automate
@@ -204,25 +198,77 @@ rot_angle:
       position: 0
       value: 0
       amplitude: 0.5
-    - kind: end
+    - kind: step
       position: 4
       value: 0
+    - kind: end
+      position: 10
+      value: 0
 
-# rot_angle:
-#   var: e1
-#   type: slider
+rot_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
 
-rot_speed:
-  var: e2
-  type: slider
-  range: [0, 2]
+rot_mod:
+  type: mod
+  source: rot_angle
+  modulators:
+    - rot_slew
 
 dist_morph:
   var: e3
   type: slider
 
-dist_speed:
-  var: e4
+bd:
+  var: e2
+  type: audio
+  channel: 0
+  slew: [0.0, 0.3]
+  range: [0.6, 1]
+
+bd_amp:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 1.0
+
+bd_mod:
+  type: mod
+  source: bd
+  modulators:
+    - bd_amp
+
+clamp_min:
+  var: e3
   type: slider
+  default: -1
+  range: [-1, 1]
+
+clamp_max:
+  var: e4
+  bypass: _
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0
+      value: -0.5
+      easing: ease_out_quint
+    - kind: ramp
+      position: 12
+      value: 1.0
+      easing: ease_in_quint
+    - kind: end
+      position: 24
+      value: 0
+
+# ???
+d1:
+  type: audio
+  channel: 2
+  slew: [0.5, 0.5]
+  detect: 0.0
+  range: [0.7, 1.0]
 
 _: _
