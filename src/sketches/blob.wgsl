@@ -19,11 +19,14 @@ struct Params {
     // invert, center_size, smoothness, color_mix
     b: vec4f,
 
-    // t_long, center_y, outer_scale, bd
+    // t_long, center_y, outer_scale, center_size
     c: vec4f,
 
-    // chord, outer_size, outer_pos_t_mix, unused
+    // unused, outer_size, outer_pos_t_mix, outer_scale_2
     d: vec4f,
+
+    e: vec4f,
+    f: vec4f,
 }
 
 @group(0) @binding(0)
@@ -51,43 +54,40 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let t_long = params.c.x;
     let center_y = params.c.y;
     let outer_scale = params.c.z;
-    let bd = params.c.w;
     let chord = params.d.x;
     let outer_size = 1.0 - params.d.y;
     let outer_pos_t_mix = params.d.z;
     let outer_scale_2 = params.d.w;
+    let center_size = params.c.w;
+    let rotation_angle = params.e.x;
+    let rotation_speed = params.e.y;
 
-    let p = correct_aspect(position);
+    var p = correct_aspect(position);
+    // p = rotate(p);
+
     let os = mix(outer_scale, outer_scale_2, outer_pos_t_mix);
-    var p1: vec2f;
-    var p2: vec2f;
-    var p3: vec2f;
-    var p4: vec2f;
-    if true {
-        p1 = vec2f((1.0 - t1) * os, (1.0 - t1) * os);
-        p2 = vec2f((1.0 - t2) * os, (-1.0 + t2 )* os);
-        p3 = vec2f((-1.0 + t3) * os, (-1.0 + t3) * os);
-        p4 = vec2f((-1.0 + t4) * os, (1.0 - t4) * os);
-    } else {
-        p1 = vec2f(
-            (1.0 - mix(t4, t1, outer_pos_t_mix)) * os, 
-            (1.0 - mix(t3, t1, outer_pos_t_mix)) * os
-        );
-        p2 = vec2f(
-            (1.0 - mix(t2, t2, outer_pos_t_mix)) * os,
-            (-1.0 + mix(t1, t2, outer_pos_t_mix)) * os
-        );
-        p3 = vec2f(
-            (-1.0 + mix(t4, t3, outer_pos_t_mix)) * os,
-            (-1.0 + mix(t3, t3, outer_pos_t_mix)) * os
-        );
-        p4 = vec2f(
-            (-1.0 + mix(t2, t4, outer_pos_t_mix)) * os,
-            (1.0 - mix(t1, t4, outer_pos_t_mix)) * os
-        );
-    }
+    let p1xt = mix(t4, t1, outer_pos_t_mix);
+    let p1yt = mix(t3, t1, outer_pos_t_mix);
+    let p2xt = mix(t2, t2, outer_pos_t_mix);
+    let p2yt = mix(t1, t2, outer_pos_t_mix);
+    let p3xt = mix(t4, t3, outer_pos_t_mix);
+    let p3yt = mix(t3, t3, outer_pos_t_mix);
+    let p4xt = mix(t4, t4, outer_pos_t_mix);
+    let p4yt = mix(t3, t4, outer_pos_t_mix);
+    var p1 = vec2f((1.0 - p1xt) * os, (1.0 - p1yt) * os);
+    var p2 = vec2f((1.0 - p2xt) * os, (-1.0 + p2yt) * os);
+    var p3 = vec2f((-1.0 + p3xt) * os, (-1.0 + p3yt) * os);
+    var p4 = vec2f((-1.0 + p4xt) * os, (1.0 - p4yt) * os);
     // center
-    let p5 = vec2f(0.0, center_y);
+    var p5 = vec2f(0.0, center_y);
+
+    let angle = rotation_angle * rotation_speed;
+    p1 = rotate_point(p1, angle);
+    p2 = rotate_point(p2, angle);
+    p3 = rotate_point(p3, angle);
+    p4 = rotate_point(p4, angle);
+    p5 = rotate_point(p5, angle);
+
 
     let scale = 1.0;
     let d1 = length(p - p1) / scale * outer_size;
@@ -96,13 +96,15 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let d4 = length(p - p4) / scale * outer_size;
     let d5 = length(p - p5) / (scale * 0.5);
 
-    let k = smoothness;
+    // As outer_size increases, smoothness decreases
+    let k = smoothness * outer_size;
+    let k_center = k * center_size;
     
     // Mix each corner with the center point
-    let mix1 = smin(d1, d5, k);
-    let mix2 = smin(d2, d5, k);
-    let mix3 = smin(d3, d5, k);
-    let mix4 = smin(d4, d5, k);
+    let mix1 = smin(d1, d5, k_center);
+    let mix2 = smin(d2, d5, k_center);
+    let mix3 = smin(d3, d5, k_center);
+    let mix4 = smin(d4, d5, k_center);
 
     // Combine all mixed pairs
     let mix12 = smin(mix1, mix2, k);
@@ -134,6 +136,30 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     color = mix(color, 1.0 - color, invert_color);
     
     return vec4f(color, 1.0);
+}
+
+fn rotate_point(p: vec2f, angle: f32) -> vec2f {
+    let rot_matrix = mat2x2f(
+        cos(angle), -sin(angle),
+        sin(angle), cos(angle)
+    );
+    return rot_matrix * p;
+}
+
+fn rotate(position: vec2f) -> vec2f {
+    let rotation_angle = params.e.x;
+    let rotation_speed = params.e.y;
+
+    let rot_matrix = mat2x2f(
+        cos(rotation_angle * rotation_speed), 
+        -sin(rotation_angle * rotation_speed),
+        sin(rotation_angle * rotation_speed), 
+        cos(rotation_angle * rotation_speed)
+    );
+
+    let rotated_p = rot_matrix * position;
+    
+    return rotated_p;
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {

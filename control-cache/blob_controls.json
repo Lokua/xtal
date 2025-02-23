@@ -1,22 +1,40 @@
 {
   "values": {
+    "blur": {
+      "Float": 20.0
+    },
+    "rot_speed": {
+      "Float": 0.0
+    },
+    "rot_angle": {
+      "Float": 6.2832
+    },
     "invert": {
       "Float": 0.0
+    },
+    "color_mix": {
+      "Float": 0.695
+    },
+    "smoothness": {
+      "Float": 0.452
+    },
+    "outer_size": {
+      "Float": 0.63
     },
     "outer_pos_t_mix": {
       "Float": 0.5
     },
-    "color_mix": {
-      "Float": 0.765
+    "gv7vc": {
+      "Bool": false
     },
-    "smoothness": {
-      "Float": 0.552
+    "6ejh8": {
+      "Bool": false
     },
-    "blur": {
-      "Float": 10.849999
+    "center_size": {
+      "Float": 4.94
     },
-    "outer_size": {
-      "Float": 0.083
+    "ie45k": {
+      "Bool": false
     }
   }
 }

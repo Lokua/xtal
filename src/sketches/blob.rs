@@ -37,11 +37,14 @@ struct ShaderParams {
     // invert, center_size, smoothness, color_mix
     b: [f32; 4],
 
-    // t_long, center_y, outer_scale, bd
+    // t_long, center_y, outer_scale, center_size
     c: [f32; 4],
 
-    // chord, outer_size, ...
+    // unused, outer_size, outer_pos_t_mix, outer_scale_2
     d: [f32; 4],
+
+    e: [f32; 4],
+    f: [f32; 4],
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
@@ -56,6 +59,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         b: [0.0; 4],
         c: [0.0; 4],
         d: [0.0; 4],
+        e: [0.0; 4],
+        f: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_fullscreen(
@@ -90,13 +95,25 @@ pub fn update(app: &App, m: &mut Model, _update: Update) {
             m.controls.get("t_long"),
             m.controls.get("center_y"),
             m.controls.get("outer_scale"),
-            m.controls.get("bd"),
+            m.controls.get("c4"),
         ],
         d: [
-            m.controls.get("chord"),
+            m.controls.get("d1"),
             m.controls.get("d2"),
             m.controls.get("d3"),
             m.controls.get("d4"),
+        ],
+        e: [
+            m.controls.get("e1"),
+            m.controls.get("e2"),
+            m.controls.get("e3"),
+            m.controls.get("e4"),
+        ],
+        f: [
+            m.controls.get("f1"),
+            m.controls.get("f2"),
+            m.controls.get("f3"),
+            m.controls.get("f4"),
         ],
     };
 

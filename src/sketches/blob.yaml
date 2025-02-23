@@ -1,3 +1,10 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Corner Animations
+# ------------------------------------------------------------------------------
+
 # top-right corner
 t1:
   type: triangle
@@ -22,66 +29,14 @@ t4:
   beats: 2
   phase: 0.75
 
-invert:
+outer_size:
+  var: d2
   type: slider
-  range: [0, 1]
+  range: [0, 2]
 
-# center size
-smoothness:
+outer_pos_t_mix:
+  var: d3
   type: slider
-  range: [0, 1]
-
-blur:
-  type: slider
-  range: [1, 20]
-
-color_mix:
-  type: slider
-
-t_long:
-  type: triangle
-
-center_y:
-  type: automate
-  mode: loop
-  bypass: _
-  breakpoints:
-    - kind: random
-      position: 0.0
-      value: 0.0
-      amplitude: 0.0
-
-    - kind: random
-      position: 2.0
-      value: 0.0
-      amplitude: 2.0
-
-    - kind: end
-      position: 4.0
-      value: 0.0
-
-center_y_slew:
-  type: effect
-  kind: slew_limiter
-  rise: 0.6
-  fall: 0.6
-
-center_y_fold:
-  type: effect
-  kind: wave_folder
-  gain: 2.0
-  iterations: 1
-  symmetry: 1.0
-  bias: 0.0
-  shape: -1.0
-  range: [-1, 1]
-
-center_y_mod:
-  type: mod
-  source: center_y
-  modulators:
-    - center_y_slew
-    - center_y_fold
 
 # this alone adds phase cancellation to t1-4 -
 # q1 moves out the most, q4 the least...
@@ -126,7 +81,7 @@ outer_scale_2:
 
 outer_scale_modifier:
   type: effect
-  kind: quant
+  kind: quantizer
   step: 0.25
   range: [0, 1.0]
 
@@ -142,27 +97,113 @@ outer_scale_mod_2:
   modulators:
     - outer_scale_modifier
 
-bd:
-  type: audio
-  channel: 0
-  slew: [0.5, 0.5]
-  detect: 0.0
-  range: [0.7, 1.0]
+# ------------------------------------------------------------------------------
+#  Center
+# ------------------------------------------------------------------------------
 
-chord:
+center_separator:
+  type: separator
+
+t_long:
+  type: triangle
+
+center_y:
+  type: automate
+  mode: loop
+  bypass: _
+  breakpoints:
+    - kind: random
+      position: 0.0
+      value: 0.0
+      amplitude: 0.0
+
+    - kind: random
+      position: 2.0
+      value: 0.0
+      amplitude: 2.0
+
+    - kind: end
+      position: 4.0
+      value: 0.0
+
+center_y_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
+
+center_y_fold_gain:
+  type: triangle
+  beats: 4
+  range: [2, 10]
+
+center_y_fold:
+  type: effect
+  kind: wave_folder
+  gain: $center_y_fold_gain
+  iterations: 1
+  symmetry: 1.0
+  bias: 0.0
+  shape: -1.0
+  range: [-1, 1]
+
+center_y_mod:
+  type: mod
+  source: center_y
+  modulators:
+    - center_y_slew
+    - center_y_fold
+
+center_size:
+  var: c4
+  type: slider
+  range: [0.25, 5]
+
+# ------------------------------------------------------------------------------
+#  Global Appearance
+# ------------------------------------------------------------------------------
+
+global_separator:
+  type: separator
+
+invert:
+  type: slider
+  range: [0, 1]
+
+# center size
+smoothness:
+  type: slider
+  range: [0, 1]
+
+blur:
+  type: slider
+  range: [1, 20]
+
+color_mix:
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Un
+# ------------------------------------------------------------------------------
+
+transform_separator:
+  type: separator
+
+d1:
   type: audio
   channel: 2
   slew: [0.5, 0.5]
   detect: 0.0
   range: [0.7, 1.0]
 
-outer_size:
-  var: d2
+rot_angle:
+  var: e1
   type: slider
-  range: [0, 0.4]
+  range: [0, *TAU]
 
-outer_pos_t_mix:
-  var: d3
+rot_speed:
+  var: e2
   type: slider
+  range: [0, 2]
 
 _: _
