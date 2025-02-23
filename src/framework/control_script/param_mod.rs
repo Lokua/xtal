@@ -45,6 +45,15 @@ impl ParamValue {
             }
         }
     }
+
+    /// Receive the wrapped if [`Self::Cold`], otherwise execute `f` in case of
+    /// [`Self::Hot`] with Hot String.
+    pub fn cold_or(&self, f: impl Fn(String) -> f32) -> f32 {
+        match self {
+            Self::Cold(x) => *x,
+            Self::Hot(name) => f(name.clone()),
+        }
+    }
 }
 
 impl From<ParamValue> for f32 {

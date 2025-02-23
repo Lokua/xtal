@@ -65,6 +65,7 @@ impl<T: TimingSource> ControlScript<T> {
 
         let config =
             Self::parse_from_str(yaml_str).expect("Unable to parse yaml");
+
         script
             .populate_controls(&config)
             .expect("Unable to populate controls");
@@ -90,7 +91,7 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
-        let name = &self.resolve_name(name);
+        let name = &self.aliases.get(name).cloned().unwrap_or(name.to_string());
 
         if let Some(bypass) = self.bypassed.get(name).and_then(|x| *x) {
             return bypass;
@@ -104,12 +105,10 @@ impl<T: TimingSource> ControlScript<T> {
 
         match self.modulations.get(name) {
             None => value,
-            Some(modulators) => self.apply_modulators(value, modulators),
+            Some(modulators) => modulators
+                .iter()
+                .fold(value, |v, modulator| self.apply_modulator(v, modulator)),
         }
-    }
-
-    fn resolve_name(&self, name: &str) -> String {
-        self.aliases.get(name).cloned().unwrap_or(name.to_string())
     }
 
     fn run_dependencies(&self, target_name: &str) {
@@ -128,16 +127,6 @@ impl<T: TimingSource> ControlScript<T> {
                 self.get_raw(name);
             }
         }
-    }
-
-    fn apply_modulators(
-        &self,
-        initial_value: f32,
-        modulators: &Vec<String>,
-    ) -> f32 {
-        modulators.iter().fold(initial_value, |value, modulator| {
-            self.apply_modulator(value, modulator)
-        })
     }
 
     fn apply_modulator(&self, value: f32, modulator: &str) -> f32 {
@@ -179,17 +168,11 @@ impl<T: TimingSource> ControlScript<T> {
                 }
                 Effect::WaveFolder(m) => {
                     self.update_effect_params(m, modulator);
-                    debug!("[apply_modulator] effect: {:?}", m);
                     m.apply(value)
                 }
                 Effect::RingModulator(_) => panic!(),
             }
         };
-
-        debug!(
-            "[apply_modulator] modulator: {}, value: {}, modulated: {}",
-            modulator, value, modulated
-        );
 
         modulated
     }
@@ -201,10 +184,7 @@ impl<T: TimingSource> ControlScript<T> {
     ) {
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                let value = match param_value {
-                    ParamValue::Cold(value) => *value,
-                    ParamValue::Hot(name) => self.get_raw(name),
-                };
+                let value = param_value.cold_or(|name| self.get_raw(&name));
                 effect.set_from_param(param_name, value);
             }
         }
@@ -214,20 +194,9 @@ impl<T: TimingSource> ControlScript<T> {
         let frame_count = frame_controller::frame_count();
 
         if self.eval_cache.has(name, frame_count) {
-            trace!(
-                "[get] (frame: {}) Returning cached value for {}",
-                frame_count,
-                name,
-            );
             let (_, value) = self.eval_cache.get(name).unwrap();
             return value;
         }
-
-        trace!(
-            "[get] (frame: {}) Computing new value for {}",
-            frame_count,
-            name
-        );
 
         let mut value = None;
 
@@ -304,12 +273,6 @@ impl<T: TimingSource> ControlScript<T> {
         node_name: &str,
         breakpoints: &Vec<Breakpoint>,
     ) -> Vec<Breakpoint> {
-        trace!(
-            "\n[resolve_breakpoint_params]\nbreakpoints: {:#?}\ndep_graph: {:#?}",
-            breakpoints,
-            self.dep_graph
-        );
-
         let mut breakpoints = breakpoints.clone();
 
         if let Some(params) = self.dep_graph.node(node_name) {
@@ -322,17 +285,11 @@ impl<T: TimingSource> ControlScript<T> {
                 }
 
                 if let Some(index) = path_segments[1].parse::<usize>().ok() {
-                    let value = match param_value {
-                        ParamValue::Cold(value) => *value,
-                        ParamValue::Hot(name) => self.get_raw(name),
-                    };
-
+                    let value = param_value.cold_or(|name| self.get_raw(&name));
                     breakpoints[index].set_from_param(&param_name, value);
                 }
             }
         }
-
-        trace!("\nbreakpoints (after): {:#?}", breakpoints);
 
         breakpoints
     }
@@ -345,24 +302,14 @@ impl<T: TimingSource> ControlScript<T> {
         node_name: &str,
     ) -> P {
         let mut config = config.clone();
-        trace!("[resolve] config: {:?}, node_name: {}", config, node_name);
 
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                trace!(
-                    "[resolve] param_name: {}, param_value: {:?}",
-                    param_name,
-                    param_value
-                );
-
-                let value = match param_value {
-                    ParamValue::Cold(value) => *value,
-                    ParamValue::Hot(name) => self.get_raw(name),
-                };
-
+                let value = param_value.cold_or(|name| self.get_raw(&name));
                 config.set_from_param(param_name, value);
             }
         }
+
         config
     }
 
@@ -420,7 +367,6 @@ impl<T: TimingSource> ControlScript<T> {
         let raw_config = serde_yml::from_str(&yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;
         let config: ConfigFile = serde_yml::from_value(merged_config)?;
-        // trace!("Parsed config: {:?}", config);
         Ok(config)
     }
 
