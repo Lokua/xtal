@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 1244,
     gui_w: None,
-    gui_h: Some(360),
+    gui_h: Some(420),
 };
 
 #[derive(SketchComponents)]

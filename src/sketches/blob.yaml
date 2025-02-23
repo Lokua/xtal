@@ -198,12 +198,31 @@ d1:
 
 rot_angle:
   var: e1
-  type: slider
-  range: [0, *TAU]
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 0
+      amplitude: 0.5
+    - kind: end
+      position: 4
+      value: 0
+
+# rot_angle:
+#   var: e1
+#   type: slider
 
 rot_speed:
   var: e2
   type: slider
   range: [0, 2]
+
+dist_morph:
+  var: e3
+  type: slider
+
+dist_speed:
+  var: e4
+  type: slider
 
 _: _

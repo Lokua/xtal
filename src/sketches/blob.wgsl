@@ -25,6 +25,7 @@ struct Params {
     // unused, outer_size, outer_pos_t_mix, outer_scale_2
     d: vec4f,
 
+    // rot_angle, rot_speed, morph, unused
     e: vec4f,
     f: vec4f,
 }
@@ -59,11 +60,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let outer_pos_t_mix = params.d.z;
     let outer_scale_2 = params.d.w;
     let center_size = params.c.w;
-    let rotation_angle = params.e.x;
-    let rotation_speed = params.e.y;
+    let rot_angle = params.e.x;
+    let rot_speed = params.e.y;
 
     var p = correct_aspect(position);
-    // p = rotate(p);
 
     let os = mix(outer_scale, outer_scale_2, outer_pos_t_mix);
     let p1xt = mix(t4, t1, outer_pos_t_mix);
@@ -81,7 +81,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     // center
     var p5 = vec2f(0.0, center_y);
 
-    let angle = rotation_angle * rotation_speed;
+    let angle = rot_angle * TAU;
     p1 = rotate_point(p1, angle);
     p2 = rotate_point(p2, angle);
     p3 = rotate_point(p3, angle);
@@ -146,22 +146,6 @@ fn rotate_point(p: vec2f, angle: f32) -> vec2f {
     return rot_matrix * p;
 }
 
-fn rotate(position: vec2f) -> vec2f {
-    let rotation_angle = params.e.x;
-    let rotation_speed = params.e.y;
-
-    let rot_matrix = mat2x2f(
-        cos(rotation_angle * rotation_speed), 
-        -sin(rotation_angle * rotation_speed),
-        sin(rotation_angle * rotation_speed), 
-        cos(rotation_angle * rotation_speed)
-    );
-
-    let rotated_p = rot_matrix * position;
-    
-    return rotated_p;
-}
-
 fn correct_aspect(position: vec2f) -> vec2f {
     let w = params.resolution.x;
     let h = params.resolution.y;
@@ -170,7 +154,6 @@ fn correct_aspect(position: vec2f) -> vec2f {
     p.x *= aspect;
     return p;
 }
-
 
 fn smin(a: f32, b: f32, k: f32) -> f32 {
     let h = max(k - abs(a - b), 0.0) / k;
