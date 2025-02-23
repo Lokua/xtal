@@ -1,55 +1,55 @@
 {
   "values": {
-    "signal_steps": {
-      "Float": 0.86499995
-    },
-    "wave_scale": {
-      "Float": 0.48499998
-    },
-    "fractal_grid_mix": {
-      "Float": 0.0
-    },
-    "wave_y": {
-      "Float": 0.137
-    },
-    "wave_mix": {
-      "Float": 0.97499996
-    },
-    "distort_mix": {
-      "Float": 0.932
-    },
-    "fractal_scale": {
-      "Float": 0.205
-    },
-    "fractal_grid_scale": {
-      "Float": 0.14299999
-    },
-    "mask_falloff": {
-      "Float": 0.78999996
-    },
-    "fractal_mix": {
-      "Float": 0.968
-    },
-    "e3": {
-      "Float": 0.0
-    },
     "signal_mix": {
       "Float": 1.0
+    },
+    "wave_scale": {
+      "Float": 0.42
+    },
+    "wave_x": {
+      "Float": 0.081999995
+    },
+    "mask_falloff": {
+      "Float": 0.798
+    },
+    "distort_mix": {
+      "Float": 0.94
+    },
+    "fractal_grid_mix": {
+      "Float": 0.24499999
+    },
+    "wave_y": {
+      "Float": 0.15799999
+    },
+    "fractal_mix": {
+      "Float": 0.26
     },
     "fractal_color_scale": {
       "Float": 0.91999996
     },
-    "wave_x": {
-      "Float": 0.155
-    },
-    "fractal_count": {
-      "Float": 0.32
-    },
-    "wave_freq": {
-      "Float": 0.81299996
+    "fractal_grid_scale": {
+      "Float": 0.0
     },
     "e4": {
       "Float": 0.0
+    },
+    "signal_steps": {
+      "Float": 0.17799999
+    },
+    "fractal_scale": {
+      "Float": 0.475
+    },
+    "fractal_count": {
+      "Float": 0.173
+    },
+    "e3": {
+      "Float": 0.0
+    },
+    "wave_mix": {
+      "Float": 0.91499996
+    },
+    "wave_freq": {
+      "Float": 0.78499997
     }
   }
 }

@@ -1,238 +1,247 @@
 _vars:
-    PI: &PI 3.14159265359
-    TAU: &TAU 6.283185307179586
-    rx: &rx 32
-    ry: &ry 16
-    rz: &rz 4
-    gt: &gt 8
+  PI: &PI 3.14159265359
+  TAU: &TAU 6.283185307179586
+  rx: &rx 32
+  ry: &ry 16
+  rz: &rz 4
+  gt: &gt 8
 
 # Animations ---------------------
 
 rot_x:
-    type: lerp_rel
-    bypass: _
-    keyframes:
-        - [*rx, *TAU]
-        - [*rx, 0]
+  type: automate
+  bypass: _
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *rx
+      value: 0
 
 rot_y:
-    type: lerp_rel
-    bypass: _
-    keyframes:
-        - [*ry, *TAU]
-        - [*ry, 0]
+  type: automate
+  bypass: _
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *ry
+      value: 0
 
 rot_z_meta:
-    type: osc
+  type: osc
 
 rot_z:
-    type: lerp_rel
-    bypass: _
-    keyframes:
-        - [*rz, *TAU]
-        - [*rz, 0]
+  type: automate
+  bypass: _
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *rz
+      value: 0
 
 corner_offset_meta:
-    type: osc
+  type: osc
 
 corner_offset:
-    type: triangle
-    beats: 4
-    range: [0, 1]
+  type: triangle
+  beats: 4
+  range: [0, 1]
 
 middle_size_meta:
-    type: osc
+  type: osc
 
 middle_size:
-    type: triangle
-    beats: 1.5
-    range: [-0.75, 0.5]
+  type: triangle
+  beats: 1.5
+  range: [-0.75, 0.5]
 
 corner_t_meta:
-    type: osc
+  type: osc
 
 _corner_t_vars:
-    ct: &ct 4
-    corner_t_base: &corner_t_base
-        type: triangle
-        bypass: _
-        beats: 2
-        range: [-1.5, 3]
+  ct: &ct 4
+  corner_t_base: &corner_t_base
+    type: triangle
+    bypass: _
+    beats: 2
+    range: [-1.5, 3]
 corner_t_1:
-    <<: *corner_t_base
-    phase: 0
+  <<: *corner_t_base
+  phase: 0
 corner_t_2:
-    <<: *corner_t_base
-    phase: 0.125
+  <<: *corner_t_base
+  phase: 0.125
 corner_t_3:
-    <<: *corner_t_base
-    phase: 0.25
+  <<: *corner_t_base
+  phase: 0.25
 corner_t_4:
-    <<: *corner_t_base
-    phase: 0.375
+  <<: *corner_t_base
+  phase: 0.375
 corner_t_5:
-    <<: *corner_t_base
-    phase: 0.5
+  <<: *corner_t_base
+  phase: 0.5
 corner_t_6:
-    <<: *corner_t_base
-    phase: 0.625
+  <<: *corner_t_base
+  phase: 0.625
 corner_t_7:
-    <<: *corner_t_base
-    phase: 0.75
+  <<: *corner_t_base
+  phase: 0.75
 corner_t_8:
-    <<: *corner_t_base
-    phase: 0.875
+  <<: *corner_t_base
+  phase: 0.875
 
 echo_time:
-    type: lerp_rel
-    keyframes:
-        - [*gt, 0.0]
-        - [*gt, 1.0]
-        - [*gt, 0.0]
+  type: triangle
+  beats: 8
 
 # --------------------------------
 
 z_offset:
-    type: slider
-    range: [-5.0, -0.5]
-    default: 3.0
+  type: slider
+  range: [-5.0, -0.5]
+  default: 3.0
 
 scale:
-    type: osc
+  type: osc
 
 middle_translate:
-    type: osc
-    range: [0, 2]
+  type: osc
+  range: [0, 2]
 
 corner_translate:
-    type: osc
-    range: [-1, 2]
+  type: osc
+  range: [-1, 2]
 
 # --------------------------------
 
 texture_section:
-    type: separator
+  type: separator
 
 texture_strength:
-    type: slider
-    range: [0.0, 2.0]
+  type: slider
+  range: [0.0, 2.0]
 
 texture_scale:
-    type: slider
-    range: [0.0, 10.0]
+  type: slider
+  range: [0.0, 10.0]
 
 # --------------------------------
 
 grid_section:
-    type: separator
+  type: separator
 
 grid_contrast:
-    type: slider
+  type: slider
 
 grid_size:
-    type: slider
-    range: [0, 16]
-    step: 1.0
+  type: slider
+  range: [0, 16]
+  step: 1.0
 
 grid_border_size:
-    type: slider
+  type: slider
 
 # --------------------------------
 
 fx_section:
-    type: separator
+  type: separator
 
 echo_threshold:
-    type: slider
+  type: slider
 
 echo_intensity:
-    type: osc
+  type: osc
 
 stag:
-    type: osc
-    range: [-1, 1]
+  type: osc
+  range: [-1, 1]
 
 diag:
-    type: osc
-    range: [0, 4]
+  type: osc
+  range: [0, 4]
 
 bulge:
-    type: slider
-    range: [-1, 1]
-    step: 0.1
+  type: slider
+  range: [-1, 1]
+  step: 0.1
 
 offs:
-    type: slider
-    range: [0, 1]
+  type: slider
+  range: [0, 1]
 
 twist:
-    type: slider
-    range: [0, 2]
+  type: slider
+  range: [0, 2]
 
 explode:
-    type: slider
+  type: slider
 
 wave:
-    type: osc
+  type: osc
 
 phase_twist:
-    type: slider
-    range: [0, 2]
+  type: slider
+  range: [0, 2]
 
 # --------------------------------
 
 color_section:
-    type: separator
+  type: separator
 
 bg_noise:
-    type: slider
-    range: [0, 1]
+  type: slider
+  range: [0, 1]
 
 bg_noise_scale:
-    type: slider
-    range: [0, 100]
+  type: slider
+  range: [0, 100]
 
 color_spread:
-    type: slider
+  type: slider
 
 # --------------------------------
 
 post_processing_section:
-    type: separator
+  type: separator
 
 edge_mix:
-    type: slider
+  type: slider
 
 edge_size:
-    type: slider
-    range: [1, 20]
-    default: 1
-    step: 1
+  type: slider
+  range: [1, 20]
+  default: 1
+  step: 1
 
 edge_thresh:
-    type: slider
-    range: [0.0, 0.4]
-    default: 0.2
-    step: 0.0001
+  type: slider
+  range: [0.0, 0.4]
+  default: 0.2
+  step: 0.0001
 
 geo_mix:
-    type: osc
+  type: osc
 
 geo_size:
-    type: slider
-    range: [0.0125, 1.0]
-    step: 0.0125
+  type: slider
+  range: [0.0125, 1.0]
+  step: 0.0125
 
 geo_offs:
-    type: slider
-    range: [0, 10]
+  type: slider
+  range: [0, 10]
 
 contrast:
-    type: slider
-    range: [-2, 2]
-    step: 0.1
+  type: slider
+  range: [-2, 2]
+  step: 0.1
 
 brightness:
-    type: slider
-    range: [-1, 1]
-    step: 0.1
+  type: slider
+  range: [-1, 1]
+  step: 0.1

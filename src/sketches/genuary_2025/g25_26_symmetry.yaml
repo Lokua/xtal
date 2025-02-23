@@ -1,40 +1,71 @@
 # --- ANIMATIONS
 
 mask_radius:
-  type: 'lerp_rel'
-  keyframes:
-    - [1.0, 1.0]
-    - [1.0, 0.0]
-    - [0.0, 1.0]
+  bypass: 0
+  type: triangle
+  beats: 2
 
 mask_x:
-  type: 'lerp_rel'
-  keyframes:
-    - [1.0, 0.0]
-    - [1.0, 0.0]
-    - [0.0, 0.0]
+  bypass: 0
+  type: triangle
+  beats: 2
 
 mask_y:
-  type: 'lerp_rel'
-  keyframes:
-    - [2.0, 0.0]
-    - [2.0, 0.0]
-    - [0.0, 0.0]
+  bypass: 0
+  type: triangle
+  beats: 2
 
 distort_freq:
-  type: 'r_ramp_rel'
-  ramp_time: 2.0
-  keyframes:
-    - [4.0, [0.0, 1.0]]
+  bypass: _
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 0.5
+      amplitude: 0.5
+    - kind: end
+      position: 4
+      value: 0.5
+
+slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
+
+distort_freq_slew_mod:
+  type: mod
+  source: distort_freq
+  modulators:
+    - slew
 
 distort_angle_offset:
-  type: 'r_ramp_rel'
-  ramp_time: 0.75
-  keyframes:
-    - [1.5, [0.0, 1.0]]
-    - [3.0, [0.0, 1.0]]
-    - [2.5, [0.0, 1.0]]
-    - [1.0, [0.0, 1.0]]
+  _:
+    val: &val 0.5
+    amp: &amp 0.5
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: *val
+      amplitude: *amp
+    - kind: random
+      position: 1.5
+      value: *val
+      amplitude: *amp
+    - kind: random
+      position: 2.75
+      value: *val
+      amplitude: *amp
+    - kind: end
+      position: 4
+      value: 0.0
+
+distort_angle_offset_mod:
+  type: mod
+  source: distort_angle_offset
+  modulators:
+    - slew
 
 # --- UI CONTROLS
 
@@ -56,12 +87,6 @@ wave_y:
 
 distort_mix:
   type: 'slider'
-
-# distort_freq:
-#     type: "slider"
-
-# distort_angle_offset:
-#     type: "slider"
 
 fractal_mix:
   type: 'slider'
