@@ -637,9 +637,11 @@ impl<T: TimingSource> ControlScript<T> {
                             effect.pass_through = pass_through;
                             Effect::Hysteresis(effect)
                         }
-                        EffectKind::Math { ref op, .. } => {
+                        EffectKind::Math {
+                            operator: ref op, ..
+                        } => {
                             let mut effect = Math::from_cold_params(&conf);
-                            effect.op = Op::from_str(&op).unwrap();
+                            effect.operator = Operator::from_str(&op).unwrap();
                             Effect::Math(effect)
                         }
                         EffectKind::Quantizer { range, .. } => {

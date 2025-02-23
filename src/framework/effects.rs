@@ -97,18 +97,18 @@ impl Default for Hysteresis {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Op {
+pub enum Operator {
     Add,
     Mult,
 }
 
-impl FromStr for Op {
+impl FromStr for Operator {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "add" => Ok(Op::Add),
-            "mult" => Ok(Op::Mult),
+            "add" => Ok(Operator::Add),
+            "mult" => Ok(Operator::Mult),
             _ => Err(format!("No op named {}", s)),
         }
     }
@@ -116,19 +116,22 @@ impl FromStr for Op {
 
 #[derive(Debug, Clone)]
 pub struct Math {
-    pub op: Op,
-    pub value: f32,
+    pub operator: Operator,
+    pub operand: f32,
 }
 
 impl Math {
-    pub fn new(op: Op, value: f32) -> Self {
-        Self { op, value }
+    pub fn new(op: Operator, value: f32) -> Self {
+        Self {
+            operator: op,
+            operand: value,
+        }
     }
 
     pub fn apply(&self, input: f32) -> f32 {
-        match self.op {
-            Op::Add => self.value + input,
-            Op::Mult => self.value * input,
+        match self.operator {
+            Operator::Add => self.operand + input,
+            Operator::Mult => self.operand * input,
         }
     }
 }
@@ -136,8 +139,8 @@ impl Math {
 impl Default for Math {
     fn default() -> Self {
         Self {
-            op: Op::Add,
-            value: 1.0,
+            operator: Operator::Add,
+            operand: 1.0,
         }
     }
 }

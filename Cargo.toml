@@ -10,16 +10,13 @@ edition = "2021"
 incremental = true
 
 [workspace]
-members = [
-    "scripts/image-markdown",
-    "derives"
-]
+members = ["scripts/image-markdown", "derives"]
 
 [dependencies]
 arboard = "3.4.1"
 # glam feature added as a hail-mary to deal with occasional
 # linking errors coming from bevy_reflect. This for some reason works?
-bevy_reflect = { version = "0.15.1", features = ["glam"]}
+bevy_reflect = { version = "0.15.1", features = ["glam"] }
 bytemuck = "1.21.0"
 chrono = "0.4.38"
 clap = { version = "4.5.28", features = ["derive"] }
@@ -50,4 +47,7 @@ toml = "0.8.19"
 wgpu-types = "=0.17.0"
 # Bug: we shouldn't have to bring in serde_yaml
 # TODO: we might want to fork this since it's on GitLab, doesn't have the ability to submit issues, etc.
-yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = ["serde_yml", "serde_yaml"] }
+yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [
+    "serde_yml",
+    "serde_yaml",
+] }

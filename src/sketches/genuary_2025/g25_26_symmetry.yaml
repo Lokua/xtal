@@ -1,4 +1,167 @@
-# --- ANIMATIONS
+# ------------------------------------------------------------------------------
+#  Shared Effects
+# ------------------------------------------------------------------------------
+
+slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.7
+  fall: 0.7
+
+# ------------------------------------------------------------------------------
+#  Wave
+# ------------------------------------------------------------------------------
+
+wave_mix:
+  type: triangle
+  beats: 32
+
+wave_freq:
+  type: slider
+
+wave_scale:
+  type: slider
+
+wave_x:
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 0.5
+      amplitude: 1
+    - kind: end
+      position: 1
+      value: 0.5
+
+wave_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.5
+  fall: 0.6
+
+wave_x_mod:
+  type: mod
+  source: wave_x
+  modulators:
+    - wave_slew
+
+wave_y:
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Distortion
+# ------------------------------------------------------------------------------
+
+distortion_section:
+  type: separator
+
+distort_mix:
+  type: slider
+
+distort_freq:
+  bypass: _
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 0.5
+      amplitude: 0.5
+    - kind: end
+      position: 4
+      value: 0.5
+
+distort_freq_add:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 4
+
+distort_freq_effects:
+  type: mod
+  source: distort_freq
+  modulators:
+    - slew
+    - distort_freq_add
+
+distort_angle_offset:
+  distort_angle_offset_defaults: &distort_angle_offset_defaults
+    value: 0.5
+    amplitude: 2
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      <<: *distort_angle_offset_defaults
+    - kind: random
+      position: 1.5
+      <<: *distort_angle_offset_defaults
+    - kind: random
+      position: 2.75
+      <<: *distort_angle_offset_defaults
+    - kind: end
+      position: 4
+      value: 0.0
+
+distort_add:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 10
+
+distort_angle_offset_mod:
+  type: mod
+  source: distort_angle_offset
+  modulators:
+    - slew
+    - distort_add
+
+# ------------------------------------------------------------------------------
+#  Fractal
+# ------------------------------------------------------------------------------
+
+fractal_section:
+  type: separator
+
+fractal_mix:
+  type: slider
+
+fractal_count:
+  type: slider
+
+fractal_scale:
+  type: slider
+
+fractal_color_scale:
+  type: slider
+
+fractal_grid_mix:
+  type: slider
+
+fractal_grid_scale:
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Signal (?)
+# ------------------------------------------------------------------------------
+
+signal_section:
+  type: separator
+
+signal_mix:
+  type: slider
+
+signal_steps:
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Circular Mask
+# ------------------------------------------------------------------------------
+
+mask_section:
+  type: separator
+
+mask_falloff:
+  type: slider
 
 mask_radius:
   bypass: 0
@@ -15,108 +178,15 @@ mask_y:
   type: triangle
   beats: 2
 
-distort_freq:
-  bypass: _
-  type: automate
-  breakpoints:
-    - kind: random
-      position: 0
-      value: 0.5
-      amplitude: 0.5
-    - kind: end
-      position: 4
-      value: 0.5
+# ------------------------------------------------------------------------------
+#  Untitled Section
+# ------------------------------------------------------------------------------
 
-slew:
-  type: effect
-  kind: slew_limiter
-  rise: 0.6
-  fall: 0.6
-
-distort_freq_slew_mod:
-  type: mod
-  source: distort_freq
-  modulators:
-    - slew
-
-distort_angle_offset:
-  _:
-    val: &val 0.5
-    amp: &amp 0.5
-  type: automate
-  breakpoints:
-    - kind: random
-      position: 0
-      value: *val
-      amplitude: *amp
-    - kind: random
-      position: 1.5
-      value: *val
-      amplitude: *amp
-    - kind: random
-      position: 2.75
-      value: *val
-      amplitude: *amp
-    - kind: end
-      position: 4
-      value: 0.0
-
-distort_angle_offset_mod:
-  type: mod
-  source: distort_angle_offset
-  modulators:
-    - slew
-
-# --- UI CONTROLS
-
-wave_mix:
-  type: 'slider'
-  default: 0.333
-
-wave_freq:
-  type: 'slider'
-
-wave_scale:
-  type: 'slider'
-
-wave_x:
-  type: 'slider'
-
-wave_y:
-  type: 'slider'
-
-distort_mix:
-  type: 'slider'
-
-fractal_mix:
-  type: 'slider'
-
-fractal_count:
-  type: 'slider'
-
-fractal_scale:
-  type: 'slider'
-
-fractal_color_scale:
-  type: 'slider'
-
-fractal_grid_mix:
-  type: 'slider'
-
-fractal_grid_scale:
-  type: 'slider'
-
-signal_mix:
-  type: 'slider'
-
-signal_steps:
-  type: 'slider'
-
-mask_falloff:
-  type: 'slider'
+untitled_section:
+  type: separator
 
 e3:
-  type: 'slider'
+  type: slider
 
 e4:
-  type: 'slider'
+  type: slider

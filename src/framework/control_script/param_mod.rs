@@ -148,7 +148,7 @@ pub trait SetFromParam {
 }
 
 fn warn_for(effect: &str, field: &str) {
-    warn!("{} does not support field: {}", effect, field);
+    warn_once!("{} does not support field: {}", effect, field);
 }
 
 impl SetFromParam for Hysteresis {
@@ -166,7 +166,7 @@ impl SetFromParam for Hysteresis {
 impl SetFromParam for Math {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
-            "value" => self.value = value,
+            "operand" => self.operand = value,
             _ => warn_for("Math", name),
         }
     }

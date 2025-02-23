@@ -12,6 +12,8 @@ use crate::framework::prelude::*;
 // Top-level Types
 //------------------------------------------------------------------------------
 
+/// Uses [`IndexMap`] so we maintain the exact order of UI controls that are
+/// declared in yaml
 pub type ConfigFile = IndexMap<String, MaybeControlConfig>;
 
 #[derive(Deserialize, Debug)]
@@ -411,8 +413,8 @@ pub enum EffectKind {
     },
 
     Math {
-        op: String,
-        value: ParamValue,
+        operator: String,
+        operand: ParamValue,
     },
 
     Quantizer {

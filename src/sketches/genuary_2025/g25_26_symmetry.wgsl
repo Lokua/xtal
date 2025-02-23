@@ -103,8 +103,8 @@ fn wave_reduce(p: vec2f) -> f32 {
 }
 
 fn distort_reduce(pos: vec2f) -> f32 {
-    let freq = params.c.x * 3.0;
-    let angle_offset = params.d.x * 10.0;
+    let freq = params.c.x;
+    let angle_offset = params.d.x;
     let phase = 0.0;
     var p = vec2f(pos);
     p *= tanh(p * freq + phase);
@@ -117,11 +117,11 @@ fn fractal_reduce(pos: vec2f) -> f32 {
     let scale = params.c.w;
     let color_scale = params.d.z;
     let fractal_grid_mix = params.d.w;
-    let fractal_grid_scale = params.c.z * 10.0;
+    let fractal_grid_scale = params.c.z * 20.0;
     
     var p = pos * scale;
     var color = 0.0;
-    let MAX_ITERATIONS = 20;
+    let MAX_ITERATIONS = 10;
     
     for (var i = 0; i < MAX_ITERATIONS; i++) {
         let weight = 1.0 - smoothstep(count - 1.0, count, f32(i));
@@ -138,8 +138,6 @@ fn fractal_reduce(pos: vec2f) -> f32 {
     
     return color / count;
 }
-
-// --- IMPL DETAILS
 
 fn correct_aspect(position: vec2f) -> vec2f {
     let w = params.resolution.x;
