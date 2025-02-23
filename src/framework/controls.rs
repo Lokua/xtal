@@ -352,8 +352,8 @@ impl Controls {
     }
 
     fn check_contains_key(&self, key: &str) {
-        if !self.values.contains_key(key) {
-            loud_panic!("Control {} does not exist", key);
+        if !self.has(key) {
+            error!("Control {} does not exist", key);
         }
     }
 

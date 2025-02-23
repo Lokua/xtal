@@ -4,3 +4,4 @@
 out*.txt
 /control-snaps
 debug.txt
+*.log

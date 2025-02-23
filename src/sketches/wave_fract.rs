@@ -16,7 +16,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    #[allow(dead_code)]
     controls: ControlScript<Timing>,
     wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,

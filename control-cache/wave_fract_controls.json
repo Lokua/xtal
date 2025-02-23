@@ -1,58 +1,58 @@
 {
   "values": {
-    "wave_horiz_freq": {
-      "Float": 6.0
+    "mix_mode": {
+      "String": "mix"
+    },
+    "wave_vert_freq": {
+      "Float": 8.0
+    },
+    "f9843": {
+      "Bool": false
+    },
+    "bg_gradient_strength": {
+      "Float": 0.588
     },
     "bg_invert": {
       "Bool": false
     },
-    "wave_bands": {
-      "Float": 3.0
-    },
-    "6m65z": {
+    "gqx1l": {
       "Bool": false
     },
     "wave_phase": {
-      "Float": 0.0
+      "Float": 0.72
     },
-    "reduce_mix": {
-      "Float": 0.14500001
+    "wave_horiz_freq": {
+      "Float": 4.0
     },
-    "bg_radius": {
-      "Float": 0.105000004
-    },
-    "wave_threshold": {
-      "Float": 0.69000006
-    },
-    "wave_power": {
-      "Float": 0.42
-    },
-    "link_axes": {
-      "Bool": true
-    },
-    "wave_vert_freq": {
-      "Float": 0.0
-    },
-    "map_mix": {
-      "Float": 0.0
-    },
-    "7p2bx": {
-      "Bool": false
-    },
-    "bg_gradient_strength": {
-      "Float": 0.14500001
-    },
-    "mix_mode": {
-      "String": "mix"
-    },
-    "bg_freq": {
-      "Float": 57.0
+    "wave_bands": {
+      "Float": 3.0
     },
     "animate_wave_phase": {
       "Bool": true
     },
+    "bg_freq": {
+      "Float": 41.0
+    },
+    "reduce_mix": {
+      "Float": 0.31
+    },
     "wave_radial_freq": {
-      "Float": 3.0
+      "Float": 2.0
+    },
+    "link_axes": {
+      "Bool": true
+    },
+    "map_mix": {
+      "Float": 0.0
+    },
+    "wave_power": {
+      "Float": 0.42
+    },
+    "wave_threshold": {
+      "Float": 0.67
+    },
+    "bg_radius": {
+      "Float": 0.24000001
     }
   }
 }

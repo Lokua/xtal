@@ -1,64 +1,61 @@
 # --- ANIMATIONS
 
 mask_radius:
-    type: "lerp_rel"
-    keyframes:
-        - [1.0, 1.0]
-        - [1.0, 0.0]
-        - [0.0, 1.0]
+  type: 'lerp_rel'
+  keyframes:
+    - [1.0, 1.0]
+    - [1.0, 0.0]
+    - [0.0, 1.0]
 
 mask_x:
-    type: "lerp_rel"
-    keyframes:
-        - [1.0, 0.0]
-        - [1.0, 0.0]
-        - [0.0, 0.0]
+  type: 'lerp_rel'
+  keyframes:
+    - [1.0, 0.0]
+    - [1.0, 0.0]
+    - [0.0, 0.0]
 
 mask_y:
-    type: "lerp_rel"
-    keyframes:
-        - [2.0, 0.0]
-        - [2.0, 0.0]
-        - [0.0, 0.0]
-        # - [2.0, 1.0]
-        # - [2.0, -1.0]
-        # - [0.0, 1.0]
+  type: 'lerp_rel'
+  keyframes:
+    - [2.0, 0.0]
+    - [2.0, 0.0]
+    - [0.0, 0.0]
 
 distort_freq:
-    type: "r_ramp_rel"
-    ramp_time: 2.0
-    keyframes:
-        - [4.0, [0.0, 1.0]]
+  type: 'r_ramp_rel'
+  ramp_time: 2.0
+  keyframes:
+    - [4.0, [0.0, 1.0]]
 
 distort_angle_offset:
-    type: "r_ramp_rel"
-    ramp_time: 0.75
-    keyframes:
-        - [1.5, [0.0, 1.0]]
-        - [3.0, [0.0, 1.0]]
-        - [2.5, [0.0, 1.0]]
-        - [1.0, [0.0, 1.0]]
+  type: 'r_ramp_rel'
+  ramp_time: 0.75
+  keyframes:
+    - [1.5, [0.0, 1.0]]
+    - [3.0, [0.0, 1.0]]
+    - [2.5, [0.0, 1.0]]
+    - [1.0, [0.0, 1.0]]
 
 # --- UI CONTROLS
 
 wave_mix:
-    type: "slider"
-    default: 0.333
+  type: 'slider'
+  default: 0.333
 
 wave_freq:
-    type: "slider"
+  type: 'slider'
 
 wave_scale:
-    type: "slider"
+  type: 'slider'
 
 wave_x:
-    type: "slider"
+  type: 'slider'
 
 wave_y:
-    type: "slider"
+  type: 'slider'
 
 distort_mix:
-    type: "slider"
+  type: 'slider'
 
 # distort_freq:
 #     type: "slider"
@@ -67,34 +64,34 @@ distort_mix:
 #     type: "slider"
 
 fractal_mix:
-    type: "slider"
+  type: 'slider'
 
 fractal_count:
-    type: "slider"
+  type: 'slider'
 
 fractal_scale:
-    type: "slider"
+  type: 'slider'
 
 fractal_color_scale:
-    type: "slider"
+  type: 'slider'
 
 fractal_grid_mix:
-    type: "slider"
+  type: 'slider'
 
 fractal_grid_scale:
-    type: "slider"
+  type: 'slider'
 
 signal_mix:
-    type: "slider"
+  type: 'slider'
 
 signal_steps:
-    type: "slider"
+  type: 'slider'
 
 mask_falloff:
-    type: "slider"
+  type: 'slider'
 
 e3:
-    type: "slider"
+  type: 'slider'
 
 e4:
-    type: "slider"
+  type: 'slider'

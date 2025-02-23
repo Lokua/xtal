@@ -9,24 +9,37 @@ _vars:
 # Animations ---------------------
 
 rot_x:
-  type: lerp_rel
+  type: automate
   bypass: _
-  keyframes:
-    - [*rx, *TAU]
-    - [*rx, 0]
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *rx
+      value: 0
 
 rot_y:
-  type: lerp_rel
+  type: automate
   bypass: _
-  keyframes:
-    - [*ry, *TAU]
-    - [*ry, 0]
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *ry
+      value: 0
+
 rot_z:
-  type: lerp_rel
+  type: automate
   bypass: 0
-  keyframes:
-    - [*rz, *TAU]
-    - [*rz, 0]
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: *TAU
+    - kind: end
+      position: *rz
+      value: 0
 
 corner_offset:
   type: triangle
@@ -72,11 +85,8 @@ corner_t_8:
   phase: 0.875
 
 echo_time:
-  type: lerp_rel
-  keyframes:
-    - [*gt, 0.0]
-    - [*gt, 1.0]
-    - [*gt, 0.0]
+  type: triangle
+  beats: *gt
 
 # --------------------------------
 

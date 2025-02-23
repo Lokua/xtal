@@ -447,7 +447,7 @@ impl<T: TimingSource> Animation<T> {
         easing: Easing,
     ) -> f32 {
         let duration = p2.position - p1.position;
-        let t = easing.apply((beats_elapsed / duration) % 1.0);
+        let t = easing.apply(((beats_elapsed - p1.position) / duration) % 1.0);
         let value = lerp(p1.value, p2.value, t);
         value
     }
@@ -665,6 +665,29 @@ mod tests {
         };
 
         init(4);
+        assert_eq!(x(), 0.5);
+    }
+
+    #[test]
+    #[serial]
+    fn test_ramp_bug_2025_02_23() {
+        let a = create_instance();
+        let x = || {
+            a.automate(
+                &[
+                    Breakpoint::ramp(0.0, 0.0, Easing::Linear),
+                    // BUG: jumps from ~0.5 to 0.75, should be exactly 0.5
+                    // ^ Fixed :)!
+                    Breakpoint::ramp(32.0, 0.5, Easing::Linear),
+                    Breakpoint::ramp(96.0, 1.0, Easing::Linear),
+                    Breakpoint::ramp(128.0, 0.75, Easing::Linear),
+                    Breakpoint::end(192.0, 0.25),
+                ],
+                Mode::Once,
+            )
+        };
+
+        init(128);
         assert_eq!(x(), 0.5);
     }
 }

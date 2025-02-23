@@ -11,11 +11,19 @@ wave_phase:
   step: 0.001
 
 wave_phase_animation:
-  type: lerp_rel
-  keyframes:
-    - [16.0, 0.0]
-    - [16.0, *TAU]
-    - [0.0, 0.0]
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.0
+
+    - kind: ramp
+      position: 16.0
+      value: *TAU
+
+    - kind: end
+      position: 32.0
+      value: 0.0
 
 wave_radial_freq:
   type: slider
