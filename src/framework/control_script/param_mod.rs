@@ -30,7 +30,7 @@ pub enum ParamValue {
 
 impl ParamValue {
     /// This should only be called after the dep_graph has been resolved and
-    /// [`SetFromParam::set`] has been called on the ParamValue
+    /// [`SetFromParam::from_cold_params`] has been called
     pub fn as_float(&self) -> f32 {
         match self {
             ParamValue::Cold(x) => *x,
@@ -86,11 +86,14 @@ impl<'de> Deserialize<'de> for ParamValue {
 // Effects
 //------------------------------------------------------------------------------
 
-/// Trait used for instantiating an Effect variant from an EffectConfig instance.
+/// Used for part 1 of an Effect's instantiation phase
 pub trait FromColdParams: Default + SetFromParam {
-    /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a newly
-    /// created Effect instance. Will use the Effect's default instead of
-    /// [`ParamValue::Hot`] since those are swapped in during [`ControlScript::get`].
+    /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a
+    /// newly created Effect instance. Will use the Effect's default instead of
+    /// [`ParamValue::Hot`] since those are swapped in during
+    /// [`ControlScript::get`]. Important that this _only_ deals with ParamValue
+    /// (f32) - you still need to deal with copying the non-ParamValues from the
+    /// EffectConfig to the Effect instance manually
     fn from_cold_params(config: &EffectConfig) -> Self {
         let mut instance = Self::default();
 
@@ -110,7 +113,6 @@ pub trait FromColdParams: Default + SetFromParam {
                                 if let Some(value) =
                                     inner_value.try_downcast_ref::<f32>()
                                 {
-                                    // trace!("setting {}: {}", field_name, value);
                                     instance.set_from_param(field_name, *value);
                                 }
                             }
