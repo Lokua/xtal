@@ -1,4 +1,4 @@
-# `ControlScript` YAML Reference
+# ControlScript YAML Reference
 
 # Table of Contents
 
@@ -31,11 +31,128 @@
   - [saturator](#saturator)
   - [slew_limiter](#slew_limiter)
   - [wave_folder](#wave_folder)
+- [Parameter Modulation](#parameter-modulation)
+- [Using `var`](#using-var)
 
 # General
 
-All yaml mappings in general are 1:1 mappings to Rust code that can be used
-"manually" in code. Some notes about mappings:
+Lattice provides various interfaces for controlling parameters including
+`Controls` for UI (sliders, checkboxes, and selects), ~~`MidiControls`~~ (TODO)
+and `OscControls` for controlling parameters from an external source,
+`AudioControls` for controlling parameters with audio or CV, and a comprehensive
+`Animation` module that can tween or generate random values and ramp to/from
+them at musical intervals. While these parameters are simple to setup, it's a
+bit of pain to have to restart the rust sketch every time you want to change an
+animation or control configuration. For this reason Lattice provides a
+`ControlScript` mechanism that uses yaml for configuration and adds these
+controls dynamically and _self-updates at runtime when the yaml file is
+changed_, quite similar to live coding. You still have to take care to setup the
+routings in your sketch (e.g. `let radius = model.controls.get("radius")`), but
+once these routings are in place you are free to edit their ranges, values,
+timing, etc. Here's an example that covers the overall capabilities:
+
+```yaml
+radius:
+  type: slider
+  range: [50, 300]
+  default: 100
+
+# ramp up and down over 16 beats = 4 bars
+pos_x:
+  type: triangle
+  beats: 16
+  range: [-500, 500]
+
+# linearly from left to right then wiggle back and forth
+# from right to left over 2 bars
+pos_y:
+  type: automate
+  breakpoints:
+    # linearly ramp to the next position
+    - kind: ramp
+      position: 0.0
+      value: -500
+    # linearly ramp to the next position with amplitude modulation applied
+    - kind: wave
+      # transition from here to next point will take 4 beats = 1 bar
+      position: 4
+      value: 500
+      shape: sine
+      # modulate up/down from base ramp over a period of 1 beat
+      frequency: 1
+      amplitude: 100
+      constrain: clamp
+    # End right where the loop restarts to ensure smooth transition
+    - kind: end
+      position: 8
+      value: -500
+
+# And now we can do some _crazy_ stuff!
+imagination_amount:
+  type: slider
+
+imagination:
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0
+      value: 0
+    - kind: ramp
+      position: 3
+      # control the peak of this animation with a slider while its happening!
+      value: $imagination_amount
+    - kind: end
+      position: 6
+      value: 0
+
+imagination_folder:
+  type: effect
+  kind: wave_folder
+  gain: 2
+  # Use the same control for two parameters because, why not?
+  symmetry: $imagination_amount
+
+# effects like above need to be connected with sources:
+imagination_mod:
+  type: mod
+  source: imagination
+  modulators:
+    - imagination_folder
+```
+
+In your sketch, the above controls can be accessed as follows:
+
+```rust
+use crate::framework::prelude::*;
+
+#[derive(SketchComponents)]
+pub struct Model {
+    controls: ControlScript<Timing>,
+}
+
+pub fn init_model(_app: &App, _wr: WindowRect) -> Model {
+    let controls = ControlScript::from_path(
+        to_absolute_path(file!(), "controls.yaml"),
+        Timing::new(SKETCH_CONFIG.bpm),
+    );
+
+    Model { controls }
+}
+
+pub fn view(app: &App, m: &Model, frame: Frame) {
+  let draw = app.draw();
+
+  let radius = m.controls.get("radius");
+  let pos_x = m.controls.get("pos_x");
+
+  // do stuff
+  // ...
+}
+```
+
+The above example contains a bunch of YAML objects that we will refer to
+henceforth as _mappings_. All mappings in general are 1:1 mappings to their Rust
+structs. Some notes about mappings to keep in mind:
 
 - All mappings require a `type` e.g. `slider`, `osc` or `automate`.
 - Most, but not all, parameters can be omitted from a mapping except in cases
@@ -46,15 +163,17 @@ All yaml mappings in general are 1:1 mappings to Rust code that can be used
   to bypass the bypass.
 - All controls support an optional `var` field. This is very useful for
   pre-loading shader uniforms before you know what the actual role or name of a
-  control will be. See [TODO: Example]().
+  control will be. See the [Using `var` section](#using-var).
 - All numbers will be interpreted as `f32` so feel free to use integers where it
   makes sense
 
 # UI
 
+Interface to [Controls][crate::framework::controls]
+
 All UI controls are added to the UI in the order they are declared.
 
-## `slider`
+## Slider
 
 ### Params
 
@@ -73,7 +192,7 @@ slider_example:
   step: 1.0
 ```
 
-## `checkbox`
+## Checkbox
 
 ### Params
 
@@ -88,7 +207,7 @@ checkbox_example:
   default: false
 ```
 
-## `select`
+## Select
 
 ### Params
 
@@ -111,7 +230,7 @@ slider_example:
 
 # OSC
 
-## `osc`
+## Osc
 
 Listens for incoming floats on the port specified in the
 [src/config.rs](src/config.rs)'s `OSC_PORT` constant (`2346`).
@@ -141,15 +260,15 @@ Listens for audio signals on the device specified in
 [src/config.rs](src/config.rs)'s `MULTICHANNEL_AUDIO_DEVICE_NAME` constant and
 transforms them into a stream suitable for parameter automation/modulation.
 
-## `audio`
+## Audio
 
 ### Params
 
 - `type` - `audio`
 - `channel` - the zero-indexed audio channel
 - `slew` - Controls smoothing ([rise, fall]) when signal amplitude increases.
-  - 0.0 = instant rise/fall (no smoothing)
-  - 1.0 = very slow rise/fall (maximum smoothing)
+  - `0.0` = instant rise/fall (no smoothing)
+  - `1.0` = very slow rise/fall (maximum smoothing)
   - defaults to `[0.0, 0.0]`
 - `detect` - Linearly mix between 0=peak detection and 1=RMS peak detection.
   Peak is snappier, RMS is smoother but limits amplitude more. Defaults to
@@ -169,7 +288,7 @@ animation_example:
 
 # Animation
 
-## `triangle`
+## Triangle
 
 A "ping pong" animation that linearly ramps from min to max and back to min as
 specified in the `range` param.
@@ -194,18 +313,18 @@ triangle_example:
   phase: 0.0
 ```
 
-## `automate`
+## Automate
 
-Advanced DAW-style animation
+Advanced DAW-style animation. This is the bread-and-butter of Lattice.
 
 ### Params
 
 - `type` - automate
 - `mode` - `loop` or `once`. Defaults to `loop`
-- `breakpoints` - a list of breaking kinds including `step`, `ramp`, `wave`,
+- `breakpoints` - a list of breakpoint kinds including `step`, `ramp`, `wave`,
   `random`, and `random_smooth`
 
-### `breakpoints`
+### Breakpoints
 
 Each breakpoint shares the following _required_ fields:
 
@@ -216,7 +335,7 @@ Each breakpoint shares the following _required_ fields:
 - `value` - the value this breakpoint will (usually) be when the timing is
   exactly at `position`
 
-### `kind`
+### Kind
 
 #### `ramp`
 
@@ -324,7 +443,7 @@ automate_example:
 
 # Modulation
 
-## `mod`
+## Mod
 
 Takes any declared control as a source and modifies its output using one or more
 modulators. A modulator can be an [effect](#effects), [animation](#animation),
@@ -355,7 +474,7 @@ be used as sources. A single effect can be used more than once, for example you
 might have several animations that use stepped randomness and may want to smooth
 them all out with a single slew_limiter.
 
-## `hysteresis`
+## Hysteresis
 
 Implements a Schmitt trigger with configurable thresholds that outputs:
 
@@ -391,7 +510,7 @@ hysteresis_example:
   pass_through: false
 ```
 
-## `quantizer`
+## Quantizer
 
 Discretizes continuous input values into fixed steps, creating stair-case
 transitions.
@@ -419,7 +538,7 @@ quantizer_example:
   range: [0.0, 1.0]
 ```
 
-## `ring_modulator`
+## Ring Modulator
 
 Implements ring modulation by combining a carrier and modulator signal. Note
 that there is no actual "carrier" parameter because the modulator signal will be
@@ -430,9 +549,9 @@ applied to the `source` field defined in a `mod` config.
 - `type` - `effect`
 - `kind` - `ring_modulator`
 - `mix` - Controls the blend between carrier and modulated signal
-  - 0.0: outputs carrier signal
-  - 0.5: outputs true ring modulation (carrier \* modulator)
-  - 1.0: outputs modulator signal
+  - `0.0`: outputs carrier signal
+  - `0.5`: outputs true ring modulation (carrier \* modulator)
+  - `1.0`: outputs modulator signal
   - (defaults to `0.0`)
 - `modulator` - name of the control to use as modulator
 
@@ -452,7 +571,7 @@ rm_mod_routing:
     - ring_modulator_example
 ```
 
-## `saturator`
+## Saturator
 
 Applies smooth saturation to a signal, creating a soft roll-off as values
 approach the range boundaries. Higher drive values create more aggressive
@@ -475,7 +594,7 @@ saturator_example:
   range: [0.0, 1.0]
 ```
 
-## `slew_limiter`
+## Slew Limiter
 
 Limits the rate of change (slew rate) of a signal
 
@@ -484,12 +603,12 @@ Limits the rate of change (slew rate) of a signal
 - `type` - `effect`
 - `kind` - `slew_limiter`
 - `rise` - Controls smoothing when signal amplitude increases.
-  - 0.0 = instant attack (no smoothing)
-  - 1.0 = very slow attack (maximum smoothing)
+  - `0.0` = instant attack (no smoothing)
+  - `1.0` = very slow attack (maximum smoothing)
   - (defaults to `0.0`)
 - `fall` - Controls smoothing when signal amplitude decreases.
-  - 0.0 = instant decay (no smoothing)
-  - 1.0 = very slow decay (maximum smoothing)
+  - `0.0` = instant decay (no smoothing)
+  - `1.0` = very slow decay (maximum smoothing)
   - (defaults to `0.0`)
 
 ### Example
@@ -502,7 +621,7 @@ slew_limiter_example:
   fall: 0.0
 ```
 
-## `wave_folder`
+## Wave Folder
 
 ### Params
 
@@ -555,3 +674,147 @@ wave_folder_example:
   shape: 1.0
   range: [0.0, 1.0]
 ```
+
+# Parameter Modulation
+
+In addition to use of `effect` and `mod` types to modulate the output of
+controls, Lattice supports _parameter modulation_. It's easiest to explain with
+an example:
+
+```yaml
+size_amount:
+  type: slider
+
+size:
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0
+      value: 0
+    - kind: ramp
+      position: 4
+      value: $size_amount # <-- HERE
+    - kind: end
+      position: 8
+      value: 0
+```
+
+In the above example we use a UI slider to control the maximum amount of a basic
+"ramp up and back down" animation. Some rules about parameter modulation:
+
+- Parameter modulations are denoted by the prefix `$` and the name of another
+  mapping.
+- Any animation or UI control that produces a float can be the source of
+  parameter modulation.
+- `effect` and `mod` types _cannot_ be the sources of parameter modulations
+- Only named fields that are of type `f32` can be modulated. For example any
+  `value` or parameter such was the Wave Folder's `symmetry` param, but not any
+  mapping's `range` since that's a list.
+
+# Using `var`
+
+```yaml
+radius:
+  var: a1
+  type: slider
+```
+
+In your sketch this control will be accessed via `m.controls.get("a1")`. This is
+especially useful for sketches that primarily rely on shaders - since like
+control scripts - shaders in Lattice support live reloading. Often creative
+coding is an experimental process and you may not know what controls you'll need
+up front and it's a huge pain to have to restart the Rust program every time you
+want to change a variable name or add a new one. To work around this, you can
+setup "banks":
+
+```rust
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable)]
+struct ShaderParams {
+    // Add a bunch of 4 member arrays that will be unpacked in your shader
+    a: [f32; 4],
+    b: [f32; 4],
+    c: [f32; 4],
+    d: [f32; 4],
+    e: [f32; 4],
+    f: [f32; 4],
+}
+
+pub fn init_model(app: &App, wr: WindowRect) -> Model {
+    let controls = ControlScript::from_path(
+        to_absolute_path(file!(), "example.yaml"),
+        Timing::new(SKETCH_CONFIG.bpm),
+    );
+
+    // No point in initializing this to anything other than zero
+    // as they will just get overwritten in the update function
+    let params = ShaderParams {
+        resolution: [0.0; 4],
+        a: [0.0; 4],
+        b: [0.0; 4],
+        c: [0.0; 4],
+        d: [0.0; 4],
+        e: [0.0; 4],
+        f: [0.0; 4],
+    };
+
+    let gpu = gpu::GpuState::new_fullscreen(
+        app,
+        wr.resolution_u32(),
+        to_absolute_path(file!(), "example.wgsl"),
+        &params,
+        true,
+    );
+
+    Model { controls, wr, gpu }
+}
+
+pub fn update(app: &App, m: &mut Model, _update: Update) {
+    // Update ensures any file changes have propagated
+    m.controls.update();
+
+    let params = ShaderParams {
+        a: [
+            // Allows us to use `var: a1` in our control_script
+            m.controls.get("a1"),
+            m.controls.get("a2"),
+            m.controls.get("a3"),
+            m.controls.get("a4"),
+        ],
+        b: [
+            m.controls.get("b1"),
+            m.controls.get("b2"),
+            m.controls.get("b3"),
+            m.controls.get("b4"),
+        ],
+        c: [
+            m.controls.get("c1"),
+            m.controls.get("c2"),
+            m.controls.get("c3"),
+            m.controls.get("c4"),
+        ],
+        // ...
+    };
+
+    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
+}
+```
+
+Then in your shader:
+
+```wgsl
+struct Params {
+    a: vec4f,
+    b: vec4f,
+    // ...
+
+@fragment
+fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
+    let radius = params.a.x;
+    let pos_x = params.a.y;
+    // ...
+```
+
+The above is admittedly a decent amount of boilerplate, but with this setup you
+are now free to live code in your script and shaders for hours uninterrupted
+without having to stop, recompile, wait... it's worth it.

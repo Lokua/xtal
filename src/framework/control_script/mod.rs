@@ -1,4 +1,8 @@
-#[doc = include_str!("../../../docs/control_script_reference.md")]
+//! Provides a means of controlling sketch parameters with the various Lattice
+//! control systems from an external yaml file that can be hot-reloaded.
+//!
+#![doc = include_str!("../../../docs/control_script_reference.md")]
+
 pub mod control_script;
 pub use control_script::ControlScript;
 

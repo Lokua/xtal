@@ -32,5 +32,11 @@ generate-markdown-index:
 md:
   just generate-markdown-index
 
+open-docs:
+  cargo doc --open --release --no-deps -p lattice
+
+docs:
+  cargo doc --release --no-deps -p derives -p lattice
+
 stats:
   sccache --show-stats

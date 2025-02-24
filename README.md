@@ -241,20 +241,21 @@ purpose!
 ### Control Scripting
 
 Lattice provides various interfaces for controlling parameters including
-`Controls` for UI sliders, checkboxes, and selects (dropdowns), `MidiControls`
-and `OscControls` for controlling parameters from an external source,
+`Controls` for UI (sliders, checkboxes, and selects), `MidiControls` and
+`OscControls` for controlling parameters from an external source,
 `AudioControls` for controlling parameters with audio or CV, and a comprehensive
 `Animation` module that can tween or generate random values and ramp to/from
 them at musical intervals. While these parameters are simple to setup, it's a
 bit of pain to have to restart the rust sketch every time you want to change an
-animation or control range. For this reason Lattice provides a `ControlScript`
-mechanism that uses yaml for configuration and adds these controls dynamically
-and self-updates at runtime when the yaml file is changed. You still have to
-take care to setup the routings in your sketch (e.g.
+animation or control configuration. For this reason Lattice provides a
+`ControlScript` mechanism that uses yaml for configuration and adds these
+controls dynamically and self-updates at runtime when the yaml file is changed.
+You still have to take care to setup the routings in your sketch (e.g.
 `let radius = model.controls.get("radius")`), but once these routings are in
 place you are free to edit their ranges, values, timing, etc. See [Control
-Script Test][control-script-test] for a working example. See
-[docs/control_script_reference.md](docs/control_script_reference.md)
+Script Test][control-script-test] for a working example or
+[docs/control_script_reference.md](docs/control_script_reference.md) for
+comprehensive documentation.
 
 ## Resources
 

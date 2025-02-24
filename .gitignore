@@ -1,5 +1,5 @@
 /target
-.vscode
+# .vscode
 .DS_Store
 out*.txt
 /control-snaps

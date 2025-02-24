@@ -30,7 +30,7 @@ pub enum ParamValue {
 
 impl ParamValue {
     /// This should only be called after the dep_graph has been resolved and
-    /// [`SetFromParam::from_cold_params`] has been called
+    /// [`FromColdParams::from_cold_params`] has been called
     pub fn as_float(&self) -> f32 {
         match self {
             ParamValue::Cold(x) => *x,
