@@ -12,17 +12,23 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use crate::config::{
+    MULTICHANNEL_AUDIO_DEVICE_COUNT as CHANNEL_COUNT,
+    MULTICHANNEL_AUDIO_DEVICE_NAME as DEVICE_NAME,
+    MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE as SAMPLE_RATE,
+};
+
 use super::frame_controller;
 use super::prelude::*;
 
-const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
+// const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 #[derive(Clone, Debug)]
 pub struct AudioControlConfig {
     /// The zero-indexed channel number (0 = first channel)
     pub channel: usize,
 
-    pub slew_config: SlewConfig,
+    pub slew_limiter: SlewLimiter,
 
     /// The pre-emphasis factor to apply to the audio signal.
     /// A higher value results in more emphasis on high frequencies.
@@ -40,7 +46,7 @@ pub struct AudioControlConfig {
 impl AudioControlConfig {
     pub fn new(
         channel: usize,
-        slew_config: SlewConfig,
+        slew_limiter: SlewLimiter,
         detect: f32,
         pre_emphasis: f32,
         range: (f32, f32),
@@ -48,7 +54,7 @@ impl AudioControlConfig {
     ) -> Self {
         Self {
             channel,
-            slew_config,
+            slew_limiter,
             detect,
             pre_emphasis,
             range,
@@ -130,9 +136,9 @@ impl AudioControls {
         state.configs.insert(name.to_string(), config);
     }
 
-    /// Get the latest processed audio value by name,
-    /// normalized to [0, 1] then mapped to the range set in [`AudioControlConfig`].
-    /// Returns 0.0 if name isn't found.
+    /// Get the latest processed audio value by name, normalized to [0, 1] then
+    /// mapped to the range set in [`AudioControlConfig`]. Returns 0.0 if name
+    /// isn't found.
     pub fn get(&self, name: &str) -> f32 {
         self.state
             .lock()
@@ -186,20 +192,13 @@ impl AudioControls {
                     .configs
                     .iter()
                     .map(|(name, config)| {
-                        let previous_value =
-                            state.previous_values[config.channel];
-
                         let channel_buffer =
                             state.processor.channel_buffer(config.channel);
 
                         let processed_value =
                             buffer_processor(channel_buffer, &config);
 
-                        let value = MultichannelAudioProcessor::follow_envelope(
-                            processed_value,
-                            previous_value,
-                            config.slew_config,
-                        );
+                        let value = config.slew_limiter.slew(processed_value);
 
                         let mapped = map_range(
                             value,
@@ -238,11 +237,7 @@ impl AudioControls {
         let host = cpal::default_host();
         let device = host
             .input_devices()?
-            .find(|d| {
-                d.name()
-                    .map(|n| n == crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME)
-                    .unwrap_or(false)
-            })
+            .find(|d| d.name().map(|n| n == DEVICE_NAME).unwrap_or(false))
             .expect("CV device not found");
 
         let stream_config = device.default_input_config()?.into();
@@ -260,7 +255,7 @@ impl AudioControlBuilder {
         Self {
             controls: AudioControls::new(
                 frame_controller::fps(),
-                crate::config::MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE,
+                SAMPLE_RATE,
                 default_buffer_processor,
             ),
         }
@@ -275,7 +270,6 @@ impl AudioControlBuilder {
         self
     }
 
-    /// See [`AudioControlConfig`]
     pub fn control_from_config(
         mut self,
         name: &str,
@@ -296,7 +290,8 @@ impl AudioControlBuilder {
     pub fn build(mut self) -> AudioControls {
         if let Err(e) = self.controls.start() {
             error!(
-                "Failed to initialize audio controls: {}. Using default values.",
+                "Failed to initialize audio controls: {}. \
+                Using default values.",
                 e
             );
         }
@@ -343,46 +338,13 @@ impl MultichannelAudioProcessor {
         &self.channel_data[channel]
     }
 
-    fn follow_envelope(
-        sample: f32,
-        previous_value: f32,
-        slew_config: SlewConfig,
-    ) -> f32 {
-        let magnitude = sample.abs();
-
-        let coeff = if magnitude > previous_value {
-            1.0 - slew_config.rise
-        } else {
-            1.0 - slew_config.fall
-        };
-
-        previous_value + coeff * (magnitude - previous_value)
-    }
-
-    /// Similar to follow_envelope but keeps audio in its original
-    /// range of [-1, 1]
-    #[allow(dead_code)]
-    fn slew_limit(
-        sample: f32,
-        previous_value: f32,
-        slew_config: SlewConfig,
-    ) -> f32 {
-        let coeff = if sample > previous_value {
-            1.0 - slew_config.rise
-        } else {
-            1.0 - slew_config.fall
-        };
-
-        previous_value + coeff * (sample - previous_value)
-    }
-
-    /// Standard pre-emphasis filter `y[n] = x[n] - α * x[n-1]` that amplifies high
-    /// frequencies relative to low frequencies by subtracting a portion of the
-    /// previous sample. It boosts high frequencies indirectly rather than
+    /// Standard pre-emphasis filter `y[n] = x[n] - α * x[n-1]` that amplifies
+    /// high frequencies relative to low frequencies by subtracting a portion of
+    /// the previous sample. It boosts high frequencies indirectly rather than
     /// explicitly cutting low frequencies with a sharp cutoff like a classical
-    /// HPF. 0.97 is common as it gives about +20dB emphasis starting around 1kHz.
-    /// See freq-response-pre-emphasis.png in the repo's assets folder for more
-    /// details.
+    /// HPF. 0.97 is common as it gives about +20dB emphasis starting around
+    /// 1kHz. See freq-response-pre-emphasis.png in the repo's assets folder for
+    /// more details.
     pub fn apply_pre_emphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(buffer.len());
         filtered.push(buffer[0]);
@@ -394,8 +356,8 @@ impl MultichannelAudioProcessor {
         filtered
     }
 
-    /// Linearly interpolate between peak and RMS amplitude detection.
-    /// 0.0 = peak, 1.0 = RMS
+    /// Linearly interpolate between peak and RMS amplitude detection. 0.0 =
+    /// peak, 1.0 = RMS
     fn detect(buffer: &[f32], method_mix: f32) -> f32 {
         if method_mix == 0.0 {
             return Self::peak(buffer);

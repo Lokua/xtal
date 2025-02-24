@@ -494,7 +494,7 @@ impl<T: TimingSource> ControlScript<T> {
 
                     let audio_control = AudioControlConfig::new(
                         conf.channel,
-                        SlewConfig::new(conf.slew[0], conf.slew[1]),
+                        SlewLimiter::new(conf.slew[0], conf.slew[1]),
                         conf.detect,
                         conf.pre,
                         (conf.range[0], conf.range[1]),

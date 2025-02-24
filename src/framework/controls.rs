@@ -514,8 +514,10 @@ impl ChangeTracker {
 
     fn check_can_save_previous(&self) {
         if !self.save_previous {
-            loud_panic!(
-                "Cannot check previous values when `save_previous` is false"
+            panic!(
+                "Cannot check previous values when `save_previous` is false.\n\
+                Use `Controls::with_previous` instead of `new`.
+                "
             );
         }
     }

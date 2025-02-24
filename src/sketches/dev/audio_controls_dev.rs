@@ -22,8 +22,8 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let controls = Controls::new(vec![
-        Control::slide("preemphasis", 0.0),
+    let controls = Controls::with_previous(vec![
+        Control::slide("pre_emphasis", 0.0),
         Control::slide("detect", 0.0),
         Control::slide("rise", 0.0),
         Control::slide("fall", 0.0),
@@ -34,7 +34,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "bd",
             AudioControlConfig {
                 channel: 0,
-                slew_config: SlewConfig::default(),
+                slew_limiter: SlewLimiter::default(),
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
@@ -45,7 +45,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "hh",
             AudioControlConfig {
                 channel: 1,
-                slew_config: SlewConfig::default(),
+                slew_limiter: SlewLimiter::default(),
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
@@ -56,7 +56,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "chord",
             AudioControlConfig {
                 channel: 2,
-                slew_config: SlewConfig::default(),
+                slew_limiter: SlewLimiter::default(),
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
@@ -76,16 +76,15 @@ pub fn update(_app: &App, m: &mut Model, _update: Update) {
     // debug_throttled!(500, "a: {}, b: {}", m.audio.get("bd"), m.audio.get("hh"));
 
     if m.controls.changed() {
-        let preemphasis = m.controls.float("preemphasis");
+        let pre_emphasis = m.controls.float("pre_emphasis");
         let detect = m.controls.float("detect");
         let rise = m.controls.float("rise");
         let fall = m.controls.float("fall");
 
         m.audio.update_controls(|control| {
-            control.pre_emphasis = preemphasis;
+            control.pre_emphasis = pre_emphasis;
             control.detect = detect;
-            control.slew_config.rise = rise;
-            control.slew_config.fall = fall;
+            control.slew_limiter.set_rates(rise, fall);
         });
 
         m.controls.mark_unchanged();
@@ -110,14 +109,14 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
         .x_y(-m.wr.w() / 4.0, 0.0);
 
     draw.ellipse()
+        .color(rgba(0.8, 0.2, 0.8, 0.9))
+        .radius(chord)
+        .x_y(0.0, 0.0);
+
+    draw.ellipse()
         .color(rgba(0.5, 0.5, 0.5, 0.9))
         .radius(hh)
         .x_y(m.wr.w() / 4.0, 0.0);
-
-    draw.ellipse()
-        .color(rgba(0.8, 0.8, 0.8, 0.9))
-        .radius(chord)
-        .x_y(0.0, 0.0);
 
     draw.to_frame(app, &frame).unwrap();
 }

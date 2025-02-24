@@ -29,7 +29,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "a",
             AudioControlConfig {
                 channel: 0,
-                slew_config: SlewConfig::default(),
+                slew_limiter: SlewLimiter::default(),
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
@@ -40,7 +40,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
             "b",
             AudioControlConfig {
                 channel: 1,
-                slew_config: SlewConfig::default(),
+                slew_limiter: SlewLimiter::default(),
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),

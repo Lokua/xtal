@@ -538,7 +538,9 @@ impl TimingSource for OscTransportTiming {
 
 /// Allows sketches to visualize animations statically by manually providing
 /// what beat we're on. This is especially useful for visualizing
-/// [`crate::framework::animate::Breakpoint`] sequences
+/// [`Breakpoint`][breakpoint] sequences
+///
+/// [breakpoint]: crate::framework::automate::Breakpoint
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
     bpm: f32,
