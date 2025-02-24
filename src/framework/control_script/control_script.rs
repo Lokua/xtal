@@ -23,8 +23,8 @@ use super::{
     config::{
         AnimationConfig, AudioConfig, AutomateConfig, CheckboxConfig,
         ConfigFile, ControlType, EffectConfig, EffectKind, KeyframeSequence,
-        LerpAbsConfig, LerpRelConfig, MaybeControlConfig, ModulationConfig,
-        OscConfig, RRampRelConfig, SelectConfig, TriangleConfig,
+        MaybeControlConfig, ModulationConfig, OscConfig, SelectConfig,
+        TriangleConfig,
     },
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
@@ -36,7 +36,7 @@ pub struct ControlScript<T: TimingSource> {
     pub animation: Animation<T>,
     osc_controls: OscControls,
     audio_controls: AudioControls,
-    keyframe_sequences: HashMap<String, (AnimationConfig, KeyframeSequence)>,
+    animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
     aliases: HashMap<String, String>,
@@ -53,7 +53,7 @@ impl<T: TimingSource> ControlScript<T> {
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
-            keyframe_sequences: HashMap::new(),
+            animations: HashMap::new(),
             modulations: HashMap::new(),
             effects: RefCell::new(HashMap::new()),
             aliases: HashMap::new(),
@@ -213,25 +213,8 @@ impl<T: TimingSource> ControlScript<T> {
             value = Some(self.audio_controls.get(name));
         }
 
-        if let Some((config, sequence)) = self.keyframe_sequences.get(name) {
+        if let Some((config, sequence)) = self.animations.get(name) {
             let v = match (config, sequence) {
-                (
-                    AnimationConfig::LerpRel(_),
-                    KeyframeSequence::Linear(kfs),
-                ) => self.animation.lerp(&kfs.clone(), config.delay()),
-                (
-                    AnimationConfig::LerpAbs(_),
-                    KeyframeSequence::Linear(kfs),
-                ) => self.animation.lerp(&kfs.clone(), config.delay()),
-                (
-                    AnimationConfig::RRampRel(conf),
-                    KeyframeSequence::Random(kfs),
-                ) => self.animation.r_ramp(
-                    kfs,
-                    conf.delay,
-                    conf.ramp_time,
-                    Easing::from_str(conf.ramp.as_str()).unwrap(),
-                ),
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
                     let conf = self.resolve_animation_config_params(conf, name);
                     self.animation.triangle(
@@ -322,7 +305,7 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn breakpoints(&self, name: &str) -> Vec<Breakpoint> {
-        self.keyframe_sequences
+        self.animations
             .get(name)
             .and_then(|(_, sequence)| match sequence {
                 KeyframeSequence::Breakpoints(breakpoints) => {
@@ -330,7 +313,7 @@ impl<T: TimingSource> ControlScript<T> {
                 }
                 _ => None,
             })
-            .unwrap_or_else(|| loud_panic!("No breakpoints for name: {}", name))
+            .unwrap_or_else(|| panic!("No breakpoints for name: {}", name))
     }
 
     pub fn update(&mut self) {
@@ -384,7 +367,7 @@ impl<T: TimingSource> ControlScript<T> {
         let osc_values: HashMap<String, f32> = self.osc_controls.values();
 
         self.controls = Controls::with_previous(vec![]);
-        self.keyframe_sequences.clear();
+        self.animations.clear();
         self.modulations.clear();
         self.aliases.clear();
         self.bypassed.clear();
@@ -503,94 +486,11 @@ impl<T: TimingSource> ControlScript<T> {
 
                     self.audio_controls.add(id, audio_control);
                 }
-                ControlType::LerpAbs => {
-                    let conf: LerpAbsConfig =
-                        serde_yml::from_value(config.config.clone())?;
-
-                    let mut parsed_keyframes = Vec::new();
-                    for (time_str, value) in &conf.keyframes {
-                        if let Ok(beats) =
-                            parse_bar_beat_16th(time_str.as_str())
-                        {
-                            parsed_keyframes.push(ParsedKeyframe {
-                                beats,
-                                value: *value,
-                            });
-                        }
-                    }
-
-                    let mut keyframes = Vec::new();
-                    for i in 0..parsed_keyframes.len() {
-                        let current = &parsed_keyframes[i];
-                        let duration = if i < parsed_keyframes.len() - 1 {
-                            parsed_keyframes[i + 1].beats - current.beats
-                        } else {
-                            0.0
-                        };
-
-                        keyframes.push(Keyframe::new(current.value, duration));
-                    }
-
-                    self.keyframe_sequences.insert(
-                        id.to_string(),
-                        (
-                            AnimationConfig::LerpAbs(conf),
-                            KeyframeSequence::Linear(keyframes),
-                        ),
-                    );
-                }
-                ControlType::LerpRel => {
-                    let conf: LerpRelConfig =
-                        serde_yml::from_value(config.config.clone())?;
-
-                    let mut keyframes =
-                        Vec::with_capacity(conf.keyframes.len());
-
-                    for (i, &(beats, value)) in
-                        conf.keyframes.iter().enumerate()
-                    {
-                        let duration = if i < conf.keyframes.len() - 1 {
-                            beats
-                        } else {
-                            0.0
-                        };
-
-                        keyframes.push(Keyframe::new(value, duration));
-                    }
-
-                    self.keyframe_sequences.insert(
-                        id.to_string(),
-                        (
-                            AnimationConfig::LerpRel(conf),
-                            KeyframeSequence::Linear(keyframes),
-                        ),
-                    );
-                }
-                ControlType::RRampRel => {
-                    let conf: RRampRelConfig =
-                        serde_yml::from_value(config.config.clone())?;
-
-                    let keyframes: Vec<_> = conf
-                        .keyframes
-                        .iter()
-                        .map(|&(beats, range)| {
-                            KeyframeRandom::new(range, beats)
-                        })
-                        .collect();
-
-                    self.keyframe_sequences.insert(
-                        id.to_string(),
-                        (
-                            AnimationConfig::RRampRel(conf),
-                            KeyframeSequence::Random(keyframes),
-                        ),
-                    );
-                }
                 ControlType::Triangle => {
                     let conf: TriangleConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    self.keyframe_sequences.insert(
+                    self.animations.insert(
                         id.to_string(),
                         (
                             AnimationConfig::Triangle(conf),
@@ -609,7 +509,7 @@ impl<T: TimingSource> ControlScript<T> {
                         .map(Breakpoint::from)
                         .collect();
 
-                    self.keyframe_sequences.insert(
+                    self.animations.insert(
                         id.to_string(),
                         (
                             AnimationConfig::Automate(conf),
@@ -785,12 +685,6 @@ impl<T: TimingSource> ControlScript<T> {
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
-}
-
-#[derive(Debug)]
-struct ParsedKeyframe {
-    beats: f32,
-    value: f32,
 }
 
 #[cfg(test)]

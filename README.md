@@ -268,7 +268,6 @@ documentation:
 _vars:
   example_var: &example_var 33.0
 
-
 # -----------------------------------------------------------------------------
 # UI CONTROLS
 # -----------------------------------------------------------------------------
@@ -338,9 +337,7 @@ rect_y:
 # -----------------------------------------------------------------------------
 
 y_offset:
-  # Interface to `Animation::automate`. This is the spiritual successor to
-  # all following animation methods and produces much of the same results
-  # and more.
+  # Interface to `Animation::automate`
   type: automate
   # loop or once (holds the last value), defaults to loop
   mode: loop
@@ -392,7 +389,6 @@ y_offset:
       value: 0.0
       frequency: 0.25
       amplitude: 0.25
-
 
     # A special breakpoint added for semantic clarity. It is identical to the
     # step kind. In this example it just represents what the previous breakpoint
@@ -483,77 +479,6 @@ wave_folder_example:
   bias: 0.0
   shape: 1.0
   range: [0.0, 1.0]
-
-
-# -----------------------------------------------------------------------------
-# ANIMATION (older methods likely to be removed as automate can do it all now)
-# -----------------------------------------------------------------------------
-
-hue:
-  # Interface to the `Animation::lerp` method that differs from the normal code
-  # signature in that times are expressed in "<bars>.<beats>.<16ths>" like a typical
-  # DAW would use and are absolute with respect to the timeline depending on what
-  # `TimingSource` is provided to the `ControlScript` constructor.
-  type: lerp_abs
-  # Optional, defaults to 0.0
-  delay: 0.0
-  keyframes:
-    # beats, bars, and 16ths are zero indexed!
-    #...start at 0 then...
-    - ["0.0.0", 0.0]
-    # ramp to 1 over the duration from 0 to the 2nd beat, then...
-    - ["0.1.0", 1.0]
-    # ramp back down to 0.0 from the 2nd to the start of the 3rd beat
-    - ["0.2.0", 0.0]
-    # ^ the above creates a perfect 2 beat loop and will continue looping.
-    # `bypass`, if omitted or is not a number will simply be ignored,
-    # however if it is a number will be used instead of the animation.
-    # This is great for testing, debugging, of even "live coding" to mute
-    # animations. All animation definitions support bypass;
-    bypass: _
-
-saturation:
-  # Another interface to the same `Animation::lerp` method as above but uses the
-  # exact same signature as the code instance for keyframes which is [beats, value].
-  # This example and last are 100% equivalent but read quite differently.
-  # While the `abs` version can be read as "arrive at this value at this time",
-  # the `rel` version should be read as "ramp from this value to the next over this time"
-  type: lerp_rel
-  # Optional, defaults to 0.0
-  delay: 0.0
-  bypass: _
-  keyframes:
-    # Ramp from 0.0 to the next keyframe value (1.0) over 1 beat
-    - [1.0, 0.0]
-    # etc...
-    - [1.0, 1.0]
-    # By convention I always set the duration of the last keyframe to 0.0
-    # Since it represents the last arrival value and doesn't really have a
-    # duration.
-    - [0.0, 0.0]
-
-lightness:
-  # A 1:1 interface to the `Animation::r_ramp` method.
-  type: r_ramp_rel
-  # Optional, defaults to "linear". Easing options include:
-  # linear, ease_in, ease_out, ease_in_out, cubic_ease_in, cubic_ease_out,
-  # cubic_ease_in_out, sine_ease_in, sine_ease_out, sine_ease_in_out, logarithmic
-  ramp: linear
-  # Optional, defaults to 0.25 (1/16th note)
-  ramp_time: 0.5
-  bypass: _
-  keyframes:
-    # Every beat, pick a random value between 0.0 and 1.0, and ramp to it
-    # over `ramp_time` beats. So for example let's say the random number generated
-    # for the 1st cycle was 0.2 and the 2nd cycle was 0.7: When the animation is
-    # started it will stay at 0.2 for the first 1/2 of a beat, then over the next 1/2
-    # beat it will ramp to 0.7. If `ramp_time` was 0.25, it would stay at 0.2 for the
-    # duration of a dotted eighth note, then ramp to 0.7 over a single 16th.
-    # Note that only the first keyframe is held; all subsequent cycles will always be
-    # ramped to (ramp happens at the end of a cycle and happens within that cycle's
-    # duration; this is why the first cycle starts static until its ramp phase -
-    # this is because there was no previous cycle that could ramp to it)
-    - [1.0, [0.0, 1.0]]
 ```
 
 ## Resources

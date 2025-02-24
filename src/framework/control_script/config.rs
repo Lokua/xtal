@@ -51,12 +51,6 @@ pub enum ControlType {
     Audio,
 
     // Animation
-    #[serde(rename = "lerp_abs")]
-    LerpAbs,
-    #[serde(rename = "lerp_rel")]
-    LerpRel,
-    #[serde(rename = "r_ramp_rel")]
-    RRampRel,
     #[serde(rename = "triangle")]
     Triangle,
     #[serde(rename = "automate")]
@@ -192,96 +186,14 @@ impl Default for AudioConfig {
 
 #[derive(Debug)]
 pub enum AnimationConfig {
-    LerpRel(LerpRelConfig),
-    LerpAbs(LerpAbsConfig),
-    RRampRel(RRampRelConfig),
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
 }
 
-impl AnimationConfig {
-    pub fn delay(&self) -> f32 {
-        match self {
-            AnimationConfig::LerpRel(x) => x.delay,
-            AnimationConfig::LerpAbs(x) => x.delay,
-            AnimationConfig::RRampRel(x) => x.delay,
-            _ => 0.0,
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub enum KeyframeSequence {
-    Linear(Vec<Keyframe>),
-    Random(Vec<KeyframeRandom>),
     Breakpoints(Vec<Breakpoint>),
     None,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct LerpAbsConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    pub delay: f32,
-    pub keyframes: Vec<(String, f32)>,
-}
-
-impl Default for LerpAbsConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            keyframes: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct LerpRelConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    pub delay: f32,
-    pub keyframes: Vec<(f32, f32)>,
-}
-
-impl Default for LerpRelConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            keyframes: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct RRampRelConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    #[serde(default)]
-    pub delay: f32,
-    #[serde(default)]
-    pub ramp_time: f32,
-    #[serde(default = "default_ramp")]
-    pub ramp: String,
-    pub keyframes: Vec<(f32, (f32, f32))>,
-}
-
-impl Default for RRampRelConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            delay: 0.0,
-            ramp: "linear".to_string(),
-            ramp_time: 0.25,
-            keyframes: Vec::new(),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
