@@ -39,7 +39,7 @@ pub struct Hysteresis {
     pub upper_threshold: f32,
     pub lower_threshold: f32,
 
-    /// The value to output when input is above the upper threshold`
+    /// The value to output when input is above the upper threshold
     pub output_high: f32,
 
     /// The value to output when input is below the lower threshold
