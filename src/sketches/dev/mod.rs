@@ -4,6 +4,7 @@ pub mod audio_dev;
 pub mod control_script_dev;
 pub mod cv_dev;
 pub mod midi_dev;
+pub mod multiple_sketches_dev;
 pub mod osc_dev;
 pub mod osc_transport_dev;
 pub mod responsive_dev;

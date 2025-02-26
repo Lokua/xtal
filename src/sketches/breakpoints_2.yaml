@@ -1,5 +1,5 @@
 _vars:
-  easing: &easing linear
+  easing: &easing ease_in_out
 
 # --------------------------------
 

@@ -106,6 +106,7 @@ fn main() {
         "control_script_dev" => run_sketch!(control_script_dev),
         "cv_dev" => run_sketch!(cv_dev),
         "midi_dev" => run_sketch!(midi_dev),
+        "multiple_sketches_dev" => run_sketch!(multiple_sketches_dev),
         "osc_dev" => run_sketch!(osc_dev),
         "osc_transport_dev" => run_sketch!(osc_transport_dev),
         "responsive_dev" => run_sketch!(responsive_dev),

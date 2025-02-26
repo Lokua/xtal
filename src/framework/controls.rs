@@ -312,6 +312,10 @@ impl Controls {
         &self.controls
     }
 
+    pub fn get_controls_mut(&mut self) -> &mut Vec<Control> {
+        &mut self.controls
+    }
+
     pub fn values(&self) -> &ControlValues {
         &self.values
     }
@@ -436,6 +440,12 @@ impl Controls {
         F: FnMut(&Control) -> bool,
     {
         self.controls.retain(f);
+    }
+}
+
+impl Default for Controls {
+    fn default() -> Self {
+        Controls::new(vec![])
     }
 }
 

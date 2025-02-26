@@ -6,6 +6,7 @@ use super::prelude::*;
 pub trait ControlProvider {
     fn as_controls(&mut self) -> &mut Controls;
     fn get_controls(&self) -> &Vec<Control>;
+    fn get_controls_mut(&mut self) -> &mut Vec<Control>;
     fn update_value(&mut self, name: &str, value: ControlValue);
     fn to_serialized(&self) -> SerializedControls;
 }
@@ -17,6 +18,10 @@ impl ControlProvider for Controls {
 
     fn get_controls(&self) -> &Vec<Control> {
         Controls::get_controls(self)
+    }
+
+    fn get_controls_mut(&mut self) -> &mut Vec<Control> {
+        self.get_controls_mut()
     }
 
     fn update_value(&mut self, name: &str, value: ControlValue) {
@@ -35,6 +40,10 @@ impl<T: TimingSource> ControlProvider for ControlScript<T> {
 
     fn get_controls(&self) -> &Vec<Control> {
         self.controls.get_controls()
+    }
+
+    fn get_controls_mut(&mut self) -> &mut Vec<Control> {
+        self.controls.get_controls_mut()
     }
 
     fn update_value(&mut self, name: &str, value: ControlValue) {

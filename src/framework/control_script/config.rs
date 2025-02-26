@@ -399,9 +399,6 @@ where
     }
 }
 
-fn default_ramp() -> String {
-    "linear".to_string()
-}
 fn default_iterations() -> usize {
     1
 }

@@ -8,6 +8,7 @@ use nannou::prelude::*;
 /// to every sketch we provide this rect as a convenience, since
 /// having window dimensions and being able to check if a resize has
 /// happened is a common need.
+#[derive(Clone)]
 pub struct WindowRect {
     current: Rect,
     last: Rect,

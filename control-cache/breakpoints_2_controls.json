@@ -1,85 +1,85 @@
 {
   "values": {
-    "output_high": {
-      "Float": 0.838
-    },
-    "a6fr6": {
-      "Bool": false
-    },
-    "3td59": {
-      "Bool": false
-    },
-    "fold": {
-      "Bool": true
-    },
-    "rm": {
-      "Bool": true
-    },
-    "rm_mix": {
-      "Float": 0.5
-    },
-    "sat": {
-      "Bool": true
-    },
-    "fold_iterations": {
-      "Float": 1.0
-    },
-    "lower_threshold": {
-      "Float": 0.285
-    },
-    "output_low": {
-      "Float": 0.232
-    },
-    "sat_drive": {
-      "Float": 3.5
-    },
-    "fall": {
-      "Float": 0.908
-    },
-    "upper_threshold": {
-      "Float": 0.75
-    },
-    "jb235": {
-      "Bool": false
-    },
-    "fold_gain": {
-      "Float": 1.8000001
-    },
-    "hyst_pass_through": {
-      "Bool": true
-    },
-    "slew": {
-      "Bool": false
-    },
-    "q7tyo": {
-      "Bool": false
+    "fold_symmetry": {
+      "Float": 1.125
     },
     "rise": {
-      "Float": 0.98499995
+      "Float": 0.59499997
     },
-    "fold_symmetry": {
+    "fold_shape": {
+      "Float": -1.1
+    },
+    "fold_iterations": {
       "Float": 1.0
     },
     "quant": {
       "Bool": false
     },
-    "fold_bias": {
-      "Float": 0.0
+    "n_points": {
+      "Float": 3904.0
     },
-    "9d26l": {
+    "fqpt6": {
+      "Bool": false
+    },
+    "sat": {
+      "Bool": true
+    },
+    "fold": {
+      "Bool": true
+    },
+    "slew": {
+      "Bool": false
+    },
+    "upper_threshold": {
+      "Float": 0.68799996
+    },
+    "rm_mix": {
+      "Float": 0.578
+    },
+    "rm": {
+      "Bool": true
+    },
+    "b4u89": {
       "Bool": false
     },
     "hyst": {
       "Bool": false
     },
+    "output_low": {
+      "Float": 0.232
+    },
+    "hyst_pass_through": {
+      "Bool": true
+    },
+    "fold_bias": {
+      "Float": -0.0
+    },
+    "sat_drive": {
+      "Float": 0.0
+    },
+    "71j79": {
+      "Bool": false
+    },
+    "output_high": {
+      "Float": 0.825
+    },
+    "dyu45": {
+      "Bool": false
+    },
+    "90lio": {
+      "Bool": false
+    },
+    "fall": {
+      "Float": 0.532
+    },
+    "lower_threshold": {
+      "Float": 0.20199999
+    },
+    "fold_gain": {
+      "Float": 1.3000001
+    },
     "quant_step": {
-      "Float": 0.05
-    },
-    "fold_shape": {
-      "Float": 1.0
-    },
-    "n_points": {
-      "Float": 10816.0
+      "Float": 0.075
     }
   }
 }
