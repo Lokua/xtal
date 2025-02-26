@@ -40,3 +40,6 @@ docs:
 
 stats:
   sccache --show-stats
+
+bin:
+  RUST_LOG=lattice=debug cargo run --release --bin lattice_dynamic

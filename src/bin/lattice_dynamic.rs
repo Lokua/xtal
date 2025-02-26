@@ -1,13 +1,12 @@
-use arboard::Clipboard;
 use nannou::prelude::*;
-use nannou_egui::egui::{self, FontDefinitions, FontFamily};
+use nannou_egui::egui::{self};
 use nannou_egui::Egui;
 use once_cell::sync::Lazy;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Mutex};
 
 use lattice::framework::frame_controller;
 use lattice::framework::prelude::*;
@@ -185,25 +184,11 @@ fn view_simple_sketch(app: &App, model: &SimpleSketch, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-// Dynamic model for nannou
-struct DynamicModel {
-    main_window_id: window::Id,
-    gui_window_id: window::Id,
-    egui: Egui,
-    session_id: String,
-    alert_text: String,
-    clear_flag: Cell<bool>,
-    recording_state: RecordingState,
-    current_sketch: Box<dyn Sketch>,
-    current_sketch_name: String,
-    current_sketch_config: &'static SketchConfig,
-    gui_visible: Cell<bool>,
-    main_visible: Cell<bool>,
-    main_maximized: Cell<bool>,
-}
-
 fn main() {
     // Create sketch registry
+    init_logger();
+    init_theme();
+    debug!("main called");
 
     // Register example sketch
     let simple_config = &SketchConfig {
@@ -218,38 +203,39 @@ fn main() {
         play_mode: PlayMode::Loop,
     };
 
-    let mut registry = REGISTRY.lock().unwrap();
+    {
+        let mut registry = REGISTRY.lock().unwrap();
+        registry.register(
+            "simple",
+            "Simple Circle Demo",
+            simple_config,
+            |_app, rect| {
+                let model = SimpleSketch::new(rect);
+                Box::new(SketchAdapter::new(
+                    model,
+                    update_simple_sketch,
+                    view_simple_sketch,
+                ))
+            },
+        );
 
-    registry.register(
-        "simple",
-        "Simple Circle Demo",
-        simple_config,
-        |_app, rect| {
-            let model = SimpleSketch::new(rect);
-            Box::new(SketchAdapter::new(
-                model,
-                update_simple_sketch,
-                view_simple_sketch,
-            ))
-        },
-    );
-
-    // In a real implementation, you'd register all your sketches here
-    // For example, adapting your existing sketches:
-    registry.register(
-        "spiral",
-        "Spiral Demo",
-        &sketches::spiral::SKETCH_CONFIG,
-        |app, rect| {
-            let model =
-                sketches::spiral::init_model(app, WindowRect::new(rect));
-            Box::new(SketchAdapter::new(
-                model,
-                sketches::spiral::update,
-                sketches::spiral::view,
-            ))
-        },
-    );
+        // In a real implementation, you'd register all your sketches here
+        // For example, adapting your existing sketches:
+        registry.register(
+            "spiral",
+            "Spiral Demo",
+            &sketches::spiral::SKETCH_CONFIG,
+            |app, rect| {
+                let model =
+                    sketches::spiral::init_model(app, WindowRect::new(rect));
+                Box::new(SketchAdapter::new(
+                    model,
+                    sketches::spiral::update,
+                    sketches::spiral::view,
+                ))
+            },
+        );
+    }
 
     // Start nannou with our model
     nannou::app(model)
@@ -257,6 +243,29 @@ fn main() {
         .view(view)
         .event(event)
         .run();
+
+    debug!("nannou started");
+}
+
+enum UiEvent {
+    SwitchSketch(String),
+}
+
+struct DynamicModel {
+    main_window_id: window::Id,
+    gui_window_id: window::Id,
+    egui: RefCell<Egui>,
+    session_id: String,
+    alert_text: String,
+    clear_flag: Cell<bool>,
+    recording_state: RecordingState,
+    current_sketch: Box<dyn Sketch>,
+    current_sketch_name: String,
+    current_sketch_config: &'static SketchConfig,
+    gui_visible: Cell<bool>,
+    main_visible: Cell<bool>,
+    main_maximized: Cell<bool>,
+    event_channel: (mpsc::Sender<UiEvent>, mpsc::Receiver<UiEvent>),
 }
 
 fn model(app: &App) -> DynamicModel {
@@ -315,17 +324,17 @@ fn model(app: &App) -> DynamicModel {
         .view(view_gui)
         .resizable(true)
         .raw_event(|_app, model: &mut DynamicModel, event| {
-            model.egui.handle_raw_event(event);
+            model.egui.get_mut().handle_raw_event(event);
         })
         .build()
         .unwrap();
 
     // Get egui instance for the GUI window
-    let egui = Egui::from_window(&app.window(gui_window_id).unwrap());
+    let egui =
+        RefCell::new(Egui::from_window(&app.window(gui_window_id).unwrap()));
 
-    // Create session ID for recording
-    let session_id = uuid_v4(); // You'll need to implement this
-    let recording_dir = PathBuf::new(); // You'll need to implement frames_dir
+    let session_id = uuid_5();
+    let recording_dir = PathBuf::new();
 
     // Create our dynamic model
     DynamicModel {
@@ -342,14 +351,28 @@ fn model(app: &App) -> DynamicModel {
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
+        event_channel: mpsc::channel(),
     }
 }
 
 fn update(app: &App, model: &mut DynamicModel, update: Update) {
-    // Update EGUI
-    model.egui.set_elapsed_time(update.since_start);
-    let ctx = model.egui.begin_frame();
-    update_gui(app, &ctx);
+    model.egui.borrow_mut().set_elapsed_time(update.since_start);
+
+    {
+        let mut egui = model.egui.borrow_mut();
+        let ctx = egui.begin_frame();
+        let (tx, _) = &model.event_channel;
+
+        update_gui(app, &mut model.current_sketch_name, &tx, &ctx);
+    }
+
+    while let Ok(event) = model.event_channel.1.try_recv() {
+        match event {
+            UiEvent::SwitchSketch(name) => {
+                switch_sketch(app, model, &name);
+            }
+        }
+    }
 
     // Update sketch with current window rect
     if let Some(window) = app.window(model.main_window_id) {
@@ -366,94 +389,47 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
     );
 }
 
-fn update_gui(app: &App, ctx: &egui::Context) {
-    // Get available sketches for dropdown
+fn update_gui(
+    app: &App,
+    current_sketch_name: &mut String,
+    event_tx: &mpsc::Sender<UiEvent>,
+    ctx: &egui::Context,
+) {
     let registry = REGISTRY.lock().unwrap();
-
     let sketch_names = registry.get_sketch_names();
 
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.heading("Lattice Dynamic");
 
-        // Sketch selection dropdown
         egui::ComboBox::from_label("Current Sketch")
-            .selected_text(&model.current_sketch_name)
+            .selected_text(current_sketch_name.clone())
             .show_ui(ui, |ui| {
                 for name in &sketch_names {
                     if ui
-                        .selectable_label(
-                            model.current_sketch_name == *name,
-                            name,
-                        )
+                        .selectable_label(*current_sketch_name == *name, name)
                         .clicked()
                     {
-                        // User selected a new sketch - switch to it
-                        if model.current_sketch_name != *name {
-                            if let Some(sketch_info) =
+                        if *current_sketch_name != *name {
+                            if let Some(_sketch_info) =
                                 registry.get_sketch_info(name)
                             {
-                                switch_sketch(app, model, name, sketch_info);
+                                event_tx
+                                    .send(UiEvent::SwitchSketch(
+                                        name.to_string(),
+                                    ))
+                                    .unwrap();
                             }
                         }
                     }
                 }
             });
-
-        ui.separator();
-
-        // Basic controls
-        if ui.button("Clear").clicked() {
-            model.clear_flag.set(true);
-            model.alert_text = "Cleared".into();
-        }
-
-        // Standard controls for frame control
-        if ui
-            .button(if frame_controller::is_paused() {
-                "Play"
-            } else {
-                "Pause"
-            })
-            .clicked()
-        {
-            let paused = !frame_controller::is_paused();
-            frame_controller::set_paused(paused);
-            model.alert_text = if paused {
-                "Paused".into()
-            } else {
-                "Playing".into()
-            };
-        }
-
-        if ui
-            .add_enabled(
-                frame_controller::is_paused(),
-                egui::Button::new("Advance"),
-            )
-            .clicked()
-        {
-            frame_controller::advance_single_frame();
-        }
-
-        ui.separator();
-
-        // Draw sketch-specific controls
-        if let Some(controls) = model.current_sketch.controls() {
-            draw_controls(controls.as_controls(), ui);
-        }
-
-        // Display status/alert text
-        ui.separator();
-        ui.label(&model.alert_text);
     });
 }
 
-fn switch_sketch(
-    app: &App,
-    model: &mut DynamicModel,
-    name: &str,
-    sketch_info: &SketchInfo,
-) {
+fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
+    let registry = REGISTRY.lock().unwrap();
+    let sketch_info = registry.get_sketch_info(name).unwrap();
+
     // Update window title
     if let Some(window) = app.window(model.main_window_id) {
         window.set_title(sketch_info.display_name);
@@ -507,61 +483,72 @@ fn view(app: &App, model: &DynamicModel, frame: Frame) {
     );
 }
 
-fn view_gui(app: &App, model: &DynamicModel, frame: Frame) {
-    model.egui.draw_to_frame(&frame).unwrap();
+fn view_gui(_app: &App, model: &DynamicModel, frame: Frame) {
+    model.egui.borrow().draw_to_frame(&frame).unwrap();
 }
 
 fn event(app: &App, model: &mut DynamicModel, event: Event) {
-    // Pass events to current sketch
     model.current_sketch.event(app, &event);
 
-    // Handle window management events
     match event {
         Event::WindowEvent {
             id,
             simple: Some(KeyPressed(key)),
             ..
         } if id == model.main_window_id => {
-            handle_key_event(app, model, key);
+            on_key_pressed(app, model, key);
         }
         _ => {}
     }
 }
 
-fn handle_key_event(app: &App, model: &mut DynamicModel, key: Key) {
+fn on_key_pressed(app: &App, model: &DynamicModel, key: Key) {
     match key {
-        Key::A => {
-            // Advance single frame when paused
-            if frame_controller::is_paused() {
-                frame_controller::advance_single_frame();
+        Key::A if has_no_modifiers(app) => {
+            frame_controller::advance_single_frame();
+        }
+        Key::C if has_no_modifiers(app) => {
+            let window = app.window(model.gui_window_id).unwrap();
+            let is_visible = model.gui_visible.get();
+
+            if is_visible {
+                window.set_visible(false);
+                model.gui_visible.set(false);
+            } else {
+                window.set_visible(true);
+                model.gui_visible.set(true);
             }
         }
-        Key::C => {
-            // Toggle control panel visibility
-            if let Some(window) = app.window(model.gui_window_id) {
-                let visible = model.gui_visible.get();
-                window.set_visible(!visible);
-                model.gui_visible.set(!visible);
+        Key::S if has_no_modifiers(app) => {
+            let window = app.window(model.main_window_id).unwrap();
+            let is_visible = model.main_visible.get();
+
+            if is_visible {
+                window.set_visible(false);
+                model.main_visible.set(false);
+            } else {
+                window.set_visible(true);
+                model.main_visible.set(true);
             }
         }
-        Key::F => {
-            // Toggle fullscreen
-            if let Some(window) = app.window(model.main_window_id) {
-                if model.main_maximized.get() {
-                    window.set_inner_size_points(
-                        model.current_sketch_config.w as f32,
-                        model.current_sketch_config.h as f32,
-                    );
-                    model.main_maximized.set(false);
+        Key::F if has_no_modifiers(app) => {
+            let window = app.window(model.main_window_id).unwrap();
+            if let Some(monitor) = window.current_monitor() {
+                let monitor_size = monitor.size();
+                let is_maximized = model.main_maximized.get();
+
+                if is_maximized {
+                    // window.set_inner_size_points(
+                    //     model.sketch_config.w as f32,
+                    //     model.sketch_config.h as f32,
+                    // );
+                    // model.main_maximized.set(false);
                 } else {
-                    if let Some(monitor) = window.current_monitor() {
-                        let monitor_size = monitor.size();
-                        window.set_inner_size_pixels(
-                            monitor_size.width,
-                            monitor_size.height,
-                        );
-                        model.main_maximized.set(true);
-                    }
+                    window.set_inner_size_pixels(
+                        monitor_size.width,
+                        monitor_size.height,
+                    );
+                    model.main_maximized.set(true);
                 }
             }
         }
@@ -569,55 +556,9 @@ fn handle_key_event(app: &App, model: &mut DynamicModel, key: Key) {
     }
 }
 
-// Placeholder for a UUID function - you'll need to implement this
-fn uuid_v4() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-    format!("session-{}", now)
-}
-
-// Placeholder for drawing controls - you'll need to replace with your implementation
-fn draw_controls(controls: &Controls, ui: &mut egui::Ui) -> bool {
-    let mut changed = false;
-
-    for control in controls.get_controls() {
-        match control {
-            Control::Slider {
-                name,
-                value,
-                min,
-                max,
-                step,
-                ..
-            } => {
-                let mut current_value = *value;
-                if ui
-                    .add(
-                        egui::Slider::new(&mut current_value, *min..*max)
-                            .text(name),
-                    )
-                    .changed()
-                {
-                    controls
-                        .update_value(name, ControlValue::Float(current_value));
-                    changed = true;
-                }
-            }
-            Control::Checkbox { name, value, .. } => {
-                let mut current_value = *value;
-                if ui.checkbox(&mut current_value, name).changed() {
-                    controls
-                        .update_value(name, ControlValue::Bool(current_value));
-                    changed = true;
-                }
-            }
-            // Implement other control types as needed
-            _ => {}
-        }
-    }
-
-    changed
+fn has_no_modifiers(app: &App) -> bool {
+    !app.keys.mods.alt()
+        && !app.keys.mods.ctrl()
+        && !app.keys.mods.shift()
+        && !app.keys.mods.logo()
 }
