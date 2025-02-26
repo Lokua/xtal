@@ -16,7 +16,7 @@ use runtime::prelude::*;
 pub mod config;
 pub mod framework;
 pub mod runtime;
-mod sketches;
+pub mod sketches;
 
 const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 const GUI_WIDTH: u32 = 560;
