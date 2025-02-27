@@ -16,10 +16,11 @@ pub fn run() {
 
         register_sketches!(registry, template);
 
+        // ---------------------------------------------------------------------
+        // MAIN
+        // ---------------------------------------------------------------------
         register_legacy_sketches!(
             registry,
-            //
-            // --- MAIN
             blob,
             breakpoints,
             breakpoints_2,
@@ -37,9 +38,14 @@ pub fn run() {
             sierpinski_triangle,
             spiral,
             spiral_lines,
-            wave_fract,
-            //
-            // --- DEV
+            wave_fract
+        );
+
+        // ---------------------------------------------------------------------
+        // DEV
+        // ---------------------------------------------------------------------
+        register_legacy_sketches!(
+            registry,
             animation_dev,
             audio_controls_dev,
             audio_dev,
@@ -52,9 +58,14 @@ pub fn run() {
             responsive_dev,
             shader_to_texture_dev,
             wgpu_compute_dev,
-            wgpu_dev,
-            //
-            // --- GENUARY 2025
+            wgpu_dev
+        );
+
+        // ---------------------------------------------------------------------
+        // GENUARY 2025
+        // ---------------------------------------------------------------------
+        register_legacy_sketches!(
+            registry,
             g25_10_11_12,
             g25_13_triangle,
             g25_14_black_and_white,
@@ -65,9 +76,14 @@ pub fn run() {
             g25_22_gradients_only,
             g25_26_symmetry,
             g25_2_layers,
-            g25_5_isometric,
-            //
-            // --- SCRATCH
+            g25_5_isometric
+        );
+
+        // ---------------------------------------------------------------------
+        // SCRATCH
+        // ---------------------------------------------------------------------
+        register_legacy_sketches!(
+            registry,
             bos,
             chromatic_aberration,
             displacement_1,
@@ -81,11 +97,16 @@ pub fn run() {
             shader_experiments,
             vertical,
             vertical_2,
-            z_sim,
-            //
-            // --- TEMPLATES
+            z_sim
+        );
+
+        // ---------------------------------------------------------------------
+        // TEMPLATES
+        // ---------------------------------------------------------------------
+        register_legacy_sketches!(
+            registry,
             basic_cube_shader_template,
-            fullscreen_shader_template // template
+            fullscreen_shader_template
         );
     }
 
@@ -100,9 +121,29 @@ pub enum UiEvent {
     SwitchSketch(String),
     Alert(String),
     ClearFlag(bool),
+    CaptureFrame,
 }
 
-pub type UiEventSender = mpsc::Sender<UiEvent>;
+pub struct UiEventSender {
+    tx: mpsc::Sender<UiEvent>,
+}
+
+impl UiEventSender {
+    fn new(tx: mpsc::Sender<UiEvent>) -> Self {
+        Self { tx }
+    }
+
+    pub fn alert(&self, message: impl Into<String>) {
+        self.tx
+            .send(UiEvent::Alert(message.into()))
+            .expect("Failed to send alert event");
+    }
+
+    pub fn send(&self, event: UiEvent) {
+        self.tx.send(event).expect("Failed to send event");
+    }
+}
+
 pub type UiEventReceiver = mpsc::Receiver<UiEvent>;
 
 struct AppModel {
@@ -291,7 +332,7 @@ fn model(app: &App) -> AppModel {
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
-        event_tx,
+        event_tx: UiEventSender::new(event_tx),
         event_rx,
     }
 }
@@ -316,9 +357,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         gui::update_gui(
-            app,
             &mut model.current_sketch_name,
-            model.main_window_id,
             &mut model.session_id,
             &model.current_sketch_config,
             model
@@ -342,6 +381,13 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             }
             UiEvent::ClearFlag(clear) => {
                 model.clear_flag = clear.into();
+            }
+            UiEvent::CaptureFrame => {
+                capture_frame(
+                    model.main_window(app).unwrap(),
+                    &model.current_sketch_name,
+                    &model.event_tx,
+                );
             }
         }
     }
@@ -519,18 +565,11 @@ fn on_midi_instruction(
             if recording_state.is_queued {
                 match recording_state.start_recording() {
                     Ok(message) => {
-                        event_tx.send(UiEvent::Alert(message).into()).unwrap();
+                        event_tx.alert(message);
                     }
                     Err(e) => {
                         event_tx
-                            .send(
-                                UiEvent::Alert(format!(
-                                    "Failed to start recording: {}",
-                                    e
-                                ))
-                                .into(),
-                            )
-                            .unwrap();
+                            .alert(format!("Failed to start recording: {}", e));
                         error!("Failed to start recording: {}", e);
                     }
                 }
@@ -545,18 +584,11 @@ fn on_midi_instruction(
                 frame_controller::reset_frame_count();
                 match recording_state.start_recording() {
                     Ok(message) => {
-                        event_tx.send(UiEvent::Alert(message).into()).unwrap();
+                        event_tx.alert(message);
                     }
                     Err(e) => {
                         event_tx
-                            .send(
-                                UiEvent::Alert(format!(
-                                    "Failed to start recording: {}",
-                                    e
-                                ))
-                                .into(),
-                            )
-                            .unwrap();
+                            .alert(format!("Failed to start recording: {}", e));
                         error!("Failed to start recording: {}", e);
                     }
                 }
@@ -572,19 +604,14 @@ fn on_midi_instruction(
     }
 }
 
-pub fn capture_frame(
-    window: &nannou::window::Window,
-    app: &App,
+pub fn capture_frame<'a>(
+    window: Ref<'a, Window>,
     sketch_name: &str,
     event_tx: &UiEventSender,
 ) {
     let filename = format!("{}-{}.png", sketch_name, uuid_5());
-    let file_path = app.project_path().unwrap().join("images").join(&filename);
+    let file_path = lattice_project_root().join("images").join(&filename);
     window.capture_frame(file_path.clone());
-    event_tx
-        .send(UiEvent::Alert(
-            format!("Image saved to {:?}", file_path).into(),
-        ))
-        .unwrap();
+    event_tx.alert(format!("Image saved to {:?}", file_path));
     info!("Image saved to {:?}", file_path);
 }
