@@ -9,7 +9,7 @@ use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
     init_logger();
-    init_theme();
+    gui::init();
 
     {
         let mut registry = REGISTRY.lock().unwrap();
@@ -146,7 +146,7 @@ fn model(app: &App) -> DynamicModel {
 
     let mut current_sketch = (sketch_info.factory)(app, window_rect);
 
-    let (gui_w, gui_h) = calculate_gui_dimensions(
+    let (gui_w, gui_h) = gui::calculate_gui_dimensions(
         current_sketch
             .controls()
             .map(|provider| provider.as_controls()),
@@ -226,7 +226,7 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         let (tx, _) = &model.event_channel;
-        update_gui(
+        gui::update_gui(
             app,
             &mut model.current_sketch_name,
             model.main_window_id,
@@ -383,7 +383,7 @@ fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
             sketch_info.config.w * 2,
             0,
         );
-        let (gui_w, gui_h) = calculate_gui_dimensions(
+        let (gui_w, gui_h) = gui::calculate_gui_dimensions(
             model
                 .current_sketch
                 .controls()
