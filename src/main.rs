@@ -2,12 +2,14 @@ use arboard::Clipboard;
 use nannou::prelude::*;
 use nannou_egui::egui::{self, FontDefinitions, FontFamily};
 use nannou_egui::Egui;
+use once_cell::sync::Lazy;
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::error::Error;
+use std::path::PathBuf;
 use std::sync::mpsc::Receiver;
-use std::sync::{mpsc, Once};
-use std::{env, fs};
-use std::{path::PathBuf, str};
+use std::sync::{mpsc, Mutex, Once};
+use std::{env, fs, str};
 
 use framework::frame_controller;
 use framework::prelude::*;
@@ -16,175 +18,230 @@ use runtime::prelude::*;
 pub mod config;
 pub mod framework;
 pub mod runtime;
-pub mod sketches;
+mod sketches;
 
 const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 const GUI_WIDTH: u32 = 560;
 
-macro_rules! run_sketch {
-    ($sketch_module:ident) => {{
-        info!(
-            "Loading {}",
-            sketches::$sketch_module::SKETCH_CONFIG.display_name
-        );
-
-        frame_controller::ensure_controller(
-            sketches::$sketch_module::SKETCH_CONFIG.fps,
-        );
-
-        nannou::app(|app| {
-            model(
-                app,
-                sketches::$sketch_module::init_model,
-                &sketches::$sketch_module::SKETCH_CONFIG,
-            )
-        })
-        .update(|app, model, nannou_update| {
-            update::<sketches::$sketch_module::Model>(
-                app,
-                model,
-                nannou_update,
-                sketches::$sketch_module::update,
-            )
-        })
-        .view(|app, model, frame| {
-            view::<sketches::$sketch_module::Model>(
-                app,
-                model,
-                frame,
-                sketches::$sketch_module::view,
-            )
-        })
-        .event(|app, model, event| {
-            match event {
-                Event::WindowEvent {
-                    simple: Some(KeyPressed(key)),
-                    ..
-                } => {
-                    on_key_pressed(app, model, key);
+macro_rules! register_legacy_sketches {
+    ($registry:expr, $($module:ident),*) => {
+        $(
+            $registry.register(
+                &crate::sketches::$module::SKETCH_CONFIG,
+                |app, rect| {
+                    let model = crate::sketches::$module::init_model(
+                        app,
+                        WindowRect::new(rect)
+                    );
+                    Box::new(SketchAdapter::new(
+                        model,
+                        crate::sketches::$module::update,
+                        crate::sketches::$module::view,
+                    ))
                 }
-                _ => {}
-            }
-            model.sketch_model.event(app, &event);
-        })
-        .run();
-    }};
+            );
+        )*
+    };
+}
+
+macro_rules! register_sketches {
+    ($registry:expr, $($module:ident),*) => {
+        $(
+            $registry.register(
+                &crate::sketches::$module::SKETCH_CONFIG,
+                |app, rect| {
+                    Box::new(crate::sketches::$module::init(
+                        app,
+                        WindowRect::new(rect)
+                    ))
+                }
+            );
+        )*
+    };
+}
+
+struct SketchInfo {
+    config: &'static SketchConfig,
+    factory: Box<
+        dyn for<'a> Fn(&'a App, Rect) -> Box<dyn Sketch + 'static>
+            + Send
+            + Sync,
+    >,
+}
+
+static REGISTRY: Lazy<Mutex<SketchRegistry>> =
+    Lazy::new(|| Mutex::new(SketchRegistry::new()));
+
+struct SketchRegistry {
+    sketches: HashMap<String, SketchInfo>,
+    sorted_names: Option<Vec<String>>,
+}
+
+impl SketchRegistry {
+    fn new() -> Self {
+        Self {
+            sketches: HashMap::new(),
+            sorted_names: None,
+        }
+    }
+
+    fn register<F>(&mut self, config: &'static SketchConfig, factory: F)
+    where
+        F: Fn(&App, Rect) -> Box<dyn Sketch> + Send + Sync + 'static,
+    {
+        self.sketches.insert(
+            config.name.to_string(),
+            SketchInfo {
+                config,
+                factory: Box::new(factory),
+            },
+        );
+    }
+
+    fn get(&self, name: &str) -> Option<&SketchInfo> {
+        self.sketches.get(name)
+    }
+
+    fn names(&mut self) -> &Vec<String> {
+        if self.sorted_names.is_none() {
+            let mut names: Vec<String> =
+                self.sketches.keys().cloned().collect();
+            names.sort();
+            self.sorted_names = Some(names);
+        }
+        self.sorted_names.as_ref().unwrap()
+    }
 }
 
 fn main() {
     init_logger();
     init_theme();
 
-    let args: Vec<String> = env::args().collect();
-    let sketch_name = args.get(1).map(|s| s.as_str()).unwrap_or("template");
+    {
+        let mut registry = REGISTRY.lock().unwrap();
 
-    match sketch_name {
-        // --- MAIN
-        "blob" => run_sketch!(blob),
-        "breakpoints" => run_sketch!(breakpoints),
-        "breakpoints_2" => run_sketch!(breakpoints_2),
-        "brutalism" => run_sketch!(brutalism),
-        "displacement_2a" => run_sketch!(displacement_2a),
-        "drop" => run_sketch!(drop),
-        "drop_walk" => run_sketch!(drop_walk),
-        "floor_supervisor" => run_sketch!(floor_supervisor),
-        "flow_field_basic" => run_sketch!(flow_field_basic),
-        "heat_mask" => run_sketch!(heat_mask),
-        "interference" => run_sketch!(interference),
-        "kalos" => run_sketch!(kalos),
-        "kalos_2" => run_sketch!(kalos_2),
-        "sand_lines" => run_sketch!(sand_lines),
-        "sierpinski_triangle" => run_sketch!(sierpinski_triangle),
-        "spiral" => run_sketch!(spiral),
-        "spiral_lines" => run_sketch!(spiral_lines),
-        "wave_fract" => run_sketch!(wave_fract),
+        register_sketches!(registry, template);
 
-        // --- DEV
-        "animation_dev" => run_sketch!(animation_dev),
-        "audio_controls_dev" => run_sketch!(audio_controls_dev),
-        "audio_dev" => run_sketch!(audio_dev),
-        "control_script_dev" => run_sketch!(control_script_dev),
-        "cv_dev" => run_sketch!(cv_dev),
-        "midi_dev" => run_sketch!(midi_dev),
-        "multiple_sketches_dev" => run_sketch!(multiple_sketches_dev),
-        "osc_dev" => run_sketch!(osc_dev),
-        "osc_transport_dev" => run_sketch!(osc_transport_dev),
-        "responsive_dev" => run_sketch!(responsive_dev),
-        "shader_to_texture_dev" => run_sketch!(shader_to_texture_dev),
-        "wgpu_compute_dev" => run_sketch!(wgpu_compute_dev),
-        "wgpu_dev" => run_sketch!(wgpu_dev),
-
-        // --- GENUARY 2025
-        "g25_1_horiz_vert" => run_sketch!(g25_1_horiz_vert),
-        "g25_2_layers" => run_sketch!(g25_2_layers),
-        "g25_5_isometric" => run_sketch!(g25_5_isometric),
-        "g25_10_11_12" => run_sketch!(g25_10_11_12),
-        "g25_13_triangle" => run_sketch!(g25_13_triangle),
-        "g25_14_black_and_white" => run_sketch!(g25_14_black_and_white),
-        "g25_18_wind" => run_sketch!(g25_18_wind),
-        "g25_19_op_art" => run_sketch!(g25_19_op_art),
-        "g25_20_23_brutal_arch" => run_sketch!(g25_20_23_brutal_arch),
-        "g25_22_gradients_only" => run_sketch!(g25_22_gradients_only),
-        "g25_26_symmetry" => run_sketch!(g25_26_symmetry),
-
-        // --- SCRATCH
-        "bos" => run_sketch!(bos),
-        "chromatic_aberration" => run_sketch!(chromatic_aberration),
-        "displacement_1" => run_sketch!(displacement_1),
-        "displacement_1a" => run_sketch!(displacement_1a),
-        "displacement_2" => run_sketch!(displacement_2),
-        "lin_alg" => run_sketch!(lin_alg),
-        "lines" => run_sketch!(lines),
-        "noise" => run_sketch!(noise),
-        "perlin_loop" => run_sketch!(perlin_loop),
-        "sand_line" => run_sketch!(sand_line),
-        "shader_experiments" => run_sketch!(shader_experiments),
-        "vertical" => run_sketch!(vertical),
-        "vertical_2" => run_sketch!(vertical_2),
-        "z_sim" => run_sketch!(z_sim),
-
-        // --- TEMPLATES
-        "basic_cube_shader_template" => run_sketch!(basic_cube_shader_template),
-        "fullscreen_shader_template" => {
-            run_sketch!(fullscreen_shader_template)
-        }
-        "template" => run_sketch!(template),
-
-        _ => {
-            warn!("Sketch not found, running template");
-            run_sketch!(template)
-        }
+        register_legacy_sketches!(
+            registry,
+            //
+            // --- MAIN
+            blob,
+            breakpoints,
+            breakpoints_2,
+            brutalism,
+            displacement_2a,
+            drop,
+            drop_walk,
+            floor_supervisor,
+            flow_field_basic,
+            heat_mask,
+            interference,
+            kalos,
+            kalos_2,
+            sand_lines,
+            sierpinski_triangle,
+            spiral,
+            spiral_lines,
+            wave_fract,
+            //
+            // --- DEV
+            animation_dev,
+            audio_controls_dev,
+            audio_dev,
+            control_script_dev,
+            cv_dev,
+            midi_dev,
+            multiple_sketches_dev,
+            osc_dev,
+            osc_transport_dev,
+            responsive_dev,
+            shader_to_texture_dev,
+            wgpu_compute_dev,
+            wgpu_dev,
+            //
+            // --- GENUARY 2025
+            g25_10_11_12,
+            g25_13_triangle,
+            g25_14_black_and_white,
+            g25_18_wind,
+            g25_19_op_art,
+            g25_1_horiz_vert,
+            g25_20_23_brutal_arch,
+            g25_22_gradients_only,
+            g25_26_symmetry,
+            g25_2_layers,
+            g25_5_isometric,
+            //
+            // --- SCRATCH
+            bos,
+            chromatic_aberration,
+            displacement_1,
+            displacement_1a,
+            displacement_2,
+            lin_alg,
+            lines,
+            noise,
+            perlin_loop,
+            sand_line,
+            shader_experiments,
+            vertical,
+            vertical_2,
+            z_sim,
+            //
+            // --- TEMPLATES
+            basic_cube_shader_template,
+            fullscreen_shader_template // template
+        );
     }
+
+    nannou::app(model)
+        .update(update)
+        .view(view)
+        .event(event)
+        .run();
 }
 
-struct AppModel<S> {
+enum UiEvent {
+    SwitchSketch(String),
+}
+
+struct DynamicModel {
     main_window_id: window::Id,
-    #[allow(dead_code)]
     gui_window_id: window::Id,
-    egui: Egui,
+    egui: RefCell<Egui>,
     session_id: String,
     alert_text: String,
     clear_flag: Cell<bool>,
     recording_state: RecordingState,
-    sketch_model: S,
-    sketch_config: &'static SketchConfig,
+    current_sketch: Box<dyn Sketch>,
+    current_sketch_name: String,
+    current_sketch_config: &'static SketchConfig,
     gui_visible: Cell<bool>,
     main_visible: Cell<bool>,
     main_maximized: Cell<bool>,
+    event_channel: (mpsc::Sender<UiEvent>, mpsc::Receiver<UiEvent>),
 }
 
-fn model<S: SketchModel + 'static>(
-    app: &App,
-    init_sketch_model: fn(&App, WindowRect) -> S,
-    sketch_config: &'static SketchConfig,
-) -> AppModel<S> {
-    let w = sketch_config.w as u32;
-    let h = sketch_config.h as u32;
+fn model(app: &App) -> DynamicModel {
+    let args: Vec<String> = env::args().collect();
+    let initial_sketch = args
+        .get(1)
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "template".to_string());
+
+    let registry = REGISTRY.lock().unwrap();
+
+    let sketch_info = registry
+        .get(&initial_sketch)
+        .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
+
+    let sketch_config = sketch_info.config;
 
     let main_window_id = app
         .new_window()
-        .title(sketch_config.display_name)
-        .size(w, h)
+        .title(sketch_info.config.display_name)
+        .size(sketch_config.w as u32, sketch_config.h as u32)
         .build()
         .unwrap();
 
@@ -193,10 +250,10 @@ fn model<S: SketchModel + 'static>(
         .expect("Unable to get window")
         .rect();
 
-    let mut sketch_model = init_sketch_model(app, WindowRect::new(window_rect));
+    let mut current_sketch = (sketch_info.factory)(app, window_rect);
 
     let (gui_w, gui_h) = calculate_gui_dimensions(
-        sketch_model
+        current_sketch
             .controls()
             .map(|provider| provider.as_controls()),
     );
@@ -208,10 +265,10 @@ fn model<S: SketchModel + 'static>(
             sketch_config.gui_w.unwrap_or(gui_w),
             sketch_config.gui_h.unwrap_or(gui_h),
         )
-        .view(view_gui::<S>)
-        .resizable(false)
-        .raw_event(|_app, model: &mut AppModel<S>, event| {
-            model.egui.handle_raw_event(event);
+        .view(view_gui)
+        .resizable(true)
+        .raw_event(|_app, model: &mut DynamicModel, event| {
+            model.egui.get_mut().handle_raw_event(event);
         })
         .build()
         .unwrap();
@@ -219,10 +276,11 @@ fn model<S: SketchModel + 'static>(
     set_window_position(app, main_window_id, 0, 0);
     set_window_position(app, gui_window_id, sketch_config.w * 2, 0);
 
-    let egui = Egui::from_window(&app.window(gui_window_id).unwrap());
+    let egui =
+        RefCell::new(Egui::from_window(&app.window(gui_window_id).unwrap()));
 
     if let Some(values) = stored_controls(&sketch_config.name) {
-        if let Some(controls) = sketch_model.controls() {
+        if let Some(controls) = current_sketch.controls() {
             for (name, value) in values.into_iter() {
                 controls.update_value(&name, value);
             }
@@ -230,26 +288,28 @@ fn model<S: SketchModel + 'static>(
         }
     }
 
-    let session_id = generate_session_id();
-    let recording_dir = frames_dir(&session_id, sketch_config.name);
+    let session_id = uuid_5();
+    let recording_dir = frames_dir(&session_id, &sketch_config.name);
 
     if sketch_config.play_mode != PlayMode::Loop {
         frame_controller::set_paused(true);
     }
 
-    AppModel {
+    DynamicModel {
         main_window_id,
         gui_window_id,
         egui,
         session_id,
+        alert_text: format!("{} loaded", initial_sketch),
         clear_flag: Cell::new(false),
-        alert_text: "".into(),
         recording_state: RecordingState::new(recording_dir.clone()),
-        sketch_model,
-        sketch_config,
+        current_sketch,
+        current_sketch_name: initial_sketch,
+        current_sketch_config: sketch_config,
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
+        event_channel: mpsc::channel(),
     }
 }
 
@@ -265,42 +325,48 @@ thread_local! {
         RefCell::new(None);
 }
 
-fn update<S: SketchModel>(
-    app: &App,
-    model: &mut AppModel<S>,
-    update: Update,
-    sketch_update_fn: fn(&App, &mut S, Update),
-) {
-    // GUI update must happen before frame_controller updates
-    // to avoid race conditions. For example pressing Adv. will
-    // set force_render=true, but if that happens at the end of update,
-    // the view function will set it back before wrapped_update
-    // could process it.
-    model.egui.set_elapsed_time(update.since_start);
-    let ctx = model.egui.begin_frame();
-    update_gui(
-        app,
-        model.main_window_id,
-        &mut model.session_id,
-        model.sketch_config,
-        &mut model.sketch_model,
-        &mut model.alert_text,
-        &mut model.clear_flag,
-        &mut model.recording_state,
-        &ctx,
-    );
+fn update(app: &App, model: &mut DynamicModel, update: Update) {
+    model.egui.borrow_mut().set_elapsed_time(update.since_start);
+    {
+        let mut egui = model.egui.borrow_mut();
+        let ctx = egui.begin_frame();
+        let (tx, _) = &model.event_channel;
+        update_gui(
+            app,
+            &mut model.current_sketch_name,
+            model.main_window_id,
+            &mut model.session_id,
+            &model.current_sketch_config,
+            model
+                .current_sketch
+                .controls()
+                .map(|provider| provider.as_controls()),
+            &mut model.alert_text,
+            &mut model.clear_flag,
+            &mut model.recording_state,
+            &tx,
+            &ctx,
+        );
+    }
 
-    model.sketch_model.set_window_rect(
-        app.window(model.main_window_id)
-            .expect("Unable to get window")
-            .rect(),
-    );
+    while let Ok(event) = model.event_channel.1.try_recv() {
+        match event {
+            UiEvent::SwitchSketch(name) => {
+                switch_sketch(app, model, &name);
+            }
+        }
+    }
+
+    if let Some(window) = app.window(model.main_window_id) {
+        let rect = window.rect();
+        model.current_sketch.set_window_rect(rect);
+    }
 
     frame_controller::wrapped_update(
         app,
-        &mut model.sketch_model,
+        &mut model.current_sketch,
         update,
-        sketch_update_fn,
+        |app, sketch, update| sketch.update(app, update),
     );
 
     INIT_MIDI_HANDLER.call_once(|| {
@@ -312,16 +378,13 @@ fn update<S: SketchModel>(
             move |message| {
                 match message[0] {
                     START => {
-                        tx.send(MidiInstruction::Start)
-                            .expect("Unable to send Start instruction");
+                        tx.send(MidiInstruction::Start).unwrap();
                     }
                     CONTINUE => {
-                        tx.send(MidiInstruction::Continue)
-                            .expect("Unable to send Continue instruction");
+                        tx.send(MidiInstruction::Continue).unwrap();
                     }
                     STOP => {
-                        tx.send(MidiInstruction::Stop)
-                            .expect("Unable to send Stop instruction");
+                        tx.send(MidiInstruction::Stop).unwrap();
                     }
                     _ => {}
                 };
@@ -336,7 +399,7 @@ fn update<S: SketchModel>(
             if let Ok(instruction) = rx.try_recv() {
                 on_midi_instruction(
                     &mut model.recording_state,
-                    model.sketch_config,
+                    model.current_sketch_config,
                     &model.session_id,
                     &mut model.alert_text,
                     instruction,
@@ -348,26 +411,31 @@ fn update<S: SketchModel>(
     if model.recording_state.is_encoding {
         model.recording_state.on_encoding_message(
             &mut model.session_id,
-            model.sketch_config,
+            model.current_sketch_config,
             &mut model.alert_text,
         );
     }
 }
 
-fn update_gui<S: SketchModel>(
+fn update_gui(
     app: &App,
+    current_sketch_name: &mut String,
     main_window_id: window::Id,
     session_id: &mut String,
     sketch_config: &SketchConfig,
-    sketch_model: &mut S,
+    controls: Option<&mut Controls>,
     alert_text: &mut String,
     clear_flag: &Cell<bool>,
     recording_state: &mut RecordingState,
+    event_tx: &mpsc::Sender<UiEvent>,
     ctx: &egui::Context,
 ) {
     apply_theme(ctx);
-    let colors = ThemeColors::current();
     setup_monospaced_fonts(ctx);
+    let colors = ThemeColors::current();
+
+    let mut registry = REGISTRY.lock().unwrap();
+    let sketch_names = registry.names().clone();
 
     egui::CentralPanel::default()
         .frame(
@@ -395,7 +463,11 @@ fn update_gui<S: SketchModel>(
                 draw_reset_button(ui, alert_text);
                 draw_clear_button(ui, clear_flag, alert_text);
                 draw_clear_cache_button(ui, sketch_config.name, alert_text);
-                draw_copy_controls(ui, sketch_model, alert_text);
+                if let Some(controls) = &controls {
+                    draw_copy_controls(ui, *controls, alert_text);
+                } else {
+                    ui.add_enabled(false, egui::Button::new("CP Ctrls"));
+                }
                 draw_queue_record_button(ui, recording_state, alert_text);
                 draw_record_button(
                     ui,
@@ -408,58 +480,152 @@ fn update_gui<S: SketchModel>(
                 draw_avg_fps(ui);
             });
 
+            ui.horizontal(|ui| {
+                egui::ComboBox::from_label("")
+                    .selected_text(current_sketch_name.clone())
+                    .show_ui(ui, |ui| {
+                        for name in &sketch_names {
+                            if ui
+                                .selectable_label(
+                                    *current_sketch_name == *name,
+                                    name,
+                                )
+                                .clicked()
+                            {
+                                if *current_sketch_name != *name {
+                                    if registry.get(name).is_some() {
+                                        event_tx
+                                            .send(UiEvent::SwitchSketch(
+                                                name.clone(),
+                                            ))
+                                            .unwrap();
+                                    }
+                                }
+                            }
+                        }
+                    });
+            });
+
             ui.separator();
-            draw_sketch_controls(ui, sketch_model, sketch_config, alert_text);
+
+            if let Some(controls) = controls {
+                draw_sketch_controls(ui, controls, sketch_config, alert_text);
+            }
+
             draw_alert_panel(ctx, alert_text);
         });
 }
 
-fn view<S: SketchModel>(
-    app: &App,
-    model: &AppModel<S>,
-    frame: Frame,
-    sketch_view_fn: fn(&App, &S, Frame),
-) {
-    if model.clear_flag.get() {
-        frame.clear(model.sketch_model.clear_color());
-        model.clear_flag.set(false);
+fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
+    let registry = REGISTRY.lock().unwrap();
+    let sketch_info = registry.get(name).unwrap();
+
+    if let Some(window) = app.window(model.main_window_id) {
+        window.set_title(&sketch_info.config.display_name);
+        set_window_position(app, model.main_window_id, 0, 0);
+        let winit_window = window.winit_window();
+        set_window_size(
+            winit_window,
+            sketch_info.config.w,
+            sketch_info.config.h,
+        );
     }
 
-    let did_render = frame_controller::wrapped_view(
-        app,
-        &model.sketch_model,
-        frame,
-        sketch_view_fn,
-    );
+    let rect = app
+        .window(model.main_window_id)
+        .expect("Unable to get window")
+        .rect();
 
-    if did_render {
-        frame_controller::clear_force_render();
+    let new_sketch = (sketch_info.factory)(app, rect);
 
-        if model.recording_state.is_recording {
-            let frame_count = model.recording_state.recorded_frames.get();
-            match app.window(model.main_window_id) {
-                Some(window) => match &model.recording_state.recording_dir {
-                    Some(path) => {
-                        let filename = format!("frame-{:06}.png", frame_count);
-                        window.capture_frame(path.join(filename));
-                    }
-                    None => error!("Unable to capture frame {}", frame_count),
-                },
-                None => panic!("Unable to attain app.window handle"),
-            }
+    model.current_sketch = new_sketch;
+    model.current_sketch_name = name.to_string();
+    model.current_sketch_config = sketch_info.config;
+
+    if let Some(window) = app.window(model.gui_window_id) {
+        window.set_title(&format!(
+            "{} Controls",
+            sketch_info.config.display_name
+        ));
+        let winit_window = window.winit_window();
+        set_window_position(
+            app,
+            model.gui_window_id,
+            sketch_info.config.w * 2,
+            0,
+        );
+        let (gui_w, gui_h) = calculate_gui_dimensions(
             model
-                .recording_state
-                .recorded_frames
-                .set(model.recording_state.recorded_frames.get() + 1);
+                .current_sketch
+                .controls()
+                .map(|provider| provider.as_controls()),
+        );
+        set_window_size(
+            winit_window,
+            sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
+            sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
+        );
+    }
+
+    frame_controller::ensure_controller(sketch_info.config.fps);
+
+    if sketch_info.config.play_mode != PlayMode::Loop {
+        frame_controller::set_paused(true);
+    }
+
+    model.clear_flag.set(true);
+    model.alert_text =
+        format!("Switched to {}", sketch_info.config.display_name);
+
+    if let Some(values) = stored_controls(&sketch_info.config.name) {
+        if let Some(controls) = model.current_sketch.controls() {
+            for (name, value) in values.into_iter() {
+                controls.update_value(&name, value);
+            }
+            info!("Controls restored")
         }
     }
 }
 
-fn view_gui<S: SketchModel>(_app: &App, model: &AppModel<S>, frame: Frame) {
-    model.egui.draw_to_frame(&frame).unwrap();
+fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
+    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
+    window.set_inner_size(logical_size);
 }
 
-fn on_key_pressed<S: SketchModel>(app: &App, model: &AppModel<S>, key: Key) {
+fn view(app: &App, model: &DynamicModel, frame: Frame) {
+    if model.clear_flag.get() {
+        frame.clear(model.current_sketch.clear_color());
+        model.clear_flag.set(false);
+    }
+
+    frame_controller::wrapped_view(
+        app,
+        &model.current_sketch,
+        frame,
+        |app, sketch, frame| sketch.view(app, frame),
+    );
+}
+
+fn view_gui(_app: &App, model: &DynamicModel, frame: Frame) {
+    model.egui.borrow().draw_to_frame(&frame).unwrap();
+}
+
+fn event(app: &App, model: &mut DynamicModel, event: Event) {
+    model.current_sketch.event(app, &event);
+
+    match event {
+        Event::WindowEvent {
+            id,
+            simple: Some(KeyPressed(key)),
+            ..
+        } if id == model.main_window_id => {
+            on_key_pressed(app, model, key);
+        }
+        _ => {}
+    }
+}
+
+fn on_key_pressed(app: &App, model: &DynamicModel, key: Key) {
     match key {
         Key::A if has_no_modifiers(app) => {
             frame_controller::advance_single_frame();
@@ -496,8 +662,8 @@ fn on_key_pressed<S: SketchModel>(app: &App, model: &AppModel<S>, key: Key) {
 
                 if is_maximized {
                     window.set_inner_size_points(
-                        model.sketch_config.w as f32,
-                        model.sketch_config.h as f32,
+                        model.current_sketch_config.w as f32,
+                        model.current_sketch_config.h as f32,
                     );
                     model.main_maximized.set(false);
                 } else {
@@ -610,35 +776,6 @@ fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
     })
 }
 
-fn setup_monospaced_fonts(ctx: &egui::Context) {
-    let mut fonts = FontDefinitions::default();
-
-    fonts
-        .families
-        .insert(FontFamily::Monospace, vec!["Hack".to_owned()]);
-
-    ctx.set_fonts(fonts);
-
-    let mut style = (*ctx.style()).clone();
-
-    style.text_styles.insert(
-        egui::TextStyle::Button,
-        egui::FontId::new(10.0, FontFamily::Monospace),
-    );
-
-    style.text_styles.insert(
-        egui::TextStyle::Body,
-        egui::FontId::new(10.0, FontFamily::Monospace),
-    );
-
-    style.text_styles.insert(
-        egui::TextStyle::Heading,
-        egui::FontId::new(12.0, FontFamily::Monospace),
-    );
-
-    ctx.set_style(style);
-}
-
 fn capture_frame(
     window: &nannou::window::Window,
     app: &App,
@@ -674,6 +811,35 @@ fn calculate_gui_dimensions(controls: Option<&mut Controls>) -> (u32, u32) {
     let height = HEADER_HEIGHT + controls_height + MIN_FINAL_GAP + ALERT_HEIGHT;
 
     (GUI_WIDTH, height)
+}
+
+fn setup_monospaced_fonts(ctx: &egui::Context) {
+    let mut fonts = FontDefinitions::default();
+
+    fonts
+        .families
+        .insert(FontFamily::Monospace, vec!["Hack".to_owned()]);
+
+    ctx.set_fonts(fonts);
+
+    let mut style = (*ctx.style()).clone();
+
+    style.text_styles.insert(
+        egui::TextStyle::Button,
+        egui::FontId::new(10.0, FontFamily::Monospace),
+    );
+
+    style.text_styles.insert(
+        egui::TextStyle::Body,
+        egui::FontId::new(10.0, FontFamily::Monospace),
+    );
+
+    style.text_styles.insert(
+        egui::TextStyle::Heading,
+        egui::FontId::new(12.0, FontFamily::Monospace),
+    );
+
+    ctx.set_style(style);
 }
 
 fn draw_pause_button(ui: &mut egui::Ui, alert_text: &mut String) {
@@ -734,24 +900,22 @@ fn draw_clear_cache_button(
     });
 }
 
-fn draw_copy_controls<S: SketchModel>(
+fn draw_copy_controls(
     ui: &mut egui::Ui,
-    sketch_model: &mut S,
+    controls: &Controls,
     alert_text: &mut String,
 ) {
     ui.add(egui::Button::new("CP Ctrls")).clicked().then(|| {
-        if let Some(controls) = sketch_model.controls() {
-            if let Ok(mut clipboard) = Clipboard::new() {
-                let serialized = controls.to_serialized();
-                if let Ok(json) = serde_json::to_string_pretty(&serialized) {
-                    let _ = clipboard.set_text(&json);
-                    *alert_text = "Control state copied to clipboard".into();
-                } else {
-                    *alert_text = "Failed to serialize controls".into();
-                }
+        if let Ok(mut clipboard) = Clipboard::new() {
+            let serialized = controls.to_serialized();
+            if let Ok(json) = serde_json::to_string_pretty(&serialized) {
+                let _ = clipboard.set_text(&json);
+                *alert_text = "Control state copied to clipboard".into();
             } else {
-                *alert_text = "Failed to access clipboard".into();
+                *alert_text = "Failed to serialize controls".into();
             }
+        } else {
+            *alert_text = "Failed to access clipboard".into();
         }
     });
 }
@@ -854,31 +1018,28 @@ fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
         });
 }
 
-fn draw_sketch_controls<S: SketchModel>(
+fn draw_sketch_controls(
     ui: &mut egui::Ui,
-    sketch_model: &mut S,
+    controls: &mut Controls,
     sketch_config: &SketchConfig,
     alert_text: &mut String,
 ) {
-    if let Some(controls) = sketch_model.controls() {
-        let any_changed = draw_controls(controls.as_controls(), ui);
-        if any_changed {
-            if frame_controller::is_paused()
-                && sketch_config.play_mode != PlayMode::ManualAdvance
-            {
-                frame_controller::advance_single_frame();
-            }
+    let any_changed = draw_controls(controls, ui);
+    if any_changed {
+        if frame_controller::is_paused()
+            && sketch_config.play_mode != PlayMode::ManualAdvance
+        {
+            frame_controller::advance_single_frame();
+        }
 
-            match persist_controls(sketch_config.name, controls.as_controls()) {
-                Ok(path_buf) => {
-                    *alert_text =
-                        format!("Controls persisted at {:?}", path_buf);
-                    trace!("Controls persisted at {:?}", path_buf);
-                }
-                Err(e) => {
-                    error!("Failed to persist controls: {}", e);
-                    *alert_text = "Failed to persist controls".into();
-                }
+        match persist_controls(sketch_config.name, controls) {
+            Ok(path_buf) => {
+                *alert_text = format!("Controls persisted at {:?}", path_buf);
+                trace!("Controls persisted at {:?}", path_buf);
+            }
+            Err(e) => {
+                error!("Failed to persist controls: {}", e);
+                *alert_text = "Failed to persist controls".into();
             }
         }
     }

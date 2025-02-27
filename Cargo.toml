@@ -3,6 +3,7 @@ name = "lattice"
 version = "0.1.0"
 authors = ["Lokua <dev@lokua.net>"]
 edition = "2021"
+default-run = "lattice"
 
 # clean with:
 #   rm -rf target/incremental
