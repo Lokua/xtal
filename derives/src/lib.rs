@@ -7,7 +7,6 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let name = &ast.ident;
 
-    // Get the attributes and fields
     let attrs = &ast.attrs;
     let fields = match &ast.data {
         Data::Struct(DataStruct {
@@ -68,7 +67,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
         .any(|f| f.ident.as_ref().unwrap() == "controls")
     {
         Some(quote! {
-            fn controls(&mut self) -> Option<&mut impl ControlProvider> {
+            fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
                 Some(&mut self.controls)
             }
         })
@@ -98,7 +97,24 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
     });
 
     let gen = quote! {
-        impl SketchModel for #name {
+        impl Sketch for #name {
+            // Required methods with helpful panic messages
+            fn update(&mut self, app: &App, update: Update) {
+                panic!(
+                    "update() not implemented. \
+                    Structs that derive SketchComponents must still provide update \
+                    and view functions."
+                )
+            }
+
+            fn view(&self, app: &App, frame: Frame) {
+                panic!(
+                    "view() not implemented. \
+                    Structs that derive SketchComponents must still provide update \
+                    and view functions."
+                )
+            }
+
             #window_rect_impl
             #controls_impl
             #clear_color_impl

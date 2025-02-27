@@ -42,63 +42,6 @@ macro_rules! register_sketches {
     };
 }
 
-// Core trait for type erasure - all sketches must implement this
-pub trait Sketch {
-    fn update(&mut self, app: &App, update: Update);
-    fn view(&self, app: &App, frame: Frame);
-    fn event(&mut self, app: &App, event: &Event);
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider>;
-    fn clear_color(&self) -> nannou::color::Rgba;
-    fn set_window_rect(&mut self, rect: Rect);
-}
-
-// Adapter to implement Sketch for your existing SketchModel types
-struct SketchAdapter<S: SketchModel> {
-    model: S,
-    update_fn: fn(&App, &mut S, Update),
-    view_fn: fn(&App, &S, Frame),
-}
-
-impl<S: SketchModel> SketchAdapter<S> {
-    fn new(
-        model: S,
-        update_fn: fn(&App, &mut S, Update),
-        view_fn: fn(&App, &S, Frame),
-    ) -> Self {
-        Self {
-            model,
-            update_fn,
-            view_fn,
-        }
-    }
-}
-
-impl<S: SketchModel> Sketch for SketchAdapter<S> {
-    fn update(&mut self, app: &App, update: Update) {
-        (self.update_fn)(app, &mut self.model, update);
-    }
-
-    fn view(&self, app: &App, frame: Frame) {
-        (self.view_fn)(app, &self.model, frame);
-    }
-
-    fn event(&mut self, app: &App, event: &Event) {
-        self.model.event(app, event);
-    }
-
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-        self.model.controls().map(|c| c as &mut dyn ControlProvider)
-    }
-
-    fn clear_color(&self) -> nannou::color::Rgba {
-        self.model.clear_color()
-    }
-
-    fn set_window_rect(&mut self, rect: Rect) {
-        self.model.set_window_rect(rect);
-    }
-}
-
 static REGISTRY: Lazy<Mutex<SketchRegistry>> =
     Lazy::new(|| Mutex::new(SketchRegistry::new()));
 
