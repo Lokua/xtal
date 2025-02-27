@@ -1,0 +1,10 @@
+{
+  "values": {
+    "radius": {
+      "Float": 0.625
+    },
+    "mode": {
+      "String": "smooth"
+    }
+  }
+}
