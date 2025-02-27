@@ -199,7 +199,6 @@ impl AppModel {
         let new_sketch = (sketch_info.factory)(app, rect);
 
         self.sketch = new_sketch;
-        // self.current_sketch_name = name.to_string();
         self.sketch_config = sketch_info.config;
 
         self.gui_window(app).map(|gui_window| {
@@ -242,6 +241,31 @@ impl AppModel {
                     controls.update_value(&name, value);
                 }
                 info!("Controls restored")
+            }
+        }
+    }
+
+    fn handle_ui_event(&mut self, app: &App, event: UiEvent) {
+        match event {
+            UiEvent::SwitchSketch(name) => {
+                self.switch_sketch(app, &name);
+            }
+            UiEvent::Alert(text) => {
+                self.alert_text = text;
+            }
+            UiEvent::ClearFlag(clear) => {
+                self.clear_flag = clear.into();
+            }
+            UiEvent::CaptureFrame => {
+                let filename =
+                    format!("{}-{}.png", self.sketch_name(), uuid_5());
+                let file_path =
+                    lattice_project_root().join("images").join(&filename);
+                let window = self.main_window(app).unwrap();
+                window.capture_frame(file_path.clone());
+                self.event_tx
+                    .alert(format!("Image saved to {:?}", file_path));
+                info!("Image saved to {:?}", file_path);
             }
         }
     }
@@ -373,24 +397,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 
     while let Ok(event) = model.event_rx.try_recv() {
-        match event {
-            UiEvent::SwitchSketch(name) => {
-                model.switch_sketch(app, &name);
-            }
-            UiEvent::Alert(text) => {
-                model.alert_text = text;
-            }
-            UiEvent::ClearFlag(clear) => {
-                model.clear_flag = clear.into();
-            }
-            UiEvent::CaptureFrame => {
-                capture_frame(
-                    model.main_window(app).unwrap(),
-                    &model.sketch_name(),
-                    &model.event_tx,
-                );
-            }
-        }
+        model.handle_ui_event(app, event);
     }
 
     model.main_window(app).map(|window| {
@@ -603,16 +610,4 @@ fn on_midi_instruction(
             }
         }
     }
-}
-
-pub fn capture_frame<'a>(
-    window: Ref<'a, Window>,
-    sketch_name: &str,
-    event_tx: &UiEventSender,
-) {
-    let filename = format!("{}-{}.png", sketch_name, uuid_5());
-    let file_path = lattice_project_root().join("images").join(&filename);
-    window.capture_frame(file_path.clone());
-    event_tx.alert(format!("Image saved to {:?}", file_path));
-    info!("Image saved to {:?}", file_path);
 }
