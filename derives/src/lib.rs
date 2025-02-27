@@ -98,7 +98,6 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
 
     let gen = quote! {
         impl Sketch for #name {
-            // Required methods with helpful panic messages
             fn update(&mut self, app: &App, update: Update) {
                 panic!(
                     "update() not implemented. \

@@ -1,14 +1,12 @@
 use nannou::prelude::*;
 
-/// A wrapper around nannou's `Rect` that is used to
-/// provide "the" main window to sketches. Development on
-/// nannou v0.19 is frozen and its app.main_window function
-/// is unreliable (it returns the currently focused window,
-/// not the main window). So intead of having to pass a window.id down
-/// to every sketch we provide this rect as a convenience, since
-/// having window dimensions and being able to check if a resize has
-/// happened is a common need.
-#[derive(Clone)]
+/// A wrapper around nannou's `Rect` that is used to provide "the" main window
+/// to sketches. Development on nannou v0.19 is frozen and its app.main_window
+/// function is unreliable (it returns the currently focused window, not the
+/// main window). So instead of having to pass a window.id down to every sketch
+/// we provide this rect as a convenience, since having window dimensions and
+/// being able to check if a resize has happened is a common need.
+#[derive(Clone, Debug)]
 pub struct WindowRect {
     current: Rect,
     last: Rect,
@@ -38,10 +36,10 @@ impl WindowRect {
     ///   m.wr.mark_unchanged()
     /// }
     /// ```
-    /// Note that this will always return true the first time it is called
-    /// or forever after that until mark_unchanged is called. This
-    /// makes the code snippet above function as dual-purpose
-    /// "init" style setup function which is pretty convenient.
+    /// Note that this will always return true the first time it is called or
+    /// forever after that until mark_unchanged is called. This makes the code
+    /// snippet above function as dual-purpose "init" style setup function which
+    /// is pretty convenient.
     pub fn changed(&self) -> bool {
         (self.current.w() != self.last.w())
             || (self.current.h() != self.last.h())

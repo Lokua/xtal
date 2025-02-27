@@ -82,19 +82,15 @@ pub trait Sketch {
     fn view(&self, app: &App, frame: Frame);
 
     fn event(&mut self, _app: &App, _event: &Event) {}
-
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
         None
     }
-
     fn clear_color(&self) -> Rgba {
         Rgba::new(0.0, 0.0, 0.0, 0.0)
     }
-
     fn window_rect(&mut self) -> Option<&mut WindowRect> {
         None
     }
-
     fn set_window_rect(&mut self, rect: Rect) {
         if let Some(window_rect) = self.window_rect() {
             window_rect.set_current(rect);

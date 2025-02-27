@@ -1,6 +1,6 @@
 use arboard::Clipboard;
 use nannou::prelude::*;
-use nannou_egui::egui::{self};
+use nannou_egui::egui::{self, FontDefinitions, FontFamily};
 use nannou_egui::Egui;
 use once_cell::sync::Lazy;
 use std::cell::{Cell, RefCell};
@@ -19,7 +19,7 @@ use lattice::sketches;
 const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 const GUI_WIDTH: u32 = 560;
 
-macro_rules! register_sketches {
+macro_rules! register_legacy_sketches {
     ($registry:expr, $($module:ident),*) => {
         $(
             $registry.register(
@@ -35,6 +35,24 @@ macro_rules! register_sketches {
                         model,
                         crate::sketches::$module::update,
                         crate::sketches::$module::view,
+                    ))
+                }
+            );
+        )*
+    };
+}
+
+macro_rules! register_sketch {
+    ($registry:expr, $($module:ident),*) => {
+        $(
+            $registry.register(
+                stringify!($module),
+                crate::sketches::$module::SKETCH_CONFIG.display_name,
+                &crate::sketches::$module::SKETCH_CONFIG,
+                |app, rect| {
+                    Box::new(crate::sketches::$module::init(
+                        app,
+                        WindowRect::new(rect)
                     ))
                 }
             );
@@ -103,7 +121,10 @@ fn main() {
 
     {
         let mut registry = REGISTRY.lock().unwrap();
-        register_sketches!(
+
+        register_sketch!(registry, template);
+
+        register_legacy_sketches!(
             registry,
             //
             // --- MAIN
@@ -172,8 +193,7 @@ fn main() {
             //
             // --- TEMPLATES
             basic_cube_shader_template,
-            fullscreen_shader_template,
-            template
+            fullscreen_shader_template // template
         );
     }
 
@@ -319,7 +339,10 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
             model.main_window_id,
             &mut model.session_id,
             &model.current_sketch_config,
-            &mut model.current_sketch.controls().unwrap().as_controls(),
+            model
+                .current_sketch
+                .controls()
+                .map(|provider| provider.as_controls()),
             &mut model.alert_text,
             &mut model.clear_flag,
             &mut model.recording_state,
@@ -402,7 +425,7 @@ fn update_gui(
     main_window_id: window::Id,
     session_id: &mut String,
     sketch_config: &SketchConfig,
-    controls: &mut Controls,
+    controls: Option<&mut Controls>,
     alert_text: &mut String,
     clear_flag: &Cell<bool>,
     recording_state: &mut RecordingState,
@@ -410,6 +433,7 @@ fn update_gui(
     ctx: &egui::Context,
 ) {
     apply_theme(ctx);
+    setup_monospaced_fonts(ctx);
     let colors = ThemeColors::current();
 
     let registry = REGISTRY.lock().unwrap();
@@ -441,7 +465,12 @@ fn update_gui(
                 draw_reset_button(ui, alert_text);
                 draw_clear_button(ui, clear_flag, alert_text);
                 draw_clear_cache_button(ui, sketch_config.name, alert_text);
-                draw_copy_controls(ui, controls, alert_text);
+                if let Some(ref_controls) = &controls {
+                    draw_copy_controls(ui, *ref_controls, alert_text);
+                } else {
+                    ui.add_enabled(false, egui::Button::new("CP Ctrls"));
+                }
+                // draw_copy_controls(ui, controls, alert_text);
                 draw_queue_record_button(ui, recording_state, alert_text);
                 draw_record_button(
                     ui,
@@ -483,7 +512,11 @@ fn update_gui(
             });
 
             ui.separator();
-            draw_sketch_controls(ui, controls, sketch_config, alert_text);
+
+            if let Some(controls) = controls {
+                draw_sketch_controls(ui, controls, sketch_config, alert_text);
+            }
+
             draw_alert_panel(ctx, alert_text);
         });
 }
@@ -740,6 +773,35 @@ fn calculate_gui_dimensions(controls: Option<&mut Controls>) -> (u32, u32) {
     let height = HEADER_HEIGHT + controls_height + MIN_FINAL_GAP + ALERT_HEIGHT;
 
     (GUI_WIDTH, height)
+}
+
+fn setup_monospaced_fonts(ctx: &egui::Context) {
+    let mut fonts = FontDefinitions::default();
+
+    fonts
+        .families
+        .insert(FontFamily::Monospace, vec!["Hack".to_owned()]);
+
+    ctx.set_fonts(fonts);
+
+    let mut style = (*ctx.style()).clone();
+
+    style.text_styles.insert(
+        egui::TextStyle::Button,
+        egui::FontId::new(10.0, FontFamily::Monospace),
+    );
+
+    style.text_styles.insert(
+        egui::TextStyle::Body,
+        egui::FontId::new(10.0, FontFamily::Monospace),
+    );
+
+    style.text_styles.insert(
+        egui::TextStyle::Heading,
+        egui::FontId::new(12.0, FontFamily::Monospace),
+    );
+
+    ctx.set_style(style);
 }
 
 fn draw_pause_button(ui: &mut egui::Ui, alert_text: &mut String) {
