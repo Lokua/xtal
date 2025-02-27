@@ -44,8 +44,6 @@ pub fn init(_app: &App, wr: WindowRect) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update) {
-        debug!("m.wr: {:?}", self.wr);
-
         let radius_max = self.controls.float("radius");
 
         self.radius = self.animation.lerp(

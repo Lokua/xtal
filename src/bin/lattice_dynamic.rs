@@ -23,8 +23,6 @@ macro_rules! register_legacy_sketches {
     ($registry:expr, $($module:ident),*) => {
         $(
             $registry.register(
-                stringify!($module),
-                crate::sketches::$module::SKETCH_CONFIG.display_name,
                 &crate::sketches::$module::SKETCH_CONFIG,
                 |app, rect| {
                     let model = crate::sketches::$module::init_model(
@@ -42,12 +40,10 @@ macro_rules! register_legacy_sketches {
     };
 }
 
-macro_rules! register_sketch {
+macro_rules! register_sketches {
     ($registry:expr, $($module:ident),*) => {
         $(
             $registry.register(
-                stringify!($module),
-                crate::sketches::$module::SKETCH_CONFIG.display_name,
                 &crate::sketches::$module::SKETCH_CONFIG,
                 |app, rect| {
                     Box::new(crate::sketches::$module::init(
@@ -60,17 +56,7 @@ macro_rules! register_sketch {
     };
 }
 
-static REGISTRY: Lazy<Mutex<SketchRegistry>> =
-    Lazy::new(|| Mutex::new(SketchRegistry::new()));
-
-// Registry for sketches to allow runtime loading
-struct SketchRegistry {
-    sketches: HashMap<String, SketchInfo>,
-}
-
 struct SketchInfo {
-    name: &'static str,
-    display_name: &'static str,
     config: &'static SketchConfig,
     factory: Box<
         dyn for<'a> Fn(&'a App, Rect) -> Box<dyn Sketch + 'static>
@@ -79,39 +65,47 @@ struct SketchInfo {
     >,
 }
 
+static REGISTRY: Lazy<Mutex<SketchRegistry>> =
+    Lazy::new(|| Mutex::new(SketchRegistry::new()));
+
+struct SketchRegistry {
+    sketches: HashMap<String, SketchInfo>,
+    sorted_names: Option<Vec<String>>,
+}
+
 impl SketchRegistry {
     fn new() -> Self {
         Self {
             sketches: HashMap::new(),
+            sorted_names: None,
         }
     }
 
-    fn register<F>(
-        &mut self,
-        name: &'static str,
-        display_name: &'static str,
-        config: &'static SketchConfig,
-        factory: F,
-    ) where
+    fn register<F>(&mut self, config: &'static SketchConfig, factory: F)
+    where
         F: Fn(&App, Rect) -> Box<dyn Sketch> + Send + Sync + 'static,
     {
         self.sketches.insert(
-            name.to_string(),
+            config.name.to_string(),
             SketchInfo {
-                name,
-                display_name,
                 config,
                 factory: Box::new(factory),
             },
         );
     }
 
-    fn get_sketch_info(&self, name: &str) -> Option<&SketchInfo> {
+    fn get(&self, name: &str) -> Option<&SketchInfo> {
         self.sketches.get(name)
     }
 
-    fn get_sketch_names(&self) -> Vec<String> {
-        self.sketches.keys().cloned().collect()
+    fn names(&mut self) -> &Vec<String> {
+        if self.sorted_names.is_none() {
+            let mut names: Vec<String> =
+                self.sketches.keys().cloned().collect();
+            names.sort();
+            self.sorted_names = Some(names);
+        }
+        self.sorted_names.as_ref().unwrap()
     }
 }
 
@@ -122,7 +116,7 @@ fn main() {
     {
         let mut registry = REGISTRY.lock().unwrap();
 
-        register_sketch!(registry, template);
+        register_sketches!(registry, template);
 
         register_legacy_sketches!(
             registry,
@@ -235,14 +229,14 @@ fn model(app: &App) -> DynamicModel {
     let registry = REGISTRY.lock().unwrap();
 
     let sketch_info = registry
-        .get_sketch_info(&initial_sketch)
+        .get(&initial_sketch)
         .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
 
     let sketch_config = sketch_info.config;
 
     let main_window_id = app
         .new_window()
-        .title(sketch_info.display_name)
+        .title(sketch_info.config.display_name)
         .size(sketch_config.w as u32, sketch_config.h as u32)
         .build()
         .unwrap();
@@ -436,8 +430,8 @@ fn update_gui(
     setup_monospaced_fonts(ctx);
     let colors = ThemeColors::current();
 
-    let registry = REGISTRY.lock().unwrap();
-    let sketch_names = registry.get_sketch_names();
+    let mut registry = REGISTRY.lock().unwrap();
+    let sketch_names = registry.names().clone();
 
     egui::CentralPanel::default()
         .frame(
@@ -465,12 +459,11 @@ fn update_gui(
                 draw_reset_button(ui, alert_text);
                 draw_clear_button(ui, clear_flag, alert_text);
                 draw_clear_cache_button(ui, sketch_config.name, alert_text);
-                if let Some(ref_controls) = &controls {
-                    draw_copy_controls(ui, *ref_controls, alert_text);
+                if let Some(controls) = &controls {
+                    draw_copy_controls(ui, *controls, alert_text);
                 } else {
                     ui.add_enabled(false, egui::Button::new("CP Ctrls"));
                 }
-                // draw_copy_controls(ui, controls, alert_text);
                 draw_queue_record_button(ui, recording_state, alert_text);
                 draw_record_button(
                     ui,
@@ -484,7 +477,7 @@ fn update_gui(
             });
 
             ui.horizontal(|ui| {
-                egui::ComboBox::from_label("Current Sketch")
+                egui::ComboBox::from_label("")
                     .selected_text(current_sketch_name.clone())
                     .show_ui(ui, |ui| {
                         for name in &sketch_names {
@@ -496,12 +489,10 @@ fn update_gui(
                                 .clicked()
                             {
                                 if *current_sketch_name != *name {
-                                    if let Some(_sketch_info) =
-                                        registry.get_sketch_info(name)
-                                    {
+                                    if registry.get(name).is_some() {
                                         event_tx
                                             .send(UiEvent::SwitchSketch(
-                                                name.to_string(),
+                                                name.clone(),
                                             ))
                                             .unwrap();
                                     }
@@ -523,10 +514,17 @@ fn update_gui(
 
 fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
     let registry = REGISTRY.lock().unwrap();
-    let sketch_info = registry.get_sketch_info(name).unwrap();
+    let sketch_info = registry.get(name).unwrap();
 
     if let Some(window) = app.window(model.main_window_id) {
-        window.set_title(sketch_info.display_name);
+        window.set_title(&sketch_info.config.display_name);
+        set_window_position(app, model.main_window_id, 0, 0);
+        let winit_window = window.winit_window();
+        set_window_size(
+            winit_window,
+            sketch_info.config.w,
+            sketch_info.config.h,
+        );
     }
 
     let rect = app
@@ -541,7 +539,28 @@ fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
     model.current_sketch_config = sketch_info.config;
 
     if let Some(window) = app.window(model.gui_window_id) {
-        window.set_title(&format!("{} Controls", sketch_info.display_name));
+        window.set_title(&format!(
+            "{} Controls",
+            sketch_info.config.display_name
+        ));
+        let winit_window = window.winit_window();
+        set_window_position(
+            app,
+            model.gui_window_id,
+            sketch_info.config.w * 2,
+            0,
+        );
+        let (gui_w, gui_h) = calculate_gui_dimensions(
+            model
+                .current_sketch
+                .controls()
+                .map(|provider| provider.as_controls()),
+        );
+        set_window_size(
+            winit_window,
+            sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
+            sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
+        );
     }
 
     frame_controller::ensure_controller(sketch_info.config.fps);
@@ -551,7 +570,22 @@ fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
     }
 
     model.clear_flag.set(true);
-    model.alert_text = format!("Switched to {}", sketch_info.display_name);
+    model.alert_text =
+        format!("Switched to {}", sketch_info.config.display_name);
+
+    if let Some(values) = stored_controls(&sketch_info.config.name) {
+        if let Some(controls) = model.current_sketch.controls() {
+            for (name, value) in values.into_iter() {
+                controls.update_value(&name, value);
+            }
+            info!("Controls restored")
+        }
+    }
+}
+
+fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
+    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
+    window.set_inner_size(logical_size);
 }
 
 fn view(app: &App, model: &DynamicModel, frame: Frame) {
