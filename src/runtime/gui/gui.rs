@@ -14,7 +14,6 @@ pub fn init() {
 
 /// The main event loop method for updating the GUI window
 pub fn update_gui(
-    current_sketch_name: &mut String,
     session_id: &mut String,
     sketch_config: &SketchConfig,
     controls: Option<&mut Controls>,
@@ -42,7 +41,7 @@ pub fn update_gui(
                 draw_adv_button(ui);
                 draw_reset_button(ui, event_tx);
                 draw_clear_button(ui, event_tx);
-                draw_clear_cache_button(ui, sketch_config.name, event_tx);
+                draw_clear_cache_button(ui, sketch_config, event_tx);
                 if let Some(controls) = &controls {
                     draw_copy_controls(ui, *controls, event_tx);
                 } else {
@@ -61,7 +60,7 @@ pub fn update_gui(
 
             draw_sketch_selector(
                 ui,
-                current_sketch_name,
+                sketch_config,
                 &sketch_names,
                 &registry,
                 event_tx,
@@ -144,11 +143,11 @@ fn draw_clear_button(ui: &mut egui::Ui, event_tx: &app::UiEventSender) {
 
 fn draw_clear_cache_button(
     ui: &mut egui::Ui,
-    sketch_name: &str,
+    sketch_config: &SketchConfig,
     event_tx: &app::UiEventSender,
 ) {
     ui.add(egui::Button::new("Clear Cache")).clicked().then(|| {
-        if let Err(e) = storage::delete_stored_controls(sketch_name) {
+        if let Err(e) = storage::delete_stored_controls(sketch_config.name) {
             error!("Failed to clear controls cache: {}", e);
         } else {
             event_tx.alert("Controls cache cleared");
@@ -245,21 +244,21 @@ fn draw_avg_fps(ui: &mut egui::Ui) {
 
 fn draw_sketch_selector(
     ui: &mut egui::Ui,
-    current_sketch_name: &mut String,
+    sketch_config: &SketchConfig,
     sketch_names: &Vec<String>,
     registry: &SketchRegistry,
     event_tx: &app::UiEventSender,
 ) {
     ui.horizontal(|ui| {
         egui::ComboBox::from_label("")
-            .selected_text(current_sketch_name.clone())
+            .selected_text(sketch_config.name)
             .show_ui(ui, |ui| {
                 for name in sketch_names {
                     if ui
-                        .selectable_label(*current_sketch_name == *name, name)
+                        .selectable_label(sketch_config.name == name, name)
                         .clicked()
                     {
-                        if *current_sketch_name != *name {
+                        if sketch_config.name != name {
                             if registry.get(name).is_some() {
                                 event_tx.send(app::UiEvent::SwitchSketch(
                                     name.clone(),

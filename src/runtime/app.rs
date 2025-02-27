@@ -154,9 +154,8 @@ struct AppModel {
     alert_text: String,
     clear_flag: Cell<bool>,
     recording_state: RecordingState,
-    current_sketch: Box<dyn Sketch>,
-    current_sketch_name: String,
-    current_sketch_config: &'static SketchConfig,
+    sketch: Box<dyn Sketch>,
+    sketch_config: &'static SketchConfig,
     gui_visible: Cell<bool>,
     main_visible: Cell<bool>,
     main_maximized: Cell<bool>,
@@ -177,6 +176,10 @@ impl AppModel {
         self.main_window(app).map(|window| window.rect())
     }
 
+    fn sketch_name(&self) -> String {
+        self.sketch_config.name.to_string()
+    }
+
     fn switch_sketch(&mut self, app: &App, name: &str) {
         let registry = REGISTRY.lock().unwrap();
         let sketch_info = registry.get(name).unwrap();
@@ -195,9 +198,9 @@ impl AppModel {
         let rect = self.window_rect(app).unwrap();
         let new_sketch = (sketch_info.factory)(app, rect);
 
-        self.current_sketch = new_sketch;
-        self.current_sketch_name = name.to_string();
-        self.current_sketch_config = sketch_info.config;
+        self.sketch = new_sketch;
+        // self.current_sketch_name = name.to_string();
+        self.sketch_config = sketch_info.config;
 
         self.gui_window(app).map(|gui_window| {
             let title =
@@ -211,7 +214,7 @@ impl AppModel {
                 0,
             );
             let (gui_w, gui_h) = gui::calculate_gui_dimensions(
-                self.current_sketch
+                self.sketch
                     .controls()
                     .map(|provider| provider.as_controls()),
             );
@@ -234,7 +237,7 @@ impl AppModel {
 
         if let Some(values) = storage::stored_controls(&sketch_info.config.name)
         {
-            if let Some(controls) = self.current_sketch.controls() {
+            if let Some(controls) = self.sketch.controls() {
                 for (name, value) in values.into_iter() {
                     controls.update_value(&name, value);
                 }
@@ -326,9 +329,8 @@ fn model(app: &App) -> AppModel {
         alert_text: format!("{} loaded", initial_sketch),
         clear_flag: Cell::new(false),
         recording_state: RecordingState::new(recording_dir.clone()),
-        current_sketch,
-        current_sketch_name: initial_sketch,
-        current_sketch_config: sketch_config,
+        sketch: current_sketch,
+        sketch_config,
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
@@ -357,11 +359,10 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         gui::update_gui(
-            &mut model.current_sketch_name,
             &mut model.session_id,
-            &model.current_sketch_config,
+            &model.sketch_config,
             model
-                .current_sketch
+                .sketch
                 .controls()
                 .map(|provider| provider.as_controls()),
             &mut model.alert_text,
@@ -385,7 +386,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             UiEvent::CaptureFrame => {
                 capture_frame(
                     model.main_window(app).unwrap(),
-                    &model.current_sketch_name,
+                    &model.sketch_name(),
                     &model.event_tx,
                 );
             }
@@ -394,12 +395,12 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     model.main_window(app).map(|window| {
         let rect = window.rect();
-        model.current_sketch.set_window_rect(rect);
+        model.sketch.set_window_rect(rect);
     });
 
     frame_controller::wrapped_update(
         app,
-        &mut model.current_sketch,
+        &mut model.sketch,
         update,
         |app, sketch, update| sketch.update(app, update),
     );
@@ -434,7 +435,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             if let Ok(instruction) = rx.try_recv() {
                 on_midi_instruction(
                     &mut model.recording_state,
-                    model.current_sketch_config,
+                    model.sketch_config,
                     &model.session_id,
                     &model.event_tx,
                     instruction,
@@ -445,15 +446,15 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     if model.recording_state.is_encoding {
         model.recording_state.on_encoding_message(
+            &model.sketch_config,
             &mut model.session_id,
-            model.current_sketch_config,
             &mut model.alert_text,
         );
     }
 }
 
 fn event(app: &App, model: &mut AppModel, event: Event) {
-    model.current_sketch.event(app, &event);
+    model.sketch.event(app, &event);
 
     match event {
         Event::WindowEvent {
@@ -469,13 +470,13 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_flag.get() {
-        frame.clear(model.current_sketch.clear_color());
+        frame.clear(model.sketch.clear_color());
         model.clear_flag.set(false);
     }
 
     frame_controller::wrapped_view(
         app,
-        &model.current_sketch,
+        &model.sketch,
         frame,
         |app, sketch, frame| sketch.view(app, frame),
     );
@@ -527,8 +528,8 @@ fn on_key_pressed(app: &App, model: &AppModel, key: Key) {
 
                 if is_maximized {
                     window.set_inner_size_points(
-                        model.current_sketch_config.w as f32,
-                        model.current_sketch_config.h as f32,
+                        model.sketch_config.w as f32,
+                        model.sketch_config.h as f32,
                     );
                     model.main_maximized.set(false);
                 } else {

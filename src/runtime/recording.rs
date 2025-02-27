@@ -111,8 +111,8 @@ impl RecordingState {
 
     pub fn on_encoding_message(
         &mut self,
-        session_id: &mut String,
         sketch_config: &SketchConfig,
+        session_id: &mut String,
         alert_text: &mut String,
     ) {
         if let Some(rx) = self.encoding_progress_rx.take() {
