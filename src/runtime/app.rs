@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 use nannou_egui::Egui;
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, Ref, RefCell};
 use std::sync::{mpsc, Once};
 use std::{env, str};
 
@@ -98,9 +98,14 @@ pub fn run() {
 
 pub enum UiEvent {
     SwitchSketch(String),
+    Alert(String),
+    ClearFlag(bool),
 }
 
-struct DynamicModel {
+pub type UiEventSender = mpsc::Sender<UiEvent>;
+pub type UiEventReceiver = mpsc::Receiver<UiEvent>;
+
+struct AppModel {
     main_window_id: window::Id,
     gui_window_id: window::Id,
     egui: RefCell<Egui>,
@@ -114,10 +119,91 @@ struct DynamicModel {
     gui_visible: Cell<bool>,
     main_visible: Cell<bool>,
     main_maximized: Cell<bool>,
-    event_channel: (mpsc::Sender<UiEvent>, mpsc::Receiver<UiEvent>),
+    event_tx: UiEventSender,
+    event_rx: UiEventReceiver,
 }
 
-fn model(app: &App) -> DynamicModel {
+impl AppModel {
+    fn main_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
+        app.window(self.main_window_id)
+    }
+
+    fn gui_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
+        app.window(self.gui_window_id)
+    }
+
+    fn window_rect<'a>(&self, app: &'a App) -> Option<Rect> {
+        self.main_window(app).map(|window| window.rect())
+    }
+
+    fn switch_sketch(&mut self, app: &App, name: &str) {
+        let registry = REGISTRY.lock().unwrap();
+        let sketch_info = registry.get(name).unwrap();
+
+        self.main_window(app).map(|window| {
+            window.set_title(&sketch_info.config.display_name);
+            set_window_position(app, self.main_window_id, 0, 0);
+            let winit_window = window.winit_window();
+            set_window_size(
+                winit_window,
+                sketch_info.config.w,
+                sketch_info.config.h,
+            );
+        });
+
+        let rect = self.window_rect(app).unwrap();
+        let new_sketch = (sketch_info.factory)(app, rect);
+
+        self.current_sketch = new_sketch;
+        self.current_sketch_name = name.to_string();
+        self.current_sketch_config = sketch_info.config;
+
+        self.gui_window(app).map(|gui_window| {
+            let title =
+                &format!("{} Controls", sketch_info.config.display_name);
+            gui_window.set_title(title);
+            let winit_window = gui_window.winit_window();
+            set_window_position(
+                app,
+                self.gui_window_id,
+                sketch_info.config.w * 2,
+                0,
+            );
+            let (gui_w, gui_h) = gui::calculate_gui_dimensions(
+                self.current_sketch
+                    .controls()
+                    .map(|provider| provider.as_controls()),
+            );
+            set_window_size(
+                winit_window,
+                sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
+                sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
+            );
+        });
+
+        frame_controller::ensure_controller(sketch_info.config.fps);
+
+        if sketch_info.config.play_mode != PlayMode::Loop {
+            frame_controller::set_paused(true);
+        }
+
+        self.clear_flag.set(true);
+        self.alert_text =
+            format!("Switched to {}", sketch_info.config.display_name);
+
+        if let Some(values) = storage::stored_controls(&sketch_info.config.name)
+        {
+            if let Some(controls) = self.current_sketch.controls() {
+                for (name, value) in values.into_iter() {
+                    controls.update_value(&name, value);
+                }
+                info!("Controls restored")
+            }
+        }
+    }
+}
+
+fn model(app: &App) -> AppModel {
     let args: Vec<String> = env::args().collect();
     let initial_sketch = args
         .get(1)
@@ -161,7 +247,7 @@ fn model(app: &App) -> DynamicModel {
         )
         .view(view_gui)
         .resizable(true)
-        .raw_event(|_app, model: &mut DynamicModel, event| {
+        .raw_event(|_app, model: &mut AppModel, event| {
             model.egui.get_mut().handle_raw_event(event);
         })
         .build()
@@ -189,7 +275,9 @@ fn model(app: &App) -> DynamicModel {
         frame_controller::set_paused(true);
     }
 
-    DynamicModel {
+    let (event_tx, event_rx) = mpsc::channel();
+
+    AppModel {
         main_window_id,
         gui_window_id,
         egui,
@@ -203,7 +291,8 @@ fn model(app: &App) -> DynamicModel {
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
-        event_channel: mpsc::channel(),
+        event_tx,
+        event_rx,
     }
 }
 
@@ -220,12 +309,12 @@ thread_local! {
         RefCell::new(None);
 }
 
-fn update(app: &App, model: &mut DynamicModel, update: Update) {
+fn update(app: &App, model: &mut AppModel, update: Update) {
     model.egui.borrow_mut().set_elapsed_time(update.since_start);
+
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        let (tx, _) = &model.event_channel;
         gui::update_gui(
             app,
             &mut model.current_sketch_name,
@@ -237,25 +326,30 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
                 .controls()
                 .map(|provider| provider.as_controls()),
             &mut model.alert_text,
-            &mut model.clear_flag,
             &mut model.recording_state,
-            &tx,
+            &model.event_tx,
             &ctx,
         );
     }
 
-    while let Ok(event) = model.event_channel.1.try_recv() {
+    while let Ok(event) = model.event_rx.try_recv() {
         match event {
             UiEvent::SwitchSketch(name) => {
-                switch_sketch(app, model, &name);
+                model.switch_sketch(app, &name);
+            }
+            UiEvent::Alert(text) => {
+                model.alert_text = text;
+            }
+            UiEvent::ClearFlag(clear) => {
+                model.clear_flag = clear.into();
             }
         }
     }
 
-    if let Some(window) = app.window(model.main_window_id) {
+    model.main_window(app).map(|window| {
         let rect = window.rect();
         model.current_sketch.set_window_rect(rect);
-    }
+    });
 
     frame_controller::wrapped_update(
         app,
@@ -296,7 +390,7 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
                     &mut model.recording_state,
                     model.current_sketch_config,
                     &model.session_id,
-                    &mut model.alert_text,
+                    &model.event_tx,
                     instruction,
                 );
             }
@@ -312,7 +406,7 @@ fn update(app: &App, model: &mut DynamicModel, update: Update) {
     }
 }
 
-fn event(app: &App, model: &mut DynamicModel, event: Event) {
+fn event(app: &App, model: &mut AppModel, event: Event) {
     model.current_sketch.event(app, &event);
 
     match event {
@@ -327,7 +421,7 @@ fn event(app: &App, model: &mut DynamicModel, event: Event) {
     }
 }
 
-fn view(app: &App, model: &DynamicModel, frame: Frame) {
+fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_flag.get() {
         frame.clear(model.current_sketch.clear_color());
         model.clear_flag.set(false);
@@ -341,79 +435,8 @@ fn view(app: &App, model: &DynamicModel, frame: Frame) {
     );
 }
 
-fn view_gui(_app: &App, model: &DynamicModel, frame: Frame) {
+fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
     model.egui.borrow().draw_to_frame(&frame).unwrap();
-}
-
-fn switch_sketch(app: &App, model: &mut DynamicModel, name: &str) {
-    let registry = REGISTRY.lock().unwrap();
-    let sketch_info = registry.get(name).unwrap();
-
-    if let Some(window) = app.window(model.main_window_id) {
-        window.set_title(&sketch_info.config.display_name);
-        set_window_position(app, model.main_window_id, 0, 0);
-        let winit_window = window.winit_window();
-        set_window_size(
-            winit_window,
-            sketch_info.config.w,
-            sketch_info.config.h,
-        );
-    }
-
-    let rect = app
-        .window(model.main_window_id)
-        .expect("Unable to get window")
-        .rect();
-
-    let new_sketch = (sketch_info.factory)(app, rect);
-
-    model.current_sketch = new_sketch;
-    model.current_sketch_name = name.to_string();
-    model.current_sketch_config = sketch_info.config;
-
-    if let Some(window) = app.window(model.gui_window_id) {
-        window.set_title(&format!(
-            "{} Controls",
-            sketch_info.config.display_name
-        ));
-        let winit_window = window.winit_window();
-        set_window_position(
-            app,
-            model.gui_window_id,
-            sketch_info.config.w * 2,
-            0,
-        );
-        let (gui_w, gui_h) = gui::calculate_gui_dimensions(
-            model
-                .current_sketch
-                .controls()
-                .map(|provider| provider.as_controls()),
-        );
-        set_window_size(
-            winit_window,
-            sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
-            sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
-        );
-    }
-
-    frame_controller::ensure_controller(sketch_info.config.fps);
-
-    if sketch_info.config.play_mode != PlayMode::Loop {
-        frame_controller::set_paused(true);
-    }
-
-    model.clear_flag.set(true);
-    model.alert_text =
-        format!("Switched to {}", sketch_info.config.display_name);
-
-    if let Some(values) = storage::stored_controls(&sketch_info.config.name) {
-        if let Some(controls) = model.current_sketch.controls() {
-            for (name, value) in values.into_iter() {
-                controls.update_value(&name, value);
-            }
-            info!("Controls restored")
-        }
-    }
 }
 
 fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
@@ -421,7 +444,7 @@ fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
     window.set_inner_size(logical_size);
 }
 
-fn on_key_pressed(app: &App, model: &DynamicModel, key: Key) {
+fn on_key_pressed(app: &App, model: &AppModel, key: Key) {
     match key {
         Key::A if has_no_modifiers(app) => {
             frame_controller::advance_single_frame();
@@ -486,7 +509,7 @@ fn on_midi_instruction(
     recording_state: &mut RecordingState,
     sketch_config: &SketchConfig,
     session_id: &str,
-    alert_text: &mut String,
+    event_tx: &UiEventSender,
     instruction: MidiInstruction,
 ) {
     match instruction {
@@ -494,9 +517,23 @@ fn on_midi_instruction(
             info!("Received MIDI Start message. Resetting frame count.");
             frame_controller::reset_frame_count();
             if recording_state.is_queued {
-                recording_state
-                    .start_recording(alert_text)
-                    .expect("Unable to start frame recording.");
+                match recording_state.start_recording() {
+                    Ok(message) => {
+                        event_tx.send(UiEvent::Alert(message).into()).unwrap();
+                    }
+                    Err(e) => {
+                        event_tx
+                            .send(
+                                UiEvent::Alert(format!(
+                                    "Failed to start recording: {}",
+                                    e
+                                ))
+                                .into(),
+                            )
+                            .unwrap();
+                        error!("Failed to start recording: {}", e);
+                    }
+                }
             }
         }
         MidiInstruction::Continue => {
@@ -506,9 +543,23 @@ fn on_midi_instruction(
                     Resetting frame count due to QUE_RECORD state."
                 );
                 frame_controller::reset_frame_count();
-                recording_state
-                    .start_recording(alert_text)
-                    .expect("Unable to start frame recording.");
+                match recording_state.start_recording() {
+                    Ok(message) => {
+                        event_tx.send(UiEvent::Alert(message).into()).unwrap();
+                    }
+                    Err(e) => {
+                        event_tx
+                            .send(
+                                UiEvent::Alert(format!(
+                                    "Failed to start recording: {}",
+                                    e
+                                ))
+                                .into(),
+                            )
+                            .unwrap();
+                        error!("Failed to start recording: {}", e);
+                    }
+                }
             }
         }
         MidiInstruction::Stop => {
@@ -525,12 +576,15 @@ pub fn capture_frame(
     window: &nannou::window::Window,
     app: &App,
     sketch_name: &str,
-    alert_text: &mut String,
+    event_tx: &UiEventSender,
 ) {
     let filename = format!("{}-{}.png", sketch_name, uuid_5());
     let file_path = app.project_path().unwrap().join("images").join(&filename);
-
     window.capture_frame(file_path.clone());
+    event_tx
+        .send(UiEvent::Alert(
+            format!("Image saved to {:?}", file_path).into(),
+        ))
+        .unwrap();
     info!("Image saved to {:?}", file_path);
-    *alert_text = format!("Image saved to {:?}", file_path);
 }

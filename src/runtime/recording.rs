@@ -34,17 +34,13 @@ impl RecordingState {
         }
     }
 
-    pub fn start_recording(
-        &mut self,
-        alert_text: &mut String,
-    ) -> Result<(), Box<dyn Error>> {
+    pub fn start_recording(&mut self) -> Result<String, Box<dyn Error>> {
         if let Some(path) = &self.recording_dir {
             self.is_recording = true;
             let message =
                 format!("Recording. Frames will be written to {:?}", path);
-            *alert_text = message;
             info!("Recording started, path: {:?}", path);
-            Ok(())
+            Ok(message)
         } else {
             Err("Unable to access recording path".into())
         }
@@ -104,12 +100,12 @@ impl RecordingState {
         &mut self,
         sketch_config: &SketchConfig,
         session_id: &str,
-        alert_text: &mut String,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<String, Box<dyn Error>> {
         if self.is_recording {
             self.stop_recording(sketch_config, session_id)
+                .and_then(|_| Ok("".to_string()))
         } else {
-            self.start_recording(alert_text)
+            self.start_recording()
         }
     }
 
@@ -307,40 +303,6 @@ pub fn frames_to_video(
         Err(err) => {
             error!("Error thread panicked: {:?}", err);
         }
-    }
-
-    Ok(())
-}
-
-pub fn frames_to_video_stub(
-    frame_dir: &str,
-    fps: f32,
-    output_path: &str,
-    total_frames: u32,
-    progress_sender: mpsc::Sender<EncodingMessage>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    use std::{thread, time};
-
-    debug!(
-        "Simulating: frame_dir = {}, fps = {}, output_path = {}, total_frames = {}",
-        frame_dir, fps, output_path, total_frames
-    );
-
-    let duration = time::Duration::from_millis(10);
-    let steps = 100; // Total steps to simulate
-    let step_progress = 1.0 / steps as f32;
-
-    for step in 0..=steps {
-        let progress = step as f32 * step_progress;
-        progress_sender.send(EncodingMessage::Progress(progress))?;
-        debug!("frames_to_video_stub progress: {}", progress);
-        thread::sleep(duration);
-    }
-
-    debug!("Simulated video encoding complete");
-
-    if progress_sender.send(EncodingMessage::Complete).is_err() {
-        warn!("Completion receiver dropped");
     }
 
     Ok(())

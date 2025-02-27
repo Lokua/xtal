@@ -1,12 +1,12 @@
 use arboard::Clipboard;
 use nannou::prelude::*;
 use nannou_egui::egui;
-use std::cell::Cell;
 use std::str;
 use std::sync::mpsc;
 
 use crate::framework::{frame_controller, prelude::*};
 use crate::runtime::app;
+use crate::runtime::app::UiEvent;
 use crate::runtime::prelude::*;
 
 pub const GUI_WIDTH: u32 = 560;
@@ -24,9 +24,8 @@ pub fn update_gui(
     sketch_config: &SketchConfig,
     controls: Option<&mut Controls>,
     alert_text: &mut String,
-    clear_flag: &Cell<bool>,
     recording_state: &mut RecordingState,
-    event_tx: &mpsc::Sender<app::UiEvent>,
+    event_tx: &app::UiEventSender,
     ctx: &egui::Context,
 ) {
     theme::apply(ctx);
@@ -51,63 +50,45 @@ pub fn update_gui(
                             &window,
                             app,
                             sketch_config.name,
-                            alert_text,
+                            event_tx,
                         );
                     }
                 });
 
-                draw_pause_button(ui, alert_text);
+                draw_pause_button(ui, event_tx);
                 draw_adv_button(ui);
-                draw_reset_button(ui, alert_text);
-                draw_clear_button(ui, clear_flag, alert_text);
-                draw_clear_cache_button(ui, sketch_config.name, alert_text);
+                draw_reset_button(ui, event_tx);
+                draw_clear_button(ui, event_tx);
+                draw_clear_cache_button(ui, sketch_config.name, event_tx);
                 if let Some(controls) = &controls {
-                    draw_copy_controls(ui, *controls, alert_text);
+                    draw_copy_controls(ui, *controls, event_tx);
                 } else {
                     ui.add_enabled(false, egui::Button::new("CP Ctrls"));
                 }
-                draw_queue_record_button(ui, recording_state, alert_text);
+                draw_queue_record_button(ui, recording_state, event_tx);
                 draw_record_button(
                     ui,
                     sketch_config,
                     session_id,
                     recording_state,
-                    alert_text,
+                    event_tx,
                 );
 
                 draw_avg_fps(ui);
             });
 
-            ui.horizontal(|ui| {
-                egui::ComboBox::from_label("")
-                    .selected_text(current_sketch_name.clone())
-                    .show_ui(ui, |ui| {
-                        for name in &sketch_names {
-                            if ui
-                                .selectable_label(
-                                    *current_sketch_name == *name,
-                                    name,
-                                )
-                                .clicked()
-                            {
-                                if *current_sketch_name != *name {
-                                    if registry.get(name).is_some() {
-                                        event_tx
-                                            .send(app::UiEvent::SwitchSketch(
-                                                name.clone(),
-                                            ))
-                                            .unwrap();
-                                    }
-                                }
-                            }
-                        }
-                    });
-            });
+            draw_sketch_selector(
+                ui,
+                current_sketch_name,
+                &sketch_names,
+                &registry,
+                event_tx,
+            );
 
             ui.separator();
 
             if let Some(controls) = controls {
-                draw_sketch_controls(ui, controls, sketch_config, alert_text);
+                draw_sketch_controls(ui, controls, sketch_config, event_tx);
             }
 
             draw_alert_panel(ctx, alert_text);
@@ -134,19 +115,22 @@ pub fn calculate_gui_dimensions(controls: Option<&mut Controls>) -> (u32, u32) {
     (GUI_WIDTH, height)
 }
 
-fn draw_pause_button(ui: &mut egui::Ui, alert_text: &mut String) {
-    ui.add(egui::Button::new(if frame_controller::is_paused() {
-        " Play"
-    } else {
+fn draw_pause_button(ui: &mut egui::Ui, event_tx: &app::UiEventSender) {
+    ui.add(egui::Button::new(ternary!(
+        frame_controller::is_paused(),
+        " Play",
         "Pause"
-    }))
+    )))
     .clicked()
     .then(|| {
         let next_is_paused = !frame_controller::is_paused();
         frame_controller::set_paused(next_is_paused);
         info!("Paused: {}", next_is_paused);
-        *alert_text =
-            (if next_is_paused { "Paused" } else { "Resumed" }).into();
+        event_tx
+            .send(app::UiEvent::Alert(
+                ternary!(next_is_paused, "Paused", "Resumed").into(),
+            ))
+            .unwrap()
     });
 }
 
@@ -158,36 +142,36 @@ fn draw_adv_button(ui: &mut egui::Ui) {
         });
 }
 
-fn draw_reset_button(ui: &mut egui::Ui, alert_text: &mut String) {
+fn draw_reset_button(ui: &mut egui::Ui, event_tx: &app::UiEventSender) {
     ui.add(egui::Button::new("Reset")).clicked().then(|| {
         frame_controller::reset_frame_count();
+        event_tx.send(app::UiEvent::Alert("Reset".into())).unwrap();
         info!("Frame count reset");
-        *alert_text = "Reset".into()
     });
 }
 
-fn draw_clear_button(
-    ui: &mut egui::Ui,
-    clear_flag: &Cell<bool>,
-    alert_text: &mut String,
-) {
+fn draw_clear_button(ui: &mut egui::Ui, event_tx: &app::UiEventSender) {
     ui.add(egui::Button::new("Clear")).clicked().then(|| {
-        clear_flag.set(true);
+        event_tx.send(app::UiEvent::ClearFlag(true)).unwrap();
+        event_tx
+            .send(app::UiEvent::Alert("Cleared".into()))
+            .unwrap();
         info!("Frame cleared");
-        *alert_text = "Cleared".into()
     });
 }
 
 fn draw_clear_cache_button(
     ui: &mut egui::Ui,
     sketch_name: &str,
-    alert_text: &mut String,
+    event_tx: &app::UiEventSender,
 ) {
     ui.add(egui::Button::new("Clear Cache")).clicked().then(|| {
         if let Err(e) = storage::delete_stored_controls(sketch_name) {
             error!("Failed to clear controls cache: {}", e);
         } else {
-            *alert_text = "Controls cache cleared".into();
+            event_tx
+                .send(app::UiEvent::Alert("Controls cache cleared".into()))
+                .unwrap();
         }
     });
 }
@@ -195,19 +179,29 @@ fn draw_clear_cache_button(
 fn draw_copy_controls(
     ui: &mut egui::Ui,
     controls: &Controls,
-    alert_text: &mut String,
+    event_tx: &app::UiEventSender,
 ) {
     ui.add(egui::Button::new("CP Ctrls")).clicked().then(|| {
         if let Ok(mut clipboard) = Clipboard::new() {
             let serialized = controls.to_serialized();
             if let Ok(json) = serde_json::to_string_pretty(&serialized) {
                 let _ = clipboard.set_text(&json);
-                *alert_text = "Control state copied to clipboard".into();
+                event_tx
+                    .send(app::UiEvent::Alert(
+                        "Control state copied to clipboard".into(),
+                    ))
+                    .unwrap();
             } else {
-                *alert_text = "Failed to serialize controls".into();
+                event_tx
+                    .send(app::UiEvent::Alert(
+                        "Failed to serialize controls".into(),
+                    ))
+                    .unwrap();
             }
         } else {
-            *alert_text = "Failed to access clipboard".into();
+            event_tx
+                .send(app::UiEvent::Alert("Failed to access clipboard".into()))
+                .unwrap();
         }
     });
 }
@@ -215,7 +209,7 @@ fn draw_copy_controls(
 fn draw_queue_record_button(
     ui: &mut egui::Ui,
     recording_state: &mut RecordingState,
-    alert_text: &mut String,
+    event_tx: &app::UiEventSender,
 ) {
     let button_label = if recording_state.is_queued {
         "QUEUED"
@@ -231,11 +225,14 @@ fn draw_queue_record_button(
     .then(|| {
         if recording_state.is_queued {
             recording_state.is_queued = false;
-            *alert_text = "".into();
+            event_tx.send(app::UiEvent::Alert("".into())).unwrap();
         } else {
             recording_state.is_queued = true;
-            *alert_text =
-                "Recording queued. Awaiting MIDI Start message.".into();
+            event_tx
+                .send(app::UiEvent::Alert(
+                    "Recording queued. Awaiting MIDI Start message".into(),
+                ))
+                .unwrap();
         }
     });
 }
@@ -245,7 +242,7 @@ fn draw_record_button(
     sketch_config: &SketchConfig,
     session_id: &str,
     recording_state: &mut RecordingState,
-    alert_text: &mut String,
+    event_tx: &app::UiEventSender,
 ) {
     let button_label = if recording_state.is_recording {
         "STOP"
@@ -261,13 +258,18 @@ fn draw_record_button(
     )
     .clicked()
     .then(|| {
-        if let Err(e) = recording_state.toggle_recording(
-            sketch_config,
-            session_id,
-            alert_text,
-        ) {
-            error!("Recording error: {}", e);
-            *alert_text = format!("Recording error: {}", e);
+        match recording_state.toggle_recording(sketch_config, session_id) {
+            Ok(message) => {
+                event_tx.send(app::UiEvent::Alert(message)).unwrap();
+            }
+            Err(e) => {
+                event_tx
+                    .send(app::UiEvent::Alert(
+                        format!("Recording error: {}", e).into(),
+                    ))
+                    .unwrap();
+                error!("Recording error: {}", e);
+            }
         }
     });
 }
@@ -277,6 +279,37 @@ fn draw_avg_fps(ui: &mut egui::Ui) {
     let avg_fps = frame_controller::average_fps();
     ui.label("FPS:");
     ui.colored_label(colors.text_data, format!("{:.1}", avg_fps));
+}
+
+fn draw_sketch_selector(
+    ui: &mut egui::Ui,
+    current_sketch_name: &mut String,
+    sketch_names: &Vec<String>,
+    registry: &SketchRegistry,
+    event_tx: &mpsc::Sender<UiEvent>,
+) {
+    ui.horizontal(|ui| {
+        egui::ComboBox::from_label("")
+            .selected_text(current_sketch_name.clone())
+            .show_ui(ui, |ui| {
+                for name in sketch_names {
+                    if ui
+                        .selectable_label(*current_sketch_name == *name, name)
+                        .clicked()
+                    {
+                        if *current_sketch_name != *name {
+                            if registry.get(name).is_some() {
+                                event_tx
+                                    .send(app::UiEvent::SwitchSketch(
+                                        name.clone(),
+                                    ))
+                                    .unwrap();
+                            }
+                        }
+                    }
+                }
+            });
+    });
 }
 
 fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
@@ -314,7 +347,7 @@ fn draw_sketch_controls(
     ui: &mut egui::Ui,
     controls: &mut Controls,
     sketch_config: &SketchConfig,
-    alert_text: &mut String,
+    event_tx: &app::UiEventSender,
 ) {
     let any_changed = controls_adapter::draw_controls(controls, ui);
     if any_changed {
@@ -326,12 +359,18 @@ fn draw_sketch_controls(
 
         match storage::persist_controls(sketch_config.name, controls) {
             Ok(path_buf) => {
-                *alert_text = format!("Controls persisted at {:?}", path_buf);
+                event_tx
+                    .send(UiEvent::Alert(
+                        format!("Controls persisted at {:?}", path_buf).into(),
+                    ))
+                    .unwrap();
                 trace!("Controls persisted at {:?}", path_buf);
             }
             Err(e) => {
+                event_tx
+                    .send(UiEvent::Alert("Failed to persist controls".into()))
+                    .unwrap();
                 error!("Failed to persist controls: {}", e);
-                *alert_text = "Failed to persist controls".into();
             }
         }
     }
