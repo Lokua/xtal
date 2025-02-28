@@ -101,6 +101,8 @@ pub trait Sketch {
     }
 }
 
+// TODO: undeprecate and port sketches to Sketch trait
+#[allow(deprecated)]
 impl<T: SketchModel> Sketch for T {
     fn update(&mut self, _app: &App, _update: Update) {
         panic!("update() not implemented for this SketchModel")
