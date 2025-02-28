@@ -104,7 +104,12 @@ pub trait FromColdParams: Default + SetFromParam {
     /// [`ParamValue::Hot`] since those are swapped in during
     /// [`ControlScript::get`]. Important that this _only_ deals with ParamValue
     /// (f32) - you still need to deal with copying the non-ParamValues from the
-    /// EffectConfig to the Effect instance manually
+    /// EffectConfig to the Effect instance manually.
+    ///
+    /// # IMPORTANT!
+    /// This _may_ suffer from the same issue that was addressed in [this
+    /// commit](https://github.com/Lokua/lattice/commit/05f5aa6) (non-param
+    /// fields being stuck with their defaults instead of the config values)
     fn from_cold_params(config: &EffectConfig) -> Self {
         let mut instance = Self::default();
 
