@@ -204,9 +204,8 @@ impl<T: TimingSource> ControlScript<T> {
             value = Some(self.controls.float(name));
         }
 
-        let osc_name = format!("/{}", name);
-        if self.osc_controls.has(&osc_name) {
-            value = Some(self.osc_controls.get(&osc_name));
+        if self.osc_controls.has(&name) {
+            value = Some(self.osc_controls.get(&name));
         }
 
         if self.audio_controls.has(name) {

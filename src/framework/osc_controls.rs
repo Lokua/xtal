@@ -15,10 +15,9 @@ pub struct OscControlConfig {
 
 impl OscControlConfig {
     pub fn new(address: &str, range: (f32, f32), default: f32) -> Self {
-        validate_address(address);
         let (min, max) = range;
         Self {
-            address: address.to_string(),
+            address: format_address(address),
             min,
             max,
             default,
@@ -39,15 +38,15 @@ impl OscState {
     }
 
     pub fn set(&mut self, address: &str, value: f32) {
-        self.values.insert(address.to_string(), value);
+        self.values.insert(format_address(address), value);
     }
 
     pub fn get(&self, address: &str) -> f32 {
-        *self.values.get(address).unwrap_or(&0.0)
+        *self.values.get(&format_address(address)).unwrap_or(&0.0)
     }
 
     pub fn has(&self, address: &str) -> bool {
-        self.values.contains_key(address)
+        self.values.contains_key(&format_address(address))
     }
 
     pub fn values(&self) -> HashMap<String, f32> {
@@ -72,22 +71,24 @@ impl OscControls {
     }
 
     pub fn add(&mut self, address: &str, config: OscControlConfig) {
-        self.state.lock().unwrap().set(address, config.default);
+        let address = format_address(address);
+        self.state.lock().unwrap().set(&address, config.default);
         self.configs.insert(address.to_string(), config);
     }
 
     pub fn has(&self, address: &str) -> bool {
-        self.state.lock().unwrap().has(address)
+        self.state.lock().unwrap().has(&format_address(address))
     }
 
     pub fn get(&self, address: &str) -> f32 {
-        validate_address(address);
-        self.state.lock().unwrap().get(address)
+        self.state.lock().unwrap().get(&format_address(address))
     }
 
     pub fn set(&self, address: &str, value: f32) {
-        validate_address(address);
-        self.state.lock().unwrap().set(address, value);
+        self.state
+            .lock()
+            .unwrap()
+            .set(&format_address(address), value);
     }
 
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -161,9 +162,10 @@ impl OscControlBuilder {
     }
 }
 
-fn validate_address(address: &str) {
-    if !address.starts_with("/") {
-        error!("OSC address `{}` does not start with `/`", address);
-        panic!();
-    }
+fn format_address(address: &str) -> String {
+    ternary!(
+        address.starts_with("/"),
+        address.into(),
+        format!("/{}", address)
+    )
 }

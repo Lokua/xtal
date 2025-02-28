@@ -45,6 +45,8 @@ pub enum ControlType {
     Separator,
 
     // External control
+    // #[serde(rename = "midi")]
+    // Midi,
     #[serde(rename = "osc")]
     Osc,
     #[serde(rename = "audio")]
