@@ -125,10 +125,10 @@ const TICKS_PER_QUARTER_NOTE: u32 = 960;
 pub struct MidiSongTiming {
     clock_count: Arc<AtomicU32>,
 
-    /// When true, clock works as a subdivision of song_position;
-    /// when false, clock is "absolute" and only reset on receive START.
-    /// See `HybridTiming` for a combination of MTC and this struct for
-    /// high precision sync for cases when SPP can't be relied on.
+    /// When true, clock works as a subdivision of song_position; when false,
+    /// clock is "absolute" and only reset on receive START. See `HybridTiming`
+    /// for a combination of MTC and this struct for high precision sync for
+    /// cases when SPP can't be relied on.
     follow_song_position_messages: bool,
 
     /// In MIDI ticks (1 tick = 1/960th of a quarter note)
@@ -167,7 +167,9 @@ impl MidiSongTiming {
         let song_position = self.song_position.clone();
         let follow_song_position_messages = self.follow_song_position_messages;
 
-        match on_message(
+        match midi::on_message(
+            "MidiSongTiming",
+            crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 if message.len() < 1 {
                     return;
@@ -220,7 +222,6 @@ impl MidiSongTiming {
                     _ => {}
                 }
             },
-            "[MidiSongTiming]",
         ) {
             Ok(_) => {
                 info!("MidiSongTiming initialized successfully");
@@ -296,7 +297,9 @@ impl HybridTiming {
         let bpm = self.bpm;
         let midi_timing = self.midi_timing.clone();
 
-        match on_message(
+        match midi::on_message(
+            "HybridSongTiming",
+            crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 if message.len() < 2 || message[0] != MTC_QUARTER_FRAME {
                     return;
@@ -421,7 +424,6 @@ impl HybridTiming {
                     _ => {}
                 }
             },
-            "[HybridTiming]",
         ) {
             Ok(_) => {
                 info!("HybridTiming MTC listener initialized successfully");

@@ -2,7 +2,7 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
-// b/w Live -> 2014.12.12 Lattice MIDI Test
+// ~/Documents/Live/2024/Lattice MIDI Test
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "midi_dev",

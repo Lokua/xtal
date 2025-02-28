@@ -7,10 +7,9 @@
   - [slider](#slider)
   - [checkbox](#checkbox)
   - [select](#select)
+- [MIDI](#midi)
 - [OSC](#osc)
-  - [osc](#osc-1)
 - [Audio](#audio)
-  - [audio](#audio-1)
 - [Animation](#animation)
   - [triangle](#triangle)
   - [automate](#automate)
@@ -175,14 +174,14 @@ All UI controls are added to the UI in the order they are declared.
 
 ## Slider
 
-### Params
+**Params**
 
 - `type` - `slider`
 - `range` - defaults to `[0.0, 1.0]`
 - `default` - defaults to `0.5`
 - `step` - defaults to `1.0`
 
-### Example
+**Example**
 
 ```yaml
 slider_example:
@@ -194,12 +193,12 @@ slider_example:
 
 ## Checkbox
 
-### Params
+**Params**
 
 - `type` - `checkbox`
 - `default` - defaults to `false`
 
-### Example
+**Example**
 
 ```yaml
 checkbox_example:
@@ -209,14 +208,14 @@ checkbox_example:
 
 ## Select
 
-### Params
+**Params**
 
 - `type` - `select`
 - `range` - defaults to `[0.0, 1.0]`
 - `default` - defaults to `0.5`
 - `step` - defaults to `1.0`
 
-### Example
+**Example**
 
 ```yaml
 slider_example:
@@ -230,12 +229,10 @@ slider_example:
 
 # OSC
 
-## Osc
-
 Listens for incoming floats on the port specified in the
 [src/config.rs](src/config.rs)'s `OSC_PORT` constant (`2346`).
 
-### Params
+**Params**
 
 Note that there is no `address` field; the address is taken from the mapping
 name (`osc_example` in the example below - forward slash is handled internally).
@@ -245,7 +242,7 @@ name (`osc_example` in the example below - forward slash is handled internally).
 - `default` - a default to use in the case an OSC message hasn't arrived at
   address since the program start. Defaults to `0.5`
 
-### Example
+**Example**
 
 ```yaml
 osc_example:
@@ -254,15 +251,40 @@ osc_example:
   default: 0.5
 ```
 
+# MIDI
+
+Listens for incoming control change messages on the port specified in the
+[src/config.rs](src/config.rs)'s `MIDI_INPUT_PORT` constant (currently hardcoded
+to `IAC Driver Lattice In`). MIDI values are by default scaled to a `[0.0, 1.0]`
+range.
+
+**Params**
+
+- `type` - `midi`
+- `channel` - zero-indexed; defaults to `0`
+- `cc` - zero-indexed; defaults to `0`
+- `range` - defaults to `[0.0, 1.0]`
+- `default` - a default to use in the case a CC message hasn't arrived since the
+  program start. Defaults to `0.0`
+
+**Example**
+
+```yaml
+midi_example:
+  type: midi
+  channel: 0
+  cc: 0
+  range: [0.0, 1.0]
+  default: 0.0
+```
+
 # Audio
 
 Listens for audio signals on the device specified in
 [src/config.rs](src/config.rs)'s `MULTICHANNEL_AUDIO_DEVICE_NAME` constant and
 transforms them into a stream suitable for parameter automation/modulation.
 
-## Audio
-
-### Params
+**Params**
 
 - `type` - `audio`
 - `channel` - the zero-indexed audio channel
@@ -275,7 +297,7 @@ transforms them into a stream suitable for parameter automation/modulation.
   `0.0`.
 - `range` - defaults to `[0.0, 1.0]`
 
-### Example
+**Example**
 
 ```yaml
 animation_example:
@@ -293,7 +315,7 @@ animation_example:
 A "ping pong" animation that linearly ramps from min to max and back to min as
 specified in the `range` param.
 
-### Params
+**Params**
 
 - `type` - `triangle`
 - `beats` - defaults to `1.0`
@@ -302,7 +324,7 @@ specified in the `range` param.
   phase offset of `0.5`, for example, will invert the triangle so that it ramps
   from max-min-max instead of min-max-min. Defaults to `0.0`
 
-### Example
+**Example**
 
 ```yaml
 triangle_example:
@@ -317,7 +339,7 @@ triangle_example:
 
 Advanced DAW-style animation. This is the bread-and-butter of Lattice.
 
-### Params
+**Params**
 
 - `type` - automate
 - `mode` - `loop` or `once`. Defaults to `loop`
@@ -399,7 +421,7 @@ kind. It represents what the overall sequence will end on. In the case of
 mode=loop, this segment will never be entered; for mode=once the value that will
 be held indefinitely.
 
-### Example
+**Example**
 
 ```yaml
 automate_example:
@@ -447,15 +469,16 @@ automate_example:
 
 Takes any declared control as a source and modifies its output using one or more
 modulators. A modulator can be an [effect](#effects), [animation](#animation),
-or the output of a [slider](#slider).
+or the output of a [slider](#slider) (TODO: validate if Osc/Midi/Audio can be
+modulators).
 
-### Params
+**Params**
 
 - `type` - `mod`
 - `source` - name of the control to modulate
 - `modulators` - list of effect names to apply to the source
 
-### Example
+**Example**
 
 ```yaml
 mod_example:
@@ -483,7 +506,7 @@ Implements a Schmitt trigger with configurable thresholds that outputs:
 - previous output when input is between thresholds
 - input value when between thresholds and `pass_through` is true
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `hysteresis`
@@ -497,7 +520,7 @@ Implements a Schmitt trigger with configurable thresholds that outputs:
   thresholds to pass through. When false, binary hysteresis is applied. defaults
   to `false`
 
-### Example
+**Example**
 
 ```yaml
 hysteresis_example:
@@ -521,14 +544,14 @@ For example, with a step size of 0.25 in range (0.0, 1.0):
 - Input 0.26 -> Output 0.25
 - Input 0.51 -> Output 0.50
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `quantizer`
 - `step` - The size of each discrete step. Defaults to `0.25`
 - `range` - defaults to `[0.0, 1.0]`
 
-### Example
+**Example**
 
 ```yaml
 quantizer_example:
@@ -544,7 +567,7 @@ Implements ring modulation by combining a carrier and modulator signal. Note
 that there is no actual "carrier" parameter because the modulator signal will be
 applied to the `source` field defined in a `mod` config.
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `ring_modulator`
@@ -555,7 +578,7 @@ applied to the `source` field defined in a `mod` config.
   - (defaults to `0.0`)
 - `modulator` - name of the control to use as modulator
 
-### Example
+**Example**
 
 ```yaml
 ring_modulator_example:
@@ -577,14 +600,14 @@ Applies smooth saturation to a signal, creating a soft roll-off as values
 approach the range boundaries. Higher drive values create more aggressive
 saturation effects.
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `saturator`
 - `drive` - defaults to `1.0`
 - `range` - defaults to `[0.0, 1.0]`
 
-### Example
+**Example**
 
 ```yaml
 saturator_example:
@@ -598,7 +621,7 @@ saturator_example:
 
 Limits the rate of change (slew rate) of a signal
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `slew_limiter`
@@ -611,7 +634,7 @@ Limits the rate of change (slew rate) of a signal
   - `1.0` = very slow decay (maximum smoothing)
   - (defaults to `0.0`)
 
-### Example
+**Example**
 
 ```yaml
 slew_limiter_example:
@@ -623,7 +646,7 @@ slew_limiter_example:
 
 ## Wave Folder
 
-### Params
+**Params**
 
 - `type` - `effect`
 - `kind` - `wave_folder`
@@ -661,7 +684,7 @@ slew_limiter_example:
   - (defaults to `1.0`)
 - `range` - defaults to `[0.0, 1.0]`
 
-### Example
+**Example**
 
 ```yaml
 wave_folder_example:

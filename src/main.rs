@@ -1,7 +1,4 @@
-pub mod config;
-pub mod framework;
-pub mod runtime;
-mod sketches;
+use lattice::runtime;
 
 fn main() {
     runtime::app::run();

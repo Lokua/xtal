@@ -12,6 +12,7 @@ pub mod frame_controller;
 pub mod gpu;
 pub mod logging;
 pub mod midi;
+pub mod midi_controls;
 pub mod noise;
 pub mod osc_controls;
 pub mod osc_receiver;

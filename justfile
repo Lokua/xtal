@@ -18,13 +18,13 @@ debug-module MODULE *ARGS:
 # To test just a single test, past the test name e.g. just test my_test
 # To test a single module, pass the module name e.g. just test my::module
 test *ARGS:
-  RUST_LOG=lattice=trace cargo test -- {{ARGS}}
+  RUST_LOG=lattice=trace cargo test --lib -- {{ARGS}}
   
 test-debug *ARGS:
-  RUST_LOG=lattice=debug cargo test -- {{ARGS}}
+  RUST_LOG=lattice=debug cargo test --lib -- {{ARGS}}
 
 test-verbose *ARGS:
-  RUST_LOG=lattice=trace cargo test -- --show-output {{ARGS}}  
+  RUST_LOG=lattice=trace cargo test --lib --show-output -- {{ARGS}}  
 
 generate-markdown-index:
   cargo run -p image-markdown --release
@@ -41,5 +41,5 @@ docs:
 stats:
   sccache --show-stats
 
-bin *ARGS:
-  RUST_LOG=lattice=debug cargo run --release --bin lattice_dynamic {{ARGS}}
+list_midi_ports:
+  RUST_LOG=lattice=debug cargo run --release --bin list_midi_ports

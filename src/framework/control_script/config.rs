@@ -45,8 +45,8 @@ pub enum ControlType {
     Separator,
 
     // External control
-    // #[serde(rename = "midi")]
-    // Midi,
+    #[serde(rename = "midi")]
+    Midi,
     #[serde(rename = "osc")]
     Osc,
     #[serde(rename = "audio")]
@@ -133,6 +133,30 @@ struct Separator {}
 //------------------------------------------------------------------------------
 // External
 //------------------------------------------------------------------------------
+
+#[derive(Deserialize, Debug)]
+#[serde(default)]
+pub struct MidiConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub channel: u8,
+    pub cc: u8,
+    pub range: [f32; 2],
+    pub default: f32,
+}
+
+impl Default for MidiConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            channel: 0,
+            cc: 0,
+            range: [0.0, 1.0],
+            default: 0.0,
+        }
+    }
+}
 
 #[derive(Deserialize, Debug)]
 #[serde(default)]
@@ -272,8 +296,8 @@ pub enum KindConfig {
         constrain: String,
     },
     Random {
-        #[serde(default = "default_f32_0_25")]
-        amplitude: f32,
+        #[serde(default = "default_param_value_0_25")]
+        amplitude: ParamValue,
     },
     RandomSmooth {
         #[serde(default = "default_param_value_0_25")]
@@ -421,9 +445,6 @@ fn default_none_string() -> String {
 }
 fn default_false() -> bool {
     false
-}
-fn default_f32_0_25() -> f32 {
-    0.25
 }
 fn default_param_value_0_25() -> ParamValue {
     ParamValue::Cold(0.25)

@@ -106,5 +106,12 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
             );
     }
 
+    if m.controls.bool("show_midi_circle") {
+        draw.ellipse()
+            .color(YELLOW)
+            .radius(m.controls.get("midi_radius"))
+            .x_y(0.0, 0.0);
+    }
+
     draw.to_frame(app, &frame).unwrap();
 }

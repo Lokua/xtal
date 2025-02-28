@@ -155,21 +155,22 @@ pub enum Kind {
     End,
 }
 
+// Should this just be a from_str?
 impl Kind {
-    pub fn default_for_variant(variant: &str) -> Self {
-        match variant {
-            "Step" => Kind::Step,
-            "Ramp" => Kind::Ramp {
+    pub fn default_for_variant_str(variant: &str) -> Self {
+        match variant.to_lowercase().as_str() {
+            "step" => Kind::Step,
+            "ramp" => Kind::Ramp {
                 easing: Easing::Linear,
             },
-            "Random" => Kind::Random { amplitude: 0.25 },
-            "RandomSmooth" => Kind::RandomSmooth {
+            "random" => Kind::Random { amplitude: 0.25 },
+            "randomsmooth" => Kind::RandomSmooth {
                 frequency: 0.25,
                 amplitude: 0.25,
                 easing: Easing::Linear,
                 constrain: Constrain::None,
             },
-            "Wave" => Kind::Wave {
+            "wave" => Kind::Wave {
                 shape: Shape::Sine,
                 frequency: 0.25,
                 width: 0.5,
@@ -177,7 +178,7 @@ impl Kind {
                 easing: Easing::Linear,
                 constrain: Constrain::None,
             },
-            "End" => Kind::End,
+            "end" => Kind::End,
             _ => panic!("Unknown breakpoint kind variant: {}", variant),
         }
     }

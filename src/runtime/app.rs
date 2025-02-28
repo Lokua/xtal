@@ -414,7 +414,9 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         MIDI_MESSAGE_RX.with(|cell| {
             *cell.borrow_mut() = Some(rx);
         });
-        on_message(
+        midi::on_message(
+            "GlobalStartStop",
+            crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 match message[0] {
                     START => {
@@ -429,7 +431,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
                     _ => {}
                 };
             },
-            "[Global Start/Stop]",
         )
         .expect("Failed to initialize MIDI handler");
     });

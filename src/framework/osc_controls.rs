@@ -91,6 +91,10 @@ impl OscControls {
             .set(&format_address(address), value);
     }
 
+    pub fn values(&self) -> HashMap<String, f32> {
+        return self.state.lock().unwrap().values();
+    }
+
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
@@ -116,10 +120,6 @@ impl OscControls {
         self.is_active = true;
 
         Ok(())
-    }
-
-    pub fn values(&self) -> HashMap<String, f32> {
-        return self.state.lock().unwrap().values();
     }
 }
 
