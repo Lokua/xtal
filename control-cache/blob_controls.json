@@ -1,40 +1,40 @@
 {
   "values": {
-    "center_size": {
-      "Float": 4.17
-    },
-    "ms73c": {
-      "Bool": false
-    },
-    "smoothness": {
-      "Float": 0.573
-    },
-    "outer_pos_t_mix": {
-      "Float": 0.5
-    },
-    "outer_size": {
-      "Float": 0.57
-    },
-    "color_mix": {
-      "Float": 0.848
-    },
-    "clamp_min": {
-      "Float": -1.0
-    },
-    "107uh": {
-      "Bool": false
-    },
     "invert": {
       "Float": 0.0
     },
     "blur": {
       "Float": 20.0
     },
-    "57mq5": {
+    "dist_morph": {
+      "Float": 0.9
+    },
+    "color_mix": {
+      "Float": 1.0
+    },
+    "clamp_min": {
+      "Float": -0.7
+    },
+    "de562": {
       "Bool": false
     },
-    "dist_morph": {
-      "Float": 0.0
+    "smoothness": {
+      "Float": 0.48499998
+    },
+    "outer_size": {
+      "Float": 0.51
+    },
+    "outer_pos_t_mix": {
+      "Float": 0.525
+    },
+    "center_size": {
+      "Float": 2.79
+    },
+    "8eovt": {
+      "Bool": false
+    },
+    "x12d6": {
+      "Bool": false
     }
   }
 }

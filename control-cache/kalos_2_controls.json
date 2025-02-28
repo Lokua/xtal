@@ -1,0 +1,49 @@
+{
+  "values": {
+    "offset": {
+      "Float": 0.2
+    },
+    "scaling_power": {
+      "Float": 1.1999999
+    },
+    "g": {
+      "Float": 0.33499998
+    },
+    "threshold": {
+      "Float": 0.117
+    },
+    "ring_strength": {
+      "Float": 11.2
+    },
+    "ring_harm_amt": {
+      "Float": 1.0
+    },
+    "lerp": {
+      "Float": 0.382
+    },
+    "angular_variation": {
+      "Float": 35.0
+    },
+    "strength": {
+      "Float": 0.5
+    },
+    "radius": {
+      "Float": 0.5
+    },
+    "ring_harmonics": {
+      "Float": 1.0
+    },
+    "mix": {
+      "Float": 0.78999996
+    },
+    "frequency": {
+      "Float": 10.0
+    },
+    "r": {
+      "Float": 0.5
+    },
+    "b": {
+      "Float": 1.0
+    }
+  }
+}

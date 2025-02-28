@@ -15,8 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(150),
 };
 
-#[derive(SketchComponents)]
-pub struct Model {
+pub struct Template {
     animation: Animation<Timing>,
     controls: Controls,
     wr: WindowRect,
@@ -24,7 +23,7 @@ pub struct Model {
     hue: f32,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, wr: WindowRect) -> Template {
     let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
 
     let controls = Controls::new(vec![Control::slider(
@@ -34,7 +33,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         1.0,
     )]);
 
-    Model {
+    Template {
         animation,
         controls,
         wr,
@@ -43,35 +42,37 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    let radius_max = m.controls.float("radius");
+impl Sketch for Template {
+    fn update(&mut self, _app: &App, _update: Update) {
+        let radius_max = self.controls.float("radius");
 
-    m.radius = m.animation.lerp(
-        &[
-            kf(20.0, 2.0),
-            kf(radius_max, 1.0),
-            kf(radius_max / 2.0, 0.5),
-            kf(radius_max, 0.5),
-            kf(20.0, 0.0),
-        ],
-        0.0,
-    );
+        self.radius = self.animation.lerp(
+            &[
+                kf(20.0, 2.0),
+                kf(radius_max, 1.0),
+                kf(radius_max / 2.0, 0.5),
+                kf(radius_max, 0.5),
+                kf(20.0, 0.0),
+            ],
+            0.0,
+        );
 
-    m.hue = m.animation.tri(12.0)
-}
+        self.hue = self.animation.tri(12.0)
+    }
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
+    fn view(&self, app: &App, frame: Frame) {
+        let draw = app.draw();
 
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h())
-        .hsla(0.0, 0.0, 0.02, 0.1);
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(self.wr.w(), self.wr.h())
+            .hsla(0.0, 0.0, 0.02, 0.1);
 
-    draw.ellipse()
-        .color(hsl(m.hue, 0.5, 0.5))
-        .radius(m.radius)
-        .x_y(0.0, 0.0);
+        draw.ellipse()
+            .color(hsl(self.hue, 0.5, 0.5))
+            .radius(self.radius)
+            .x_y(0.0, 0.0);
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

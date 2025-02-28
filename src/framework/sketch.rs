@@ -53,6 +53,7 @@ pub enum PlayMode {
     ManualAdvance,
 }
 
+#[deprecated(note = "Use Sketch trait directly instead")]
 pub trait SketchModel {
     fn controls(&mut self) -> Option<&mut impl ControlProvider> {
         None::<&mut Controls>
@@ -73,4 +74,104 @@ pub trait SketchModel {
     }
 
     fn event(&mut self, _app: &App, _event: &Event) {}
+}
+
+/// Core trait for type erasure - all sketches must implement this
+pub trait Sketch {
+    fn update(&mut self, app: &App, update: Update);
+    fn view(&self, app: &App, frame: Frame);
+
+    fn event(&mut self, _app: &App, _event: &Event) {}
+    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
+        None
+    }
+    fn controls_provided(&mut self) -> Option<&mut Controls> {
+        self.controls().map(|provider| provider.as_controls_mut())
+    }
+    fn clear_color(&self) -> Rgba {
+        Rgba::new(0.0, 0.0, 0.0, 0.0)
+    }
+    fn window_rect(&mut self) -> Option<&mut WindowRect> {
+        None
+    }
+    fn set_window_rect(&mut self, rect: Rect) {
+        if let Some(window_rect) = self.window_rect() {
+            window_rect.set_current(rect);
+        }
+    }
+}
+
+// TODO: undeprecate and port sketches to Sketch trait
+#[allow(deprecated)]
+impl<T: SketchModel> Sketch for T {
+    fn update(&mut self, _app: &App, _update: Update) {
+        panic!("update() not implemented for this SketchModel")
+    }
+
+    fn view(&self, _app: &App, _frame: Frame) {
+        panic!("view() not implemented for this SketchModel")
+    }
+
+    fn event(&mut self, app: &App, event: &Event) {
+        SketchModel::event(self, app, event)
+    }
+
+    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
+        SketchModel::controls(self).map(|c| c as &mut dyn ControlProvider)
+    }
+
+    fn clear_color(&self) -> nannou::color::Rgba {
+        SketchModel::clear_color(self)
+    }
+
+    fn set_window_rect(&mut self, rect: Rect) {
+        SketchModel::set_window_rect(self, rect);
+    }
+}
+
+/// Adapter to implement Sketch for legacy SketchModel types
+pub struct SketchAdapter<S: Sketch> {
+    model: S,
+    update_fn: fn(&App, &mut S, Update),
+    view_fn: fn(&App, &S, Frame),
+}
+
+impl<S: Sketch> SketchAdapter<S> {
+    pub fn new(
+        model: S,
+        update_fn: fn(&App, &mut S, Update),
+        view_fn: fn(&App, &S, Frame),
+    ) -> Self {
+        Self {
+            model,
+            update_fn,
+            view_fn,
+        }
+    }
+}
+
+impl<S: Sketch> Sketch for SketchAdapter<S> {
+    fn update(&mut self, app: &App, update: Update) {
+        (self.update_fn)(app, &mut self.model, update);
+    }
+
+    fn view(&self, app: &App, frame: Frame) {
+        (self.view_fn)(app, &self.model, frame);
+    }
+
+    fn event(&mut self, app: &App, event: &Event) {
+        self.model.event(app, event);
+    }
+
+    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
+        self.model.controls()
+    }
+
+    fn clear_color(&self) -> nannou::color::Rgba {
+        self.model.clear_color()
+    }
+
+    fn set_window_rect(&mut self, rect: Rect) {
+        self.model.set_window_rect(rect);
+    }
 }

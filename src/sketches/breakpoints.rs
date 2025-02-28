@@ -47,7 +47,7 @@ pub struct Model {
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let animation = Animation::new(ManualTiming::new(SKETCH_CONFIG.bpm));
 
-    let controls = Controls::new(vec![
+    let controls = Controls::with_previous(vec![
         Control::select("easing", "linear", &Easing::unary_function_names()),
         Control::select(
             "wave_easing",
