@@ -168,7 +168,7 @@ impl MidiSongTiming {
         let follow_song_position_messages = self.follow_song_position_messages;
 
         match midi::on_message(
-            "MidiSongTiming",
+            midi::ConnectionType::Clock,
             crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 if message.len() < 1 {
@@ -298,7 +298,7 @@ impl HybridTiming {
         let midi_timing = self.midi_timing.clone();
 
         match midi::on_message(
-            "HybridSongTiming",
+            midi::ConnectionType::Clock,
             crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 if message.len() < 2 || message[0] != MTC_QUARTER_FRAME {
@@ -426,10 +426,10 @@ impl HybridTiming {
             },
         ) {
             Ok(_) => {
-                info!("HybridTiming MTC listener initialized successfully");
+                info!("HybridTiming initialized successfully");
             }
             Err(e) => {
-                warn!("Failed to initialize HybridTiming MTC listener: {}", e);
+                warn!("Failed to initialize HybridTiming: {}", e);
             }
         }
     }

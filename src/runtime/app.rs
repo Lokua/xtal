@@ -415,7 +415,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             *cell.borrow_mut() = Some(rx);
         });
         midi::on_message(
-            "GlobalStartStop",
+            midi::ConnectionType::GlobalStartStop,
             crate::config::MIDI_CLOCK_PORT,
             move |message| {
                 match message[0] {

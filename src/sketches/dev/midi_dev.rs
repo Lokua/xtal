@@ -30,8 +30,8 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     Model { midi }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug!("{}", m.midi.get("a"));
+pub fn update(_app: &App, _m: &mut Model, _update: Update) {
+    // debug!("{}", m.midi.get("a"));
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {

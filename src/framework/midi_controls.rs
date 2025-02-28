@@ -97,7 +97,7 @@ impl MidiControls {
         let configs = self.configs.clone();
 
         match midi::on_message(
-            "MidiControls",
+            midi::ConnectionType::Control,
             crate::config::MIDI_CONTROL_PORT,
             move |message| {
                 if message.len() < 3 {
