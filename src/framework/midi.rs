@@ -44,12 +44,20 @@ impl MidiState {
         }
     }
 
+    pub fn get(&self, name: &str) -> f32 {
+        *self.values.get(name).unwrap_or(&0.0)
+    }
+
     pub fn set(&mut self, name: &str, value: f32) {
         self.values.insert(name.to_string(), value);
     }
 
-    pub fn get(&self, name: &str) -> f32 {
-        *self.values.get(name).unwrap_or(&0.0)
+    pub fn has(&self, name: &str) -> bool {
+        self.values.contains_key(name)
+    }
+
+    pub fn values(&self) -> HashMap<String, f32> {
+        return self.values.clone();
     }
 }
 
@@ -77,33 +85,51 @@ impl MidiControls {
         self.state.lock().unwrap().get(name)
     }
 
+    pub fn set(&self, name: &str, value: f32) {
+        self.state.lock().unwrap().set(name, value)
+    }
+
+    pub fn has(&self, name: &str) -> bool {
+        self.state.lock().unwrap().has(name)
+    }
+
+    pub fn values(&self) -> HashMap<String, f32> {
+        return self.state.lock().unwrap().values();
+    }
+
     fn start(&mut self) {
         let state = self.state.clone();
         let configs = self.configs.clone();
 
         match on_message(
             move |message| {
-                if message.len() >= 3 {
-                    let status = message[0];
-                    let channel = status & 0x0F;
-                    let cc = message[1];
-                    let value = message[2] as f32 / 127.0;
+                if message.len() < 3 {
+                    return;
+                }
 
-                    for (name, config) in configs.iter() {
-                        if config.channel == channel && config.cc == cc {
-                            let mapped_value =
-                                value * (config.max - config.min) + config.min;
+                let status = message[0];
+                let channel = status & 0x0F;
+                let cc = message[1];
+                let value = message[2] as f32 / 127.0;
 
-                            trace!(
-                                "Message match - channel: {}, cc: {}, value: {}, mapped: {}",
-                                channel,
-                                cc,
-                                value,
-                                mapped_value
-                            );
+                for (name, config) in configs.iter() {
+                    if config.channel == channel && config.cc == cc {
+                        let mapped_value =
+                            value * (config.max - config.min) + config.min;
 
-                            state.lock().unwrap().set(name, mapped_value);
-                        }
+                        trace!(
+                            "Message - \
+                                channel: {}, \
+                                cc: {}, \
+                                value: {}, \
+                                mapped: {}",
+                            channel,
+                            cc,
+                            value,
+                            mapped_value
+                        );
+
+                        state.lock().unwrap().set(name, mapped_value);
                     }
                 }
             },
@@ -174,7 +200,7 @@ where
         .iter()
         .find(|p| {
             midi_in.port_name(p).unwrap_or_default()
-                == crate::config::MIDI_INPUT_PORT
+                == crate::config::MIDI_CLOCK_PORT
         })
         .expect("Unable to find input port")
         .clone();
@@ -197,7 +223,7 @@ where
 
         info!(
             "Connected to {}, connection_purpose: {}",
-            crate::config::MIDI_INPUT_PORT,
+            crate::config::MIDI_CLOCK_PORT,
             connection_purpose
         );
 

@@ -14,9 +14,7 @@ use std::{
 use yaml_merge_keys::merge_keys_serde_yml;
 
 use crate::framework::{
-    control_script::{config::SliderConfig, param_mod::FromColdParams},
-    frame_controller,
-    prelude::*,
+    control_script::config::MidiConfig, frame_controller, prelude::*,
 };
 
 use super::{
@@ -24,16 +22,17 @@ use super::{
         AnimationConfig, AudioConfig, AutomateConfig, CheckboxConfig,
         ConfigFile, ControlType, EffectConfig, EffectKind, KeyframeSequence,
         MaybeControlConfig, ModulationConfig, OscConfig, SelectConfig,
-        TriangleConfig,
+        SliderConfig, TriangleConfig,
     },
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
-    param_mod::{ParamValue, SetFromParam},
+    param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
+    midi_controls: MidiControls,
     osc_controls: OscControls,
     audio_controls: AudioControls,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
@@ -50,6 +49,7 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn new(yaml_str: &str, timing: T) -> Self {
         let mut script = Self {
             controls: Controls::with_previous(vec![]),
+            midi_controls: MidiControls::new(),
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
@@ -204,8 +204,12 @@ impl<T: TimingSource> ControlScript<T> {
             value = Some(self.controls.float(name));
         }
 
-        if self.osc_controls.has(&name) {
-            value = Some(self.osc_controls.get(&name));
+        if self.osc_controls.has(name) {
+            value = Some(self.osc_controls.get(name));
+        }
+
+        if self.midi_controls.has(name) {
+            value = Some(self.midi_controls.get(name));
         }
 
         if self.audio_controls.has(name) {
@@ -364,6 +368,7 @@ impl<T: TimingSource> ControlScript<T> {
     ) -> Result<(), Box<dyn Error>> {
         let current_values: ControlValues = self.controls.values().clone();
         let osc_values: HashMap<String, f32> = self.osc_controls.values();
+        let midi_values: HashMap<String, f32> = self.midi_controls.values();
 
         self.controls = Controls::with_previous(vec![]);
         self.animations.clear();
@@ -449,16 +454,14 @@ impl<T: TimingSource> ControlScript<T> {
                     let conf: OscConfig =
                         serde_yml::from_value(config.config.clone())?;
 
-                    let address = format!("/{}", id);
-
-                    let existing_value = if osc_values.contains_key(&address) {
-                        osc_values.get(&address)
+                    let existing_value = if osc_values.contains_key(id) {
+                        osc_values.get(id)
                     } else {
                         None
                     };
 
                     let osc_control = OscControlConfig::new(
-                        &address,
+                        &id,
                         (conf.range[0], conf.range[1]),
                         conf.default,
                     );
@@ -468,6 +471,28 @@ impl<T: TimingSource> ControlScript<T> {
 
                     if let Some(value) = existing_value {
                         self.osc_controls.set(&osc_control.address, *value);
+                    }
+                }
+                ControlType::Midi => {
+                    let conf: MidiConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    let existing_value = if midi_values.contains_key(id) {
+                        midi_values.get(id)
+                    } else {
+                        None
+                    };
+
+                    let midi_control = MidiControlConfig::new(
+                        (conf.channel, conf.cc),
+                        (conf.range[0], conf.range[1]),
+                        conf.default,
+                    );
+
+                    self.midi_controls.add(&id, midi_control);
+
+                    if let Some(value) = existing_value {
+                        self.midi_controls.set(&id, *value);
                     }
                 }
                 ControlType::Audio => {

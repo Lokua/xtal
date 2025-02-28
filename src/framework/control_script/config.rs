@@ -45,8 +45,8 @@ pub enum ControlType {
     Separator,
 
     // External control
-    // #[serde(rename = "midi")]
-    // Midi,
+    #[serde(rename = "midi")]
+    Midi,
     #[serde(rename = "osc")]
     Osc,
     #[serde(rename = "audio")]
@@ -133,6 +133,30 @@ struct Separator {}
 //------------------------------------------------------------------------------
 // External
 //------------------------------------------------------------------------------
+
+#[derive(Deserialize, Debug)]
+#[serde(default)]
+pub struct MidiConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub channel: u8,
+    pub cc: u8,
+    pub range: [f32; 2],
+    pub default: f32,
+}
+
+impl Default for MidiConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            channel: 0,
+            cc: 0,
+            range: [0.0, 1.0],
+            default: 0.0,
+        }
+    }
+}
 
 #[derive(Deserialize, Debug)]
 #[serde(default)]
