@@ -233,8 +233,6 @@ impl<T: TimingSource> ControlScript<T> {
                     let breakpoints =
                         self.resolve_breakpoint_params(name, breakpoints);
 
-                    // debug_throttled!(1000, "{:#?}", breakpoints);
-
                     self.animation.automate(
                         &breakpoints,
                         Mode::from_str(&conf.mode).unwrap(),
