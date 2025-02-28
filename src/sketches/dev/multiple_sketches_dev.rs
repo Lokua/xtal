@@ -75,7 +75,7 @@ pub fn update(app: &App, m: &mut Model, update: Update) {
                 let mut model = animation_dev::init_model(app, m.wr.clone());
                 m.controls.retain(|control| control.name() == "sketch");
                 if let Some(model_controls) = model.controls() {
-                    for control in model_controls.get_controls_mut().drain(..) {
+                    for control in model_controls.items_mut().drain(..) {
                         m.controls.add(control);
                     }
                 }
@@ -92,7 +92,7 @@ pub fn update(app: &App, m: &mut Model, update: Update) {
                     control_script_dev::init_model(app, m.wr.clone());
                 m.controls.retain(|control| control.name() == "sketch");
                 if let Some(model_controls) = model.controls() {
-                    for control in model_controls.get_controls_mut().drain(..) {
+                    for control in model_controls.items_mut().drain(..) {
                         m.controls.add(control);
                     }
                 }

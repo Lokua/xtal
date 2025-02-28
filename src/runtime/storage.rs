@@ -5,14 +5,16 @@ use std::{fs, str};
 use super::prelude::*;
 use crate::framework::prelude::*;
 
+/// When false will use the appropriate OS config dir; when true will store
+/// within the Lattice project's controls_cache folder for easy source control.
 const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 
 pub fn stored_controls(sketch_name: &str) -> Option<ControlValues> {
-    let path = controls_storage_path(sketch_name)?;
-    let bytes = fs::read(path).ok()?;
-    let string = str::from_utf8(&bytes).ok()?;
-    let serialized = serde_json::from_str::<SerializedControls>(string).ok()?;
-    Some(serialized.values)
+    controls_storage_path(sketch_name)
+        .and_then(|path| fs::read(path).ok())
+        .and_then(|bytes| str::from_utf8(&bytes).ok().map(|s| s.to_owned()))
+        .and_then(|json| serde_json::from_str::<SerializedControls>(&json).ok())
+        .map(|sc| sc.values)
 }
 
 pub fn persist_controls(

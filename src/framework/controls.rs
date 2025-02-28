@@ -275,7 +275,7 @@ pub struct SerializedControls {
 /// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
 #[derive(Serialize, Deserialize)]
 pub struct Controls {
-    controls: Vec<Control>,
+    items: Vec<Control>,
     values: ControlValues,
     #[serde(skip)]
     change_tracker: ChangeTracker,
@@ -289,7 +289,7 @@ impl Controls {
             .collect();
 
         Self {
-            controls,
+            items: controls,
             values,
             change_tracker: ChangeTracker::new(false),
         }
@@ -302,18 +302,18 @@ impl Controls {
             .collect();
 
         Self {
-            controls,
+            items: controls,
             values,
             change_tracker: ChangeTracker::new(true),
         }
     }
 
-    pub fn get_controls(&self) -> &Vec<Control> {
-        &self.controls
+    pub fn items(&self) -> &Vec<Control> {
+        &self.items
     }
 
-    pub fn get_controls_mut(&mut self) -> &mut Vec<Control> {
-        &mut self.controls
+    pub fn items_mut(&mut self) -> &mut Vec<Control> {
+        &mut self.items
     }
 
     pub fn values(&self) -> &ControlValues {
@@ -384,7 +384,7 @@ impl Controls {
     }
 
     pub fn get_original_config(&self, name: &str) -> Option<&Control> {
-        self.controls.iter().find(|control| control.name() == name)
+        self.items.iter().find(|control| control.name() == name)
     }
 
     pub fn slider_range(&self, name: &str) -> (f32, f32) {
@@ -414,7 +414,7 @@ impl Controls {
         controls: Vec<Control>,
     ) -> Self {
         Self {
-            controls,
+            items: controls,
             values: serialized.values,
             change_tracker: ChangeTracker::new(false),
         }
@@ -424,11 +424,10 @@ impl Controls {
         let name = control.name().to_string();
         let value = control.value();
 
-        if let Some(index) = self.controls.iter().position(|c| c.name() == name)
-        {
-            self.controls[index] = control;
+        if let Some(index) = self.items.iter().position(|c| c.name() == name) {
+            self.items[index] = control;
         } else {
-            self.controls.push(control);
+            self.items.push(control);
         }
 
         self.values.insert(name, value);
@@ -439,7 +438,7 @@ impl Controls {
     where
         F: FnMut(&Control) -> bool,
     {
-        self.controls.retain(f);
+        self.items.retain(f);
     }
 }
 
@@ -452,7 +451,7 @@ impl Default for Controls {
 impl fmt::Debug for Controls {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_struct = f.debug_struct("Controls");
-        debug_struct.field("controls", &self.controls);
+        debug_struct.field("controls", &self.items);
         debug_struct.field("values", &self.values);
         debug_struct.finish()
     }

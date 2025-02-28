@@ -12,8 +12,7 @@ pub fn run() {
     gui::init();
 
     {
-        let mut registry = REGISTRY.lock().unwrap();
-
+        let mut registry = REGISTRY.write().unwrap();
         register_sketches!(registry, template);
 
         // ---------------------------------------------------------------------
@@ -108,6 +107,8 @@ pub fn run() {
             basic_cube_shader_template,
             fullscreen_shader_template
         );
+
+        registry.prepare();
     }
 
     nannou::app(model)
@@ -118,10 +119,11 @@ pub fn run() {
 }
 
 pub enum UiEvent {
-    SwitchSketch(String),
     Alert(String),
-    ClearFlag(bool),
     CaptureFrame,
+    ClearFlag(bool),
+    Reset,
+    SwitchSketch(String),
 }
 
 pub struct UiEventSender {
@@ -180,16 +182,48 @@ impl AppModel {
         self.sketch_config.name.to_string()
     }
 
+    fn handle_ui_event(&mut self, app: &App, event: UiEvent) {
+        match event {
+            UiEvent::Alert(text) => {
+                self.alert_text = text;
+            }
+            UiEvent::CaptureFrame => {
+                let filename =
+                    format!("{}-{}.png", self.sketch_name(), uuid_5());
+
+                let file_path =
+                    lattice_project_root().join("images").join(&filename);
+
+                self.main_window(app)
+                    .unwrap()
+                    .capture_frame(file_path.clone());
+
+                let alert_text = format!("Image saved to {:?}", file_path);
+                self.alert_text = alert_text.clone();
+                info!("{}", alert_text);
+            }
+            UiEvent::ClearFlag(clear) => {
+                self.clear_flag = clear.into();
+            }
+            UiEvent::Reset => {
+                frame_controller::reset_frame_count();
+                self.alert_text = "Reset".into();
+            }
+            UiEvent::SwitchSketch(name) => {
+                self.switch_sketch(app, &name);
+            }
+        }
+    }
+
     fn switch_sketch(&mut self, app: &App, name: &str) {
-        let registry = REGISTRY.lock().unwrap();
+        let registry = REGISTRY.read().unwrap();
         let sketch_info = registry.get(name).unwrap();
 
         self.main_window(app).map(|window| {
             window.set_title(&sketch_info.config.display_name);
             set_window_position(app, self.main_window_id, 0, 0);
-            let winit_window = window.winit_window();
             set_window_size(
-                winit_window,
+                window.winit_window(),
                 sketch_info.config.w,
                 sketch_info.config.h,
             );
@@ -202,23 +236,26 @@ impl AppModel {
         self.sketch_config = sketch_info.config;
 
         self.gui_window(app).map(|gui_window| {
-            let title =
-                &format!("{} Controls", sketch_info.config.display_name);
-            gui_window.set_title(title);
-            let winit_window = gui_window.winit_window();
+            gui_window.set_title(&format!(
+                "{} Controls",
+                sketch_info.config.display_name
+            ));
+
             set_window_position(
                 app,
                 self.gui_window_id,
                 sketch_info.config.w * 2,
                 0,
             );
+
             let (gui_w, gui_h) = gui::calculate_gui_dimensions(
                 self.sketch
                     .controls()
-                    .map(|provider| provider.as_controls()),
+                    .map(|provider| provider.as_controls_mut()),
             );
+
             set_window_size(
-                winit_window,
+                gui_window.winit_window(),
                 sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
                 sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
             );
@@ -234,40 +271,10 @@ impl AppModel {
         self.alert_text =
             format!("Switched to {}", sketch_info.config.display_name);
 
-        if let Some(values) = storage::stored_controls(&sketch_info.config.name)
-        {
-            if let Some(controls) = self.sketch.controls() {
-                for (name, value) in values.into_iter() {
-                    controls.update_value(&name, value);
-                }
-                info!("Controls restored")
-            }
-        }
-    }
-
-    fn handle_ui_event(&mut self, app: &App, event: UiEvent) {
-        match event {
-            UiEvent::SwitchSketch(name) => {
-                self.switch_sketch(app, &name);
-            }
-            UiEvent::Alert(text) => {
-                self.alert_text = text;
-            }
-            UiEvent::ClearFlag(clear) => {
-                self.clear_flag = clear.into();
-            }
-            UiEvent::CaptureFrame => {
-                let filename =
-                    format!("{}-{}.png", self.sketch_name(), uuid_5());
-                let file_path =
-                    lattice_project_root().join("images").join(&filename);
-                let window = self.main_window(app).unwrap();
-                window.capture_frame(file_path.clone());
-                self.event_tx
-                    .alert(format!("Image saved to {:?}", file_path));
-                info!("Image saved to {:?}", file_path);
-            }
-        }
+        restore_controls(
+            &sketch_info.config.name,
+            self.sketch.controls_provided(),
+        );
     }
 }
 
@@ -278,7 +285,7 @@ fn model(app: &App) -> AppModel {
         .map(|s| s.to_string())
         .unwrap_or_else(|| "template".to_string());
 
-    let registry = REGISTRY.lock().unwrap();
+    let registry = REGISTRY.read().unwrap();
 
     let sketch_info = registry
         .get(&initial_sketch)
@@ -298,13 +305,10 @@ fn model(app: &App) -> AppModel {
         .expect("Unable to get window")
         .rect();
 
-    let mut current_sketch = (sketch_info.factory)(app, window_rect);
+    let mut sketch = (sketch_info.factory)(app, window_rect);
 
-    let (gui_w, gui_h) = gui::calculate_gui_dimensions(
-        current_sketch
-            .controls()
-            .map(|provider| provider.as_controls()),
-    );
+    let (gui_w, gui_h) =
+        gui::calculate_gui_dimensions(sketch.controls_provided());
 
     let gui_window_id = app
         .new_window()
@@ -327,14 +331,7 @@ fn model(app: &App) -> AppModel {
     let egui =
         RefCell::new(Egui::from_window(&app.window(gui_window_id).unwrap()));
 
-    if let Some(values) = storage::stored_controls(&sketch_config.name) {
-        if let Some(controls) = current_sketch.controls() {
-            for (name, value) in values.into_iter() {
-                controls.update_value(&name, value);
-            }
-            info!("Controls restored")
-        }
-    }
+    restore_controls(&sketch_config.name, sketch.controls_provided());
 
     let session_id = uuid_5();
     let recording_dir = frames_dir(&session_id, &sketch_config.name);
@@ -353,7 +350,7 @@ fn model(app: &App) -> AppModel {
         alert_text: format!("{} loaded", initial_sketch),
         clear_flag: Cell::new(false),
         recording_state: RecordingState::new(recording_dir.clone()),
-        sketch: current_sketch,
+        sketch,
         sketch_config,
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
@@ -382,13 +379,13 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        gui::update_gui(
+        gui::update(
             &mut model.session_id,
             &model.sketch_config,
             model
                 .sketch
                 .controls()
-                .map(|provider| provider.as_controls()),
+                .map(|provider| provider.as_controls_mut()),
             &mut model.alert_text,
             &mut model.recording_state,
             &model.event_tx,
@@ -609,5 +606,17 @@ fn on_midi_instruction(
                     .expect("Error attempting to stop recording");
             }
         }
+    }
+}
+
+pub fn restore_controls(sketch_name: &str, controls: Option<&mut Controls>) {
+    if let (Some(values), Some(controls)) =
+        (storage::stored_controls(sketch_name), controls)
+    {
+        for (name, value) in values.into_iter() {
+            controls.update_value(&name, value);
+        }
+
+        info!("Controls restored");
     }
 }

@@ -12,8 +12,7 @@ pub fn init() {
     theme::init_light_dark();
 }
 
-/// The main event loop method for updating the GUI window
-pub fn update_gui(
+pub fn update(
     session_id: &mut String,
     sketch_config: &SketchConfig,
     controls: Option<&mut Controls>,
@@ -25,7 +24,7 @@ pub fn update_gui(
     theme::apply(ctx);
     let colors = theme::Colors::current();
 
-    let mut registry = REGISTRY.lock().unwrap();
+    let registry = REGISTRY.read().unwrap();
     let sketch_names = registry.names().clone();
 
     egui::CentralPanel::default()
@@ -84,7 +83,7 @@ pub fn calculate_gui_dimensions(controls: Option<&mut Controls>) -> (u32, u32) {
     const MIN_FINAL_GAP: u32 = 4;
 
     let controls_height = controls.map_or(0, |controls| {
-        let count = controls.get_controls().len() as u32;
+        let count = controls.items().len() as u32;
         let reduced_height = (CONTROL_HEIGHT as f32 * 0.95) as u32;
         let base = THRESHOLD * reduced_height;
         let remaining = count - THRESHOLD;
@@ -127,9 +126,7 @@ fn draw_adv_button(ui: &mut egui::Ui) {
 
 fn draw_reset_button(ui: &mut egui::Ui, event_tx: &app::UiEventSender) {
     ui.add(egui::Button::new("Reset")).clicked().then(|| {
-        frame_controller::reset_frame_count();
         event_tx.alert("Reset");
-        info!("Frame count reset");
     });
 }
 

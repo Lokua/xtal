@@ -85,6 +85,9 @@ pub trait Sketch {
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
         None
     }
+    fn controls_provided(&mut self) -> Option<&mut Controls> {
+        self.controls().map(|provider| provider.as_controls_mut())
+    }
     fn clear_color(&self) -> Rgba {
         Rgba::new(0.0, 0.0, 0.0, 0.0)
     }
