@@ -19,5 +19,7 @@ pub const CV_DEVICE_SAMPLE_RATE: usize = 48_000;
 
 /// The name of the MIDI device/port that will be used for clocking
 pub const MIDI_CLOCK_PORT: &str = "IAC Driver Lattice In";
+
 /// The name of the MIDI device/port that will be used for parameter control
-pub const MIDI_CONTROL_PORT: &str = MIDI_CLOCK_PORT;
+// pub const MIDI_CONTROL_PORT: &str = MIDI_CLOCK_PORT;
+pub const MIDI_CONTROL_PORT: &str = "MFT Midi Fighter Twister";
