@@ -41,5 +41,5 @@ docs:
 stats:
   sccache --show-stats
 
-bin *ARGS:
-  RUST_LOG=lattice=debug cargo run --release --bin lattice_dynamic {{ARGS}}
+list_midi_ports:
+  RUST_LOG=lattice=debug cargo run --release --bin list_midi_ports

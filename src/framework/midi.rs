@@ -238,15 +238,17 @@ pub fn print_ports() -> Result<(), Box<dyn Error>> {
     midi_in.ignore(Ignore::None);
     let midi_out = MidiOutput::new("midir test output")?;
 
-    info!("\nAvailable input ports:");
+    println!("\nAvailable input ports:");
     for (i, p) in midi_in.ports().iter().enumerate() {
-        info!("{}: {}", i, midi_in.port_name(p)?);
+        println!("    {}: {}", i, midi_in.port_name(p)?);
     }
 
-    info!("\nAvailable output ports:");
+    println!("\nAvailable output ports:");
     for (i, p) in midi_out.ports().iter().enumerate() {
-        info!("{}: {}", i, midi_out.port_name(p)?);
+        println!("    {}: {}", i, midi_out.port_name(p)?);
     }
+
+    println!("");
 
     Ok(())
 }
