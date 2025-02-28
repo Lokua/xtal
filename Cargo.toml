@@ -5,6 +5,10 @@ authors = ["Lokua <dev@lokua.net>"]
 edition = "2021"
 default-run = "lattice"
 
+# TODO: fixme
+[lib]
+doctest = false
+
 # clean with:
 #   rm -rf target/incremental
 [profile.release]

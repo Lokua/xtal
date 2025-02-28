@@ -296,8 +296,8 @@ pub enum KindConfig {
         constrain: String,
     },
     Random {
-        #[serde(default = "default_f32_0_25")]
-        amplitude: f32,
+        #[serde(default = "default_param_value_0_25")]
+        amplitude: ParamValue,
     },
     RandomSmooth {
         #[serde(default = "default_param_value_0_25")]
@@ -445,9 +445,6 @@ fn default_none_string() -> String {
 }
 fn default_false() -> bool {
     false
-}
-fn default_f32_0_25() -> f32 {
-    0.25
 }
 fn default_param_value_0_25() -> ParamValue {
     ParamValue::Cold(0.25)

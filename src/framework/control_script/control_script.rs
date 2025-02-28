@@ -233,6 +233,8 @@ impl<T: TimingSource> ControlScript<T> {
                     let breakpoints =
                         self.resolve_breakpoint_params(name, breakpoints);
 
+                    // debug_throttled!(1000, "{:#?}", breakpoints);
+
                     self.animation.automate(
                         &breakpoints,
                         Mode::from_str(&conf.mode).unwrap(),
@@ -612,6 +614,12 @@ impl<T: TimingSource> ControlScript<T> {
             self.osc_controls
                 .start()
                 .expect("Unable to start OSC receiver");
+        }
+
+        if !self.midi_controls.is_active() {
+            self.midi_controls
+                .start()
+                .expect("Unable to start MIDI receiver");
         }
 
         self.controls.mark_changed();

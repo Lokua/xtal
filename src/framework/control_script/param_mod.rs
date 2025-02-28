@@ -16,6 +16,8 @@
 //!   symmetry: $t1
 //! ```
 
+use std::str::FromStr;
+
 use bevy_reflect::{Reflect, ReflectRef};
 use serde::{Deserialize, Deserializer};
 
@@ -46,8 +48,8 @@ impl ParamValue {
         }
     }
 
-    /// Receive the wrapped if [`Self::Cold`], otherwise execute `f` in case of
-    /// [`Self::Hot`] with Hot String.
+    /// Receive the wrapped float if [`Self::Cold`], otherwise execute `f` in
+    /// case of [`Self::Hot`] with Hot String.
     pub fn cold_or(&self, f: impl Fn(String) -> f32) -> f32 {
         match self {
             Self::Cold(x) => *x,
@@ -235,38 +237,62 @@ impl SetFromParam for TriangleConfig {
     }
 }
 
+/// See the [parameter handling documentation](../docs/parameter_handling.md)
+/// for details on how different parameter types are processed.
 impl From<BreakpointConfig> for Breakpoint {
     fn from(config: BreakpointConfig) -> Self {
+        let kind_reflect: &dyn Reflect = &config.kind;
+        let variant_name =
+            if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
+                enum_ref.variant_name()
+            } else {
+                "Step"
+            };
+
         let mut breakpoint = Breakpoint {
             position: config.position,
             value: match &config.value {
                 ParamValue::Cold(v) => *v,
                 ParamValue::Hot(_) => 0.0,
             },
-            kind: Kind::Step,
+            kind: Kind::default_for_variant_str(variant_name),
         };
 
-        let kind_reflect: &dyn Reflect = &config.kind;
         if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
-            let variant_name = enum_ref.variant_name();
-            breakpoint.kind = Kind::default_for_variant(variant_name);
-
             for field_index in 0..enum_ref.field_len() {
                 if let Some(field_value) = enum_ref.field_at(field_index) {
-                    let field_name =
-                        enum_ref.name_at(field_index).unwrap_or("");
+                    if let Some(field_name) = enum_ref.name_at(field_index) {
+                        if let ReflectRef::Enum(inner_enum) =
+                            field_value.reflect_ref()
+                        {
+                            let inner_variant = inner_enum.variant_name();
 
-                    if let ReflectRef::Enum(param_enum) =
-                        field_value.reflect_ref()
-                    {
-                        if param_enum.variant_name() == "Cold" {
-                            if let Some(param_field) = param_enum.field_at(0) {
-                                if let Some(value) =
-                                    param_field.try_downcast_ref::<f32>()
+                            if inner_variant == "Cold" {
+                                if let Some(param_field) =
+                                    inner_enum.field_at(0)
                                 {
-                                    breakpoint
-                                        .set_from_param(field_name, *value);
+                                    if let Some(value) =
+                                        param_field.try_downcast_ref::<f32>()
+                                    {
+                                        breakpoint
+                                            .set_field(field_name, *value);
+                                    }
                                 }
+                            } else if inner_variant == "Hot" {
+                                // Hot params get skipped and live with their
+                                // defaults until they are replaced at "get"
+                                // time from the dep_graph and `set_from_param`
+                            }
+                        } else {
+                            // non-ParamValue fields like Easing, Constrain,
+                            // Shape, etc.
+                            if let Some(reflect_value) =
+                                field_value.try_as_reflect()
+                            {
+                                breakpoint.set_non_param_field(
+                                    field_name,
+                                    reflect_value,
+                                );
                             }
                         }
                     }
@@ -278,58 +304,139 @@ impl From<BreakpointConfig> for Breakpoint {
     }
 }
 
-impl SetFromParam for Breakpoint {
-    fn set_from_param(&mut self, name: &str, value: f32) {
+impl Breakpoint {
+    /// See the [parameter handling
+    /// documentation](../docs/parameter_handling.md) for details on how
+    /// different parameter types are processed.
+    fn set_field(&mut self, name: &str, value: f32) {
         if name == "value" {
             self.value = value;
             return;
         }
 
-        let path_segments: Vec<&str> = name.split(".").collect();
-
-        if path_segments.len() == 3 && path_segments[0] == "breakpoints" {
-            let key = path_segments[2];
-
-            let result = match self.kind {
-                Kind::Step => match key {
-                    "value" => Ok(self.value = value),
-                    _ => Err(()),
-                },
-                Kind::Random {
-                    ref mut amplitude, ..
-                } => match key {
-                    "value" => Ok(self.value = value),
-                    "amplitude" => Ok(*amplitude = value),
-                    _ => Err(()),
-                },
-                Kind::RandomSmooth {
-                    ref mut amplitude,
-                    ref mut frequency,
-                    ..
-                } => match key {
-                    "value" => Ok(self.value = value),
-                    "amplitude" => Ok(*amplitude = value),
-                    "frequency" => Ok(*frequency = value),
-                    _ => Err(()),
-                },
-                Kind::Wave {
-                    ref mut amplitude,
-                    ref mut frequency,
-                    ref mut width,
-                    ..
-                } => match key {
-                    "value" => Ok(self.value = value),
-                    "amplitude" => Ok(*amplitude = value),
-                    "width" => Ok(*width = value),
-                    "frequency" => Ok(*frequency = value),
-                    _ => Err(()),
-                },
-                _ => Err(()),
-            };
-
-            if result.is_err() {
+        match self.kind {
+            Kind::Step => {}
+            Kind::Random {
+                ref mut amplitude, ..
+            } => {
+                if name == "amplitude" {
+                    *amplitude = value;
+                }
+            }
+            Kind::RandomSmooth {
+                ref mut amplitude,
+                ref mut frequency,
+                ..
+            } => match name {
+                "amplitude" => *amplitude = value,
+                "frequency" => *frequency = value,
+                _ => {}
+            },
+            Kind::Wave {
+                ref mut amplitude,
+                ref mut frequency,
+                ref mut width,
+                ..
+            } => match name {
+                "amplitude" => *amplitude = value,
+                "frequency" => *frequency = value,
+                "width" => *width = value,
+                _ => {}
+            },
+            _ => {
                 warn_for("Breakpoint", name);
             }
+        }
+    }
+
+    /// See the [parameter handling
+    /// documentation](../docs/parameter_handling.md) for details on how
+    /// different parameter types are processed.
+    fn set_non_param_field(&mut self, name: &str, value: &dyn Reflect) {
+        match self.kind {
+            Kind::Ramp { ref mut easing } => {
+                if name == "easing" {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
+                            *easing = parsed_easing;
+                        }
+                    }
+                }
+            }
+            _ => {
+                warn!("No handler for non-param field: {}", name);
+            }
+        }
+    }
+}
+
+impl SetFromParam for Breakpoint {
+    /// See the [parameter handling
+    /// documentation](../docs/parameter_handling.md) for details on how
+    /// different parameter types are processed.
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        let path_segments: Vec<&str> = name.split('.').collect();
+
+        match path_segments.len() {
+            1 => {
+                self.set_field(path_segments[0], value);
+            }
+            3 if path_segments[0] == "breakpoints" => {
+                self.set_field(path_segments[2], value);
+            }
+            _ => {
+                warn_for("Breakpoint", name);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::framework::control_script::config::KindConfig;
+
+    #[test]
+    fn test_breakpoint_ramp_conversion() {
+        let config = BreakpointConfig {
+            position: 0.0,
+            value: ParamValue::Cold(100.0),
+            kind: KindConfig::Ramp {
+                easing: "ease_in".into(),
+            },
+        };
+
+        let breakpoint = Breakpoint::from(config);
+
+        assert_eq!(breakpoint.position, 0.0);
+        assert_eq!(breakpoint.value, 100.0);
+
+        if let Kind::Ramp { easing } = breakpoint.kind {
+            assert_eq!(easing, Easing::EaseIn);
+        } else {
+            panic!("Expected Kind::Ramp");
+        }
+    }
+
+    #[test]
+    fn test_breakpoint_random_conversion() {
+        let config = BreakpointConfig {
+            position: 0.0,
+            value: ParamValue::Cold(100.0),
+            kind: KindConfig::Random {
+                amplitude: ParamValue::Cold(50.0),
+            },
+        };
+
+        let breakpoint = Breakpoint::from(config);
+
+        assert_eq!(breakpoint.position, 0.0);
+        assert_eq!(breakpoint.value, 100.0);
+
+        if let Kind::Random { amplitude } = breakpoint.kind {
+            assert_eq!(amplitude, 50.0);
+        } else {
+            panic!("Expected Kind::Random");
         }
     }
 }

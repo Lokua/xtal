@@ -98,50 +98,50 @@ show_breakpoints:
   type: checkbox
   default: true
 
-breakpoints_line:
-  _line_freq: &line_freq 1.0
-  _line_amp: &line_amp 0.125
-  type: automate
-  breakpoints:
-    - position: 0.0
-      value: 0.25
-      kind: step
+# breakpoints_line:
+#   _line_freq: &line_freq 1.0
+#   _line_amp: &line_amp 0.125
+#   type: automate
+#   breakpoints:
+#     - position: 0.0
+#       value: 0.25
+#       kind: step
 
-    - position: 4.0
-      value: 0.25
-      kind: ramp
+#     - position: 4.0
+#       value: 0.25
+#       kind: ramp
 
-    - position: 8.0
-      value: 0.75
-      kind: ramp
+#     - position: 8.0
+#       value: 0.75
+#       kind: ramp
 
-    - position: 12.0
-      value: 0.1
-      kind: wave
-      shape: sine
-      frequency: *line_freq
-      amplitude: *line_amp
-      easing: linear
-      constrain: clamp
+#     - position: 12.0
+#       value: 0.1
+#       kind: wave
+#       shape: sine
+#       frequency: *line_freq
+#       amplitude: *line_amp
+#       easing: linear
+#       constrain: clamp
 
-    - position: 16.0
-      value: 0.9
-      kind: wave
-      shape: sine
-      freq: *line_freq
-      amp: *line_amp
-      easing: linear
-      constrain: clamp
+#     - position: 16.0
+#       value: 0.9
+#       kind: wave
+#       shape: sine
+#       freq: *line_freq
+#       amp: *line_amp
+#       easing: linear
+#       constrain: clamp
 
-    - position: 20.0
-      value: 0.0
-      kind: random_smooth
-      freq: *line_freq
-      amp: *line_amp
+#     - position: 20.0
+#       value: 0.0
+#       kind: random_smooth
+#       freq: *line_freq
+#       amp: *line_amp
 
-    - position: 24.0
-      value: 0.9
-      kind: end
+#     - position: 24.0
+#       value: 0.9
+#       kind: end
 
 # ------------------------------------------------------------------------------
 #  Red Ball
@@ -155,30 +155,37 @@ show_red_circle:
   default: true
 
 red_circle_pos_x:
-  bypass: _
-  type: r_ramp_rel
-  ramp: linear
-  ramp_time: 0.25
-  keyframes:
-    - [1.5, [-1.0, -0.5]]
-    - [1.5, [-0.25, 0.25]]
-    - [1.0, [0.5, 1.0]]
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0
+      value: -1
+      easing: ease_in
+    - kind: ramp
+      position: 4
+      value: 1
+    - kind: end
+      position: 8
+      value: -1
 
 red_circle_radius:
+  _red_val: &red_val 100
+  _red_amp: &red_amp 50
   type: automate
+  bypass: _
   mode: loop
   breakpoints:
     - kind: random
       position: 0.0
-      value: 100.0
-      amplitude: 100.0
+      value: *red_val
+      amplitude: *red_amp
     - kind: random
       position: 1.0
-      value: 100.0
-      amplitude: 100.0
+      value: *red_val
+      amplitude: *red_amp
     - kind: end
       position: 2.0
-      value: 0.0
+      value: *red_val
 
 red_circle_radius_hyst:
   type: effect
@@ -213,11 +220,28 @@ rm_mod:
   beats: 1.0
   range: [50, 150]
 
-red_circle_radius_mods:
-  type: mod
-  source: red_circle_radius
-  modulators:
-    # - red_circle_radius_hyst
-    # - red_circle_radius_slew
-    # - red_circle_radius_quant
-    # - red_circle_radius_rm
+# red_circle_radius_mods:
+#   type: mod
+#   source: red_circle_radius
+#   modulators:
+#     # - red_circle_radius_hyst
+#     # - red_circle_radius_slew
+#     # - red_circle_radius_quant
+#     # - red_circle_radius_rm
+
+# ------------------------------------------------------------------------------
+#  Yellow Ball (MIDI)
+# ------------------------------------------------------------------------------
+
+midi_section:
+  type: separator
+
+show_midi_circle:
+  type: checkbox
+  default: false
+
+midi_radius:
+  type: midi
+  channel: 0
+  cc: 0
+  range: [10, 400]

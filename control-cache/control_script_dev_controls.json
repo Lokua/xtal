@@ -1,46 +1,52 @@
 {
   "values": {
-    "white_radius_amt": {
-      "Float": 1.0
+    "28ql1": {
+      "Bool": false
     },
-    "bg_alpha": {
-      "Float": 0.645
-    },
-    "show_white_circle": {
-      "Bool": true
+    "show_midi_circle": {
+      "Bool": false
     },
     "center_radius": {
       "Float": 125.0
     },
-    "show_red_circle": {
-      "Bool": false
-    },
-    "989w1": {
-      "Bool": false
-    },
-    "show_audio": {
-      "Bool": false
-    },
-    "m5gvl": {
+    "h87nx": {
       "Bool": false
     },
     "show_center_circle": {
-      "Bool": true
-    },
-    "13n9n": {
       "Bool": false
     },
-    "wrk57": {
+    "4acog": {
+      "Bool": false
+    },
+    "u6d28": {
+      "Bool": false
+    },
+    "show_white_circle": {
       "Bool": false
     },
     "show_breakpoints": {
       "Bool": false
     },
+    "bg_alpha": {
+      "Float": 0.645
+    },
+    "show_red_circle": {
+      "Bool": true
+    },
     "center_hue": {
       "Float": 0.0
     },
-    "06i5w": {
+    "f56f9": {
       "Bool": false
+    },
+    "7119h": {
+      "Bool": false
+    },
+    "show_audio": {
+      "Bool": false
+    },
+    "white_radius_amt": {
+      "Float": 1.0
     }
   }
 }

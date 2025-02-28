@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
@@ -91,7 +92,7 @@ impl MidiControls {
         return self.state.lock().unwrap().values();
     }
 
-    fn start(&mut self) {
+    pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
 
@@ -133,6 +134,7 @@ impl MidiControls {
             Ok(_) => {
                 self.is_active = true;
                 info!("MidiControls initialized successfully");
+                Ok(())
             }
             Err(e) => {
                 self.is_active = false;
@@ -141,6 +143,7 @@ impl MidiControls {
                         Using default values.",
                     e
                 );
+                Err(e)
             }
         }
     }
@@ -180,7 +183,9 @@ impl MidiControlBuilder {
     }
 
     pub fn build(mut self) -> MidiControls {
-        self.controls.start();
+        self.controls
+            .start()
+            .expect("Unable to build start MIDI receiver");
         self.controls
     }
 }
