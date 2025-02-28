@@ -121,7 +121,7 @@ impl MidiControls {
                                 mapped: {}",
                             channel,
                             cc,
-                            value,
+                            message[2],
                             mapped_value
                         );
 
