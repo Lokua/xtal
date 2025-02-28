@@ -15,6 +15,10 @@
 //!   type: wave_folder
 //!   symmetry: $t1
 //! ```
+//!
+//! See the [parameter handling documentation](doc-link) for details on how
+//! different parameter types are processed. [link]:
+//! https://github.com/Lokua/lattice/blob/main/docs/parameter_handling.md
 
 use std::str::FromStr;
 
@@ -242,8 +246,6 @@ impl SetFromParam for TriangleConfig {
     }
 }
 
-/// See the [parameter handling documentation](../docs/parameter_handling.md)
-/// for details on how different parameter types are processed.
 impl From<BreakpointConfig> for Breakpoint {
     fn from(config: BreakpointConfig) -> Self {
         let kind_reflect: &dyn Reflect = &config.kind;
@@ -310,9 +312,6 @@ impl From<BreakpointConfig> for Breakpoint {
 }
 
 impl Breakpoint {
-    /// See the [parameter handling
-    /// documentation](../docs/parameter_handling.md) for details on how
-    /// different parameter types are processed.
     fn set_field(&mut self, name: &str, value: f32) {
         if name == "value" {
             self.value = value;
@@ -354,9 +353,6 @@ impl Breakpoint {
         }
     }
 
-    /// See the [parameter handling
-    /// documentation](../docs/parameter_handling.md) for details on how
-    /// different parameter types are processed.
     fn set_non_param_field(&mut self, name: &str, value: &dyn Reflect) {
         match self.kind {
             Kind::Ramp { ref mut easing } => {
@@ -368,6 +364,64 @@ impl Breakpoint {
                     }
                 }
             }
+            Kind::Wave {
+                ref mut easing,
+                ref mut shape,
+                ref mut constrain,
+                ..
+            } => match name {
+                "easing" => {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
+                            *easing = parsed_easing;
+                        }
+                    }
+                }
+                "shape" => {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_shape) = Shape::from_str(str_value) {
+                            *shape = parsed_shape;
+                        }
+                    }
+                }
+                "constrain" => {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_constrain) =
+                            Constrain::try_from((str_value.as_str(), 0.0, 1.0))
+                        {
+                            *constrain = parsed_constrain;
+                        }
+                    }
+                }
+                _ => {
+                    warn!("Unrecognized field for Wave kind: {}", name);
+                }
+            },
+            Kind::RandomSmooth {
+                ref mut easing,
+                ref mut constrain,
+                ..
+            } => match name {
+                "easing" => {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
+                            *easing = parsed_easing;
+                        }
+                    }
+                }
+                "constrain" => {
+                    if let Some(str_value) = value.downcast_ref::<String>() {
+                        if let Ok(parsed_constrain) =
+                            Constrain::try_from((str_value.as_str(), 0.0, 1.0))
+                        {
+                            *constrain = parsed_constrain;
+                        }
+                    }
+                }
+                _ => {
+                    warn!("Unrecognized field for Wave kind: {}", name);
+                }
+            },
             _ => {
                 warn!("No handler for non-param field: {}", name);
             }
@@ -376,9 +430,6 @@ impl Breakpoint {
 }
 
 impl SetFromParam for Breakpoint {
-    /// See the [parameter handling
-    /// documentation](../docs/parameter_handling.md) for details on how
-    /// different parameter types are processed.
     fn set_from_param(&mut self, name: &str, value: f32) {
         let path_segments: Vec<&str> = name.split('.').collect();
 

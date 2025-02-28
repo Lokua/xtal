@@ -33,10 +33,10 @@ md:
   just generate-markdown-index
 
 open-docs:
-  cargo doc --open --release --no-deps -p lattice
+  cargo doc --open --release --document-private-items --no-deps -p lattice
 
 docs:
-  cargo doc --release --no-deps -p derives -p lattice
+  cargo doc --release --no-deps --document-private-items -p derives -p lattice
 
 stats:
   sccache --show-stats

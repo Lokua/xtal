@@ -9,7 +9,7 @@ echo "Current branch: $current_branch"
 
 # Generate docs for both the main app and derives
 echo "Generating documentation for main app and derives crate..."
-cargo doc --release --no-deps -p lattice -p derives || {
+cargo doc --release --no-deps --document-private-items -p lattice -p derives || {
    echo "Error: Documentation generation failed"
    exit 1
 }

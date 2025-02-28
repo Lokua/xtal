@@ -221,6 +221,7 @@ impl Constrain {
         }
     }
 }
+
 impl TryFrom<(&str, f32, f32)> for Constrain {
     type Error = String;
 
