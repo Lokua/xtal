@@ -2,7 +2,128 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
 
-#[proc_macro_derive(SketchComponents, attributes(sketch))]
+#[proc_macro_derive(LegacySketchComponents, attributes(sketch))]
+pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+    let name = &ast.ident;
+
+    let attrs = &ast.attrs;
+    let fields = match &ast.data {
+        Data::Struct(DataStruct {
+            fields: Fields::Named(fields),
+            ..
+        }) => &fields.named,
+        _ => panic!("SketchComponents only works on structs with named fields"),
+    };
+
+    // Parse struct-level attributes
+    let mut clear_color = None;
+    for attr in attrs {
+        if attr.path().is_ident("sketch") {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("clear_color") {
+                    if let Ok(value) = meta.value() {
+                        if let Ok(lit_str) = value.parse::<syn::LitStr>() {
+                            if let Some(color_format) =
+                                ColorFormat::from_str(&lit_str.value())
+                            {
+                                clear_color = Some(color_format);
+                            }
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .unwrap_or_else(|_| panic!("failed to parse sketch attribute"));
+        }
+    }
+
+    // Generate implementations based on field attributes and presence
+    let window_rect_impl = {
+        let has_window_rect = fields
+            .iter()
+            .any(|f| f.ident.as_ref().unwrap() == "window_rect");
+        let has_wr = fields.iter().any(|f| f.ident.as_ref().unwrap() == "wr");
+
+        if has_window_rect {
+            Some(quote! {
+                fn window_rect(&mut self) -> Option<&mut WindowRect> {
+                    Some(&mut self.window_rect)
+                }
+            })
+        } else if has_wr {
+            Some(quote! {
+                fn window_rect(&mut self) -> Option<&mut WindowRect> {
+                    Some(&mut self.wr)
+                }
+            })
+        } else {
+            None
+        }
+    };
+
+    let controls_impl = if fields
+        .iter()
+        .any(|f| f.ident.as_ref().unwrap() == "controls")
+    {
+        Some(quote! {
+            fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
+                Some(&mut self.controls)
+            }
+        })
+    } else {
+        None
+    };
+
+    let clear_color_impl = clear_color.map(|color| match color {
+        ColorFormat::Rgba(components) => {
+            let [r, g, b, a] =
+                [components[0], components[1], components[2], components[3]];
+            quote! {
+                fn clear_color(&self) -> Rgba {
+                    Rgba::new(#r, #g, #b, #a)
+                }
+            }
+        }
+        ColorFormat::Hsla(components) => {
+            let [h, s, l, a] =
+                [components[0], components[1], components[2], components[3]];
+            quote! {
+                fn clear_color(&self) -> Rgba {
+                    hsla(#h, #s, #l, #a).into()
+                }
+            }
+        }
+    });
+
+    let gen = quote! {
+        impl Sketch for #name {
+            fn update(&mut self, app: &App, update: Update, ctx: &LatticeContext) {
+                panic!(
+                    "update() not implemented. \
+                    Structs that derive SketchComponents must still provide update \
+                    and view functions."
+                )
+            }
+
+            fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+                panic!(
+                    "view() not implemented. \
+                    Structs that derive SketchComponents must still provide update \
+                    and view functions."
+                )
+            }
+
+            #window_rect_impl
+            #controls_impl
+            #clear_color_impl
+        }
+    };
+
+    gen.into()
+}
+
+#[proc_macro_derive(SketchComponentsV2, attributes(sketch))]
 pub fn sketch_components(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let name = &ast.ident;

@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const N_LINES: u32 = 64;
 const GRID_SIZE: u32 = 16;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 0.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]

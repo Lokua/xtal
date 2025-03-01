@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(300),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct Model {
     #[allow(dead_code)]

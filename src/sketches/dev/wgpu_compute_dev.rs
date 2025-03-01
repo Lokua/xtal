@@ -48,7 +48,7 @@ struct OutputPoint {
     _padding: [f32; 2],
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,

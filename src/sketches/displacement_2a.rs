@@ -25,7 +25,7 @@ const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 const CIRCLE_RESOLUTION: f32 = 6.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,

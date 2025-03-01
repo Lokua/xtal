@@ -65,7 +65,7 @@ struct ShaderParams {
     grid_mult: f32,
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,

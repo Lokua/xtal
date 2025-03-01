@@ -20,7 +20,7 @@ const N_LINES: i32 = 4;
 const STROKE_WEIGHT: f32 = 4.0;
 const SPACING: f32 = 32.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: Controls,
     window_rect: WindowRect,

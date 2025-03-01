@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: ControlScript<Timing>,
     wr: WindowRect,

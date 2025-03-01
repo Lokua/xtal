@@ -193,7 +193,7 @@ impl AppModel {
         app.window(self.gui_window_id)
     }
 
-    fn window_rect<'a>(&self, app: &'a App) -> Option<Rect> {
+    fn rect<'a>(&self, app: &'a App) -> Option<Rect> {
         self.main_window(app).map(|window| window.rect())
     }
 
@@ -424,8 +424,13 @@ impl AppModel {
         let registry = REGISTRY.read().unwrap();
         let sketch_info = registry.get(name).unwrap();
 
-        let rect = self.window_rect(app).unwrap();
-        let sketch = (sketch_info.factory)(app, rect);
+        let sketch = (sketch_info.factory)(
+            app,
+            LatticeContext {
+                bpm: self.bpm(),
+                window_rect: WindowRect::new(self.rect(app).unwrap()),
+            },
+        );
 
         self.sketch = sketch;
         self.sketch_config = sketch_info.config;
@@ -515,12 +520,18 @@ fn model(app: &App) -> AppModel {
 
     let main_window_id = app.new_window().build().unwrap();
 
-    let window_rect = app
+    let rect = app
         .window(main_window_id)
         .expect("Unable to get window")
         .rect();
 
-    let sketch = (sketch_info.factory)(app, window_rect);
+    let sketch = (sketch_info.factory)(
+        app,
+        LatticeContext {
+            bpm: sketch_info.config.bpm,
+            window_rect: WindowRect::new(rect),
+        },
+    );
 
     let gui_window_id = app
         .new_window()
@@ -583,6 +594,10 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         let bpm = model.bpm();
+        debug!(
+            "update_gui time - controls: {:?}",
+            model.sketch.controls_provided()
+        );
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
@@ -606,6 +621,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     });
 
     let bpm = model.bpm();
+    let rect = model.rect(app).unwrap();
 
     frame_controller::wrapped_update(
         app,
@@ -617,7 +633,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
                 update,
                 &LatticeContext {
                     bpm,
-                    window_rect: None,
+                    window_rect: WindowRect::new(rect),
                 },
             )
         },
@@ -694,6 +710,8 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
     }
 
     let bpm = model.bpm();
+    let rect = model.rect(app).unwrap();
+
     let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
@@ -704,7 +722,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
                 frame,
                 &LatticeContext {
                     bpm,
-                    window_rect: None,
+                    window_rect: WindowRect::new(rect),
                 },
             )
         },

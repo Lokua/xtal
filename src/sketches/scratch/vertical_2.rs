@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.2, 0.8, 0.5)")]
 pub struct Model {
     controls: Controls,

@@ -45,7 +45,7 @@ struct ShaderParams {
     h: [f32; 4],
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,

@@ -78,14 +78,19 @@ pub trait SketchModel {
 
 /// Context passed down from the Lattice runtime. This is similar to how
 /// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
+#[derive(Debug)]
 pub struct LatticeContext {
     pub bpm: f32,
-    pub window_rect: Option<WindowRect>,
+    pub window_rect: WindowRect,
 }
 
 impl LatticeContext {
-    pub fn new(bpm: f32, window_rect: Option<WindowRect>) -> Self {
+    pub fn new(bpm: f32, window_rect: WindowRect) -> Self {
         Self { bpm, window_rect }
+    }
+
+    pub fn window_rect(&self) -> WindowRect {
+        self.window_rect.clone()
     }
 }
 
@@ -117,7 +122,7 @@ pub trait Sketch {
 // TODO: undeprecate and port sketches to Sketch trait
 #[allow(deprecated)]
 impl<T: SketchModel> Sketch for T {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         panic!("update() not implemented for this SketchModel")
     }
 

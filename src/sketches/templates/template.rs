@@ -18,13 +18,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 pub struct Template {
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     radius: f32,
     hue: f32,
 }
 
-pub fn init(_app: &App, wr: WindowRect) -> Template {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+pub fn init(_app: &App, ctx: LatticeContext) -> Template {
+    debug!("ctx: {:?}", ctx);
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::new(vec![Control::slider(
         "radius",
@@ -36,37 +36,37 @@ pub fn init(_app: &App, wr: WindowRect) -> Template {
     Template {
         animation,
         controls,
-        wr,
         radius: 0.0,
         hue: 0.0,
     }
 }
 
 impl Sketch for Template {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         let radius_max = self.controls.float("radius");
 
-        self.radius = self.animation.lerp(
+        self.radius = self.animation.automate(
             &[
-                kf(20.0, 2.0),
-                kf(radius_max, 1.0),
-                kf(radius_max / 2.0, 0.5),
-                kf(radius_max, 0.5),
-                kf(20.0, 0.0),
+                Breakpoint::ramp(0.0, 10.0, Easing::Linear),
+                Breakpoint::ramp(0.5, ctx.window_rect().hw(), Easing::Linear),
+                Breakpoint::ramp(0.1, 10.0, Easing::Linear),
+                Breakpoint::ramp(1.5, radius_max, Easing::Linear),
+                Breakpoint::end(2.0, 10.0),
             ],
-            0.0,
+            Mode::Loop,
         );
 
         self.hue = self.animation.tri(12.0)
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
         let draw = app.draw();
 
         draw.rect()
             .x_y(0.0, 0.0)
-            .w_h(self.wr.w(), self.wr.h())
-            .hsla(0.0, 0.0, 0.02, 0.1);
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 0.02, 0.4);
 
         draw.ellipse()
             .color(hsl(self.hue, 0.5, 0.5))

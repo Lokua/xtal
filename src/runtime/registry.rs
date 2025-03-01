@@ -8,47 +8,47 @@ use crate::framework::prelude::*;
 
 #[macro_export]
 macro_rules! register_legacy_sketches {
-  ($registry:expr, $($module:ident),*) => {
-      $(
-          $registry.register(
-              &crate::sketches::$module::SKETCH_CONFIG,
-              |app, rect| {
-                  let model = crate::sketches::$module::init_model(
-                      app,
-                      WindowRect::new(rect)
-                  );
-                  Box::new(SketchAdapter::new(
-                      model,
-                      crate::sketches::$module::update,
-                      crate::sketches::$module::view,
-                  ))
-              }
-          );
-      )*
-  };
+    ($registry:expr, $($module:ident),*) => {
+        $(
+            $registry.register(
+                &crate::sketches::$module::SKETCH_CONFIG,
+                |app, ctx| {
+                    let model = crate::sketches::$module::init_model(
+                        app,
+                        WindowRect::new(ctx.window_rect.rect())
+                    );
+                    Box::new(SketchAdapter::new(
+                        model,
+                        crate::sketches::$module::update,
+                        crate::sketches::$module::view,
+                    ))
+                }
+            );
+        )*
+    };
 }
 
 #[macro_export]
 macro_rules! register_sketches {
-  ($registry:expr, $($module:ident),*) => {
-      $(
-          $registry.register(
-              &crate::sketches::$module::SKETCH_CONFIG,
-              |app, rect| {
-                  Box::new(crate::sketches::$module::init(
-                      app,
-                      WindowRect::new(rect)
-                  ))
-              }
-          );
-      )*
-  };
+    ($registry:expr, $($module:ident),*) => {
+        $(
+            $registry.register(
+                &crate::sketches::$module::SKETCH_CONFIG,
+                |app, ctx| {
+                    Box::new(crate::sketches::$module::init(
+                        app,
+                        ctx
+                    ))
+                }
+            );
+        )*
+    };
 }
 
 pub struct SketchInfo {
     pub config: &'static SketchConfig,
     pub factory: Box<
-        dyn for<'a> Fn(&'a App, Rect) -> Box<dyn Sketch + 'static>
+        dyn for<'a> Fn(&'a App, LatticeContext) -> Box<dyn Sketch + 'static>
             + Send
             + Sync,
     >,
@@ -72,7 +72,7 @@ impl SketchRegistry {
 
     pub fn register<F>(&mut self, config: &'static SketchConfig, factory: F)
     where
-        F: Fn(&App, Rect) -> Box<dyn Sketch> + Send + Sync + 'static,
+        F: Fn(&App, LatticeContext) -> Box<dyn Sketch> + Send + Sync + 'static,
     {
         self.sketches.insert(
             config.name.to_string(),

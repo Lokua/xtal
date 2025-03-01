@@ -34,7 +34,7 @@ struct LaneSegment {
     is_step: bool,
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<ManualTiming>,
     controls: Controls,
