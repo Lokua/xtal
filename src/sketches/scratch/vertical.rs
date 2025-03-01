@@ -26,7 +26,7 @@ pub struct Model {
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
 
-    let mode_options = [string_vec!["multi_lerp"], XMods::to_names()].concat();
+    let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 
     let controls = Controls::new(vec![
         Control::slider("scale", 1.0, (0.1, 4.0), 0.1),
@@ -40,7 +40,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             0.1,
             (0.0, 0.5),
             0.01,
-            disabled_unless_modes(string_vec![
+            disabled_unless_modes(str_vec![
                 "multi_lerp",
                 "per_line",
                 "harmonic_cascade",
@@ -52,7 +52,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             0.1,
             (0.0, 1.0),
             0.01,
-            disabled_unless_modes(string_vec![
+            disabled_unless_modes(str_vec![
                 "multi_lerp",
                 "wave_interference",
                 "fractal_waves",
@@ -65,7 +65,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             2.0,
             (1.0, 4.0),
             0.1,
-            disabled_unless_modes(string_vec![
+            disabled_unless_modes(str_vec![
                 "multi_lerp",
                 "line_phase",
                 "wave_interference",
@@ -80,14 +80,14 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
             0.05,
             (0.0, 0.2),
             0.01,
-            disabled_unless_modes(string_vec!["multi_lerp", "ripples"]),
+            disabled_unless_modes(str_vec!["multi_lerp", "ripples"]),
         ),
         Control::slider_x(
             "x_complexity",
             1.0,
             (0.1, 3.0),
             0.1,
-            disabled_unless_modes(string_vec![
+            disabled_unless_modes(str_vec![
                 "multi_lerp",
                 "spiral",
                 "wave_interference",
@@ -219,7 +219,7 @@ struct XMods {}
 
 impl XMods {
     fn to_names() -> Vec<String> {
-        string_vec![
+        str_vec![
             "per_line",
             "ripples",
             "line_phase",

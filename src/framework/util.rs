@@ -76,7 +76,7 @@ pub const CUBE_POSITIONS: [[f32; 3]; 36] = [
 ];
 
 #[macro_export]
-macro_rules! string_vec {
+macro_rules! str_vec {
     ($($x:expr),* $(,)?) => (vec![$($x.to_string()),*]);
 }
 

@@ -543,7 +543,7 @@ fn generate_pattern_options() -> Vec<String> {
     functions
         .iter()
         .flat_map(|a| functions.iter().map(move |b| format!("{},{}", a, b)))
-        .chain(string_vec![
+        .chain(str_vec![
             "Custo",
             "Sprial",
             "Ripple",

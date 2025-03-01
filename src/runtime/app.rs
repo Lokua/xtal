@@ -382,10 +382,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         gui::update(
             &mut model.session_id,
             &model.sketch_config,
-            model
-                .sketch
-                .controls()
-                .map(|provider| provider.as_controls_mut()),
+            model.sketch.controls_provided(),
             &mut model.alert_text,
             &mut model.recording_state,
             &model.event_tx,
