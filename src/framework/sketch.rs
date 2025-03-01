@@ -129,7 +129,7 @@ impl<T: SketchModel> Sketch for T {
     }
 }
 
-/// Adapter to implement Sketch for legacy SketchModel types
+/// Adapter to instantiate Sketch for legacy SketchModel types
 pub struct SketchAdapter<S: Sketch> {
     model: S,
     update_fn: fn(&App, &mut S, Update),

@@ -382,14 +382,16 @@ impl AppModel {
                     ternary!(next_is_paused, "Paused", "Resumed").into();
                 info!("Paused: {}", next_is_paused);
             }
-            AppEvent::ToggleTapTempo(tap_temp) => {
-                self.tap_tempo_enabled = tap_temp;
-                self.alert_text = ternary!(
-                    tap_temp,
-                    "Tap `Space` key to set BPM",
-                    "Tap tempo disabled. Sketch BPM has been restored."
-                )
-                .into();
+            AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
+                self.tap_tempo_enabled = tap_tempo_enabled;
+                if tap_tempo_enabled {
+                    self.tap_tempo_bpm = self.sketch_config.bpm;
+                    self.alert_text = "Tap `Space` key to set BPM".into();
+                } else {
+                    self.alert_text =
+                        "Tap tempo disabled. Sketch BPM has been restored."
+                            .into();
+                }
             }
         }
     }
