@@ -39,7 +39,7 @@ impl RecordingState {
             self.is_recording = true;
             let message =
                 format!("Recording. Frames will be written to {:?}", path);
-            info!("Recording started, path: {:?}", path);
+            info!("{}", message.clone());
             Ok(message)
         } else {
             Err("Unable to access recording path".into())

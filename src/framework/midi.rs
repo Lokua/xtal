@@ -17,7 +17,7 @@ lazy_static! {
         Mutex::new(HashMap::new());
 }
 
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ConnectionType {
     Clock,
     Control,

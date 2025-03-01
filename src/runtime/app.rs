@@ -1,7 +1,7 @@
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
-use std::sync::{mpsc, Once};
+use std::sync::mpsc;
 use std::{env, str};
 
 use super::prelude::*;
@@ -118,35 +118,44 @@ pub fn run() {
         .run();
 }
 
-pub enum UiEvent {
+#[derive(Debug)]
+pub enum AppEvent {
     Alert(String),
     CaptureFrame,
     ClearFlag(bool),
     Reset,
     SwitchSketch(String),
+    MidiInstruction(MidiInstruction),
 }
 
-pub struct UiEventSender {
-    tx: mpsc::Sender<UiEvent>,
+#[derive(Debug)]
+pub enum MidiInstruction {
+    Start,
+    Continue,
+    Stop,
 }
 
-impl UiEventSender {
-    fn new(tx: mpsc::Sender<UiEvent>) -> Self {
+pub struct AppEventSender {
+    tx: mpsc::Sender<AppEvent>,
+}
+
+impl AppEventSender {
+    fn new(tx: mpsc::Sender<AppEvent>) -> Self {
         Self { tx }
     }
 
     pub fn alert(&self, message: impl Into<String>) {
         self.tx
-            .send(UiEvent::Alert(message.into()))
+            .send(AppEvent::Alert(message.into()))
             .expect("Failed to send alert event");
     }
 
-    pub fn send(&self, event: UiEvent) {
+    pub fn send(&self, event: AppEvent) {
         self.tx.send(event).expect("Failed to send event");
     }
 }
 
-pub type UiEventReceiver = mpsc::Receiver<UiEvent>;
+pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 
 struct AppModel {
     main_window_id: window::Id,
@@ -161,8 +170,8 @@ struct AppModel {
     gui_visible: Cell<bool>,
     main_visible: Cell<bool>,
     main_maximized: Cell<bool>,
-    event_tx: UiEventSender,
-    event_rx: UiEventReceiver,
+    event_tx: AppEventSender,
+    event_rx: AppEventReceiver,
 }
 
 impl AppModel {
@@ -182,12 +191,12 @@ impl AppModel {
         self.sketch_config.name.to_string()
     }
 
-    fn handle_ui_event(&mut self, app: &App, event: UiEvent) {
+    fn on_app_event(&mut self, app: &App, event: AppEvent) {
         match event {
-            UiEvent::Alert(text) => {
+            AppEvent::Alert(text) => {
                 self.alert_text = text;
             }
-            UiEvent::CaptureFrame => {
+            AppEvent::CaptureFrame => {
                 let filename =
                     format!("{}-{}.png", self.sketch_name(), uuid_5());
 
@@ -202,17 +211,86 @@ impl AppModel {
                 self.alert_text = alert_text.clone();
                 info!("{}", alert_text);
             }
-            UiEvent::ClearFlag(clear) => {
+            AppEvent::ClearFlag(clear) => {
                 self.clear_flag = clear.into();
             }
-            UiEvent::Reset => {
+            AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
             }
-            UiEvent::SwitchSketch(name) => {
+            AppEvent::SwitchSketch(name) => {
                 self.switch_sketch(app, &name);
             }
+            AppEvent::MidiInstruction(instruction) => {
+                self.on_midi_instruction(&instruction);
+            }
         }
+    }
+
+    fn on_midi_instruction(&mut self, instruction: &MidiInstruction) {
+        match instruction {
+            MidiInstruction::Start | MidiInstruction::Continue => {
+                info!(
+                    "Received {:?} message. Resetting frame count.",
+                    instruction
+                );
+
+                frame_controller::reset_frame_count();
+
+                if self.recording_state.is_queued {
+                    match self.recording_state.start_recording() {
+                        Ok(message) => {
+                            self.event_tx.alert(message);
+                        }
+                        Err(e) => {
+                            let message =
+                                format!("Failed to start recording: {}", e);
+                            self.event_tx.alert(message.clone());
+                            error!("{}", message);
+                        }
+                    }
+                }
+            }
+            MidiInstruction::Stop => {
+                if self.recording_state.is_recording
+                    && !self.recording_state.is_encoding
+                {
+                    match self
+                        .recording_state
+                        .stop_recording(self.sketch_config, &self.session_id)
+                    {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!("Failed stop recording: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn capture_recording_frame(&self, app: &App) {
+        frame_controller::clear_force_render();
+
+        if !self.recording_state.is_recording {
+            return;
+        }
+
+        let frame_count = self.recording_state.recorded_frames.get();
+        let window = self.main_window(app).unwrap();
+
+        let recording_dir = match &self.recording_state.recording_dir {
+            Some(path) => path,
+            None => {
+                error!("Unable to capture frame {}", frame_count);
+                return;
+            }
+        };
+
+        let filename = format!("frame-{:06}.png", frame_count);
+        window.capture_frame(recording_dir.join(filename));
+
+        self.recording_state.recorded_frames.set(frame_count + 1);
     }
 
     fn switch_sketch(&mut self, app: &App, name: &str) {
@@ -234,6 +312,12 @@ impl AppModel {
 
         self.sketch = new_sketch;
         self.sketch_config = sketch_info.config;
+        self.session_id = uuid_5();
+        self.clear_flag.set(true);
+        self.recording_state = RecordingState::new(frames_dir(
+            &self.session_id,
+            &self.sketch_config.name,
+        ));
 
         self.gui_window(app).map(|gui_window| {
             gui_window.set_title(&format!(
@@ -248,11 +332,8 @@ impl AppModel {
                 0,
             );
 
-            let (gui_w, gui_h) = gui::calculate_gui_dimensions(
-                self.sketch
-                    .controls()
-                    .map(|provider| provider.as_controls_mut()),
-            );
+            let (gui_w, gui_h) =
+                gui::calculate_gui_dimensions(self.sketch.controls_provided());
 
             set_window_size(
                 gui_window.winit_window(),
@@ -267,14 +348,13 @@ impl AppModel {
             frame_controller::set_paused(true);
         }
 
-        self.clear_flag.set(true);
-        self.alert_text =
-            format!("Switched to {}", sketch_info.config.display_name);
-
         restore_controls(
             &sketch_info.config.name,
             self.sketch.controls_provided(),
         );
+
+        self.alert_text =
+            format!("Switched to {}", sketch_info.config.display_name);
     }
 }
 
@@ -341,6 +421,28 @@ fn model(app: &App) -> AppModel {
     }
 
     let (event_tx, event_rx) = mpsc::channel();
+    let midi_tx = event_tx.clone();
+
+    midi::on_message(
+        midi::ConnectionType::GlobalStartStop,
+        crate::config::MIDI_CLOCK_PORT,
+        move |message| match message[0] {
+            START => midi_tx
+                .send(AppEvent::MidiInstruction(MidiInstruction::Start))
+                .unwrap(),
+            CONTINUE => midi_tx
+                .send(AppEvent::MidiInstruction(MidiInstruction::Continue))
+                .unwrap(),
+            STOP => midi_tx
+                .send(AppEvent::MidiInstruction(MidiInstruction::Stop))
+                .unwrap(),
+            _ => {}
+        },
+    )
+    .expect(&format!(
+        "Failed to initialize {:?} MIDI connection",
+        midi::ConnectionType::GlobalStartStop
+    ));
 
     AppModel {
         main_window_id,
@@ -355,22 +457,9 @@ fn model(app: &App) -> AppModel {
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
-        event_tx: UiEventSender::new(event_tx),
+        event_tx: AppEventSender::new(event_tx),
         event_rx,
     }
-}
-
-static INIT_MIDI_HANDLER: Once = Once::new();
-
-enum MidiInstruction {
-    Start,
-    Continue,
-    Stop,
-}
-
-thread_local! {
-    static MIDI_MESSAGE_RX: RefCell<Option<mpsc::Receiver<MidiInstruction>>> =
-        RefCell::new(None);
 }
 
 fn update(app: &App, model: &mut AppModel, update: Update) {
@@ -391,7 +480,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 
     while let Ok(event) = model.event_rx.try_recv() {
-        model.handle_ui_event(app, event);
+        model.on_app_event(app, event);
     }
 
     model.main_window(app).map(|window| {
@@ -405,46 +494,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         update,
         |app, sketch, update| sketch.update(app, update),
     );
-
-    INIT_MIDI_HANDLER.call_once(|| {
-        let (tx, rx) = mpsc::channel();
-        MIDI_MESSAGE_RX.with(|cell| {
-            *cell.borrow_mut() = Some(rx);
-        });
-        midi::on_message(
-            midi::ConnectionType::GlobalStartStop,
-            crate::config::MIDI_CLOCK_PORT,
-            move |message| {
-                match message[0] {
-                    START => {
-                        tx.send(MidiInstruction::Start).unwrap();
-                    }
-                    CONTINUE => {
-                        tx.send(MidiInstruction::Continue).unwrap();
-                    }
-                    STOP => {
-                        tx.send(MidiInstruction::Stop).unwrap();
-                    }
-                    _ => {}
-                };
-            },
-        )
-        .expect("Failed to initialize MIDI handler");
-    });
-
-    MIDI_MESSAGE_RX.with(|cell| {
-        if let Some(rx) = cell.borrow_mut().as_ref() {
-            if let Ok(instruction) = rx.try_recv() {
-                on_midi_instruction(
-                    &mut model.recording_state,
-                    model.sketch_config,
-                    &model.session_id,
-                    &model.event_tx,
-                    instruction,
-                );
-            }
-        }
-    });
 
     if model.recording_state.is_encoding {
         model.recording_state.on_encoding_message(
@@ -476,12 +525,16 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         model.clear_flag.set(false);
     }
 
-    frame_controller::wrapped_view(
+    let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
         frame,
         |app, sketch, frame| sketch.view(app, frame),
     );
+
+    if did_render {
+        model.capture_recording_frame(app);
+    }
 }
 
 fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
@@ -552,59 +605,6 @@ fn has_no_modifiers(app: &App) -> bool {
         && !app.keys.mods.ctrl()
         && !app.keys.mods.shift()
         && !app.keys.mods.logo()
-}
-
-fn on_midi_instruction(
-    recording_state: &mut RecordingState,
-    sketch_config: &SketchConfig,
-    session_id: &str,
-    event_tx: &UiEventSender,
-    instruction: MidiInstruction,
-) {
-    match instruction {
-        MidiInstruction::Start => {
-            info!("Received MIDI Start message. Resetting frame count.");
-            frame_controller::reset_frame_count();
-            if recording_state.is_queued {
-                match recording_state.start_recording() {
-                    Ok(message) => {
-                        event_tx.alert(message);
-                    }
-                    Err(e) => {
-                        event_tx
-                            .alert(format!("Failed to start recording: {}", e));
-                        error!("Failed to start recording: {}", e);
-                    }
-                }
-            }
-        }
-        MidiInstruction::Continue => {
-            if recording_state.is_queued {
-                info!(
-                    "Received MIDI Continue message. \
-                    Resetting frame count due to QUE_RECORD state."
-                );
-                frame_controller::reset_frame_count();
-                match recording_state.start_recording() {
-                    Ok(message) => {
-                        event_tx.alert(message);
-                    }
-                    Err(e) => {
-                        event_tx
-                            .alert(format!("Failed to start recording: {}", e));
-                        error!("Failed to start recording: {}", e);
-                    }
-                }
-            }
-        }
-        MidiInstruction::Stop => {
-            if recording_state.is_recording && !recording_state.is_encoding {
-                recording_state
-                    .stop_recording(sketch_config, session_id)
-                    .expect("Error attempting to stop recording");
-            }
-        }
-    }
 }
 
 pub fn restore_controls(sketch_name: &str, controls: Option<&mut Controls>) {
