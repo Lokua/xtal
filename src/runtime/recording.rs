@@ -113,7 +113,7 @@ impl RecordingState {
         &mut self,
         sketch_config: &SketchConfig,
         session_id: &mut String,
-        alert_text: &mut String,
+        event_tx: &app::AppEventSender,
     ) {
         if let Some(rx) = self.encoding_progress_rx.take() {
             while let Ok(message) = rx.try_recv() {
@@ -121,9 +121,10 @@ impl RecordingState {
                     EncodingMessage::Progress(progress) => {
                         let percentage = (progress * 100.0).round();
                         debug!("rx progress: {}%", percentage);
-                        *alert_text =
-                            format!("Encoding progress: {}%", percentage)
-                                .into();
+                        event_tx.alert(format!(
+                            "Encoding progress: {}%",
+                            percentage
+                        ));
                     }
                     EncodingMessage::Complete => {
                         info!("Encoding complete");
@@ -143,11 +144,10 @@ impl RecordingState {
                                 .unwrap()
                                 .to_string_lossy()
                                 .into_owned();
-                        *alert_text = format!(
+                        event_tx.alert(format!(
                             "Encoding complete. Video path {}",
                             output_path
-                        )
-                        .into();
+                        ));
                         *session_id = generate_session_id();
                         self.recorded_frames.set(0);
                         if let Some(new_path) =
@@ -157,9 +157,10 @@ impl RecordingState {
                         }
                     }
                     EncodingMessage::Error(error) => {
-                        error!("Received child process error: {}", error);
-                        *alert_text =
+                        let message =
                             format!("Received encoding error: {}", error);
+                        event_tx.alert(message.clone());
+                        error!("{}", message);
                     }
                 }
             }

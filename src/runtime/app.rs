@@ -412,9 +412,9 @@ impl AppModel {
         let sketch_info = registry.get(name).unwrap();
 
         let rect = self.window_rect(app).unwrap();
-        let new_sketch = (sketch_info.factory)(app, rect);
+        let sketch = (sketch_info.factory)(app, rect);
 
-        self.sketch = new_sketch;
+        self.sketch = sketch;
         self.sketch_config = sketch_info.config;
         self.session_id = uuid_5();
         self.clear_flag.set(true);
@@ -592,7 +592,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.recording_state.on_encoding_message(
             &model.sketch_config,
             &mut model.session_id,
-            &mut model.alert_text,
+            &model.event_tx,
         );
     }
 }
