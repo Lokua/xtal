@@ -17,6 +17,8 @@ pub fn update(
     controls: Option<&mut Controls>,
     alert_text: &mut String,
     perf_mode: &mut bool,
+    tap_tempo: &mut bool,
+    bpm: f32,
     recording_state: &mut RecordingState,
     event_tx: &app::AppEventSender,
     ctx: &egui::Context,
@@ -73,6 +75,9 @@ pub fn update(
                     event_tx,
                 );
                 draw_perf_mode_checkbox(ui, perf_mode, event_tx);
+                ui.separator();
+                draw_bpm(ui, bpm);
+                draw_tap_tempo_checkbox(ui, tap_tempo, event_tx);
             });
 
             ui.separator();
@@ -260,6 +265,22 @@ fn draw_perf_mode_checkbox(
         .changed()
     {
         event_tx.send(app::AppEvent::TogglePerfMode(perf_mode.clone()))
+    }
+}
+
+fn draw_bpm(ui: &mut egui::Ui, bpm: f32) {
+    let colors = theme::Colors::current();
+    ui.label("BPM:");
+    ui.colored_label(colors.text_data, format!("{:.1}", bpm));
+}
+
+fn draw_tap_tempo_checkbox(
+    ui: &mut egui::Ui,
+    tap_tempo: &mut bool,
+    event_tx: &app::AppEventSender,
+) {
+    if ui.add(egui::Checkbox::new(tap_tempo, "Tap")).changed() {
+        event_tx.send(app::AppEvent::ToggleTapTempo(tap_tempo.clone()))
     }
 }
 

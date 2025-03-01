@@ -5,6 +5,7 @@ use std::sync::mpsc;
 use std::{env, str};
 
 use super::prelude::*;
+use super::tap_tempo::TapTempo;
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -133,11 +134,13 @@ pub enum AppEvent {
     Record,
     Reset,
     SwitchSketch(String),
+    Tap,
     ToggleFullScreen,
     ToggleGuiFocus,
-    TogglePerfMode(bool),
     ToggleMainFocus,
+    TogglePerfMode(bool),
     TogglePlay,
+    ToggleTapTempo(bool),
 }
 
 pub struct AppEventSender {
@@ -169,6 +172,9 @@ struct AppModel {
     session_id: String,
     alert_text: String,
     clear_next_frame: Cell<bool>,
+    tap_tempo: TapTempo,
+    tap_tempo_enabled: bool,
+    tap_tempo_bpm: f32,
     perf_mode: bool,
     recording_state: RecordingState,
     sketch: Box<dyn Sketch>,
@@ -195,6 +201,14 @@ impl AppModel {
 
     fn sketch_name(&self) -> String {
         self.sketch_config.name.to_string()
+    }
+
+    fn bpm(&self) -> f32 {
+        ternary!(
+            self.tap_tempo_enabled,
+            self.tap_tempo_bpm,
+            self.sketch_config.bpm
+        )
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -330,6 +344,9 @@ impl AppModel {
                     self.switch_sketch(app, &name);
                 }
             }
+            AppEvent::Tap => {
+                self.tap_tempo_bpm = self.tap_tempo.tap();
+            }
             AppEvent::ToggleFullScreen => {
                 let window = self.main_window(app).unwrap();
                 if let Some(monitor) = window.current_monitor() {
@@ -363,9 +380,6 @@ impl AppModel {
                     self.gui_visible.set(true);
                 }
             }
-            AppEvent::TogglePerfMode(ignore) => {
-                self.perf_mode = ignore;
-            }
             AppEvent::ToggleMainFocus => {
                 let window = self.main_window(app).unwrap();
                 let is_visible = self.main_visible.get();
@@ -378,12 +392,24 @@ impl AppModel {
                     self.main_visible.set(true);
                 }
             }
+            AppEvent::TogglePerfMode(ignore) => {
+                self.perf_mode = ignore;
+            }
             AppEvent::TogglePlay => {
                 let next_is_paused = !frame_controller::is_paused();
                 frame_controller::set_paused(next_is_paused);
                 self.alert_text =
                     ternary!(next_is_paused, "Paused", "Resumed").into();
                 info!("Paused: {}", next_is_paused);
+            }
+            AppEvent::ToggleTapTempo(tap_temp) => {
+                self.tap_tempo_enabled = tap_temp;
+                self.alert_text = ternary!(
+                    tap_temp,
+                    "Tap `Space` key to set BPM",
+                    "Tap tempo disabled. Sketch BPM has been restored."
+                )
+                .into();
             }
         }
     }
@@ -551,6 +577,9 @@ fn model(app: &App) -> AppModel {
         alert_text: String::new(),
         clear_next_frame: Cell::new(true),
         perf_mode: false,
+        tap_tempo: TapTempo::new(),
+        tap_tempo_enabled: false,
+        tap_tempo_bpm: 134.0,
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
@@ -572,11 +601,14 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
+        let bpm = model.bpm();
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
             &mut model.alert_text,
             &mut model.perf_mode,
+            &mut model.tap_tempo_enabled,
+            bpm,
             &mut model.recording_state,
             &model.event_tx,
             &ctx,
@@ -624,6 +656,9 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 && !app.keys.mods.logo();
 
             match key {
+                Key::Space => {
+                    model.event_tx.send(AppEvent::Tap);
+                }
                 // A
                 Key::A if has_no_modifiers => {
                     model.event_tx.send(AppEvent::AdvanceSingleFrame);

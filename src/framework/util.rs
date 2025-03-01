@@ -565,6 +565,12 @@ pub mod tests {
     use super::*;
 
     pub fn approx_eq(a: f32, b: f32) -> bool {
+        if a.is_infinite() || b.is_infinite() {
+            panic!(
+                "approx_eq cannot deal with infinite values. a: {}, b: {}",
+                a, b
+            );
+        }
         (a - b).abs() < 0.001
     }
 
