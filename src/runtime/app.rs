@@ -133,6 +133,9 @@ pub enum AppEvent {
     Record,
     Reset,
     SwitchSketch(String),
+    ToggleFullScreen,
+    ToggleGuiFocus,
+    ToggleMainFocus,
     TogglePlay,
 }
 
@@ -325,6 +328,51 @@ impl AppModel {
                     self.switch_sketch(app, &name);
                 }
             }
+            AppEvent::ToggleFullScreen => {
+                let window = self.main_window(app).unwrap();
+                if let Some(monitor) = window.current_monitor() {
+                    let monitor_size = monitor.size();
+                    let is_maximized = self.main_maximized.get();
+
+                    if is_maximized {
+                        window.set_inner_size_points(
+                            self.sketch_config.w as f32,
+                            self.sketch_config.h as f32,
+                        );
+                        self.main_maximized.set(false);
+                    } else {
+                        window.set_inner_size_pixels(
+                            monitor_size.width,
+                            monitor_size.height,
+                        );
+                        self.main_maximized.set(true);
+                    }
+                }
+            }
+            AppEvent::ToggleGuiFocus => {
+                let window = self.gui_window(app).unwrap();
+                let is_visible = self.gui_visible.get();
+
+                if is_visible {
+                    window.set_visible(false);
+                    self.gui_visible.set(false);
+                } else {
+                    window.set_visible(true);
+                    self.gui_visible.set(true);
+                }
+            }
+            AppEvent::ToggleMainFocus => {
+                let window = self.main_window(app).unwrap();
+                let is_visible = self.main_visible.get();
+
+                if is_visible {
+                    window.set_visible(false);
+                    self.main_visible.set(false);
+                } else {
+                    window.set_visible(true);
+                    self.main_visible.set(true);
+                }
+            }
             AppEvent::TogglePlay => {
                 let next_is_paused = !frame_controller::is_paused();
                 frame_controller::set_paused(next_is_paused);
@@ -363,16 +411,6 @@ impl AppModel {
         let registry = REGISTRY.read().unwrap();
         let sketch_info = registry.get(name).unwrap();
 
-        self.main_window(app).map(|window| {
-            window.set_title(&sketch_info.config.display_name);
-            set_window_position(app, self.main_window_id, 0, 0);
-            set_window_size(
-                window.winit_window(),
-                sketch_info.config.w,
-                sketch_info.config.h,
-            );
-        });
-
         let rect = self.window_rect(app).unwrap();
         let new_sketch = (sketch_info.factory)(app, rect);
 
@@ -380,47 +418,67 @@ impl AppModel {
         self.sketch_config = sketch_info.config;
         self.session_id = uuid_5();
         self.clear_flag.set(true);
+
+        self.init_sketch_environment(app);
+
+        self.alert_text =
+            format!("Switched to {}", sketch_info.config.display_name);
+    }
+
+    fn init_sketch_environment(&mut self, app: &App) {
         self.recording_state = RecordingState::new(frames_dir(
             &self.session_id,
             &self.sketch_config.name,
         ));
 
+        self.main_window(app).map(|window| {
+            window.set_title(&self.sketch_config.display_name);
+            set_window_position(app, self.main_window_id, 0, 0);
+            set_window_size(
+                window.winit_window(),
+                self.sketch_config.w,
+                self.sketch_config.h,
+            );
+        });
+
+        let (gui_w, gui_h) =
+            gui::calculate_gui_dimensions(self.sketch.controls_provided());
+
         self.gui_window(app).map(|gui_window| {
             gui_window.set_title(&format!(
                 "{} Controls",
-                sketch_info.config.display_name
+                self.sketch_config.display_name
             ));
 
             set_window_position(
                 app,
                 self.gui_window_id,
-                sketch_info.config.w * 2,
+                self.sketch_config.w * 2,
                 0,
             );
 
-            let (gui_w, gui_h) =
-                gui::calculate_gui_dimensions(self.sketch.controls_provided());
-
             set_window_size(
                 gui_window.winit_window(),
-                sketch_info.config.gui_w.unwrap_or(gui_w) as i32,
-                sketch_info.config.gui_h.unwrap_or(gui_h) as i32,
+                self.sketch_config.gui_w.unwrap_or(gui_w) as i32,
+                self.sketch_config.gui_h.unwrap_or(gui_h) as i32,
             );
         });
 
-        frame_controller::ensure_controller(sketch_info.config.fps);
+        frame_controller::ensure_controller(self.sketch_config.fps);
 
-        if sketch_info.config.play_mode != PlayMode::Loop {
+        if self.sketch_config.play_mode != PlayMode::Loop {
             frame_controller::set_paused(true);
         }
 
-        restore_controls(
-            &sketch_info.config.name,
+        if let (Some(values), Some(controls)) = (
+            storage::stored_controls(self.sketch_config.name),
             self.sketch.controls_provided(),
-        );
-
-        self.alert_text =
-            format!("Switched to {}", sketch_info.config.display_name);
+        ) {
+            for (name, value) in values.into_iter() {
+                controls.update_value(&name, value);
+            }
+            info!("Controls restored");
+        }
     }
 }
 
@@ -432,37 +490,21 @@ fn model(app: &App) -> AppModel {
         .unwrap_or_else(|| "template".to_string());
 
     let registry = REGISTRY.read().unwrap();
-
     let sketch_info = registry
         .get(&initial_sketch)
         .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
 
-    let sketch_config = sketch_info.config;
-
-    let main_window_id = app
-        .new_window()
-        .title(sketch_info.config.display_name)
-        .size(sketch_config.w as u32, sketch_config.h as u32)
-        .build()
-        .unwrap();
+    let main_window_id = app.new_window().build().unwrap();
 
     let window_rect = app
         .window(main_window_id)
         .expect("Unable to get window")
         .rect();
 
-    let mut sketch = (sketch_info.factory)(app, window_rect);
-
-    let (gui_w, gui_h) =
-        gui::calculate_gui_dimensions(sketch.controls_provided());
+    let sketch = (sketch_info.factory)(app, window_rect);
 
     let gui_window_id = app
         .new_window()
-        .title(format!("{} Controls", sketch_config.display_name))
-        .size(
-            sketch_config.gui_w.unwrap_or(gui_w),
-            sketch_config.gui_h.unwrap_or(gui_h),
-        )
         .view(view_gui)
         .resizable(true)
         .raw_event(|_app, model: &mut AppModel, event| {
@@ -471,23 +513,11 @@ fn model(app: &App) -> AppModel {
         .build()
         .unwrap();
 
-    set_window_position(app, main_window_id, 0, 0);
-    set_window_position(app, gui_window_id, sketch_config.w * 2, 0);
-
     let egui =
         RefCell::new(Egui::from_window(&app.window(gui_window_id).unwrap()));
 
-    restore_controls(&sketch_config.name, sketch.controls_provided());
-
-    let session_id = uuid_5();
-    let recording_dir = frames_dir(&session_id, &sketch_config.name);
-
-    if sketch_config.play_mode != PlayMode::Loop {
-        frame_controller::set_paused(true);
-    }
-
-    let (event_tx, event_rx) = mpsc::channel();
-    let midi_tx = event_tx.clone();
+    let (raw_event_tx, event_rx) = mpsc::channel();
+    let midi_tx = raw_event_tx.clone();
 
     midi::on_message(
         midi::ConnectionType::GlobalStartStop,
@@ -504,22 +534,26 @@ fn model(app: &App) -> AppModel {
         midi::ConnectionType::GlobalStartStop
     ));
 
-    AppModel {
+    let mut model = AppModel {
         main_window_id,
         gui_window_id,
         egui,
-        session_id,
-        alert_text: format!("{} loaded", initial_sketch),
-        clear_flag: Cell::new(false),
-        recording_state: RecordingState::new(recording_dir.clone()),
+        session_id: uuid_5(),
+        alert_text: String::new(),
+        clear_flag: Cell::new(true),
+        recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
-        sketch_config,
+        sketch_config: sketch_info.config,
         gui_visible: Cell::new(true),
         main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
-        event_tx: AppEventSender::new(event_tx),
+        event_tx: AppEventSender::new(raw_event_tx),
         event_rx,
-    }
+    };
+
+    model.init_sketch_environment(app);
+
+    model
 }
 
 fn update(app: &App, model: &mut AppModel, update: Update) {
@@ -563,16 +597,48 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 }
 
+/// Note: this is shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
     model.sketch.event(app, &event);
 
     match event {
         Event::WindowEvent {
-            id,
             simple: Some(KeyPressed(key)),
             ..
-        } if id == model.main_window_id => {
-            on_key_pressed(app, model, key);
+        } => {
+            let logo_pressed = app.keys.mods.logo();
+            let has_no_modifiers = !app.keys.mods.alt()
+                && !app.keys.mods.ctrl()
+                && !app.keys.mods.shift()
+                && !app.keys.mods.logo();
+
+            match key {
+                // A
+                Key::A if has_no_modifiers => {
+                    model.event_tx.send(AppEvent::AdvanceSingleFrame);
+                }
+                // Cmd + F
+                Key::F if logo_pressed => {
+                    model.event_tx.send(AppEvent::ToggleFullScreen);
+                }
+                // Cmd + G
+                Key::G if logo_pressed => {
+                    model.event_tx.send(AppEvent::ToggleGuiFocus);
+                }
+                // Cmd + M
+                Key::M if logo_pressed => {
+                    model.event_tx.send(AppEvent::ToggleMainFocus);
+                }
+                // R
+                Key::R if has_no_modifiers => {
+                    model.event_tx.send(AppEvent::Reset);
+                }
+                // S
+                Key::S if has_no_modifiers => {
+                    model.event_tx.send(AppEvent::CaptureFrame);
+                }
+                _ => {}
+            }
         }
         _ => {}
     }
@@ -598,77 +664,4 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
 
 fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
     model.egui.borrow().draw_to_frame(&frame).unwrap();
-}
-
-fn on_key_pressed(app: &App, model: &AppModel, key: Key) {
-    match key {
-        Key::A if has_no_modifiers(app) => {
-            frame_controller::advance_single_frame();
-        }
-        Key::C if has_no_modifiers(app) => {
-            let window = app.window(model.gui_window_id).unwrap();
-            let is_visible = model.gui_visible.get();
-
-            if is_visible {
-                window.set_visible(false);
-                model.gui_visible.set(false);
-            } else {
-                window.set_visible(true);
-                model.gui_visible.set(true);
-            }
-        }
-        Key::S if has_no_modifiers(app) => {
-            let window = app.window(model.main_window_id).unwrap();
-            let is_visible = model.main_visible.get();
-
-            if is_visible {
-                window.set_visible(false);
-                model.main_visible.set(false);
-            } else {
-                window.set_visible(true);
-                model.main_visible.set(true);
-            }
-        }
-        Key::F if has_no_modifiers(app) => {
-            let window = app.window(model.main_window_id).unwrap();
-            if let Some(monitor) = window.current_monitor() {
-                let monitor_size = monitor.size();
-                let is_maximized = model.main_maximized.get();
-
-                if is_maximized {
-                    window.set_inner_size_points(
-                        model.sketch_config.w as f32,
-                        model.sketch_config.h as f32,
-                    );
-                    model.main_maximized.set(false);
-                } else {
-                    window.set_inner_size_pixels(
-                        monitor_size.width,
-                        monitor_size.height,
-                    );
-                    model.main_maximized.set(true);
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
-fn has_no_modifiers(app: &App) -> bool {
-    !app.keys.mods.alt()
-        && !app.keys.mods.ctrl()
-        && !app.keys.mods.shift()
-        && !app.keys.mods.logo()
-}
-
-pub fn restore_controls(sketch_name: &str, controls: Option<&mut Controls>) {
-    if let (Some(values), Some(controls)) =
-        (storage::stored_controls(sketch_name), controls)
-    {
-        for (name, value) in values.into_iter() {
-            controls.update_value(&name, value);
-        }
-
-        info!("Controls restored");
-    }
 }
