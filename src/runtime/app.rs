@@ -126,19 +126,14 @@ pub enum AppEvent {
     ClearControlsCache,
     ClearFlag(bool),
     ControlsChanged,
-    MidiInstruction(MidiInstruction),
+    MidiContinue,
+    MidiStart,
+    MidiStop,
     QueueRecord,
     Record,
     Reset,
     SwitchSketch(String),
     TogglePlay,
-}
-
-#[derive(Debug)]
-pub enum MidiInstruction {
-    Start,
-    Continue,
-    Stop,
 }
 
 pub struct AppEventSender {
@@ -257,8 +252,42 @@ impl AppModel {
                     }
                 }
             }
-            AppEvent::MidiInstruction(instruction) => {
-                self.on_midi_instruction(&instruction);
+            AppEvent::MidiStart | AppEvent::MidiContinue => {
+                info!(
+                    "Received MIDI Start/Continue message. \
+                    Resetting frame count."
+                );
+
+                frame_controller::reset_frame_count();
+
+                if self.recording_state.is_queued {
+                    match self.recording_state.start_recording() {
+                        Ok(message) => {
+                            self.event_tx.alert(message);
+                        }
+                        Err(e) => {
+                            let message =
+                                format!("Failed to start recording: {}", e);
+                            self.alert_text = message.clone();
+                            error!("{}", message);
+                        }
+                    }
+                }
+            }
+            AppEvent::MidiStop => {
+                if self.recording_state.is_recording
+                    && !self.recording_state.is_encoding
+                {
+                    match self
+                        .recording_state
+                        .stop_recording(self.sketch_config, &self.session_id)
+                    {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!("Failed stop recording: {}", e);
+                        }
+                    }
+                }
             }
             AppEvent::QueueRecord => {
                 if self.recording_state.is_queued {
@@ -302,48 +331,6 @@ impl AppModel {
                 self.alert_text =
                     ternary!(next_is_paused, "Paused", "Resumed").into();
                 info!("Paused: {}", next_is_paused);
-            }
-        }
-    }
-
-    fn on_midi_instruction(&mut self, instruction: &MidiInstruction) {
-        match instruction {
-            MidiInstruction::Start | MidiInstruction::Continue => {
-                info!(
-                    "Received {:?} message. Resetting frame count.",
-                    instruction
-                );
-
-                frame_controller::reset_frame_count();
-
-                if self.recording_state.is_queued {
-                    match self.recording_state.start_recording() {
-                        Ok(message) => {
-                            self.event_tx.alert(message);
-                        }
-                        Err(e) => {
-                            let message =
-                                format!("Failed to start recording: {}", e);
-                            self.alert_text = message.clone();
-                            error!("{}", message);
-                        }
-                    }
-                }
-            }
-            MidiInstruction::Stop => {
-                if self.recording_state.is_recording
-                    && !self.recording_state.is_encoding
-                {
-                    match self
-                        .recording_state
-                        .stop_recording(self.sketch_config, &self.session_id)
-                    {
-                        Ok(_) => {}
-                        Err(e) => {
-                            error!("Failed stop recording: {}", e);
-                        }
-                    }
-                }
             }
         }
     }
@@ -506,15 +493,9 @@ fn model(app: &App) -> AppModel {
         midi::ConnectionType::GlobalStartStop,
         crate::config::MIDI_CLOCK_PORT,
         move |message| match message[0] {
-            START => midi_tx
-                .send(AppEvent::MidiInstruction(MidiInstruction::Start))
-                .unwrap(),
-            CONTINUE => midi_tx
-                .send(AppEvent::MidiInstruction(MidiInstruction::Continue))
-                .unwrap(),
-            STOP => midi_tx
-                .send(AppEvent::MidiInstruction(MidiInstruction::Stop))
-                .unwrap(),
+            START => midi_tx.send(AppEvent::MidiStart).unwrap(),
+            CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
+            STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
             _ => {}
         },
     )
