@@ -1,10 +1,10 @@
 {
   "values": {
-    "invert": {
-      "Float": 0.0
+    "kfg03": {
+      "Bool": false
     },
-    "blur": {
-      "Float": 20.0
+    "outer_pos_t_mix": {
+      "Float": 0.5
     },
     "dist_morph": {
       "Float": 0.9
@@ -12,29 +12,29 @@
     "color_mix": {
       "Float": 1.0
     },
-    "clamp_min": {
-      "Float": -0.7
-    },
-    "de562": {
-      "Bool": false
-    },
     "smoothness": {
       "Float": 0.48499998
     },
-    "outer_size": {
-      "Float": 0.51
+    "blur": {
+      "Float": 20.0
     },
-    "outer_pos_t_mix": {
-      "Float": 0.525
+    "clamp_min": {
+      "Float": -0.7
+    },
+    "invert": {
+      "Float": 0.0
+    },
+    "81hbp": {
+      "Bool": false
+    },
+    "10ep2": {
+      "Bool": false
     },
     "center_size": {
       "Float": 2.79
     },
-    "8eovt": {
-      "Bool": false
-    },
-    "x12d6": {
-      "Bool": false
+    "outer_size": {
+      "Float": 0.78999996
     }
   }
 }

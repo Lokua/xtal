@@ -16,6 +16,7 @@ pub fn update(
     sketch_config: &SketchConfig,
     controls: Option<&mut Controls>,
     alert_text: &mut String,
+    perf_mode: &mut bool,
     recording_state: &mut RecordingState,
     event_tx: &app::AppEventSender,
     ctx: &egui::Context,
@@ -71,6 +72,7 @@ pub fn update(
                     &sketch_names,
                     event_tx,
                 );
+                draw_perf_mode_checkbox(ui, perf_mode, event_tx);
             });
 
             ui.separator();
@@ -141,7 +143,7 @@ fn draw_reset_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
 
 fn draw_clear_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Clear")).clicked().then(|| {
-        event_tx.send(app::AppEvent::ClearFlag(true));
+        event_tx.send(app::AppEvent::ClearNextFrame);
         event_tx.alert("Cleared");
         info!("Frame cleared");
     });
@@ -246,6 +248,19 @@ fn draw_sketch_selector(
                     }
                 });
         });
+}
+
+fn draw_perf_mode_checkbox(
+    ui: &mut egui::Ui,
+    perf_mode: &mut bool,
+    event_tx: &app::AppEventSender,
+) {
+    if ui
+        .add(egui::Checkbox::new(perf_mode, "Perf Mode"))
+        .changed()
+    {
+        event_tx.send(app::AppEvent::TogglePerfMode(perf_mode.clone()))
+    }
 }
 
 fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {

@@ -124,7 +124,7 @@ pub enum AppEvent {
     Alert(String),
     CaptureFrame,
     ClearControlsCache,
-    ClearFlag(bool),
+    ClearNextFrame,
     ControlsChanged,
     MidiContinue,
     MidiStart,
@@ -135,6 +135,7 @@ pub enum AppEvent {
     SwitchSketch(String),
     ToggleFullScreen,
     ToggleGuiFocus,
+    TogglePerfMode(bool),
     ToggleMainFocus,
     TogglePlay,
 }
@@ -167,7 +168,8 @@ struct AppModel {
     egui: RefCell<Egui>,
     session_id: String,
     alert_text: String,
-    clear_flag: Cell<bool>,
+    clear_next_frame: Cell<bool>,
+    perf_mode: bool,
     recording_state: RecordingState,
     sketch: Box<dyn Sketch>,
     sketch_config: &'static SketchConfig,
@@ -227,8 +229,8 @@ impl AppModel {
                     self.alert_text = "Controls cache cleared".into();
                 }
             }
-            AppEvent::ClearFlag(clear) => {
-                self.clear_flag = clear.into();
+            AppEvent::ClearNextFrame => {
+                self.clear_next_frame.set(true);
             }
             AppEvent::ControlsChanged => {
                 if frame_controller::is_paused()
@@ -361,6 +363,9 @@ impl AppModel {
                     self.gui_visible.set(true);
                 }
             }
+            AppEvent::TogglePerfMode(ignore) => {
+                self.perf_mode = ignore;
+            }
             AppEvent::ToggleMainFocus => {
                 let window = self.main_window(app).unwrap();
                 let is_visible = self.main_visible.get();
@@ -417,7 +422,7 @@ impl AppModel {
         self.sketch = sketch;
         self.sketch_config = sketch_info.config;
         self.session_id = uuid_5();
-        self.clear_flag.set(true);
+        self.clear_next_frame.set(true);
 
         self.init_sketch_environment(app);
 
@@ -433,12 +438,14 @@ impl AppModel {
 
         self.main_window(app).map(|window| {
             window.set_title(&self.sketch_config.display_name);
-            set_window_position(app, self.main_window_id, 0, 0);
-            set_window_size(
-                window.winit_window(),
-                self.sketch_config.w,
-                self.sketch_config.h,
-            );
+            if !self.perf_mode {
+                set_window_position(app, self.main_window_id, 0, 0);
+                set_window_size(
+                    window.winit_window(),
+                    self.sketch_config.w,
+                    self.sketch_config.h,
+                );
+            }
         });
 
         let (gui_w, gui_h) =
@@ -450,12 +457,14 @@ impl AppModel {
                 self.sketch_config.display_name
             ));
 
-            set_window_position(
-                app,
-                self.gui_window_id,
-                self.sketch_config.w * 2,
-                0,
-            );
+            if !self.perf_mode {
+                set_window_position(
+                    app,
+                    self.gui_window_id,
+                    self.sketch_config.w * 2,
+                    0,
+                );
+            }
 
             set_window_size(
                 gui_window.winit_window(),
@@ -540,7 +549,8 @@ fn model(app: &App) -> AppModel {
         egui,
         session_id: uuid_5(),
         alert_text: String::new(),
-        clear_flag: Cell::new(true),
+        clear_next_frame: Cell::new(true),
+        perf_mode: false,
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
@@ -566,6 +576,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             &model.sketch_config,
             model.sketch.controls_provided(),
             &mut model.alert_text,
+            &mut model.perf_mode,
             &mut model.recording_state,
             &model.event_tx,
             &ctx,
@@ -645,9 +656,9 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 }
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
-    if model.clear_flag.get() {
+    if model.clear_next_frame.get() {
         frame.clear(model.sketch.clear_color());
-        model.clear_flag.set(false);
+        model.clear_next_frame.set(false);
     }
 
     let did_render = frame_controller::wrapped_view(
