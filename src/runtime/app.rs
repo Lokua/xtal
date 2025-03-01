@@ -120,12 +120,18 @@ pub fn run() {
 
 #[derive(Debug)]
 pub enum AppEvent {
+    AdvanceSingleFrame,
     Alert(String),
     CaptureFrame,
+    ClearControlsCache,
     ClearFlag(bool),
+    ControlsChanged,
+    MidiInstruction(MidiInstruction),
+    QueueRecord,
+    Record,
     Reset,
     SwitchSketch(String),
-    MidiInstruction(MidiInstruction),
+    TogglePlay,
 }
 
 #[derive(Debug)]
@@ -193,6 +199,9 @@ impl AppModel {
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
         match event {
+            AppEvent::AdvanceSingleFrame => {
+                frame_controller::advance_single_frame();
+            }
             AppEvent::Alert(text) => {
                 self.alert_text = text;
             }
@@ -211,18 +220,88 @@ impl AppModel {
                 self.alert_text = alert_text.clone();
                 info!("{}", alert_text);
             }
+            AppEvent::ClearControlsCache => {
+                if let Err(e) =
+                    storage::delete_stored_controls(self.sketch_config.name)
+                {
+                    error!("Failed to clear controls cache: {}", e);
+                } else {
+                    self.alert_text = "Controls cache cleared".into();
+                }
+            }
             AppEvent::ClearFlag(clear) => {
                 self.clear_flag = clear.into();
+            }
+            AppEvent::ControlsChanged => {
+                if frame_controller::is_paused()
+                    && self.sketch_config.play_mode != PlayMode::ManualAdvance
+                {
+                    frame_controller::advance_single_frame();
+                }
+
+                match storage::persist_controls(
+                    self.sketch_config.name,
+                    self.sketch.controls_provided().unwrap(),
+                ) {
+                    Ok(path_buf) => {
+                        let message =
+                            format!("Controls persisted at {:?}", path_buf);
+                        self.alert_text = message.clone();
+                        trace!("{}", message);
+                    }
+                    Err(e) => {
+                        let message =
+                            format!("Failed to persist controls: {}", e);
+                        self.alert_text = message.clone();
+                        error!("{}", message);
+                    }
+                }
+            }
+            AppEvent::MidiInstruction(instruction) => {
+                self.on_midi_instruction(&instruction);
+            }
+            AppEvent::QueueRecord => {
+                if self.recording_state.is_queued {
+                    self.recording_state.is_queued = false;
+                    self.alert_text = "".into();
+                } else {
+                    self.recording_state.is_queued = true;
+                    self.alert_text =
+                        "Recording queued. Awaiting MIDI Start message".into();
+                }
+            }
+            AppEvent::Record => {
+                match self
+                    .recording_state
+                    .toggle_recording(self.sketch_config, &self.session_id)
+                {
+                    Ok(message) => {
+                        self.alert_text = message;
+                    }
+                    Err(e) => {
+                        let message = format!("Recording error: {}", e);
+                        self.alert_text = message.clone();
+                        error!("{}", message);
+                    }
+                }
             }
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
             }
             AppEvent::SwitchSketch(name) => {
-                self.switch_sketch(app, &name);
+                if self.sketch_config.name != name
+                    && REGISTRY.read().unwrap().get(&name).is_some()
+                {
+                    self.switch_sketch(app, &name);
+                }
             }
-            AppEvent::MidiInstruction(instruction) => {
-                self.on_midi_instruction(&instruction);
+            AppEvent::TogglePlay => {
+                let next_is_paused = !frame_controller::is_paused();
+                frame_controller::set_paused(next_is_paused);
+                self.alert_text =
+                    ternary!(next_is_paused, "Paused", "Resumed").into();
+                info!("Paused: {}", next_is_paused);
             }
         }
     }
@@ -245,7 +324,7 @@ impl AppModel {
                         Err(e) => {
                             let message =
                                 format!("Failed to start recording: {}", e);
-                            self.event_tx.alert(message.clone());
+                            self.alert_text = message.clone();
                             error!("{}", message);
                         }
                     }
@@ -469,7 +548,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         gui::update(
-            &mut model.session_id,
             &model.sketch_config,
             model.sketch.controls_provided(),
             &mut model.alert_text,
