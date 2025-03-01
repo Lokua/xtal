@@ -1,114 +1,114 @@
 {
   "values": {
-    "wave_phase": {
-      "Float": 0.0
-    },
-    "circle_r_min": {
-      "Float": 0.46499997
-    },
-    "noise_scale": {
-      "Float": 0.0015
-    },
     "bg_brightness": {
       "Float": 3.24
-    },
-    "animate_wave_phase": {
-      "Bool": true
-    },
-    "animate_steep_phase": {
-      "Bool": false
-    },
-    "steepness": {
-      "Float": 29.0
-    },
-    "wave_amp": {
-      "Float": 0.0
-    },
-    "invert_animate_stripe_phase": {
-      "Bool": false
-    },
-    "invert_animate_steep_phase": {
-      "Bool": false
     },
     "steep_phase": {
       "Float": 1.32
     },
-    "phase_animation_mult": {
-      "Float": 0.375
+    "harmonic_influence": {
+      "Float": 0.17999999
     },
-    "n_lines": {
-      "Float": 119.0
+    "steepness": {
+      "Float": 29.0
     },
-    "animate_quant_phase": {
+    "animate_steep_phase": {
       "Bool": true
     },
-    "animate_stripe_phase": {
+    "animate_wave_phase": {
       "Bool": true
     },
-    "passes": {
-      "Float": 1.0
-    },
-    "offset_mult": {
-      "Float": 1.1700001
-    },
-    "invert_animate_quant_phase": {
-      "Bool": true
-    },
-    "invert_animate_wave_phase": {
-      "Bool": false
-    },
-    "animate_bg": {
-      "Bool": false
+    "points_per_segment": {
+      "Float": 13750.0
     },
     "stripe_amp": {
       "Float": 0.0
     },
-    "circle_r_max": {
-      "Float": 0.773
+    "point_size": {
+      "Float": 0.0018999999
+    },
+    "invert": {
+      "Bool": false
+    },
+    "passes": {
+      "Float": 1.0
+    },
+    "quant_phase": {
+      "Float": 0.0
+    },
+    "animate_angle_offset": {
+      "Bool": false
+    },
+    "steep_freq": {
+      "Float": 18.0
+    },
+    "invert_animate_quant_phase": {
+      "Bool": true
+    },
+    "circle_r_min": {
+      "Float": 0.46499997
+    },
+    "wave_freq": {
+      "Float": 5.0
+    },
+    "steep_amp": {
+      "Float": 0.436
+    },
+    "n_lines": {
+      "Float": 150.0
+    },
+    "quant_amp": {
+      "Float": 0.308
+    },
+    "stripe_phase": {
+      "Float": 0.0
+    },
+    "stripe_freq": {
+      "Float": 24.0
+    },
+    "animate_bg": {
+      "Bool": false
     },
     "angle_variation": {
       "Float": 0.7
     },
-    "invert": {
+    "circle_r_max": {
+      "Float": 0.773
+    },
+    "invert_animate_wave_phase": {
+      "Bool": false
+    },
+    "offset_mult_10": {
       "Bool": false
     },
     "quant_freq": {
       "Float": 6.0
     },
-    "point_size": {
-      "Float": 0.0018999999
-    },
-    "steep_amp": {
-      "Float": 0.271
-    },
-    "stripe_freq": {
-      "Float": 10.0
-    },
-    "offset_mult_10": {
-      "Bool": false
-    },
-    "wave_freq": {
-      "Float": 5.0
-    },
-    "points_per_segment": {
-      "Float": 13750.0
-    },
-    "quant_amp": {
-      "Float": 0.308
-    },
-    "animate_angle_offset": {
-      "Bool": false
-    },
-    "stripe_phase": {
+    "wave_phase": {
       "Float": 0.0
     },
-    "harmonic_influence": {
-      "Float": 0.47
+    "invert_animate_steep_phase": {
+      "Bool": false
     },
-    "steep_freq": {
-      "Float": 18.0
+    "animate_stripe_phase": {
+      "Bool": true
     },
-    "quant_phase": {
+    "invert_animate_stripe_phase": {
+      "Bool": false
+    },
+    "phase_animation_mult": {
+      "Float": 0.375
+    },
+    "offset_mult": {
+      "Float": 8.35
+    },
+    "noise_scale": {
+      "Float": 0.003
+    },
+    "animate_quant_phase": {
+      "Bool": true
+    },
+    "wave_amp": {
       "Float": 0.0
     }
   }

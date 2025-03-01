@@ -183,6 +183,11 @@ where
     (grid, cell_size)
 }
 
+pub fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
+    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
+    window.set_inner_size(logical_size);
+}
+
 pub fn set_window_position(app: &App, window_id: window::Id, x: i32, y: i32) {
     app.window(window_id)
         .unwrap()

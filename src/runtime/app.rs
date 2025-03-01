@@ -619,11 +619,6 @@ fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
     model.egui.borrow().draw_to_frame(&frame).unwrap();
 }
 
-fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
-    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
-    window.set_inner_size(logical_size);
-}
-
 fn on_key_pressed(app: &App, model: &AppModel, key: Key) {
     match key {
         Key::A if has_no_modifiers(app) => {
