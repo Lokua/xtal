@@ -529,6 +529,8 @@ fn model(app: &App) -> AppModel {
         .get(&initial_sketch)
         .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
 
+    app.set_fullscreen_on_shortcut(false);
+
     let main_window_id = app.new_window().build().unwrap();
 
     let window_rect = app
@@ -541,7 +543,6 @@ fn model(app: &App) -> AppModel {
     let gui_window_id = app
         .new_window()
         .view(view_gui)
-        .resizable(true)
         .raw_event(|_app, model: &mut AppModel, event| {
             model.egui.get_mut().handle_raw_event(event);
         })
@@ -642,18 +643,17 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
 /// Note: this is shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
-    model.sketch.event(app, &event);
-
     match event {
         Event::WindowEvent {
             simple: Some(KeyPressed(key)),
             ..
         } => {
             let logo_pressed = app.keys.mods.logo();
+            let shift_pressed = app.keys.mods.shift();
             let has_no_modifiers = !app.keys.mods.alt()
                 && !app.keys.mods.ctrl()
-                && !app.keys.mods.shift()
-                && !app.keys.mods.logo();
+                && !shift_pressed
+                && !logo_pressed;
 
             match key {
                 Key::Space => {
@@ -667,6 +667,12 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 Key::F if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleFullScreen);
                 }
+                // Cmd + Shift + F
+                // Key::F if logo_pressed && shift_pressed => {
+                //     model.main_window(app).unwrap().set_fullscreen_with(Some(
+                //         Fullscreen::Borderless(None),
+                //     ));
+                // }
                 // Cmd + G
                 Key::G if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleGuiFocus);
