@@ -43,7 +43,7 @@ pub fn init(_app: &App, wr: WindowRect) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, _app: &App, _update: Update) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         let radius_max = self.controls.float("radius");
 
         self.radius = self.animation.lerp(
@@ -60,7 +60,7 @@ impl Sketch for Template {
         self.hue = self.animation.tri(12.0)
     }
 
-    fn view(&self, app: &App, frame: Frame) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
         let draw = app.draw();
 
         draw.rect()

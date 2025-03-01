@@ -76,10 +76,23 @@ pub trait SketchModel {
     fn event(&mut self, _app: &App, _event: &Event) {}
 }
 
+/// Context passed down from the Lattice runtime. This is similar to how
+/// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
+pub struct LatticeContext {
+    pub bpm: f32,
+    pub window_rect: Option<WindowRect>,
+}
+
+impl LatticeContext {
+    pub fn new(bpm: f32, window_rect: Option<WindowRect>) -> Self {
+        Self { bpm, window_rect }
+    }
+}
+
 /// Core trait for type erasure - all sketches must implement this
 pub trait Sketch {
-    fn update(&mut self, app: &App, update: Update);
-    fn view(&self, app: &App, frame: Frame);
+    fn update(&mut self, app: &App, update: Update, ctx: &LatticeContext);
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext);
 
     fn event(&mut self, _app: &App, _event: &Event) {}
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
@@ -104,11 +117,11 @@ pub trait Sketch {
 // TODO: undeprecate and port sketches to Sketch trait
 #[allow(deprecated)]
 impl<T: SketchModel> Sketch for T {
-    fn update(&mut self, _app: &App, _update: Update) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         panic!("update() not implemented for this SketchModel")
     }
 
-    fn view(&self, _app: &App, _frame: Frame) {
+    fn view(&self, _app: &App, _frame: Frame, _ctx: &LatticeContext) {
         panic!("view() not implemented for this SketchModel")
     }
 
@@ -151,11 +164,11 @@ impl<S: Sketch> SketchAdapter<S> {
 }
 
 impl<S: Sketch> Sketch for SketchAdapter<S> {
-    fn update(&mut self, app: &App, update: Update) {
+    fn update(&mut self, app: &App, update: Update, _ctx: &LatticeContext) {
         (self.update_fn)(app, &mut self.model, update);
     }
 
-    fn view(&self, app: &App, frame: Frame) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
         (self.view_fn)(app, &self.model, frame);
     }
 

@@ -605,11 +605,22 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.sketch.set_window_rect(rect);
     });
 
+    let bpm = model.bpm();
+
     frame_controller::wrapped_update(
         app,
         &mut model.sketch,
         update,
-        |app, sketch, update| sketch.update(app, update),
+        |app, sketch, update| {
+            sketch.update(
+                app,
+                update,
+                &LatticeContext {
+                    bpm,
+                    window_rect: None,
+                },
+            )
+        },
     );
 
     if model.recording_state.is_encoding {
@@ -682,11 +693,21 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         model.clear_next_frame.set(false);
     }
 
+    let bpm = model.bpm();
     let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
         frame,
-        |app, sketch, frame| sketch.view(app, frame),
+        |app, sketch, frame| {
+            sketch.view(
+                app,
+                frame,
+                &LatticeContext {
+                    bpm,
+                    window_rect: None,
+                },
+            )
+        },
     );
 
     if did_render {

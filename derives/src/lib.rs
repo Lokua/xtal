@@ -98,7 +98,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
 
     let gen = quote! {
         impl Sketch for #name {
-            fn update(&mut self, app: &App, update: Update) {
+            fn update(&mut self, app: &App, update: Update, ctx: &LatticeContext) {
                 panic!(
                     "update() not implemented. \
                     Structs that derive SketchComponents must still provide update \
@@ -106,7 +106,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
                 )
             }
 
-            fn view(&self, app: &App, frame: Frame) {
+            fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
                 panic!(
                     "view() not implemented. \
                     Structs that derive SketchComponents must still provide update \
