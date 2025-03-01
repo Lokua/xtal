@@ -179,8 +179,6 @@ struct AppModel {
     recording_state: RecordingState,
     sketch: Box<dyn Sketch>,
     sketch_config: &'static SketchConfig,
-    gui_visible: Cell<bool>,
-    main_visible: Cell<bool>,
     main_maximized: Cell<bool>,
     event_tx: AppEventSender,
     event_rx: AppEventReceiver,
@@ -369,28 +367,10 @@ impl AppModel {
                 }
             }
             AppEvent::ToggleGuiFocus => {
-                let window = self.gui_window(app).unwrap();
-                let is_visible = self.gui_visible.get();
-
-                if is_visible {
-                    window.set_visible(false);
-                    self.gui_visible.set(false);
-                } else {
-                    window.set_visible(true);
-                    self.gui_visible.set(true);
-                }
+                self.gui_window(app).unwrap().set_visible(true);
             }
             AppEvent::ToggleMainFocus => {
-                let window = self.main_window(app).unwrap();
-                let is_visible = self.main_visible.get();
-
-                if is_visible {
-                    window.set_visible(false);
-                    self.main_visible.set(false);
-                } else {
-                    window.set_visible(true);
-                    self.main_visible.set(true);
-                }
+                self.main_window(app).unwrap().set_visible(true);
             }
             AppEvent::TogglePerfMode(ignore) => {
                 self.perf_mode = ignore;
@@ -584,8 +564,6 @@ fn model(app: &App) -> AppModel {
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
-        gui_visible: Cell::new(true),
-        main_visible: Cell::new(true),
         main_maximized: Cell::new(false),
         event_tx: AppEventSender::new(raw_event_tx),
         event_rx,
