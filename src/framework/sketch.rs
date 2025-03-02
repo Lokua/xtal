@@ -98,8 +98,10 @@ impl LatticeContext {
 pub trait Sketch {
     fn update(&mut self, app: &App, update: Update, ctx: &LatticeContext);
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext);
-
     fn event(&mut self, _app: &App, _event: &Event) {}
+}
+
+pub trait SketchDerived {
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
         None
     }
@@ -107,7 +109,7 @@ pub trait Sketch {
         self.controls().map(|provider| provider.as_controls_mut())
     }
     fn clear_color(&self) -> Rgba {
-        Rgba::new(0.0, 0.0, 0.0, 0.0)
+        Rgba::new(0.0, 0.0, 0.0, 1.0)
     }
     fn window_rect(&mut self) -> Option<&mut WindowRect> {
         None
@@ -119,56 +121,43 @@ pub trait Sketch {
     }
 }
 
-// TODO: undeprecate and port sketches to Sketch trait
-#[allow(deprecated)]
-impl<T: SketchModel> Sketch for T {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        panic!("update() not implemented for this SketchModel")
-    }
-
-    fn view(&self, _app: &App, _frame: Frame, _ctx: &LatticeContext) {
-        panic!("view() not implemented for this SketchModel")
-    }
-
-    fn event(&mut self, app: &App, event: &Event) {
-        SketchModel::event(self, app, event)
-    }
-
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-        SketchModel::controls(self).map(|c| c as &mut dyn ControlProvider)
-    }
-
-    fn clear_color(&self) -> nannou::color::Rgba {
-        SketchModel::clear_color(self)
-    }
-
-    fn set_window_rect(&mut self, rect: Rect) {
-        SketchModel::set_window_rect(self, rect);
-    }
-}
+pub trait SketchAll: Sketch + SketchDerived {}
+impl<T: Sketch + SketchDerived> SketchAll for T {}
 
 /// Adapter to instantiate Sketch for legacy SketchModel types
-pub struct SketchAdapter<S: Sketch> {
+pub struct SketchAdapter<S> {
     model: S,
     update_fn: fn(&App, &mut S, Update),
     view_fn: fn(&App, &S, Frame),
+    controls_fn: Option<fn(&mut S) -> Option<&mut dyn ControlProvider>>,
+    clear_color_fn: Option<fn(&S) -> Rgba>,
+    window_rect_fn: Option<fn(&mut S) -> Option<&mut WindowRect>>,
+    set_window_rect_fn: Option<fn(&mut S, Rect)>,
 }
 
-impl<S: Sketch> SketchAdapter<S> {
+impl<S> SketchAdapter<S> {
     pub fn new(
         model: S,
         update_fn: fn(&App, &mut S, Update),
         view_fn: fn(&App, &S, Frame),
+        controls_fn: Option<fn(&mut S) -> Option<&mut dyn ControlProvider>>,
+        clear_color_fn: Option<fn(&S) -> Rgba>,
+        window_rect_fn: Option<fn(&mut S) -> Option<&mut WindowRect>>,
+        set_window_rect_fn: Option<fn(&mut S, Rect)>,
     ) -> Self {
         Self {
             model,
             update_fn,
             view_fn,
+            controls_fn,
+            clear_color_fn,
+            window_rect_fn,
+            set_window_rect_fn,
         }
     }
 }
 
-impl<S: Sketch> Sketch for SketchAdapter<S> {
+impl<S> Sketch for SketchAdapter<S> {
     fn update(&mut self, app: &App, update: Update, _ctx: &LatticeContext) {
         (self.update_fn)(app, &mut self.model, update);
     }
@@ -177,19 +166,37 @@ impl<S: Sketch> Sketch for SketchAdapter<S> {
         (self.view_fn)(app, &self.model, frame);
     }
 
-    fn event(&mut self, app: &App, event: &Event) {
-        self.model.event(app, event);
-    }
+    fn event(&mut self, _app: &App, _event: &Event) {}
+}
 
+impl<S> SketchDerived for SketchAdapter<S> {
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-        self.model.controls()
+        if let Some(f) = self.controls_fn {
+            f(&mut self.model).map(|c| c as &mut dyn ControlProvider)
+        } else {
+            None
+        }
     }
 
-    fn clear_color(&self) -> nannou::color::Rgba {
-        self.model.clear_color()
+    fn clear_color(&self) -> Rgba {
+        if let Some(f) = self.clear_color_fn {
+            f(&self.model)
+        } else {
+            Rgba::new(0.0, 0.0, 0.0, 1.0)
+        }
+    }
+
+    fn window_rect(&mut self) -> Option<&mut WindowRect> {
+        if let Some(f) = self.window_rect_fn {
+            f(&mut self.model)
+        } else {
+            None
+        }
     }
 
     fn set_window_rect(&mut self, rect: Rect) {
-        self.model.set_window_rect(rect);
+        if let Some(f) = self.set_window_rect_fn {
+            f(&mut self.model, rect);
+        }
     }
 }

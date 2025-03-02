@@ -41,6 +41,8 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
     }
 }
 
+impl SketchDerived for Template {}
+
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         let radius_max = self.controls.float("radius");

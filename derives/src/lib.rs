@@ -13,10 +13,11 @@ pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
             fields: Fields::Named(fields),
             ..
         }) => &fields.named,
-        _ => panic!("SketchComponents only works on structs with named fields"),
+        _ => panic!(
+            "Legacy SketchComponents only works on structs with named fields"
+        ),
     };
 
-    // Parse struct-level attributes
     let mut clear_color = None;
     for attr in attrs {
         if attr.path().is_ident("sketch") {
@@ -38,7 +39,6 @@ pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
         }
     }
 
-    // Generate implementations based on field attributes and presence
     let window_rect_impl = {
         let has_window_rect = fields
             .iter()
@@ -113,7 +113,9 @@ pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
                     and view functions."
                 )
             }
+        }
 
+        impl SketchDerived for #name {
             #window_rect_impl
             #controls_impl
             #clear_color_impl
@@ -123,7 +125,7 @@ pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
-#[proc_macro_derive(SketchComponentsV2, attributes(sketch))]
+#[proc_macro_derive(SketchComponents, attributes(sketch))]
 pub fn sketch_components(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let name = &ast.ident;
@@ -134,10 +136,11 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
             fields: Fields::Named(fields),
             ..
         }) => &fields.named,
-        _ => panic!("SketchComponents only works on structs with named fields"),
+        _ => panic!(
+            "Legacy SketchComponents only works on structs with named fields"
+        ),
     };
 
-    // Parse struct-level attributes
     let mut clear_color = None;
     for attr in attrs {
         if attr.path().is_ident("sketch") {
@@ -159,85 +162,47 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
         }
     }
 
-    // Generate implementations based on field attributes and presence
-    let window_rect_impl = {
-        let has_window_rect = fields
-            .iter()
-            .any(|f| f.ident.as_ref().unwrap() == "window_rect");
-        let has_wr = fields.iter().any(|f| f.ident.as_ref().unwrap() == "wr");
-
-        if has_window_rect {
-            Some(quote! {
-                fn window_rect(&mut self) -> Option<&mut WindowRect> {
-                    Some(&mut self.window_rect)
-                }
-            })
-        } else if has_wr {
-            Some(quote! {
-                fn window_rect(&mut self) -> Option<&mut WindowRect> {
-                    Some(&mut self.wr)
-                }
-            })
-        } else {
-            None
-        }
-    };
-
     let controls_impl = if fields
         .iter()
         .any(|f| f.ident.as_ref().unwrap() == "controls")
     {
-        Some(quote! {
-            fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-                Some(&mut self.controls)
-            }
-        })
+        quote! { Some(&mut self.controls) }
     } else {
-        None
+        quote! { None }
     };
 
-    let clear_color_impl = clear_color.map(|color| match color {
-        ColorFormat::Rgba(components) => {
-            let [r, g, b, a] =
-                [components[0], components[1], components[2], components[3]];
-            quote! {
-                fn clear_color(&self) -> Rgba {
-                    Rgba::new(#r, #g, #b, #a)
-                }
+    let clear_color_impl = clear_color
+        .map(|color| match color {
+            ColorFormat::Rgba(components) => {
+                let [r, g, b, a] = [
+                    components[0],
+                    components[1],
+                    components[2],
+                    components[3],
+                ];
+                quote! { Rgba::new(#r, #g, #b, #a) }
             }
-        }
-        ColorFormat::Hsla(components) => {
-            let [h, s, l, a] =
-                [components[0], components[1], components[2], components[3]];
-            quote! {
-                fn clear_color(&self) -> Rgba {
-                    hsla(#h, #s, #l, #a).into()
-                }
+            ColorFormat::Hsla(components) => {
+                let [h, s, l, a] = [
+                    components[0],
+                    components[1],
+                    components[2],
+                    components[3],
+                ];
+                quote! { hsla(#h, #s, #l, #a).into() }
             }
-        }
-    });
+        })
+        .unwrap_or_else(|| quote! { Rgba::new(0.0, 0.0, 0.0, 0.0) });
 
     let gen = quote! {
         impl Sketch for #name {
-            fn update(&mut self, app: &App, update: Update, ctx: &LatticeContext) {
-                panic!(
-                    "update() not implemented. \
-                    Structs that derive SketchComponents must still provide update \
-                    and view functions."
-                )
+            fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
+                #controls_impl
             }
 
-            fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
-                panic!(
-                    "view() not implemented. \
-                    Structs that derive SketchComponents must still provide update \
-                    and view functions."
-                )
+            fn clear_color(&self) -> Rgba {
+                #clear_color_impl
             }
-
-            #window_rect_impl
-            #controls_impl
-            #clear_color_impl
         }
     };
 

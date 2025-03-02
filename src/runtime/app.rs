@@ -177,7 +177,7 @@ struct AppModel {
     tap_tempo_bpm: f32,
     perf_mode: bool,
     recording_state: RecordingState,
-    sketch: Box<dyn Sketch>,
+    sketch: Box<dyn SketchAll>,
     sketch_config: &'static SketchConfig,
     main_maximized: Cell<bool>,
     event_tx: AppEventSender,
@@ -594,10 +594,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
         let bpm = model.bpm();
-        debug!(
-            "update_gui time - controls: {:?}",
-            model.sketch.controls_provided()
-        );
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
