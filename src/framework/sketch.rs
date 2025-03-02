@@ -53,29 +53,6 @@ pub enum PlayMode {
     ManualAdvance,
 }
 
-#[deprecated(note = "Use Sketch trait directly instead")]
-pub trait SketchModel {
-    fn controls(&mut self) -> Option<&mut impl ControlProvider> {
-        None::<&mut Controls>
-    }
-
-    fn clear_color(&self) -> Rgba {
-        Rgba::new(0.0, 0.0, 0.0, 0.0)
-    }
-
-    fn window_rect(&mut self) -> Option<&mut WindowRect> {
-        None
-    }
-
-    fn set_window_rect(&mut self, rect: Rect) {
-        if let Some(window_rect) = self.window_rect() {
-            window_rect.set_current(rect);
-        }
-    }
-
-    fn event(&mut self, _app: &App, _event: &Event) {}
-}
-
 /// Context passed down from the Lattice runtime. This is similar to how
 /// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
 #[derive(Debug)]
@@ -123,6 +100,29 @@ pub trait SketchDerived {
 
 pub trait SketchAll: Sketch + SketchDerived {}
 impl<T: Sketch + SketchDerived> SketchAll for T {}
+
+#[deprecated(note = "Use Sketch trait directly instead")]
+pub trait SketchModel {
+    fn controls(&mut self) -> Option<&mut impl ControlProvider> {
+        None::<&mut Controls>
+    }
+
+    fn clear_color(&self) -> Rgba {
+        Rgba::new(0.0, 0.0, 0.0, 0.0)
+    }
+
+    fn window_rect(&mut self) -> Option<&mut WindowRect> {
+        None
+    }
+
+    fn set_window_rect(&mut self, rect: Rect) {
+        if let Some(window_rect) = self.window_rect() {
+            window_rect.set_current(rect);
+        }
+    }
+
+    fn event(&mut self, _app: &App, _event: &Event) {}
+}
 
 /// Adapter to instantiate Sketch for legacy SketchModel types
 pub struct SketchAdapter<S> {

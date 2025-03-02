@@ -195,7 +195,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
         .unwrap_or_else(|| quote! { Rgba::new(0.0, 0.0, 0.0, 0.0) });
 
     let gen = quote! {
-        impl Sketch for #name {
+        impl SketchDerived for #name {
             fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
                 #controls_impl
             }
@@ -204,6 +204,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
                 #clear_color_impl
             }
         }
+
     };
 
     gen.into()

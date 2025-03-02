@@ -12,9 +12,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(150),
+    gui_h: Some(200),
 };
 
+#[derive(SketchComponents)]
 pub struct Template {
     animation: Animation<Timing>,
     controls: Controls,
@@ -41,8 +42,6 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
     }
 }
 
-impl SketchDerived for Template {}
-
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         let radius_max = self.controls.float("radius");
@@ -50,10 +49,10 @@ impl Sketch for Template {
         self.radius = self.animation.automate(
             &[
                 Breakpoint::ramp(0.0, 10.0, Easing::Linear),
-                Breakpoint::ramp(0.5, ctx.window_rect().hw(), Easing::Linear),
-                Breakpoint::ramp(0.1, 10.0, Easing::Linear),
-                Breakpoint::ramp(1.5, radius_max, Easing::Linear),
-                Breakpoint::end(2.0, 10.0),
+                Breakpoint::ramp(1.0, ctx.window_rect().hw(), Easing::Linear),
+                Breakpoint::ramp(2.0, 10.0, Easing::Linear),
+                Breakpoint::ramp(3.0, radius_max, Easing::Linear),
+                Breakpoint::end(4.0, 10.0),
             ],
             Mode::Loop,
         );
