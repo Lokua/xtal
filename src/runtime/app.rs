@@ -174,7 +174,6 @@ struct AppModel {
     clear_next_frame: Cell<bool>,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
-    // bpm: Bpm,
     perf_mode: bool,
     recording_state: RecordingState,
     sketch: Box<dyn SketchAll>,
@@ -598,9 +597,11 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     model.main_window(app).map(|window| {
         let rect = window.rect();
         model.sketch.set_window_rect(rect);
+        model
+            .sketch
+            .window_rect()
+            .map(|window_rect| model.ctx.window_rect = window_rect.clone());
     });
-
-    model.ctx.window_rect = model.sketch.window_rect().unwrap().clone();
 
     frame_controller::wrapped_update(
         app,
@@ -618,7 +619,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 }
 
-/// Note: this is shared between main and gui windows
+/// Shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
     match event {
         Event::WindowEvent {

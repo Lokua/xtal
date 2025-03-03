@@ -1,58 +1,58 @@
 {
   "values": {
-    "wave1_amp": {
-      "Float": 2.0
-    },
-    "wave1_y_influence": {
-      "Float": 0.26999998
-    },
-    "wave1_angle": {
-      "Float": 0.5
-    },
-    "type_mix": {
-      "Float": 1.0
-    },
-    "wave2_amp": {
-      "Float": 1.96
-    },
-    "checkerboard": {
-      "Bool": false
-    },
-    "wave1_phase": {
-      "Float": 0.49699998
-    },
     "wave_distort": {
-      "Float": 0.085
-    },
-    "wave2_phase": {
-      "Float": 0.0
-    },
-    "animate_wave1_phase": {
-      "Bool": true
-    },
-    "curve_freq_x": {
-      "Float": 1.83
-    },
-    "wave2_angle": {
-      "Float": 0.125
-    },
-    "animate_wave2_phase": {
-      "Bool": true
+      "Float": 0.14999999
     },
     "smoothing": {
       "Float": 0.0
     },
-    "wave1_frequency": {
-      "Float": 0.78999996
-    },
-    "wave2_frequency": {
-      "Float": 0.15699999
-    },
     "wave2_y_influence": {
-      "Float": 0.295
+      "Float": 0.162
+    },
+    "wave1_phase": {
+      "Float": 0.49699998
+    },
+    "wave1_y_influence": {
+      "Float": 0.26999998
+    },
+    "wave1_amp": {
+      "Float": 1.705
+    },
+    "wave2_angle": {
+      "Float": 0.125
+    },
+    "curve_freq_x": {
+      "Float": 2.0
+    },
+    "checkerboard": {
+      "Bool": false
+    },
+    "wave2_phase": {
+      "Float": 0.0
+    },
+    "animate_wave2_phase": {
+      "Bool": true
     },
     "curve_freq_y": {
-      "Float": 1.8650001
+      "Float": 0.605
+    },
+    "type_mix": {
+      "Float": 0.0
+    },
+    "wave2_frequency": {
+      "Float": 0.74
+    },
+    "wave2_amp": {
+      "Float": 1.725
+    },
+    "wave1_angle": {
+      "Float": 0.5
+    },
+    "wave1_frequency": {
+      "Float": 0.765
+    },
+    "animate_wave1_phase": {
+      "Bool": true
     }
   }
 }
