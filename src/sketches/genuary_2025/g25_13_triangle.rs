@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
     animation: Animation<FrameTiming>,
@@ -38,7 +38,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::slider("scale", 1.0, (0.0001, 2.0), 0.0001),

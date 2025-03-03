@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(440),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     #[allow(dead_code)]
     animation: Animation<Timing>,
@@ -58,7 +58,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let disable = |_controls: &Controls| true;
 

@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     lerp: f32,
@@ -28,7 +28,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     Model {
         animation,

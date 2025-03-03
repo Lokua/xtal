@@ -65,7 +65,7 @@ struct ShaderParams {
     grid_mult: f32,
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,
@@ -164,7 +164,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::checkbox("draw_nannou_rect", false),
     ]);
 
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     Model {
         animation,

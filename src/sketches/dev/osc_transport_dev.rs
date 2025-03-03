@@ -14,14 +14,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<OscTransportTiming>,
     wr: WindowRect,
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(OscTransportTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     Model { animation, wr }
 }

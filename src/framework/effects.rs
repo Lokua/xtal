@@ -173,11 +173,8 @@ impl Quantizer {
 
     pub fn quantize(&self, input: f32) -> f32 {
         let (min, max) = self.range;
-        let range = max - min;
-        let normalized = (input - min) / range;
-        let steps = (normalized / self.step).round();
-        // Convert back to step-based value and denormalize
-        let quantized = (steps * self.step) * range + min;
+        let steps_from_zero = (input / self.step).round();
+        let quantized = steps_from_zero * self.step;
         quantized.clamp(min, max)
     }
 
@@ -434,12 +431,15 @@ pub struct WaveFolder {
     pub bias: f32,
 
     /// Suggested range: -2.0 to 2.0 (values below -2.0 are hard capped)
+    /// - 0.0: linear folding
     /// - < 0.0: softer folding curves
     /// - -1.0: perfectly sine-shaped folds
     /// - < -2.0: introduces intermediary folds but slight loss in overall
     ///   amplitude around ~-2.5
-    /// - 1.0: linear folding
-    /// - >1.0: sharper folding edges
+    /// - > 0.0: sharper folding edges, power function with exponent (1.0 +
+    ///   > shape)
+    /// - 1.0: quadratic folding (power of 2.0)
+    /// - 2.0: cubic folding (power of 3.0)
     pub shape: f32,
 
     /// The (assumed) domain and range of the input and output signal
@@ -483,7 +483,7 @@ impl WaveFolder {
     }
 
     fn fold_once(&self, input: f32) -> f32 {
-        if self.gain <= 1.0 {
+        if self.gain < 1.0 {
             return input;
         }
         // Comments assume the following settings unless noted otherwise:
@@ -563,7 +563,7 @@ impl WaveFolder {
             pre_shaped
         };
 
-        // 0.8 * 0.5 + 0.5 = 0.8
+        // 0.8 * 0.5 + 0.5 = 0.9
         shaped * half_range + midpoint
     }
 }
@@ -578,7 +578,7 @@ impl Default for WaveFolder {
             // No DC offset
             bias: 0.0,
             // Linear folding
-            shape: 1.0,
+            shape: 0.0,
             range: (0.0, 1.0),
         }
     }
@@ -599,48 +599,48 @@ mod tests {
     use super::Quantizer;
     use super::Saturator;
     use super::WaveFolder;
-    use crate::framework::util::tests::approx_eq;
+    use crate::assert_approx_eq;
 
     #[test]
     fn test_wave_folder() {
         let wf = WaveFolder::default();
-        approx_eq(wf.fold(1.2), 0.8);
+        assert_approx_eq!(wf.fold(1.2), 0.8);
     }
 
     #[test]
     fn test_wave_folder_gain() {
         let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
-        approx_eq(wf.fold(0.5), 1.0);
+        assert_approx_eq!(wf.fold(1.0), 0.5);
     }
 
     #[test]
     fn test_wave_folder_comments_case() {
         let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
-        approx_eq(wf.fold(0.7), 0.8);
+        assert_approx_eq!(wf.fold(0.7), 0.9);
     }
 
     #[test]
     fn test_quantizer_default() {
         let quantizer = Quantizer::default();
-        approx_eq(quantizer.quantize(0.12), 0.0);
-        approx_eq(quantizer.quantize(0.26), 0.25);
-        approx_eq(quantizer.quantize(0.51), 0.50);
-        approx_eq(quantizer.quantize(0.88), 1.0);
+        assert_approx_eq!(quantizer.quantize(0.12), 0.0);
+        assert_approx_eq!(quantizer.quantize(0.26), 0.25);
+        assert_approx_eq!(quantizer.quantize(0.51), 0.50);
+        assert_approx_eq!(quantizer.quantize(0.88), 1.0);
     }
 
     #[test]
-    fn test_quantizer_custom() {
+    fn test_quantizer() {
         let quantizer = Quantizer::new(0.2, (-1.0, 1.0));
-        approx_eq(quantizer.quantize(0.3), 0.2);
-        approx_eq(quantizer.quantize(-0.35), -0.4);
-        approx_eq(quantizer.quantize(0.95), 1.0);
+        assert_approx_eq!(quantizer.quantize(0.3), 0.4);
+        assert_approx_eq!(quantizer.quantize(-0.3), -0.4);
+        assert_approx_eq!(quantizer.quantize(0.95), 1.0);
     }
 
     #[test]
     fn test_saturator_center_unchanged() {
         let saturator = Saturator::default();
         // Center point should pass through unchanged
-        approx_eq(saturator.saturate(0.5), 0.5);
+        assert_approx_eq!(saturator.saturate(0.5), 0.5);
     }
 
     #[test]
@@ -649,7 +649,7 @@ mod tests {
         let high = saturator.saturate(0.8);
         let low = saturator.saturate(0.2);
         // Should be equidistant from center
-        approx_eq(0.5 - low, high - 0.5);
+        assert_approx_eq!(0.5 - low, high - 0.5);
     }
 
     #[test]

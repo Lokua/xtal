@@ -25,7 +25,7 @@ const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 const CIRCLE_RESOLUTION: f32 = 6.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
@@ -82,7 +82,7 @@ impl Model {
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = Controls::new(vec![

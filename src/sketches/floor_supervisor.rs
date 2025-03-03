@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 #[sketch(clear_color = "hsl(0.0, 0.0, 0.03, 0.5)")]
 pub struct Model {
     wr: WindowRect,
@@ -35,7 +35,7 @@ pub struct Model {
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let modes = ["attract", "influence"];
 

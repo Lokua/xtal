@@ -23,7 +23,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: ControlScript<OscTransportTiming>,
     wr: WindowRect,
@@ -88,7 +88,7 @@ struct PostShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
-        OscTransportTiming::new(SKETCH_CONFIG.bpm),
+        OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     let params = ShaderParams {

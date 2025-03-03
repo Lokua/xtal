@@ -122,7 +122,7 @@ impl AudioProcessor {
 
         Self {
             sample_rate,
-            buffer: Vec::with_capacity(buffer_size),
+            buffer: vec![0.0; buffer_size],
             buffer_size,
             fft,
         }

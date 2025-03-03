@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 32;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     window_rect: WindowRect,
     controls: Controls,
@@ -27,7 +27,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let (grid, cell_size) =
         create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);

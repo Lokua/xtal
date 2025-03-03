@@ -257,7 +257,10 @@ impl From<BreakpointConfig> for Breakpoint {
             };
 
         let mut breakpoint = Breakpoint {
-            position: config.position,
+            position: match &config.position {
+                ParamValue::Cold(v) => *v,
+                ParamValue::Hot(_) => 0.0,
+            },
             value: match &config.value {
                 ParamValue::Cold(v) => *v,
                 ParamValue::Hot(_) => 0.0,
@@ -315,6 +318,10 @@ impl Breakpoint {
     fn set_field(&mut self, name: &str, value: f32) {
         if name == "value" {
             self.value = value;
+            return;
+        }
+        if name == "position" {
+            self.position = value;
             return;
         }
 
@@ -455,7 +462,7 @@ mod tests {
     #[test]
     fn test_breakpoint_ramp_conversion() {
         let config = BreakpointConfig {
-            position: 0.0,
+            position: ParamValue::Cold(0.0),
             value: ParamValue::Cold(100.0),
             kind: KindConfig::Ramp {
                 easing: "ease_in".into(),
@@ -477,7 +484,7 @@ mod tests {
     #[test]
     fn test_breakpoint_random_conversion() {
         let config = BreakpointConfig {
-            position: 0.0,
+            position: ParamValue::Cold(0.0),
             value: ParamValue::Cold(100.0),
             kind: KindConfig::Random {
                 amplitude: ParamValue::Cold(50.0),

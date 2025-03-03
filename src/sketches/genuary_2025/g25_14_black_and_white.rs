@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(580),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<OscTransportTiming>,
     controls: ControlScript<OscTransportTiming>,
@@ -49,7 +49,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let timing = OscTransportTiming::new(SKETCH_CONFIG.bpm);
+    let timing = OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm));
 
     let animation = Animation::new(timing.clone());
 

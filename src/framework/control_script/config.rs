@@ -267,7 +267,7 @@ impl Default for AutomateConfig {
 
 #[derive(Clone, Deserialize, Debug, Reflect)]
 pub struct BreakpointConfig {
-    pub position: f32,
+    pub position: ParamValue,
     pub value: ParamValue,
     #[serde(flatten)]
     pub kind: KindConfig,

@@ -15,9 +15,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 };
 
 #[derive(SketchComponents)]
-pub struct Model {
+pub struct WaveFract {
     controls: ControlScript<Timing>,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -40,10 +39,12 @@ struct ShaderParams {
     d: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: LatticeContext) -> WaveFract {
+    let window_rect = ctx.window_rect().clone();
+
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "wave_fract.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(ctx.bpm),
     );
 
     let params = ShaderParams {
@@ -56,62 +57,69 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        window_rect.resolution_u32(),
         to_absolute_path(file!(), "wave_fract.wgsl"),
         &params,
         true,
     );
 
-    Model { controls, wr, gpu }
+    WaveFract { controls, gpu }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for WaveFract {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        self.controls.update();
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            if m.controls.bool("animate_wave_phase") {
-                m.controls.get("wave_phase_animation")
-            } else {
-                m.controls.get("wave_phase")
-            },
-            m.controls.get("wave_radial_freq"),
-            m.controls.get("wave_horiz_freq"),
-            if m.controls.bool("link_axes") {
-                m.controls.get("wave_horiz_freq")
-            } else {
-                m.controls.get("wave_vert_freq")
-            },
-        ],
-        b: [
-            m.controls.get("bg_freq"),
-            m.controls.get("bg_radius"),
-            m.controls.get("bg_gradient_strength"),
-            m.controls.get("wave_power"),
-        ],
-        c: [
-            m.controls.get("reduce_mix"),
-            m.controls.get("map_mix"),
-            m.controls.get("wave_bands"),
-            m.controls.get("wave_threshold"),
-        ],
-        d: [
-            bool_to_f32(m.controls.bool("bg_invert")),
-            0.0,
-            match m.controls.string("mix_mode").as_str() {
-                "mix" => 0.0,
-                "min_max" => 1.0,
-                _ => unreachable!(),
-            },
-            0.0,
-        ],
-    };
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                if self.controls.bool("animate_wave_phase") {
+                    self.controls.get("wave_phase_animation")
+                } else {
+                    self.controls.get("wave_phase")
+                },
+                self.controls.get("wave_radial_freq"),
+                self.controls.get("wave_horiz_freq"),
+                if self.controls.bool("link_axes") {
+                    self.controls.get("wave_horiz_freq")
+                } else {
+                    self.controls.get("wave_vert_freq")
+                },
+            ],
+            b: [
+                self.controls.get("bg_freq"),
+                self.controls.get("bg_radius"),
+                self.controls.get("bg_gradient_strength"),
+                self.controls.get("wave_power"),
+            ],
+            c: [
+                self.controls.get("reduce_mix"),
+                self.controls.get("map_mix"),
+                self.controls.get("wave_bands"),
+                self.controls.get("wave_threshold"),
+            ],
+            d: [
+                bool_to_f32(self.controls.bool("bg_invert")),
+                0.0,
+                match self.controls.string("mix_mode").as_str() {
+                    "mix" => 0.0,
+                    "min_max" => 1.0,
+                    _ => unreachable!(),
+                },
+                0.0,
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

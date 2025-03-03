@@ -26,13 +26,30 @@ use std::{
     error::Error,
     sync::{
         atomic::{AtomicBool, AtomicU32, Ordering},
-        Arc,
+        Arc, RwLock,
     },
 };
 
 use super::frame_controller;
 use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
+
+#[derive(Clone, Debug)]
+pub struct Bpm(Arc<RwLock<f32>>);
+
+impl Bpm {
+    pub fn new(bpm: f32) -> Self {
+        Self(Arc::new(RwLock::new(bpm)))
+    }
+
+    pub fn get(&self) -> f32 {
+        *self.0.read().unwrap()
+    }
+
+    pub fn set(&self, value: f32) {
+        *self.0.write().unwrap() = value;
+    }
+}
 
 pub trait TimingSource: Clone {
     fn beats(&self) -> f32;
@@ -53,7 +70,8 @@ pub enum Timing {
 }
 
 impl Timing {
-    pub fn new(bpm: f32) -> Self {
+    /// Temporary constructor until we can port older sketch to Sketch trait
+    pub fn new(bpm: Bpm) -> Self {
         let args: Vec<String> = env::args().collect();
         let timing_arg = args.get(2).map(|s| s.as_str()).unwrap_or("frame");
         let timing = match timing_arg {
@@ -91,22 +109,22 @@ impl TimingSource for Timing {
 
 #[derive(Clone, Debug)]
 pub struct FrameTiming {
-    bpm: f32,
+    bpm: Bpm,
 }
 
 impl FrameTiming {
-    pub fn new(bpm: f32) -> Self {
+    pub fn new(bpm: Bpm) -> Self {
         Self { bpm }
     }
 }
 
 impl TimingSource for FrameTiming {
     fn bpm(&self) -> f32 {
-        self.bpm
+        self.bpm.get()
     }
 
     fn beats(&self) -> f32 {
-        let seconds_per_beat = 60.0 / self.bpm;
+        let seconds_per_beat = 60.0 / self.bpm.get();
         let frames_per_beat = seconds_per_beat * frame_controller::fps();
         frame_controller::frame_count() as f32 / frames_per_beat
     }
@@ -133,11 +151,11 @@ pub struct MidiSongTiming {
 
     /// In MIDI ticks (1 tick = 1/960th of a quarter note)
     song_position: Arc<AtomicU32>,
-    bpm: f32,
+    bpm: Bpm,
 }
 
 impl MidiSongTiming {
-    pub fn new(bpm: f32) -> Self {
+    pub fn new(bpm: Bpm) -> Self {
         let timing = Self {
             clock_count: Arc::new(AtomicU32::default()),
             follow_song_position_messages: true,
@@ -150,7 +168,7 @@ impl MidiSongTiming {
     }
 
     /// Internal use for MtcTiming or HybridTiming
-    pub fn new_no_song_position(bpm: f32) -> Self {
+    pub fn new_no_song_position(bpm: Bpm) -> Self {
         let timing = Self {
             clock_count: Arc::new(AtomicU32::default()),
             follow_song_position_messages: false,
@@ -249,7 +267,7 @@ impl MidiSongTiming {
 
 impl TimingSource for MidiSongTiming {
     fn bpm(&self) -> f32 {
-        self.bpm
+        self.bpm.get()
     }
 
     fn beats(&self) -> f32 {
@@ -262,7 +280,7 @@ const MTC_QUARTER_FRAME: u8 = 0xF1;
 #[derive(Clone, Debug)]
 pub struct HybridTiming {
     midi_timing: MidiSongTiming,
-    bpm: f32,
+    bpm: Bpm,
 
     // MTC time components - needed for tracking SMPTE position
     hours: Arc<AtomicU32>,
@@ -275,9 +293,9 @@ impl HybridTiming {
     /// Sync when difference from MTC & MIDI Clock exceeds 1 beat
     const BEAT_SYNC_THRESHOLD: f32 = 0.5;
 
-    pub fn new(bpm: f32) -> Self {
+    pub fn new(bpm: Bpm) -> Self {
         let timing = Self {
-            midi_timing: MidiSongTiming::new_no_song_position(bpm),
+            midi_timing: MidiSongTiming::new_no_song_position(bpm.clone()),
             bpm,
             hours: Arc::new(AtomicU32::default()),
             minutes: Arc::new(AtomicU32::default()),
@@ -294,7 +312,7 @@ impl HybridTiming {
         let minutes = self.minutes.clone();
         let seconds = self.seconds.clone();
         let frames = self.frames.clone();
-        let bpm = self.bpm;
+        let bpm = self.bpm.clone();
         let midi_timing = self.midi_timing.clone();
 
         match midi::on_message(
@@ -389,7 +407,7 @@ impl HybridTiming {
                             + seconds.load(Ordering::Relaxed) as f32
                             + frames.load(Ordering::Relaxed) as f32 / fps;
 
-                        let mtc_beats = mtc_seconds * (bpm / 60.0);
+                        let mtc_beats = mtc_seconds * (bpm.get() / 60.0);
                         let midi_beats = midi_timing.beats();
 
                         let beat_difference = (mtc_beats - midi_beats).abs();
@@ -441,7 +459,7 @@ impl HybridTiming {
 
 impl TimingSource for HybridTiming {
     fn bpm(&self) -> f32 {
-        self.bpm
+        self.bpm.get()
     }
 
     fn beats(&self) -> f32 {
@@ -459,7 +477,7 @@ impl TimingSource for HybridTiming {
 ///     https://github.com/Lokua/lattice/tree/main?tab=readme-ov-file#open-sound-control-osc
 #[derive(Clone, Debug)]
 pub struct OscTransportTiming {
-    bpm: f32,
+    bpm: Bpm,
     is_playing: Arc<AtomicBool>,
     bars: Arc<AtomicU32>,
     beats: Arc<AtomicU32>,
@@ -470,7 +488,7 @@ pub struct OscTransportTiming {
 }
 
 impl OscTransportTiming {
-    pub fn new(bpm: f32) -> Self {
+    pub fn new(bpm: Bpm) -> Self {
         let timing = Self {
             bpm,
             is_playing: Arc::new(AtomicBool::new(false)),
@@ -530,7 +548,7 @@ impl OscTransportTiming {
 
 impl TimingSource for OscTransportTiming {
     fn bpm(&self) -> f32 {
-        self.bpm
+        self.bpm.get()
     }
 
     fn beats(&self) -> f32 {
@@ -543,12 +561,12 @@ impl TimingSource for OscTransportTiming {
 /// [`Breakpoint`] sequences
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
-    bpm: f32,
+    bpm: Bpm,
     beats: f32,
 }
 
 impl ManualTiming {
-    pub fn new(bpm: f32) -> Self {
+    pub fn new(bpm: Bpm) -> Self {
         Self { bpm, beats: 0.0 }
     }
 
@@ -559,7 +577,7 @@ impl ManualTiming {
 
 impl TimingSource for ManualTiming {
     fn bpm(&self) -> f32 {
-        self.bpm
+        self.bpm.get()
     }
 
     fn beats(&self) -> f32 {
@@ -594,7 +612,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_midi_timing_beats() {
-        let timing = MidiSongTiming::new(120.0);
+        let timing = MidiSongTiming::new(Bpm::new(120.0));
 
         // Simulate receiving SPP message for bar 44
         timing

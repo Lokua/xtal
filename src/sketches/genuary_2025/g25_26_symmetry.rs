@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(640),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: ControlScript<Timing>,
     wr: WindowRect,
@@ -49,7 +49,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_26_symmetry.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     let params = ShaderParams {

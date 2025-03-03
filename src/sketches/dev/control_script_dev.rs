@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(500),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: ControlScript<Timing>,
     wr: WindowRect,
@@ -26,7 +26,7 @@ pub struct Model {
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     Model { controls, wr }

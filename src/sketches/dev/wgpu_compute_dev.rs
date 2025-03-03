@@ -48,7 +48,7 @@ struct OutputPoint {
     _padding: [f32; 2],
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,
@@ -63,7 +63,7 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("show_ref_line", false),

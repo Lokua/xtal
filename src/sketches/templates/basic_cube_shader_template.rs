@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: ControlScript<Timing>,
     wr: WindowRect,
@@ -45,7 +45,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     let params = ShaderParams {

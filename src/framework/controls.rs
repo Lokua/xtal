@@ -324,6 +324,11 @@ impl Controls {
         self.values.contains_key(name)
     }
 
+    #[doc(alias = "float")]
+    pub fn get(&self, name: &str) -> f32 {
+        self.float(name)
+    }
+
     pub fn float(&self, name: &str) -> f32 {
         self.check_contains_key(name);
         self.values

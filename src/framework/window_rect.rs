@@ -90,6 +90,10 @@ impl WindowRect {
         vec2(self.w(), self.h())
     }
 
+    pub fn rect(&self) -> Rect {
+        self.current
+    }
+
     // Methods delegated to self.current
     pub fn top(&self) -> f32 {
         self.current.top()

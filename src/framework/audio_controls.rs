@@ -307,7 +307,7 @@ struct MultichannelAudioProcessor {
 impl MultichannelAudioProcessor {
     fn new(buffer_size: usize) -> Self {
         Self {
-            channel_data: vec![Vec::with_capacity(buffer_size); CHANNEL_COUNT],
+            channel_data: vec![vec![0.0; buffer_size]; CHANNEL_COUNT],
             buffer_size,
         }
     }

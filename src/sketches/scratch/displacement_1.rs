@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
@@ -35,7 +35,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let h = SKETCH_CONFIG.h;
     let grid_w = w as f32 - 80.0;
     let grid_h = h as f32 - 80.0;
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::new(vec![
         Control::slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001),

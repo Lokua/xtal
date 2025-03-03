@@ -20,7 +20,7 @@ const N_LINES: i32 = 4;
 const STROKE_WEIGHT: f32 = 4.0;
 const SPACING: f32 = 32.0;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: Controls,
     window_rect: WindowRect,
@@ -32,7 +32,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let controls = Controls::new(vec![
+    let controls = Controls::with_previous(vec![
         Control::slider("deviation", 5.0, (1.0, 10.0), 0.1),
         Control::slider("n_points", 16.0, (3.0, 64.0), 1.0),
         Control::slider("chaikin_passes", 4.0, (1.0, 16.0), 1.0),
@@ -90,11 +90,11 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
 
     for demo in 0..n_demos {
         let y = wr.top() - (wr.h() / n_demos as f32) * (demo as f32 + 0.5);
-        let draw_shited = draw.translate(vec3(0.0, y, 0.0));
+        let draw_shifted = draw.translate(vec3(0.0, y, 0.0));
 
         match demo {
             0 => {
-                draw_shited
+                draw_shifted
                     .line()
                     .start(vec2(start_x, 0.0))
                     .end(vec2(end_x, 0.0))
@@ -103,7 +103,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
             }
             1 => {
                 for (start, end) in m.slant_points.iter() {
-                    draw_shited
+                    draw_shifted
                         .line()
                         .start(*start)
                         .end(*end)
@@ -113,7 +113,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
             }
             2 => {
                 for line in m.jerky_points.iter() {
-                    draw_shited
+                    draw_shifted
                         .polyline()
                         .weight(STROKE_WEIGHT)
                         .points(line.iter().cloned())
@@ -122,7 +122,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
             }
             3 => {
                 for line in m.chaikin_points.iter() {
-                    draw_shited
+                    draw_shifted
                         .polyline()
                         .weight(STROKE_WEIGHT)
                         .points(line.iter().cloned())
@@ -131,7 +131,7 @@ pub fn view(app: &App, m: &Model, frame: Frame) {
             }
             4 => {
                 for line in m.kernel_points.iter() {
-                    draw_shited
+                    draw_shifted
                         .polyline()
                         .weight(STROKE_WEIGHT)
                         .points(line.iter().cloned())

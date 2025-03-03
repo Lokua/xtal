@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const MAX_DROPS: usize = 2500;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,
@@ -62,7 +62,7 @@ impl Dropper {
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
     let controls = Controls::new(vec![
         Control::slider("center_min_radius", 2.0, (1.0, 50.0), 1.0),
         Control::slider("center_max_radius", 20.0, (1.0, 50.0), 1.0),

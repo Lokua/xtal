@@ -14,7 +14,21 @@ pub fn run() {
 
     {
         let mut registry = REGISTRY.write().unwrap();
-        register_sketches!(registry, template);
+        register_sketches!(
+            registry,
+            // -----------------------------------------------------------------
+            // MAIN
+            // -----------------------------------------------------------------
+            wave_fract,
+            // -----------------------------------------------------------------
+            // DEV
+            // -----------------------------------------------------------------
+            effects_wavefolder_dev,
+            // -----------------------------------------------------------------
+            // TEMPLATES
+            // -----------------------------------------------------------------
+            template
+        );
 
         // ---------------------------------------------------------------------
         // MAIN
@@ -37,8 +51,7 @@ pub fn run() {
             sand_lines,
             sierpinski_triangle,
             spiral,
-            spiral_lines,
-            wave_fract
+            spiral_lines
         );
 
         // ---------------------------------------------------------------------
@@ -174,14 +187,14 @@ struct AppModel {
     clear_next_frame: Cell<bool>,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
-    tap_tempo_bpm: f32,
     perf_mode: bool,
     recording_state: RecordingState,
-    sketch: Box<dyn Sketch>,
+    sketch: Box<dyn SketchAll>,
     sketch_config: &'static SketchConfig,
     main_maximized: Cell<bool>,
     event_tx: AppEventSender,
     event_rx: AppEventReceiver,
+    ctx: LatticeContext,
 }
 
 impl AppModel {
@@ -193,20 +206,8 @@ impl AppModel {
         app.window(self.gui_window_id)
     }
 
-    fn window_rect<'a>(&self, app: &'a App) -> Option<Rect> {
-        self.main_window(app).map(|window| window.rect())
-    }
-
     fn sketch_name(&self) -> String {
         self.sketch_config.name.to_string()
-    }
-
-    fn bpm(&self) -> f32 {
-        ternary!(
-            self.tap_tempo_enabled,
-            self.tap_tempo_bpm,
-            self.sketch_config.bpm
-        )
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -343,7 +344,9 @@ impl AppModel {
                 }
             }
             AppEvent::Tap => {
-                self.tap_tempo_bpm = self.tap_tempo.tap();
+                if self.tap_tempo_enabled {
+                    self.ctx.bpm.set(self.tap_tempo.tap());
+                }
             }
             AppEvent::ToggleFullScreen => {
                 let window = self.main_window(app).unwrap();
@@ -384,14 +387,13 @@ impl AppModel {
             }
             AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
                 self.tap_tempo_enabled = tap_tempo_enabled;
-                if tap_tempo_enabled {
-                    self.tap_tempo_bpm = self.sketch_config.bpm;
-                    self.alert_text = "Tap `Space` key to set BPM".into();
-                } else {
-                    self.alert_text =
-                        "Tap tempo disabled. Sketch BPM has been restored."
-                            .into();
-                }
+                self.ctx.bpm.set(self.sketch_config.bpm);
+                self.alert_text = ternary!(
+                    tap_tempo_enabled,
+                    "Tap `Space` key to set BPM",
+                    "Tap tempo disabled. Sketch BPM has been restored."
+                )
+                .into();
             }
         }
     }
@@ -422,10 +424,13 @@ impl AppModel {
 
     fn switch_sketch(&mut self, app: &App, name: &str) {
         let registry = REGISTRY.read().unwrap();
-        let sketch_info = registry.get(name).unwrap();
 
-        let rect = self.window_rect(app).unwrap();
-        let sketch = (sketch_info.factory)(app, rect);
+        let sketch_info = registry.get(name).unwrap_or_else(|| {
+            error!("No sketch named `{}`. Defaulting to `template`", name);
+            registry.get("template").unwrap()
+        });
+
+        let sketch = (sketch_info.factory)(app, self.ctx.clone());
 
         self.sketch = sketch;
         self.sketch_config = sketch_info.config;
@@ -507,20 +512,29 @@ fn model(app: &App) -> AppModel {
         .unwrap_or_else(|| "template".to_string());
 
     let registry = REGISTRY.read().unwrap();
-    let sketch_info = registry
-        .get(&initial_sketch)
-        .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
+
+    let sketch_info = registry.get(&initial_sketch).unwrap_or_else(|| {
+        error!(
+            "No sketch named `{}`. Defaulting to `template`",
+            initial_sketch
+        );
+        registry.get("template").unwrap()
+    });
 
     app.set_fullscreen_on_shortcut(false);
 
     let main_window_id = app.new_window().build().unwrap();
 
-    let window_rect = app
+    let rect = app
         .window(main_window_id)
         .expect("Unable to get window")
         .rect();
 
-    let sketch = (sketch_info.factory)(app, window_rect);
+    let bpm = Bpm::new(sketch_info.config.bpm);
+    let bpm_clone = bpm.clone();
+    let ctx = LatticeContext::new(bpm_clone, WindowRect::new(rect));
+
+    let sketch = (sketch_info.factory)(app, ctx.clone());
 
     let gui_window_id = app
         .new_window()
@@ -552,6 +566,8 @@ fn model(app: &App) -> AppModel {
         midi::ConnectionType::GlobalStartStop
     ));
 
+    let raw_bpm = bpm.get();
+
     let mut model = AppModel {
         main_window_id,
         gui_window_id,
@@ -560,15 +576,15 @@ fn model(app: &App) -> AppModel {
         alert_text: String::new(),
         clear_next_frame: Cell::new(true),
         perf_mode: false,
-        tap_tempo: TapTempo::new(),
+        tap_tempo: TapTempo::new(raw_bpm),
         tap_tempo_enabled: false,
-        tap_tempo_bpm: 134.0,
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
         main_maximized: Cell::new(false),
         event_tx: AppEventSender::new(raw_event_tx),
         event_rx,
+        ctx,
     };
 
     model.init_sketch_environment(app);
@@ -582,7 +598,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        let bpm = model.bpm();
+        let bpm = model.ctx.bpm.get();
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
@@ -603,13 +619,17 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     model.main_window(app).map(|window| {
         let rect = window.rect();
         model.sketch.set_window_rect(rect);
+        model
+            .sketch
+            .window_rect()
+            .map(|window_rect| model.ctx.window_rect = window_rect.clone());
     });
 
     frame_controller::wrapped_update(
         app,
         &mut model.sketch,
         update,
-        |app, sketch, update| sketch.update(app, update),
+        |app, sketch, update| sketch.update(app, update, &model.ctx),
     );
 
     if model.recording_state.is_encoding {
@@ -621,7 +641,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 }
 
-/// Note: this is shared between main and gui windows
+/// Shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
     match event {
         Event::WindowEvent {
@@ -647,12 +667,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 Key::F if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleFullScreen);
                 }
-                // Cmd + Shift + F
-                // Key::F if logo_pressed && shift_pressed => {
-                //     model.main_window(app).unwrap().set_fullscreen_with(Some(
-                //         Fullscreen::Borderless(None),
-                //     ));
-                // }
                 // Cmd + G
                 Key::G if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleGuiFocus);
@@ -686,7 +700,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         app,
         &model.sketch,
         frame,
-        |app, sketch, frame| sketch.view(app, frame),
+        |app, sketch, frame| sketch.view(app, frame, &model.ctx),
     );
 
     if did_render {

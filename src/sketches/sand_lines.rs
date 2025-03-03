@@ -24,7 +24,7 @@ const N_LINES: usize = 64;
 
 type Line = Vec<Vec2>;
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     controls: Controls,
     wr: WindowRect,

@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(700),
 };
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<ManualTiming>,
     controls: ControlScript<ManualTiming>,
@@ -30,7 +30,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let timing = ManualTiming::new(SKETCH_CONFIG.bpm);
+    let timing = ManualTiming::new(Bpm::new(SKETCH_CONFIG.bpm));
     let animation = Animation::new(timing.clone());
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "breakpoints_2.yaml"),

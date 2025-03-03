@@ -564,40 +564,39 @@ pub fn parse_bar_beat_16th(time_str: &str) -> Result<f32, Box<dyn Error>> {
 pub mod tests {
     use super::*;
 
-    pub fn approx_eq(a: f32, b: f32) -> bool {
-        if a.is_infinite() || b.is_infinite() {
-            panic!(
-                "approx_eq cannot deal with infinite values. a: {}, b: {}",
-                a, b
+    #[macro_export]
+    macro_rules! assert_approx_eq {
+        ($a:expr, $b:expr) => {
+            assert!(
+                ($a - $b).abs() < 0.001,
+                "Values not approximately equal: {} and {}, difference: {}",
+                $a, $b, ($a - $b).abs()
             );
-        }
-        (a - b).abs() < 0.001
+        };
+        ($a:expr, $b:expr, $epsilon:expr) => {
+            assert!(
+                ($a - $b).abs() < $epsilon,
+                "Values not approximately equal: {} and {}, difference: {}, tolerance: {}",
+                $a, $b, ($a - $b).abs(), $epsilon
+            );
+        };
     }
 
     #[test]
     fn test_triangle_map() {
         // Test the key points specified in the original examples
-        assert!(approx_eq(triangle_map(0.0, 0.0, 1.0, 0.0, 100.0), 0.0));
-        assert!(approx_eq(triangle_map(0.25, 0.0, 1.0, 0.0, 100.0), 50.0));
-        assert!(approx_eq(triangle_map(0.5, 0.0, 1.0, 0.0, 100.0), 100.0));
-        assert!(approx_eq(triangle_map(0.75, 0.0, 1.0, 0.0, 100.0), 50.0));
-        assert!(approx_eq(triangle_map(1.0, 0.0, 1.0, 0.0, 100.0), 0.0));
+        assert_approx_eq!(triangle_map(0.0, 0.0, 1.0, 0.0, 100.0), 0.0);
+        assert_approx_eq!(triangle_map(0.25, 0.0, 1.0, 0.0, 100.0), 50.0);
+        assert_approx_eq!(triangle_map(0.5, 0.0, 1.0, 0.0, 100.0), 100.0);
+        assert_approx_eq!(triangle_map(0.75, 0.0, 1.0, 0.0, 100.0), 50.0);
+        assert_approx_eq!(triangle_map(1.0, 0.0, 1.0, 0.0, 100.0), 0.0);
 
         // Test with different input/output ranges
-        assert!(approx_eq(triangle_map(5.0, 0.0, 10.0, 0.0, 1.0), 1.0));
+        assert_approx_eq!(triangle_map(5.0, 0.0, 10.0, 0.0, 1.0), 1.0);
 
         // Test negative ranges
-        assert!(approx_eq(
-            triangle_map(-1.0, -1.0, 1.0, -100.0, 100.0),
-            -100.0
-        ));
-        assert!(approx_eq(
-            triangle_map(0.0, -1.0, 1.0, -100.0, 100.0),
-            100.0
-        ));
-        assert!(approx_eq(
-            triangle_map(1.0, -1.0, 1.0, -100.0, 100.0),
-            -100.0
-        ));
+        assert_approx_eq!(triangle_map(-1.0, -1.0, 1.0, -100.0, 100.0), -100.0);
+        assert_approx_eq!(triangle_map(0.0, -1.0, 1.0, -100.0, 100.0), 100.0);
+        assert_approx_eq!(triangle_map(1.0, -1.0, 1.0, -100.0, 100.0), -100.0);
     }
 }

@@ -34,7 +34,7 @@ struct LaneSegment {
     is_step: bool,
 }
 
-#[derive(SketchComponents)]
+#[derive(LegacySketchComponents)]
 pub struct Model {
     animation: Animation<ManualTiming>,
     controls: Controls,
@@ -45,7 +45,8 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(ManualTiming::new(SKETCH_CONFIG.bpm));
+    let animation =
+        Animation::new(ManualTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::select("easing", "linear", &Easing::unary_function_names()),
