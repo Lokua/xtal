@@ -48,14 +48,12 @@ pub fn legacy_sketch_components(input: TokenStream) -> TokenStream {
         if has_window_rect {
             Some(quote! {
                 fn window_rect(&mut self) -> Option<&mut WindowRect> {
-                    debug!("Generated...");
                     Some(&mut self.window_rect)
                 }
             })
         } else if has_wr {
             Some(quote! {
                 fn window_rect(&mut self) -> Option<&mut WindowRect> {
-                    debug!("Generated...wr");
                     Some(&mut self.wr)
                 }
             })
