@@ -10,20 +10,21 @@ wave_phase:
   range: [0.0, *TAU]
   step: 0.001
 
+wave_phase_anim_speed:
+  type: slider
+  range: [0.25, 4]
+  default: 1
+  step: 0.25
+
 wave_phase_animation:
   type: automate
   breakpoints:
     - kind: ramp
       position: 0.0
       value: 0.0
-
-    - kind: ramp
-      position: 16.0
-      value: *TAU
-
     - kind: end
-      position: 32.0
-      value: 0.0
+      position: $wave_phase_anim_speed
+      value: 1
 
 wave_radial_freq:
   type: slider

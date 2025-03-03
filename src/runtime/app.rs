@@ -14,7 +14,21 @@ pub fn run() {
 
     {
         let mut registry = REGISTRY.write().unwrap();
-        register_sketches!(registry, effects_wavefolder_dev, template);
+        register_sketches!(
+            registry,
+            // -----------------------------------------------------------------
+            // MAIN
+            // -----------------------------------------------------------------
+            wave_fract,
+            // -----------------------------------------------------------------
+            // DEV
+            // -----------------------------------------------------------------
+            effects_wavefolder_dev,
+            // -----------------------------------------------------------------
+            // TEMPLATES
+            // -----------------------------------------------------------------
+            template
+        );
 
         // ---------------------------------------------------------------------
         // MAIN
@@ -37,8 +51,7 @@ pub fn run() {
             sand_lines,
             sierpinski_triangle,
             spiral,
-            spiral_lines,
-            wave_fract
+            spiral_lines
         );
 
         // ---------------------------------------------------------------------
@@ -411,7 +424,11 @@ impl AppModel {
 
     fn switch_sketch(&mut self, app: &App, name: &str) {
         let registry = REGISTRY.read().unwrap();
-        let sketch_info = registry.get(name).unwrap();
+
+        let sketch_info = registry.get(name).unwrap_or_else(|| {
+            error!("No sketch named `{}`. Defaulting to `template`", name);
+            registry.get("template").unwrap()
+        });
 
         let sketch = (sketch_info.factory)(app, self.ctx.clone());
 
@@ -495,9 +512,14 @@ fn model(app: &App) -> AppModel {
         .unwrap_or_else(|| "template".to_string());
 
     let registry = REGISTRY.read().unwrap();
-    let sketch_info = registry
-        .get(&initial_sketch)
-        .unwrap_or_else(|| panic!("Sketch not found: {}", initial_sketch));
+
+    let sketch_info = registry.get(&initial_sketch).unwrap_or_else(|| {
+        error!(
+            "No sketch named `{}`. Defaulting to `template`",
+            initial_sketch
+        );
+        registry.get("template").unwrap()
+    });
 
     app.set_fullscreen_on_shortcut(false);
 

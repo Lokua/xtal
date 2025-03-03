@@ -142,7 +142,7 @@ fn draw_adv_button(
 
 fn draw_reset_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Reset")).clicked().then(|| {
-        event_tx.alert("Reset");
+        event_tx.send(app::AppEvent::Reset);
     });
 }
 
