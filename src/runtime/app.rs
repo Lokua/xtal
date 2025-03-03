@@ -19,6 +19,7 @@ pub fn run() {
             // -----------------------------------------------------------------
             // MAIN
             // -----------------------------------------------------------------
+            blob,
             wave_fract,
             // -----------------------------------------------------------------
             // DEV
@@ -35,7 +36,6 @@ pub fn run() {
         // ---------------------------------------------------------------------
         register_legacy_sketches!(
             registry,
-            blob,
             breakpoints,
             breakpoints_2,
             brutalism,
@@ -618,11 +618,13 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     model.main_window(app).map(|window| {
         let rect = window.rect();
-        model.sketch.set_window_rect(rect);
-        model
-            .sketch
-            .window_rect()
-            .map(|window_rect| model.ctx.window_rect = window_rect.clone());
+        let cwr = &model.ctx.window_rect;
+
+        if rect.w() != cwr.w() || rect.h() != cwr.h() {
+            // For legacy sketches
+            model.sketch.set_window_rect(rect);
+            model.ctx.window_rect = WindowRect::new(rect);
+        }
     });
 
     frame_controller::wrapped_update(

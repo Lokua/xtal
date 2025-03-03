@@ -18,10 +18,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(420),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Blob {
     controls: ControlScript<Timing>,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -47,10 +46,11 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: LatticeContext) -> Blob {
+    let window_rect = ctx.window_rect();
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "blob.yaml"),
-        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
+        Timing::new(ctx.bpm),
     );
 
     let params = ShaderParams {
@@ -65,62 +65,69 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        window_rect.resolution_u32(),
         to_absolute_path(file!(), "./blob.wgsl"),
         &params,
         true,
     );
 
-    Model { controls, wr, gpu }
+    Blob { controls, gpu }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for Blob {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        self.controls.update();
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.get("t1"),
-            m.controls.get("t2"),
-            m.controls.get("t3"),
-            m.controls.get("t4"),
-        ],
-        b: [
-            m.controls.get("invert"),
-            m.controls.get("smoothness"),
-            m.controls.get("blur"),
-            m.controls.get("color_mix"),
-        ],
-        c: [
-            m.controls.get("t_long"),
-            m.controls.get("center_y"),
-            m.controls.get("outer_scale"),
-            m.controls.get("c4"),
-        ],
-        d: [
-            m.controls.get("d1"),
-            m.controls.get("d2"),
-            m.controls.get("d3"),
-            m.controls.get("d4"),
-        ],
-        e: [
-            m.controls.get("e1"),
-            m.controls.get("e2"),
-            m.controls.get("e3"),
-            m.controls.get("e4"),
-        ],
-        f: [
-            m.controls.get("f1"),
-            m.controls.get("f2"),
-            m.controls.get("f3"),
-            m.controls.get("f4"),
-        ],
-    };
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.get("t1"),
+                self.controls.get("t2"),
+                self.controls.get("t3"),
+                self.controls.get("t4"),
+            ],
+            b: [
+                self.controls.get("invert"),
+                self.controls.get("smoothness"),
+                self.controls.get("blur"),
+                self.controls.get("color_mix"),
+            ],
+            c: [
+                self.controls.get("t_long"),
+                self.controls.get("center_y"),
+                self.controls.get("outer_scale"),
+                self.controls.get("c4"),
+            ],
+            d: [
+                self.controls.get("d1"),
+                self.controls.get("d2"),
+                self.controls.get("d3"),
+                self.controls.get("d4"),
+            ],
+            e: [
+                self.controls.get("e1"),
+                self.controls.get("e2"),
+                self.controls.get("e3"),
+                self.controls.get("e4"),
+            ],
+            f: [
+                self.controls.get("f1"),
+                self.controls.get("f2"),
+                self.controls.get("f3"),
+                self.controls.get("f4"),
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

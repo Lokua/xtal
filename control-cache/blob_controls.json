@@ -1,40 +1,40 @@
 {
   "values": {
-    "kfg03": {
+    "invert": {
+      "Float": 0.0
+    },
+    "dist_morph": {
+      "Float": 0.48499998
+    },
+    "clamp_min": {
+      "Float": 0.26
+    },
+    "3ikn7": {
+      "Bool": false
+    },
+    "color_mix": {
+      "Float": 1.0
+    },
+    "p894t": {
+      "Bool": false
+    },
+    "smoothness": {
+      "Float": 0.552
+    },
+    "fa22w": {
       "Bool": false
     },
     "outer_pos_t_mix": {
       "Float": 0.5
     },
-    "dist_morph": {
-      "Float": 0.9
-    },
-    "color_mix": {
-      "Float": 1.0
-    },
-    "smoothness": {
-      "Float": 0.48499998
-    },
     "blur": {
       "Float": 20.0
     },
-    "clamp_min": {
-      "Float": -0.7
-    },
-    "invert": {
-      "Float": 0.0
-    },
-    "81hbp": {
-      "Bool": false
-    },
-    "10ep2": {
-      "Bool": false
-    },
     "center_size": {
-      "Float": 2.79
+      "Float": 4.0499997
     },
     "outer_size": {
-      "Float": 0.78999996
+      "Float": 0.44
     }
   }
 }
