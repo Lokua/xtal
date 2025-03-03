@@ -54,7 +54,7 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(MidiSongTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(MidiSongTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::select(

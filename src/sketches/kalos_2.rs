@@ -58,7 +58,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let disable = |_controls: &Controls| true;
 

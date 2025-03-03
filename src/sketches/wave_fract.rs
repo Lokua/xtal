@@ -43,7 +43,7 @@ struct ShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "wave_fract.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     let params = ShaderParams {

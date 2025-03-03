@@ -23,7 +23,7 @@
 //! # Basic Usage
 //!
 //! ```rust
-//! let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+//! let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 //!
 //! // Simple oscillation between 0-1 over 4 beats
 //! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
@@ -533,7 +533,7 @@ pub mod animation_tests {
     }
 
     pub fn create_instance() -> Animation<FrameTiming> {
-        Animation::new(FrameTiming::new(BPM))
+        Animation::new(FrameTiming::new(Bpm::new(BPM)))
     }
 
     #[test]
@@ -929,7 +929,7 @@ pub mod animation_tests {
             kfr((0.0, 1.0), 1.0),
         ];
 
-        let mut timing = OscTransportTiming::new(BPM);
+        let mut timing = OscTransportTiming::new(Bpm::new(BPM));
         let animation = Animation::new(timing.clone());
 
         // Test transition points directly

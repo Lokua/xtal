@@ -6,7 +6,7 @@ use super::prelude::*;
 /// A configuration that all sketches must export in order to integrate
 /// with the main Lattice runtime.
 pub struct SketchConfig {
-    /// Not used but may be used in the future
+    /// Must be unique among all sketches
     pub name: &'static str,
 
     /// The name that will show up in the title bar of the window
@@ -57,12 +57,12 @@ pub enum PlayMode {
 /// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
 #[derive(Debug)]
 pub struct LatticeContext {
-    pub bpm: f32,
+    pub bpm: Bpm,
     pub window_rect: WindowRect,
 }
 
 impl LatticeContext {
-    pub fn new(bpm: f32, window_rect: WindowRect) -> Self {
+    pub fn new(bpm: Bpm, window_rect: WindowRect) -> Self {
         Self { bpm, window_rect }
     }
 

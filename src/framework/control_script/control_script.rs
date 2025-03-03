@@ -726,7 +726,7 @@ mod tests {
     use crate::framework::animation::animation_tests::{init, BPM};
 
     fn create_instance(yaml: &str) -> ControlScript<FrameTiming> {
-        ControlScript::new(yaml, FrameTiming::new(BPM))
+        ControlScript::new(yaml, FrameTiming::new(Bpm::new(BPM)))
     }
 
     #[test]

@@ -34,7 +34,7 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
     let w = window_rect.w();
     let h = window_rect.h();
 
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::new(vec![
         Control::checkbox("debug_walker", false),

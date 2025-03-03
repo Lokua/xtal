@@ -57,7 +57,7 @@ pub struct Model {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let disabled = |_controls: &Controls| true;
 

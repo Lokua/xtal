@@ -35,7 +35,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::slider("primary_iterations", 1.0, (0.0, 16.0), 1.0),

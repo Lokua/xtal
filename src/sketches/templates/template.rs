@@ -9,8 +9,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: 700,
-    h: 700,
+    w: 500,
+    h: 500,
     gui_w: None,
     gui_h: Some(200),
 };
@@ -24,7 +24,6 @@ pub struct Template {
 }
 
 pub fn init(_app: &App, ctx: LatticeContext) -> Template {
-    debug!("ctx: {:?}", ctx);
     let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::new(vec![Control::slider(
@@ -44,6 +43,12 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        // debug_throttled!(
+        //     1000,
+        //     "ctx.bpm: {:?}, anim.bpm: {:?}",
+        //     ctx.bpm,
+        //     self.animation.timing.bpm()
+        // );
         let radius_max = self.controls.float("radius");
 
         self.radius = self.animation.automate(

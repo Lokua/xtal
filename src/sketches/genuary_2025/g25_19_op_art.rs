@@ -50,7 +50,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(OscTransportTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::with_previous(vec![
         Control::slider("wave_power", 5.0, (0.0, 10.0), 0.01),

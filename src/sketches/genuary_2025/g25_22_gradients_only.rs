@@ -37,7 +37,7 @@ struct ShaderParams {
 }
 
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let timing = Timing::new(SKETCH_CONFIG.bpm);
+    let timing = Timing::new(Bpm::new(SKETCH_CONFIG.bpm));
     let animation = Animation::new(timing.clone());
 
     let controls = ControlScript::from_path(

@@ -88,7 +88,7 @@ struct PostShaderParams {
 pub fn init_model(app: &App, wr: WindowRect) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
-        OscTransportTiming::new(SKETCH_CONFIG.bpm),
+        OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)),
     );
 
     let params = ShaderParams {

@@ -117,7 +117,7 @@ impl DisplacerConfig {
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::new(vec![
         Control::Select {

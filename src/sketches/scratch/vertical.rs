@@ -24,7 +24,7 @@ pub struct Model {
 }
 
 pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(SKETCH_CONFIG.bpm));
+    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 

@@ -174,7 +174,7 @@ struct AppModel {
     clear_next_frame: Cell<bool>,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
-    tap_tempo_bpm: f32,
+    bpm: Bpm,
     perf_mode: bool,
     recording_state: RecordingState,
     sketch: Box<dyn SketchAll>,
@@ -199,14 +199,6 @@ impl AppModel {
 
     fn sketch_name(&self) -> String {
         self.sketch_config.name.to_string()
-    }
-
-    fn bpm(&self) -> f32 {
-        ternary!(
-            self.tap_tempo_enabled,
-            self.tap_tempo_bpm,
-            self.sketch_config.bpm
-        )
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -343,7 +335,9 @@ impl AppModel {
                 }
             }
             AppEvent::Tap => {
-                self.tap_tempo_bpm = self.tap_tempo.tap();
+                if self.tap_tempo_enabled {
+                    self.bpm.set(self.tap_tempo.tap());
+                }
             }
             AppEvent::ToggleFullScreen => {
                 let window = self.main_window(app).unwrap();
@@ -384,14 +378,13 @@ impl AppModel {
             }
             AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
                 self.tap_tempo_enabled = tap_tempo_enabled;
-                if tap_tempo_enabled {
-                    self.tap_tempo_bpm = self.sketch_config.bpm;
-                    self.alert_text = "Tap `Space` key to set BPM".into();
-                } else {
-                    self.alert_text =
-                        "Tap tempo disabled. Sketch BPM has been restored."
-                            .into();
-                }
+                self.bpm.set(self.sketch_config.bpm);
+                self.alert_text = ternary!(
+                    tap_tempo_enabled,
+                    "Tap `Space` key to set BPM",
+                    "Tap tempo disabled. Sketch BPM has been restored."
+                )
+                .into();
             }
         }
     }
@@ -427,7 +420,7 @@ impl AppModel {
         let sketch = (sketch_info.factory)(
             app,
             LatticeContext {
-                bpm: self.bpm(),
+                bpm: self.bpm.clone(),
                 window_rect: WindowRect::new(self.rect(app).unwrap()),
             },
         );
@@ -525,10 +518,12 @@ fn model(app: &App) -> AppModel {
         .expect("Unable to get window")
         .rect();
 
+    let bpm = Bpm::new(sketch_info.config.bpm);
+
     let sketch = (sketch_info.factory)(
         app,
         LatticeContext {
-            bpm: sketch_info.config.bpm,
+            bpm: bpm.clone(),
             window_rect: WindowRect::new(rect),
         },
     );
@@ -573,7 +568,7 @@ fn model(app: &App) -> AppModel {
         perf_mode: false,
         tap_tempo: TapTempo::new(),
         tap_tempo_enabled: false,
-        tap_tempo_bpm: 134.0,
+        bpm,
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
@@ -593,7 +588,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        let bpm = model.bpm();
+        let bpm = model.bpm.get();
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
@@ -616,7 +611,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.sketch.set_window_rect(rect);
     });
 
-    let bpm = model.bpm();
+    let bpm = model.bpm.clone();
     let rect = model.rect(app).unwrap();
 
     frame_controller::wrapped_update(
@@ -670,12 +665,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 Key::F if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleFullScreen);
                 }
-                // Cmd + Shift + F
-                // Key::F if logo_pressed && shift_pressed => {
-                //     model.main_window(app).unwrap().set_fullscreen_with(Some(
-                //         Fullscreen::Borderless(None),
-                //     ));
-                // }
                 // Cmd + G
                 Key::G if logo_pressed => {
                     model.event_tx.send(AppEvent::ToggleGuiFocus);
@@ -705,7 +694,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         model.clear_next_frame.set(false);
     }
 
-    let bpm = model.bpm();
+    let bpm = model.bpm.clone();
     let rect = model.rect(app).unwrap();
 
     let did_render = frame_controller::wrapped_view(
