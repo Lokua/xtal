@@ -43,12 +43,12 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        // debug_throttled!(
-        //     1000,
-        //     "ctx.bpm: {:?}, anim.bpm: {:?}",
-        //     ctx.bpm,
-        //     self.animation.timing.bpm()
-        // );
+        debug_throttled!(
+            1000,
+            "ctx.bpm: {:?}, anim.bpm: {:?}",
+            ctx.bpm.get(),
+            self.animation.timing.bpm()
+        );
         let radius_max = self.controls.float("radius");
 
         self.radius = self.animation.automate(

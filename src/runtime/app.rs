@@ -14,7 +14,7 @@ pub fn run() {
 
     {
         let mut registry = REGISTRY.write().unwrap();
-        register_sketches!(registry, template);
+        register_sketches!(registry, effects_wavefolder_dev, template);
 
         // ---------------------------------------------------------------------
         // MAIN
@@ -566,7 +566,7 @@ fn model(app: &App) -> AppModel {
         alert_text: String::new(),
         clear_next_frame: Cell::new(true),
         perf_mode: false,
-        tap_tempo: TapTempo::new(),
+        tap_tempo: TapTempo::new(bpm.get()),
         tap_tempo_enabled: false,
         bpm,
         recording_state: RecordingState::new(frames_dir("", "")),
