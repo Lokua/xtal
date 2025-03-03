@@ -174,7 +174,7 @@ struct AppModel {
     clear_next_frame: Cell<bool>,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
-    bpm: Bpm,
+    // bpm: Bpm,
     perf_mode: bool,
     recording_state: RecordingState,
     sketch: Box<dyn SketchAll>,
@@ -182,6 +182,7 @@ struct AppModel {
     main_maximized: Cell<bool>,
     event_tx: AppEventSender,
     event_rx: AppEventReceiver,
+    ctx: LatticeContext,
 }
 
 impl AppModel {
@@ -191,10 +192,6 @@ impl AppModel {
 
     fn gui_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
         app.window(self.gui_window_id)
-    }
-
-    fn rect<'a>(&self, app: &'a App) -> Option<Rect> {
-        self.main_window(app).map(|window| window.rect())
     }
 
     fn sketch_name(&self) -> String {
@@ -336,7 +333,7 @@ impl AppModel {
             }
             AppEvent::Tap => {
                 if self.tap_tempo_enabled {
-                    self.bpm.set(self.tap_tempo.tap());
+                    self.ctx.bpm.set(self.tap_tempo.tap());
                 }
             }
             AppEvent::ToggleFullScreen => {
@@ -378,7 +375,7 @@ impl AppModel {
             }
             AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
                 self.tap_tempo_enabled = tap_tempo_enabled;
-                self.bpm.set(self.sketch_config.bpm);
+                self.ctx.bpm.set(self.sketch_config.bpm);
                 self.alert_text = ternary!(
                     tap_tempo_enabled,
                     "Tap `Space` key to set BPM",
@@ -417,13 +414,7 @@ impl AppModel {
         let registry = REGISTRY.read().unwrap();
         let sketch_info = registry.get(name).unwrap();
 
-        let sketch = (sketch_info.factory)(
-            app,
-            LatticeContext {
-                bpm: self.bpm.clone(),
-                window_rect: WindowRect::new(self.rect(app).unwrap()),
-            },
-        );
+        let sketch = (sketch_info.factory)(app, self.ctx.clone());
 
         self.sketch = sketch;
         self.sketch_config = sketch_info.config;
@@ -519,14 +510,10 @@ fn model(app: &App) -> AppModel {
         .rect();
 
     let bpm = Bpm::new(sketch_info.config.bpm);
+    let bpm_clone = bpm.clone();
+    let ctx = LatticeContext::new(bpm_clone, WindowRect::new(rect));
 
-    let sketch = (sketch_info.factory)(
-        app,
-        LatticeContext {
-            bpm: bpm.clone(),
-            window_rect: WindowRect::new(rect),
-        },
-    );
+    let sketch = (sketch_info.factory)(app, ctx.clone());
 
     let gui_window_id = app
         .new_window()
@@ -558,6 +545,8 @@ fn model(app: &App) -> AppModel {
         midi::ConnectionType::GlobalStartStop
     ));
 
+    let raw_bpm = bpm.get();
+
     let mut model = AppModel {
         main_window_id,
         gui_window_id,
@@ -566,15 +555,15 @@ fn model(app: &App) -> AppModel {
         alert_text: String::new(),
         clear_next_frame: Cell::new(true),
         perf_mode: false,
-        tap_tempo: TapTempo::new(bpm.get()),
+        tap_tempo: TapTempo::new(raw_bpm),
         tap_tempo_enabled: false,
-        bpm,
         recording_state: RecordingState::new(frames_dir("", "")),
         sketch,
         sketch_config: sketch_info.config,
         main_maximized: Cell::new(false),
         event_tx: AppEventSender::new(raw_event_tx),
         event_rx,
+        ctx,
     };
 
     model.init_sketch_environment(app);
@@ -588,7 +577,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        let bpm = model.bpm.get();
+        let bpm = model.ctx.bpm.get();
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
@@ -611,23 +600,13 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.sketch.set_window_rect(rect);
     });
 
-    let bpm = model.bpm.clone();
-    let rect = model.rect(app).unwrap();
+    model.ctx.window_rect = model.sketch.window_rect().unwrap().clone();
 
     frame_controller::wrapped_update(
         app,
         &mut model.sketch,
         update,
-        |app, sketch, update| {
-            sketch.update(
-                app,
-                update,
-                &LatticeContext {
-                    bpm,
-                    window_rect: WindowRect::new(rect),
-                },
-            )
-        },
+        |app, sketch, update| sketch.update(app, update, &model.ctx),
     );
 
     if model.recording_state.is_encoding {
@@ -694,23 +673,11 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         model.clear_next_frame.set(false);
     }
 
-    let bpm = model.bpm.clone();
-    let rect = model.rect(app).unwrap();
-
     let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
         frame,
-        |app, sketch, frame| {
-            sketch.view(
-                app,
-                frame,
-                &LatticeContext {
-                    bpm,
-                    window_rect: WindowRect::new(rect),
-                },
-            )
-        },
+        |app, sketch, frame| sketch.view(app, frame, &model.ctx),
     );
 
     if did_render {

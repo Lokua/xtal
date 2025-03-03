@@ -55,7 +55,7 @@ pub enum PlayMode {
 
 /// Context passed down from the Lattice runtime. This is similar to how
 /// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct LatticeContext {
     pub bpm: Bpm,
     pub window_rect: WindowRect,
@@ -88,9 +88,14 @@ pub trait SketchDerived {
     fn clear_color(&self) -> Rgba {
         Rgba::new(0.0, 0.0, 0.0, 1.0)
     }
+
+    // Temporary until old sketches are ported over as this comes from
+    // LatticeContext now
     fn window_rect(&mut self) -> Option<&mut WindowRect> {
         None
     }
+    // Temporary until old sketches are ported over as this comes from
+    // LatticeContext now
     fn set_window_rect(&mut self, rect: Rect) {
         if let Some(window_rect) = self.window_rect() {
             window_rect.set_current(rect);
