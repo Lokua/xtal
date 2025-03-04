@@ -29,6 +29,12 @@ use super::{
     param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
+struct SnapshotTransition {
+    values: HashMap<String, (f32, f32)>,
+    start_frame: u32,
+    end_frame: u32,
+}
+
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
@@ -44,6 +50,7 @@ pub struct ControlScript<T: TimingSource> {
     eval_cache: EvalCache,
     update_state: Option<UpdateState>,
     snapshots: HashMap<String, ControlValues>,
+    active_transition: Option<SnapshotTransition>,
 }
 
 impl<T: TimingSource> ControlScript<T> {
@@ -63,6 +70,7 @@ impl<T: TimingSource> ControlScript<T> {
             dep_graph: DepGraph::new(),
             update_state: None,
             snapshots: HashMap::new(),
+            active_transition: None,
         };
 
         let config =
@@ -95,6 +103,17 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn get(&self, name: &str) -> f32 {
         let name = &self.aliases.get(name).cloned().unwrap_or(name.to_string());
 
+        if let Some(transition) = &self.active_transition {
+            if let Some((from, to)) = transition.values.get(name) {
+                return self.get_tweened(
+                    *from,
+                    *to,
+                    transition.start_frame,
+                    transition.end_frame,
+                );
+            }
+        }
+
         if let Some(bypass) = self.bypassed.get(name).and_then(|x| *x) {
             return bypass;
         }
@@ -111,6 +130,23 @@ impl<T: TimingSource> ControlScript<T> {
                 .iter()
                 .fold(value, |v, modulator| self.apply_modulator(v, modulator)),
         }
+    }
+
+    fn get_tweened(
+        &self,
+        from: f32,
+        to: f32,
+        start_frame: u32,
+        end_frame: u32,
+    ) -> f32 {
+        let current_frame = frame_controller::frame_count();
+        if current_frame > end_frame {
+            return to;
+        }
+        let duration = end_frame - start_frame;
+        let progress = current_frame - start_frame;
+        let t = progress as f32 / duration as f32;
+        lerp(from, to, t)
     }
 
     fn run_dependencies(&self, target_name: &str) {
@@ -321,6 +357,65 @@ impl<T: TimingSource> ControlScript<T> {
             .unwrap_or_else(|| panic!("No breakpoints for name: {}", name))
     }
 
+    pub fn take_snapshot(&mut self, id: &str) {
+        let mut snapshot: ControlValues = ControlValues::new();
+
+        snapshot.extend(self.controls.values().clone());
+        snapshot.extend(self.midi_controls.values().iter().map(
+            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
+        ));
+        snapshot.extend(self.osc_controls.values().iter().map(
+            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
+        ));
+
+        self.snapshots.insert(id.to_string(), snapshot);
+    }
+
+    pub fn recall_snapshot(&mut self, id: &str) {
+        if let Some(snapshot) = self.snapshots.get(id) {
+            let frame_count = frame_controller::frame_count();
+            let mut transition = SnapshotTransition {
+                values: HashMap::new(),
+                start_frame: frame_count,
+                end_frame: frame_count
+                    + self.animation.beats_to_frames(4.0) as u32,
+            };
+            for (name, value) in snapshot {
+                if self.controls.has(&name) {
+                    match value {
+                        ControlValue::Float(v) => {
+                            transition.values.insert(
+                                name.to_string(),
+                                (self.get_raw(name), *v),
+                            );
+                        }
+                        ControlValue::Bool(_) | ControlValue::String(_) => {
+                            self.controls.update_value(&name, value.clone());
+                        }
+                    }
+                    continue;
+                }
+                if self.midi_controls.has(&name) || self.osc_controls.has(&name)
+                {
+                    transition.values.insert(
+                        name.to_string(),
+                        (self.get_raw(name), value.as_float().unwrap()),
+                    );
+                    continue;
+                }
+            }
+            self.active_transition = Some(transition);
+        }
+    }
+
+    pub fn delete_snapshot(&mut self, id: &str) {
+        self.snapshots.remove(id);
+    }
+
+    pub fn clear_snapshots(&mut self) {
+        self.snapshots.clear()
+    }
+
     pub fn update(&mut self) {
         let new_config = {
             if let Some(update_state) = &self.update_state {
@@ -339,49 +434,27 @@ impl<T: TimingSource> ControlScript<T> {
                 error!("Failed to apply new configuration: {:?}", e);
             }
         }
-    }
 
-    pub fn take_snapshot(&mut self, id: &str) {
-        let mut snapshot: ControlValues = ControlValues::new();
-
-        snapshot.extend(self.controls.values().clone());
-        snapshot.extend(self.midi_controls.values().iter().map(
-            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
-        ));
-        snapshot.extend(self.osc_controls.values().iter().map(
-            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
-        ));
-
-        self.snapshots.insert(id.to_string(), snapshot);
-    }
-
-    pub fn recall_snapshot(&mut self, id: &str) {
-        if let Some(snapshot) = self.snapshots.get(id) {
-            for (name, value) in snapshot {
-                if self.controls.has(&name) {
-                    self.controls.update_value(&name, value.clone());
-                    continue;
+        if let Some(transition) = &self.active_transition {
+            if frame_controller::frame_count() > transition.end_frame {
+                for (name, (_from, to)) in &transition.values {
+                    if self.controls.has(&name) {
+                        let value = ControlValue::Float(*to);
+                        self.controls.update_value(name, value);
+                        continue;
+                    }
+                    if self.midi_controls.has(&name) {
+                        self.midi_controls.update_value(name, *to);
+                        continue;
+                    }
+                    if self.osc_controls.has(&name) {
+                        self.osc_controls.update_value(name, *to);
+                        continue;
+                    }
                 }
-                if self.midi_controls.has(&name) {
-                    self.midi_controls
-                        .update_value(&name, value.as_float().unwrap());
-                    continue;
-                }
-                if self.osc_controls.has(&name) {
-                    self.osc_controls
-                        .update_value(&name, value.as_float().unwrap());
-                    continue;
-                }
+                self.active_transition = None;
             }
         }
-    }
-
-    pub fn delete_snapshot(&mut self, id: &str) {
-        self.snapshots.remove(id);
-    }
-
-    pub fn clear_snapshots(&mut self) {
-        self.snapshots.clear()
     }
 
     pub fn changed(&self) -> bool {
