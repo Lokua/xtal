@@ -92,6 +92,9 @@ impl MidiControls {
         return self.state.lock().unwrap().values();
     }
 
+    pub fn update_value(&mut self, name: &str, value: f32) {
+        self.state.lock().unwrap().set(&name, value);
+    }
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();

@@ -39,6 +39,22 @@ impl ControlValue {
     }
 }
 
+impl From<f32> for ControlValue {
+    fn from(value: f32) -> Self {
+        Self::Float(value)
+    }
+}
+impl From<bool> for ControlValue {
+    fn from(value: bool) -> Self {
+        Self::Bool(value)
+    }
+}
+impl From<String> for ControlValue {
+    fn from(value: String) -> Self {
+        Self::String(value)
+    }
+}
+
 type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
 
 #[derive(Serialize, Deserialize)]

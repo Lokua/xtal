@@ -43,6 +43,7 @@ pub struct ControlScript<T: TimingSource> {
     dep_graph: DepGraph,
     eval_cache: EvalCache,
     update_state: Option<UpdateState>,
+    snapshots: HashMap<String, ControlValues>,
 }
 
 impl<T: TimingSource> ControlScript<T> {
@@ -61,6 +62,7 @@ impl<T: TimingSource> ControlScript<T> {
             eval_cache: EvalCache::new(),
             dep_graph: DepGraph::new(),
             update_state: None,
+            snapshots: HashMap::new(),
         };
 
         let config =
@@ -337,6 +339,49 @@ impl<T: TimingSource> ControlScript<T> {
                 error!("Failed to apply new configuration: {:?}", e);
             }
         }
+    }
+
+    pub fn take_snapshot(&mut self, id: &str) {
+        let mut snapshot: ControlValues = ControlValues::new();
+
+        snapshot.extend(self.controls.values().clone());
+        snapshot.extend(self.midi_controls.values().iter().map(
+            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
+        ));
+        snapshot.extend(self.osc_controls.values().iter().map(
+            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
+        ));
+
+        self.snapshots.insert(id.to_string(), snapshot);
+    }
+
+    pub fn recall_snapshot(&mut self, id: &str) {
+        if let Some(snapshot) = self.snapshots.get(id) {
+            for (name, value) in snapshot {
+                if self.controls.has(&name) {
+                    self.controls.update_value(&name, value.clone());
+                    continue;
+                }
+                if self.midi_controls.has(&name) {
+                    self.midi_controls
+                        .update_value(&name, value.as_float().unwrap());
+                    continue;
+                }
+                if self.osc_controls.has(&name) {
+                    self.osc_controls
+                        .update_value(&name, value.as_float().unwrap());
+                    continue;
+                }
+            }
+        }
+    }
+
+    pub fn delete_snapshot(&mut self, id: &str) {
+        self.snapshots.remove(id);
+    }
+
+    pub fn clear_snapshots(&mut self) {
+        self.snapshots.clear()
     }
 
     pub fn changed(&self) -> bool {
@@ -797,7 +842,6 @@ test_mod:
     fn test_parameter_modulation_breakpoint() {
         let controls = create_instance(
             r#"
-
 slider: 
   type: slider 
   default: 40
@@ -808,6 +852,7 @@ automate:
     - position: 0
       value: $slider
       kind: step 
+      
             "#,
         );
 
@@ -817,5 +862,45 @@ automate:
             40.0,
             "[automate.0.value]<-[$slider@40]"
         );
+    }
+
+    #[test]
+    #[serial]
+    fn test_snapshot() {
+        let mut controls = create_instance(
+            r#"
+a: 
+  type: slider 
+  default: 10
+b: 
+  type: midi
+  default: 20
+c: 
+  type: osc 
+  default: 30
+      
+            "#,
+        );
+
+        controls.take_snapshot("foo");
+
+        controls
+            .controls
+            .update_value("a", ControlValue::Float(100.0));
+        controls.midi_controls.update_value("b", 200.0);
+        controls.osc_controls.update_value("c", 300.0);
+        controls.take_snapshot("bar");
+
+        init(0);
+        controls.recall_snapshot("bar");
+        assert_eq!(controls.get("a"), 100.0);
+        assert_eq!(controls.get("b"), 200.0);
+        assert_eq!(controls.get("c"), 300.0);
+
+        init(1);
+        controls.recall_snapshot("foo");
+        assert_eq!(controls.get("a"), 10.0);
+        assert_eq!(controls.get("b"), 20.0);
+        assert_eq!(controls.get("c"), 30.0);
     }
 }

@@ -95,6 +95,11 @@ impl OscControls {
         return self.state.lock().unwrap().values();
     }
 
+    pub fn update_value(&mut self, address: &str, value: f32) {
+        let address = format_address(address);
+        self.state.lock().unwrap().set(&address, value);
+    }
+
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();

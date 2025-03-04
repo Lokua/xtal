@@ -1,28 +1,28 @@
 {
   "values": {
-    "rect_width": {
-      "Float": 4.5
-    },
-    "seed": {
-      "Float": 8184.0
-    },
     "noise_scale": {
-      "Float": 3.2
+      "Float": 1.9
     },
-    "rotate": {
-      "Bool": false
-    },
-    "max_rect_length": {
-      "Float": 43.7
+    "rect_width": {
+      "Float": 5.0
     },
     "circle_radius": {
-      "Float": 198.0
+      "Float": 295.0
+    },
+    "rotate": {
+      "Bool": true
     },
     "time_x": {
-      "Float": 2.0
+      "Float": 1.5
     },
     "angle_resolution": {
-      "Float": 92.0
+      "Float": 102.0
+    },
+    "seed": {
+      "Float": 23298.0
+    },
+    "max_rect_length": {
+      "Float": 148.0
     }
   }
 }

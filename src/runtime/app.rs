@@ -437,6 +437,12 @@ impl AppModel {
         self.session_id = uuid_5();
         self.clear_next_frame.set(true);
 
+        if let Some(provider) = self.sketch.controls() {
+            if provider.is_control_script() {
+                provider.clear_snapshots();
+            }
+        }
+
         self.init_sketch_environment(app);
 
         self.alert_text =
@@ -656,6 +662,42 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 && !app.keys.mods.ctrl()
                 && !shift_pressed
                 && !logo_pressed;
+
+            let digit = match key {
+                Key::Key0 => Some("0"),
+                Key::Key1 => Some("1"),
+                Key::Key2 => Some("2"),
+                Key::Key3 => Some("3"),
+                Key::Key4 => Some("4"),
+                Key::Key5 => Some("5"),
+                Key::Key6 => Some("6"),
+                Key::Key7 => Some("7"),
+                Key::Key8 => Some("8"),
+                Key::Key9 => Some("9"),
+                _ => None,
+            };
+
+            if let Some(digit) = digit {
+                if let Some(provider) = model.sketch.controls() {
+                    if provider.is_control_script() {
+                        if shift_pressed {
+                            provider.take_snapshot(digit);
+                            let alert = format!("Snapshot {:?} saved", digit);
+                            model.event_tx.alert(alert);
+
+                            return;
+                        }
+                        if logo_pressed {
+                            provider.recall_snapshot(digit);
+                            let alert =
+                                format!("Snapshot {:?} recalled", digit);
+                            model.event_tx.alert(alert);
+
+                            return;
+                        }
+                    }
+                }
+            }
 
             match key {
                 Key::Space => {
