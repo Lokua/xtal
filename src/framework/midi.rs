@@ -49,7 +49,7 @@ where
     let in_port = in_ports
         .iter()
         .find(|p| midi_in.port_name(p).unwrap_or_default() == port)
-        .expect("Unable to find input port")
+        .ok_or_else(|| format!("Unable to find input port: {}", port))?
         .clone();
 
     {

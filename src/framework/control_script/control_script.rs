@@ -732,9 +732,9 @@ impl<T: TimingSource> ControlScript<T> {
         }
 
         if !self.midi_controls.is_active() {
-            self.midi_controls
-                .start()
-                .expect("Unable to start MIDI receiver");
+            if let Err(e) = self.midi_controls.start() {
+                warn!("Unable to start MIDI receiver. {}", e);
+            }
         }
 
         self.controls.mark_changed();

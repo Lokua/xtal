@@ -581,7 +581,7 @@ fn model(app: &App) -> AppModel {
     let (raw_event_tx, event_rx) = mpsc::channel();
     let midi_tx = raw_event_tx.clone();
 
-    midi::on_message(
+    let midi_handler_result = midi::on_message(
         midi::ConnectionType::GlobalStartStop,
         crate::config::MIDI_CLOCK_PORT,
         move |message| match message[0] {
@@ -590,11 +590,14 @@ fn model(app: &App) -> AppModel {
             STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
             _ => {}
         },
-    )
-    .expect(&format!(
-        "Failed to initialize {:?} MIDI connection",
-        midi::ConnectionType::GlobalStartStop
-    ));
+    );
+    if let Err(e) = midi_handler_result {
+        warn!(
+            "Failed to initialize {:?} MIDI connection. Error: {}",
+            midi::ConnectionType::GlobalStartStop,
+            e
+        );
+    }
 
     let raw_bpm = bpm.get();
 
