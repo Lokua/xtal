@@ -146,6 +146,8 @@ pub enum AppEvent {
     QueueRecord,
     Record,
     Reset,
+    SnapshotRecall(String),
+    SnapshotStore(String),
     SwitchSketch(String),
     Tap,
     ToggleFullScreen,
@@ -335,6 +337,28 @@ impl AppModel {
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
+            }
+            AppEvent::SnapshotRecall(digit) => {
+                if let Some(provider) = self.sketch.controls() {
+                    if provider.is_control_script() {
+                        provider.recall_snapshot(&digit);
+                        let alert = format!("Snapshot {:?} recalled", digit);
+                        self.alert_text = alert;
+                    }
+                } else {
+                    warn!("Controls does not support snapshots");
+                }
+            }
+            AppEvent::SnapshotStore(digit) => {
+                if let Some(provider) = self.sketch.controls() {
+                    if provider.is_control_script() {
+                        provider.take_snapshot(&digit);
+                        let alert = format!("Snapshot {:?} saved", digit);
+                        self.alert_text = alert;
+                    }
+                } else {
+                    warn!("Controls does not support snapshots");
+                }
             }
             AppEvent::SwitchSketch(name) => {
                 if self.sketch_config.name != name
@@ -677,25 +701,14 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 _ => None,
             };
 
-            if let Some(digit) = digit {
-                if let Some(provider) = model.sketch.controls() {
-                    if provider.is_control_script() {
-                        if shift_pressed {
-                            provider.take_snapshot(digit);
-                            let alert = format!("Snapshot {:?} saved", digit);
-                            model.event_tx.alert(alert);
-
-                            return;
-                        }
-                        if logo_pressed {
-                            provider.recall_snapshot(digit);
-                            let alert =
-                                format!("Snapshot {:?} recalled", digit);
-                            model.event_tx.alert(alert);
-
-                            return;
-                        }
-                    }
+            if let Some(digit) = digit.map(|s| s.to_string()) {
+                if shift_pressed {
+                    model.event_tx.send(AppEvent::SnapshotStore(digit));
+                    return;
+                }
+                if logo_pressed {
+                    model.event_tx.send(AppEvent::SnapshotRecall(digit));
+                    return;
                 }
             }
 
