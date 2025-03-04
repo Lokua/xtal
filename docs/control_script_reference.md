@@ -674,13 +674,14 @@ slew_limiter_example:
   - ±0.1-0.3: subtle asymmetry
   - ±0.5-1.0: extreme asymmetry
   - (defaults to `0.0`)
-- `shape` - Suggested range: -2.0 to 2.0 (values below -2.0 are hard capped)
+- `shape` - Suggested range: [`-2.0`, `2.0`] (values below -2.0 are hard capped)
+  - 0.0: linear folding
   - < 0.0: softer folding curves
   - -1.0: perfectly sine-shaped folds
   - < -2.0: introduces intermediary folds but slight loss in overall amplitude
-    around ~-2.5
-  - 1.0: linear folding
-  - \>1.0: sharper folding edges
+  - \> 0.0: sharper folding edges, power function with exponent (1.0 + shape)
+  - 1.0: quadratic folding (power of 2.0)
+  - 2.0: cubic folding (power of 3.0)
   - (defaults to `1.0`)
 - `range` - defaults to `[0.0, 1.0]`
 
