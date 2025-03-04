@@ -361,9 +361,7 @@ impl AppModel {
                 }
             }
             AppEvent::SwitchSketch(name) => {
-                if self.sketch_config.name != name
-                    && REGISTRY.read().unwrap().get(&name).is_some()
-                {
+                if self.sketch_config.name != name {
                     self.switch_sketch(app, &name);
                 }
             }
@@ -399,8 +397,8 @@ impl AppModel {
             AppEvent::ToggleMainFocus => {
                 self.main_window(app).unwrap().set_visible(true);
             }
-            AppEvent::TogglePerfMode(ignore) => {
-                self.perf_mode = ignore;
+            AppEvent::TogglePerfMode(perf_mode) => {
+                self.perf_mode = perf_mode;
             }
             AppEvent::TogglePlay => {
                 let next_is_paused = !frame_controller::is_paused();
@@ -423,8 +421,6 @@ impl AppModel {
     }
 
     fn capture_recording_frame(&self, app: &App) {
-        frame_controller::clear_force_render();
-
         if !self.recording_state.is_recording {
             return;
         }
@@ -764,6 +760,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
     );
 
     if did_render {
+        frame_controller::clear_force_render();
         model.capture_recording_frame(app);
     }
 }

@@ -346,40 +346,37 @@ impl Controls {
     }
 
     pub fn float(&self, name: &str) -> f32 {
-        self.check_contains_key(name);
         self.values
             .get(name)
             .and_then(ControlValue::as_float)
             .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a float", name)
+                error!("No float for `{}`. Returning 0.0.", name);
+                0.0
             })
     }
 
     pub fn bool(&self, name: &str) -> bool {
-        self.check_contains_key(name);
         self.values
             .get(name)
             .and_then(ControlValue::as_bool)
             .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a bool", name)
+                error!("No bool for `{}`. Returning false.", name);
+                false
             })
     }
 
     pub fn string(&self, name: &str) -> String {
-        self.check_contains_key(name);
         self.values
             .get(name)
             .and_then(ControlValue::as_string)
             .map(ToOwned::to_owned)
             .unwrap_or_else(|| {
-                loud_panic!("Control '{}' exists but is not a string", name)
+                error!(
+                    "No String for Control named `{}`. Returning empty.",
+                    name
+                );
+                "".to_string()
             })
-    }
-
-    fn check_contains_key(&self, key: &str) {
-        if !self.has(key) {
-            error!("Control {} does not exist", key);
-        }
     }
 
     pub fn changed(&self) -> bool {

@@ -1,52 +1,52 @@
 {
   "values": {
-    "show_red_circle": {
-      "Bool": true
-    },
-    "uxuq7": {
-      "Bool": false
-    },
-    "center_radius": {
-      "Float": 125.0
-    },
-    "show_midi_circle": {
+    "17x30": {
       "Bool": false
     },
     "show_audio": {
       "Bool": false
     },
-    "y1k0y": {
+    "show_red_circle": {
+      "Bool": true
+    },
+    "show_breakpoints": {
       "Bool": false
     },
-    "kpsd7": {
+    "center_radius": {
+      "Float": 100.0
+    },
+    "hk5vj": {
       "Bool": false
+    },
+    "white_radius_amt": {
+      "Float": 0.0
     },
     "show_white_circle": {
       "Bool": false
     },
-    "c08m8": {
+    "ntk21": {
       "Bool": false
     },
-    "m58gj": {
+    "lb3l1": {
       "Bool": false
     },
-    "bg_alpha": {
-      "Float": 0.645
+    "show_midi_circle": {
+      "Bool": false
+    },
+    "center_hue": {
+      "Float": 0.3
+    },
+    "14d81": {
+      "Bool": false
+    },
+    "vn82z": {
+      "Bool": false
     },
     "show_center_circle": {
       "Bool": false
     },
-    "center_hue": {
-      "Float": 0.0
-    },
-    "white_radius_amt": {
-      "Float": 1.0
-    },
-    "6f018": {
-      "Bool": false
-    },
-    "show_breakpoints": {
-      "Bool": false
+    "bg_alpha": {
+      "Float": 0.645
     }
   }
 }
