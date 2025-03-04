@@ -18,12 +18,7 @@ use crate::framework::{
 };
 
 use super::{
-    config::{
-        AnimationConfig, AudioConfig, AutomateConfig, CheckboxConfig,
-        ConfigFile, ControlType, EffectConfig, EffectKind, KeyframeSequence,
-        MaybeControlConfig, ModulationConfig, OscConfig, SelectConfig,
-        SliderConfig, TriangleConfig,
-    },
+    config::*,
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
     param_mod::{FromColdParams, ParamValue, SetFromParam},
@@ -374,12 +369,14 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn recall_snapshot(&mut self, id: &str) {
         if let Some(snapshot) = self.snapshots.get(id) {
             let frame_count = frame_controller::frame_count();
+            let duration = self.animation.beats_to_frames(4.0) as u32;
+
             let mut transition = SnapshotTransition {
                 values: HashMap::new(),
                 start_frame: frame_count,
-                end_frame: frame_count
-                    + self.animation.beats_to_frames(4.0) as u32,
+                end_frame: frame_count + duration,
             };
+
             for (name, value) in snapshot {
                 if self.controls.has(&name) {
                     match value {
@@ -395,6 +392,7 @@ impl<T: TimingSource> ControlScript<T> {
                     }
                     continue;
                 }
+
                 if self.midi_controls.has(&name) || self.osc_controls.has(&name)
                 {
                     transition.values.insert(
@@ -404,6 +402,7 @@ impl<T: TimingSource> ControlScript<T> {
                     continue;
                 }
             }
+
             self.active_transition = Some(transition);
         }
     }
