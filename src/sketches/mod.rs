@@ -24,7 +24,6 @@ pub use self::dev::control_script_dev;
 pub use self::dev::cv_dev;
 pub use self::dev::effects_wavefolder_dev;
 pub use self::dev::midi_dev;
-pub use self::dev::multiple_sketches_dev;
 pub use self::dev::osc_dev;
 pub use self::dev::osc_transport_dev;
 pub use self::dev::responsive_dev;

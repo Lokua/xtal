@@ -39,7 +39,16 @@ pub fn run() {
             // -----------------------------------------------------------------
             // DEV
             // -----------------------------------------------------------------
+            animation_dev,
+            audio_controls_dev,
+            audio_dev,
+            control_script_dev,
+            cv_dev,
             effects_wavefolder_dev,
+            midi_dev,
+            osc_dev,
+            osc_transport_dev,
+            responsive_dev,
             // -----------------------------------------------------------------
             // TEMPLATES
             // -----------------------------------------------------------------
@@ -51,16 +60,6 @@ pub fn run() {
         // ---------------------------------------------------------------------
         register_legacy_sketches!(
             registry,
-            animation_dev,
-            audio_controls_dev,
-            audio_dev,
-            control_script_dev,
-            cv_dev,
-            midi_dev,
-            multiple_sketches_dev,
-            osc_dev,
-            osc_transport_dev,
-            responsive_dev,
             shader_to_texture_dev,
             wgpu_compute_dev,
             wgpu_dev
@@ -469,6 +468,8 @@ impl AppModel {
 
         self.main_window(app).map(|window| {
             window.set_title(&self.sketch_config.display_name);
+            self.ctx.window_rect().set_current(window.rect());
+
             if !self.perf_mode {
                 set_window_position(app, self.main_window_id, 0, 0);
                 set_window_size(
@@ -639,12 +640,19 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     model.main_window(app).map(|window| {
         let rect = window.rect();
-        let cwr = &model.ctx.window_rect;
+        let cwr = &mut model.ctx.window_rect();
 
         if rect.w() != cwr.w() || rect.h() != cwr.h() {
+            // debug!(
+            //     "app w: {}, h: {}, cw: {}, ch: {}",
+            //     rect.w(),
+            //     rect.h(),
+            //     cwr.w(),
+            //     cwr.h()
+            // );
             // For legacy sketches
             model.sketch.set_window_rect(rect);
-            model.ctx.window_rect = WindowRect::new(rect);
+            cwr.set_current(rect);
         }
     });
 

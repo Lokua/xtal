@@ -14,40 +14,39 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct OscTransportDev {
     animation: Animation<OscTransportTiming>,
-    wr: WindowRect,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: LatticeContext) -> OscTransportDev {
+    let animation = Animation::new(OscTransportTiming::new(ctx.bpm));
 
-    Model { animation, wr }
+    OscTransportDev { animation }
 }
 
-pub fn update(_app: &App, _m: &mut Model, _update: Update) {}
+impl Sketch for OscTransportDev {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
 
-    draw.rect()
-        .color(BLACK)
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h());
+        draw.rect().color(BLACK).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-    let a = m.animation.lrp(&[kf(0.0, 4.0), kf(200.0, 4.0)], 0.0);
-    let b = m.animation.lrp(&[kf(0.0, 2.0), kf(200.0, 2.0)], 0.0);
+        let a = self.animation.lrp(&[kf(0.0, 4.0), kf(200.0, 4.0)], 0.0);
+        let b = self.animation.lrp(&[kf(0.0, 2.0), kf(200.0, 2.0)], 0.0);
 
-    draw.ellipse()
-        .color(rgba(1.0, 0.0, 0.0, 0.5))
-        .radius(a)
-        .x_y(-m.wr.w() / 16.0, 0.0);
+        draw.ellipse()
+            .color(rgba(1.0, 0.0, 0.0, 0.5))
+            .radius(a)
+            .x_y(-wr.w() / 16.0, 0.0);
 
-    draw.ellipse()
-        .color(rgba(0.0, 0.0, 1.0, 0.5))
-        .radius(b)
-        .x_y(m.wr.w() / 16.0, 0.0);
+        draw.ellipse()
+            .color(rgba(0.0, 0.0, 1.0, 0.5))
+            .radius(b)
+            .x_y(wr.w() / 16.0, 0.0);
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

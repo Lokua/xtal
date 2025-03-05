@@ -1,13 +1,13 @@
 {
   "values": {
-    "pre_emphasis": {
-      "Float": 0.637
-    },
-    "rise": {
-      "Float": 0.13000001
-    },
     "fall": {
       "Float": 0.418
+    },
+    "pre_emphasis": {
+      "Float": 0.827
+    },
+    "rise": {
+      "Float": 0.21000001
     }
   }
 }

@@ -15,48 +15,48 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
-    window_rect: WindowRect,
+#[derive(SketchComponents)]
+pub struct ResponsiveDev {
     grid: Vec<Vec2>,
     cell_size: f32,
 }
 
-pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
-    let (grid, cell_size) =
-        create_grid(window_rect.w(), window_rect.h(), 64, vec2);
+pub fn init(_app: &App, ctx: LatticeContext) -> ResponsiveDev {
+    let wr = ctx.window_rect();
+    let (grid, cell_size) = create_grid(wr.w(), wr.h(), 64, vec2);
 
-    Model {
-        window_rect,
-        grid,
-        cell_size,
-    }
+    ResponsiveDev { grid, cell_size }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    if model.window_rect.changed() {
-        (model.grid, model.cell_size) =
-            create_grid(model.window_rect.w(), model.window_rect.h(), 64, vec2);
-        model.window_rect.mark_unchanged();
+impl Sketch for ResponsiveDev {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let mut wr = ctx.window_rect();
+
+        if wr.changed() {
+            // debug!("changed w: {}, h: {}", wr.w(), wr.h());
+            (self.grid, self.cell_size) = create_grid(wr.w(), wr.h(), 64, vec2);
+            wr.mark_unchanged();
+        }
     }
-}
 
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
 
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(model.window_rect.w(), model.window_rect.h())
-        .hsla(0.0, 0.0, 0.02, 0.1);
-
-    for point in model.grid.iter() {
         draw.rect()
-            .xy(*point)
-            .w_h(model.cell_size, model.cell_size)
-            .color(ORANGE)
-            .stroke_weight(2.0)
-            .stroke(BLACK);
-    }
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 0.02, 0.1);
 
-    draw.to_frame(app, &frame).unwrap();
+        for point in self.grid.iter() {
+            draw.rect()
+                .xy(*point)
+                .w_h(self.cell_size, self.cell_size)
+                .color(ORANGE)
+                .stroke_weight(2.0)
+                .stroke(BLACK);
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

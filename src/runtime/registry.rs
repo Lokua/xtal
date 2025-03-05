@@ -15,7 +15,7 @@ macro_rules! register_legacy_sketches {
                 |app, ctx| {
                     let model = crate::sketches::$module::init_model(
                         app,
-                        WindowRect::new(ctx.window_rect.rect())
+                        WindowRect::new(ctx.window_rect().rect())
                     );
                     Box::new(SketchAdapter::new(
                         model,

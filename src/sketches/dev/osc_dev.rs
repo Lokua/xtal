@@ -14,46 +14,49 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct OscDev {
     osc: OscControls,
-    wr: WindowRect,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, _ctx: LatticeContext) -> OscDev {
     let osc = OscControlBuilder::new()
         .control_mapped("/a", (0.0, 400.0), 0.5)
-        // testing that osc_controls works with or without `/`
         .control_mapped("b", (0.0, 400.0), 0.5)
         .build();
 
-    Model { osc, wr }
+    OscDev { osc }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    debug_throttled!(1_000, "/a: {}, /b: {}", m.osc.get("/a"), m.osc.get("b"));
-}
+impl Sketch for OscDev {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        debug_throttled!(
+            1_000,
+            "/a: {}, /b: {}",
+            self.osc.get("/a"),
+            self.osc.get("b")
+        );
+    }
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
 
-    draw.rect()
-        .color(BLACK)
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h());
+        draw.rect().color(BLACK).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-    let a = m.osc.get("/a");
-    let b = m.osc.get("b");
+        let a = self.osc.get("/a");
+        let b = self.osc.get("b");
 
-    draw.ellipse()
-        .color(rgba(1.0, 0.0, 0.0, 0.5))
-        .radius(a)
-        .x_y(-m.wr.w() / 16.0, 0.0);
+        draw.ellipse()
+            .color(rgba(1.0, 0.0, 0.0, 0.5))
+            .radius(a)
+            .x_y(-wr.w() / 16.0, 0.0);
 
-    draw.ellipse()
-        .color(rgba(0.0, 0.0, 1.0, 0.5))
-        .radius(b)
-        .x_y(m.wr.w() / 16.0, 0.0);
+        draw.ellipse()
+            .color(rgba(0.0, 0.0, 1.0, 0.5))
+            .radius(b)
+            .x_y(wr.w() / 16.0, 0.0);
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

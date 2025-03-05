@@ -1,5 +1,7 @@
 use nannou::prelude::*;
 
+use super::prelude::*;
+
 /// A wrapper around nannou's `Rect` that is used to provide "the" main window
 /// to sketches. Development on nannou v0.19 is frozen and its app.main_window
 /// function is unreliable (it returns the currently focused window, not the
@@ -28,12 +30,14 @@ impl WindowRect {
     /// [`Self::mark_unchanged`] was called. Use this in the `update` function
     /// when you want to perform an expensive operation only when needed.
     /// ```rust
-    /// if m.wr.changed() {
+    /// let wr = ctx.window_rect();
+    ///
+    /// if wr.changed() {
     ///   // do stuff
     ///   //...
     ///   // But don't forget to mark it as unchanged or
     ///   // this block will run every frame!
-    ///   m.wr.mark_unchanged()
+    ///   wr.mark_unchanged()
     /// }
     /// ```
     /// Note that this will always return true the first time it is called or
@@ -41,12 +45,26 @@ impl WindowRect {
     /// snippet above function as dual-purpose "init" style setup function which
     /// is pretty convenient.
     pub fn changed(&self) -> bool {
+        // debug!(
+        //     "changed cw: {}, ch: {}, lw: {}, lh: {}",
+        //     self.current.w(),
+        //     self.current.h(),
+        //     self.last.w(),
+        //     self.last.h()
+        // );
         (self.current.w() != self.last.w())
             || (self.current.h() != self.last.h())
     }
 
     pub fn mark_unchanged(&mut self) {
         self.last = self.current;
+        // debug!(
+        //     "mark_unchanged cw: {}, ch: {}, lw: {}, lh: {}",
+        //     self.current.w(),
+        //     self.current.h(),
+        //     self.last.w(),
+        //     self.last.h()
+        // );
     }
 
     pub fn w(&self) -> f32 {

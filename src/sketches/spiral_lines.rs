@@ -47,6 +47,7 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct SpiralLines {
+    #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
     gpu: gpu::GpuState<()>,

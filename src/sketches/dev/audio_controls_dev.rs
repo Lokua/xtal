@@ -2,6 +2,8 @@ use nannou::prelude::*;
 
 use crate::framework::prelude::*;
 
+// ~/Documents/Live/2025/Lattice Audio Controls Test Project/Lattice Audio Controls Test.als
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "audio_controls_dev",
     display_name: "Audio Controls Test",
@@ -14,14 +16,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct AudioControlsDev {
     controls: Controls,
     audio: AudioControls,
-    wr: WindowRect,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, _ctx: LatticeContext) -> AudioControlsDev {
     let controls = Controls::with_previous(vec![
         Control::slide("pre_emphasis", 0.0),
         Control::slide("detect", 0.0),
@@ -65,58 +66,54 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         )
         .build();
 
-    Model {
-        audio,
-        controls,
-        wr,
-    }
+    AudioControlsDev { audio, controls }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    // debug_throttled!(500, "a: {}, b: {}", m.audio.get("bd"), m.audio.get("hh"));
+impl Sketch for AudioControlsDev {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        // debug_throttled!(500, "a: {}, b: {}", self.audio.get("bd"), self.audio.get("hh"));
 
-    if m.controls.changed() {
-        let pre_emphasis = m.controls.float("pre_emphasis");
-        let detect = m.controls.float("detect");
-        let rise = m.controls.float("rise");
-        let fall = m.controls.float("fall");
+        if self.controls.changed() {
+            let pre_emphasis = self.controls.float("pre_emphasis");
+            let detect = self.controls.float("detect");
+            let rise = self.controls.float("rise");
+            let fall = self.controls.float("fall");
 
-        m.audio.update_controls(|control| {
-            control.pre_emphasis = pre_emphasis;
-            control.detect = detect;
-            control.slew_limiter.set_rates(rise, fall);
-        });
+            self.audio.update_controls(|control| {
+                control.pre_emphasis = pre_emphasis;
+                control.detect = detect;
+                control.slew_limiter.set_rates(rise, fall);
+            });
 
-        m.controls.mark_unchanged();
+            self.controls.mark_unchanged();
+        }
     }
-}
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
 
-    draw.rect()
-        .color(WHITE)
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h());
+        draw.rect().color(WHITE).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-    let bd = m.audio.get("bd");
-    let hh = m.audio.get("hh");
-    let chord = m.audio.get("chord");
+        let bd = self.audio.get("bd");
+        let hh = self.audio.get("hh");
+        let chord = self.audio.get("chord");
 
-    draw.ellipse()
-        .color(rgba(0.02, 0.02, 0.02, 0.9))
-        .radius(bd)
-        .x_y(-m.wr.w() / 4.0, 0.0);
+        draw.ellipse()
+            .color(rgba(0.02, 0.02, 0.02, 0.9))
+            .radius(bd)
+            .x_y(-wr.w() / 4.0, 0.0);
 
-    draw.ellipse()
-        .color(rgba(0.8, 0.2, 0.8, 0.9))
-        .radius(chord)
-        .x_y(0.0, 0.0);
+        draw.ellipse()
+            .color(rgba(0.8, 0.2, 0.8, 0.9))
+            .radius(chord)
+            .x_y(0.0, 0.0);
 
-    draw.ellipse()
-        .color(rgba(0.5, 0.5, 0.5, 0.9))
-        .radius(hh)
-        .x_y(m.wr.w() / 4.0, 0.0);
+        draw.ellipse()
+            .color(rgba(0.5, 0.5, 0.5, 0.9))
+            .radius(hh)
+            .x_y(wr.w() / 4.0, 0.0);
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
