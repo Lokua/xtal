@@ -44,7 +44,7 @@ pub fn init(app: &App, ctx: LatticeContext) -> WaveFract {
 
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "wave_fract.yaml"),
-        Timing::new(ctx.bpm),
+        Timing::new(ctx.bpm()),
     );
 
     let params = ShaderParams {

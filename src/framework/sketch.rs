@@ -57,13 +57,17 @@ pub enum PlayMode {
 /// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
 #[derive(Clone, Debug)]
 pub struct LatticeContext {
-    pub bpm: Bpm,
-    pub window_rect: WindowRect,
+    bpm: Bpm,
+    window_rect: WindowRect,
 }
 
 impl LatticeContext {
     pub fn new(bpm: Bpm, window_rect: WindowRect) -> Self {
         Self { bpm, window_rect }
+    }
+
+    pub fn bpm(&self) -> Bpm {
+        self.bpm.clone()
     }
 
     pub fn window_rect(&self) -> WindowRect {

@@ -50,7 +50,7 @@ pub fn init(app: &App, ctx: LatticeContext) -> Blob {
     let window_rect = ctx.window_rect();
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "blob.yaml"),
-        Timing::new(ctx.bpm),
+        Timing::new(ctx.bpm()),
     );
 
     let params = ShaderParams {
@@ -119,11 +119,7 @@ impl Sketch for Blob {
             ],
         };
 
-        self.gpu.update_params(
-            app,
-            ctx.window_rect().resolution_u32(),
-            &params,
-        );
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {

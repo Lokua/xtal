@@ -358,7 +358,7 @@ impl AppModel {
             }
             AppEvent::Tap => {
                 if self.tap_tempo_enabled {
-                    self.ctx.bpm.set(self.tap_tempo.tap());
+                    self.ctx.bpm().set(self.tap_tempo.tap());
                 }
             }
             AppEvent::ToggleFullScreen => {
@@ -400,7 +400,7 @@ impl AppModel {
             }
             AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
                 self.tap_tempo_enabled = tap_tempo_enabled;
-                self.ctx.bpm.set(self.sketch_config.bpm);
+                self.ctx.bpm().set(self.sketch_config.bpm);
                 self.alert_text = ternary!(
                     tap_tempo_enabled,
                     "Tap `Space` key to set BPM",
@@ -620,7 +620,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     {
         let mut egui = model.egui.borrow_mut();
         let ctx = egui.begin_frame();
-        let bpm = model.ctx.bpm.get();
+        let bpm = model.ctx.bpm().get();
         gui::update(
             &model.sketch_config,
             model.sketch.controls_provided(),
@@ -643,14 +643,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let cwr = &mut model.ctx.window_rect();
 
         if rect.w() != cwr.w() || rect.h() != cwr.h() {
-            // debug!(
-            //     "app w: {}, h: {}, cw: {}, ch: {}",
-            //     rect.w(),
-            //     rect.h(),
-            //     cwr.w(),
-            //     cwr.h()
-            // );
-            // For legacy sketches
             model.sketch.set_window_rect(rect);
             cwr.set_current(rect);
         }

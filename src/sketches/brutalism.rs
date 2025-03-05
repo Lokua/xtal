@@ -86,7 +86,7 @@ struct PostShaderParams {
 pub fn init(app: &App, ctx: LatticeContext) -> Brutalism {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
-        Timing::new(ctx.bpm.clone()),
+        Timing::new(ctx.bpm()),
     );
 
     let params = ShaderParams {
@@ -109,11 +109,10 @@ pub fn init(app: &App, ctx: LatticeContext) -> Brutalism {
     };
 
     let vertices = create_vertices(0.0);
-    let res = ctx.window_rect().resolution_u32();
 
     let main_shader = gpu::GpuState::new(
         app,
-        res,
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "brutalism_shader1.wgsl"),
         &params,
         Some(&vertices),
@@ -125,7 +124,7 @@ pub fn init(app: &App, ctx: LatticeContext) -> Brutalism {
 
     let post_shader = gpu::GpuState::new_fullscreen(
         app,
-        res,
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "brutalism_shader2.wgsl"),
         &post_params,
         true,

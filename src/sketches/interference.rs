@@ -45,8 +45,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: LatticeContext) -> Interference {
-    let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate_wave1_phase", false),
@@ -94,7 +93,7 @@ pub fn init(app: &App, ctx: LatticeContext) -> Interference {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./interference.wgsl"),
         &params,
         true,

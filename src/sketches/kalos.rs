@@ -55,7 +55,7 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: LatticeContext) -> Kalos {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate", false),

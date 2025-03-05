@@ -35,7 +35,7 @@ pub fn init(_app: &App, ctx: LatticeContext) -> DisplacementModel {
     let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let modes = ["attract", "influence"];
 

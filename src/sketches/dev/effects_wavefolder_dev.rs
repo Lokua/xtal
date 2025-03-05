@@ -18,15 +18,15 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const N_POINTS: usize = 2048;
 
 #[derive(SketchComponents)]
-pub struct Template {
+pub struct EffectsWavefolderDev {
     animation: Animation<ManualTiming>,
     lanes: Vec<Vec<[f32; 2]>>,
     wave_folder: WaveFolder,
     controls: Controls,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> Template {
-    let animation = Animation::new(ManualTiming::new(ctx.bpm));
+pub fn init(_app: &App, ctx: LatticeContext) -> EffectsWavefolderDev {
+    let animation = Animation::new(ManualTiming::new(ctx.bpm()));
     let wave_folder = WaveFolder::default();
 
     let controls = Controls::new(vec![
@@ -37,7 +37,7 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
         Control::slider("shape", 0.0, (-2.0, 2.0), 0.125),
     ]);
 
-    Template {
+    EffectsWavefolderDev {
         lanes: vec![],
         wave_folder,
         animation,
@@ -45,7 +45,7 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Template {
     }
 }
 
-impl Sketch for Template {
+impl Sketch for EffectsWavefolderDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         self.wave_folder.gain = self.controls.get("gain");
         self.wave_folder.iterations = self.controls.get("iterations") as usize;

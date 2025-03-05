@@ -56,7 +56,7 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: LatticeContext) -> Kalos2 {
     let resolution = ctx.window_rect().resolution_u32();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let disable = |_controls: &Controls| true;
 

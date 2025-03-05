@@ -29,7 +29,7 @@ pub struct Breakpoints2 {
 }
 
 pub fn init(_app: &App, ctx: LatticeContext) -> Breakpoints2 {
-    let timing = ManualTiming::new(ctx.bpm);
+    let timing = ManualTiming::new(ctx.bpm());
     let animation = Animation::new(timing.clone());
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "breakpoints_2.yaml"),

@@ -54,7 +54,7 @@ pub struct Spiral {
 
 pub fn init(app: &App, ctx: LatticeContext) -> Spiral {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         // 1 "pass" = 1 million vertices

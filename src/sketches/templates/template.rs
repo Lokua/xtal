@@ -24,7 +24,7 @@ pub struct Template {
 }
 
 pub fn init(_app: &App, ctx: LatticeContext) -> Template {
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![Control::slider(
         "radius",
@@ -46,7 +46,7 @@ impl Sketch for Template {
         debug_throttled!(
             1000,
             "ctx.bpm: {:?}, anim.bpm: {:?}",
-            ctx.bpm.get(),
+            ctx.bpm().get(),
             self.animation.timing.bpm()
         );
         let radius_max = self.controls.float("radius");

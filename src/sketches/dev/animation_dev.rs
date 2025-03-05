@@ -28,7 +28,7 @@ pub struct AnimationDev {
 }
 
 pub fn init(_app: &App, ctx: LatticeContext) -> AnimationDev {
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     AnimationDev {
         animation,

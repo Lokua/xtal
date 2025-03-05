@@ -35,7 +35,7 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: LatticeContext) -> SierpinskiTriangle {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::slider("primary_iterations", 1.0, (0.0, 16.0), 1.0),

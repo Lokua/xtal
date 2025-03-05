@@ -36,7 +36,7 @@ pub fn init(_app: &App, ctx: LatticeContext) -> Drops {
     let w = ctx.window_rect().w();
     let h = ctx.window_rect().h();
 
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![
         Control::checkbox("debug_walker", false),

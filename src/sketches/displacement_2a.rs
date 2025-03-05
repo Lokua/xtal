@@ -83,7 +83,7 @@ impl Displacement2a {
 pub fn init(_app: &App, ctx: LatticeContext) -> Displacement2a {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = Controls::new(vec![

@@ -33,7 +33,7 @@ impl Sketch for ResponsiveDev {
         let mut wr = ctx.window_rect();
 
         if wr.changed() {
-            // debug!("changed w: {}, h: {}", wr.w(), wr.h());
+            debug!("changed w: {}, h: {}", wr.w(), wr.h());
             (self.grid, self.cell_size) = create_grid(wr.w(), wr.h(), 64, vec2);
             wr.mark_unchanged();
         }

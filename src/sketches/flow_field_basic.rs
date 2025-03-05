@@ -26,7 +26,7 @@ pub struct FlowFieldBasic {
 }
 
 pub fn init(_app: &App, ctx: LatticeContext) -> FlowFieldBasic {
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::select(

@@ -55,7 +55,7 @@ pub struct SpiralLines {
 
 pub fn init(app: &App, ctx: LatticeContext) -> SpiralLines {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::slider("passes", 1.0, (1.0, 20.0), 1.0),
