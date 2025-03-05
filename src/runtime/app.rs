@@ -747,10 +747,10 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_next_frame.get() {
-        debug!(
-            "model.sketch.clear_color(): {:?}",
-            model.sketch.clear_color()
-        );
+        // debug!(
+        //     "model.sketch.clear_color(): {:?}",
+        //     model.sketch.clear_color()
+        // );
         frame.clear(model.sketch.clear_color());
         model.clear_next_frame.set(false);
     }
