@@ -201,6 +201,26 @@ impl Sketch for AnimationDev {
             .radius(radius * 0.333)
             .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
 
+        // BLACK BALL LEFT
+        draw.ellipse()
+            .x_y(-wr.qw(), self.animation.random(1.0, (-wr.hh(), wr.hh()), 9))
+            .radius(20.0)
+            .color(BLACK);
+
+        // BLACK BALL RIGHT
+        draw.ellipse()
+            .x_y(
+                wr.qw(),
+                self.animation.random_slewed(
+                    1.0,
+                    (-wr.hh(), wr.hh()),
+                    (0.7, 0.7),
+                    99,
+                ),
+            )
+            .radius(20.0)
+            .color(BLACK);
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

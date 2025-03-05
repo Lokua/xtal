@@ -30,7 +30,7 @@ wave_x:
       value: 0.5
       amplitude: 1
     - kind: end
-      position: 1
+      position: 2
       value: 0.5
 
 wave_slew:
@@ -93,13 +93,13 @@ distort_angle_offset:
       position: 0
       <<: *distort_angle_offset_defaults
     - kind: random
-      position: 1.5
+      position: 2
       <<: *distort_angle_offset_defaults
     - kind: random
-      position: 2.75
+      position: 4
       <<: *distort_angle_offset_defaults
     - kind: end
-      position: 4
+      position: 6
       value: 0.0
 
 distort_add:
@@ -167,16 +167,19 @@ mask_radius:
   bypass: 0
   type: triangle
   beats: 2
+  range: [-2, 2]
 
 mask_x:
   bypass: 0
   type: triangle
   beats: 2
+  range: [-1, 1]
 
 mask_y:
   bypass: 0
   type: triangle
-  beats: 2
+  beats: 8
+  range: [-1, 1]
 
 # ------------------------------------------------------------------------------
 #  Untitled Section

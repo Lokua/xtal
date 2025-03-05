@@ -46,14 +46,14 @@ wave_x_freq:
   var: c3
   bypass: _
   type: triangle
-  beats: 10
+  beats: 20
   range: [0, 0.75]
 
 wave_y_freq:
   var: c4
   bypass: _
   type: triangle
-  beats: 14
+  beats: 28
   range: [0, 0.25]
 
 wave_reduce_mix:
@@ -64,15 +64,37 @@ wave_reduce_mix:
 #  Distortion
 # ------------------------------------------------------------------------------
 
+dist_section:
+  type: separator
+
 dist_freq:
   var: a1
   type: triangle
   beats: 32
   range: [0, 5]
 
+dist_echo_mix:
+  var: a4
+  type: slider
+
+dist_echo_x:
+  var: a2
+  type: slider
+  range: [1, 10]
+  step: 1
+
+dist_echo_y:
+  var: a3
+  type: slider
+  range: [1, 10]
+  step: 1
+
 # ------------------------------------------------------------------------------
-#  Fract
+#  Fractal
 # ------------------------------------------------------------------------------
+
+fract_section:
+  type: separator
 
 fract_count:
   var: d1
@@ -98,44 +120,55 @@ fract_count_mod:
   modulators:
     - fract_count_slew
 
+fract_noise_mix:
+  var: b1
+  type: slider
+
+fract_noise_scale:
+  var: b2
+  type: slider
+  range: [0.00, 2.0]
+
+fract_noise_fract:
+  var: b3
+  type: slider
+  range: [1.0, 50.0]
+  step: 1
+
+fract_noise_shape:
+  var: b4
+  type: slider
+
+fract_zoom:
+  var: d2
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 2
+      amplitude: 1
+    - kind: end
+      position: 2
+      value: 0
+
+fract_zoom_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
+
+fract_zoom_mod:
+  type: mod
+  source: fract_zoom
+  modulators:
+    - fract_zoom_slew
+
 # ------------------------------------------------------------------------------
 #  Unused
 # ------------------------------------------------------------------------------
 
 unused_section:
   type: separator
-
-a2:
-  var: a2
-  type: slider
-
-a3:
-  var: a3
-  type: slider
-
-a4:
-  var: a4
-  type: slider
-
-b1:
-  var: b1
-  type: slider
-
-b2:
-  var: b2
-  type: slider
-
-b3:
-  var: b3
-  type: slider
-
-b4:
-  var: b4
-  type: slider
-
-d2:
-  var: d2
-  type: slider
 
 d3:
   var: d3

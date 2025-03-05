@@ -77,26 +77,53 @@ fn wave_map(wave: f32) -> vec4f {
 
 fn distort_reduce(pos: vec2f) -> f32 {
     let dist_freq = params.a.x;
+    let dist_echo_mix = params.a.w;
+    let dist_echo_x = params.a.y;
+    let dist_echo_y = params.a.z;
     var p = vec2f(pos);
     p *= tan(p * dist_freq);
-    return length(p);
+
+    let echo_x = fract(p.x * dist_echo_x);
+    let echo_y = fract(p.y * dist_echo_y);
+    let echo = echo_x + echo_y;
+
+    return mix(length(p), echo, dist_echo_mix);
 }
+
 fn distort_map(d: f32) -> vec4f {
-    return vec4f(vec3(smoothstep(0.0, 1.0, d)), 1.0);
+    return vec4f(vec3(smoothstep(0.0, 1.0, d * 0.3)), 1.0);
 }
 
 fn fractal_reduce(pos: vec2f) -> f32 {
     let fract_count = params.d.x; 
-    let scale = 1.0;
+    let fract_noise_mix = params.b.x;
+    let fract_noise_scale = params.b.y;
+    let fract_noise_fract = params.b.z;
+    let fract_noise_shape = params.b.w;
+    let fract_zoom = params.d.y;
     
-    var p = pos * scale;
+    // Zoom
+    let center_x = 0.0;
+    let center_y = 0.0;
+    
+    var zoomed_pos = 
+        (pos - vec2f(center_x, center_y)) / 
+        fract_zoom + vec2f(center_x, center_y);
+
+    var noise_x = fract(zoomed_pos.y * fract_noise_fract) * fract_noise_fract * -1.0;
+    var noise_y = fract(zoomed_pos.x * fract_noise_fract) * fract_noise_fract;
+    noise_x = mix(noise_x, cos(noise_x), fract_noise_shape);
+    noise_y = mix(noise_y, sin(noise_y), fract_noise_shape);
+
+    let pn = noise(vec2f((noise_x), (noise_y))) * fract_noise_scale;
+
+    var p = mix(zoomed_pos, vec2f(pn), fract_noise_mix);
+    
     var color = 0.0;
-    let MAX_ITERATIONS = 20;
-    
+    let MAX_ITERATIONS = 100;
     for (var i = 0; i < MAX_ITERATIONS; i++) {
         let weight = 1.0 - smoothstep(fract_count - 1.0, fract_count, f32(i));
         if (weight <= 0.0) { break; }
-        
         p = abs(p) * 2.0 - 1.0;
         let len = max(length(p), 0.001);
         color += (1.0 / len) * weight;
@@ -104,6 +131,35 @@ fn fractal_reduce(pos: vec2f) -> f32 {
     
     return color / fract_count;
 }
+// fn fractal_reduce(pos: vec2f) -> f32 {
+//     let fract_count = params.d.x; 
+//     let fract_noise_mix = params.b.x;
+//     let fract_noise_scale = params.b.y;
+//     let fract_noise_fract = params.b.z;
+//     let fract_noise_shape = params.b.w;
+
+//     var noise_x = fract(pos.y * fract_noise_fract) * fract_noise_fract * -1.0;
+//     var noise_y = fract(pos.x * fract_noise_fract) * fract_noise_fract;
+//     noise_x = mix(noise_x, cos(noise_x), fract_noise_shape);
+//     noise_y = mix(noise_y, sin(noise_y), fract_noise_shape);
+
+//     let pn = noise(vec2f((noise_x), (noise_y))) * fract_noise_scale;
+
+//     var p = mix(pos, vec2f(pn), fract_noise_mix);
+    
+//     var color = 0.0;
+//     let MAX_ITERATIONS = 100;
+//     for (var i = 0; i < MAX_ITERATIONS; i++) {
+//         let weight = 1.0 - smoothstep(fract_count - 1.0, fract_count, f32(i));
+//         if (weight <= 0.0) { break; }
+//         p = abs(p) * 2.0 - 1.0;
+//         let len = max(length(p), 0.001);
+//         color += (1.0 / len) * weight;
+//     }
+    
+//     return color / fract_count;
+// }
+
 
 fn fractal_map(color_value: f32) -> vec4f {
     let fract_steps = 1.0;
@@ -111,6 +167,29 @@ fn fractal_map(color_value: f32) -> vec4f {
     let contrasted = pow(color_value, contrast);
     let stepped = floor(contrasted * fract_steps) / fract_steps;
     return vec4f(vec3f(stepped), 1.0);
+}
+
+fn noise(p: vec2f) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    
+    // Cubic Hermine Curve for smoother interpolation
+    let u = f * f * (3.0 - 2.0 * f);
+    
+    // Four corners
+    let a = hash(i + vec2f(0.0, 0.0));
+    let b = hash(i + vec2f(1.0, 0.0));
+    let c = hash(i + vec2f(0.0, 1.0));
+    let d = hash(i + vec2f(1.0, 1.0));
+    
+    // Bilinear interpolation
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+fn hash(p: vec2f) -> f32 {
+    let p3 = fract(vec3f(p.xyx) * 0.13);
+    let p4 = p3 + vec3f(7.0, 157.0, 113.0);
+    return fract(dot(p4, vec3f(268.5453123, 143.2354234, 424.2424234)));
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {

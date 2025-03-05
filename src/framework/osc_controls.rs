@@ -15,9 +15,10 @@ pub struct OscControlConfig {
 
 impl OscControlConfig {
     pub fn new(address: &str, range: (f32, f32), default: f32) -> Self {
+        check_address(address);
         let (min, max) = range;
         Self {
-            address: format_address(address),
+            address: address.to_string(),
             min,
             max,
             default,
@@ -38,15 +39,15 @@ impl OscState {
     }
 
     pub fn set(&mut self, address: &str, value: f32) {
-        self.values.insert(format_address(address), value);
+        self.values.insert(address.to_string(), value);
     }
 
     pub fn get(&self, address: &str) -> f32 {
-        *self.values.get(&format_address(address)).unwrap_or(&0.0)
+        *self.values.get(address).unwrap_or(&0.0)
     }
 
     pub fn has(&self, address: &str) -> bool {
-        self.values.contains_key(&format_address(address))
+        self.values.contains_key(address)
     }
 
     pub fn values(&self) -> HashMap<String, f32> {
@@ -71,24 +72,24 @@ impl OscControls {
     }
 
     pub fn add(&mut self, address: &str, config: OscControlConfig) {
-        let address = format_address(address);
+        check_address(address);
         self.state.lock().unwrap().set(&address, config.default);
         self.configs.insert(address.to_string(), config);
     }
 
     pub fn has(&self, address: &str) -> bool {
-        self.state.lock().unwrap().has(&format_address(address))
+        check_address(address);
+        self.state.lock().unwrap().has(&address)
     }
 
     pub fn get(&self, address: &str) -> f32 {
-        self.state.lock().unwrap().get(&format_address(address))
+        check_address(address);
+        self.state.lock().unwrap().get(&address)
     }
 
     pub fn set(&self, address: &str, value: f32) {
-        self.state
-            .lock()
-            .unwrap()
-            .set(&format_address(address), value);
+        check_address(address);
+        self.state.lock().unwrap().set(&address, value);
     }
 
     pub fn values(&self) -> HashMap<String, f32> {
@@ -96,7 +97,7 @@ impl OscControls {
     }
 
     pub fn update_value(&mut self, address: &str, value: f32) {
-        let address = format_address(address);
+        check_address(address);
         self.state.lock().unwrap().set(&address, value);
     }
 
@@ -105,7 +106,9 @@ impl OscControls {
         let configs = self.configs.clone();
 
         SHARED_OSC_RECEIVER.register_callback("*", move |msg| {
-            if let Some(config) = configs.get(&msg.addr) {
+            let key = msg.addr.trim_start_matches('/');
+
+            if let Some(config) = configs.get(key) {
                 let value: Option<f32> = match msg.args.get(0) {
                     Some(osc::Type::Float(value)) => Some(*value),
                     Some(osc::Type::Int(value)) => Some(*value as f32),
@@ -114,10 +117,10 @@ impl OscControls {
                 };
 
                 if let Some(value) = value {
-                    trace!("Setting {} to {}", msg.addr, value);
+                    trace!("Setting {} to {}", key, value);
                     let mapped_value =
                         value * (config.max - config.min) + config.min;
-                    state.lock().unwrap().set(&msg.addr, mapped_value);
+                    state.lock().unwrap().set(key, mapped_value);
                 }
             }
         });
@@ -167,10 +170,8 @@ impl OscControlBuilder {
     }
 }
 
-fn format_address(address: &str) -> String {
-    ternary!(
-        address.starts_with("/"),
-        address.into(),
-        format!("/{}", address)
-    )
+fn check_address(address: &str) {
+    if address.starts_with('/') {
+        panic!("Unsupported address format. Remove leading `/` from address");
+    }
 }

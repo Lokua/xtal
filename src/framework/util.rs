@@ -560,6 +560,16 @@ pub fn parse_bar_beat_16th(time_str: &str) -> Result<f32, Box<dyn Error>> {
     Ok(total_beats)
 }
 
+pub fn str_to_f32_seed(id: &str) -> f32 {
+    let mut hash: u32 = 0;
+
+    for byte in id.bytes() {
+        hash = hash.wrapping_mul(31).wrapping_add(byte as u32);
+    }
+
+    hash as f32
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

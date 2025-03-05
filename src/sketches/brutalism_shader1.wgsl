@@ -160,7 +160,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let f = 1.0 / tan(fov / 2.0);
     let range_inv = 1.0 / (near - far);
 
-    let proj = mat4x4f(
+    let proj = mat4x4(
         vec4f(f / aspect, 0.0, 0.0, 0.0),
         vec4f(0.0, f, 0.0, 0.0),
         vec4f(0.0, 0.0, far * range_inv, -1.0),
@@ -588,7 +588,7 @@ fn rotate_around_axis(p: vec3f, axis: vec3f, angle: f32) -> vec3f {
     let y = axis.y;
     let z = axis.z;
     
-    let rot = mat3x3f(
+    let rot = mat3x3(
         vec3f(t * x * x + c, t * x * y - s * z, t * x * z + s * y),
         vec3f(t * x * y + s * z, t * y * y + c, t * y * z - s * x),
         vec3f(t * x * z - s * y, t * y * z + s * x, t * z * z + c)

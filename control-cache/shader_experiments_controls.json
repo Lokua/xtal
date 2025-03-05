@@ -1,46 +1,46 @@
 {
   "values": {
-    "fract_dist_reduce_mix": {
-      "Float": 0.5
+    "07130": {
+      "Bool": false
     },
-    "d2": {
-      "Float": 0.0
+    "fract_noise_scale": {
+      "Float": 1.55
+    },
+    "fract_noise_fract": {
+      "Float": 40.0
+    },
+    "dist_echo_y": {
+      "Float": 10.0
+    },
+    "fract_zoom": {
+      "Float": 1.133
     },
     "wave_reduce_mix": {
-      "Float": 0.592
+      "Float": 0.88699996
     },
-    "a2": {
-      "Float": 0.0
-    },
-    "b3": {
-      "Float": 0.0
+    "82yqr": {
+      "Bool": false
     },
     "d3": {
       "Float": 37.5
     },
-    "a4": {
-      "Float": 0.54499996
+    "fract_noise_shape": {
+      "Float": 0.0
     },
-    "fract_dist_map_mix": {
-      "Float": 0.51699996
+    "dist_echo_mix": {
+      "Float": 0.0
+    },
+    "v907r": {
+      "Bool": false
+    },
+    "fract_noise_mix": {
+      "Float": 0.0
+    },
+    "dist_echo_x": {
+      "Float": 10.0
     },
     "wave_dist": {
-      "Float": 0.443
-    },
-    "b4": {
-      "Float": 0.45499998
-    },
-    "wk71v": {
-      "Bool": false
-    },
-    "dyrtu": {
-      "Bool": false
-    },
-    "2wc91": {
-      "Bool": false
-    },
-    "dist_radius": {
-      "Float": 1.0
+      "Float": 0.42299998
     }
   }
 }

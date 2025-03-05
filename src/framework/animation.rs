@@ -78,6 +78,9 @@
 //! control over timing, transitions, and modulation. All animations
 //! automatically sync to the provided timing source's beat position.
 
+use std::cell::RefCell;
+use std::collections::HashMap;
+
 use nannou::math::map_range;
 use nannou::rand;
 use rand::rngs::StdRng;
@@ -141,11 +144,15 @@ pub struct Trigger {
 #[derive(Clone, Debug)]
 pub struct Animation<T: TimingSource> {
     pub timing: T,
+    random_smooth_previous_values: RefCell<HashMap<u64, f32>>,
 }
 
 impl<T: TimingSource> Animation<T> {
     pub fn new(timing: T) -> Self {
-        Self { timing }
+        Self {
+            timing,
+            random_smooth_previous_values: RefCell::new(HashMap::new()),
+        }
     }
 
     /// Return the number of beats that have elapsed
@@ -187,6 +194,55 @@ impl<T: TimingSource> Animation<T> {
         let mut x = (self.beats() / duration + phase_offset.abs() * 0.5) % 1.0;
         x = ternary!(x < 0.5, x, 1.0 - x) * 2.0;
         map_range(x, 0.0, 1.0, min, max)
+    }
+
+    /// Generate a randomized value once during every cycle of `duration`. The
+    /// function is completely deterministic given the same parameters in
+    /// relation to the current beat.
+    pub fn random(
+        &self,
+        duration: f32,
+        (min, max): (f32, f32),
+        stem: u64,
+    ) -> f32 {
+        let loop_count = (self.beats() / duration).floor();
+        let seed = stem + ((duration + (max - min) + loop_count) as u64);
+        let mut rng = StdRng::seed_from_u64(seed);
+        rng.gen_range(min..=max)
+    }
+
+    /// Generate a randomized value once during every cycle of `duration`. The
+    /// function is completely deterministic given the same parameters in
+    /// relation to the current beat. The `stem` - which serves as the root of
+    /// an internal seed generator - is also a unique ID for internal slew state
+    /// and for that reason you should make sure all animations in your sketch
+    /// have unique stems. See [`lattice::framework::effects::SlewLimiter`] for
+    /// details on how `rise` and `fall` work.
+    pub fn random_slewed(
+        &self,
+        duration: f32,
+        (min, max): (f32, f32),
+        (rise, fall): (f32, f32),
+        stem: u64,
+    ) -> f32 {
+        let loop_count = (self.beats() / duration).floor();
+
+        let seed = stem
+            + duration.to_bits() as u64
+            + (max - min).to_bits() as u64
+            + loop_count as u64;
+
+        let mut rng = StdRng::seed_from_u64(seed);
+        let value = rng.gen_range(min..=max);
+
+        let mut prev_values = self.random_smooth_previous_values.borrow_mut();
+        let value = prev_values.get(&stem).map_or(value, |prev| {
+            SlewLimiter::slew_pure(*prev, value, rise, fall)
+        });
+
+        prev_values.insert(stem, value);
+
+        value
     }
 
     /// Creates a new [`Trigger`] with specified interval and delay;
@@ -966,5 +1022,70 @@ pub mod animation_tests {
                 after
             );
         }
+    }
+
+    #[test]
+    #[serial]
+    fn test_random() {
+        let a = create_instance();
+
+        init(0);
+        let n = a.random(1.0, (0.0, 1.0), 999);
+
+        init(1);
+        let n2 = a.random(1.0, (0.0, 1.0), 999);
+        assert_eq!(n, n2, "should return same N for full cycle");
+
+        init(2);
+        let n3 = a.random(1.0, (0.0, 1.0), 999);
+        assert_eq!(n, n3, "should return same N for full cycle");
+
+        init(3);
+        let n4 = a.random(1.0, (0.0, 1.0), 999);
+        assert_eq!(n, n4, "should return same N for full cycle");
+
+        init(4);
+        let n5 = a.random(1.0, (0.0, 1.0), 999);
+        assert_ne!(n, n5, "should return new number on next cycle");
+    }
+
+    #[test]
+    #[serial]
+    fn test_random_stem() {
+        let a = create_instance();
+
+        init(0);
+        let n1 = a.random(1.0, (0.0, 1.0), 99);
+        let n2 = a.random(1.0, (0.0, 1.0), 99);
+
+        assert_eq!(n1, n2, "should return same N for same args");
+
+        let n3 = a.random(1.0, (0.0, 1.0), 100);
+        assert_ne!(n1, n3, "should return different N for diff stems");
+    }
+
+    #[test]
+    #[serial]
+    fn test_random_smooth() {
+        let a = create_instance();
+
+        init(0);
+        let n = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+
+        init(1);
+        let n2 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        assert_eq!(n, n2, "should return same N for full cycle");
+
+        init(2);
+        let n3 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        assert_eq!(n, n3, "should return same N for full cycle");
+
+        init(3);
+        let n4 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        assert_eq!(n, n4, "should return same N for full cycle");
+
+        init(4);
+        let n5 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        assert_ne!(n, n5, "should return new number on next cycle");
     }
 }

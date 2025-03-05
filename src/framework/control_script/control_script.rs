@@ -46,6 +46,7 @@ pub struct ControlScript<T: TimingSource> {
     update_state: Option<UpdateState>,
     snapshots: HashMap<String, ControlValues>,
     active_transition: Option<SnapshotTransition>,
+    transition_time: f32,
 }
 
 impl<T: TimingSource> ControlScript<T> {
@@ -66,6 +67,7 @@ impl<T: TimingSource> ControlScript<T> {
             update_state: None,
             snapshots: HashMap::new(),
             active_transition: None,
+            transition_time: 4.0,
         };
 
         let config =
@@ -135,7 +137,9 @@ impl<T: TimingSource> ControlScript<T> {
         end_frame: u32,
     ) -> f32 {
         let current_frame = frame_controller::frame_count();
-        if current_frame > end_frame {
+        debug!("start_frame == end_frame: {}", start_frame == end_frame);
+        if current_frame > end_frame || start_frame == end_frame {
+            debug!("returning value: {}", to);
             return to;
         }
         let duration = end_frame - start_frame;
@@ -369,7 +373,8 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn recall_snapshot(&mut self, id: &str) {
         if let Some(snapshot) = self.snapshots.get(id) {
             let frame_count = frame_controller::frame_count();
-            let duration = self.animation.beats_to_frames(4.0) as u32;
+            let duration =
+                self.animation.beats_to_frames(self.transition_time) as u32;
 
             let mut transition = SnapshotTransition {
                 values: HashMap::new(),
@@ -413,6 +418,10 @@ impl<T: TimingSource> ControlScript<T> {
 
     pub fn clear_snapshots(&mut self) {
         self.snapshots.clear()
+    }
+
+    pub fn set_transition_time(&mut self, transition_time: f32) {
+        self.transition_time = transition_time;
     }
 
     pub fn update(&mut self) {
@@ -954,6 +963,7 @@ c:
             "#,
         );
 
+        controls.set_transition_time(0.0);
         controls.take_snapshot("foo");
 
         controls
@@ -965,11 +975,13 @@ c:
 
         init(0);
         controls.recall_snapshot("bar");
+        controls.update();
         assert_eq!(controls.get("a"), 100.0);
         assert_eq!(controls.get("b"), 200.0);
         assert_eq!(controls.get("c"), 300.0);
 
         init(1);
+        controls.update();
         controls.recall_snapshot("foo");
         assert_eq!(controls.get("a"), 10.0);
         assert_eq!(controls.get("b"), 20.0);
