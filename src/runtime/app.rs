@@ -22,6 +22,7 @@ pub fn run() {
             blob,
             breakpoints_2,
             brutalism,
+            displacement_2a,
             wave_fract,
             // -----------------------------------------------------------------
             // DEV
@@ -38,7 +39,6 @@ pub fn run() {
         // ---------------------------------------------------------------------
         register_legacy_sketches!(
             registry,
-            displacement_2a,
             drop,
             drop_walk,
             floor_supervisor,

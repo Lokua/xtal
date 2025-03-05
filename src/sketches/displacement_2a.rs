@@ -25,8 +25,8 @@ const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 const CIRCLE_RESOLUTION: f32 = 6.0;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Displacement2a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
     animation: Animation<Timing>,
@@ -40,7 +40,7 @@ pub struct Model {
     last_position_animation: String,
 }
 
-impl Model {
+impl Displacement2a {
     fn update_trig_fns(&mut self) {
         let pattern = self.controls.string("pattern");
         let lookup = trig_fn_lookup();
@@ -62,6 +62,7 @@ impl Model {
             None
         };
     }
+
     fn weave_frequency(&self) -> f32 {
         let value = self.controls.float("weave_frequency");
         if self.controls.bool("animate_frequency") {
@@ -79,10 +80,10 @@ impl Model {
     }
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: LatticeContext) -> Displacement2a {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+    let animation = Animation::new(Timing::new(ctx.bpm));
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = Controls::new(vec![
@@ -200,7 +201,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         Gradient::new(vec![LIGHTGREEN.into_lin_srgb(), AZURE.into_lin_srgb()]),
     ];
 
-    Model {
+    Displacement2a {
         grid: create_grid(w as f32 - pad, h as f32 - pad, GRID_SIZE, vec2).0,
         displacer_configs,
         animation,
@@ -215,236 +216,250 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(app: &App, model: &mut Model, _update: Update) {
-    let audio_enabled = model.controls.bool("audio_enabled");
-    let clamp_circle_radii = model.controls.bool("clamp_circle_radii");
-    let quad_restraint = model.controls.bool("quad_restraint");
-    let qr_shape = model.controls.string("qr_shape");
-    let qr_lerp = model.controls.float("qr_lerp");
-    let qr_divisor = model.controls.float("qr_divisor");
-    let qr_pos = model.controls.float("qr_pos");
-    let qr_size = model.controls.float("qr_size");
-    let gradient_spread = model.controls.float("gradient_spread");
-    let displacer_radius = model.controls.float("displacer_radius");
-    let displacer_strength = model.controls.float("displacer_strength");
-    let weave_scale = model.controls.float("weave_scale");
-    let weave_amplitude = model.controls.float("weave_amplitude");
-    let pattern = model.controls.string("pattern");
-    let circle_radius_min = model.controls.float("circle_radius_min");
-    let circle_radius_max = model.controls.float("circle_radius_max");
-    let weave_frequency = model.weave_frequency();
-    let scaling_power = model.controls.float("scaling_power");
-    let quad_influence_or_attract =
-        model.controls.bool("quad_influence_or_attract");
-    let center_influence_or_attract =
-        model.controls.bool("center_influence_or_attract");
-    let color_influence_or_attract =
-        model.controls.bool("color_influence_or_attract");
+impl Sketch for Displacement2a {
+    fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
+        let audio_enabled = self.controls.bool("audio_enabled");
+        let clamp_circle_radii = self.controls.bool("clamp_circle_radii");
+        let quad_restraint = self.controls.bool("quad_restraint");
+        let qr_shape = self.controls.string("qr_shape");
+        let qr_lerp = self.controls.float("qr_lerp");
+        let qr_divisor = self.controls.float("qr_divisor");
+        let qr_pos = self.controls.float("qr_pos");
+        let qr_size = self.controls.float("qr_size");
+        let gradient_spread = self.controls.float("gradient_spread");
+        let displacer_radius = self.controls.float("displacer_radius");
+        let displacer_strength = self.controls.float("displacer_strength");
+        let weave_scale = self.controls.float("weave_scale");
+        let weave_amplitude = self.controls.float("weave_amplitude");
+        let pattern = self.controls.string("pattern");
+        let circle_radius_min = self.controls.float("circle_radius_min");
+        let circle_radius_max = self.controls.float("circle_radius_max");
+        let weave_frequency = self.weave_frequency();
+        let scaling_power = self.controls.float("scaling_power");
+        let quad_influence_or_attract =
+            self.controls.bool("quad_influence_or_attract");
+        let center_influence_or_attract =
+            self.controls.bool("center_influence_or_attract");
+        let color_influence_or_attract =
+            self.controls.bool("color_influence_or_attract");
 
-    if model.cached_trig_fns == None
-        || (model.cached_pattern != model.controls.string("pattern"))
-    {
-        model.update_trig_fns();
-    }
-
-    if model.last_position_animation
-        != model.controls.string("position_animation")
-    {
-        model.last_position_animation =
-            model.controls.string("position_animation");
-        let position_animations = animation_fns(&model.last_position_animation);
-        for i in 0..model.displacer_configs.len() {
-            model.displacer_configs[i].position_animation =
-                position_animations[i].clone();
+        if self.cached_trig_fns.is_none()
+            || (self.cached_pattern != self.controls.string("pattern"))
+        {
+            self.update_trig_fns();
         }
-    }
 
-    model.fft_bands = model.audio.bands(
-        N_BANDS,
-        30.0,
-        10_000.0,
-        0.0,
-        model.controls.float("rise_rate"),
-        model.controls.float("fall_rate"),
-    );
-
-    let cached_trig_fns = model.cached_trig_fns.clone();
-    let animation = &model.animation;
-    let controls = &model.controls;
-    let band_for_freq = model.fft_bands[0];
-
-    let distance_fn: CustomDistanceFn =
-        Some(Arc::new(move |grid_point, position| {
-            weave(
-                grid_point.x,
-                grid_point.y,
-                position.x,
-                position.y,
-                if audio_enabled {
-                    map_range(band_for_freq, 0.0, 1.0, weave_frequency, 0.01)
-                } else {
-                    weave_frequency
-                },
-                weave_scale,
-                weave_amplitude,
-                pattern.clone(),
-                cached_trig_fns,
-            )
-        }));
-
-    for config in model.displacer_configs.iter_mut() {
-        config.update(animation, controls);
-        config.displacer.set_custom_distance_fn(distance_fn.clone());
-        config.displacer.set_radius(displacer_radius);
-        config.displacer.set_strength(if audio_enabled {
-            map_range(model.fft_bands[3], 0.0, 1.0, 0.5, displacer_strength)
-        } else {
-            displacer_strength
-        });
-    }
-
-    let enabled_displacer_configs: Vec<&DisplacerConfig> = model
-        .displacer_configs
-        .iter()
-        .filter(|x| model.controls.bool(x.kind))
-        .collect();
-
-    let max_mag = model.displacer_configs.len() as f32 * displacer_strength;
-    let gradient =
-        find_palette_by_name(&controls.string("palette"), &model.palettes);
-    let time = app.time;
-
-    model.ellipses = model
-        .grid
-        .par_iter()
-        .map(|point| {
-            let mut total_displacement = vec2(0.0, 0.0);
-            let mut total_influence = 0.0;
-            let mut quad_contains = false;
-            let mut current_qr_kind = "center";
-
-            for config in &enabled_displacer_configs {
-                if quad_restraint {
-                    if QuadShape::from_str(&qr_shape).contains_point(
-                        config.displacer.position * qr_pos,
-                        vec2(
-                            SKETCH_CONFIG.w as f32 / 3.0,
-                            SKETCH_CONFIG.h as f32 / 3.0,
-                        ) * qr_size,
-                        *point,
-                        time,
-                    ) {
-                        current_qr_kind = config.kind;
-                        quad_contains = true;
-                    }
-                }
-                let displacement = if config.kind == "center" {
-                    if center_influence_or_attract {
-                        config.displacer.attract(*point, scaling_power)
-                    } else {
-                        config.displacer.core_influence(*point, scaling_power)
-                    }
-                } else {
-                    if quad_influence_or_attract {
-                        config.displacer.attract(*point, scaling_power)
-                    } else {
-                        config.displacer.core_influence(*point, scaling_power)
-                    }
-                };
-                let influence = displacement.length();
-                total_displacement += displacement;
-                total_influence += influence;
+        if self.last_position_animation
+            != self.controls.string("position_animation")
+        {
+            self.last_position_animation =
+                self.controls.string("position_animation");
+            let position_animations =
+                animation_fns(&self.last_position_animation);
+            for i in 0..self.displacer_configs.len() {
+                self.displacer_configs[i].position_animation =
+                    position_animations[i].clone();
             }
+        }
 
-            let mut blended_color = gradient.get(0.0);
-            let inv_total = 1.0 / total_influence.max(1.0);
+        self.fft_bands = self.audio.bands(
+            N_BANDS,
+            30.0,
+            10_000.0,
+            0.0,
+            self.controls.float("rise_rate"),
+            self.controls.float("fall_rate"),
+        );
 
-            for config in &enabled_displacer_configs {
-                let displacement = if color_influence_or_attract {
-                    config.displacer.attract(*point, scaling_power)
-                } else {
-                    config.displacer.core_influence(*point, scaling_power)
-                };
-                let influence = displacement.length();
-                let color_position = (influence / config.displacer.strength)
-                    .powf(gradient_spread)
-                    .clamp(0.0, 1.0);
-                let color = gradient.get(color_position);
-                let weight = influence * inv_total;
-                blended_color = blended_color.mix(&color, weight);
-            }
+        let cached_trig_fns = self.cached_trig_fns.clone();
+        let animation = &self.animation;
+        let controls = &self.controls;
+        let band_for_freq = self.fft_bands[0];
 
-            let magnitude = if clamp_circle_radii {
-                total_displacement.length().clamp(0.0, max_mag)
-            } else {
-                total_displacement.length()
-            };
-
-            let radius = map_range(
-                magnitude,
-                0.0,
-                max_mag,
-                circle_radius_min,
-                circle_radius_max,
-            );
-
-            if quad_restraint && quad_contains {
-                let color = if DEBUG_QUADS {
-                    match current_qr_kind {
-                        "quad_1" => RED,
-                        "quad_2" => GREEN,
-                        "quad_3" => BLUE,
-                        "quad_4" => YELLOW,
-                        _ => WHITE,
-                    }
-                    .into_lin_srgb()
-                } else {
-                    blended_color
-                };
-                let displaced_point = if audio_enabled {
-                    let bass_to_qr_divisor = map_range(
-                        model.fft_bands[4],
-                        0.0,
-                        1.0,
-                        qr_divisor,
-                        0.0,
-                    );
-                    *point + (total_displacement / bass_to_qr_divisor)
-                } else {
-                    *point + (total_displacement / qr_divisor)
-                };
-                (
-                    displaced_point,
-                    radius,
-                    gradient.get(0.0).mix(&color, qr_lerp),
+        let distance_fn: CustomDistanceFn =
+            Some(Arc::new(move |grid_point, position| {
+                weave(
+                    grid_point.x,
+                    grid_point.y,
+                    position.x,
+                    position.y,
+                    if audio_enabled {
+                        map_range(
+                            band_for_freq,
+                            0.0,
+                            1.0,
+                            weave_frequency,
+                            0.01,
+                        )
+                    } else {
+                        weave_frequency
+                    },
+                    weave_scale,
+                    weave_amplitude,
+                    pattern.clone(),
+                    cached_trig_fns,
                 )
+            }));
+
+        for config in self.displacer_configs.iter_mut() {
+            config.update(animation, controls);
+            config.displacer.set_custom_distance_fn(distance_fn.clone());
+            config.displacer.set_radius(displacer_radius);
+            config.displacer.set_strength(if audio_enabled {
+                map_range(self.fft_bands[3], 0.0, 1.0, 0.5, displacer_strength)
             } else {
-                (*point + total_displacement, radius, blended_color)
-            }
-        })
-        .collect();
-}
+                displacer_strength
+            });
+        }
 
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
+        let enabled_displacer_configs: Vec<&DisplacerConfig> = self
+            .displacer_configs
+            .iter()
+            .filter(|x| self.controls.bool(x.kind))
+            .collect();
 
-    frame.clear(BLACK);
-    draw.background().color(rgba(0.1, 0.1, 0.1, 0.01));
+        let max_mag = self.displacer_configs.len() as f32 * displacer_strength;
+        let gradient =
+            find_palette_by_name(&controls.string("palette"), &self.palettes);
+        let time = app.time;
 
-    let scaled_draw = draw.scale(model.controls.float("scale"));
+        self.ellipses = self
+            .grid
+            .par_iter()
+            .map(|point| {
+                let mut total_displacement = vec2(0.0, 0.0);
+                let mut total_influence = 0.0;
+                let mut quad_contains = false;
+                let mut current_qr_kind = "center";
 
-    for (position, radius, color) in &model.ellipses {
-        scaled_draw
-            .ellipse()
-            .no_fill()
-            .stroke(*color)
-            .stroke_weight(0.5)
-            .radius(*radius)
-            .resolution(CIRCLE_RESOLUTION)
-            .xy(*position);
+                for config in &enabled_displacer_configs {
+                    if quad_restraint {
+                        if QuadShape::from_str(&qr_shape).contains_point(
+                            config.displacer.position * qr_pos,
+                            vec2(
+                                SKETCH_CONFIG.w as f32 / 3.0,
+                                SKETCH_CONFIG.h as f32 / 3.0,
+                            ) * qr_size,
+                            *point,
+                            time,
+                        ) {
+                            current_qr_kind = config.kind;
+                            quad_contains = true;
+                        }
+                    }
+                    let displacement = if config.kind == "center" {
+                        if center_influence_or_attract {
+                            config.displacer.attract(*point, scaling_power)
+                        } else {
+                            config
+                                .displacer
+                                .core_influence(*point, scaling_power)
+                        }
+                    } else {
+                        if quad_influence_or_attract {
+                            config.displacer.attract(*point, scaling_power)
+                        } else {
+                            config
+                                .displacer
+                                .core_influence(*point, scaling_power)
+                        }
+                    };
+                    let influence = displacement.length();
+                    total_displacement += displacement;
+                    total_influence += influence;
+                }
+
+                let mut blended_color = gradient.get(0.0);
+                let inv_total = 1.0 / total_influence.max(1.0);
+
+                for config in &enabled_displacer_configs {
+                    let displacement = if color_influence_or_attract {
+                        config.displacer.attract(*point, scaling_power)
+                    } else {
+                        config.displacer.core_influence(*point, scaling_power)
+                    };
+                    let influence = displacement.length();
+                    let color_position = (influence
+                        / config.displacer.strength)
+                        .powf(gradient_spread)
+                        .clamp(0.0, 1.0);
+                    let color = gradient.get(color_position);
+                    let weight = influence * inv_total;
+                    blended_color = blended_color.mix(&color, weight);
+                }
+
+                let magnitude = if clamp_circle_radii {
+                    total_displacement.length().clamp(0.0, max_mag)
+                } else {
+                    total_displacement.length()
+                };
+
+                let radius = map_range(
+                    magnitude,
+                    0.0,
+                    max_mag,
+                    circle_radius_min,
+                    circle_radius_max,
+                );
+
+                if quad_restraint && quad_contains {
+                    let color = if DEBUG_QUADS {
+                        match current_qr_kind {
+                            "quad_1" => RED,
+                            "quad_2" => GREEN,
+                            "quad_3" => BLUE,
+                            "quad_4" => YELLOW,
+                            _ => WHITE,
+                        }
+                        .into_lin_srgb()
+                    } else {
+                        blended_color
+                    };
+                    let displaced_point = if audio_enabled {
+                        let bass_to_qr_divisor = map_range(
+                            self.fft_bands[4],
+                            0.0,
+                            1.0,
+                            qr_divisor,
+                            0.0,
+                        );
+                        *point + (total_displacement / bass_to_qr_divisor)
+                    } else {
+                        *point + (total_displacement / qr_divisor)
+                    };
+                    (
+                        displaced_point,
+                        radius,
+                        gradient.get(0.0).mix(&color, qr_lerp),
+                    )
+                } else {
+                    (*point + total_displacement, radius, blended_color)
+                }
+            })
+            .collect();
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let draw = app.draw();
+
+        frame.clear(BLACK);
+        draw.background().color(rgba(0.1, 0.1, 0.1, 0.01));
+
+        let scaled_draw = draw.scale(self.controls.float("scale"));
+
+        for (position, radius, color) in &self.ellipses {
+            scaled_draw
+                .ellipse()
+                .no_fill()
+                .stroke(*color)
+                .stroke_weight(0.5)
+                .radius(*radius)
+                .resolution(CIRCLE_RESOLUTION)
+                .xy(*position);
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 type AnimationFn<R> = Option<
