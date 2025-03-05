@@ -9,6 +9,7 @@
     "midir",
     "randomsmooth",
     "sccache",
+    "smin",
     "thresholded"
   ]
 }

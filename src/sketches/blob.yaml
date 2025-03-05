@@ -5,28 +5,30 @@ _vars:
 #  Corner Animations
 # ------------------------------------------------------------------------------
 
+_t_beats: &t_beats 3
+
 # top-right corner
 t1:
   type: triangle
-  beats: 2
+  beats: *t_beats
   phase: 0
 
 # bottom-right corner
 t2:
   type: triangle
-  beats: 2
+  beats: *t_beats
   phase: 0.25
 
 # bottom-left corner
 t3:
   type: triangle
-  beats: 2
+  beats: *t_beats
   phase: 0.5
 
 # top-left corner
 t4:
   type: triangle
-  beats: 2
+  beats: *t_beats
   phase: 0.75
 
 # ------------------------------------------------------------------------------
@@ -136,7 +138,7 @@ center_y_slew:
 center_y_fold_gain:
   type: triangle
   beats: 4
-  range: [2, 10]
+  range: [1, 1.5]
 
 center_y_fold:
   type: effect
@@ -145,7 +147,7 @@ center_y_fold:
   iterations: 1
   symmetry: 1.0
   bias: 0.0
-  shape: -1.0
+  shape: -1
   range: [-1, 1]
 
 center_y_mod:
@@ -202,7 +204,7 @@ rot_angle:
       position: 4
       value: 0
     - kind: end
-      position: 10
+      position: 6
       value: 0
 
 rot_slew:
@@ -216,10 +218,6 @@ rot_mod:
   source: rot_angle
   modulators:
     - rot_slew
-
-dist_morph:
-  var: e3
-  type: slider
 
 bd:
   var: e2

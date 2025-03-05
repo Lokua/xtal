@@ -55,7 +55,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let t_long = params.c.x;
     let center_y = params.c.y;
     let outer_scale = params.c.z;
-    let chord = params.d.x;
     let outer_size = 1.0 - params.d.y;
     let outer_pos_t_mix = params.d.z;
     let outer_scale_2 = params.d.w;
@@ -163,7 +162,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 }
 
 fn rotate_point(p: vec2f, angle: f32) -> vec2f {
-    let rot_matrix = mat2x2f(
+    let rot_matrix = mat2x2(
         cos(angle), -sin(angle),
         sin(angle), cos(angle)
     );

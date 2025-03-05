@@ -287,7 +287,3 @@ comprehensive documentation.
 [control-script-test]: src/sketches/scratch/control_script_test.rs
 [osc-transport]: assets/L.OscTransport.amxd
 [osc-send]: assets/L.OscSend.amxd
-
-```
-
-```
