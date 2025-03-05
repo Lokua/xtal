@@ -24,6 +24,7 @@ pub fn run() {
             brutalism,
             displacement_2a,
             wave_fract,
+            drop_walk,
             // -----------------------------------------------------------------
             // DEV
             // -----------------------------------------------------------------
@@ -40,7 +41,6 @@ pub fn run() {
         register_legacy_sketches!(
             registry,
             drop,
-            drop_walk,
             floor_supervisor,
             flow_field_basic,
             heat_mask,

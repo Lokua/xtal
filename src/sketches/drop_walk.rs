@@ -19,22 +19,21 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const MAX_DROPS: usize = 5000;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Drops {
     animation: Animation<Timing>,
     controls: Controls,
-    window_rect: WindowRect,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
     droppers: Vec<Dropper>,
     palettes: Vec<(ColorFn, ColorFn, ColorFn)>,
 }
 
-pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
-    let w = window_rect.w();
-    let h = window_rect.h();
+pub fn init(_app: &App, ctx: LatticeContext) -> Drops {
+    let w = ctx.window_rect().w();
+    let h = ctx.window_rect().h();
 
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::new(vec![
         Control::checkbox("debug_walker", false),
@@ -43,7 +42,7 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
         Control::slider("splatter_radius", 2.0, (1.0, 200.0), 1.0),
         Control::slider("drop_max_radius", 20.0, (1.0, 50.0), 1.0),
         Control::Separator {},
-        Control::select("palette", "millenial", &["millenial", "gen_x"]),
+        Control::select("palette", "millennial", &["millennial", "gen_x"]),
         Control::slide("color_ratio", 0.5),
         Control::slide("lightness_min", 0.0),
         Control::slide("lightness_max", 1.0),
@@ -94,10 +93,9 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
         ),
     ];
 
-    Model {
+    Drops {
         animation,
         controls,
-        window_rect,
         max_drops: MAX_DROPS,
         drops: Vec::new(),
         droppers,
@@ -116,82 +114,84 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let step_size = model.controls.float("step_size");
-    let drop_max_radius = model.controls.float("drop_max_radius");
-    let splatter_radius = model.controls.float("splatter_radius");
-    let n_drops = model.controls.float("n_drops");
-    let palette_name = model.controls.string("palette");
-    let palette = palette_by_name(&model.palettes, &palette_name);
+impl Sketch for Drops {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let step_size = self.controls.float("step_size");
+        let drop_max_radius = self.controls.float("drop_max_radius");
+        let splatter_radius = self.controls.float("splatter_radius");
+        let n_drops = self.controls.float("n_drops");
+        let palette_name = self.controls.string("palette");
+        let palette = palette_by_name(&self.palettes, &palette_name);
+        let wr = ctx.window_rect();
 
-    model
-        .droppers
-        .iter_mut()
-        .enumerate()
-        .for_each(|(index, dropper)| {
-            if model.animation.should_trigger(&mut dropper.trigger) {
-                dropper.walker.step_size = step_size;
-                dropper.walker.w = model.window_rect.w();
-                dropper.walker.h = model.window_rect.h();
+        self.droppers
+            .iter_mut()
+            .enumerate()
+            .for_each(|(index, dropper)| {
+                if self.animation.should_trigger(&mut dropper.trigger) {
+                    dropper.walker.step_size = step_size;
+                    dropper.walker.w = wr.w();
+                    dropper.walker.h = wr.h();
 
-                let color_fn = match index % 3 {
-                    0 => palette.0,
-                    1 => palette.1,
-                    2 => palette.2,
-                    _ => unreachable!(),
-                };
+                    let color_fn = match index % 3 {
+                        0 => palette.0,
+                        1 => palette.1,
+                        2 => palette.2,
+                        _ => unreachable!(),
+                    };
 
-                dropper.walker.step();
+                    dropper.walker.step();
 
-                match dropper.kind.as_str() {
-                    "center" => {
-                        dropper.min_radius = 0.1;
-                        dropper.max_radius = drop_max_radius;
+                    match dropper.kind.as_str() {
+                        "center" => {
+                            dropper.min_radius = 0.1;
+                            dropper.max_radius = drop_max_radius;
+                        }
+                        _ => {}
                     }
-                    _ => {}
+
+                    for _ in 0..n_drops as i32 {
+                        (dropper.drop_fn)(
+                            dropper,
+                            dropper.walker.to_vec2(),
+                            &mut self.drops,
+                            self.max_drops,
+                            (color_fn)(&self.controls),
+                            splatter_radius,
+                        );
+                    }
                 }
-
-                for _ in 0..n_drops as i32 {
-                    (dropper.drop_fn)(
-                        dropper,
-                        dropper.walker.to_vec2(),
-                        &mut model.drops,
-                        model.max_drops,
-                        (color_fn)(&model.controls),
-                        splatter_radius,
-                    );
-                }
-            }
-        });
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.background().color(hsl(0.0, 0.0, 1.0));
-
-    for (drop, color) in model.drops.iter() {
-        draw.polygon()
-            .color(*color)
-            .points(drop.vertices().iter().cloned());
+            });
     }
 
-    if model.controls.bool("debug_walker") {
-        for (index, dropper) in model.droppers.iter().enumerate() {
-            draw.ellipse()
-                .color(match index {
-                    0 => RED,
-                    1 => GREEN,
-                    _ => BLUE,
-                })
-                .stroke(BLACK)
-                .stroke_weight(4.0)
-                .xy(dropper.walker.to_vec2())
-                .radius(20.0);
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let draw = app.draw();
+
+        draw.background().color(hsl(0.0, 0.0, 1.0));
+
+        for (drop, color) in self.drops.iter() {
+            draw.polygon()
+                .color(*color)
+                .points(drop.vertices().iter().cloned());
         }
-    }
 
-    draw.to_frame(app, &frame).unwrap();
+        if self.controls.bool("debug_walker") {
+            for (index, dropper) in self.droppers.iter().enumerate() {
+                draw.ellipse()
+                    .color(match index {
+                        0 => RED,
+                        1 => GREEN,
+                        _ => BLUE,
+                    })
+                    .stroke(BLACK)
+                    .stroke_weight(4.0)
+                    .xy(dropper.walker.to_vec2())
+                    .radius(20.0);
+            }
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl, f32);
@@ -320,7 +320,7 @@ fn palette_by_name(
     name: &str,
 ) -> (ColorFn, ColorFn, ColorFn) {
     let index = match name {
-        "millenial" => 0,
+        "millennial" => 0,
         "gen_x" => 1,
         _ => 0,
     };
