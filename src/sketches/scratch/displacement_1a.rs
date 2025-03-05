@@ -20,22 +20,22 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Displacement1a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     gradient: Gradient<LinSrgb>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1a {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
     let grid_w = w as f32 - 80.0;
     let grid_h = h as f32 - 80.0;
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![
         Control::slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001),
@@ -52,7 +52,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         None,
     )];
 
-    Model {
+    Displacement1a {
         grid: create_grid(grid_w, grid_h, GRID_SIZE, vec2).0,
         displacer_configs,
         animation,
@@ -65,79 +65,77 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let circle_radius_min = model.controls.float("circle_radius_min");
-    let circle_radius_max = model.controls.float("circle_radius_max");
-    let radius = model.controls.float("displacer_radius");
-    let strength = model.controls.float("displacer_strength");
-    let gradient_spread = model.controls.float("gradient_spread");
-    let scaling_power = model.controls.float("scaling_power");
+impl Sketch for Displacement1a {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        let circle_radius_min = self.controls.float("circle_radius_min");
+        let circle_radius_max = self.controls.float("circle_radius_max");
+        let radius = self.controls.float("displacer_radius");
+        let strength = self.controls.float("displacer_strength");
+        let gradient_spread = self.controls.float("gradient_spread");
+        let scaling_power = self.controls.float("scaling_power");
 
-    for config in &mut model.displacer_configs {
-        config.update(&model.animation, &model.controls);
-        config.displacer.set_strength(strength);
-        config.displacer.set_radius(radius);
+        for config in &mut self.displacer_configs {
+            config.update(&self.animation, &self.controls);
+            config.displacer.set_strength(strength);
+            config.displacer.set_radius(radius);
+        }
+
+        let max_mag = self.displacer_configs.len() as f32 * strength;
+        let gradient = &self.gradient;
+
+        self.ellipses = self
+            .grid
+            .par_iter()
+            .map(|point| {
+                let total_displacement = self.displacer_configs.iter().fold(
+                    vec2(0.0, 0.0),
+                    |acc, config| {
+                        acc + config.displacer.attract(*point, scaling_power)
+                    },
+                );
+
+                let displacement_magnitude = total_displacement.length();
+
+                let color = gradient.get(
+                    1.0 - (displacement_magnitude / max_mag)
+                        .powf(gradient_spread)
+                        .clamp(0.0, 1.0),
+                );
+
+                let radius = map_clamp(
+                    displacement_magnitude,
+                    0.0,
+                    max_mag,
+                    circle_radius_min,
+                    circle_radius_max,
+                    |x| x,
+                );
+
+                (*point + total_displacement, radius, color)
+            })
+            .collect();
     }
 
-    let max_mag = model.displacer_configs.len() as f32 * strength;
-    let gradient = &model.gradient;
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let draw = app.draw();
 
-    model.ellipses = model
-        .grid
-        .par_iter()
-        .map(|point| {
-            let total_displacement = model.displacer_configs.iter().fold(
-                vec2(0.0, 0.0),
-                |acc, config| {
-                    acc + config.displacer.attract(*point, scaling_power)
-                },
-            );
+        draw.background().color(hsl(0.0, 0.0, 0.02));
 
-            let displacement_magnitude = total_displacement.length();
+        for (position, radius, color) in &self.ellipses {
+            draw.ellipse()
+                .no_fill()
+                .stroke(*color)
+                .stroke_weight(0.5)
+                .radius(*radius)
+                .xy(*position);
+        }
 
-            let color = gradient.get(
-                1.0 - (displacement_magnitude / max_mag)
-                    .powf(gradient_spread)
-                    .clamp(0.0, 1.0),
-            );
-
-            let radius = map_clamp(
-                displacement_magnitude,
-                0.0,
-                max_mag,
-                circle_radius_min,
-                circle_radius_max,
-                |x| x,
-            );
-
-            (*point + total_displacement, radius, color)
-        })
-        .collect();
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.background().color(hsl(0.0, 0.0, 0.02));
-
-    for (position, radius, color) in &model.ellipses {
-        draw.ellipse()
-            .no_fill()
-            .stroke(*color)
-            .stroke_weight(0.5)
-            .radius(*radius)
-            .xy(*position);
+        draw.to_frame(app, &frame).unwrap();
     }
-
-    draw.to_frame(app, &frame).unwrap();
 }
 
 type AnimationFn<R> = Option<
-    Arc<
-        dyn Fn(&Displacer, &Animation<FrameTiming>, &Controls) -> R
-            + Send
-            + Sync,
-    >,
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
 >;
 
 struct DisplacerConfig {
@@ -161,7 +159,7 @@ impl DisplacerConfig {
 
     pub fn update(
         &mut self,
-        animation: &Animation<FrameTiming>,
+        animation: &Animation<Timing>,
         controls: &Controls,
     ) {
         if let Some(position_fn) = &self.position_animation {

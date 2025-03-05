@@ -17,13 +17,12 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(540),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Template {
     #[allow(dead_code)]
     animation: Animation<OscTransportTiming>,
     osc: OscControls,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -49,10 +48,10 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+    let animation = Animation::new(OscTransportTiming::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
+    let controls = Controls::new(vec![
         Control::slider("wave_power", 5.0, (0.0, 10.0), 0.01),
         Control::slider("wave_bands", 0.0, (2.0, 10.0), 1.0),
         Control::slider("wave_threshold", 0.0, (-1.0, 1.0), 0.001),
@@ -89,64 +88,74 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_19_op_art.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    Template {
         animation,
         osc,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.osc.get("/wave_phase"),
-            m.osc.get("/wave_radial_freq"),
-            m.osc.get("/wave_horiz_freq"),
-            m.osc.get("/wave_vert_freq"),
-        ],
-        b: [
-            m.osc.get("/bg_freq"),
-            m.controls.float("bg_radius"),
-            m.controls.float("bg_gradient_strength"),
-            m.controls.float("wave_power"),
-        ],
-        c: [
-            m.osc.get("/reduce_mix"),
-            m.osc.get("/map_mix"),
-            m.controls.float("wave_bands"),
-            m.controls.float("wave_threshold"),
-        ],
-        d: [
-            bool_to_f32(m.controls.bool("bg_invert")),
-            m.animation.tri(8.0) * 2.0 - 1.0,
-            match m.controls.string("mix_mode").as_str() {
-                "mix" => 0.0,
-                "min_max" => 1.0,
-                _ => unreachable!(),
-            },
-            m.osc.get("/wave_scale"),
-        ],
-        e: [
-            m.osc.get("/wave1_mix"),
-            m.osc.get("/wave2_mix"),
-            m.osc.get("/wave3_mix"),
-            0.0,
-        ],
-    };
+impl Sketch for Template {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let params = ShaderParams {
+            resolution: [
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
+                0.0,
+                0.0,
+            ],
+            a: [
+                self.osc.get("/wave_phase"),
+                self.osc.get("/wave_radial_freq"),
+                self.osc.get("/wave_horiz_freq"),
+                self.osc.get("/wave_vert_freq"),
+            ],
+            b: [
+                self.osc.get("/bg_freq"),
+                self.controls.float("bg_radius"),
+                self.controls.float("bg_gradient_strength"),
+                self.controls.float("wave_power"),
+            ],
+            c: [
+                self.osc.get("/reduce_mix"),
+                self.osc.get("/map_mix"),
+                self.controls.float("wave_bands"),
+                self.controls.float("wave_threshold"),
+            ],
+            d: [
+                bool_to_f32(self.controls.bool("bg_invert")),
+                self.animation.tri(8.0) * 2.0 - 1.0,
+                match self.controls.string("mix_mode").as_str() {
+                    "mix" => 0.0,
+                    "min_max" => 1.0,
+                    _ => unreachable!(),
+                },
+                self.osc.get("/wave_scale"),
+            ],
+            e: [
+                self.osc.get("/wave1_mix"),
+                self.osc.get("/wave2_mix"),
+                self.osc.get("/wave3_mix"),
+                0.0,
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

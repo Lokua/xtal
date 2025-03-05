@@ -18,11 +18,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(580),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Template {
     animation: Animation<OscTransportTiming>,
     controls: ControlScript<OscTransportTiming>,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -48,8 +47,8 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let timing = OscTransportTiming::new(Bpm::new(SKETCH_CONFIG.bpm));
+pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+    let timing = OscTransportTiming::new(ctx.bpm());
 
     let animation = Animation::new(timing.clone());
 
@@ -69,73 +68,83 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
-        to_absolute_path(file!(), "./g25_14_black_and_white.wgsl"),
+        ctx.window_rect().resolution_u32(),
+        to_absolute_path(file!(), "g25_14_black_and_white.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    Template {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for Template {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
 
-    let phase_mod = m.controls.get("phase_mod");
+        let phase_mod = self.controls.get("phase_mod");
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.get("wave1_freq"),
-            0.0, // wave1_angle
-            m.controls.get("wave2_freq"),
-            0.25, // wave2_angle
-        ],
-        b: [
-            m.animation.r_ramp(
-                &[kfr((0.0, phase_mod), 2.0)],
+        let params = ShaderParams {
+            resolution: [
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
                 0.0,
-                1.0,
-                Easing::Linear,
-            ),
-            m.animation.r_ramp(
-                &[kfr((0.0, phase_mod), 2.0)],
-                1.0,
-                1.0,
-                Easing::Linear,
-            ),
-            m.controls.get("wave1_y"),
-            m.controls.get("wave2_y"),
-        ],
-        c: [
-            0.0,
-            m.controls.get("type_mix"),
-            0.0,
-            m.controls.get("checker"),
-        ],
-        d: [
-            m.controls.get("curve_x"),
-            m.controls.get("curve_y"),
-            m.controls.get("wave_distort"),
-            0.0, // smoothing
-        ],
-        e: [
-            m.controls.get("wave1_amp"),
-            m.controls.get("wave2_amp"),
-            0.0,
-            0.0,
-        ],
-    };
+                0.0,
+            ],
+            a: [
+                self.controls.get("wave1_freq"),
+                0.0, // wave1_angle
+                self.controls.get("wave2_freq"),
+                0.25, // wave2_angle
+            ],
+            b: [
+                self.animation.r_ramp(
+                    &[kfr((0.0, phase_mod), 2.0)],
+                    0.0,
+                    1.0,
+                    Easing::Linear,
+                ),
+                self.animation.r_ramp(
+                    &[kfr((0.0, phase_mod), 2.0)],
+                    1.0,
+                    1.0,
+                    Easing::Linear,
+                ),
+                self.controls.get("wave1_y"),
+                self.controls.get("wave2_y"),
+            ],
+            c: [
+                0.0,
+                self.controls.get("type_mix"),
+                0.0,
+                self.controls.get("checker"),
+            ],
+            d: [
+                self.controls.get("curve_x"),
+                self.controls.get("curve_y"),
+                self.controls.get("wave_distort"),
+                0.0, // smoothing
+            ],
+            e: [
+                self.controls.get("wave1_amp"),
+                self.controls.get("wave2_amp"),
+                0.0,
+                0.0,
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

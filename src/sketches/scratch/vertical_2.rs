@@ -14,15 +14,15 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
+#[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.2, 0.8, 0.5)")]
-pub struct Model {
+pub struct Vertical2 {
     controls: Controls,
     background_color: Rgba,
     noise: SimplexNoise,
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> Vertical2 {
     let controls = Controls::new(vec![Control::slider(
         "alpha",
         0.25,
@@ -30,55 +30,54 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         0.001,
     )]);
 
-    Model {
+    Vertical2 {
         controls,
         background_color: hsla(0.0, 0.2, 0.8, 0.5).into(),
         noise: SimplexNoise::new(random::<u32>() * 10_000),
     }
 }
 
-pub fn update(_app: &App, _model: &mut Model, _update: Update) {}
+impl Sketch for Vertical2 {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
 
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let window_rect = app
-        .window(frame.window_id())
-        .expect("Unable to get window")
-        .rect();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let window_rect = ctx.window_rect();
 
-    let w = window_rect.w();
-    let h = window_rect.h();
-    let hh = h / 2.0;
+        let w = window_rect.w();
+        let h = window_rect.h();
+        let hh = h / 2.0;
 
-    let draw = app.draw();
+        let draw = app.draw();
 
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(w, h)
-        .color(model.background_color);
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(w, h)
+            .color(self.background_color);
 
-    let alpha = model.controls.float("alpha");
-    let size = 1.0;
-    let params = vec![
-        (0.005, 10.0),
-        (0.03, 12.0),
-        (0.07, 14.0),
-        (0.115, 16.0),
-        (0.26, 18.0),
-    ];
+        let alpha = self.controls.float("alpha");
+        let size = 1.0;
+        let params = vec![
+            (0.005, 10.0),
+            (0.03, 12.0),
+            (0.07, 14.0),
+            (0.115, 16.0),
+            (0.26, 18.0),
+        ];
 
-    for (ns, amp) in params.iter() {
-        for y in (-hh as i32..=hh as i32).rev() {
-            let y = y as f32;
+        for (ns, amp) in params.iter() {
+            for y in (-hh as i32..=hh as i32).rev() {
+                let y = y as f32;
 
-            for i in 1..=*amp as i32 {
-                let i = i as f32;
-                let amp = y / (amp - i as f32);
-                let x = model.noise.get([i * ns, y * ns]) * amp;
-                let color = hsla(0.0, 0.0, 0.0, alpha);
-                draw.rect().x_y(x, y).w_h(size, size).color(color);
+                for i in 1..=*amp as i32 {
+                    let i = i as f32;
+                    let amp = y / (amp - i as f32);
+                    let x = self.noise.get([i * ns, y * ns]) * amp;
+                    let color = hsla(0.0, 0.0, 0.0, alpha);
+                    draw.rect().x_y(x, y).w_h(size, size).color(color);
+                }
             }
         }
-    }
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

@@ -20,8 +20,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Displacement1 {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
     animation: Animation<FrameTiming>,
@@ -30,12 +30,12 @@ pub struct Model {
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1 {
     let w = SKETCH_CONFIG.w;
     let h = SKETCH_CONFIG.h;
     let grid_w = w as f32 - 80.0;
     let grid_h = h as f32 - 80.0;
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
 
     let controls = Controls::new(vec![
         Control::slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001),
@@ -51,7 +51,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         None,
     )];
 
-    Model {
+    Displacement1 {
         grid: create_grid(grid_w, grid_h, GRID_SIZE, vec2).0,
         displacer_configs,
         animation,
@@ -64,110 +64,114 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let circle_radius_min = model.controls.float("circle_radius_min");
-    let circle_radius_max = model.controls.float("circle_radius_max");
-    let radius = model.controls.float("displacer_radius");
-    let strength = model.controls.float("displacer_strength");
-    let gradient_spread = model.controls.float("gradient_spread");
+impl Sketch for Displacement1 {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        let circle_radius_min = self.controls.float("circle_radius_min");
+        let circle_radius_max = self.controls.float("circle_radius_max");
+        let radius = self.controls.float("displacer_radius");
+        let strength = self.controls.float("displacer_strength");
+        let gradient_spread = self.controls.float("gradient_spread");
 
-    for config in &mut model.displacer_configs {
-        config.update(&model.animation, &model.controls);
-        config.displacer.set_strength(strength);
-        config.displacer.set_radius(radius);
+        for config in &mut self.displacer_configs {
+            config.update(&self.animation, &self.controls);
+            config.displacer.set_strength(strength);
+            config.displacer.set_radius(radius);
+        }
+
+        let max_mag = self.displacer_configs.len() as f32 * strength;
+        let gradient = &self.gradient;
+
+        self.ellipses = self
+            .grid
+            .par_iter()
+            .map(|point| {
+                // Initialize accumulators for total displacement and influence
+                // These track the combined effect of all displacers on this point
+                let mut total_displacement = vec2(0.0, 0.0);
+                let mut total_influence = 0.0;
+
+                // First pass: Calculate displacements and influences from all displacers
+                // Store these for later use in color calculations
+                let displacements: Vec<(Vec2, f32)> = self
+                    .displacer_configs
+                    .iter()
+                    .map(|config| {
+                        // Calculate how this displacer affects the current point
+                        let displacement = config.displacer.influence(*point);
+                        // Get the magnitude of the displacement as influence
+                        let influence = displacement.length();
+
+                        // Add to running totals
+                        total_displacement += displacement; // Accumulate the vector displacement
+                        total_influence += influence; // Accumulate the scalar influence
+
+                        // Return both for use in color calculation
+                        (displacement, influence)
+                    })
+                    .collect();
+
+                // Initialize vector to store color contributions from each displacer
+                let mut colors: Vec<(LinSrgb, f32)> = Vec::new();
+
+                // Second pass: Calculate color contribution from each displacer
+                for (index, config) in self.displacer_configs.iter().enumerate()
+                {
+                    let (_displacement, influence) = displacements[index];
+
+                    // Calculate color position in gradient based on relative influence
+                    // Higher influence = more intense color
+                    let color_position = (influence
+                        / config.displacer.strength)
+                        .powf(gradient_spread) // Apply non-linear scaling from UI control
+                        .clamp(0.0, 1.0); // Ensure we stay within gradient bounds
+
+                    // Get the color from our gradient at this position
+                    let color = gradient.get(color_position);
+
+                    // Calculate how much this displacer's color should contribute
+                    // based on its influence relative to total influence
+                    let weight = influence / total_influence.max(1.0);
+
+                    colors.push((color, weight));
+                }
+
+                // Blend all colors together based on their weights
+                // Starting with the base gradient color (position 0.0)
+                let blended_color = colors
+                    .iter()
+                    .fold(gradient.get(0.0), |acc, (color, weight)| {
+                        acc.mix(color, *weight)
+                    });
+
+                let radius = map_range(
+                    total_displacement.length(),
+                    0.0,
+                    max_mag,
+                    circle_radius_min,
+                    circle_radius_max,
+                );
+
+                (*point + total_displacement, radius, blended_color)
+            })
+            .collect();
     }
 
-    let max_mag = model.displacer_configs.len() as f32 * strength;
-    let gradient = &model.gradient;
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let draw = app.draw();
 
-    model.ellipses = model
-        .grid
-        .par_iter()
-        .map(|point| {
-            // Initialize accumulators for total displacement and influence
-            // These track the combined effect of all displacers on this point
-            let mut total_displacement = vec2(0.0, 0.0);
-            let mut total_influence = 0.0;
+        draw.background().color(hsl(0.0, 0.0, 0.02));
 
-            // First pass: Calculate displacements and influences from all displacers
-            // Store these for later use in color calculations
-            let displacements: Vec<(Vec2, f32)> = model
-                .displacer_configs
-                .iter()
-                .map(|config| {
-                    // Calculate how this displacer affects the current point
-                    let displacement = config.displacer.influence(*point);
-                    // Get the magnitude of the displacement as influence
-                    let influence = displacement.length();
+        for (position, radius, color) in &self.ellipses {
+            draw.ellipse()
+                .no_fill()
+                .stroke(*color)
+                .stroke_weight(0.5)
+                .radius(*radius)
+                .xy(*position);
+        }
 
-                    // Add to running totals
-                    total_displacement += displacement; // Accumulate the vector displacement
-                    total_influence += influence; // Accumulate the scalar influence
-
-                    // Return both for use in color calculation
-                    (displacement, influence)
-                })
-                .collect();
-
-            // Initialize vector to store color contributions from each displacer
-            let mut colors: Vec<(LinSrgb, f32)> = Vec::new();
-
-            // Second pass: Calculate color contribution from each displacer
-            for (index, config) in model.displacer_configs.iter().enumerate() {
-                let (_displacement, influence) = displacements[index];
-
-                // Calculate color position in gradient based on relative influence
-                // Higher influence = more intense color
-                let color_position = (influence / config.displacer.strength)
-                    .powf(gradient_spread) // Apply non-linear scaling from UI control
-                    .clamp(0.0, 1.0); // Ensure we stay within gradient bounds
-
-                // Get the color from our gradient at this position
-                let color = gradient.get(color_position);
-
-                // Calculate how much this displacer's color should contribute
-                // based on its influence relative to total influence
-                let weight = influence / total_influence.max(1.0);
-
-                colors.push((color, weight));
-            }
-
-            // Blend all colors together based on their weights
-            // Starting with the base gradient color (position 0.0)
-            let blended_color = colors
-                .iter()
-                .fold(gradient.get(0.0), |acc, (color, weight)| {
-                    acc.mix(color, *weight)
-                });
-
-            let radius = map_range(
-                total_displacement.length(),
-                0.0,
-                max_mag,
-                circle_radius_min,
-                circle_radius_max,
-            );
-
-            (*point + total_displacement, radius, blended_color)
-        })
-        .collect();
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.background().color(hsl(0.0, 0.0, 0.02));
-
-    for (position, radius, color) in &model.ellipses {
-        draw.ellipse()
-            .no_fill()
-            .stroke(*color)
-            .stroke_weight(0.5)
-            .radius(*radius)
-            .xy(*position);
+        draw.to_frame(app, &frame).unwrap();
     }
-
-    draw.to_frame(app, &frame).unwrap();
 }
 
 type AnimationFn<R> = Option<

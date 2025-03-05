@@ -21,8 +21,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct PerlinLoop {
     #[allow(dead_code)]
     animation: Animation<FrameTiming>,
     controls: Controls,
@@ -30,8 +30,9 @@ pub struct Model {
     last_seed: u32,
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, _ctx: &LatticeContext) -> PerlinLoop {
+    let animation =
+        Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let controls = Controls::new(vec![
         Control::checkbox("rotate", false),
@@ -47,7 +48,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     let noise = Perlin::new();
     let last_seed = noise.seed();
 
-    Model {
+    PerlinLoop {
         animation,
         controls,
         noise,
@@ -55,58 +56,55 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let seed = model.controls.float("seed") as u32;
-    if seed != model.last_seed {
-        model.noise = model.noise.set_seed(seed);
-        model.last_seed = seed;
-    }
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let _window_rect = app
-        .window(frame.window_id())
-        .expect("Unable to get window")
-        .rect();
-
-    let draw = app.draw();
-    draw.background().hsl(0.0, 0.0, 0.03);
-
-    let circle_radius = model.controls.float("circle_radius");
-    let max_rect_length = model.controls.float("max_rect_length");
-    let rect_width = model.controls.float("rect_width");
-    let noise_scale = model.controls.float("noise_scale");
-    let angle_resolution = model.controls.float("angle_resolution");
-    let time_x = model.controls.float("time_x");
-    let angle_increment = PI / angle_resolution;
-    let total_segments = (360.0 / angle_increment) as i32;
-
-    let draw_rotated = draw.rotate(if model.controls.bool("rotate") {
-        model.animation.loop_phase(32.0) * PI * 2.0
-    } else {
-        0.0
-    });
-
-    for i in 0..total_segments {
-        let current_angle = i as f32 * angle_increment;
-        let noise_x = (current_angle.cos() + 1.0) * noise_scale;
-        let noise_y = (current_angle.sin() + 1.0) * noise_scale;
-        let noise_value = model.noise.get([
-            noise_x as f64,
-            noise_y as f64,
-            (app.time * time_x) as f64,
-        ]) as f32;
-        let rect_length = (noise_value + 1.0) * (max_rect_length / 2.0);
-        draw_rotated
-            .rect()
-            .color(BEIGE)
-            .x_y(
-                circle_radius * current_angle.cos(),
-                circle_radius * current_angle.sin(),
-            )
-            .w_h(rect_length, rect_width)
-            .rotate(current_angle);
+impl Sketch for PerlinLoop {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        let seed = self.controls.float("seed") as u32;
+        if seed != self.last_seed {
+            self.noise = self.noise.set_seed(seed);
+            self.last_seed = seed;
+        }
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let draw = app.draw();
+        draw.background().hsl(0.0, 0.0, 0.03);
+
+        let circle_radius = self.controls.float("circle_radius");
+        let max_rect_length = self.controls.float("max_rect_length");
+        let rect_width = self.controls.float("rect_width");
+        let noise_scale = self.controls.float("noise_scale");
+        let angle_resolution = self.controls.float("angle_resolution");
+        let time_x = self.controls.float("time_x");
+        let angle_increment = PI / angle_resolution;
+        let total_segments = (360.0 / angle_increment) as i32;
+
+        let draw_rotated = draw.rotate(if self.controls.bool("rotate") {
+            self.animation.loop_phase(32.0) * PI * 2.0
+        } else {
+            0.0
+        });
+
+        for i in 0..total_segments {
+            let current_angle = i as f32 * angle_increment;
+            let noise_x = (current_angle.cos() + 1.0) * noise_scale;
+            let noise_y = (current_angle.sin() + 1.0) * noise_scale;
+            let noise_value = self.noise.get([
+                noise_x as f64,
+                noise_y as f64,
+                (app.time * time_x) as f64,
+            ]) as f32;
+            let rect_length = (noise_value + 1.0) * (max_rect_length / 2.0);
+            draw_rotated
+                .rect()
+                .color(BEIGE)
+                .x_y(
+                    circle_radius * current_angle.cos(),
+                    circle_radius * current_angle.sin(),
+                )
+                .w_h(rect_length, rect_width)
+                .rotate(current_angle);
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

@@ -15,16 +15,17 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Vertical {
     animation: Animation<FrameTiming>,
     controls: Controls,
     lines: Vec<Vec<Point2>>,
     patterns: Vec<XModFn>,
 }
 
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, _ctx: &LatticeContext) -> Vertical {
+    let animation =
+        Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 
@@ -101,7 +102,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
 
     let lines = Vec::with_capacity(controls.float("n_lines") as usize);
 
-    Model {
+    Vertical {
         animation,
         controls,
         lines,
@@ -109,83 +110,89 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let w = SKETCH_CONFIG.w as f32;
-    let h = SKETCH_CONFIG.h as f32;
-    let n_lines = model.controls.float("n_lines") as usize;
-    let a = model.controls.float("amplitude");
-    let f = model.controls.float("frequency");
+impl Sketch for Vertical {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        let w = SKETCH_CONFIG.w as f32;
+        let h = SKETCH_CONFIG.h as f32;
+        let n_lines = self.controls.float("n_lines") as usize;
+        let a = self.controls.float("amplitude");
+        let f = self.controls.float("frequency");
 
-    let params = XModParams {
-        line_scaling: model.controls.float("x_line_scaling"),
-        phase_shift: model.controls.float("x_phase_shift"),
-        harmonic_ratio: model.controls.float("x_harmonic_ratio"),
-        distance_scaling: model.controls.float("x_distance_scaling"),
-        complexity: model.controls.float("x_complexity"),
-    };
+        let params = XModParams {
+            line_scaling: self.controls.float("x_line_scaling"),
+            phase_shift: self.controls.float("x_phase_shift"),
+            harmonic_ratio: self.controls.float("x_harmonic_ratio"),
+            distance_scaling: self.controls.float("x_distance_scaling"),
+            complexity: self.controls.float("x_complexity"),
+        };
 
-    model.lines = Vec::new();
-    let step = w / n_lines as f32;
-    let start_x = -(w / 2.0) + (step / 2.0);
-    let n_points = SKETCH_CONFIG.h as usize / 2;
+        self.lines = Vec::new();
+        let step = w / n_lines as f32;
+        let start_x = -(w / 2.0) + (step / 2.0);
+        let n_points = SKETCH_CONFIG.h as usize / 2;
 
-    for i in 0..n_lines {
-        let x = start_x + i as f32 * step;
-        let mut points = Vec::new();
+        for i in 0..n_lines {
+            let x = start_x + i as f32 * step;
+            let mut points = Vec::new();
 
-        for j in 0..n_points {
-            let y = map_range(j, 0, n_points - 1, -h / 2.0, h / 2.0);
+            for j in 0..n_points {
+                let y = map_range(j, 0, n_points - 1, -h / 2.0, h / 2.0);
 
-            let x = match model.controls.string("mode").as_str() {
-                "multi_lerp" => {
-                    let values = model
-                        .patterns
-                        .iter()
-                        .map(|func| {
-                            func(x, y, i as f32, a, f, n_lines as f32, &params)
-                        })
-                        .collect::<Vec<f32>>();
+                let x = match self.controls.string("mode").as_str() {
+                    "multi_lerp" => {
+                        let values = self
+                            .patterns
+                            .iter()
+                            .map(|func| {
+                                func(
+                                    x,
+                                    y,
+                                    i as f32,
+                                    a,
+                                    f,
+                                    n_lines as f32,
+                                    &params,
+                                )
+                            })
+                            .collect::<Vec<f32>>();
 
-                    multi_lerp(&values, model.animation.tri(24.0))
-                }
-                _ => {
-                    let func =
-                        XMods::func_by_name(model.controls.string("mode"));
-                    func(x, y, i as f32, a, f, n_lines as f32, &params)
-                }
-            };
+                        multi_lerp(&values, self.animation.tri(24.0))
+                    }
+                    _ => {
+                        let func =
+                            XMods::func_by_name(self.controls.string("mode"));
+                        func(x, y, i as f32, a, f, n_lines as f32, &params)
+                    }
+                };
 
-            points.push(pt2(x, y));
+                points.push(pt2(x, y));
+            }
+
+            self.lines.push(points);
+        }
+    }
+
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let window_rect = ctx.window_rect();
+        let draw = app.draw();
+
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(window_rect.w(), window_rect.h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
+
+        let zoomed_draw = draw.scale(self.controls.float("scale"));
+
+        for (_, line) in self.lines.iter().enumerate() {
+            zoomed_draw
+                .polyline()
+                .weight(self.controls.float("weight"))
+                .points(line.iter().cloned())
+                .color(hsla(0.4, 0.0, 0.0, 0.9));
         }
 
-        model.lines.push(points);
+        draw.to_frame(app, &frame).unwrap();
     }
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let window_rect = app
-        .window(frame.window_id())
-        .expect("Unable to get window")
-        .rect();
-
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(window_rect.w(), window_rect.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let zoomed_draw = draw.scale(model.controls.float("scale"));
-
-    for (_, line) in model.lines.iter().enumerate() {
-        zoomed_draw
-            .polyline()
-            .weight(model.controls.float("weight"))
-            .points(line.iter().cloned())
-            .color(hsla(0.4, 0.0, 0.0, 0.9));
-    }
-
-    draw.to_frame(app, &frame).unwrap();
 }
 
 pub fn disabled_unless_modes(modes: Vec<String>) -> impl Fn(&Controls) -> bool {

@@ -18,15 +18,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct SandLineSketch {
     controls: Controls,
-    wr: WindowRect,
     ref_line: Vec<Vec2>,
     sand_line: Vec<Vec2>,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLineSketch {
     let disable_octave =
         |controls: &Controls| controls.string("noise_strategy") != "Octave";
 
@@ -82,112 +81,117 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         Control::slide("alpha", 0.5),
     ]);
 
-    Model {
+    SandLineSketch {
         controls,
-        wr,
         ref_line: vec![],
         sand_line: vec![],
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    if m.controls.changed() {
-        let noise_strategy = m.controls.string("noise_strategy");
-        let distribution_strategy = m.controls.string("distribution_strategy");
+impl Sketch for SandLineSketch {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        if self.controls.changed() {
+            let noise_strategy = self.controls.string("noise_strategy");
+            let distribution_strategy =
+                self.controls.string("distribution_strategy");
 
-        let noise_scale = m.controls.float("noise_scale");
-        let noise_octaves = m.controls.float("noise_octaves");
-        let noise_persistence = m.controls.float("noise_persistence");
+            let noise_scale = self.controls.float("noise_scale");
+            let noise_octaves = self.controls.float("noise_octaves");
+            let noise_persistence = self.controls.float("noise_persistence");
 
-        let angle_variation = m.controls.float("angle_variation");
-        let points_per_segment = m.controls.float("points_per_segment");
-        let passes = m.controls.float("passes");
-        let curvature = m.controls.float("curvature");
-        let trig_fn_a = m.controls.string("trig_fn_a");
-        let trig_fn_b = m.controls.string("trig_fn_b");
+            let angle_variation = self.controls.float("angle_variation");
+            let points_per_segment = self.controls.float("points_per_segment");
+            let passes = self.controls.float("passes");
+            let curvature = self.controls.float("curvature");
+            let trig_fn_a = self.controls.string("trig_fn_a");
+            let trig_fn_b = self.controls.string("trig_fn_b");
 
-        if m.controls.any_changed_in(&[
-            "ref_segments",
-            "ref_deviation",
-            "ref_smooth",
-        ]) {
-            let ref_segments = m.controls.float("ref_segments");
-            let ref_deviation = m.controls.float("ref_deviation");
-            let ref_smooth = m.controls.float("ref_smooth");
+            let wr = ctx.window_rect();
 
-            let pad = m.wr.w() / 32.0;
-            let start = vec2(-m.wr.hw() + pad, 0.0);
-            let end = vec2(m.wr.hw() - pad, 0.0);
+            if self.controls.any_changed_in(&[
+                "ref_segments",
+                "ref_deviation",
+                "ref_smooth",
+            ]) {
+                let ref_segments = self.controls.float("ref_segments");
+                let ref_deviation = self.controls.float("ref_deviation");
+                let ref_smooth = self.controls.float("ref_smooth");
 
-            m.ref_line = reference_line(
-                start,
-                end,
-                ref_segments as usize,
-                ref_deviation,
-                ref_smooth as usize,
+                let pad = wr.w() / 32.0;
+                let start = vec2(-wr.hw() + pad, 0.0);
+                let end = vec2(wr.hw() - pad, 0.0);
+
+                self.ref_line = reference_line(
+                    start,
+                    end,
+                    ref_segments as usize,
+                    ref_deviation,
+                    ref_smooth as usize,
+                );
+            }
+
+            let sand_line = SandLine::new(
+                match noise_strategy.as_str() {
+                    "Octave" => Box::new(OctaveNoise::new(
+                        noise_octaves as u32,
+                        noise_persistence,
+                    )),
+                    _ => Box::new(GaussianNoise {}),
+                },
+                match distribution_strategy.as_str() {
+                    "Curved" => Box::new(CurvedDistribution::new(curvature)),
+                    "TrigFn" => Box::new(TrigFnDistribution::new(
+                        curvature,
+                        *trig_fn_lookup().get(trig_fn_a.as_str()).unwrap(),
+                        *trig_fn_lookup().get(trig_fn_b.as_str()).unwrap(),
+                    )),
+                    _ => Box::new(PerpendicularDistribution),
+                },
             );
-        }
 
-        let sand_line = SandLine::new(
-            match noise_strategy.as_str() {
-                "Octave" => Box::new(OctaveNoise::new(
-                    noise_octaves as u32,
-                    noise_persistence,
-                )),
-                _ => Box::new(GaussianNoise {}),
-            },
-            match distribution_strategy.as_str() {
-                "Curved" => Box::new(CurvedDistribution::new(curvature)),
-                "TrigFn" => Box::new(TrigFnDistribution::new(
-                    curvature,
-                    *trig_fn_lookup().get(trig_fn_a.as_str()).unwrap(),
-                    *trig_fn_lookup().get(trig_fn_b.as_str()).unwrap(),
-                )),
-                _ => Box::new(PerpendicularDistribution),
-            },
-        );
+            self.sand_line = sand_line.generate(
+                &self.ref_line,
+                noise_scale,
+                points_per_segment as usize,
+                angle_variation,
+                passes as usize,
+            );
 
-        m.sand_line = sand_line.generate(
-            &m.ref_line,
-            noise_scale,
-            points_per_segment as usize,
-            angle_variation,
-            passes as usize,
-        );
-
-        m.controls.mark_unchanged();
-    }
-}
-
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let alpha = m.controls.float("alpha");
-    let show_ref_line = m.controls.bool("show_ref_line");
-    let show_sand_line = m.controls.bool("show_sand_line");
-
-    if show_sand_line {
-        for point in &m.sand_line {
-            draw.rect()
-                .xy(*point)
-                .w_h(1.0, 1.0)
-                .color(hsla(0.0, 0.0, 0.0, alpha));
+            self.controls.mark_unchanged();
         }
     }
 
-    if show_ref_line {
-        draw.polyline()
-            .weight(2.0)
-            .points(m.ref_line.iter().cloned())
-            .color(rgba(0.33, 0.45, 0.9, 1.0));
-    }
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
+        let wr = ctx.window_rect();
 
-    draw.to_frame(app, &frame).unwrap();
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
+
+        let alpha = self.controls.float("alpha");
+        let show_ref_line = self.controls.bool("show_ref_line");
+        let show_sand_line = self.controls.bool("show_sand_line");
+
+        if show_sand_line {
+            for point in &self.sand_line {
+                draw.rect()
+                    .xy(*point)
+                    .w_h(1.0, 1.0)
+                    .color(hsla(0.0, 0.0, 0.0, alpha));
+            }
+        }
+
+        if show_ref_line {
+            draw.polyline()
+                .weight(2.0)
+                .points(self.ref_line.iter().cloned())
+                .color(rgba(0.33, 0.45, 0.9, 1.0));
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 fn reference_line(

@@ -14,12 +14,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct FullscreenShader {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -33,13 +32,15 @@ struct ShaderParams {
     a: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::select("mode", "smooth", &["smooth", "step"]),
         Control::slide("radius", 0.5),
     ]);
+
+    let wr = ctx.window_rect();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -54,33 +55,36 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    FullscreenShader {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            match m.controls.string("mode").as_str() {
-                "smooth" => 0.0,
-                "step" => 1.0,
-                _ => unreachable!(),
-            },
-            m.controls.float("radius"),
-            0.0,
-            0.0,
-        ],
-    };
+impl Sketch for FullscreenShader {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                match self.controls.string("mode").as_str() {
+                    "smooth" => 0.0,
+                    "step" => 1.0,
+                    _ => unreachable!(),
+                },
+                self.controls.float("radius"),
+                0.0,
+                0.0,
+            ],
+        };
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

@@ -16,36 +16,26 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct G25_2Layers {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
-    // w, h ..unused
     resolution: [f32; 4],
-
-    // constrast, smooth_mix, time, time_2
-    a: [f32; 4],
-
-    // t1, t2, t3, post_mix
-    b: [f32; 4],
-
-    // r1, r2, r3, unused
-    c: [f32; 4],
-
-    // g1, g2, g3, unused
-    d: [f32; 4],
+    a: [f32; 4], // contrast, smooth_mix, time, time_2
+    b: [f32; 4], // t1, t2, t3, post_mix
+    c: [f32; 4], // r1, r2, r3, unused
+    d: [f32; 4], // g1, g2, g3, unused
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> G25_2Layers {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let disable = |_controls: &Controls| true;
 
@@ -61,87 +51,95 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     ]);
 
     let params = ShaderParams {
-        resolution: [0.0, 0.0, 0.0, 0.0],
-        a: [0.0, 0.0, 0.0, 0.0],
-        b: [0.0, 0.0, 0.0, 0.0],
-        c: [0.0, 0.0, 0.0, 0.0],
-        d: [0.0, 0.0, 0.0, 0.0],
+        resolution: [0.0; 4],
+        a: [0.0; 4],
+        b: [0.0; 4],
+        c: [0.0; 4],
+        d: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_2_layers.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    G25_2Layers {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let time = 8.0;
-    let kfs = [kfr((0.0, 1.0), time)];
+impl Sketch for G25_2Layers {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let time = 8.0;
+        let kfs = [kfr((0.0, 1.0), time)];
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("contrast"),
-            m.controls.float("smooth_mix"),
-            m.animation.tri(8.0),
-            m.animation.tri(12.0),
-        ],
-        b: [
-            m.animation.r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
-            m.animation.r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
-            m.animation.r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
-            m.controls.float("post_mix"),
-        ],
-        c: [
-            m.animation.r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
-            m.animation.r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
-            m.animation.r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
-            0.0,
-        ],
-        d: [
-            // m.controls.float("g1"),
-            // m.controls.float("g2"),
-            // m.controls.float("g3"),
-            // ---
-            2.0,
-            m.animation.lrp(
-                &[
-                    kf(2.0, 4.0),  // stay
-                    kf(2.0, 4.0),  // transition
-                    kf(3.0, 24.0), // stay
-                    kf(3.0, 6.0),  // transition
-                ],
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("contrast"),
+                self.controls.float("smooth_mix"),
+                self.animation.tri(8.0),
+                self.animation.tri(12.0),
+            ],
+            b: [
+                self.animation
+                    .r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
+                self.animation
+                    .r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
+                self.animation
+                    .r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
+                self.controls.float("post_mix"),
+            ],
+            c: [
+                self.animation
+                    .r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
+                self.animation
+                    .r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
+                self.animation
+                    .r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
                 0.0,
-            ),
-            m.animation.lrp(
-                &[
-                    kf(2.0, 4.0), // stay
-                    kf(2.0, 4.0), // transition
-                    kf(4.0, 8.0), // stay
-                    kf(4.0, 8.0), // transition
-                    kf(8.0, 8.0), // stay
-                    kf(8.0, 6.0), // transition
-                ],
+            ],
+            d: [
+                2.0,
+                self.animation.lrp(
+                    &[
+                        kf(2.0, 4.0),  // stay
+                        kf(2.0, 4.0),  // transition
+                        kf(3.0, 24.0), // stay
+                        kf(3.0, 6.0),  // transition
+                    ],
+                    0.0,
+                ),
+                self.animation.lrp(
+                    &[
+                        kf(2.0, 4.0), // stay
+                        kf(2.0, 4.0), // transition
+                        kf(4.0, 8.0), // stay
+                        kf(4.0, 8.0), // transition
+                        kf(8.0, 8.0), // stay
+                        kf(8.0, 6.0), // transition
+                    ],
+                    0.0,
+                ),
                 0.0,
-            ),
-            0.0,
-        ],
-    };
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

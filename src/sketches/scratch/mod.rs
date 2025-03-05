@@ -3,7 +3,6 @@ pub mod chromatic_aberration;
 pub mod displacement_1;
 pub mod displacement_1a;
 pub mod displacement_2;
-pub mod lin_alg;
 pub mod lines;
 pub mod noise;
 pub mod perlin_loop;

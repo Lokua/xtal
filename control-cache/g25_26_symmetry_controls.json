@@ -1,64 +1,64 @@
 {
   "values": {
-    "signal_steps": {
-      "Float": 0.072
+    "c86t3": {
+      "Bool": false
     },
-    "e3": {
-      "Float": 0.0
+    "8rwb2": {
+      "Bool": false
     },
     "fractal_grid_scale": {
-      "Float": 0.597
+      "Float": 0.867
     },
-    "ss255": {
+    "370jo": {
       "Bool": false
     },
-    "64qx0": {
+    "33lb0": {
       "Bool": false
-    },
-    "fractal_color_scale": {
-      "Float": 0.445
-    },
-    "e4": {
-      "Float": 0.0
     },
     "wave_scale": {
-      "Float": 0.096999995
-    },
-    "my3p0": {
-      "Bool": false
+      "Float": 0.055
     },
     "fractal_count": {
       "Float": 0.275
     },
-    "wave_freq": {
-      "Float": 0.085
-    },
-    "afaxn": {
-      "Bool": false
-    },
-    "mask_falloff": {
-      "Float": 0.742
-    },
-    "66zue": {
-      "Bool": false
-    },
-    "wave_y": {
-      "Float": 0.044999998
-    },
-    "signal_mix": {
-      "Float": 1.0
-    },
-    "distort_mix": {
-      "Float": 0.047
-    },
     "fractal_scale": {
-      "Float": 0.145
+      "Float": 0.305
+    },
+    "fractal_mix": {
+      "Float": 0.0
+    },
+    "e3": {
+      "Float": 0.0
+    },
+    "86l4i": {
+      "Bool": false
     },
     "fractal_grid_mix": {
       "Float": 0.0
     },
-    "fractal_mix": {
+    "wave_freq": {
+      "Float": 0.14999999
+    },
+    "signal_steps": {
+      "Float": 0.06
+    },
+    "fractal_color_scale": {
+      "Float": 0.53999996
+    },
+    "distort_mix": {
+      "Float": 0.074999996
+    },
+    "signal_mix": {
+      "Float": 1.0
+    },
+    "e4": {
       "Float": 0.0
+    },
+    "wave_y": {
+      "Float": 0.095
+    },
+    "mask_falloff": {
+      "Float": 1.0
     }
   }
 }

@@ -17,17 +17,17 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 32;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
-    window_rect: WindowRect,
+#[derive(SketchComponents)]
+pub struct ZSim {
     controls: Controls,
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
 
-pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let window_rect = ctx.window_rect();
 
     let (grid, cell_size) =
         create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);
@@ -38,8 +38,7 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
         Control::slider("depth_influence", 1.0, (0.0, 5.0), 0.1),
     ]);
 
-    Model {
-        window_rect,
+    ZSim {
         controls,
         animation,
         grid,
@@ -47,74 +46,77 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    if model.window_rect.changed() {
-        (model.grid, model.cell_size) = create_grid(
-            model.window_rect.w(),
-            model.window_rect.h(),
-            GRID_SIZE,
-            vec2,
-        );
-        model.window_rect.mark_unchanged();
+impl Sketch for ZSim {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let mut wr = ctx.window_rect();
+
+        if wr.changed() {
+            let window_rect = ctx.window_rect();
+            (self.grid, self.cell_size) =
+                create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);
+
+            wr.mark_unchanged();
+        }
     }
-}
 
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(model.window_rect.w(), model.window_rect.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let hw = model.window_rect.w() / 2.0;
-    let hh = model.window_rect.h() / 2.0;
-    let cell_size = model.cell_size * model.controls.float("size_mult");
-    let alpha = model.controls.float("alpha");
-    let depth_influence = model.controls.float("depth_influence");
-    let max_possible_dist = hw.max(hh);
-
-    let center = vec2(
-        model.animation.r_ramp(
-            &[kfr((-hw, hw), 2.0)],
-            0.0,
-            1.0,
-            Easing::Linear,
-        ),
-        model.animation.r_ramp(
-            &[kfr((-hh, hh), 1.0)],
-            0.0,
-            0.5,
-            Easing::Linear,
-        ),
-    );
-
-    for point in model.grid.iter() {
-        let dist_from_center = point.distance(center);
-        let depth = 1.0
-            - (dist_from_center / max_possible_dist).clamp(0.0, 1.0)
-                * depth_influence;
-
-        // Modify size based on depth
-        // Further objects are smaller
-        let depth_adjusted_size = cell_size * (0.5 + depth);
-
-        // Modify color based on depth
-        // Further objects are darker
-        let color_intensity = 0.3 + (depth * 0.7);
-        let depth_color = rgba(
-            255.0 * color_intensity,
-            0.0,
-            0.0,
-            // Further objects more transparent
-            alpha * (0.3 + depth * 0.7),
-        );
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
+        let wr = ctx.window_rect();
 
         draw.rect()
-            .xy(*point)
-            .w_h(depth_adjusted_size, depth_adjusted_size)
-            .color(depth_color);
-    }
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
 
-    draw.to_frame(app, &frame).unwrap();
+        let hw = wr.w() / 2.0;
+        let hh = wr.h() / 2.0;
+        let cell_size = self.cell_size * self.controls.float("size_mult");
+        let alpha = self.controls.float("alpha");
+        let depth_influence = self.controls.float("depth_influence");
+        let max_possible_dist = hw.max(hh);
+
+        let center = vec2(
+            self.animation.r_ramp(
+                &[kfr((-hw, hw), 2.0)],
+                0.0,
+                1.0,
+                Easing::Linear,
+            ),
+            self.animation.r_ramp(
+                &[kfr((-hh, hh), 1.0)],
+                0.0,
+                0.5,
+                Easing::Linear,
+            ),
+        );
+
+        for point in self.grid.iter() {
+            let dist_from_center = point.distance(center);
+            let depth = 1.0
+                - (dist_from_center / max_possible_dist).clamp(0.0, 1.0)
+                    * depth_influence;
+
+            // Modify size based on depth
+            // Further objects are smaller
+            let depth_adjusted_size = cell_size * (0.5 + depth);
+
+            // Modify color based on depth
+            // Further objects are darker
+            let color_intensity = 0.3 + (depth * 0.7);
+            let depth_color = rgba(
+                255.0 * color_intensity,
+                0.0,
+                0.0,
+                // Further objects more transparent
+                alpha * (0.3 + depth * 0.7),
+            );
+
+            draw.rect()
+                .xy(*point)
+                .w_h(depth_adjusted_size, depth_adjusted_size)
+                .color(depth_color);
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

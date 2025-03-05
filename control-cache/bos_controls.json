@@ -1,18 +1,10 @@
 {
-  "controls": [
-    {
-      "Slider": {
-        "name": "a",
-        "value": 0.5,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    }
-  ],
   "values": {
+    "b": {
+      "Float": 0.5
+    },
     "a": {
-      "Float": 0.42499998
+      "Float": 0.41
     }
   }
 }

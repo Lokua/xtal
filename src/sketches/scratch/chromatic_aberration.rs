@@ -17,17 +17,20 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 8;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
-    window_rect: WindowRect,
+#[derive(SketchComponents)]
+pub struct Template {
     controls: Controls,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
 
-pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
-    let (grid, cell_size) =
-        create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);
+pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
+    let (grid, cell_size) = create_grid(
+        ctx.window_rect().w(),
+        ctx.window_rect().h(),
+        GRID_SIZE,
+        vec2,
+    );
 
     let controls = Controls::new(vec![
         Control::slider("x_offset", 1.0, (0.0, 20.0), 0.5),
@@ -36,55 +39,56 @@ pub fn init_model(_app: &App, window_rect: WindowRect) -> Model {
         Control::slider("alpha", 0.5, (0.0, 1.0), 0.001),
     ]);
 
-    Model {
-        window_rect,
+    Template {
         controls,
         grid,
         cell_size,
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    if model.window_rect.changed() {
-        (model.grid, model.cell_size) = create_grid(
-            model.window_rect.w(),
-            model.window_rect.h(),
-            GRID_SIZE,
-            vec2,
-        );
-        model.window_rect.mark_unchanged();
-    }
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(model.window_rect.w(), model.window_rect.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let cell_size = model.cell_size * model.controls.float("size_mult");
-    let x_offset = model.controls.float("x_offset");
-    let y_offset = model.controls.float("y_offset");
-    let alpha = model.controls.float("alpha");
-
-    for point in model.grid.iter() {
-        draw.rect()
-            .xy(*point + vec2(x_offset, y_offset))
-            .w_h(cell_size, cell_size)
-            .color(rgba(255.0, 0.0, 0.0, alpha));
-
-        draw.rect()
-            .xy(*point - vec2(x_offset, y_offset))
-            .w_h(cell_size, cell_size)
-            .color(rgba(0.0, 255.0, 0.0, alpha));
-
-        draw.rect()
-            .xy(*point)
-            .w_h(cell_size, cell_size)
-            .color(rgba(0.0, 0.0, 255.0, alpha));
+impl Sketch for Template {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        if ctx.window_rect().changed() {
+            (self.grid, self.cell_size) = create_grid(
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
+                GRID_SIZE,
+                vec2,
+            );
+            ctx.window_rect().mark_unchanged();
+        }
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
+
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(ctx.window_rect().w(), ctx.window_rect().h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
+
+        let cell_size = self.cell_size * self.controls.float("size_mult");
+        let x_offset = self.controls.float("x_offset");
+        let y_offset = self.controls.float("y_offset");
+        let alpha = self.controls.float("alpha");
+
+        for point in self.grid.iter() {
+            draw.rect()
+                .xy(*point + vec2(x_offset, y_offset))
+                .w_h(cell_size, cell_size)
+                .color(rgba(255.0, 0.0, 0.0, alpha));
+
+            draw.rect()
+                .xy(*point - vec2(x_offset, y_offset))
+                .w_h(cell_size, cell_size)
+                .color(rgba(0.0, 255.0, 0.0, alpha));
+
+            draw.rect()
+                .xy(*point)
+                .w_h(cell_size, cell_size)
+                .color(rgba(0.0, 0.0, 255.0, alpha));
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }

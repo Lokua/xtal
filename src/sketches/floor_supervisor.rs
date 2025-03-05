@@ -21,7 +21,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const GRID_SIZE: usize = 128;
 
 #[derive(SketchComponents)]
-#[sketch(clear_color = "hsl(0.0, 0.0, 0.03, 0.5)")]
+#[sketch(clear_color = "hsla(0.0, 0.0, 0.03, 0.5)")]
 pub struct DisplacementModel {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,

@@ -17,10 +17,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(640),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Template {
     controls: ControlScript<Timing>,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -46,10 +45,10 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: &LatticeContext) -> Template {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "g25_26_symmetry.yaml"),
-        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
+        Timing::new(ctx.bpm()),
     );
 
     let params = ShaderParams {
@@ -63,56 +62,67 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "g25_26_symmetry.wgsl"),
         &params,
         true,
     );
 
-    Model { controls, wr, gpu }
+    Template { controls, gpu }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for Template {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.get("fractal_mix"),
-            m.controls.get("distort_mix"),
-            m.controls.get("wave_mix"),
-            m.controls.get("fractal_count"),
-        ],
-        b: [
-            m.controls.get("wave_freq"),
-            m.controls.get("wave_scale"),
-            m.controls.get("wave_x"),
-            m.controls.get("wave_y"),
-        ],
-        c: [
-            m.controls.get("distort_freq"),
-            m.controls.get("signal_mix"),
-            m.controls.get("fractal_grid_scale"),
-            m.controls.get("fractal_scale"),
-        ],
-        d: [
-            m.controls.get("distort_angle_offset"),
-            m.controls.get("signal_steps"),
-            m.controls.get("fractal_color_scale"),
-            m.controls.get("fractal_grid_mix"),
-        ],
-        e: [
-            m.controls.get("mask_radius"),
-            m.controls.get("mask_falloff"),
-            m.controls.get("mask_x"),
-            m.controls.get("mask_y"),
-        ],
-    };
+        let params = ShaderParams {
+            resolution: [
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
+                0.0,
+                0.0,
+            ],
+            a: [
+                self.controls.get("fractal_mix"),
+                self.controls.get("distort_mix"),
+                self.controls.get("wave_mix"),
+                self.controls.get("fractal_count"),
+            ],
+            b: [
+                self.controls.get("wave_freq"),
+                self.controls.get("wave_scale"),
+                self.controls.get("wave_x"),
+                self.controls.get("wave_y"),
+            ],
+            c: [
+                self.controls.get("distort_freq"),
+                self.controls.get("signal_mix"),
+                self.controls.get("fractal_grid_scale"),
+                self.controls.get("fractal_scale"),
+            ],
+            d: [
+                self.controls.get("distort_angle_offset"),
+                self.controls.get("signal_steps"),
+                self.controls.get("fractal_color_scale"),
+                self.controls.get("fractal_grid_mix"),
+            ],
+            e: [
+                self.controls.get("mask_radius"),
+                self.controls.get("mask_falloff"),
+                self.controls.get("mask_x"),
+                self.controls.get("mask_y"),
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

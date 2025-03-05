@@ -18,10 +18,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct BasicCubeShader {
     controls: ControlScript<Timing>,
-    wr: WindowRect,
     gpu: gpu::GpuState<Vertex>,
 }
 
@@ -42,10 +41,10 @@ struct ShaderParams {
     a: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: &LatticeContext) -> BasicCubeShader {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
-        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
+        Timing::new(ctx.bpm()),
     );
 
     let params = ShaderParams {
@@ -57,7 +56,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "basic_cube_shader_template.wgsl"),
         &params,
         Some(&vertices),
@@ -67,30 +66,34 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model { controls, wr, gpu }
+    BasicCubeShader { controls, gpu }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for BasicCubeShader {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+        let wr = ctx.window_rect();
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.get("rotation"),
-            m.controls.get("z_offset"),
-            m.controls.get("scale"),
-            m.controls.get("a4"),
-        ],
-    };
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.get("rotation"),
+                self.controls.get("z_offset"),
+                self.controls.get("scale"),
+                self.controls.get("a4"),
+            ],
+        };
 
-    let vertices = create_vertices();
+        let vertices = create_vertices();
 
-    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
-}
+        self.gpu
+            .update(app, wr.resolution_u32(), &params, &vertices);
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }
 
 fn create_vertices() -> Vec<Vertex> {

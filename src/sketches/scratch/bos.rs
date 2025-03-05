@@ -5,7 +5,7 @@ use crate::framework::prelude::*;
 // Scratch sketch to follow along with https://thebookofshaders.com
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "bos_07",
+    name: "bos",
     display_name: "BOS 07",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -16,11 +16,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Bos {
     animation: Animation<FrameTiming>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -34,16 +33,14 @@ struct ShaderParams {
     _pad: f32,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> Bos {
+    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
-        Control::slide("a", 0.5),
-        Control::slide("b", 0.5),
-    ]);
+    let controls =
+        Controls::new(vec![Control::slide("a", 0.5), Control::slide("b", 0.5)]);
 
     let params = ShaderParams {
-        resolution: wr.resolution(),
+        resolution: ctx.window_rect().resolution(),
         a: 0.0,
         b: 0.0,
         t: 0.0,
@@ -52,33 +49,38 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./bos.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    Bos {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: m.wr.resolution(),
-        a: m.controls.float("a"),
-        b: m.controls.float("b"),
-        t: m.animation.tri(4.0),
-        _pad: 0.0,
-    };
+impl Sketch for Bos {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let params = ShaderParams {
+            resolution: ctx.window_rect().resolution(),
+            a: self.controls.float("a"),
+            b: self.controls.float("b"),
+            t: self.animation.tri(4.0),
+            _pad: 0.0,
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

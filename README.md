@@ -62,7 +62,8 @@ just start <sketch>
 ```
 
 Where `sketch` is a file in the src/sketches folder (without the extension) and
-registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main].
+registered in [src/sketches/mod.rs][module] as well as
+[src/runtime/app.rs][main].
 
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
@@ -284,7 +285,7 @@ comprehensive documentation.
 [template]: src/sketches/templates/template.rs
 [midi-sketch]: src/sketches/midi_test.rs
 [module]: src/sketches/mod.rs
-[main]: src/main.rs
+[main]: src/runtime/app.rs
 [control-script-test]: src/sketches/scratch/control_script_test.rs
 [osc-transport]: assets/L.OscTransport.amxd
 [osc-send]: assets/L.OscSend.amxd

@@ -15,12 +15,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Template {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -29,18 +28,17 @@ pub struct Model {
 struct ShaderParams {
     // w, h, ..unused
     resolution: [f32; 4],
-
     a: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
-        Control::slide("a1", 0.5),
-        Control::slide("a2", 0.5),
-        Control::slide("a3", 0.5),
-        Control::slide("a4", 0.5),
+    let controls = Controls::new(vec![
+        Control::slider("a1", 0.5, (0.0, 1.0), 0.01),
+        Control::slider("a2", 0.5, (0.0, 1.0), 0.01),
+        Control::slider("a3", 0.5, (0.0, 1.0), 0.01),
+        Control::slider("a4", 0.5, (0.0, 1.0), 0.01),
     ]);
 
     let params = ShaderParams {
@@ -48,37 +46,49 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         a: [0.0; 4],
     };
 
+    let window_size = ctx.window_rect().resolution_u32();
+
     let gpu = GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        window_size,
         to_absolute_path(file!(), "./g25_5_isometric.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    Template {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("a1"),
-            m.controls.float("a2"),
-            m.controls.float("a3"),
-            m.controls.float("a4"),
-        ],
-    };
+impl Sketch for Template {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let params = ShaderParams {
+            resolution: [
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
+                0.0,
+                0.0,
+            ],
+            a: [
+                self.controls.float("a1"),
+                self.controls.float("a2"),
+                self.controls.float("a3"),
+                self.controls.float("a4"),
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

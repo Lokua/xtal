@@ -32,29 +32,26 @@ struct Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
     resolution: [f32; 4],
-
     // bg_alpha, bg_anim, displace, slice_glitch
     a: [f32; 4],
-
     // lightning, ...unused
     b: [f32; 4],
 }
 
-#[derive(LegacySketchComponents)]
+#[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
-pub struct Model {
+pub struct G25_18Wind {
     #[allow(dead_code)]
     animation: Animation<MidiSongTiming>,
     controls: Controls,
     midi: MidiControls,
-    wr: WindowRect,
     agents: Vec<Agent>,
     noise: PerlinNoise,
     gpu: gpu::GpuState<Vertex>,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(MidiSongTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
+    let animation = Animation::new(MidiSongTiming::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::select(
@@ -115,7 +112,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "g25_18_wind.wgsl"),
         &params,
         Some(&initial_vertices),
@@ -125,104 +122,111 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    G25_18Wind {
         animation,
         controls,
         midi,
-        wr,
         agents: vec![],
         noise: PerlinNoise::new(512),
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    if m.controls.any_changed_in(&["agent_count"]) {
-        // let agent_count = m.controls.float("agent_count") as usize;
-        let agent_count = MAX_COUNT;
+impl Sketch for G25_18Wind {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-        if m.agents.len() > agent_count {
-            m.agents.truncate(agent_count);
-        } else if m.agents.len() < agent_count {
-            let new_agents = (m.agents.len()..agent_count)
-                .map(|_| Agent::new(random_point(&m.wr)));
-            m.agents.extend(new_agents);
+        if self.controls.any_changed_in(&["agent_count"]) {
+            let agent_count = MAX_COUNT;
+
+            if self.agents.len() > agent_count {
+                self.agents.truncate(agent_count);
+            } else if self.agents.len() < agent_count {
+                let new_agents = (self.agents.len()..agent_count)
+                    .map(|_| Agent::new(random_point(&wr)));
+                self.agents.extend(new_agents);
+            }
+
+            self.controls.mark_unchanged();
         }
 
-        m.controls.mark_unchanged();
-    }
-
-    let algorithm = match m.midi.get("alg").floor() as u32 {
-        0 => "cos,sin",
-        1 => "tanh,cosh",
-        2 => "exponential_drift",
-        3 => "lightning",
-        4 => "plasma",
-        5 => "static",
-        _ => panic!("Unsupported algorithm"),
-    };
-
-    let agent_size = m.controls.float("agent_size");
-    let noise_scale = m.midi.get("noise_scale");
-    let noise_strength = m.midi.get("noise_strength");
-    let noise_vel = m.midi.get("noise_vel");
-    let step_range = m.controls.float("step_range");
-    let bg_alpha = m.controls.float("bg_alpha");
-
-    m.agents.iter_mut().for_each(|agent| {
-        agent.step_size = random_range(1.0, step_range + 0.001);
-        agent.update(
-            algorithm,
-            &m.noise,
-            noise_scale,
-            noise_strength,
-            noise_vel,
-        );
-        agent.constrain(&m.wr);
-    });
-
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            bg_alpha,
-            m.animation.lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
-            m.midi.get("displace"),
-            m.midi.get("slice_glitch"),
-        ],
-        b: [
-            m.midi.get("lightning"),
-            m.animation.tri(6.0),
-            m.controls.float("b3"),
-            m.controls.float("b4"),
-        ],
-    };
-
-    let randomize_point_size = m.controls.bool("randomize_point_size");
-    let (size_min, _) = m.controls.slider_range("agent_size");
-    let size_range = safe_range(size_min - 0.000_1, agent_size);
-
-    let mut vertices =
-        generate_quad_vertices(vec2(0.0, 0.0), 1.0, VERTEX_TYPE_BG);
-    vertices.reserve(m.agents.len() * 6);
-
-    for agent in &m.agents {
-        let size = if randomize_point_size {
-            random_range(size_range.0, size_range.1)
-        } else {
-            agent_size
+        let algorithm = match self.midi.get("alg").floor() as u32 {
+            0 => "cos,sin",
+            1 => "tanh,cosh",
+            2 => "exponential_drift",
+            3 => "lightning",
+            4 => "plasma",
+            5 => "static",
+            _ => panic!("Unsupported algorithm"),
         };
-        vertices.extend(generate_quad_vertices(
-            vec2(agent.pos.x / m.wr.hw(), agent.pos.y / m.wr.hh()),
-            size,
-            VERTEX_TYPE_AGENT,
-        ));
+
+        let agent_size = self.controls.float("agent_size");
+        let noise_scale = self.midi.get("noise_scale");
+        let noise_strength = self.midi.get("noise_strength");
+        let noise_vel = self.midi.get("noise_vel");
+        let step_range = self.controls.float("step_range");
+        let bg_alpha = self.controls.float("bg_alpha");
+
+        self.agents.iter_mut().for_each(|agent| {
+            agent.step_size = random_range(1.0, step_range + 0.001);
+            agent.update(
+                algorithm,
+                &self.noise,
+                noise_scale,
+                noise_strength,
+                noise_vel,
+            );
+            agent.constrain(&wr);
+        });
+
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                bg_alpha,
+                self.animation.lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
+                self.midi.get("displace"),
+                self.midi.get("slice_glitch"),
+            ],
+            b: [
+                self.midi.get("lightning"),
+                self.animation.tri(6.0),
+                self.controls.float("b3"),
+                self.controls.float("b4"),
+            ],
+        };
+
+        let randomize_point_size = self.controls.bool("randomize_point_size");
+        let (size_min, _) = self.controls.slider_range("agent_size");
+        let size_range = safe_range(size_min - 0.000_1, agent_size);
+
+        let mut vertices =
+            generate_quad_vertices(vec2(0.0, 0.0), 1.0, VERTEX_TYPE_BG);
+        vertices.reserve(self.agents.len() * 6);
+
+        for agent in &self.agents {
+            let size = if randomize_point_size {
+                random_range(size_range.0, size_range.1)
+            } else {
+                agent_size
+            };
+            vertices.extend(generate_quad_vertices(
+                vec2(agent.pos.x / wr.hw(), agent.pos.y / wr.hh()),
+                size,
+                VERTEX_TYPE_AGENT,
+            ));
+        }
+
+        self.gpu.update(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+            &vertices,
+        );
     }
 
-    m.gpu.update(app, m.wr.resolution_u32(), &params, &vertices);
-}
-
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        self.gpu.render(&frame);
+    }
 }
 
 fn random_point(wr: &WindowRect) -> Vec2 {

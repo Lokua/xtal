@@ -53,40 +53,27 @@ pub fn run() {
             shader_to_texture_dev,
             wgpu_compute_dev,
             // -----------------------------------------------------------------
-            // TEMPLATES
+            // GENUARY 2025
             // -----------------------------------------------------------------
-            template
-        );
-
-        // ---------------------------------------------------------------------
-        // GENUARY 2025
-        // ---------------------------------------------------------------------
-        register_legacy_sketches!(
-            registry,
+            g25_1_horiz_vert,
+            g25_2_layers,
+            g25_5_isometric,
             g25_10_11_12,
             g25_13_triangle,
             g25_14_black_and_white,
             g25_18_wind,
             g25_19_op_art,
-            g25_1_horiz_vert,
             g25_20_23_brutal_arch,
             g25_22_gradients_only,
             g25_26_symmetry,
-            g25_2_layers,
-            g25_5_isometric
-        );
-
-        // ---------------------------------------------------------------------
-        // SCRATCH
-        // ---------------------------------------------------------------------
-        register_legacy_sketches!(
-            registry,
+            // ---------------------------------------------------------------------
+            // SCRATCH
+            // ---------------------------------------------------------------------
             bos,
             chromatic_aberration,
             displacement_1,
             displacement_1a,
             displacement_2,
-            lin_alg,
             lines,
             noise,
             perlin_loop,
@@ -94,14 +81,11 @@ pub fn run() {
             shader_experiments,
             vertical,
             vertical_2,
-            z_sim
-        );
-
-        // ---------------------------------------------------------------------
-        // TEMPLATES
-        // ---------------------------------------------------------------------
-        register_legacy_sketches!(
-            registry,
+            z_sim,
+            // -----------------------------------------------------------------
+            // TEMPLATES
+            // -----------------------------------------------------------------
+            template,
             basic_cube_shader_template,
             fullscreen_shader_template
         );

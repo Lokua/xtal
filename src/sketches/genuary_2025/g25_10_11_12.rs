@@ -47,17 +47,16 @@ struct ShaderParams {
     h: [f32; 4],
 }
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Template {
     animation: Animation<FrameTiming>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<()>,
     midi: MidiControls,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
 
     let disabled = |_controls: &Controls| true;
 
@@ -137,7 +136,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_procedural(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_10_11_12.wgsl"),
         &params,
         true,
@@ -163,94 +162,108 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         .control_mapped("wave_freq", (0, 15), (0.00, 64.0), 1.0)
         .build();
 
-    Model {
+    Template {
         animation,
         controls,
-        wr,
         gpu,
         midi,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [-0.9, 0.0, 0.9, 0.0],
-        b: [
-            m.midi.get("points_per_segment"),
-            m.midi.get("noise_scale"),
-            m.midi.get("angle_variation"),
-            m.midi.get("n_lines"),
-        ],
-        c: [
-            m.controls.float("point_size"),
-            m.midi.get("circle_r_min"),
-            m.midi.get("circle_r_max"),
-            m.midi.get("offset_mult"),
-        ],
-        d: [
-            m.controls.float("bg_brightness"),
-            m.animation.tri(64.0),
-            bool_to_f32(m.controls.bool("invert")),
-            bool_to_f32(m.controls.bool("animate_angle_offset")),
-        ],
-        e: [
-            m.midi.get("wave_amp"),
-            m.midi.get("wave_freq").ceil(),
-            m.midi.get("stripe_amp"),
-            m.midi.get("stripe_freq").ceil(),
-        ],
-        f: [
-            bool_to_f32(m.controls.bool("animate_bg")),
-            m.midi.get("steep_amp"),
-            m.midi.get("steep_freq").ceil(),
-            m.controls.float("steepness"),
-        ],
-        g: [
-            m.midi.get("quant_amp"),
-            m.midi.get("quant_freq").ceil(),
-            get_phase(&m, "quant", 24.0),
-            get_phase(&m, "steep", 48.0),
-        ],
-        h: [
-            get_phase(&m, "wave", 32.0),
-            get_phase(&m, "stripe", 56.0),
-            m.controls.float("harmonic_influence"),
-            0.0,
-        ],
-    };
+impl Sketch for Template {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let params = ShaderParams {
+            resolution: [
+                ctx.window_rect().w(),
+                ctx.window_rect().h(),
+                0.0,
+                0.0,
+            ],
+            a: [-0.9, 0.0, 0.9, 0.0],
+            b: [
+                self.midi.get("points_per_segment"),
+                self.midi.get("noise_scale"),
+                self.midi.get("angle_variation"),
+                self.midi.get("n_lines"),
+            ],
+            c: [
+                self.controls.float("point_size"),
+                self.midi.get("circle_r_min"),
+                self.midi.get("circle_r_max"),
+                self.midi.get("offset_mult"),
+            ],
+            d: [
+                self.controls.float("bg_brightness"),
+                self.animation.tri(64.0),
+                bool_to_f32(self.controls.bool("invert")),
+                bool_to_f32(self.controls.bool("animate_angle_offset")),
+            ],
+            e: [
+                self.midi.get("wave_amp"),
+                self.midi.get("wave_freq").ceil(),
+                self.midi.get("stripe_amp"),
+                self.midi.get("stripe_freq").ceil(),
+            ],
+            f: [
+                bool_to_f32(self.controls.bool("animate_bg")),
+                self.midi.get("steep_amp"),
+                self.midi.get("steep_freq").ceil(),
+                self.controls.float("steepness"),
+            ],
+            g: [
+                self.midi.get("quant_amp"),
+                self.midi.get("quant_freq").ceil(),
+                get_phase(self, "quant", 24.0),
+                get_phase(self, "steep", 48.0),
+            ],
+            h: [
+                get_phase(self, "wave", 32.0),
+                get_phase(self, "stripe", 56.0),
+                self.controls.float("harmonic_influence"),
+                0.0,
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-    m.controls.mark_unchanged();
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+        self.controls.mark_unchanged();
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(WHITE);
+
+        let points_per_line = self.midi.get("points_per_segment") as u32;
+        let n_lines = self.midi.get("n_lines") as u32;
+        let total_points = points_per_line * n_lines;
+        let density = self.controls.float("passes") as u32;
+        let spiral_vertices = total_points * 6 * density;
+        let background_vertices = 3;
+        let total_vertices = background_vertices + spiral_vertices;
+
+        self.gpu.render_procedural(&frame, total_vertices);
+    }
 }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(WHITE);
-
-    let points_per_line = m.midi.get("points_per_segment") as u32;
-    let n_lines = m.midi.get("n_lines") as u32;
-    let total_points = points_per_line * n_lines;
-    let density = m.controls.float("passes") as u32;
-    let spiral_vertices = total_points * 6 * density;
-    let background_vertices = 3;
-    let total_vertices = background_vertices + spiral_vertices;
-
-    m.gpu.render_procedural(&frame, total_vertices);
-}
-
-fn get_phase(m: &Model, param_name: &str, animation_time: f32) -> f32 {
+fn get_phase(
+    template: &Template,
+    param_name: &str,
+    animation_time: f32,
+) -> f32 {
     let animate_param = format!("animate_{}_phase", param_name);
     let invert_param = format!("invert_animate_{}_phase", param_name);
     let phase_param = format!("{}_phase", param_name);
-    let time = animation_time * m.controls.float("phase_animation_mult");
+    let time = animation_time * template.controls.float("phase_animation_mult");
 
-    if m.controls.bool(&animate_param) {
-        if m.controls.bool(&invert_param) {
-            m.animation.loop_phase(time) * TAU
+    if template.controls.bool(&animate_param) {
+        if template.controls.bool(&invert_param) {
+            template.animation.loop_phase(time) * TAU
         } else {
-            (1.0 - m.animation.loop_phase(time)) * TAU
+            (1.0 - template.animation.loop_phase(time)) * TAU
         }
     } else {
-        m.controls.float(&phase_param)
+        template.controls.float(&phase_param)
     }
 }

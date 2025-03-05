@@ -20,10 +20,9 @@ const N_LINES: i32 = 4;
 const STROKE_WEIGHT: f32 = 4.0;
 const SPACING: f32 = 32.0;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Lines {
     controls: Controls,
-    window_rect: WindowRect,
     slant_points: Vec<(Vec2, Vec2)>,
     jerky_points: Vec<Vec<Vec2>>,
     chaikin_points: Vec<Vec<Vec2>>,
@@ -31,7 +30,9 @@ pub struct Model {
     pad: f32,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Lines {
+    let wr = ctx.window_rect();
+
     let controls = Controls::with_previous(vec![
         Control::slider("deviation", 5.0, (1.0, 10.0), 0.1),
         Control::slider("n_points", 16.0, (3.0, 64.0), 1.0),
@@ -41,9 +42,8 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 
     let pad = wr.w() / 20.0;
 
-    Model {
+    Lines {
         controls,
-        window_rect: wr,
         slant_points: vec![],
         jerky_points: vec![],
         chaikin_points: vec![],
@@ -52,97 +52,101 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    if m.controls.changed() {
-        let deviation = m.controls.float("deviation");
-        let n_points = m.controls.float("n_points") as usize;
-        let chaikin_passes = m.controls.float("chaikin_passes") as usize;
-        let kernel_passes = m.controls.float("kernel_passes") as usize;
-        let wr = &m.window_rect;
-        let params = &LineParams {
-            pad: m.pad,
-            deviation,
-            n_points,
-            chaikin_passes,
-            kernel_passes,
-        };
-        m.slant_points = generate_slant_points(wr, params);
-        m.jerky_points = generate_jerky_points(wr, params);
-        m.chaikin_points = generate_points_using_chaikin_smoothing(wr, params);
-        m.kernel_points = generate_points_using_kernel_smoothing(wr, params);
+impl Sketch for Lines {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        if self.controls.changed() {
+            let deviation = self.controls.float("deviation");
+            let n_points = self.controls.float("n_points") as usize;
+            let chaikin_passes = self.controls.float("chaikin_passes") as usize;
+            let kernel_passes = self.controls.float("kernel_passes") as usize;
+            let wr = &ctx.window_rect();
+            let params = &LineParams {
+                pad: self.pad,
+                deviation,
+                n_points,
+                chaikin_passes,
+                kernel_passes,
+            };
+            self.slant_points = generate_slant_points(wr, params);
+            self.jerky_points = generate_jerky_points(wr, params);
+            self.chaikin_points =
+                generate_points_using_chaikin_smoothing(wr, params);
+            self.kernel_points =
+                generate_points_using_kernel_smoothing(wr, params);
 
-        m.controls.mark_unchanged();
-    }
-}
-
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
-    let wr = &m.window_rect;
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(wr.w(), wr.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let start_x = -wr.hw() + m.pad;
-    let end_x = wr.hw() - m.pad;
-    let n_demos = 5;
-
-    for demo in 0..n_demos {
-        let y = wr.top() - (wr.h() / n_demos as f32) * (demo as f32 + 0.5);
-        let draw_shifted = draw.translate(vec3(0.0, y, 0.0));
-
-        match demo {
-            0 => {
-                draw_shifted
-                    .line()
-                    .start(vec2(start_x, 0.0))
-                    .end(vec2(end_x, 0.0))
-                    .color(BLACK)
-                    .stroke_weight(STROKE_WEIGHT);
-            }
-            1 => {
-                for (start, end) in m.slant_points.iter() {
-                    draw_shifted
-                        .line()
-                        .start(*start)
-                        .end(*end)
-                        .color(BLACK)
-                        .stroke_weight(STROKE_WEIGHT);
-                }
-            }
-            2 => {
-                for line in m.jerky_points.iter() {
-                    draw_shifted
-                        .polyline()
-                        .weight(STROKE_WEIGHT)
-                        .points(line.iter().cloned())
-                        .color(BLACK);
-                }
-            }
-            3 => {
-                for line in m.chaikin_points.iter() {
-                    draw_shifted
-                        .polyline()
-                        .weight(STROKE_WEIGHT)
-                        .points(line.iter().cloned())
-                        .color(BLACK);
-                }
-            }
-            4 => {
-                for line in m.kernel_points.iter() {
-                    draw_shifted
-                        .polyline()
-                        .weight(STROKE_WEIGHT)
-                        .points(line.iter().cloned())
-                        .color(BLACK);
-                }
-            }
-            _ => unreachable!(),
+            self.controls.mark_unchanged();
         }
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
+        let wr = &ctx.window_rect();
+
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
+
+        let start_x = -wr.hw() + self.pad;
+        let end_x = wr.hw() - self.pad;
+        let n_demos = 5;
+
+        for demo in 0..n_demos {
+            let y = wr.top() - (wr.h() / n_demos as f32) * (demo as f32 + 0.5);
+            let draw_shifted = draw.translate(vec3(0.0, y, 0.0));
+
+            match demo {
+                0 => {
+                    draw_shifted
+                        .line()
+                        .start(vec2(start_x, 0.0))
+                        .end(vec2(end_x, 0.0))
+                        .color(BLACK)
+                        .stroke_weight(STROKE_WEIGHT);
+                }
+                1 => {
+                    for (start, end) in self.slant_points.iter() {
+                        draw_shifted
+                            .line()
+                            .start(*start)
+                            .end(*end)
+                            .color(BLACK)
+                            .stroke_weight(STROKE_WEIGHT);
+                    }
+                }
+                2 => {
+                    for line in self.jerky_points.iter() {
+                        draw_shifted
+                            .polyline()
+                            .weight(STROKE_WEIGHT)
+                            .points(line.iter().cloned())
+                            .color(BLACK);
+                    }
+                }
+                3 => {
+                    for line in self.chaikin_points.iter() {
+                        draw_shifted
+                            .polyline()
+                            .weight(STROKE_WEIGHT)
+                            .points(line.iter().cloned())
+                            .color(BLACK);
+                    }
+                }
+                4 => {
+                    for line in self.kernel_points.iter() {
+                        draw_shifted
+                            .polyline()
+                            .weight(STROKE_WEIGHT)
+                            .points(line.iter().cloned())
+                            .color(BLACK);
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 struct LineParams {

@@ -14,12 +14,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(500),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct ShaderExperiments {
     #[allow(dead_code)]
     animation: Animation<FrameTiming>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -34,7 +33,7 @@ struct ShaderParams {
     d: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: &LatticeContext) -> ShaderExperiments {
     let animation =
         Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
 
@@ -60,6 +59,8 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         Control::slide("d4", 0.5),
     ]);
 
+    let wr = ctx.window_rect();
+
     let params = ShaderParams {
         resolution: [0.0; 4],
         a: [0.0; 4],
@@ -76,47 +77,50 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    ShaderExperiments {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("a1"),
-            m.controls.float("a2"),
-            m.controls.float("a3"),
-            m.controls.float("a4"),
-        ],
-        b: [
-            m.controls.float("b1"),
-            m.controls.float("b2"),
-            m.controls.float("b3"),
-            m.controls.float("b4"),
-        ],
-        c: [
-            m.controls.float("c1"),
-            m.controls.float("c2"),
-            m.controls.float("c3"),
-            m.controls.float("c4"),
-        ],
-        d: [
-            m.controls.float("d1"),
-            m.controls.float("d2"),
-            m.controls.float("d3"),
-            m.controls.float("d4"),
-        ],
-    };
+impl Sketch for ShaderExperiments {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("a1"),
+                self.controls.float("a2"),
+                self.controls.float("a3"),
+                self.controls.float("a4"),
+            ],
+            b: [
+                self.controls.float("b1"),
+                self.controls.float("b2"),
+                self.controls.float("b3"),
+                self.controls.float("b4"),
+            ],
+            c: [
+                self.controls.float("c1"),
+                self.controls.float("c2"),
+                self.controls.float("c3"),
+                self.controls.float("c4"),
+            ],
+            d: [
+                self.controls.float("d1"),
+                self.controls.float("d2"),
+                self.controls.float("d3"),
+                self.controls.float("d4"),
+            ],
+        };
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

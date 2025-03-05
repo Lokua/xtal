@@ -49,7 +49,6 @@ pub use self::scratch::chromatic_aberration;
 pub use self::scratch::displacement_1;
 pub use self::scratch::displacement_1a;
 pub use self::scratch::displacement_2;
-pub use self::scratch::lin_alg;
 pub use self::scratch::lines;
 pub use self::scratch::noise;
 pub use self::scratch::perlin_loop;
