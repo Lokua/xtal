@@ -82,6 +82,12 @@ pub trait Sketch {
     fn event(&mut self, _app: &App, _event: &Event) {}
 }
 
+/// Secondary trait that all sketches must implement if they want to integrate
+/// with the main runtime. Does not have to implemented manually. Use with:
+/// ```rust
+/// #[derive(SketchComponents)]
+/// pub struct MySketch {}
+/// ```
 pub trait SketchDerived {
     fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
         None
@@ -92,120 +98,7 @@ pub trait SketchDerived {
     fn clear_color(&self) -> Rgba {
         Rgba::new(0.0, 0.0, 0.0, 1.0)
     }
-
-    // Temporary until old sketches are ported over as this comes from
-    // LatticeContext now
-    fn window_rect(&mut self) -> Option<&mut WindowRect> {
-        None
-    }
-    // Temporary until old sketches are ported over as this comes from
-    // LatticeContext now
-    fn set_window_rect(&mut self, rect: Rect) {
-        if let Some(window_rect) = self.window_rect() {
-            window_rect.set_current(rect);
-        }
-    }
 }
 
 pub trait SketchAll: Sketch + SketchDerived {}
 impl<T: Sketch + SketchDerived> SketchAll for T {}
-
-#[deprecated(note = "Use Sketch trait directly instead")]
-pub trait SketchModel {
-    fn controls(&mut self) -> Option<&mut impl ControlProvider> {
-        None::<&mut Controls>
-    }
-
-    fn clear_color(&self) -> Rgba {
-        Rgba::new(0.0, 0.0, 0.0, 0.0)
-    }
-
-    fn window_rect(&mut self) -> Option<&mut WindowRect> {
-        None
-    }
-
-    fn set_window_rect(&mut self, rect: Rect) {
-        if let Some(window_rect) = self.window_rect() {
-            window_rect.set_current(rect);
-        }
-    }
-
-    fn event(&mut self, _app: &App, _event: &Event) {}
-}
-
-/// Adapter to instantiate Sketch for legacy SketchModel types
-pub struct SketchAdapter<S> {
-    model: S,
-    update_fn: fn(&App, &mut S, Update),
-    view_fn: fn(&App, &S, Frame),
-    controls_fn: Option<fn(&mut S) -> Option<&mut dyn ControlProvider>>,
-    clear_color_fn: Option<fn(&S) -> Rgba>,
-    window_rect_fn: Option<fn(&mut S) -> Option<&mut WindowRect>>,
-    set_window_rect_fn: Option<fn(&mut S, Rect)>,
-}
-
-impl<S> SketchAdapter<S> {
-    pub fn new(
-        model: S,
-        update_fn: fn(&App, &mut S, Update),
-        view_fn: fn(&App, &S, Frame),
-        controls_fn: Option<fn(&mut S) -> Option<&mut dyn ControlProvider>>,
-        clear_color_fn: Option<fn(&S) -> Rgba>,
-        window_rect_fn: Option<fn(&mut S) -> Option<&mut WindowRect>>,
-        set_window_rect_fn: Option<fn(&mut S, Rect)>,
-    ) -> Self {
-        Self {
-            model,
-            update_fn,
-            view_fn,
-            controls_fn,
-            clear_color_fn,
-            window_rect_fn,
-            set_window_rect_fn,
-        }
-    }
-}
-
-impl<S> Sketch for SketchAdapter<S> {
-    fn update(&mut self, app: &App, update: Update, _ctx: &LatticeContext) {
-        (self.update_fn)(app, &mut self.model, update);
-    }
-
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
-        (self.view_fn)(app, &self.model, frame);
-    }
-
-    fn event(&mut self, _app: &App, _event: &Event) {}
-}
-
-impl<S> SketchDerived for SketchAdapter<S> {
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-        if let Some(f) = self.controls_fn {
-            f(&mut self.model).map(|c| c as &mut dyn ControlProvider)
-        } else {
-            None
-        }
-    }
-
-    fn clear_color(&self) -> Rgba {
-        if let Some(f) = self.clear_color_fn {
-            f(&self.model)
-        } else {
-            Rgba::new(0.0, 0.0, 0.0, 1.0)
-        }
-    }
-
-    fn window_rect(&mut self) -> Option<&mut WindowRect> {
-        if let Some(f) = self.window_rect_fn {
-            f(&mut self.model)
-        } else {
-            None
-        }
-    }
-
-    fn set_window_rect(&mut self, rect: Rect) {
-        if let Some(f) = self.set_window_rect_fn {
-            f(&mut self.model, rect);
-        }
-    }
-}

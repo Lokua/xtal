@@ -63,7 +63,7 @@ just start <sketch>
 
 Where `sketch` is a file in the src/sketches folder (without the extension) and
 registered in [src/sketches/mod.rs][module] as well as
-[src/runtime/app.rs][main].
+[src/runtime/app.rs][app].
 
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
@@ -104,10 +104,8 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
       name: "template", // <-- RENAME THIS!
    ```
 3. Add that filename to the [src/sketches/mod.rs][module]
-4. Add a match case for the sketch in [src/main.rs][main]:
-   ```rust
-   "my_awesome_sketch" => run_sketch!(my_awesome_sketch),
-   ```
+4. Add that sketch module to the `register_sketches` call in
+   [src/runtime/app.rs][app]:
 5. Run that sketch via command line by `cargo run --release <name>` or
    `just start <name>` where `name` is what you put in your file's
    `SKETCH_CONFIG.name` field.

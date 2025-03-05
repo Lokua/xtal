@@ -620,7 +620,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let cwr = &mut model.ctx.window_rect();
 
         if rect.w() != cwr.w() || rect.h() != cwr.h() {
-            model.sketch.set_window_rect(rect);
             cwr.set_current(rect);
         }
     });

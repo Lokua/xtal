@@ -7,32 +7,6 @@ use std::sync::RwLock;
 use crate::framework::prelude::*;
 
 #[macro_export]
-macro_rules! register_legacy_sketches {
-    ($registry:expr, $($module:ident),*) => {
-        $(
-            $registry.register(
-                &crate::sketches::$module::SKETCH_CONFIG,
-                |app, ctx| {
-                    let model = crate::sketches::$module::init_model(
-                        app,
-                        WindowRect::new(ctx.window_rect().rect())
-                    );
-                    Box::new(SketchAdapter::new(
-                        model,
-                        crate::sketches::$module::update,
-                        crate::sketches::$module::view,
-                        Some(|model: &mut _| model.controls()),
-                        Some(|model: &_| model.clear_color()),
-                        Some(|model: &mut _| model.window_rect()),
-                        Some(|model: &mut _, rect| model.set_window_rect(rect)),
-                    )) as Box<dyn SketchAll>
-                }
-            );
-        )*
-    };
-}
-
-#[macro_export]
 macro_rules! register_sketches {
     ($registry:expr, $($module:ident),*) => {
         $(
