@@ -14,13 +14,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(440),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
-    #[allow(dead_code)]
+#[derive(SketchComponents)]
+pub struct Kalos2 {
     animation: Animation<Timing>,
     controls: Controls,
-    #[allow(dead_code)]
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -57,8 +54,9 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: LatticeContext) -> Kalos2 {
+    let resolution = ctx.window_rect().resolution_u32();
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let disable = |_controls: &Controls| true;
 
@@ -109,79 +107,90 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let gpu = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        resolution,
         to_absolute_path(file!(), "kalos_2.wgsl"),
         &params,
         true,
     );
 
-    Model {
+    Kalos2 {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let a = &m.animation;
+impl Sketch for Kalos2 {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let a = &self.animation;
 
-    let r_range = m.controls.slider_range("radius");
-    let s_range = m.controls.slider_range("strength");
+        let r_range = self.controls.slider_range("radius");
+        let s_range = self.controls.slider_range("strength");
 
-    let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
-        [
-            // radius
-            a.r_ramp(&[kfr(r_range, dur)], delay, dur * 0.5, Easing::Linear),
-            // strength
-            a.r_ramp(
-                &[kfr(s_range, dur * 1.5)],
-                delay + 1.0,
-                dur * 0.75,
-                Easing::Linear,
-            ),
-            // scaling_power
-            if anim_scaling {
-                m.controls.float("scaling_power")
-            } else {
-                (a.tri(8.0) + 1.0) * 4.0
-            },
-            // offset
-            a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, Easing::Linear),
-        ]
-    };
+        let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
+            [
+                // radius
+                a.r_ramp(
+                    &[kfr(r_range, dur)],
+                    delay,
+                    dur * 0.5,
+                    Easing::Linear,
+                ),
+                // strength
+                a.r_ramp(
+                    &[kfr(s_range, dur * 1.5)],
+                    delay + 1.0,
+                    dur * 0.75,
+                    Easing::Linear,
+                ),
+                // scaling_power
+                if anim_scaling {
+                    self.controls.float("scaling_power")
+                } else {
+                    (a.tri(8.0) + 1.0) * 4.0
+                },
+                // offset
+                a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, Easing::Linear),
+            ]
+        };
 
-    let corner = gen_anim(16.0, 0.0, true);
+        let corner = gen_anim(16.0, 0.0, true);
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        d_0: gen_anim(32.0, 0.0, false),
-        d_1: corner,
-        d_2: corner,
-        d_3: corner,
-        d_4: corner,
-        radius: m.controls.float("radius"),
-        strength: m.controls.float("strength"),
-        scaling_power: m.controls.float("scaling_power"),
-        r: m.controls.float("r"),
-        g: m.controls.float("g"),
-        b: m.controls.float("b"),
-        offset: a.tri(64.0),
-        ring_strength: m.controls.float("ring_strength"),
-        ring_harmonics: m.controls.float("ring_harmonics"),
-        ring_harm_amt: m.controls.float("ring_harm_amt"),
-        angular_variation: m.controls.float("angular_variation"),
-        frequency: m.controls.float("frequency"),
-        lerp: m.controls.float("lerp"),
-        threshold: m.controls.float("threshold"),
-        mix: m.controls.float("mix"),
-        time: app.time,
-    };
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            d_0: gen_anim(32.0, 0.0, false),
+            d_1: corner,
+            d_2: corner,
+            d_3: corner,
+            d_4: corner,
+            radius: self.controls.float("radius"),
+            strength: self.controls.float("strength"),
+            scaling_power: self.controls.float("scaling_power"),
+            r: self.controls.float("r"),
+            g: self.controls.float("g"),
+            b: self.controls.float("b"),
+            offset: a.tri(64.0),
+            ring_strength: self.controls.float("ring_strength"),
+            ring_harmonics: self.controls.float("ring_harmonics"),
+            ring_harm_amt: self.controls.float("ring_harm_amt"),
+            angular_variation: self.controls.float("angular_variation"),
+            frequency: self.controls.float("frequency"),
+            lerp: self.controls.float("lerp"),
+            threshold: self.controls.float("threshold"),
+            mix: self.controls.float("mix"),
+            time: app.time,
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

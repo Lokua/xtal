@@ -11,15 +11,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(580),
+    gui_h: Some(600),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Kalos {
     animation: Animation<Timing>,
     controls: Controls,
     #[allow(dead_code)]
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -54,8 +53,9 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: LatticeContext) -> Kalos {
+    let wr = ctx.window_rect();
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate", false),
@@ -124,75 +124,77 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    Kalos {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let strength = m.controls.float("strength");
-    let strength_range = m.controls.slider_range("strength");
-    let strength_swing = 0.05;
+impl Sketch for Kalos {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let strength = self.controls.float("strength");
+        let strength_range = self.controls.slider_range("strength");
+        let strength_swing = 0.05;
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        show_center: m.controls.bool("show_center") as i32 as f32,
-        show_corners: m.controls.bool("show_corners") as i32 as f32,
-        radius: m.controls.float("radius"),
-        strength: if m.controls.bool("animate") {
-            m.animation.lrp(
-                &[
-                    kf(
-                        clamp(
-                            strength - strength_swing,
-                            strength_range.0,
-                            strength_range.1,
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            show_center: self.controls.bool("show_center") as i32 as f32,
+            show_corners: self.controls.bool("show_corners") as i32 as f32,
+            radius: self.controls.float("radius"),
+            strength: if self.controls.bool("animate") {
+                self.animation.lrp(
+                    &[
+                        kf(
+                            clamp(
+                                strength - strength_swing,
+                                strength_range.0,
+                                strength_range.1,
+                            ),
+                            1.0,
                         ),
-                        1.0,
-                    ),
-                    kf(
-                        clamp(
-                            strength + strength_swing,
-                            strength_range.0,
-                            strength_range.1,
+                        kf(
+                            clamp(
+                                strength + strength_swing,
+                                strength_range.0,
+                                strength_range.1,
+                            ),
+                            1.0,
                         ),
-                        1.0,
-                    ),
-                ],
-                0.0,
-            )
-        } else {
-            strength
-        },
-        corner_radius: m.controls.float("corner_radius"),
-        corner_strength: m.controls.float("corner_strength"),
-        scaling_power: m.controls.float("scaling_power"),
-        auto_hue_shift: m.controls.bool("auto_hue_shift") as i32 as f32,
-        r: m.controls.float("r"),
-        g: m.controls.float("g"),
-        b: m.controls.float("b"),
-        offset: m.controls.float("offset"),
-        ring_strength: m.controls.float("ring_strength"),
-        angular_variation: m.controls.float("angular_variation"),
-        threshold: m.controls.float("threshold"),
-        mix: m.controls.float("mix"),
-        alg: match m.controls.string("alg").as_str() {
-            "distance" => 0.0,
-            "concentric_waves" => 1.0,
-            "moire" => 2.0,
-            _ => unreachable!(),
-        },
-        j: m.controls.float("j"),
-        k: m.controls.float("k"),
-        time: app.time,
-    };
+                    ],
+                    0.0,
+                )
+            } else {
+                strength
+            },
+            corner_radius: self.controls.float("corner_radius"),
+            corner_strength: self.controls.float("corner_strength"),
+            scaling_power: self.controls.float("scaling_power"),
+            auto_hue_shift: self.controls.bool("auto_hue_shift") as i32 as f32,
+            r: self.controls.float("r"),
+            g: self.controls.float("g"),
+            b: self.controls.float("b"),
+            offset: self.controls.float("offset"),
+            ring_strength: self.controls.float("ring_strength"),
+            angular_variation: self.controls.float("angular_variation"),
+            threshold: self.controls.float("threshold"),
+            mix: self.controls.float("mix"),
+            alg: match self.controls.string("alg").as_str() {
+                "distance" => 0.0,
+                "concentric_waves" => 1.0,
+                "moire" => 2.0,
+                _ => unreachable!(),
+            },
+            j: self.controls.float("j"),
+            k: self.controls.float("k"),
+            time: app.time,
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    m.gpu.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        self.gpu.render(&frame);
+    }
 }

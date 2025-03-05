@@ -26,6 +26,15 @@ pub fn run() {
             drop,
             drop_walk,
             floor_supervisor,
+            flow_field_basic,
+            heat_mask,
+            interference,
+            kalos,
+            kalos_2,
+            sand_lines,
+            sierpinski_triangle,
+            spiral,
+            spiral_lines,
             wave_fract,
             // -----------------------------------------------------------------
             // DEV
@@ -35,22 +44,6 @@ pub fn run() {
             // TEMPLATES
             // -----------------------------------------------------------------
             template
-        );
-
-        // ---------------------------------------------------------------------
-        // MAIN
-        // ---------------------------------------------------------------------
-        register_legacy_sketches!(
-            registry,
-            flow_field_basic,
-            heat_mask,
-            interference,
-            kalos,
-            kalos_2,
-            sand_lines,
-            sierpinski_triangle,
-            spiral,
-            spiral_lines
         );
 
         // ---------------------------------------------------------------------

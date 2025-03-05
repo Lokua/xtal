@@ -194,6 +194,8 @@ pub fn init(_app: &App, ctx: LatticeContext) -> DisplacementModel {
 
 impl Sketch for DisplacementModel {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let mut wr = ctx.window_rect();
+
         let show_center = self.controls.bool("show_center");
         let animate_center = self.controls.bool("animate_center");
         let center_use_grain = self.controls.bool("center_use_grain");
@@ -229,11 +231,11 @@ impl Sketch for DisplacementModel {
         let max_mag = self.displacer_configs.len() as f32
             * self.controls.float("mag_mult");
         let gradient = &self.gradient;
-        let wr = ctx.window_rect();
 
         if wr.changed() {
             (self.grid, _) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
             update_positions(&wr, &mut self.displacer_configs);
+            wr.mark_unchanged();
         }
 
         let custom_distance_fn: CustomDistanceFn =

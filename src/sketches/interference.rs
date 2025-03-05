@@ -14,12 +14,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(580),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Interference {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -45,8 +44,9 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: LatticeContext) -> Interference {
+    let wr = ctx.window_rect();
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("animate_wave1_phase", false),
@@ -100,71 +100,74 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    Interference {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("wave1_frequency"),
-            m.controls.float("wave1_angle"),
-            m.controls.float("wave2_frequency"),
-            m.controls.float("wave2_angle"),
-        ],
-        b: [
-            if m.controls.bool("animate_wave1_phase") {
-                m.animation.r_ramp(
-                    &[kfr((0.0, 1.0), 2.0)],
-                    0.0,
-                    1.0,
-                    Easing::Linear,
-                )
-            } else {
-                m.controls.float("wave1_phase")
-            },
-            if m.controls.bool("animate_wave2_phase") {
-                m.animation.r_ramp(
-                    &[kfr((0.0, 1.0), 2.0)],
-                    1.0,
-                    1.0,
-                    Easing::Linear,
-                )
-            } else {
-                m.controls.float("wave2_phase")
-            },
-            m.controls.float("wave1_y_influence"),
-            m.controls.float("wave2_y_influence"),
-        ],
-        c: [
-            0.0,
-            m.controls.float("type_mix"),
-            0.0,
-            bool_to_f32(m.controls.bool("checkerboard")),
-        ],
-        d: [
-            m.controls.float("curve_freq_x"),
-            m.controls.float("curve_freq_y"),
-            m.controls.float("wave_distort"),
-            m.controls.float("smoothing"),
-        ],
-        e: [
-            m.controls.float("wave1_amp"),
-            m.controls.float("wave2_amp"),
-            0.0,
-            0.0,
-        ],
-    };
+impl Sketch for Interference {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("wave1_frequency"),
+                self.controls.float("wave1_angle"),
+                self.controls.float("wave2_frequency"),
+                self.controls.float("wave2_angle"),
+            ],
+            b: [
+                if self.controls.bool("animate_wave1_phase") {
+                    self.animation.r_ramp(
+                        &[kfr((0.0, 1.0), 2.0)],
+                        0.0,
+                        1.0,
+                        Easing::Linear,
+                    )
+                } else {
+                    self.controls.float("wave1_phase")
+                },
+                if self.controls.bool("animate_wave2_phase") {
+                    self.animation.r_ramp(
+                        &[kfr((0.0, 1.0), 2.0)],
+                        1.0,
+                        1.0,
+                        Easing::Linear,
+                    )
+                } else {
+                    self.controls.float("wave2_phase")
+                },
+                self.controls.float("wave1_y_influence"),
+                self.controls.float("wave2_y_influence"),
+            ],
+            c: [
+                0.0,
+                self.controls.float("type_mix"),
+                0.0,
+                bool_to_f32(self.controls.bool("checkerboard")),
+            ],
+            d: [
+                self.controls.float("curve_freq_x"),
+                self.controls.float("curve_freq_y"),
+                self.controls.float("wave_distort"),
+                self.controls.float("smoothing"),
+            ],
+            e: [
+                self.controls.float("wave1_amp"),
+                self.controls.float("wave2_amp"),
+                0.0,
+                0.0,
+            ],
+        };
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

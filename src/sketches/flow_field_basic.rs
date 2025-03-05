@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use nannou::color::*;
 use nannou::prelude::*;
 
@@ -17,19 +15,18 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(300),
 };
 
-#[derive(LegacySketchComponents)]
+#[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
-pub struct Model {
+pub struct FlowFieldBasic {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     agents: Vec<Agent>,
     noise: PerlinNoise,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: LatticeContext) -> FlowFieldBasic {
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::select(
@@ -53,75 +50,79 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
         Control::slide("bg_alpha", 0.02),
     ]);
 
-    Model {
+    FlowFieldBasic {
         animation,
         controls,
-        wr,
         agents: vec![],
         noise: PerlinNoise::new(512),
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    if m.controls.any_changed_in(&["agent_count"]) {
-        let agent_count = m.controls.float("agent_count") as usize;
+impl Sketch for FlowFieldBasic {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        if self.controls.any_changed_in(&["agent_count"]) {
+            let agent_count = self.controls.float("agent_count") as usize;
+            let wr = ctx.window_rect();
 
-        if m.agents.len() > agent_count {
-            m.agents.truncate(agent_count);
-        } else if m.agents.len() < agent_count {
-            let new_agents = (m.agents.len()..agent_count)
-                .map(|_| Agent::new(random_point(&m.wr)));
-            m.agents.extend(new_agents);
+            if self.agents.len() > agent_count {
+                self.agents.truncate(agent_count);
+            } else if self.agents.len() < agent_count {
+                let new_agents = (self.agents.len()..agent_count)
+                    .map(|_| Agent::new(random_point(&wr)));
+                self.agents.extend(new_agents);
+            }
+
+            self.controls.mark_unchanged();
         }
 
-        m.controls.mark_unchanged();
+        let noise_scale = self.controls.float("noise_scale");
+        let noise_strength = self.controls.float("noise_strength");
+        let noise_vel = self.controls.float("noise_vel");
+        let step_range = self.controls.float("step_range");
+        let algorithm = self.controls.string("algorithm");
+        let wr = ctx.window_rect();
+
+        self.agents.iter_mut().for_each(|agent| {
+            agent.step_size = random_range(1.0, step_range + 0.001);
+            agent.update(
+                algorithm.as_str(),
+                &self.noise,
+                noise_scale,
+                noise_strength,
+                noise_vel,
+            );
+            agent.constrain(&wr);
+        });
     }
 
-    let noise_scale = m.controls.float("noise_scale");
-    let noise_strength = m.controls.float("noise_strength");
-    let noise_vel = m.controls.float("noise_vel");
-    let step_range = m.controls.float("step_range");
-    let algorithm = m.controls.string("algorithm");
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        // let start = Instant::now();
 
-    m.agents.iter_mut().for_each(|agent| {
-        agent.step_size = random_range(1.0, step_range + 0.001);
-        agent.update(
-            algorithm.as_str(),
-            &m.noise,
-            noise_scale,
-            noise_strength,
-            noise_vel,
-        );
-        agent.constrain(&m.wr);
-    });
-}
+        let draw = app.draw();
+        let wr = ctx.window_rect();
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let start = Instant::now();
+        draw.rect().wh(wr.vec2()).color(hsla(
+            1.0,
+            1.0,
+            1.0,
+            self.controls.float("bg_alpha"),
+        ));
 
-    let draw = app.draw();
+        let randomize_point_size = self.controls.bool("randomize_point_size");
 
-    draw.rect().wh(m.wr.vec2()).color(hsla(
-        1.0,
-        1.0,
-        1.0,
-        m.controls.float("bg_alpha"),
-    ));
+        self.agents.iter().for_each(|agent| {
+            let radius = ternary!(randomize_point_size, random_f32(), 1.0);
 
-    let randomize_point_size = m.controls.bool("randomize_point_size");
+            draw.ellipse()
+                .radius(radius)
+                .xy(agent.pos)
+                .color(hsla(0.7, 0.2, 0.02, 1.0));
+        });
 
-    m.agents.iter().for_each(|agent| {
-        let radius = ternary!(randomize_point_size, random_f32(), 1.0);
+        draw.to_frame(app, &frame).unwrap();
 
-        draw.ellipse()
-            .radius(radius)
-            .xy(agent.pos)
-            .color(hsla(0.7, 0.2, 0.02, 1.0));
-    });
-
-    draw.to_frame(app, &frame).unwrap();
-
-    debug!("draw: {:?}", start.elapsed());
+        // debug!("draw: {:?}", start.elapsed());
+    }
 }
 
 fn random_point(wr: &WindowRect) -> Vec2 {

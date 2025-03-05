@@ -1,109 +1,109 @@
 {
   "values": {
-    "grain_size": {
-      "Float": 79.0
-    },
-    "gradient_spread": {
-      "Float": 1.0
-    },
-    "stroke_weight": {
-      "Float": 1.25
+    "corner_mode": {
+      "String": "attract"
     },
     "distance_strength": {
-      "Float": 0.5
+      "Float": 0.59300005
     },
-    "scaling_power": {
-      "Float": 3.0
-    },
-    "show_trbl": {
-      "Bool": true
-    },
-    "flip": {
-      "Bool": false
+    "sort": {
+      "String": "radius"
     },
     "trbl_mode": {
       "String": "attract"
     },
-    "invert_colors": {
-      "Bool": false
+    "size_max": {
+      "Float": 7.3
     },
-    "stroke": {
-      "Bool": true
-    },
-    "t_scale": {
+    "scale": {
       "Float": 1.0
     },
     "animate_corner": {
       "Bool": false
     },
-    "corner_mode": {
-      "String": "attract"
-    },
-    "center_mode": {
-      "String": "attract"
+    "corner_strength": {
+      "Float": 20.0
     },
     "trbl_radius": {
       "Float": 20.0
     },
-    "show_corner": {
-      "Bool": true
-    },
-    "center_radius": {
-      "Float": 35.0
-    },
-    "animate_center": {
-      "Bool": false
-    },
-    "animate_trbl": {
-      "Bool": false
-    },
-    "corner_radius": {
-      "Float": 20.0
-    },
-    "size_max": {
-      "Float": 7.3
+    "gradient_spread": {
+      "Float": 1.0
     },
     "show_center": {
+      "Bool": true
+    },
+    "invert_colors": {
       "Bool": false
     },
-    "alpha": {
-      "Float": 1.0
-    },
-    "scale": {
-      "Float": 1.0
-    },
-    "center_strength": {
-      "Float": 20.0
-    },
-    "sort": {
-      "String": "radius"
+    "stroke_weight": {
+      "Float": 1.25
     },
     "background_alpha": {
       "Float": 1.0
     },
-    "corner_strength": {
-      "Float": 20.0
+    "animate_trbl": {
+      "Bool": false
+    },
+    "corner_use_grain": {
+      "Bool": true
+    },
+    "flip": {
+      "Bool": false
     },
     "trbl_strength": {
       "Float": 20.0
     },
     "angle_mult": {
-      "Float": 17.0
+      "Float": 26.0
     },
-    "trbl_use_grain": {
+    "show_corner": {
       "Bool": true
     },
-    "corner_use_grain": {
+    "animate_center": {
       "Bool": true
+    },
+    "center_strength": {
+      "Float": 20.0
+    },
+    "scaling_power": {
+      "Float": 3.0
     },
     "mag_mult": {
       "Float": 1.0
     },
-    "center_use_grain": {
+    "center_mode": {
+      "String": "attract"
+    },
+    "show_trbl": {
       "Bool": true
     },
+    "corner_radius": {
+      "Float": 20.0
+    },
+    "t_scale": {
+      "Float": 1.0
+    },
+    "trbl_use_grain": {
+      "Bool": true
+    },
+    "center_use_grain": {
+      "Bool": false
+    },
+    "center_radius": {
+      "Float": 35.0
+    },
+    "alpha": {
+      "Float": 1.0
+    },
     "angle_frequency": {
-      "Float": 5.0
+      "Float": 95.0
+    },
+    "stroke": {
+      "Bool": true
+    },
+    "grain_size": {
+      "Float": 40.0
     }
   }
 }

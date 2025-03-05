@@ -14,12 +14,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(360),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct SierpinskiTriangle {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -34,8 +33,9 @@ struct ShaderParams {
     b: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: LatticeContext) -> SierpinskiTriangle {
+    let wr = ctx.window_rect();
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::slider("primary_iterations", 1.0, (0.0, 16.0), 1.0),
@@ -60,35 +60,42 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    SierpinskiTriangle {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("primary_iterations"),
-            m.controls.float("second_iterations"),
-            m.controls.float("third_iterations"),
-            m.controls.float("fourth_iterations"),
-        ],
-        b: [
-            m.controls.float("scale"),
-            m.controls.float("y_offset"),
-            0.0,
-            0.0,
-        ],
-    };
+impl Sketch for SierpinskiTriangle {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("primary_iterations"),
+                self.controls.float("second_iterations"),
+                self.controls.float("third_iterations"),
+                self.controls.float("fourth_iterations"),
+            ],
+            b: [
+                self.controls.float("scale"),
+                self.controls.float("y_offset"),
+                0.0,
+                0.0,
+            ],
+        };
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    m.gpu.render(&frame);
+        self.gpu.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &params,
+        );
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+    }
 }

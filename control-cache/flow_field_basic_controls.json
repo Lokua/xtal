@@ -1,7 +1,16 @@
 {
   "values": {
+    "step_range": {
+      "Float": 4.8
+    },
+    "randomize_point_size": {
+      "Bool": true
+    },
     "noise_strength": {
       "Float": 1.4
+    },
+    "bg_alpha": {
+      "Float": 0.61
     },
     "noise_scale": {
       "Float": 63.0
@@ -9,17 +18,8 @@
     "noise_vel": {
       "Float": 0.0162
     },
-    "step_range": {
-      "Float": 4.8
-    },
-    "bg_alpha": {
-      "Float": 0.105
-    },
     "algorithm": {
       "String": "cos,sin"
-    },
-    "randomize_point_size": {
-      "Bool": true
     },
     "agent_count": {
       "Float": 6600.0

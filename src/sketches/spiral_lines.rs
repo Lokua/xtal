@@ -45,17 +45,16 @@ struct ShaderParams {
     h: [f32; 4],
 }
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
-    #[allow(dead_code)]
+#[derive(SketchComponents)]
+pub struct SpiralLines {
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     gpu: gpu::GpuState<()>,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: LatticeContext) -> SpiralLines {
+    let wr = ctx.window_rect();
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let controls = Controls::with_previous(vec![
         Control::slider("passes", 1.0, (1.0, 20.0), 1.0),
@@ -120,75 +119,77 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
         true,
     );
 
-    Model {
+    SpiralLines {
         animation,
         controls,
-        wr,
         gpu,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [-0.9, 0.0, 0.9, 0.0],
-        b: [
-            m.controls.float("points_per_segment"),
-            m.controls.float("noise_scale"),
-            m.controls.float("angle_variation"),
-            m.controls.float("n_lines"),
-        ],
-        c: [
-            m.controls.float("point_size"),
-            m.controls.float("col_freq"),
-            m.controls.float("width"),
-            m.controls.float("distortion"),
-        ],
-        d: [
-            m.controls.float("clip_start"),
-            m.controls.float("clip_grade"),
-            0.0,
-            m.controls.float("row_freq"),
-        ],
-        e: [
-            m.controls.float("stripe_step"),
-            m.controls.float("stripe_mix"),
-            m.controls.float("stripe_amp"),
-            m.controls.float("stripe_freq"),
-        ],
-        f: [
-            0.0,
-            m.controls.float("circle_radius"),
-            m.controls.float("circle_phase"),
-            m.controls.float("wave_amp"),
-        ],
-        g: [
-            m.controls.float("center_count"),
-            m.controls.float("center_spread"),
-            m.controls.float("center_falloff"),
-            m.controls.float("circle_force"),
-        ],
-        h: [
-            m.controls.float("stripe_min"),
-            m.controls.float("stripe_phase"),
-            m.controls.float("harmonic_influence"),
-            m.controls.float("stripe_max"),
-        ],
-    };
+impl Sketch for SpiralLines {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [-0.9, 0.0, 0.9, 0.0],
+            b: [
+                self.controls.float("points_per_segment"),
+                self.controls.float("noise_scale"),
+                self.controls.float("angle_variation"),
+                self.controls.float("n_lines"),
+            ],
+            c: [
+                self.controls.float("point_size"),
+                self.controls.float("col_freq"),
+                self.controls.float("width"),
+                self.controls.float("distortion"),
+            ],
+            d: [
+                self.controls.float("clip_start"),
+                self.controls.float("clip_grade"),
+                0.0,
+                self.controls.float("row_freq"),
+            ],
+            e: [
+                self.controls.float("stripe_step"),
+                self.controls.float("stripe_mix"),
+                self.controls.float("stripe_amp"),
+                self.controls.float("stripe_freq"),
+            ],
+            f: [
+                0.0,
+                self.controls.float("circle_radius"),
+                self.controls.float("circle_phase"),
+                self.controls.float("wave_amp"),
+            ],
+            g: [
+                self.controls.float("center_count"),
+                self.controls.float("center_spread"),
+                self.controls.float("center_falloff"),
+                self.controls.float("circle_force"),
+            ],
+            h: [
+                self.controls.float("stripe_min"),
+                self.controls.float("stripe_phase"),
+                self.controls.float("harmonic_influence"),
+                self.controls.float("stripe_max"),
+            ],
+        };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
-}
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
+    }
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(WHITE);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(WHITE);
 
-    let points_per_line = m.controls.float("points_per_segment") as u32;
-    let n_lines = m.controls.float("n_lines") as u32;
-    let total_points = points_per_line * n_lines;
-    let density = m.controls.float("passes") as u32;
-    let spiral_vertices = total_points * 6 * density;
-    let background_vertices = 3;
-    let total_vertices = background_vertices + spiral_vertices;
+        let points_per_line = self.controls.float("points_per_segment") as u32;
+        let n_lines = self.controls.float("n_lines") as u32;
+        let total_points = points_per_line * n_lines;
+        let density = self.controls.float("passes") as u32;
+        let spiral_vertices = total_points * 6 * density;
+        let background_vertices = 3;
+        let total_vertices = background_vertices + spiral_vertices;
 
-    m.gpu.render_procedural(&frame, total_vertices);
+        self.gpu.render_procedural(&frame, total_vertices);
+    }
 }
