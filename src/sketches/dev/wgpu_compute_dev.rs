@@ -48,11 +48,10 @@ struct OutputPoint {
     _padding: [f32; 2],
 }
 
-#[derive(LegacySketchComponents)]
+#[derive(SketchComponents)]
 pub struct Model {
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     compute_pipeline: wgpu::ComputePipeline,
     params_buffer: wgpu::Buffer,
     params_bind_group: wgpu::BindGroup,
@@ -62,8 +61,8 @@ pub struct Model {
     computed_points: Arc<Mutex<Vec<OutputPoint>>>,
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> Model {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::checkbox("show_ref_line", false),
@@ -218,7 +217,6 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     Model {
         animation,
         controls,
-        wr,
         compute_pipeline,
         params_buffer,
         params_bind_group,
@@ -229,173 +227,187 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let segments = m.controls.float("ref_segments") as usize;
-    let deviation = m.controls.float("ref_deviation");
-    let points_per_segment = m.controls.float("points_per_segment") as u32;
+impl Sketch for Model {
+    fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
+        let segments = self.controls.float("ref_segments") as usize;
+        let deviation = self.controls.float("ref_deviation");
+        let points_per_segment =
+            self.controls.float("points_per_segment") as u32;
 
-    if m.controls.changed() {
-        if m.controls
-            .any_changed_in(&["ref_segments", "ref_deviation"])
-        {
-            m.reference_points = generate_reference_points(segments, deviation);
+        if self.controls.changed() {
+            if self
+                .controls
+                .any_changed_in(&["ref_segments", "ref_deviation"])
+            {
+                self.reference_points =
+                    generate_reference_points(segments, deviation);
+            }
+            self.controls.mark_unchanged();
         }
-        m.controls.mark_unchanged();
-    }
 
-    let n_segments = (m.reference_points.len() - 1) as u32;
+        let n_segments = (self.reference_points.len() - 1) as u32;
 
-    let (ns_min, _ns_max) = m.controls.slider_range("noise_scale");
-    let (ns_min, ns_max) = safe_range(ns_min, m.controls.float("noise_scale"));
+        let (ns_min, _ns_max) = self.controls.slider_range("noise_scale");
+        let (ns_min, ns_max) =
+            safe_range(ns_min, self.controls.float("noise_scale"));
 
-    let (angle_min, _angle_max) = m.controls.slider_range("angle_variation");
-    let (angle_min, angle_max) =
-        safe_range(angle_min, m.controls.float("angle_variation"));
+        let (angle_min, _angle_max) =
+            self.controls.slider_range("angle_variation");
+        let (angle_min, angle_max) =
+            safe_range(angle_min, self.controls.float("angle_variation"));
 
-    let params = ComputeParams {
-        n_segments,
-        points_per_segment,
-        noise_scale: map_range(m.animation.tri(8.0), 0.0, 1.0, ns_min, ns_max),
-        angle_variation: map_range(
-            m.animation.tri(3.0),
-            0.0,
-            1.0,
-            angle_min,
-            angle_max,
-        ),
-    };
+        let params = ComputeParams {
+            n_segments,
+            points_per_segment,
+            noise_scale: map_range(
+                self.animation.tri(8.0),
+                0.0,
+                1.0,
+                ns_min,
+                ns_max,
+            ),
+            angle_variation: map_range(
+                self.animation.tri(3.0),
+                0.0,
+                1.0,
+                angle_min,
+                angle_max,
+            ),
+        };
 
-    let window = app.main_window();
-    let device = window.device();
+        let window = app.main_window();
+        let device = window.device();
 
-    // Update parameters
-    window.queue().write_buffer(
-        &m.params_buffer,
-        0,
-        bytemuck::bytes_of(&params),
-    );
+        // Update parameters
+        window.queue().write_buffer(
+            &self.params_buffer,
+            0,
+            bytemuck::bytes_of(&params),
+        );
 
-    window.queue().write_buffer(
-        &m.input_buffer,
-        0,
-        bytemuck::cast_slice(&m.reference_points),
-    );
+        window.queue().write_buffer(
+            &self.input_buffer,
+            0,
+            bytemuck::cast_slice(&self.reference_points),
+        );
 
-    let output_size = (n_segments
-        * points_per_segment
-        * std::mem::size_of::<OutputPoint>() as u32)
-        as u64;
+        let output_size = (n_segments
+            * points_per_segment
+            * std::mem::size_of::<OutputPoint>() as u32)
+            as u64;
 
-    // Make sure output_size doesn't exceed our output buffer's capacity
-    let max_size =
-        (MAX_POINTS * std::mem::size_of::<OutputPoint>() as u32) as u64;
-    let output_size = output_size.min(max_size);
+        // Make sure output_size doesn't exceed our output buffer's capacity
+        let max_size =
+            (MAX_POINTS * std::mem::size_of::<OutputPoint>() as u32) as u64;
+        let output_size = output_size.min(max_size);
 
-    // Create the read buffer
-    let read_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("read buffer"),
-        size: output_size,
-        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    // Create and submit compute pass
-    let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Compute Encoder"),
+        // Create the read buffer
+        let read_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("read buffer"),
+            size: output_size,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
         });
 
-    {
-        let mut compute_pass =
-            encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("Sand Line Compute Pass"),
+        // Create and submit compute pass
+        let mut encoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Compute Encoder"),
             });
-        compute_pass.set_pipeline(&m.compute_pipeline);
-        compute_pass.set_bind_group(0, &m.params_bind_group, &[]);
-        compute_pass.dispatch_workgroups(
-            ((params.n_segments * params.points_per_segment) as f32 / 64.0)
-                .ceil() as u32,
-            1,
-            1,
+
+        {
+            let mut compute_pass =
+                encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                    label: Some("Sand Line Compute Pass"),
+                });
+            compute_pass.set_pipeline(&self.compute_pipeline);
+            compute_pass.set_bind_group(0, &self.params_bind_group, &[]);
+            compute_pass.dispatch_workgroups(
+                ((params.n_segments * params.points_per_segment) as f32 / 64.0)
+                    .ceil() as u32,
+                1,
+                1,
+            );
+        }
+
+        // Copy the compute output to our read buffer
+        encoder.copy_buffer_to_buffer(
+            &self.output_buffer,
+            0,
+            &read_buffer,
+            0,
+            output_size,
         );
-    }
+        window.queue().submit(Some(encoder.finish()));
 
-    // Copy the compute output to our read buffer
-    encoder.copy_buffer_to_buffer(
-        &m.output_buffer,
-        0,
-        &read_buffer,
-        0,
-        output_size,
-    );
-    window.queue().submit(Some(encoder.finish()));
+        // Read the result synchronously
+        let slice = read_buffer.slice(..);
 
-    // Read the result synchronously
-    let slice = read_buffer.slice(..);
+        // Create callback
+        let computed_points = self.computed_points.clone();
+        slice.map_async(wgpu::MapMode::Read, move |_| {});
 
-    // Create callback
-    let computed_points = m.computed_points.clone();
-    slice.map_async(wgpu::MapMode::Read, move |_| {});
+        // Wait for GPU to finish
+        device.poll(wgpu::Maintain::Wait);
 
-    // Wait for GPU to finish
-    device.poll(wgpu::Maintain::Wait);
-
-    // Read the data
-    {
-        let data = slice.get_mapped_range();
-        if let Ok(mut points) = computed_points.lock() {
-            let new_points = bytemuck::cast_slice(&data);
-            points[..new_points.len()].copy_from_slice(new_points);
-        }
-    }
-
-    // Clean up
-    read_buffer.unmap();
-}
-
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h())
-        .hsla(0.0, 0.0, 1.0, 1.0);
-
-    let show_ref_line = m.controls.bool("show_ref_line");
-    let show_sand_line = m.controls.bool("show_sand_line");
-
-    if show_ref_line {
-        for i in 0..m.reference_points.len() - 1 {
-            let start = vec2(
-                m.reference_points[i].pos[0] * m.wr.w(),
-                m.reference_points[i].pos[1] * m.wr.h(),
-            );
-            let end = vec2(
-                m.reference_points[i + 1].pos[0] * m.wr.w(),
-                m.reference_points[i + 1].pos[1] * m.wr.h(),
-            );
-            draw.line()
-                .start(start)
-                .end(end)
-                .color(STEELBLUE)
-                .weight(2.0);
-        }
-    }
-
-    if show_sand_line {
-        let num_points = (m.reference_points.len() - 1) as u32
-            * m.controls.float("points_per_segment") as u32;
-
-        if let Ok(points) = m.computed_points.lock() {
-            for point in points.iter().take(num_points as usize) {
-                let pos =
-                    vec2(point.pos[0] * m.wr.w(), point.pos[1] * m.wr.h());
-                draw.rect().xy(pos).w_h(1.0, 1.0).color(BLACK);
+        // Read the data
+        {
+            let data = slice.get_mapped_range();
+            if let Ok(mut points) = computed_points.lock() {
+                let new_points = bytemuck::cast_slice(&data);
+                points[..new_points.len()].copy_from_slice(new_points);
             }
         }
+
+        // Clean up
+        read_buffer.unmap();
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
+
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .hsla(0.0, 0.0, 1.0, 1.0);
+
+        let show_ref_line = self.controls.bool("show_ref_line");
+        let show_sand_line = self.controls.bool("show_sand_line");
+
+        if show_ref_line {
+            for i in 0..self.reference_points.len() - 1 {
+                let start = vec2(
+                    self.reference_points[i].pos[0] * wr.w(),
+                    self.reference_points[i].pos[1] * wr.h(),
+                );
+                let end = vec2(
+                    self.reference_points[i + 1].pos[0] * wr.w(),
+                    self.reference_points[i + 1].pos[1] * wr.h(),
+                );
+                draw.line()
+                    .start(start)
+                    .end(end)
+                    .color(STEELBLUE)
+                    .weight(2.0);
+            }
+        }
+
+        if show_sand_line {
+            let num_points = (self.reference_points.len() - 1) as u32
+                * self.controls.float("points_per_segment") as u32;
+
+            if let Ok(points) = self.computed_points.lock() {
+                for point in points.iter().take(num_points as usize) {
+                    let pos =
+                        vec2(point.pos[0] * wr.w(), point.pos[1] * wr.h());
+                    draw.rect().xy(pos).w_h(1.0, 1.0).color(BLACK);
+                }
+            }
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 fn generate_reference_points(

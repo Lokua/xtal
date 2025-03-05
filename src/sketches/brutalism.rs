@@ -83,7 +83,7 @@ struct PostShaderParams {
     y: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Brutalism {
+pub fn init(app: &App, ctx: &LatticeContext) -> Brutalism {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
         Timing::new(ctx.bpm()),

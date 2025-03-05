@@ -25,7 +25,7 @@ pub struct EffectsWavefolderDev {
     controls: Controls,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> EffectsWavefolderDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> EffectsWavefolderDev {
     let animation = Animation::new(ManualTiming::new(ctx.bpm()));
     let wave_folder = WaveFolder::default();
 

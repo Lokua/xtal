@@ -29,7 +29,7 @@ pub struct Drops {
     droppers: Vec<Dropper>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> Drops {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     let animation = Animation::new(Timing::new(ctx.bpm()));
     let controls = Controls::new(vec![
         Control::slider("center_min_radius", 2.0, (1.0, 50.0), 1.0),

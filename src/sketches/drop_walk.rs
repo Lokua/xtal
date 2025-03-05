@@ -32,7 +32,7 @@ pub struct Drops {
     palettes: Vec<(ColorFn, ColorFn, ColorFn)>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> Drops {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     let w = ctx.window_rect().w();
     let h = ctx.window_rect().h();
 

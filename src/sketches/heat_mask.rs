@@ -21,7 +21,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const GRID_SIZE: usize = 128;
 
 #[derive(SketchComponents)]
-#[sketch(clear_color = "hsl(0.0, 0.0, 0.03, 0.5)")]
+#[sketch(clear_color = "hsla(0.0, 0.0, 0.03, 0.5)")]
 pub struct HeatMask {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
@@ -31,7 +31,7 @@ pub struct HeatMask {
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> HeatMask {
+pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
     let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;

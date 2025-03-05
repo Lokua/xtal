@@ -53,7 +53,7 @@ pub struct SpiralLines {
     gpu: gpu::GpuState<()>,
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> SpiralLines {
+pub fn init(app: &App, ctx: &LatticeContext) -> SpiralLines {
     let wr = ctx.window_rect();
     let animation = Animation::new(Timing::new(ctx.bpm()));
 

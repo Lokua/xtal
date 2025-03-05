@@ -27,7 +27,7 @@ pub struct AnimationDev {
     slew_limiter: SlewLimiter,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> AnimationDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> AnimationDev {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
     AnimationDev {

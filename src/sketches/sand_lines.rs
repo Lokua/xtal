@@ -31,7 +31,7 @@ pub struct SandLines {
     sand_lines: Vec<Line>,
 }
 
-pub fn init(_app: &App, _ctx: LatticeContext) -> SandLines {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLines {
     let disable_octave =
         |controls: &Controls| controls.string("noise_strategy") != "Octave";
 

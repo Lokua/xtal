@@ -17,12 +17,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct ShaderToTextureDev {
     #[allow(dead_code)]
     animation: Animation<Timing>,
     controls: Controls,
-    wr: WindowRect,
     first_pass: gpu::GpuState<Vertex>,
     second_pass: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -37,24 +36,19 @@ struct Vertex {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct ShaderParams {
-    // w, h, ..unused
     resolution: [f32; 4],
-    // mode, radius, ..unused
     a: [f32; 4],
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct PostProcessParams {
-    // w, h, ..unused
     resolution: [f32; 4],
-
-    // unused
     a: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::slide("a1", 0.0),
@@ -77,7 +71,7 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let first_pass = gpu::GpuState::new(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev.wgsl"),
         &first_pass_params,
         Some(&vertices),
@@ -89,63 +83,65 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let second_pass = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),
         &post_process_params,
         true,
     );
 
-    Model {
+    ShaderToTextureDev {
         animation,
         controls,
-        wr,
         first_pass,
         second_pass,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    let first_pass_params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("a1"),
-            m.controls.float("a2"),
-            m.controls.float("a3"),
-            m.controls.float("a4"),
-        ],
-    };
+impl Sketch for ShaderToTextureDev {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
 
-    let post_process_params = PostProcessParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.float("a1"),
-            m.controls.float("a2"),
-            m.controls.float("a3"),
-            m.controls.float("a4"),
-        ],
-    };
+        let first_pass_params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("a1"),
+                self.controls.float("a2"),
+                self.controls.float("a3"),
+                self.controls.float("a4"),
+            ],
+        };
 
-    let texture_view = m.first_pass.render_to_texture(app);
-    m.second_pass.set_input_texture(app, &texture_view);
+        let post_process_params = PostProcessParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.float("a1"),
+                self.controls.float("a2"),
+                self.controls.float("a3"),
+                self.controls.float("a4"),
+            ],
+        };
 
-    let vertices = create_vertices();
-    m.first_pass.update(
-        app,
-        m.wr.resolution_u32(),
-        &first_pass_params,
-        &vertices,
-    );
-    m.second_pass.update_params(
-        app,
-        m.wr.resolution_u32(),
-        &post_process_params,
-    );
-}
+        let texture_view = self.first_pass.render_to_texture(app);
+        self.second_pass.set_input_texture(app, &texture_view);
 
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(BLACK);
-    // m.first_pass.render(&frame);
-    m.second_pass.render(&frame);
+        let vertices = create_vertices();
+        self.first_pass.update(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &first_pass_params,
+            &vertices,
+        );
+        self.second_pass.update_params(
+            app,
+            ctx.window_rect().resolution_u32(),
+            &post_process_params,
+        );
+    }
+
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(BLACK);
+        self.second_pass.render(&frame);
+    }
 }
 
 fn create_vertices() -> Vec<Vertex> {

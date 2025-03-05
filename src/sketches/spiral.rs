@@ -52,7 +52,7 @@ pub struct Spiral {
     gpu: gpu::GpuState<()>,
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Spiral {
+pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
     let wr = ctx.window_rect();
     let animation = Animation::new(Timing::new(ctx.bpm()));
 

@@ -19,7 +19,7 @@ pub struct OscTransportDev {
     animation: Animation<OscTransportTiming>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> OscTransportDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> OscTransportDev {
     let animation = Animation::new(OscTransportTiming::new(ctx.bpm()));
 
     OscTransportDev { animation }

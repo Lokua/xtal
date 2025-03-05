@@ -22,7 +22,7 @@ pub struct AudioControlsDev {
     audio: AudioControls,
 }
 
-pub fn init(_app: &App, _ctx: LatticeContext) -> AudioControlsDev {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioControlsDev {
     let controls = Controls::with_previous(vec![
         Control::slide("pre_emphasis", 0.0),
         Control::slide("detect", 0.0),

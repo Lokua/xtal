@@ -29,7 +29,6 @@ pub use self::dev::osc_transport_dev;
 pub use self::dev::responsive_dev;
 pub use self::dev::shader_to_texture_dev;
 pub use self::dev::wgpu_compute_dev;
-pub use self::dev::wgpu_dev;
 
 pub mod genuary_2025;
 pub use self::genuary_2025::g25_10_11_12;

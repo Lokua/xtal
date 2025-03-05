@@ -21,7 +21,7 @@ pub struct ResponsiveDev {
     cell_size: f32,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> ResponsiveDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> ResponsiveDev {
     let wr = ctx.window_rect();
     let (grid, cell_size) = create_grid(wr.w(), wr.h(), 64, vec2);
 

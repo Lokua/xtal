@@ -54,7 +54,7 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Kalos2 {
+pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
     let resolution = ctx.window_rect().resolution_u32();
     let animation = Animation::new(Timing::new(ctx.bpm()));
 

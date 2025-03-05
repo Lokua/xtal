@@ -33,7 +33,7 @@ struct ShaderParams {
     b: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> SierpinskiTriangle {
+pub fn init(app: &App, ctx: &LatticeContext) -> SierpinskiTriangle {
     let wr = ctx.window_rect();
     let animation = Animation::new(Timing::new(ctx.bpm()));
 

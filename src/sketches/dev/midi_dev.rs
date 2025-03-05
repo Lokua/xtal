@@ -21,7 +21,7 @@ pub struct MidiDev {
     midi: MidiControls,
 }
 
-pub fn init(_app: &App, _ctx: LatticeContext) -> MidiDev {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> MidiDev {
     let midi = MidiControlBuilder::new()
         .control("a", (0, 1), 0.5)
         .control("b", (0, 2), 0.5)

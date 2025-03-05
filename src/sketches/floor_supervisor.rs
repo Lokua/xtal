@@ -31,7 +31,7 @@ pub struct DisplacementModel {
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> DisplacementModel {
+pub fn init(_app: &App, ctx: &LatticeContext) -> DisplacementModel {
     let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;

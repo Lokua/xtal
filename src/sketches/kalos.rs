@@ -53,7 +53,7 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Kalos {
+pub fn init(app: &App, ctx: &LatticeContext) -> Kalos {
     let wr = ctx.window_rect();
     let animation = Animation::new(Timing::new(ctx.bpm()));
 

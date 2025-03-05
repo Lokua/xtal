@@ -44,7 +44,7 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Interference {
+pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![

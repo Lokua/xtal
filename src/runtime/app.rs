@@ -14,6 +14,7 @@ pub fn run() {
 
     {
         let mut registry = REGISTRY.write().unwrap();
+
         register_sketches!(
             registry,
             // -----------------------------------------------------------------
@@ -49,20 +50,12 @@ pub fn run() {
             osc_dev,
             osc_transport_dev,
             responsive_dev,
+            shader_to_texture_dev,
+            wgpu_compute_dev,
             // -----------------------------------------------------------------
             // TEMPLATES
             // -----------------------------------------------------------------
             template
-        );
-
-        // ---------------------------------------------------------------------
-        // DEV
-        // ---------------------------------------------------------------------
-        register_legacy_sketches!(
-            registry,
-            shader_to_texture_dev,
-            wgpu_compute_dev,
-            wgpu_dev
         );
 
         // ---------------------------------------------------------------------
@@ -441,7 +434,7 @@ impl AppModel {
             registry.get("template").unwrap()
         });
 
-        let sketch = (sketch_info.factory)(app, self.ctx.clone());
+        let sketch = (sketch_info.factory)(app, &self.ctx);
 
         self.sketch = sketch;
         self.sketch_config = sketch_info.config;
@@ -553,7 +546,7 @@ fn model(app: &App) -> AppModel {
     let bpm_clone = bpm.clone();
     let ctx = LatticeContext::new(bpm_clone, WindowRect::new(rect));
 
-    let sketch = (sketch_info.factory)(app, ctx.clone());
+    let sketch = (sketch_info.factory)(app, &ctx);
 
     let gui_window_id = app
         .new_window()
@@ -740,10 +733,10 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_next_frame.get() {
-        // debug!(
-        //     "model.sketch.clear_color(): {:?}",
-        //     model.sketch.clear_color()
-        // );
+        debug!(
+            "model.sketch.clear_color(): {:?}",
+            model.sketch.clear_color()
+        );
         frame.clear(model.sketch.clear_color());
         model.clear_next_frame.set(false);
     }

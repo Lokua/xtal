@@ -39,7 +39,7 @@ struct ShaderParams {
     d: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> WaveFract {
+pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
     let window_rect = ctx.window_rect().clone();
 
     let controls = ControlScript::from_path(

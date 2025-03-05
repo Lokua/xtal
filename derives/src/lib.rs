@@ -245,7 +245,13 @@ impl ColorFormat {
                     None
                 }
             }
-            _ => None,
+            _ => {
+                panic!(
+                    "Unsupported color format: '{}'. \
+                    Use 'rgba(r,g,b,a)' or 'hsla(h,s,l,a)'",
+                    format
+                );
+            }
         }
     }
 }

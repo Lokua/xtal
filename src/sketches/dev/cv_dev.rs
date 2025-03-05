@@ -21,7 +21,7 @@ pub struct CvTest {
     audio: AudioControls,
 }
 
-pub fn init(_app: &App, _ctx: LatticeContext) -> CvTest {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> CvTest {
     let audio = AudioControlBuilder::new()
         .with_buffer_processor(thru_buffer_processor)
         .control_from_config(

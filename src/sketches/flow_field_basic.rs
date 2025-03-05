@@ -25,7 +25,7 @@ pub struct FlowFieldBasic {
     noise: PerlinNoise,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> FlowFieldBasic {
+pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![

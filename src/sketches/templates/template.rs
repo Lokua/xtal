@@ -23,7 +23,7 @@ pub struct Template {
     hue: f32,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> Template {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![Control::slider(

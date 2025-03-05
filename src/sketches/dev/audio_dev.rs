@@ -25,7 +25,7 @@ pub struct AudioDev {
     fft_bands: Vec<f32>,
 }
 
-pub fn init(_app: &App, _ctx: LatticeContext) -> AudioDev {
+pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioDev {
     let audio =
         Audio::new(crate::config::AUDIO_DEVICE_SAMPLE_RATE, SKETCH_CONFIG.fps);
 

@@ -46,7 +46,7 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: LatticeContext) -> Blob {
+pub fn init(app: &App, ctx: &LatticeContext) -> Blob {
     let window_rect = ctx.window_rect();
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "blob.yaml"),

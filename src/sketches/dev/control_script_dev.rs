@@ -22,7 +22,7 @@ pub struct ControlScriptDev {
     controls: ControlScript<Timing>,
 }
 
-pub fn init(_app: &App, ctx: LatticeContext) -> ControlScriptDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> ControlScriptDev {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
         Timing::new(ctx.bpm()),
