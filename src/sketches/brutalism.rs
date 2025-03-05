@@ -22,10 +22,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 const BACKGROUND: f32 = 0.0;
 const FOREGROUND: f32 = 1.0;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Brutalism {
     controls: ControlScript<Timing>,
-    wr: WindowRect,
     main_shader: gpu::GpuState<Vertex>,
     post_shader: gpu::GpuState<BasicPositionVertex>,
 }
@@ -84,10 +83,10 @@ struct PostShaderParams {
     y: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: LatticeContext) -> Brutalism {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
-        Timing::new(Bpm::new(SKETCH_CONFIG.bpm)),
+        Timing::new(ctx.bpm.clone()),
     );
 
     let params = ShaderParams {
@@ -110,10 +109,11 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     };
 
     let vertices = create_vertices(0.0);
+    let res = ctx.window_rect().resolution_u32();
 
     let main_shader = gpu::GpuState::new(
         app,
-        wr.resolution_u32(),
+        res,
         to_absolute_path(file!(), "brutalism_shader1.wgsl"),
         &params,
         Some(&vertices),
@@ -125,111 +125,114 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
 
     let post_shader = gpu::GpuState::new_fullscreen(
         app,
-        wr.resolution_u32(),
+        res,
         to_absolute_path(file!(), "brutalism_shader2.wgsl"),
         &post_params,
         true,
     );
 
-    Model {
+    Brutalism {
         controls,
-        wr,
         main_shader,
         post_shader,
     }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for Brutalism {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+        let wr = ctx.window_rect();
 
-    let params = ShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        a: [
-            m.controls.get("rot_x"),
-            m.controls.get("rot_y"),
-            m.controls.get("rot_z"),
-            m.controls.get("z_offset"),
-        ],
-        b: [
-            m.controls.get("scale"),
-            m.controls.get("texture_strength"),
-            m.controls.get("texture_scale"),
-            m.controls.get("echo_time"),
-        ],
-        c: [
-            m.controls.get("echo_threshold"),
-            m.controls.get("echo_intensity"),
-            m.controls.get("grid_contrast"),
-            m.controls.get("grid_size"),
-        ],
-        d: [
-            m.controls.get("grid_border_size"),
-            m.controls.get("corner_offset"),
-            m.controls.get("middle_translate"),
-            m.controls.get("middle_size"),
-        ],
-        e: [
-            (m.controls.get("corner_t_1")),
-            (m.controls.get("corner_t_2")),
-            (m.controls.get("corner_t_3")),
-            (m.controls.get("corner_t_4")),
-        ],
-        f: [
-            m.controls.get("corner_t_5"),
-            m.controls.get("corner_t_6"),
-            m.controls.get("corner_t_7"),
-            m.controls.get("corner_t_8"),
-        ],
-        g: [
-            m.controls.get("stag"),
-            m.controls.get("diag"),
-            m.controls.get("bulge"),
-            m.controls.get("offs"),
-        ],
-        h: [
-            m.controls.get("bg_noise"),
-            m.controls.get("bg_noise_scale"),
-            m.controls.get("color_spread"),
-            m.controls.get("corner_translate"),
-        ],
-        i: [
-            m.controls.get("twist"),
-            m.controls.get("explode"),
-            m.controls.get("wave"),
-            m.controls.get("phase_twist"),
-        ],
-    };
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [
+                self.controls.get("rot_x"),
+                self.controls.get("rot_y"),
+                self.controls.get("rot_z"),
+                self.controls.get("z_offset"),
+            ],
+            b: [
+                self.controls.get("scale"),
+                self.controls.get("texture_strength"),
+                self.controls.get("texture_scale"),
+                self.controls.get("echo_time"),
+            ],
+            c: [
+                self.controls.get("echo_threshold"),
+                self.controls.get("echo_intensity"),
+                self.controls.get("grid_contrast"),
+                self.controls.get("grid_size"),
+            ],
+            d: [
+                self.controls.get("grid_border_size"),
+                self.controls.get("corner_offset"),
+                self.controls.get("middle_translate"),
+                self.controls.get("middle_size"),
+            ],
+            e: [
+                (self.controls.get("corner_t_1")),
+                (self.controls.get("corner_t_2")),
+                (self.controls.get("corner_t_3")),
+                (self.controls.get("corner_t_4")),
+            ],
+            f: [
+                self.controls.get("corner_t_5"),
+                self.controls.get("corner_t_6"),
+                self.controls.get("corner_t_7"),
+                self.controls.get("corner_t_8"),
+            ],
+            g: [
+                self.controls.get("stag"),
+                self.controls.get("diag"),
+                self.controls.get("bulge"),
+                self.controls.get("offs"),
+            ],
+            h: [
+                self.controls.get("bg_noise"),
+                self.controls.get("bg_noise_scale"),
+                self.controls.get("color_spread"),
+                self.controls.get("corner_translate"),
+            ],
+            i: [
+                self.controls.get("twist"),
+                self.controls.get("explode"),
+                self.controls.get("wave"),
+                self.controls.get("phase_twist"),
+            ],
+        };
 
-    let post_params = PostShaderParams {
-        resolution: [m.wr.w(), m.wr.h(), 0.0, 0.0],
-        z: [
-            m.controls.get("edge_mix"),
-            m.controls.get("edge_size"),
-            m.controls.get("edge_thresh"),
-            m.controls.get("geo_mix"),
-        ],
-        y: [
-            m.controls.get("geo_size"),
-            m.controls.get("geo_offs"),
-            m.controls.get("contrast"),
-            m.controls.get("brightness"),
-        ],
-    };
+        let post_params = PostShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            z: [
+                self.controls.get("edge_mix"),
+                self.controls.get("edge_size"),
+                self.controls.get("edge_thresh"),
+                self.controls.get("geo_mix"),
+            ],
+            y: [
+                self.controls.get("geo_size"),
+                self.controls.get("geo_offs"),
+                self.controls.get("contrast"),
+                self.controls.get("brightness"),
+            ],
+        };
 
-    let vertices = create_vertices(m.controls.get("scale"));
+        let vertices = create_vertices(self.controls.get("scale"));
+        let window_size = wr.resolution_u32();
 
-    let window_size = m.wr.resolution_u32();
+        self.main_shader
+            .update(app, window_size, &params, &vertices);
 
-    m.main_shader.update(app, window_size, &params, &vertices);
+        let texture = self.main_shader.render_to_texture(app);
+        self.post_shader.set_input_texture(app, &texture);
+        self.post_shader
+            .update_params(app, window_size, &post_params);
+    }
 
-    let texture = m.main_shader.render_to_texture(app);
-    m.post_shader.set_input_texture(app, &texture);
-    m.post_shader.update_params(app, window_size, &post_params);
-}
-
-pub fn view(_app: &App, m: &Model, frame: Frame) {
-    frame.clear(WHITE);
-    m.post_shader.render(&frame);
+    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+        frame.clear(WHITE);
+        self.post_shader.render(&frame);
+    }
 }
 
 fn create_vertices(scale: f32) -> Vec<Vertex> {
