@@ -1,52 +1,46 @@
 {
   "values": {
-    "c2": {
-      "Float": 0.83699995
-    },
-    "c3": {
-      "Float": 0.35999998
-    },
-    "d1": {
-      "Float": 0.02
-    },
-    "c4": {
-      "Float": 0.062
-    },
-    "b4": {
-      "Float": 0.75699997
-    },
-    "a3": {
-      "Float": 0.675
-    },
-    "a1": {
-      "Float": 0.49199998
+    "fract_dist_reduce_mix": {
+      "Float": 0.5
     },
     "d2": {
-      "Float": 0.22199999
+      "Float": 0.0
     },
-    "d4": {
-      "Float": 0.638
-    },
-    "b1": {
-      "Float": 0.295
-    },
-    "a4": {
-      "Float": 0.75299996
+    "wave_reduce_mix": {
+      "Float": 0.592
     },
     "a2": {
       "Float": 0.0
     },
-    "b2": {
-      "Float": 0.16
-    },
-    "c1": {
-      "Float": 0.29999998
+    "b3": {
+      "Float": 0.0
     },
     "d3": {
-      "Float": 0.715
+      "Float": 37.5
     },
-    "b3": {
-      "Float": 0.111999996
+    "a4": {
+      "Float": 0.54499996
+    },
+    "fract_dist_map_mix": {
+      "Float": 0.51699996
+    },
+    "wave_dist": {
+      "Float": 0.443
+    },
+    "b4": {
+      "Float": 0.45499998
+    },
+    "wk71v": {
+      "Bool": false
+    },
+    "dyrtu": {
+      "Bool": false
+    },
+    "2wc91": {
+      "Bool": false
+    },
+    "dist_radius": {
+      "Float": 1.0
     }
   }
 }

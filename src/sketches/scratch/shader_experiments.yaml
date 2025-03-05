@@ -1,0 +1,142 @@
+# ------------------------------------------------------------------------------
+#  Wave
+# ------------------------------------------------------------------------------
+
+wave_phase:
+  var: c1
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 0.5
+      amplitude: 0.5
+    - kind: random
+      position: 2
+      value: 0.5
+      amplitude: 0.5
+    - kind: end
+      position: 4
+      value: 0
+
+wave_phase_mult:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 0.2
+
+wave_phase_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.65
+  fall: 0.65
+
+wave_phase_mod:
+  type: mod
+  source: wave_phase
+  modulators:
+    - wave_phase_mult
+    - wave_phase_slew
+
+wave_dist:
+  var: c2
+  type: slider
+  range: [0, 0.5]
+
+wave_x_freq:
+  var: c3
+  bypass: _
+  type: triangle
+  beats: 10
+  range: [0, 0.75]
+
+wave_y_freq:
+  var: c4
+  bypass: _
+  type: triangle
+  beats: 14
+  range: [0, 0.25]
+
+wave_reduce_mix:
+  var: d4
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Distortion
+# ------------------------------------------------------------------------------
+
+dist_freq:
+  var: a1
+  type: triangle
+  beats: 32
+  range: [0, 5]
+
+# ------------------------------------------------------------------------------
+#  Fract
+# ------------------------------------------------------------------------------
+
+fract_count:
+  var: d1
+  type: automate
+  breakpoints:
+    - kind: random
+      position: 0
+      value: 5
+      amplitude: 5
+    - kind: end
+      position: 1
+      value: 5
+
+fract_count_slew:
+  type: effect
+  kind: slew_limiter
+  rise: 0.6
+  fall: 0.6
+
+fract_count_mod:
+  type: mod
+  source: fract_count
+  modulators:
+    - fract_count_slew
+
+# ------------------------------------------------------------------------------
+#  Unused
+# ------------------------------------------------------------------------------
+
+unused_section:
+  type: separator
+
+a2:
+  var: a2
+  type: slider
+
+a3:
+  var: a3
+  type: slider
+
+a4:
+  var: a4
+  type: slider
+
+b1:
+  var: b1
+  type: slider
+
+b2:
+  var: b2
+  type: slider
+
+b3:
+  var: b3
+  type: slider
+
+b4:
+  var: b4
+  type: slider
+
+d2:
+  var: d2
+  type: slider
+
+d3:
+  var: d3
+  type: slider
