@@ -195,23 +195,28 @@ control to something.
 > Ableton parameter. In this case _you do not_ want Lattice enabled in Ableton's
 > MIDI Input ports at all as that just complicates things.
 
-#### Sync Recording
+### Sync Recording
+
+With MIDI ports configured in your DAW to send clock to Lattice, Lattice is
+already in a place where you can perfectly sync video recordings with audio from
+your DAW. Below are steps to setup Ableton Live such that you can record audio
+and video simultaneously when you press Play in the DAW (if you only want to
+record video you can just do steps 2 and 4):
 
 1. In Ableton > Preferences > Record, make sure **Start Transport With Record**
    is set to **Off**
 2. Hit **Q Rec** in Lattice.
-3. (optional if no recording audio) Arm tracks in Ableton, arm the transport
-   (Record button)
+3. Arm tracks in Ableton, arm the transport (Record button)
 4. Now, pressing play in Ableton will also initiate recording in Lattice,
    likewise pressing Stop in Ableton will stop recording in Lattice.
 
 ### Open Sound Control (OSC)
 
-While MIDI is grate for controlling parameters in the case that MIDI controller
-can send 14bit high resolution MIDI, it sucks otherwise (128 values just isn't
-enough precision for smooth parameter automation). For this reason Lattice
-supports OSC and comes with two MaxForLive devices designed to make integration
-with Ableton Live simpler.
+While MIDI is great for controlling parameters in the case that a MIDI
+controller can send 14bit high resolution MIDI, it sucks otherwise (128 values
+just isn't enough precision for smooth parameter automation). For this reason
+Lattice supports OSC and comes with two MaxForLive devices designed to make
+integration with Ableton Live simpler.
 
 #### L.OscTransport
 

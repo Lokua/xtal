@@ -15,11 +15,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(700),
 };
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Breakpoints2 {
     animation: Animation<ManualTiming>,
     controls: ControlScript<ManualTiming>,
-    wr: WindowRect,
     lanes: Vec<Vec<[f32; 2]>>,
     slew_limiter: SlewLimiter,
     hysteresis: Hysteresis,
@@ -29,8 +28,8 @@ pub struct Model {
     ring_modulator: RingModulator,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
-    let timing = ManualTiming::new(Bpm::new(SKETCH_CONFIG.bpm));
+pub fn init(_app: &App, ctx: LatticeContext) -> Breakpoints2 {
+    let timing = ManualTiming::new(ctx.bpm);
     let animation = Animation::new(timing.clone());
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "breakpoints_2.yaml"),
@@ -44,10 +43,9 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     let saturator = Saturator::default();
     let ring_modulator = RingModulator::default();
 
-    Model {
+    Breakpoints2 {
         animation,
         controls,
-        wr,
         lanes: vec![],
         slew_limiter,
         hysteresis,
@@ -58,149 +56,157 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    m.controls.update();
+impl Sketch for Breakpoints2 {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.controls.update();
 
-    if m.controls.changed() {
-        let slew = m.controls.bool("slew");
-        let rise = m.controls.get("rise");
-        let fall = m.controls.get("fall");
-        m.slew_limiter.set_rates(rise, fall);
+        if self.controls.changed() {
+            let slew = self.controls.bool("slew");
+            let rise = self.controls.get("rise");
+            let fall = self.controls.get("fall");
+            self.slew_limiter.set_rates(rise, fall);
 
-        let hyst = m.controls.bool("hyst");
-        m.hysteresis.pass_through = m.controls.bool("hyst_pass_through");
-        m.hysteresis.lower_threshold = m.controls.get("lower_threshold");
-        m.hysteresis.upper_threshold = m.controls.get("upper_threshold");
-        m.hysteresis.output_low = m.controls.get("output_low");
-        m.hysteresis.output_high = m.controls.get("output_high");
+            let hyst = self.controls.bool("hyst");
+            self.hysteresis.pass_through =
+                self.controls.bool("hyst_pass_through");
+            self.hysteresis.lower_threshold =
+                self.controls.get("lower_threshold");
+            self.hysteresis.upper_threshold =
+                self.controls.get("upper_threshold");
+            self.hysteresis.output_low = self.controls.get("output_low");
+            self.hysteresis.output_high = self.controls.get("output_high");
 
-        let fold = m.controls.bool("fold");
-        m.wave_folder.gain = m.controls.get("fold_gain");
-        m.wave_folder.iterations =
-            m.controls.get("fold_iterations").floor() as usize;
-        m.wave_folder.symmetry = m.controls.get("fold_symmetry");
-        m.wave_folder.bias = m.controls.get("fold_bias");
-        m.wave_folder.shape = m.controls.get("fold_shape");
+            let fold = self.controls.bool("fold");
+            self.wave_folder.gain = self.controls.get("fold_gain");
+            self.wave_folder.iterations =
+                self.controls.get("fold_iterations").floor() as usize;
+            self.wave_folder.symmetry = self.controls.get("fold_symmetry");
+            self.wave_folder.bias = self.controls.get("fold_bias");
+            self.wave_folder.shape = self.controls.get("fold_shape");
 
-        let quant = m.controls.bool("quant");
-        m.quantizer.step = m.controls.get("quant_step");
+            let quant = self.controls.bool("quant");
+            self.quantizer.step = self.controls.get("quant_step");
 
-        let sat = m.controls.bool("sat");
-        m.saturator.drive = m.controls.get("sat_drive");
+            let sat = self.controls.bool("sat");
+            self.saturator.drive = self.controls.get("sat_drive");
 
-        let rm = m.controls.bool("rm");
-        m.ring_modulator.mix = m.controls.get("rm_mix");
+            let rm = self.controls.bool("rm");
+            self.ring_modulator.mix = self.controls.get("rm_mix");
 
-        let n_points = m.controls.get("n_points").floor() as usize;
+            let n_points = self.controls.get("n_points").floor() as usize;
 
-        m.lanes.clear();
-        m.lanes.extend(vec![
-            create_points(
-                &mut m.animation,
-                &m.controls.breakpoints("points"),
-                n_points,
-                ternary!(slew, Some(&mut m.slew_limiter), None),
-                ternary!(hyst, Some(&mut m.hysteresis), None),
-                ternary!(fold, Some(&mut m.wave_folder), None),
-                ternary!(quant, Some(&mut m.quantizer), None),
-                ternary!(sat, Some(&mut m.saturator), None),
-            ),
-            create_points(
-                &mut m.animation,
-                &m.controls.breakpoints("points_2"),
-                n_points,
-                ternary!(slew, Some(&mut m.slew_limiter), None),
-                ternary!(hyst, Some(&mut m.hysteresis), None),
-                ternary!(fold, Some(&mut m.wave_folder), None),
-                ternary!(quant, Some(&mut m.quantizer), None),
-                ternary!(sat, Some(&mut m.saturator), None),
-            ),
-            create_points(
-                &mut m.animation,
-                &m.controls.breakpoints("points_3"),
-                n_points,
-                ternary!(slew, Some(&mut m.slew_limiter), None),
-                ternary!(hyst, Some(&mut m.hysteresis), None),
-                ternary!(fold, Some(&mut m.wave_folder), None),
-                ternary!(quant, Some(&mut m.quantizer), None),
-                ternary!(sat, Some(&mut m.saturator), None),
-            ),
-            create_modulated_points(
-                &mut m.animation,
-                &m.controls.breakpoints("points_2"),
-                &m.controls.breakpoints("points_3"),
-                n_points,
-                ternary!(slew, Some(&mut m.slew_limiter), None),
-                ternary!(hyst, Some(&mut m.hysteresis), None),
-                ternary!(fold, Some(&mut m.wave_folder), None),
-                ternary!(quant, Some(&mut m.quantizer), None),
-                ternary!(sat, Some(&mut m.saturator), None),
-                ternary!(rm, Some(&mut m.ring_modulator), None),
-            ),
-        ]);
+            self.lanes.clear();
+            self.lanes.extend(vec![
+                create_points(
+                    &mut self.animation,
+                    &self.controls.breakpoints("points"),
+                    n_points,
+                    ternary!(slew, Some(&mut self.slew_limiter), None),
+                    ternary!(hyst, Some(&mut self.hysteresis), None),
+                    ternary!(fold, Some(&mut self.wave_folder), None),
+                    ternary!(quant, Some(&mut self.quantizer), None),
+                    ternary!(sat, Some(&mut self.saturator), None),
+                ),
+                create_points(
+                    &mut self.animation,
+                    &self.controls.breakpoints("points_2"),
+                    n_points,
+                    ternary!(slew, Some(&mut self.slew_limiter), None),
+                    ternary!(hyst, Some(&mut self.hysteresis), None),
+                    ternary!(fold, Some(&mut self.wave_folder), None),
+                    ternary!(quant, Some(&mut self.quantizer), None),
+                    ternary!(sat, Some(&mut self.saturator), None),
+                ),
+                create_points(
+                    &mut self.animation,
+                    &self.controls.breakpoints("points_3"),
+                    n_points,
+                    ternary!(slew, Some(&mut self.slew_limiter), None),
+                    ternary!(hyst, Some(&mut self.hysteresis), None),
+                    ternary!(fold, Some(&mut self.wave_folder), None),
+                    ternary!(quant, Some(&mut self.quantizer), None),
+                    ternary!(sat, Some(&mut self.saturator), None),
+                ),
+                create_modulated_points(
+                    &mut self.animation,
+                    &self.controls.breakpoints("points_2"),
+                    &self.controls.breakpoints("points_3"),
+                    n_points,
+                    ternary!(slew, Some(&mut self.slew_limiter), None),
+                    ternary!(hyst, Some(&mut self.hysteresis), None),
+                    ternary!(fold, Some(&mut self.wave_folder), None),
+                    ternary!(quant, Some(&mut self.quantizer), None),
+                    ternary!(sat, Some(&mut self.saturator), None),
+                    ternary!(rm, Some(&mut self.ring_modulator), None),
+                ),
+            ]);
 
-        m.controls.mark_unchanged();
-    }
-}
-
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect()
-        .x_y(0.0, 0.0)
-        .w_h(m.wr.w(), m.wr.h())
-        .color(gray(0.1));
-
-    let track_height = (m.wr.h() / m.lanes.len() as f32) - 6.0;
-    let track_h_margin = 12.0;
-    let track_v_margin = 12.0;
-    let track_h_padding = 12.0;
-    let track_v_padding = 4.0;
-    let track_height_with_margin = track_height - (track_v_margin * 2.0);
-
-    let get_y_offset = |i: usize| {
-        (m.wr.h() / 2.0) - (track_height * (i as f32 + 0.5)) - track_v_margin
-    };
-
-    // Draw track backgrounds for each lane
-    for (i, _) in m.lanes.iter().enumerate() {
-        let y_offset = get_y_offset(i);
-
-        draw.rect()
-            .x_y(0.0, y_offset)
-            .w_h(m.wr.w() - (track_h_margin * 2.0), track_height_with_margin)
-            .color(gray(0.15));
-    }
-
-    // Draw points for each lane
-    for (i, lane) in m.lanes.iter().enumerate() {
-        let y_offset = get_y_offset(i);
-
-        for point in lane {
-            draw.ellipse()
-                .x_y(
-                    map_range(
-                        point[0],
-                        0.0,
-                        lane.last().unwrap()[0],
-                        -m.wr.hw() + track_h_padding,
-                        m.wr.hw() - track_h_padding,
-                    ),
-                    y_offset
-                        + map_range(
-                            point[1],
-                            0.0,
-                            1.0,
-                            -(track_height_with_margin / 2.0) + track_v_padding,
-                            track_height_with_margin / 2.0 - track_v_padding,
-                        ),
-                )
-                .radius(1.0)
-                .color(PALETURQUOISE);
+            self.controls.mark_unchanged();
         }
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let draw = app.draw();
+
+        draw.rect()
+            .x_y(0.0, 0.0)
+            .w_h(wr.w(), wr.h())
+            .color(gray(0.1));
+
+        let track_height = (wr.h() / self.lanes.len() as f32) - 6.0;
+        let track_h_margin = 12.0;
+        let track_v_margin = 12.0;
+        let track_h_padding = 12.0;
+        let track_v_padding = 4.0;
+        let track_height_with_margin = track_height - (track_v_margin * 2.0);
+
+        let get_y_offset = |i: usize| {
+            (wr.h() / 2.0) - (track_height * (i as f32 + 0.5)) - track_v_margin
+        };
+
+        // Draw track backgrounds for each lane
+        for (i, _) in self.lanes.iter().enumerate() {
+            let y_offset = get_y_offset(i);
+
+            draw.rect()
+                .x_y(0.0, y_offset)
+                .w_h(wr.w() - (track_h_margin * 2.0), track_height_with_margin)
+                .color(gray(0.15));
+        }
+
+        // Draw points for each lane
+        for (i, lane) in self.lanes.iter().enumerate() {
+            let y_offset = get_y_offset(i);
+
+            for point in lane {
+                draw.ellipse()
+                    .x_y(
+                        map_range(
+                            point[0],
+                            0.0,
+                            lane.last().unwrap()[0],
+                            -wr.hw() + track_h_padding,
+                            wr.hw() - track_h_padding,
+                        ),
+                        y_offset
+                            + map_range(
+                                point[1],
+                                0.0,
+                                1.0,
+                                -(track_height_with_margin / 2.0)
+                                    + track_v_padding,
+                                track_height_with_margin / 2.0
+                                    - track_v_padding,
+                            ),
+                    )
+                    .radius(1.0)
+                    .color(PALETURQUOISE);
+            }
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 fn create_points(
