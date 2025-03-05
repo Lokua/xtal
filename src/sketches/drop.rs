@@ -3,6 +3,9 @@ use nannou::prelude::*;
 use super::shared::drop::*;
 use crate::framework::prelude::*;
 
+// https://www.youtube.com/watch?v=p7IGZTjC008&t=613s
+// https://people.csail.mit.edu/jaffer/Marbling/Dropping-Paint
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "drop",
     display_name: "Drop",
@@ -17,8 +20,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const MAX_DROPS: usize = 2500;
 
-#[derive(LegacySketchComponents)]
-pub struct Model {
+#[derive(SketchComponents)]
+pub struct Drops {
     animation: Animation<Timing>,
     controls: Controls,
     max_drops: usize,
@@ -26,43 +29,8 @@ pub struct Model {
     droppers: Vec<Dropper>,
 }
 
-type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl);
-type ColorFn = fn(&Controls) -> Hsl;
-
-struct Dropper {
-    kind: String,
-    trigger: Trigger,
-    zone: DropZone,
-    drop_fn: DropFn,
-    min_radius: f32,
-    max_radius: f32,
-    color_fn: ColorFn,
-}
-
-impl Dropper {
-    pub fn new(
-        kind: String,
-        trigger: Trigger,
-        zone: DropZone,
-        drop_fn: DropFn,
-        min_radius: f32,
-        max_radius: f32,
-        color_fn: ColorFn,
-    ) -> Self {
-        Self {
-            kind,
-            trigger,
-            zone,
-            drop_fn,
-            min_radius,
-            max_radius,
-            color_fn,
-        }
-    }
-}
-
-pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: LatticeContext) -> Drops {
+    let animation = Animation::new(Timing::new(ctx.bpm));
     let controls = Controls::new(vec![
         Control::slider("center_min_radius", 2.0, (1.0, 50.0), 1.0),
         Control::slider("center_max_radius", 20.0, (1.0, 50.0), 1.0),
@@ -173,7 +141,7 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
         ),
     ];
 
-    Model {
+    Drops {
         animation,
         controls,
         max_drops: MAX_DROPS,
@@ -182,46 +150,102 @@ pub fn init_model(_app: &App, _window_rect: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
-    let offset = model
-        .animation
-        .lerp(&[kf(1.0, 2.0), kf(2.0, 2.0), kf(3.0, 2.0)], 0.0);
+impl Sketch for Drops {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        let offset = self
+            .animation
+            .lerp(&[kf(1.0, 2.0), kf(2.0, 2.0), kf(3.0, 2.0)], 0.0);
 
-    model.droppers.iter_mut().for_each(|dropper| {
-        if model.animation.should_trigger(&mut dropper.trigger) {
-            match dropper.kind.as_str() {
-                "trbl" => {
-                    dropper.min_radius =
-                        model.controls.float("trbl_min_radius");
-                    dropper.max_radius =
-                        model.controls.float("trbl_max_radius");
+        self.droppers.iter_mut().for_each(|dropper| {
+            if self.animation.should_trigger(&mut dropper.trigger) {
+                match dropper.kind.as_str() {
+                    "trbl" => {
+                        dropper.min_radius =
+                            self.controls.float("trbl_min_radius");
+                        dropper.max_radius =
+                            self.controls.float("trbl_max_radius");
+                    }
+                    "corner" => {
+                        dropper.min_radius =
+                            self.controls.float("corner_min_radius");
+                        dropper.max_radius =
+                            self.controls.float("corner_max_radius");
+                    }
+                    "center" => {
+                        dropper.min_radius =
+                            self.controls.float("center_min_radius");
+                        dropper.max_radius =
+                            self.controls.float("center_max_radius");
+                    }
+                    _ => {}
                 }
-                "corner" => {
-                    dropper.min_radius =
-                        model.controls.float("corner_min_radius");
-                    dropper.max_radius =
-                        model.controls.float("corner_max_radius");
-                }
-                "center" => {
-                    dropper.min_radius =
-                        model.controls.float("center_min_radius");
-                    dropper.max_radius =
-                        model.controls.float("center_max_radius");
-                }
-                _ => {}
-            }
 
-            for _ in 0..3 {
-                (dropper.drop_fn)(
-                    dropper,
-                    dropper.zone.center * offset,
-                    &mut model.drops,
-                    model.max_drops,
-                    (dropper.color_fn)(&model.controls),
-                );
+                for _ in 0..3 {
+                    (dropper.drop_fn)(
+                        dropper,
+                        dropper.zone.center * offset,
+                        &mut self.drops,
+                        self.max_drops,
+                        (dropper.color_fn)(&self.controls),
+                    );
+                }
             }
+        });
+    }
+
+    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+        let _window_rect = app
+            .window(frame.window_id())
+            .expect("Unable to get window")
+            .rect();
+
+        let draw = app.draw();
+
+        draw.background().color(hsl(0.0, 0.0, 1.0));
+
+        for (drop, color) in self.drops.iter() {
+            draw.polygon()
+                .color(*color)
+                .points(drop.vertices().iter().cloned());
         }
-    });
+
+        draw.to_frame(app, &frame).unwrap();
+    }
+}
+
+type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl);
+type ColorFn = fn(&Controls) -> Hsl;
+
+struct Dropper {
+    kind: String,
+    trigger: Trigger,
+    zone: DropZone,
+    drop_fn: DropFn,
+    min_radius: f32,
+    max_radius: f32,
+    color_fn: ColorFn,
+}
+
+impl Dropper {
+    pub fn new(
+        kind: String,
+        trigger: Trigger,
+        zone: DropZone,
+        drop_fn: DropFn,
+        min_radius: f32,
+        max_radius: f32,
+        color_fn: ColorFn,
+    ) -> Self {
+        Self {
+            kind,
+            trigger,
+            zone,
+            drop_fn,
+            min_radius,
+            max_radius,
+            color_fn,
+        }
+    }
 }
 
 fn drop_it(
@@ -271,23 +295,4 @@ fn corner_color(controls: &Controls) -> Hsl {
     } else {
         hsl(0.0, 0.0, 1.0)
     }
-}
-
-pub fn view(app: &App, model: &Model, frame: Frame) {
-    let _window_rect = app
-        .window(frame.window_id())
-        .expect("Unable to get window")
-        .rect();
-
-    let draw = app.draw();
-
-    draw.background().color(hsl(0.0, 0.0, 1.0));
-
-    for (drop, color) in model.drops.iter() {
-        draw.polygon()
-            .color(*color)
-            .points(drop.vertices().iter().cloned());
-    }
-
-    draw.to_frame(app, &frame).unwrap();
 }

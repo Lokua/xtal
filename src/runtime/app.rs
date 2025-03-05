@@ -23,8 +23,10 @@ pub fn run() {
             breakpoints_2,
             brutalism,
             displacement_2a,
-            wave_fract,
+            drop,
             drop_walk,
+            floor_supervisor,
+            wave_fract,
             // -----------------------------------------------------------------
             // DEV
             // -----------------------------------------------------------------
@@ -40,8 +42,6 @@ pub fn run() {
         // ---------------------------------------------------------------------
         register_legacy_sketches!(
             registry,
-            drop,
-            floor_supervisor,
             flow_field_basic,
             heat_mask,
             interference,
@@ -747,6 +747,10 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_next_frame.get() {
+        debug!(
+            "model.sketch.clear_color(): {:?}",
+            model.sketch.clear_color()
+        );
         frame.clear(model.sketch.clear_color());
         model.clear_next_frame.set(false);
     }

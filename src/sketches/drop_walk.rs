@@ -3,7 +3,10 @@ use nannou::prelude::*;
 use super::shared::drop::*;
 use crate::framework::prelude::*;
 
-// ...Live/2024/2024.02.19 Dumb Out Project/04 - Dumb Out - Video Promo Edit.als
+// https://www.youtube.com/watch?v=p7IGZTjC008&t=613s
+// https://people.csail.mit.edu/jaffer/Marbling/Dropping-Paint
+
+// ~/Documents/Live/2024/2024.02.19 Dumb Out Project/04 - Dumb Out - Video Promo Edit.als
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "drop_walk",

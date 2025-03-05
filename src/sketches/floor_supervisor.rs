@@ -20,10 +20,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
-#[derive(LegacySketchComponents)]
+#[derive(SketchComponents)]
 #[sketch(clear_color = "hsl(0.0, 0.0, 0.03, 0.5)")]
-pub struct Model {
-    wr: WindowRect,
+pub struct DisplacementModel {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
     animation: Animation<Timing>,
@@ -32,10 +31,11 @@ pub struct Model {
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
 
-pub fn init_model(_app: &App, wr: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: LatticeContext) -> DisplacementModel {
+    let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
-    let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+    let animation = Animation::new(Timing::new(ctx.bpm));
 
     let modes = ["attract", "influence"];
 
@@ -177,8 +177,7 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
 
     update_positions(&wr, &mut displacer_configs);
 
-    Model {
-        wr,
+    DisplacementModel {
         grid: create_grid(grid_w, grid_h, GRID_SIZE, vec2).0,
         displacer_configs,
         animation,
@@ -193,282 +192,300 @@ pub fn init_model(_app: &App, wr: WindowRect) -> Model {
     }
 }
 
-pub fn update(_app: &App, m: &mut Model, _update: Update) {
-    let show_center = m.controls.bool("show_center");
-    let animate_center = m.controls.bool("animate_center");
-    let center_use_grain = m.controls.bool("center_use_grain");
-    let center_mode = m.controls.string("center_mode");
-    let center_radius = m.controls.float("center_radius");
-    let center_strength = m.controls.float("center_strength");
-    // ---
-    let show_corner = m.controls.bool("show_corner");
-    let animate_corner = m.controls.bool("animate_corner");
-    let corner_use_grain = m.controls.bool("corner_use_grain");
-    let corner_mode = m.controls.string("corner_mode");
-    let corner_radius = m.controls.float("corner_radius");
-    let corner_strength = m.controls.float("corner_strength");
-    // ---
-    let show_trbl = m.controls.bool("show_trbl");
-    let animate_trbl = m.controls.bool("animate_trbl");
-    let trbl_use_grain = m.controls.bool("trbl_use_grain");
-    let trbl_mode = m.controls.string("trbl_mode");
-    let trbl_radius = m.controls.float("trbl_radius");
-    let trbl_strength = m.controls.float("trbl_strength");
-    // ---
-    let sort = m.controls.string("sort");
-    let size_max = m.controls.float("size_max");
-    let invert_colors = m.controls.bool("invert_colors");
-    let gradient_spread = m.controls.float("gradient_spread");
-    let scaling_power = m.controls.float("scaling_power");
-    let t_scale = m.controls.float("t_scale");
-    let grain_size = m.controls.float("grain_size");
-    let angle_mult = m.controls.float("angle_mult");
-    let distance_strength = m.controls.float("distance_strength");
-    let angle_frequency = m.controls.float("angle_frequency");
+impl Sketch for DisplacementModel {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let show_center = self.controls.bool("show_center");
+        let animate_center = self.controls.bool("animate_center");
+        let center_use_grain = self.controls.bool("center_use_grain");
+        let center_mode = self.controls.string("center_mode");
+        let center_radius = self.controls.float("center_radius");
+        let center_strength = self.controls.float("center_strength");
+        // ---
+        let show_corner = self.controls.bool("show_corner");
+        let animate_corner = self.controls.bool("animate_corner");
+        let corner_use_grain = self.controls.bool("corner_use_grain");
+        let corner_mode = self.controls.string("corner_mode");
+        let corner_radius = self.controls.float("corner_radius");
+        let corner_strength = self.controls.float("corner_strength");
+        // ---
+        let show_trbl = self.controls.bool("show_trbl");
+        let animate_trbl = self.controls.bool("animate_trbl");
+        let trbl_use_grain = self.controls.bool("trbl_use_grain");
+        let trbl_mode = self.controls.string("trbl_mode");
+        let trbl_radius = self.controls.float("trbl_radius");
+        let trbl_strength = self.controls.float("trbl_strength");
+        // ---
+        let sort = self.controls.string("sort");
+        let size_max = self.controls.float("size_max");
+        let invert_colors = self.controls.bool("invert_colors");
+        let gradient_spread = self.controls.float("gradient_spread");
+        let scaling_power = self.controls.float("scaling_power");
+        let t_scale = self.controls.float("t_scale");
+        let grain_size = self.controls.float("grain_size");
+        let angle_mult = self.controls.float("angle_mult");
+        let distance_strength = self.controls.float("distance_strength");
+        let angle_frequency = self.controls.float("angle_frequency");
 
-    let max_mag =
-        m.displacer_configs.len() as f32 * m.controls.float("mag_mult");
-    let gradient = &m.gradient;
+        let max_mag = self.displacer_configs.len() as f32
+            * self.controls.float("mag_mult");
+        let gradient = &self.gradient;
+        let wr = ctx.window_rect();
 
-    if m.wr.changed() {
-        (m.grid, _) = create_grid(m.wr.w(), m.wr.h(), GRID_SIZE, vec2);
-        update_positions(&m.wr, &mut m.displacer_configs);
-        m.wr.mark_unchanged();
-    }
+        if wr.changed() {
+            (self.grid, _) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
+            update_positions(&wr, &mut self.displacer_configs);
+        }
 
-    let custom_distance_fn: CustomDistanceFn =
-        Some(Arc::new(move |grid_point, position| {
-            wood_grain_advanced(
-                grid_point.x,
-                grid_point.y,
-                position.x,
-                position.y,
-                grain_size,
-                angle_mult,
-                2.0,
-                distance_strength,
-                angle_frequency,
-            )
-        }));
+        let custom_distance_fn: CustomDistanceFn =
+            Some(Arc::new(move |grid_point, position| {
+                wood_grain_advanced(
+                    grid_point.x,
+                    grid_point.y,
+                    position.x,
+                    position.y,
+                    grain_size,
+                    angle_mult,
+                    2.0,
+                    distance_strength,
+                    angle_frequency,
+                )
+            }));
 
-    let configs: Vec<&mut DisplacerConfig> = m
-        .displacer_configs
-        .iter_mut()
-        .filter(|config| match config.kind {
-            DisplacerConfigKind::Center => show_center,
-            DisplacerConfigKind::Corner => show_corner,
-            DisplacerConfigKind::Trbl => show_trbl,
-        })
-        .map(|config| {
-            config.update(&m.animation, &m.controls);
-            match config.kind {
-                DisplacerConfigKind::Center => {
-                    config.displacer.set_custom_distance_fn(
-                        if center_use_grain {
-                            custom_distance_fn.clone()
+        let configs: Vec<&mut DisplacerConfig> = self
+            .displacer_configs
+            .iter_mut()
+            .filter(|config| match config.kind {
+                DisplacerConfigKind::Center => show_center,
+                DisplacerConfigKind::Corner => show_corner,
+                DisplacerConfigKind::Trbl => show_trbl,
+            })
+            .map(|config| {
+                config.update(&self.animation, &self.controls);
+                match config.kind {
+                    DisplacerConfigKind::Center => {
+                        config.displacer.set_custom_distance_fn(
+                            if center_use_grain {
+                                custom_distance_fn.clone()
+                            } else {
+                                None
+                            },
+                        );
+                        if animate_center {
+                            config.displacer.set_strength(
+                                self.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 8.0)],
+                                    0.0,
+                                    4.0,
+                                    Easing::Linear,
+                                ),
+                            );
+                            config.displacer.set_radius(self.animation.r_ramp(
+                                &[kfr((1.0, 500.0), 12.0)],
+                                1.0,
+                                3.0,
+                                Easing::Linear,
+                            ));
                         } else {
-                            None
-                        },
-                    );
-                    if animate_center {
-                        config.displacer.set_strength(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 8.0)],
-                            0.0,
-                            4.0,
-                            Easing::Linear,
-                        ));
-                        config.displacer.set_radius(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 12.0)],
-                            1.0,
-                            3.0,
-                            Easing::Linear,
-                        ));
-                    } else {
-                        config.displacer.set_strength(center_radius);
-                        config.displacer.set_radius(center_strength);
+                            config.displacer.set_strength(center_radius);
+                            config.displacer.set_radius(center_strength);
+                        }
+                    }
+                    DisplacerConfigKind::Corner => {
+                        config.displacer.set_custom_distance_fn(
+                            if corner_use_grain {
+                                custom_distance_fn.clone()
+                            } else {
+                                None
+                            },
+                        );
+                        if animate_corner {
+                            config.displacer.set_strength(
+                                self.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 4.0)],
+                                    0.0,
+                                    4.0,
+                                    Easing::Linear,
+                                ),
+                            );
+                            config.displacer.set_radius(self.animation.r_ramp(
+                                &[kfr((1.0, 500.0), 8.0)],
+                                1.0,
+                                3.0,
+                                Easing::Linear,
+                            ));
+                        } else {
+                            config.displacer.set_strength(corner_radius);
+                            config.displacer.set_radius(corner_strength);
+                        }
+                    }
+                    DisplacerConfigKind::Trbl => {
+                        config.displacer.set_custom_distance_fn(
+                            if trbl_use_grain {
+                                custom_distance_fn.clone()
+                            } else {
+                                None
+                            },
+                        );
+                        if animate_trbl {
+                            config.displacer.set_strength(
+                                self.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 16.0)],
+                                    0.0,
+                                    6.0,
+                                    Easing::Linear,
+                                ),
+                            );
+                            config.displacer.set_radius(self.animation.r_ramp(
+                                &[kfr((1.0, 500.0), 24.0)],
+                                2.0,
+                                18.0,
+                                Easing::Linear,
+                            ));
+                        } else {
+                            config.displacer.set_strength(trbl_radius);
+                            config.displacer.set_radius(trbl_strength);
+                        }
                     }
                 }
-                DisplacerConfigKind::Corner => {
-                    config.displacer.set_custom_distance_fn(
-                        if corner_use_grain {
-                            custom_distance_fn.clone()
-                        } else {
-                            None
-                        },
-                    );
-                    if animate_corner {
-                        config.displacer.set_strength(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 4.0)],
-                            0.0,
-                            4.0,
-                            Easing::Linear,
-                        ));
-                        config.displacer.set_radius(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 8.0)],
-                            1.0,
-                            3.0,
-                            Easing::Linear,
-                        ));
-                    } else {
-                        config.displacer.set_strength(corner_radius);
-                        config.displacer.set_radius(corner_strength);
-                    }
-                }
-                DisplacerConfigKind::Trbl => {
-                    config.displacer.set_custom_distance_fn(
-                        if trbl_use_grain {
-                            custom_distance_fn.clone()
-                        } else {
-                            None
-                        },
-                    );
-                    if animate_trbl {
-                        config.displacer.set_strength(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 16.0)],
-                            0.0,
-                            6.0,
-                            Easing::Linear,
-                        ));
-                        config.displacer.set_radius(m.animation.r_ramp(
-                            &[kfr((1.0, 500.0), 24.0)],
-                            2.0,
-                            18.0,
-                            Easing::Linear,
-                        ));
-                    } else {
-                        config.displacer.set_strength(trbl_radius);
-                        config.displacer.set_radius(trbl_strength);
-                    }
-                }
-            }
-            config
-        })
-        .collect();
+                config
+            })
+            .collect();
 
-    m.objects = m
-        .grid
-        .par_iter()
-        .map(|point| {
-            let total_displacement =
-                configs.iter().fold(vec2(0.0, 0.0), |acc, config| {
-                    let mode = match config.kind {
-                        DisplacerConfigKind::Center => &center_mode,
-                        DisplacerConfigKind::Corner => &corner_mode,
-                        DisplacerConfigKind::Trbl => &trbl_mode,
-                    };
+        self.objects = self
+            .grid
+            .par_iter()
+            .map(|point| {
+                let total_displacement =
+                    configs.iter().fold(vec2(0.0, 0.0), |acc, config| {
+                        let mode = match config.kind {
+                            DisplacerConfigKind::Center => &center_mode,
+                            DisplacerConfigKind::Corner => &corner_mode,
+                            DisplacerConfigKind::Trbl => &trbl_mode,
+                        };
 
-                    acc + if mode == "attract" {
-                        config.displacer.attract(*point, scaling_power)
-                    } else {
-                        config.displacer.core_influence(*point, scaling_power)
-                    }
+                        acc + if mode == "attract" {
+                            config.displacer.attract(*point, scaling_power)
+                        } else {
+                            config
+                                .displacer
+                                .core_influence(*point, scaling_power)
+                        }
+                    });
+
+                let displacement_magnitude = total_displacement.length();
+
+                let triangle_height = map_range(
+                    displacement_magnitude,
+                    0.0,
+                    max_mag,
+                    1.0,
+                    t_scale,
+                );
+
+                let normalized = (displacement_magnitude / max_mag)
+                    .powf(gradient_spread)
+                    .clamp(0.0, 1.0);
+
+                let color = gradient.get(if invert_colors {
+                    normalized
+                } else {
+                    1.0 - normalized
                 });
 
-            let displacement_magnitude = total_displacement.length();
+                assert!(
+                    displacement_magnitude.is_finite(),
+                    "displacement_magnitude is not finite: {:?}",
+                    displacement_magnitude
+                );
 
-            let triangle_height =
-                map_range(displacement_magnitude, 0.0, max_mag, 1.0, t_scale);
+                let radius = map_clamp(
+                    displacement_magnitude,
+                    0.0,
+                    max_mag,
+                    0.1,
+                    size_max,
+                    ease_out_quad,
+                );
 
-            let normalized = (displacement_magnitude / max_mag)
-                .powf(gradient_spread)
-                .clamp(0.0, 1.0);
-
-            let color = gradient.get(if invert_colors {
-                normalized
-            } else {
-                1.0 - normalized
-            });
-
-            assert!(
-                displacement_magnitude.is_finite(),
-                "displacement_magnitude is not finite: {:?}",
-                displacement_magnitude
-            );
-
-            let radius = map_clamp(
-                displacement_magnitude,
-                0.0,
-                max_mag,
-                0.1,
-                size_max,
-                ease_out_quad,
-            );
-
-            (*point + total_displacement, radius, triangle_height, color)
-        })
-        .collect();
-
-    m.objects.sort_by(
-        |(_position_a, radius_a, _triangle_height_a, color_a),
-         (_position_b, radius_b, _triangle_height_b, color_b)| {
-            match sort.as_str() {
-                "radius" => radius_a.partial_cmp(radius_b).unwrap(),
-                "radius_reversed" => radius_b.partial_cmp(radius_a).unwrap(),
-                _ => {
-                    luminance(color_a).partial_cmp(&luminance(color_b)).unwrap()
-                }
-            }
-        },
-    );
-}
-
-pub fn view(app: &App, m: &Model, frame: Frame) {
-    let draw = app.draw();
-
-    draw.rect().wh(m.wr.vec2()).color(hsla(
-        0.0,
-        0.0,
-        0.03,
-        m.controls.float("background_alpha"),
-    ));
-
-    let scaled_draw = draw.scale(m.controls.float("scale"));
-
-    let alpha = m.controls.float("alpha");
-    let stroke = m.controls.bool("stroke");
-    let stroke_weight = m.controls.float("stroke_weight");
-    let flip = m.controls.bool("flip");
-
-    for (position, radius, triangle_height, color) in &m.objects {
-        // Calculate outward direction from center to position
-        let outward_dir = if position.length_squared() == 0.0 {
-            vec2(1.0, 0.0)
-        } else {
-            (*position - vec2(0.0, 0.0)).normalize()
-        };
-
-        let radius = radius.max(0.01);
-
-        // Distance from the center to the tip
-        let height = radius;
-        let base_width = radius;
-
-        // Calculate vertices
-        let tip = *position
-            + outward_dir
-                * height
-                * *triangle_height
-                * if flip { -1.0 } else { 1.0 };
-
-        // Perpendicular vector for the base
-        let perpendicular = vec2(-outward_dir.y, outward_dir.x);
-
-        let base_left = *position - perpendicular * (base_width / 2.0);
-        let base_right = *position + perpendicular * (base_width / 2.0);
-
-        scaled_draw
-            .polygon()
-            .stroke(if stroke {
-                hsla(0.0, 0.0, 0.0, 1.0)
-            } else {
-                hsla(0.0, 0.0, 0.0, 0.0)
+                (*point + total_displacement, radius, triangle_height, color)
             })
-            .stroke_weight(stroke_weight)
-            .points(vec![tip, base_left, base_right])
-            .color(lin_srgb_to_lin_srgba(*color, alpha));
+            .collect();
+
+        self.objects.sort_by(
+            |(_position_a, radius_a, _triangle_height_a, color_a),
+             (_position_b, radius_b, _triangle_height_b, color_b)| {
+                match sort.as_str() {
+                    "radius" => radius_a.partial_cmp(radius_b).unwrap(),
+                    "radius_reversed" => {
+                        radius_b.partial_cmp(radius_a).unwrap()
+                    }
+                    _ => luminance(color_a)
+                        .partial_cmp(&luminance(color_b))
+                        .unwrap(),
+                }
+            },
+        );
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
+        let wr = ctx.window_rect();
+
+        draw.rect().wh(wr.vec2()).color(hsla(
+            0.0,
+            0.0,
+            0.03,
+            self.controls.float("background_alpha"),
+        ));
+
+        let scaled_draw = draw.scale(self.controls.float("scale"));
+
+        let alpha = self.controls.float("alpha");
+        let stroke = self.controls.bool("stroke");
+        let stroke_weight = self.controls.float("stroke_weight");
+        let flip = self.controls.bool("flip");
+
+        for (position, radius, triangle_height, color) in &self.objects {
+            // Calculate outward direction from center to position
+            let outward_dir = if position.length_squared() == 0.0 {
+                vec2(1.0, 0.0)
+            } else {
+                (*position - vec2(0.0, 0.0)).normalize()
+            };
+
+            let radius = radius.max(0.01);
+
+            // Distance from the center to the tip
+            let height = radius;
+            let base_width = radius;
+
+            // Calculate vertices
+            let tip = *position
+                + outward_dir
+                    * height
+                    * *triangle_height
+                    * if flip { -1.0 } else { 1.0 };
+
+            // Perpendicular vector for the base
+            let perpendicular = vec2(-outward_dir.y, outward_dir.x);
+
+            let base_left = *position - perpendicular * (base_width / 2.0);
+            let base_right = *position + perpendicular * (base_width / 2.0);
+
+            scaled_draw
+                .polygon()
+                .stroke(if stroke {
+                    hsla(0.0, 0.0, 0.0, 1.0)
+                } else {
+                    hsla(0.0, 0.0, 0.0, 0.0)
+                })
+                .stroke_weight(stroke_weight)
+                .points(vec![tip, base_left, base_right])
+                .color(lin_srgb_to_lin_srgba(*color, alpha));
+        }
+
+        draw.to_frame(app, &frame).unwrap();
+    }
 }
 
 type AnimationFn<R> = Option<
