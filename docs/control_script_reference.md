@@ -15,7 +15,7 @@
   - [random](#random)
   - [random_slewed](#random_slewed)
   - [automate](#automate)
-    - [breakpoints](#breakpoints)
+    - [breakpoints](#automatebreakpoints)
     - [kind](#kind)
       - [ramp](#ramp)
       - [step](#step)
@@ -38,8 +38,8 @@
 # General
 
 Lattice provides various interfaces for controlling parameters including
-`Controls` for UI (sliders, checkboxes, and selects), ~~`MidiControls`~~ (TODO)
-and `OscControls` for controlling parameters from an external source,
+`Controls` for UI (sliders, checkboxes, and selects), `MidiControls` and
+`OscControls` for controlling parameters from an external source,
 `AudioControls` for controlling parameters with audio or CV, and a comprehensive
 `Animation` module that can tween or generate random values and ramp to/from
 them at musical intervals. While these parameters are simple to setup, it's a
@@ -313,7 +313,7 @@ animation_example:
 
 # Animation
 
-## Triangle
+## triangle
 
 A "ping pong" animation that linearly ramps from min to max and back to min as
 specified in the `range` param.
@@ -338,7 +338,7 @@ triangle_example:
   phase: 0.0
 ```
 
-## Random
+## random
 
 Generate a randomized value once during every cycle of `duration`. The function
 is completely deterministic given the same parameters in relation to the current
@@ -390,7 +390,7 @@ random_slewed_example:
   stem: 88
 ```
 
-## Automate
+## automate
 
 Advanced DAW-style animation. This is the bread-and-butter of Lattice.
 
@@ -401,7 +401,7 @@ Advanced DAW-style animation. This is the bread-and-butter of Lattice.
 - `breakpoints` - a list of breakpoint kinds including `step`, `ramp`, `wave`,
   `random`, and `random_smooth`
 
-### Breakpoints
+### automate.breakpoints
 
 Each breakpoint shares the following _required_ fields:
 
@@ -412,7 +412,7 @@ Each breakpoint shares the following _required_ fields:
 - `value` - the value this breakpoint will (usually) be when the timing is
   exactly at `position`
 
-### Kind
+### automate.breakpoints.kind
 
 #### `ramp`
 
@@ -458,7 +458,7 @@ Generates a random number somewhere above or below the set `value` by
 - `amplitude` - how much +- the random number generator will deviate from
   `value` when choosing a number
 
-### `random_smooth`
+#### `random_smooth`
 
 Like the [`ramp`](#ramp) type only uses perlin noise to deviate from the base
 ramp.
@@ -469,7 +469,7 @@ ramp.
 - `amplitude`- how much above and below the base ramp to add/subtract. Defaults
   to `0.25`
 
-### `end`
+#### `end`
 
 A special breakpoint added for semantic clarity. It is identical to the step
 kind. It represents what the overall sequence will end on. In the case of
