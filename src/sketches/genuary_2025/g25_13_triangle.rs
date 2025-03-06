@@ -19,7 +19,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct G25_13Triangle {
     #[allow(dead_code)]
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
     midi: MidiControls,
@@ -39,7 +39,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
-    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::with_previous(vec![
         Control::slider("scale", 1.0, (0.0001, 2.0), 0.0001),

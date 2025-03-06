@@ -17,15 +17,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Vertical {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     lines: Vec<Vec<Point2>>,
     patterns: Vec<XModFn>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> Vertical {
-    let animation =
-        Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 

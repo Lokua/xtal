@@ -49,14 +49,14 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     gpu: gpu::GpuState<()>,
     midi: MidiControls,
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let disabled = |_controls: &Controls| true;
 

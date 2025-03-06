@@ -23,7 +23,7 @@
 //! # Basic Usage
 //!
 //! ```rust
-//! let animation = Animation::new(Timing::new(Bpm::new(SKETCH_CONFIG.bpm)));
+//! let animation = Animation::new(Timing::new(ctx.bpm()));
 //!
 //! // Simple oscillation between 0-1 over 4 beats
 //! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0

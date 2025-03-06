@@ -885,10 +885,10 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init_model(app: &App, wr: WindowRect) -> Model {
+pub fn init(app: &App, ctx: &LatticeContext) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "example.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(ctx.bpm()),
     );
 
     // No point in initializing this to anything other than zero
@@ -914,34 +914,38 @@ pub fn init_model(app: &App, wr: WindowRect) -> Model {
     Model { controls, wr, gpu }
 }
 
-pub fn update(app: &App, m: &mut Model, _update: Update) {
-    // Update ensures any file changes have propagated
-    m.controls.update();
+impl Sketch for Model {
+  fn update(&mut self, app: &App, _update: Update, _ctx. &LatticeContext) {
+      // Update ensures any file changes have propagated
+      self.controls.update();
 
-    let params = ShaderParams {
-        a: [
-            // Allows us to use `var: a1` in our control_script
-            m.controls.get("a1"),
-            m.controls.get("a2"),
-            m.controls.get("a3"),
-            m.controls.get("a4"),
-        ],
-        b: [
-            m.controls.get("b1"),
-            m.controls.get("b2"),
-            m.controls.get("b3"),
-            m.controls.get("b4"),
-        ],
-        c: [
-            m.controls.get("c1"),
-            m.controls.get("c2"),
-            m.controls.get("c3"),
-            m.controls.get("c4"),
-        ],
-        // ...
-    };
+      let params = ShaderParams {
+          a: [
+              // Allows us to use `var: a1` in our control_script
+              m.controls.get("a1"),
+              m.controls.get("a2"),
+              m.controls.get("a3"),
+              m.controls.get("a4"),
+          ],
+          b: [
+              m.controls.get("b1"),
+              m.controls.get("b2"),
+              m.controls.get("b3"),
+              m.controls.get("b4"),
+          ],
+          c: [
+              m.controls.get("c1"),
+              m.controls.get("c2"),
+              m.controls.get("c3"),
+              m.controls.get("c4"),
+          ],
+          // ...
+      };
 
-    m.gpu.update_params(app, m.wr.resolution_u32(), &params);
+      self.gpu.update_params(app, ctx.window_rect().resolution_u32(), &params);
+  }
+
+  // ...
 }
 ```
 

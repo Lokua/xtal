@@ -24,7 +24,7 @@ const GRID_SIZE: usize = 128;
 pub struct Displacement1 {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     gradient: Gradient<LinSrgb>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
@@ -35,7 +35,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1 {
     let h = SKETCH_CONFIG.h;
     let grid_w = w as f32 - 80.0;
     let grid_h = h as f32 - 80.0;
-    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![
         Control::slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001),
@@ -175,11 +175,7 @@ impl Sketch for Displacement1 {
 }
 
 type AnimationFn<R> = Option<
-    Arc<
-        dyn Fn(&Displacer, &Animation<FrameTiming>, &Controls) -> R
-            + Send
-            + Sync,
-    >,
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
 >;
 
 struct DisplacerConfig {
@@ -203,7 +199,7 @@ impl DisplacerConfig {
 
     pub fn update(
         &mut self,
-        animation: &Animation<FrameTiming>,
+        animation: &Animation<Timing>,
         controls: &Controls,
     ) {
         if let Some(position_fn) = &self.position_animation {

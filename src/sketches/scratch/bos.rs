@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Bos {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -34,7 +34,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Bos {
-    let animation = Animation::new(FrameTiming::new(ctx.bpm()));
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls =
         Controls::new(vec![Control::slide("a", 0.5), Control::slide("b", 0.5)]);

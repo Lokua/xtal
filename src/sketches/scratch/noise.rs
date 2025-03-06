@@ -23,15 +23,14 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 1.0, 1.0)")]
 pub struct Noise {
-    animation: Animation<FrameTiming>,
+    animation: Animation<Timing>,
     controls: Controls,
     noise: SuperSimplex,
     last_seed: u32,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> Noise {
-    let animation =
-        Animation::new(FrameTiming::new(Bpm::new(SKETCH_CONFIG.bpm)));
+pub fn init(_app: &App, ctx: &LatticeContext) -> Noise {
+    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let controls = Controls::new(vec![
         Control::checkbox("rotate", false),
