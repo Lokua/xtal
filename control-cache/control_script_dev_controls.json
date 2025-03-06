@@ -1,58 +1,58 @@
 {
   "values": {
-    "center_radius": {
-      "Float": 100.0
-    },
-    "q71xe": {
-      "Bool": false
-    },
-    "z6l1o": {
-      "Bool": false
-    },
-    "288r3": {
-      "Bool": false
-    },
-    "show_center_circle": {
-      "Bool": false
-    },
-    "bg_alpha": {
-      "Float": 0.645
-    },
-    "show_audio": {
-      "Bool": false
-    },
     "show_breakpoints": {
       "Bool": false
     },
-    "center_hue": {
-      "Float": 0.3
-    },
-    "white_radius_amt": {
-      "Float": 0.0
-    },
-    "show_random_section": {
-      "Bool": true
-    },
-    "show_midi_circle": {
-      "Bool": false
-    },
-    "5112v": {
-      "Bool": false
-    },
-    "87m62": {
+    "a3089": {
       "Bool": false
     },
     "show_red_circle": {
       "Bool": false
     },
-    "ys8v2": {
+    "show_midi_circle": {
+      "Bool": false
+    },
+    "show_audio": {
+      "Bool": false
+    },
+    "61sbi": {
+      "Bool": false
+    },
+    "center_hue": {
+      "Float": 0.3
+    },
+    "821y0": {
+      "Bool": false
+    },
+    "7parp": {
+      "Bool": false
+    },
+    "fo03g": {
+      "Bool": false
+    },
+    "21n9n": {
+      "Bool": false
+    },
+    "show_center_circle": {
+      "Bool": false
+    },
+    "u9tzg": {
+      "Bool": false
+    },
+    "bg_alpha": {
+      "Float": 0.645
+    },
+    "show_random_section": {
       "Bool": false
     },
     "show_white_circle": {
-      "Bool": false
+      "Bool": true
     },
-    "q6e6i": {
-      "Bool": false
+    "white_radius_amt": {
+      "Float": 0.93799996
+    },
+    "center_radius": {
+      "Float": 100.0
     }
   }
 }

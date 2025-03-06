@@ -123,9 +123,11 @@ impl<T: TimingSource> ControlScript<T> {
 
         match self.modulations.get(name) {
             None => value,
-            Some(modulators) => modulators
-                .iter()
-                .fold(value, |v, modulator| self.apply_modulator(v, modulator)),
+            Some(modulators) => {
+                modulators.iter().fold(value, |v, modulator| {
+                    self.apply_modulators(v, modulator)
+                })
+            }
         }
     }
 
@@ -137,9 +139,7 @@ impl<T: TimingSource> ControlScript<T> {
         end_frame: u32,
     ) -> f32 {
         let current_frame = frame_controller::frame_count();
-        debug!("start_frame == end_frame: {}", start_frame == end_frame);
         if current_frame > end_frame || start_frame == end_frame {
-            debug!("returning value: {}", to);
             return to;
         }
         let duration = end_frame - start_frame;
@@ -166,7 +166,7 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
-    fn apply_modulator(&self, value: f32, modulator: &str) -> f32 {
+    fn apply_modulators(&self, value: f32, modulator: &str) -> f32 {
         let mut effects = self.effects.borrow_mut();
 
         if !effects.contains_key(modulator) {

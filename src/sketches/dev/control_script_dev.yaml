@@ -45,6 +45,7 @@ white_pos_x:
 white_pos_y:
   type: triangle
   beats: 2
+  range: [-1, 1]
 
 white_radius:
   type: triangle
