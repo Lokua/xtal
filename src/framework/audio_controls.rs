@@ -198,7 +198,7 @@ impl AudioControls {
                         let processed_value =
                             buffer_processor(channel_buffer, &config);
 
-                        let value = config.slew_limiter.slew(processed_value);
+                        let value = config.slew_limiter.apply(processed_value);
 
                         let mapped = map_range(
                             value,

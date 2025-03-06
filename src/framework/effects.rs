@@ -236,12 +236,7 @@ impl Quantizer {
         Self { step, range }
     }
 
-    #[doc(alias = "quantize")]
     pub fn apply(&self, input: f32) -> f32 {
-        self.quantize(input)
-    }
-
-    pub fn quantize(&self, input: f32) -> f32 {
         let (min, max) = self.range;
         let steps_from_zero = (input / self.step).round();
         let quantized = steps_from_zero * self.step;
@@ -280,12 +275,7 @@ impl RingModulator {
         Self { mix: depth, range }
     }
 
-    #[doc(alias = "modulate")]
     pub fn apply(&self, carrier: f32, modulator: f32) -> f32 {
-        self.modulate(carrier, modulator)
-    }
-
-    pub fn modulate(&self, carrier: f32, modulator: f32) -> f32 {
         let (min, max) = self.range;
         let range = max - min;
         let midpoint = min + range / 2.0;
@@ -351,12 +341,7 @@ impl Saturator {
         Self { drive, range }
     }
 
-    #[doc(alias = "saturate")]
     pub fn apply(&self, input: f32) -> f32 {
-        self.saturate(input)
-    }
-
-    pub fn saturate(&self, input: f32) -> f32 {
         if self.drive == 0.0 {
             return input;
         }
@@ -419,11 +404,6 @@ impl SlewLimiter {
     }
 
     pub fn apply(&self, value: f32) -> f32 {
-        self.slew(value)
-    }
-
-    #[doc(alias = "apply")]
-    pub fn slew(&self, value: f32) -> f32 {
         self.slew_with_rates(value, self.rise, self.fall)
     }
 
@@ -535,17 +515,12 @@ impl WaveFolder {
         }
     }
 
-    #[doc(alias = "fold")]
     pub fn apply(&self, input: f32) -> f32 {
         let mut output = input;
         for _ in 0..self.iterations {
             output = self.fold_once(output);
         }
         output
-    }
-
-    pub fn fold(&self, input: f32) -> f32 {
-        self.apply(input)
     }
 
     pub fn set_range(&mut self, range: (f32, f32)) {
@@ -674,50 +649,50 @@ mod tests {
     #[test]
     fn test_wave_folder() {
         let wf = WaveFolder::default();
-        assert_approx_eq!(wf.fold(1.2), 0.8);
+        assert_approx_eq!(wf.apply(1.2), 0.8);
     }
 
     #[test]
     fn test_wave_folder_gain() {
         let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
-        assert_approx_eq!(wf.fold(1.0), 0.5);
+        assert_approx_eq!(wf.apply(1.0), 0.5);
     }
 
     #[test]
     fn test_wave_folder_comments_case() {
         let wf = WaveFolder::new(2.0, 1, 1.0, 0.0, 0.0, (0.0, 1.0));
-        assert_approx_eq!(wf.fold(0.7), 0.9);
+        assert_approx_eq!(wf.apply(0.7), 0.9);
     }
 
     #[test]
     fn test_quantizer_default() {
         let quantizer = Quantizer::default();
-        assert_approx_eq!(quantizer.quantize(0.12), 0.0);
-        assert_approx_eq!(quantizer.quantize(0.26), 0.25);
-        assert_approx_eq!(quantizer.quantize(0.51), 0.50);
-        assert_approx_eq!(quantizer.quantize(0.88), 1.0);
+        assert_approx_eq!(quantizer.apply(0.12), 0.0);
+        assert_approx_eq!(quantizer.apply(0.26), 0.25);
+        assert_approx_eq!(quantizer.apply(0.51), 0.50);
+        assert_approx_eq!(quantizer.apply(0.88), 1.0);
     }
 
     #[test]
     fn test_quantizer() {
         let quantizer = Quantizer::new(0.2, (-1.0, 1.0));
-        assert_approx_eq!(quantizer.quantize(0.3), 0.4);
-        assert_approx_eq!(quantizer.quantize(-0.3), -0.4);
-        assert_approx_eq!(quantizer.quantize(0.95), 1.0);
+        assert_approx_eq!(quantizer.apply(0.3), 0.4);
+        assert_approx_eq!(quantizer.apply(-0.3), -0.4);
+        assert_approx_eq!(quantizer.apply(0.95), 1.0);
     }
 
     #[test]
     fn test_saturator_center_unchanged() {
         let saturator = Saturator::default();
         // Center point should pass through unchanged
-        assert_approx_eq!(saturator.saturate(0.5), 0.5);
+        assert_approx_eq!(saturator.apply(0.5), 0.5);
     }
 
     #[test]
     fn test_saturator_symmetry() {
         let saturator = Saturator::new(2.0, (0.0, 1.0));
-        let high = saturator.saturate(0.8);
-        let low = saturator.saturate(0.2);
+        let high = saturator.apply(0.8);
+        let low = saturator.apply(0.2);
         // Should be equidistant from center
         assert_approx_eq!(0.5 - low, high - 0.5);
     }
@@ -726,7 +701,7 @@ mod tests {
     fn test_saturator_range() {
         let saturator = Saturator::new(4.0, (-1.0, 1.0));
         // Even with high drive, should stay within range
-        assert!(saturator.saturate(2.0) <= 1.0);
-        assert!(saturator.saturate(-2.0) >= -1.0);
+        assert!(saturator.apply(2.0) <= 1.0);
+        assert!(saturator.apply(-2.0) >= -1.0);
     }
 }
