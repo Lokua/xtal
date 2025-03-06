@@ -25,7 +25,10 @@ use std::str::FromStr;
 use bevy_reflect::{Reflect, ReflectRef};
 use serde::{Deserialize, Deserializer};
 
-use super::config::{BreakpointConfig, EffectConfig, TriangleConfig};
+use super::config::{
+    BreakpointConfig, EffectConfig, RandomConfig, RandomSlewedConfig,
+    TriangleConfig,
+};
 use crate::framework::prelude::*;
 
 #[derive(Clone, Debug, Reflect)]
@@ -242,6 +245,25 @@ impl SetFromParam for TriangleConfig {
             "beats" => self.beats = ParamValue::Cold(value),
             "phase" => self.phase = ParamValue::Cold(value),
             _ => warn_for("Triangle", name),
+        }
+    }
+}
+
+impl SetFromParam for RandomConfig {
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            _ => warn_for("Random", name),
+        }
+    }
+}
+
+impl SetFromParam for RandomSlewedConfig {
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            "slew" => self.slew = ParamValue::Cold(value),
+            _ => warn_for("RandomSlewed", name),
         }
     }
 }

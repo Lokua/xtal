@@ -263,6 +263,26 @@ impl<T: TimingSource> ControlScript<T> {
                         conf.phase.as_float(),
                     )
                 }
+                (AnimationConfig::Random(conf), KeyframeSequence::None) => {
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    self.animation.random(
+                        conf.beats.as_float(),
+                        (conf.range[0], conf.range[1]),
+                        conf.stem,
+                    )
+                }
+                (
+                    AnimationConfig::RandomSlewed(conf),
+                    KeyframeSequence::None,
+                ) => {
+                    let conf = self.resolve_animation_config_params(conf, name);
+                    self.animation.random_slewed(
+                        conf.beats.as_float(),
+                        (conf.range[0], conf.range[1]),
+                        conf.slew.as_float(),
+                        conf.stem,
+                    )
+                }
                 (
                     AnimationConfig::Automate(conf),
                     KeyframeSequence::Breakpoints(breakpoints),
@@ -644,6 +664,27 @@ impl<T: TimingSource> ControlScript<T> {
                         id.to_string(),
                         (
                             AnimationConfig::Triangle(conf),
+                            KeyframeSequence::None,
+                        ),
+                    );
+                }
+                ControlType::Random => {
+                    let conf: RandomConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.animations.insert(
+                        id.to_string(),
+                        (AnimationConfig::Random(conf), KeyframeSequence::None),
+                    );
+                }
+                ControlType::RandomSlewed => {
+                    let conf: RandomSlewedConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.animations.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::RandomSlewed(conf),
                             KeyframeSequence::None,
                         ),
                     );

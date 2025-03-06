@@ -216,13 +216,13 @@ impl<T: TimingSource> Animation<T> {
     /// relation to the current beat. The `stem` - which serves as the root of
     /// an internal seed generator - is also a unique ID for internal slew state
     /// and for that reason you should make sure all animations in your sketch
-    /// have unique stems. See [`lattice::framework::effects::SlewLimiter`] for
-    /// details on how `rise` and `fall` work.
+    /// have unique stems. `slew` controls smoothing when the value changes with
+    /// 0.0 being instant and 1.0 being essentially frozen.
     pub fn random_slewed(
         &self,
         duration: f32,
         (min, max): (f32, f32),
-        (rise, fall): (f32, f32),
+        slew: f32,
         stem: u64,
     ) -> f32 {
         let loop_count = (self.beats() / duration).floor();
@@ -237,7 +237,7 @@ impl<T: TimingSource> Animation<T> {
 
         let mut prev_values = self.random_smooth_previous_values.borrow_mut();
         let value = prev_values.get(&stem).map_or(value, |prev| {
-            SlewLimiter::slew_pure(*prev, value, rise, fall)
+            SlewLimiter::slew_pure(*prev, value, slew, slew)
         });
 
         prev_values.insert(stem, value);
@@ -1070,22 +1070,22 @@ pub mod animation_tests {
         let a = create_instance();
 
         init(0);
-        let n = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        let n = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
 
         init(1);
-        let n2 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        let n2 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
         assert_eq!(n, n2, "should return same N for full cycle");
 
         init(2);
-        let n3 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        let n3 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
         assert_eq!(n, n3, "should return same N for full cycle");
 
         init(3);
-        let n4 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        let n4 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
         assert_eq!(n, n4, "should return same N for full cycle");
 
         init(4);
-        let n5 = a.random_slewed(1.0, (0.0, 1.0), (0.0, 0.0), 9);
+        let n5 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
         assert_ne!(n, n5, "should return new number on next cycle");
     }
 }

@@ -57,6 +57,10 @@ pub enum ControlType {
     Triangle,
     #[serde(rename = "automate")]
     Automate,
+    #[serde(rename = "random")]
+    Random,
+    #[serde(rename = "random_slewed")]
+    RandomSlewed,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -214,6 +218,8 @@ impl Default for AudioConfig {
 pub enum AnimationConfig {
     Triangle(TriangleConfig),
     Automate(AutomateConfig),
+    Random(RandomConfig),
+    RandomSlewed(RandomSlewedConfig),
 }
 
 #[derive(Clone, Debug)]
@@ -240,6 +246,52 @@ impl Default for TriangleConfig {
             beats: ParamValue::Cold(1.0),
             range: [0.0, 1.0],
             phase: ParamValue::Cold(0.0),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RandomConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub stem: u64,
+}
+
+impl Default for RandomConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            stem: 93473,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RandomSlewedConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub slew: ParamValue,
+    pub stem: u64,
+}
+
+impl Default for RandomSlewedConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            slew: ParamValue::Cold(0.65),
+            stem: 93472,
         }
     }
 }

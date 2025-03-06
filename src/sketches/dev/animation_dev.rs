@@ -211,12 +211,8 @@ impl Sketch for AnimationDev {
         draw.ellipse()
             .x_y(
                 wr.qw(),
-                self.animation.random_slewed(
-                    1.0,
-                    (-wr.hh(), wr.hh()),
-                    (0.7, 0.7),
-                    99,
-                ),
+                self.animation
+                    .random_slewed(1.0, (-wr.hh(), wr.hh()), 0.7, 99),
             )
             .radius(20.0)
             .color(BLACK);

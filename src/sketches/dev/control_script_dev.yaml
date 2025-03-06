@@ -244,3 +244,30 @@ midi_radius:
   channel: 0
   cc: 0
   range: [10, 400]
+
+# ------------------------------------------------------------------------------
+#  Black Circles (Random & RandomSlewed)
+# ------------------------------------------------------------------------------
+
+random_section:
+  type: separator
+
+show_random_section:
+  type: checkbox
+  default: false
+
+random_size:
+  type: random
+  range: [10, 300]
+  stem: 888
+
+test_slew_pmod:
+  type: triangle
+  beats: 5
+
+random_size_slewed:
+  type: random_slewed
+  range: [10, 300]
+  # slew: $test_slew_pmod
+  slew: 0.7
+  stem: 999

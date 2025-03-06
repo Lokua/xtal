@@ -114,6 +114,16 @@ impl Sketch for ControlScriptDev {
                 .x_y(0.0, 0.0);
         }
 
+        if self.controls.bool("show_random_section") {
+            let size = self.controls.get("random_size");
+            let size_slewed = self.controls.get("random_size_slewed");
+            draw.rect().color(BLACK).w_h(size, size).x_y(-wr.qw(), 0.0);
+            draw.rect()
+                .color(BLACK)
+                .w_h(size_slewed, size_slewed)
+                .x_y(wr.qw(), 0.0);
+        }
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

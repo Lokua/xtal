@@ -1,45 +1,15 @@
 {
   "values": {
-    "17x30": {
-      "Bool": false
-    },
-    "show_audio": {
-      "Bool": false
-    },
-    "show_red_circle": {
-      "Bool": true
-    },
-    "show_breakpoints": {
-      "Bool": false
-    },
     "center_radius": {
       "Float": 100.0
     },
-    "hk5vj": {
+    "q71xe": {
       "Bool": false
     },
-    "white_radius_amt": {
-      "Float": 0.0
-    },
-    "show_white_circle": {
+    "z6l1o": {
       "Bool": false
     },
-    "ntk21": {
-      "Bool": false
-    },
-    "lb3l1": {
-      "Bool": false
-    },
-    "show_midi_circle": {
-      "Bool": false
-    },
-    "center_hue": {
-      "Float": 0.3
-    },
-    "14d81": {
-      "Bool": false
-    },
-    "vn82z": {
+    "288r3": {
       "Bool": false
     },
     "show_center_circle": {
@@ -47,6 +17,42 @@
     },
     "bg_alpha": {
       "Float": 0.645
+    },
+    "show_audio": {
+      "Bool": false
+    },
+    "show_breakpoints": {
+      "Bool": false
+    },
+    "center_hue": {
+      "Float": 0.3
+    },
+    "white_radius_amt": {
+      "Float": 0.0
+    },
+    "show_random_section": {
+      "Bool": true
+    },
+    "show_midi_circle": {
+      "Bool": false
+    },
+    "5112v": {
+      "Bool": false
+    },
+    "87m62": {
+      "Bool": false
+    },
+    "show_red_circle": {
+      "Bool": false
+    },
+    "ys8v2": {
+      "Bool": false
+    },
+    "show_white_circle": {
+      "Bool": false
+    },
+    "q6e6i": {
+      "Bool": false
     }
   }
 }

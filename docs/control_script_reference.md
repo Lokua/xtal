@@ -12,6 +12,8 @@
 - [Audio](#audio)
 - [Animation](#animation)
   - [triangle](#triangle)
+  - [random](#random)
+  - [random_slewed](#random_slewed)
   - [automate](#automate)
     - [breakpoints](#breakpoints)
     - [kind](#kind)
@@ -19,7 +21,7 @@
       - [step](#step)
       - [wave](#wave)
       - [random](#random)
-      - [random_smooth](#random_smooth)
+      - [random_smooth](#randomsmooth)
       - [end](#end)
 - [Modulation](#modulation)
   - [mod](#mod)
@@ -129,23 +131,24 @@ pub struct Model {
     controls: ControlScript<Timing>,
 }
 
-pub fn init_model(_app: &App, _wr: WindowRect) -> Model {
+pub fn init(_app: &App, ctx: &LatticeContext) -> Model {
     let controls = ControlScript::from_path(
         to_absolute_path(file!(), "controls.yaml"),
-        Timing::new(SKETCH_CONFIG.bpm),
+        Timing::new(ctx.bpm()),
     );
 
     Model { controls }
 }
 
-pub fn view(app: &App, m: &Model, frame: Frame) {
-  let draw = app.draw();
+impl Sketch for Model {
+    fn view(app: &App, m: &Model, frame: Frame, ctx: &LatticeContext) {
+        let draw = app.draw();
 
-  let radius = m.controls.get("radius");
-  let pos_x = m.controls.get("pos_x");
+        let radius = m.controls.get("radius");
+        let pos_x = m.controls.get("pos_x");
 
-  // do stuff
-  // ...
+        // ...
+    }
 }
 ```
 
@@ -333,6 +336,58 @@ triangle_example:
   beats: 16.0
   range: [0.0, 1.0]
   phase: 0.0
+```
+
+## Random
+
+Generate a randomized value once during every cycle of `duration`. The function
+is completely deterministic given the same parameters in relation to the current
+beat.
+
+**Params**
+
+- `type` - `random`
+- `beats` - defaults to `1.0`
+- `range` - defaults to `[0.0, 1.0]`
+- `stem` - the "seed" to differentiate this animation from otherwise identical
+  animations
+
+**Example**
+
+```yaml
+random_example:
+  type: random
+  beats: 1.0
+  range: [0.0, 1.0]
+  stem: 44
+```
+
+## random_slewed
+
+Generate a randomized value once during every cycle of `duration`. The function
+is completely deterministic given the same parameters in relation to the current
+beat. The `stem` - which serves as the root of an internal seed generator - is
+also a unique ID for internal slew state and for that reason you should make
+sure all animations in your sketch have unique stems. `slew` controls smoothing
+when the value changes with 0.0 being instant and 1.0 being essentially frozen.
+
+**Params**
+
+- `type` - `random`
+- `beats` - defaults to `1.0`
+- `range` - defaults to `[0.0, 1.0]`
+- `slew` - control the rise/fall of internal slew limiter. defaults to `0.65`
+- `stem` - the "seed" + unique ID for this animation
+
+**Example**
+
+```yaml
+random_slewed_example:
+  type: random_slewed
+  beats: 1.0
+  range: [0.0, 1.0]
+  slew: 0.65
+  stem: 88
 ```
 
 ## Automate
@@ -533,7 +588,7 @@ hysteresis_example:
   pass_through: false
 ```
 
-## Quantizer
+## quantizer
 
 Discretizes continuous input values into fixed steps, creating stair-case
 transitions.
@@ -561,7 +616,7 @@ quantizer_example:
   range: [0.0, 1.0]
 ```
 
-## Ring Modulator
+## ring_modulator
 
 Implements ring modulation by combining a carrier and modulator signal. Note
 that there is no actual "carrier" parameter because the modulator signal will be
@@ -594,7 +649,7 @@ rm_mod_routing:
     - ring_modulator_example
 ```
 
-## Saturator
+## saturator
 
 Applies smooth saturation to a signal, creating a soft roll-off as values
 approach the range boundaries. Higher drive values create more aggressive
@@ -617,7 +672,7 @@ saturator_example:
   range: [0.0, 1.0]
 ```
 
-## Slew Limiter
+## slew_limiter
 
 Limits the rate of change (slew rate) of a signal
 
