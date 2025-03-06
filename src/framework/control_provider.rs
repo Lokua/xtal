@@ -14,6 +14,7 @@ pub trait ControlProvider {
     fn recall_snapshot(&mut self, id: &str);
     fn delete_snapshot(&mut self, id: &str);
     fn clear_snapshots(&mut self);
+    fn midi_controls(&self) -> Option<MidiControls>;
 }
 
 impl ControlProvider for Controls {
@@ -53,6 +54,10 @@ impl ControlProvider for Controls {
     fn clear_snapshots(&mut self) {
         warn!("Controls doesn't have snapshots");
     }
+
+    fn midi_controls(&self) -> Option<MidiControls> {
+        None
+    }
 }
 
 impl<T: TimingSource> ControlProvider for ControlScript<T> {
@@ -91,5 +96,9 @@ impl<T: TimingSource> ControlProvider for ControlScript<T> {
     }
     fn clear_snapshots(&mut self) {
         self.clear_snapshots();
+    }
+
+    fn midi_controls(&self) -> Option<MidiControls> {
+        Some(self.midi_controls.clone())
     }
 }

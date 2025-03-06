@@ -3,6 +3,7 @@ use midir::Ignore;
 use midir::MidiInput;
 use midir::MidiInputConnection;
 use midir::MidiOutput;
+use midir::MidiOutputConnection;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
@@ -125,4 +126,42 @@ pub fn print_ports() -> Result<(), Box<dyn Error>> {
     println!("");
 
     Ok(())
+}
+
+#[allow(dead_code)]
+pub struct MidiOut {
+    port: String,
+    connection: Option<MidiOutputConnection>,
+}
+
+impl MidiOut {
+    pub fn new(port: &str) -> Self {
+        Self {
+            port: port.to_string(),
+            connection: None,
+        }
+    }
+
+    pub fn connect(&mut self) -> Result<(), Box<dyn Error>> {
+        let midi_out = MidiOutput::new("ControlOut")?;
+        let out_ports = midi_out.ports();
+        let out_port = out_ports
+            .iter()
+            .find(|p| midi_out.port_name(p).unwrap_or_default() == self.port)
+            .ok_or_else(|| {
+                format!("Unable to find output port: {}", self.port)
+            })?;
+        let connection = midi_out.connect(out_port, "ControlOut")?;
+        self.connection = Some(connection);
+        Ok(())
+    }
+
+    pub fn send(&mut self, message: &[u8; 3]) -> Result<(), Box<dyn Error>> {
+        if let Some(connection) = &mut self.connection {
+            connection.send(message)?
+        } else {
+            warn!("Midi ControlOut connection has not been established");
+        }
+        Ok(())
+    }
 }

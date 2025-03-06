@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
+use nannou::math::map_range;
+
 use super::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -56,6 +58,7 @@ impl MidiState {
     }
 }
 
+#[derive(Clone)]
 pub struct MidiControls {
     configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,
@@ -92,6 +95,22 @@ impl MidiControls {
         return self.state.lock().unwrap().values();
     }
 
+    pub fn messages(&self) -> Vec<[u8; 3]> {
+        let values = self.values();
+        let mut messages: Vec<[u8; 3]> = vec![];
+        for (name, value) in values.iter() {
+            let mut message: [u8; 3] = [0; 3];
+            let config = self.configs.get(name).unwrap();
+            message[0] = 176 + config.channel;
+            message[1] = config.cc;
+            let value = map_range(*value, config.min, config.max, 0.0, 127.0);
+            let value = constrain::clamp(value, 0.0, 127.0);
+            message[2] = value.round() as u8;
+            messages.push(message);
+        }
+        messages
+    }
+
     pub fn update_value(&mut self, name: &str, value: f32) {
         self.state.lock().unwrap().set(&name, value);
     }
@@ -101,7 +120,7 @@ impl MidiControls {
 
         match midi::on_message(
             midi::ConnectionType::Control,
-            crate::config::MIDI_CONTROL_PORT,
+            crate::config::MIDI_CONTROL_IN_PORT,
             move |message| {
                 if message.len() < 3 {
                     return;

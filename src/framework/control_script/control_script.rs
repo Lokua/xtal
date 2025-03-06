@@ -33,7 +33,7 @@ struct SnapshotTransition {
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
-    midi_controls: MidiControls,
+    pub midi_controls: MidiControls,
     osc_controls: OscControls,
     audio_controls: AudioControls,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,

@@ -6,6 +6,7 @@ use std::{env, str};
 
 use super::prelude::*;
 use super::tap_tempo::TapTempo;
+use crate::config::MIDI_CONTROL_OUT_PORT;
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -114,6 +115,7 @@ pub enum AppEvent {
     QueueRecord,
     Record,
     Reset,
+    SendMidi,
     SnapshotRecall(String),
     SnapshotStore(String),
     SwitchSketch(String),
@@ -305,6 +307,36 @@ impl AppModel {
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
+            }
+            AppEvent::SendMidi => {
+                // TODO: put me on AppModel
+                let mut midi_out = midi::MidiOut::new(MIDI_CONTROL_OUT_PORT);
+
+                match midi_out.connect() {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("{}", e);
+                        return;
+                    }
+                }
+
+                if let Some(provider) = self.sketch.controls() {
+                    if !provider.is_control_script() {
+                        return;
+                    }
+                    if let Some(midi_controls) = provider.midi_controls() {
+                        for message in midi_controls.messages() {
+                            if let Err(e) = midi_out.send(&message) {
+                                error!(
+                                    "Error sending MIDI message: {:?}; error: {}",
+                                    message,
+                                    e
+                                );
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(provider) = self.sketch.controls() {
@@ -716,10 +748,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
     if model.clear_next_frame.get() {
-        debug!(
-            "model.sketch.clear_color(): {:?}",
-            model.sketch.clear_color()
-        );
         frame.clear(model.sketch.clear_color());
         model.clear_next_frame.set(false);
     }
