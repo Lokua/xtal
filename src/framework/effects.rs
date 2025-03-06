@@ -7,11 +7,14 @@ use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
 use std::str::FromStr;
 
+use nannou::math::map_range;
+
 use super::prelude::*;
 
 #[derive(Debug)]
 pub enum Effect {
     Hysteresis(Hysteresis),
+    Map(Map),
     Math(Math),
     Quantizer(Quantizer),
     RingModulator(RingModulator),
@@ -141,6 +144,37 @@ impl Default for Math {
         Self {
             operator: Operator::Add,
             operand: 1.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Map {
+    pub domain: (f32, f32),
+    pub range: (f32, f32),
+}
+
+impl Map {
+    pub fn new(domain: (f32, f32), range: (f32, f32)) -> Self {
+        Self { domain, range }
+    }
+
+    pub fn apply(&self, input: f32) -> f32 {
+        map_range(
+            input,
+            self.domain.0,
+            self.domain.1,
+            self.range.0,
+            self.range.1,
+        )
+    }
+}
+
+impl Default for Map {
+    fn default() -> Self {
+        Self {
+            domain: (0.0, 1.0),
+            range: (0.0, 1.0),
         }
     }
 }

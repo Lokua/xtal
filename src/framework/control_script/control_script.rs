@@ -187,6 +187,7 @@ impl<T: TimingSource> ControlScript<T> {
                     self.update_effect_params(m, modulator);
                     m.apply(value)
                 }
+                Effect::Map(m) => m.apply(value),
                 Effect::Math(m) => {
                     self.update_effect_params(m, modulator);
                     m.apply(value)
@@ -727,6 +728,9 @@ impl<T: TimingSource> ControlScript<T> {
                                 Hysteresis::from_cold_params(&conf);
                             effect.pass_through = pass_through;
                             Effect::Hysteresis(effect)
+                        }
+                        EffectKind::Map { domain, range } => {
+                            Effect::Map(Map::new(domain, range))
                         }
                         EffectKind::Math {
                             operator: ref op, ..

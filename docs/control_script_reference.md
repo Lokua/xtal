@@ -27,6 +27,8 @@
   - [mod](#mod)
 - [Effects](#effects)
   - [hysteresis](#hysteresis)
+  - [math](#math)
+  - [map](#map)
   - [quantizer](#quantizer)
   - [ring_modulator](#ring_modulator)
   - [saturator](#saturator)
@@ -586,6 +588,48 @@ hysteresis_example:
   output_low: 0.0
   output_high: 1.0
   pass_through: false
+```
+
+## map
+
+Basic linear scaling
+
+**Params**
+
+- `type` - `effect`
+- `kind` - `map`
+- `domain` - the assumed input range, not clamped. Defaults to `[0.0, 1.0]`
+- `range` - output range, not clamped. Defaults to `[0.0, 1.0]`
+
+**Example**
+
+```yaml
+map_example:
+  type: effect
+  kind: map
+  domain: [0.0, 1.0]
+  range: [0.0, 1.0]
+```
+
+## math
+
+Basic addition or multiplication
+
+**Params**
+
+- `type` - `effect`
+- `kind` - `math`
+- `operator` - `add` or `mult`. Defaults to `add`
+- `operand` - the number to add or multiply with the input. Defaults to `1.0`
+
+**Example**
+
+```yaml
+math_example:
+  type: effect
+  kind: math
+  operator: add
+  operand: 33
 ```
 
 ## quantizer

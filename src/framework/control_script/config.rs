@@ -402,6 +402,11 @@ pub enum EffectKind {
         pass_through: bool,
     },
 
+    Map {
+        domain: (f32, f32),
+        range: (f32, f32),
+    },
+
     Math {
         operator: String,
         operand: ParamValue,

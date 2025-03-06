@@ -47,6 +47,18 @@ white_pos_y:
   beats: 2
   range: [-1, 1]
 
+white_pos_y_map:
+  type: effect
+  kind: map
+  domain: [-1, 1]
+  range: [-0.25, 0.25]
+
+white_pos_y_mod:
+  type: mod
+  source: white_pos_y
+  modulators:
+    - white_pos_y_map
+
 white_radius:
   type: triangle
   beats: 8
