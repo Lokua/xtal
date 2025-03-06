@@ -26,6 +26,7 @@
 - [Modulation](#modulation)
   - [mod](#mod)
 - [Effects](#effects)
+  - [constrain](#constrain)
   - [hysteresis](#hysteresis)
   - [math](#math)
   - [map](#map)
@@ -554,7 +555,28 @@ be used as sources. A single effect can be used more than once, for example you
 might have several animations that use stepped randomness and may want to smooth
 them all out with a single slew_limiter.
 
-## Hysteresis
+## constrain
+
+Basic input clamping
+
+**Params**
+
+- `type` - `effect`
+- `kind` - `constrain`
+- `mode` - `clamp`, `fold`, or `wrap`. Defaults to `clamp`
+- `range` - output range. Defaults to `[0.0, 1.0]`
+
+**Example**
+
+```yaml
+map_example:
+  type: effect
+  kind: constrain
+  mode: clamp
+  range: [0.0, 1.0]
+```
+
+## hysteresis
 
 Implements a Schmitt trigger with configurable thresholds that outputs:
 

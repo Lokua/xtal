@@ -183,6 +183,7 @@ impl<T: TimingSource> ControlScript<T> {
             m.apply(value, self.get_raw(modulator))
         } else {
             match effect {
+                Effect::Constrain(m) => m.apply(value),
                 Effect::Hysteresis(m) => {
                     self.update_effect_params(m, modulator);
                     m.apply(value)
@@ -723,6 +724,16 @@ impl<T: TimingSource> ControlScript<T> {
                         serde_yml::from_value(config.config.clone())?;
 
                     let effect = match conf.kind {
+                        EffectKind::Constrain { ref mode, range } => {
+                            Effect::Constrain(
+                                Constrain::try_from((
+                                    mode.as_str(),
+                                    range.0,
+                                    range.1,
+                                ))
+                                .unwrap_or(Constrain::None),
+                            )
+                        }
                         EffectKind::Hysteresis { pass_through, .. } => {
                             let mut effect =
                                 Hysteresis::from_cold_params(&conf);

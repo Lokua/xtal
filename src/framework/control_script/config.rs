@@ -389,6 +389,12 @@ pub struct EffectConfig {
 #[derive(Clone, Deserialize, Debug, Reflect)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum EffectKind {
+    Constrain {
+        #[serde(default = "default_clamp_string")]
+        mode: String,
+        #[serde(default = "default_normalized_range")]
+        range: (f32, f32),
+    },
     Hysteresis {
         #[serde(default = "default_param_value_0_3")]
         lower_threshold: ParamValue,
@@ -499,6 +505,9 @@ fn default_shape() -> String {
 }
 fn default_none_string() -> String {
     "none".to_string()
+}
+fn default_clamp_string() -> String {
+    "clamp".to_string()
 }
 fn default_false() -> bool {
     false

@@ -51,13 +51,20 @@ white_pos_y_map:
   type: effect
   kind: map
   domain: [-1, 1]
-  range: [-0.25, 0.25]
+  range: [-2, 2]
+
+white_pos_y_constrain:
+  type: effect
+  kind: constrain
+  mode: wrap
+  range: [-0.5, 0.5]
 
 white_pos_y_mod:
   type: mod
   source: white_pos_y
   modulators:
     - white_pos_y_map
+    - white_pos_y_constrain
 
 white_radius:
   type: triangle

@@ -13,6 +13,7 @@ use super::prelude::*;
 
 #[derive(Debug)]
 pub enum Effect {
+    Constrain(Constrain),
     Hysteresis(Hysteresis),
     Map(Map),
     Math(Math),
@@ -21,6 +22,41 @@ pub enum Effect {
     Saturator(Saturator),
     SlewLimiter(SlewLimiter),
     WaveFolder(WaveFolder),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Constrain {
+    None,
+    Clamp(f32, f32),
+    Fold(f32, f32),
+    Wrap(f32, f32),
+}
+
+impl Constrain {
+    pub fn apply(&self, value: f32) -> f32 {
+        match self {
+            Self::None => value,
+            Self::Clamp(min, max) => constrain::clamp(value, *min, *max),
+            Self::Fold(min, max) => constrain::fold(value, *min, *max),
+            Self::Wrap(min, max) => constrain::wrap(value, *min, *max),
+        }
+    }
+}
+
+impl TryFrom<(&str, f32, f32)> for Constrain {
+    type Error = String;
+
+    fn try_from(
+        (method, min, max): (&str, f32, f32),
+    ) -> Result<Self, Self::Error> {
+        match method.to_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "clamp" => Ok(Self::Clamp(min, max)),
+            "fold" => Ok(Self::Fold(min, max)),
+            "wrap" => Ok(Self::Wrap(min, max)),
+            _ => Err(format!("No constrain method {} exists.", method)),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
