@@ -12,27 +12,20 @@ pub struct ConcreteControls {
 pub struct SerializableControls {
     version: String,
     controls: Vec<ControlConfig>,
-    midi_controls: Vec<MidiControlConfig>,
-    osc_controls: Vec<OscControlConfig>,
+    midi_controls: Vec<BasicNameValueConfig>,
+    osc_controls: Vec<BasicNameValueConfig>,
 }
 
 #[derive(Serialize, Deserialize)]
 struct ControlConfig {
+    #[serde(rename = "type")]
     kind: String,
     name: String,
     value: ControlValue,
 }
 
 #[derive(Serialize, Deserialize)]
-struct MidiControlConfig {
-    name: String,
-    channel: u8,
-    cc: u8,
-    value: f32,
-}
-
-#[derive(Serialize, Deserialize)]
-struct OscControlConfig {
+struct BasicNameValueConfig {
     name: String,
     value: f32,
 }
@@ -52,13 +45,11 @@ impl From<ConcreteControls> for SerializableControls {
 
         let midi_controls = concretes
             .midi_controls
-            .configs()
+            .values()
             .iter()
-            .map(|(name, config)| MidiControlConfig {
+            .map(|(name, value)| BasicNameValueConfig {
                 name: name.clone(),
-                channel: config.channel,
-                cc: config.cc,
-                value: concretes.midi_controls.get(name),
+                value: *value,
             })
             .collect();
 
@@ -66,8 +57,8 @@ impl From<ConcreteControls> for SerializableControls {
             .osc_controls
             .values()
             .iter()
-            .map(|(name, value)| OscControlConfig {
-                name: name.to_string(),
+            .map(|(name, value)| BasicNameValueConfig {
+                name: name.clone(),
                 value: *value,
             })
             .collect();
