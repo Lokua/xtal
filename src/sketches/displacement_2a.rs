@@ -29,8 +29,7 @@ const CIRCLE_RESOLUTION: f32 = 6.0;
 pub struct Displacement2a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     cached_pattern: String,
     cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
     palettes: Vec<Gradient<LinSrgb>>,
@@ -67,7 +66,8 @@ impl Displacement2a {
         let value = self.controls.float("weave_frequency");
         if self.controls.bool("animate_frequency") {
             map_range(
-                self.animation
+                self.controls
+                    .animation
                     .lerp(&[kf(0.0, 16.0), kf(1.0, 16.0), kf(0.0, 0.0)], 0.0),
                 0.0,
                 1.0,
@@ -81,58 +81,61 @@ impl Displacement2a {
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
-    let w = SKETCH_CONFIG.w;
-    let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let wr = ctx.window_rect();
+    let w = wr.w();
+    let h = wr.h();
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
-    let controls = Controls::new(vec![
-        Control::checkbox("audio_enabled", false),
-        Control::slider("rise_rate", 0.96, (0.001, 1.0), 0.001),
-        Control::slider("fall_rate", 0.9, (0.0, 1.0), 0.001),
-        Control::Separator {},
-        Control::select("pattern", "cos,sin", &generate_pattern_options()),
-        Control::slider("scale", 1.0, (0.1, 4.0), 0.1),
-        Control::checkbox("clamp_circle_radii", false),
-        Control::checkbox("animate_frequency", false),
-        Control::Separator {},
-        Control::checkbox("quad_restraint", false),
-        Control::slider("qr_lerp", 0.5, (0.0, 1.0), 0.0001),
-        Control::slider("qr_divisor", 2.0, (0.5, 16.0), 0.125),
-        Control::slider("qr_pos", 1.0, (0.125, 1.0), 0.125),
-        Control::slider("qr_size", 1.0, (0.125, 1.0), 0.125),
-        Control::select(
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(Bpm::new(134.0)))
+        .checkbox("audio_enabled", false, None)
+        .slider("rise_rate", 0.96, (0.001, 1.0), 0.001, None)
+        .slider("fall_rate", 0.9, (0.0, 1.0), 0.001, None)
+        .separator()
+        .select("pattern", "cos,sin", &generate_pattern_options(), None)
+        .slider("scale", 1.0, (0.1, 4.0), 0.1, None)
+        .checkbox("clamp_circle_radii", false, None)
+        .checkbox("animate_frequency", false, None)
+        .separator()
+        .checkbox("quad_restraint", false, None)
+        .slider("qr_lerp", 0.5, (0.0, 1.0), 0.0001, None)
+        .slider("qr_divisor", 2.0, (0.5, 16.0), 0.125, None)
+        .slider("qr_pos", 1.0, (0.125, 1.0), 0.125, None)
+        .slider("qr_size", 1.0, (0.125, 1.0), 0.125, None)
+        .select(
             "position_animation",
             "Counter Clockwise",
             &["None", "Counter Clockwise"],
-        ),
-        Control::select(
+            None,
+        )
+        .select(
             "qr_shape",
             "Rectangle",
             &["Rectangle", "Circle", "Ripple", "Spiral"],
-        ),
-        Control::checkbox("quad_1", false),
-        Control::checkbox("quad_2", false),
-        Control::checkbox("quad_3", false),
-        Control::checkbox("quad_4", false),
-        Control::checkbox("quad_influence_or_attract", false),
-        Control::Separator {},
-        Control::checkbox("center", true),
-        Control::checkbox("center_influence_or_attract", false),
-        Control::Separator {},
-        Control::select("palette", "lightcoral", &["lightcoral", "lightgreen"]),
-        Control::slider("gradient_spread", 0.99, (0.0, 1.0), 0.0001),
-        Control::checkbox("color_influence_or_attract", false),
-        Control::Separator {},
-        Control::slider("circle_radius_min", 1.0, (0.1, 12.0), 0.1),
-        Control::slider("circle_radius_max", 5.0, (0.1, 12.0), 0.1),
-        Control::slider("displacer_radius", 0.001, (0.0001, 0.01), 0.0001),
-        Control::slider("displacer_strength", 34.0, (0.5, 100.0), 0.5),
-        Control::slider("weave_frequency", 0.03, (0.01, 0.2), 0.001),
-        Control::slider("weave_scale", 0.05, (0.001, 0.1), 0.001),
-        Control::slider("weave_amplitude", 0.001, (0.0001, 0.01), 0.0001),
-        Control::slider("scaling_power", 2.0, (0.25, 9.00), 0.25),
-    ]);
+            None,
+        )
+        .checkbox("quad_1", false, None)
+        .checkbox("quad_2", false, None)
+        .checkbox("quad_3", false, None)
+        .checkbox("quad_4", false, None)
+        .checkbox("quad_influence_or_attract", false, None)
+        .separator()
+        .checkbox("center", true, None)
+        .checkbox("center_influence_or_attract", false, None)
+        .separator()
+        .select("palette", "lightcoral", &["lightcoral", "lightgreen"], None)
+        .slider("gradient_spread", 0.99, (0.0, 1.0), 0.0001, None)
+        .checkbox("color_influence_or_attract", false, None)
+        .separator()
+        .slider("circle_radius_min", 1.0, (0.1, 12.0), 0.1, None)
+        .slider("circle_radius_max", 5.0, (0.1, 12.0), 0.1, None)
+        .slider("displacer_radius", 0.001, (0.0001, 0.01), 0.0001, None)
+        .slider("displacer_strength", 34.0, (0.5, 100.0), 0.5, None)
+        .slider("weave_frequency", 0.03, (0.01, 0.2), 0.001, None)
+        .slider("weave_scale", 0.05, (0.001, 0.1), 0.001, None)
+        .slider("weave_amplitude", 0.001, (0.0001, 0.01), 0.0001, None)
+        .slider("scaling_power", 2.0, (0.25, 9.00), 0.25, None)
+        .build();
 
     let mut displacer_configs = vec![
         DisplacerConfig::new(
@@ -143,45 +146,25 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
         ),
         DisplacerConfig::new(
             "quad_1",
-            Displacer::new(
-                vec2(w as f32 / 4.0, h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(w / 4.0, h / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
         DisplacerConfig::new(
             "quad_2",
-            Displacer::new(
-                vec2(w as f32 / 4.0, -h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(w / 4.0, -h / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
         DisplacerConfig::new(
             "quad_3",
-            Displacer::new(
-                vec2(-w as f32 / 4.0, -h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(-w / 4.0, -h / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
         DisplacerConfig::new(
             "quad_4",
-            Displacer::new(
-                vec2(-w as f32 / 4.0, h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(-w / 4.0, h / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
@@ -194,7 +177,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
             position_animations[i].clone();
     }
 
-    let pad = w as f32 * (1.0 / 3.0);
+    let pad = w * (1.0 / 3.0);
     let cached_pattern = controls.string("pattern");
     let palettes = vec![
         Gradient::new(vec![LIGHTCORAL.into_lin_srgb(), AZURE.into_lin_srgb()]),
@@ -202,9 +185,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     ];
 
     Displacement2a {
-        grid: create_grid(w as f32 - pad, h as f32 - pad, GRID_SIZE, vec2).0,
+        grid: create_grid(w - pad, h - pad, GRID_SIZE, vec2).0,
         displacer_configs,
-        animation,
         controls,
         cached_pattern,
         cached_trig_fns: None,
@@ -272,7 +254,7 @@ impl Sketch for Displacement2a {
         );
 
         let cached_trig_fns = self.cached_trig_fns.clone();
-        let animation = &self.animation;
+        let animation = &self.controls.animation;
         let controls = &self.controls;
         let band_for_freq = self.fft_bands[0];
 
@@ -302,7 +284,7 @@ impl Sketch for Displacement2a {
             }));
 
         for config in self.displacer_configs.iter_mut() {
-            config.update(animation, controls);
+            config.update(animation, &controls.controls);
             config.displacer.set_custom_distance_fn(distance_fn.clone());
             config.displacer.set_radius(displacer_radius);
             config.displacer.set_strength(if audio_enabled {
@@ -520,7 +502,7 @@ pub fn weave(
 
     let position_pattern = match pattern.as_str() {
         "Custo" => (x.sin() * y.cos()) + (x - y).tanh() * (x + y).tan(),
-        "Sprial" => {
+        "Spiral" => {
             (x * y).sin() * (x - y).cos() + ((x * x + y * y).sqrt()).tanh()
         }
         "Ripple" => (x * x + y * y).sin() * (x - y).cos() + (x * y).tanh(),
@@ -560,7 +542,7 @@ fn generate_pattern_options() -> Vec<String> {
         .flat_map(|a| functions.iter().map(move |b| format!("{},{}", a, b)))
         .chain(str_vec![
             "Custo",
-            "Sprial",
+            "Spiral",
             "Ripple",
             "VortxFld",
             "VortxFld2",

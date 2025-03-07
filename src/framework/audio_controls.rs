@@ -5,7 +5,7 @@
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
 
 use cpal::{traits::*, Device, StreamConfig};
-use nannou::{image::buffer, math::map_range};
+use nannou::math::map_range;
 use std::{
     collections::HashMap,
     error::Error,
