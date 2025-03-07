@@ -25,6 +25,7 @@ pub fn run() {
             breakpoints_2,
             brutalism,
             displacement_2a,
+            displacement_2a_orig,
             drop,
             drop_walk,
             floor_supervisor,

@@ -265,21 +265,13 @@ impl<T: TimingSource> ControlScript<T> {
 
         if self.controls.has(name) {
             value = Some(self.controls.float(name));
-        }
-
-        if self.osc_controls.has(name) {
+        } else if self.osc_controls.has(name) {
             value = Some(self.osc_controls.get(name));
-        }
-
-        if self.midi_controls.has(name) {
+        } else if self.midi_controls.has(name) {
             value = Some(self.midi_controls.get(name));
-        }
-
-        if self.audio_controls.has(name) {
+        } else if self.audio_controls.has(name) {
             value = Some(self.audio_controls.get(name));
-        }
-
-        if let Some((config, sequence)) = self.animations.get(name) {
+        } else if let Some((config, sequence)) = self.animations.get(name) {
             let v = match (config, sequence) {
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
                     let conf = self.resolve_animation_config_params(conf, name);
