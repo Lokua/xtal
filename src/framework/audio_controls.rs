@@ -5,7 +5,7 @@
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
 
 use cpal::{traits::*, Device, StreamConfig};
-use nannou::math::map_range;
+use nannou::{image::buffer, math::map_range};
 use std::{
     collections::HashMap,
     error::Error,
@@ -178,6 +178,10 @@ impl AudioControls {
 
     pub fn is_active(&self) -> bool {
         self.is_active
+    }
+
+    pub fn set_buffer_processor(&mut self, buffer_processor: BufferProcessor) {
+        self.buffer_processor = buffer_processor
     }
 
     fn start(&mut self) -> Result<(), Box<dyn Error>> {

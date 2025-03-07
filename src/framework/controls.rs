@@ -55,7 +55,7 @@ impl From<String> for ControlValue {
     }
 }
 
-type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
+pub type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
 
 #[derive(Serialize, Deserialize)]
 pub enum Control {

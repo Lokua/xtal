@@ -61,10 +61,10 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
     );
 
     let midi = MidiControlBuilder::new()
-        .control_mapped("primary_iterations", (0, 1), (0.0, 5.0), 0.0)
-        .control_mapped("second_iterations", (0, 2), (0.0, 3.0), 0.0)
-        .control_mapped("third_iterations", (0, 3), (0.0, 3.0), 0.0)
-        .control_mapped("fourth_iterations", (0, 4), (0.0, 3.0), 0.0)
+        .control("primary_iterations", (0, 1), (0.0, 5.0), 0.0)
+        .control("second_iterations", (0, 2), (0.0, 3.0), 0.0)
+        .control("third_iterations", (0, 3), (0.0, 3.0), 0.0)
+        .control("fourth_iterations", (0, 4), (0.0, 3.0), 0.0)
         .build();
 
     G25_13Triangle {

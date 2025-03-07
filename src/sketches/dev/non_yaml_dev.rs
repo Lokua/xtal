@@ -25,18 +25,11 @@ pub struct NonYamlDev {
 pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
     let controls: ControlScript<Timing> = ControlScriptBuilder::new()
         .timing(Timing::new(ctx.bpm()))
-        .controls(
-            ControlBuilder::new()
-                .control(Control::slider("radius", 100.0, (10.0, 500.0), 1.0))
-                .slider("unused", 100.0, (10.0, 500.0), 1.0, None)
-                .slider_normalized("another", 100.0)
-                .build(),
-        )
-        .midi_controls(
-            MidiControlBuilder::new()
-                .control_mapped("x_pos", (0, 0), (-1.0, 1.0), 0.0)
-                .build(),
-        )
+        .slider("radius", 100.0, (10.0, 500.0), 1.0, None)
+        .slider("unused", 100.0, (10.0, 500.0), 1.0, None)
+        .slider_n("another", 100.0)
+        .midi("x_pos", (0, 0), (-1.0, 1.0), 0.0)
+        .midi_n("y_pos", (0, 1))
         .build();
 
     NonYamlDev {

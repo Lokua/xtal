@@ -21,8 +21,8 @@ pub struct OscDev {
 
 pub fn init(_app: &App, _ctx: &LatticeContext) -> OscDev {
     let osc = OscControlBuilder::new()
-        .control_mapped("/a", (0.0, 400.0), 0.5)
-        .control_mapped("b", (0.0, 400.0), 0.5)
+        .control("/a", (0.0, 400.0), 0.5)
+        .control("b", (0.0, 400.0), 0.5)
         .build();
 
     OscDev { osc }
