@@ -80,6 +80,8 @@ pub fn update(
                 draw_tap_tempo_checkbox(ui, tap_tempo, event_tx);
                 ui.separator();
                 draw_send_midi_button(ui, event_tx);
+                ui.separator();
+                draw_save_controls_button(ui, event_tx);
             });
 
             ui.separator();
@@ -289,6 +291,15 @@ fn draw_tap_tempo_checkbox(
 fn draw_send_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Send Midi")).clicked().then(|| {
         event_tx.send(app::AppEvent::SendMidi);
+    });
+}
+
+fn draw_save_controls_button(
+    ui: &mut egui::Ui,
+    event_tx: &app::AppEventSender,
+) {
+    ui.add(egui::Button::new("Save Ctrls")).clicked().then(|| {
+        event_tx.send(app::AppEvent::SaveControls);
     });
 }
 

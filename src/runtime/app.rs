@@ -116,6 +116,7 @@ pub enum AppEvent {
     QueueRecord,
     Record,
     Reset,
+    SaveControls,
     SendMidi,
     SnapshotRecall(String),
     SnapshotStore(String),
@@ -138,14 +139,12 @@ impl AppEventSender {
         Self { tx }
     }
 
-    pub fn alert(&self, message: impl Into<String>) {
-        self.tx
-            .send(AppEvent::Alert(message.into()))
-            .expect("Failed to send alert event");
-    }
-
     pub fn send(&self, event: AppEvent) {
         self.tx.send(event).expect("Failed to send event");
+    }
+
+    pub fn alert(&self, message: impl Into<String>) {
+        self.send(AppEvent::Alert(message.into()));
     }
 }
 
@@ -308,6 +307,35 @@ impl AppModel {
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
+            }
+            AppEvent::SaveControls => {
+                let sketch_name = self.sketch_name();
+                if let Some(provider) = self.sketch.controls() {
+                    if !provider.is_control_script() {
+                        return;
+                    }
+                    let control_script = provider
+                        .as_any()
+                        .downcast_ref::<ControlScript<Timing>>();
+
+                    match storage::save_controls(
+                        sketch_name.as_str(),
+                        control_script.unwrap(),
+                    ) {
+                        Ok(path_buf) => {
+                            let message =
+                                format!("Controls persisted at {:?}", path_buf);
+                            self.alert_text = message.clone();
+                            info!("{}", message);
+                        }
+                        Err(e) => {
+                            let message =
+                                format!("Failed to persist controls: {}", e);
+                            self.alert_text = message.clone();
+                            error!("{}", message);
+                        }
+                    }
+                }
             }
             AppEvent::SendMidi => {
                 // TODO: put me on AppModel
@@ -521,14 +549,30 @@ impl AppModel {
             frame_controller::set_paused(true);
         }
 
-        if let (Some(values), Some(controls)) = (
-            storage::stored_controls(self.sketch_config.name),
-            self.sketch.controls_provided(),
-        ) {
-            for (name, value) in values.into_iter() {
-                controls.update_value(&name, value);
+        if self.sketch_config.name == "control_script_dev" {
+            if let Some(provider) = self.sketch.controls() {
+                if provider.is_control_script() {
+                    match provider.load_controls(self.sketch_config.name) {
+                        Some(Ok(())) => info!("Controls restored"),
+                        Some(Err(e)) => {
+                            warn!("Unable to restore controls: {}", e)
+                        }
+                        None => warn!("Unable to restore controls"),
+                    };
+                }
             }
-            info!("Controls restored");
+        } else {
+            if let (Some(values), Some(controls)) = (
+                storage::stored_controls(self.sketch_config.name),
+                self.sketch.controls_provided(),
+            ) {
+                for (name, value) in values.into_iter() {
+                    controls.update_value(&name, value);
+                }
+                info!("Controls restored");
+            } else {
+                warn!("Unable to restore controls");
+            }
         }
     }
 }

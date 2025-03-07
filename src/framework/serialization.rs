@@ -3,31 +3,79 @@ use serde::{Deserialize, Serialize};
 use super::prelude::*;
 
 pub struct ConcreteControls {
-    controls: Controls,
-    midi_controls: MidiControls,
-    osc_controls: OscControls,
+    pub controls: Controls,
+    pub midi_controls: MidiControls,
+    pub osc_controls: OscControls,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct SerializableControls {
-    version: String,
-    controls: Vec<ControlConfig>,
-    midi_controls: Vec<BasicNameValueConfig>,
-    osc_controls: Vec<BasicNameValueConfig>,
+    pub version: String,
+    pub controls: Vec<ControlConfig>,
+    pub midi_controls: Vec<BasicNameValueConfig>,
+    pub osc_controls: Vec<BasicNameValueConfig>,
 }
 
 #[derive(Serialize, Deserialize)]
-struct ControlConfig {
+pub struct ControlConfig {
     #[serde(rename = "type")]
-    kind: String,
-    name: String,
-    value: ControlValue,
+    pub kind: String,
+    pub name: String,
+    #[serde(with = "control_value_format")]
+    pub value: ControlValue,
 }
 
 #[derive(Serialize, Deserialize)]
-struct BasicNameValueConfig {
-    name: String,
-    value: f32,
+pub struct BasicNameValueConfig {
+    pub name: String,
+    pub value: f32,
+}
+
+mod control_value_format {
+    use super::*;
+    use serde::{Deserializer, Serializer};
+
+    pub fn serialize<S>(
+        value: &ControlValue,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if let Some(f) = value.as_float() {
+            return serializer.serialize_f32(f);
+        }
+        if let Some(s) = value.as_string() {
+            return serializer.serialize_str(s);
+        }
+        if let Some(b) = value.as_bool() {
+            return serializer.serialize_bool(b);
+        }
+
+        serializer.serialize_f32(0.0)
+    }
+
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<ControlValue, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Value {
+            Float(f32),
+            String(String),
+            Bool(bool),
+        }
+
+        let value = Value::deserialize(deserializer)?;
+        match value {
+            Value::Float(f) => Ok(ControlValue::from(f)),
+            Value::String(s) => Ok(ControlValue::from(s)),
+            Value::Bool(b) => Ok(ControlValue::from(b)),
+        }
+    }
 }
 
 impl From<ConcreteControls> for SerializableControls {
@@ -36,10 +84,13 @@ impl From<ConcreteControls> for SerializableControls {
             .controls
             .items()
             .iter()
-            .map(|c| ControlConfig {
-                kind: c.variant_string(),
-                name: c.name().to_string(),
-                value: c.value(),
+            .map(|c| {
+                let value = concretes.controls.values().get(c.name());
+                ControlConfig {
+                    kind: c.variant_string(),
+                    name: c.name().to_string(),
+                    value: value.unwrap_or(&c.value()).clone(),
+                }
             })
             .collect();
 

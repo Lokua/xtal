@@ -245,6 +245,56 @@ impl Control {
     }
 }
 
+impl Clone for Control {
+    fn clone(&self) -> Self {
+        match self {
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                disabled: _,
+            } => Control::Slider {
+                name: name.clone(),
+                value: *value,
+                min: *min,
+                max: *max,
+                step: *step,
+                disabled: None,
+            },
+            Control::Checkbox {
+                name,
+                value,
+                disabled: _,
+            } => Control::Checkbox {
+                name: name.clone(),
+                value: *value,
+                disabled: None,
+            },
+            Control::Select {
+                name,
+                value,
+                options,
+                disabled: _,
+            } => Control::Select {
+                name: name.clone(),
+                value: value.clone(),
+                options: options.clone(),
+                disabled: None,
+            },
+            Control::Button { name, disabled: _ } => Control::Button {
+                name: name.clone(),
+                disabled: None,
+            },
+            Control::Separator {} => Control::Separator {},
+            Control::DynamicSeparator { name } => {
+                Control::DynamicSeparator { name: name.clone() }
+            }
+        }
+    }
+}
+
 impl fmt::Debug for Control {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -301,8 +351,10 @@ pub struct SerializedControls {
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See
 /// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Controls {
+    /// Holds the original Control references and their default values - values
+    /// are not updated!
     items: Vec<Control>,
     values: ControlValues,
     #[serde(skip)]
@@ -501,6 +553,7 @@ impl fmt::Debug for Controls {
     }
 }
 
+#[derive(Clone)]
 struct ChangeTracker {
     save_previous: bool,
     changed: bool,

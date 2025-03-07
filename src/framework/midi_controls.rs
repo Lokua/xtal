@@ -29,7 +29,7 @@ impl MidiControlConfig {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct MidiState {
     values: HashMap<String, f32>,
 }
@@ -58,7 +58,7 @@ impl MidiState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MidiControls {
     configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,

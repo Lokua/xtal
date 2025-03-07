@@ -1,58 +1,107 @@
 {
-  "values": {
-    "center_hue": {
-      "Float": 0.3
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 1.0
     },
-    "2a63j": {
-      "Bool": false
+    {
+      "type": "DynamicSeparator",
+      "name": "4t767",
+      "value": false
     },
-    "show_midi_circle": {
-      "Bool": true
+    {
+      "type": "Checkbox",
+      "name": "show_center_circle",
+      "value": true
     },
-    "4m7gj": {
-      "Bool": false
+    {
+      "type": "Slider",
+      "name": "center_radius",
+      "value": 100.0
     },
-    "bg_alpha": {
-      "Float": 0.645
+    {
+      "type": "Slider",
+      "name": "center_hue",
+      "value": 0.3
     },
-    "show_red_circle": {
-      "Bool": false
+    {
+      "type": "DynamicSeparator",
+      "name": "w2fyw",
+      "value": false
     },
-    "show_audio": {
-      "Bool": false
+    {
+      "type": "Checkbox",
+      "name": "show_white_circle",
+      "value": true
     },
-    "show_random_section": {
-      "Bool": false
+    {
+      "type": "Slider",
+      "name": "white_radius_amt",
+      "value": 0.92999995
     },
-    "90q4k": {
-      "Bool": false
+    {
+      "type": "DynamicSeparator",
+      "name": "25jkk",
+      "value": false
     },
-    "show_breakpoints": {
-      "Bool": false
+    {
+      "type": "Checkbox",
+      "name": "show_audio",
+      "value": false
     },
-    "white_radius_amt": {
-      "Float": 0.96699995
+    {
+      "type": "DynamicSeparator",
+      "name": "90q7e",
+      "value": false
     },
-    "center_radius": {
-      "Float": 100.0
+    {
+      "type": "Checkbox",
+      "name": "show_breakpoints",
+      "value": false
     },
-    "show_center_circle": {
-      "Bool": false
+    {
+      "type": "DynamicSeparator",
+      "name": "3b028",
+      "value": false
     },
-    "r066g": {
-      "Bool": false
+    {
+      "type": "Checkbox",
+      "name": "show_red_circle",
+      "value": false
     },
-    "show_white_circle": {
-      "Bool": true
+    {
+      "type": "DynamicSeparator",
+      "name": "61drm",
+      "value": false
     },
-    "09h8v": {
-      "Bool": false
+    {
+      "type": "Checkbox",
+      "name": "show_midi_circle",
+      "value": false
     },
-    "x72i4": {
-      "Bool": false
+    {
+      "type": "DynamicSeparator",
+      "name": "u8i3q",
+      "value": false
     },
-    "548h9": {
-      "Bool": false
+    {
+      "type": "Checkbox",
+      "name": "show_random_section",
+      "value": false
     }
-  }
+  ],
+  "midi_controls": [
+    {
+      "name": "midi_radius",
+      "value": 0.0
+    }
+  ],
+  "osc_controls": [
+    {
+      "name": "white_pos_x",
+      "value": 0.0
+    }
+  ]
 }

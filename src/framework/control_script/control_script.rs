@@ -27,6 +27,7 @@ use super::{
     param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
+#[derive(Debug)]
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
@@ -37,12 +38,14 @@ struct UpdateState {
     has_changes: Arc<AtomicBool>,
 }
 
+#[derive(Debug)]
 struct SnapshotTransition {
     values: HashMap<String, (f32, f32)>,
     start_frame: u32,
     end_frame: u32,
 }
 
+#[derive(Debug)]
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,

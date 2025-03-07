@@ -5,6 +5,7 @@ type NodeName = String;
 type Frame = u32;
 type CachedValue = f32;
 
+#[derive(Debug)]
 pub struct EvalCache {
     cache: RefCell<HashMap<NodeName, (Frame, CachedValue)>>,
 }

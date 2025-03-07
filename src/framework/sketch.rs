@@ -93,7 +93,7 @@ pub trait SketchDerived {
         None
     }
     fn controls_provided(&mut self) -> Option<&mut Controls> {
-        self.controls().map(|provider| provider.as_controls_mut())
+        self.controls().map(|provider| provider.controls_mut())
     }
     fn clear_color(&self) -> Rgba {
         Rgba::new(0.0, 0.0, 0.0, 1.0)

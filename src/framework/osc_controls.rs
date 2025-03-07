@@ -55,7 +55,7 @@ impl OscState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct OscControls {
     pub is_active: bool,
     configs: HashMap<String, OscControlConfig>,
