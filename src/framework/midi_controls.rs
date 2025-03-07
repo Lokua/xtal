@@ -91,8 +91,24 @@ impl MidiControls {
         self.state.lock().unwrap().has(name)
     }
 
+    pub fn update_value(&mut self, name: &str, value: f32) {
+        self.state.lock().unwrap().set(&name, value);
+    }
+
     pub fn values(&self) -> HashMap<String, f32> {
         return self.state.lock().unwrap().values();
+    }
+
+    pub fn with_values_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut state = self.state.lock().unwrap();
+        f(&mut state.values);
+    }
+
+    pub fn configs(&self) -> HashMap<String, MidiControlConfig> {
+        self.configs.clone()
     }
 
     pub fn messages(&self) -> Vec<[u8; 3]> {
@@ -111,9 +127,6 @@ impl MidiControls {
         messages
     }
 
-    pub fn update_value(&mut self, name: &str, value: f32) {
-        self.state.lock().unwrap().set(&name, value);
-    }
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();

@@ -231,6 +231,18 @@ impl Control {
             _ => false,
         }
     }
+
+    pub fn variant_string(&self) -> String {
+        (match self {
+            Self::Button { .. } => "Button",
+            Self::Checkbox { .. } => "Checkbox",
+            Self::DynamicSeparator { .. } => "DynamicSeparator",
+            Self::Select { .. } => "Select",
+            Self::Separator {} => "Separator",
+            Self::Slider { .. } => "Slider",
+        })
+        .to_string()
+    }
 }
 
 impl fmt::Debug for Control {
@@ -344,6 +356,10 @@ impl Controls {
 
     pub fn values(&self) -> &ControlValues {
         &self.values
+    }
+
+    pub fn values_mut(&mut self) -> &mut ControlValues {
+        &mut self.values
     }
 
     pub fn has(&self, name: &str) -> bool {

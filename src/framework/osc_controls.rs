@@ -96,6 +96,14 @@ impl OscControls {
         return self.state.lock().unwrap().values();
     }
 
+    pub fn with_values_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut state = self.state.lock().unwrap();
+        f(&mut state.values);
+    }
+
     pub fn update_value(&mut self, address: &str, value: f32) {
         check_address(address);
         self.state.lock().unwrap().set(&address, value);
