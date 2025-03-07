@@ -324,6 +324,16 @@ impl Controls {
         }
     }
 
+    pub fn extend(&mut self, controls: Vec<Control>) {
+        let values: ControlValues = controls
+            .iter()
+            .map(|control| (control.name().to_string(), control.value()))
+            .collect();
+
+        self.values.extend(values);
+        self.items.extend(controls);
+    }
+
     pub fn items(&self) -> &Vec<Control> {
         &self.items
     }

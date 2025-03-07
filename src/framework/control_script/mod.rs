@@ -7,6 +7,10 @@ pub mod control_script;
 pub use control_script::ControlScript;
 
 mod config;
+
+mod control_script_builder;
+pub use control_script_builder::ControlScriptBuilder;
+
 mod dep_graph;
 mod eval_cache;
 mod param_mod;

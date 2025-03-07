@@ -69,7 +69,7 @@ white_pos_y_mod:
 white_radius:
   type: triangle
   beats: 8
-  range: [5, 200]
+  range: [5, 10]
 
 white_radius_amt:
   type: slider

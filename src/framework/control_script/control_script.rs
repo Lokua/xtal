@@ -9,7 +9,10 @@ use std::{
     fs,
     path::PathBuf,
     str::FromStr,
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
 };
 use yaml_merge_keys::merge_keys_serde_yml;
 
@@ -24,6 +27,16 @@ use super::{
     param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
+struct UpdateState {
+    _watcher: notify::RecommendedWatcher,
+    state: Arc<Mutex<Option<ConfigFile>>>,
+
+    /// Optimization to speed up checking for changes vs having to acquire a
+    /// lock on the above state mutex (~1-5 ns vs ~25-100 ns uncontended or
+    /// 1_000 ns contented)
+    has_changes: Arc<AtomicBool>,
+}
+
 struct SnapshotTransition {
     values: HashMap<String, (f32, f32)>,
     start_frame: u32,
@@ -34,8 +47,8 @@ pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
     pub midi_controls: MidiControls,
-    osc_controls: OscControls,
-    audio_controls: AudioControls,
+    pub osc_controls: OscControls,
+    pub audio_controls: AudioControls,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
@@ -50,7 +63,7 @@ pub struct ControlScript<T: TimingSource> {
 }
 
 impl<T: TimingSource> ControlScript<T> {
-    pub fn new(yaml_str: &str, timing: T) -> Self {
+    pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             controls: Controls::with_previous(vec![]),
             midi_controls: MidiControls::new(),
@@ -70,12 +83,14 @@ impl<T: TimingSource> ControlScript<T> {
             transition_time: 4.0,
         };
 
-        let config =
-            Self::parse_from_str(yaml_str).expect("Unable to parse yaml");
+        if let Some(yaml) = yaml_str {
+            let config =
+                Self::parse_from_str(yaml).expect("Unable to parse yaml");
 
-        script
-            .populate_controls(&config)
-            .expect("Unable to populate controls");
+            script
+                .populate_controls(&config)
+                .expect("Unable to populate controls");
+        }
 
         script
     }
@@ -87,11 +102,17 @@ impl<T: TimingSource> ControlScript<T> {
         let file_content =
             fs::read_to_string(&path).expect("Unable to read file");
 
-        let mut script = Self::new(&file_content, timing);
+        let mut script = Self::new(Some(&file_content), timing);
+        let has_changes = Arc::new(AtomicBool::new(false));
 
         script.update_state = Some(UpdateState {
+            _watcher: Self::setup_watcher(
+                path.clone(),
+                state_clone,
+                has_changes.clone(),
+            ),
             state: state.clone(),
-            _watcher: Self::setup_watcher(path.clone(), state_clone),
+            has_changes,
         });
 
         script
@@ -339,13 +360,14 @@ impl<T: TimingSource> ControlScript<T> {
         breakpoints
     }
 
-    fn resolve_animation_config_params<
-        P: SetFromParam + Clone + std::fmt::Debug,
-    >(
+    fn resolve_animation_config_params<P>(
         &self,
         config: &P,
         node_name: &str,
-    ) -> P {
+    ) -> P
+    where
+        P: SetFromParam + Clone + std::fmt::Debug,
+    {
         let mut config = config.clone();
 
         if let Some(params) = self.dep_graph.node(node_name) {
@@ -356,14 +378,6 @@ impl<T: TimingSource> ControlScript<T> {
         }
 
         config
-    }
-
-    pub fn bool(&self, name: &str) -> bool {
-        return self.controls.bool(name);
-    }
-
-    pub fn string(&self, name: &str) -> String {
-        return self.controls.string(name);
     }
 
     pub fn breakpoints(&self, name: &str) -> Vec<Breakpoint> {
@@ -449,8 +463,14 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn update(&mut self) {
         let new_config = {
             if let Some(update_state) = &self.update_state {
-                if let Ok(mut guard) = update_state.state.lock() {
-                    guard.take()
+                if update_state.has_changes.load(Ordering::Acquire) {
+                    update_state.has_changes.store(false, Ordering::Release);
+
+                    if let Ok(mut guard) = update_state.state.lock() {
+                        guard.take()
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -487,6 +507,19 @@ impl<T: TimingSource> ControlScript<T> {
         }
     }
 
+    pub fn add_controls(&mut self, configs: Vec<Control>) {
+        self.controls.extend(configs);
+    }
+
+    pub fn float(&self, name: &str) -> f32 {
+        return self.controls.float(name);
+    }
+    pub fn bool(&self, name: &str) -> bool {
+        return self.controls.bool(name);
+    }
+    pub fn string(&self, name: &str) -> String {
+        return self.controls.string(name);
+    }
     pub fn changed(&self) -> bool {
         self.controls.changed()
     }
@@ -853,6 +886,7 @@ impl<T: TimingSource> ControlScript<T> {
     fn setup_watcher(
         path: PathBuf,
         state: Arc<Mutex<Option<ConfigFile>>>,
+        has_changes: Arc<AtomicBool>,
     ) -> notify::RecommendedWatcher {
         let path_to_watch = path.clone();
 
@@ -875,7 +909,11 @@ impl<T: TimingSource> ControlScript<T> {
             match Self::parse_from_path(&path) {
                 Ok(new_config) => {
                     if let Ok(mut guard) = state.lock() {
-                        info!("Loaded new configuration");
+                        info!(
+                            "Loaded new configuration. \
+                            DON'T FORGET TO CALL UPDATE!"
+                        );
+                        has_changes.store(true, Ordering::Release);
                         *guard = Some(new_config);
                     }
                 }
@@ -894,11 +932,6 @@ impl<T: TimingSource> ControlScript<T> {
     }
 }
 
-struct UpdateState {
-    _watcher: notify::RecommendedWatcher,
-    state: Arc<Mutex<Option<ConfigFile>>>,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -908,7 +941,7 @@ mod tests {
     use crate::framework::animation::animation_tests::{init, BPM};
 
     fn create_instance(yaml: &str) -> ControlScript<FrameTiming> {
-        ControlScript::new(yaml, FrameTiming::new(Bpm::new(BPM)))
+        ControlScript::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))
     }
 
     #[test]

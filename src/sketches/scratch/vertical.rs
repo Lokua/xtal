@@ -18,17 +18,18 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Vertical {
     animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     lines: Vec<Vec<Point2>>,
     patterns: Vec<XModFn>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let mut controls = ControlScript::new(None, Timing::new(ctx.bpm()));
+    let animation = controls.animation.clone();
 
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 
-    let controls = Controls::new(vec![
+    controls.add_controls(vec![
         Control::slider("scale", 1.0, (0.1, 4.0), 0.1),
         Control::select("mode", "per_line", &mode_options),
         Control::slider("n_lines", 64.0, (16.0, 256.0), 2.0),

@@ -97,6 +97,7 @@ pub fn thru_buffer_processor(
     *buffer.last().unwrap_or(&0.0)
 }
 
+#[derive(Debug)]
 struct AudioControlState {
     configs: HashMap<String, AudioControlConfig>,
     processor: MultichannelAudioProcessor,
@@ -104,6 +105,7 @@ struct AudioControlState {
     previous_values: [f32; CHANNEL_COUNT],
 }
 
+#[derive(Debug)]
 pub struct AudioControls {
     pub is_active: bool,
     buffer_processor: BufferProcessor,
@@ -133,6 +135,7 @@ impl AudioControls {
     /// Add a new control. Overwrites any previous control of the same name.
     pub fn add(&mut self, name: &str, config: AudioControlConfig) {
         let mut state = self.state.lock().unwrap();
+        state.values.insert(name.to_string(), config.default);
         state.configs.insert(name.to_string(), config);
     }
 
@@ -299,6 +302,7 @@ impl AudioControlBuilder {
     }
 }
 
+#[derive(Debug)]
 struct MultichannelAudioProcessor {
     channel_data: Vec<Vec<f32>>,
     buffer_size: usize,

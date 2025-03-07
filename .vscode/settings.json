@@ -7,10 +7,12 @@
     "hyst",
     "kalos",
     "midir",
+    "msaa",
     "pmod",
     "randomsmooth",
     "sccache",
     "smin",
-    "thresholded"
+    "thresholded",
+    "verts"
   ]
 }

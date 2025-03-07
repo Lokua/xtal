@@ -48,6 +48,7 @@ pub fn run() {
             cv_dev,
             effects_wavefolder_dev,
             midi_dev,
+            non_yaml_dev,
             osc_dev,
             osc_transport_dev,
             responsive_dev,
