@@ -1,13 +1,14 @@
-use std::collections::{HashMap, VecDeque};
+use rustc_hash::FxHashMap;
+use std::collections::VecDeque;
 
 use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
 
 /// { "symmetry" -> Param::Hot("t1"), ... }
-pub type Node = HashMap<String, ParamValue>;
+pub type Node = FxHashMap<String, ParamValue>;
 
 /// "t2" -> { "symmetry" -> Param::Hot("t1"), ... }
-pub type Graph = HashMap<String, Node>;
+pub type Graph = FxHashMap<String, Node>;
 
 pub type EvalOrder = Option<Vec<String>>;
 
@@ -15,18 +16,26 @@ pub type EvalOrder = Option<Vec<String>>;
 pub struct DepGraph {
     graph: Graph,
     eval_order: EvalOrder,
+    /// Provides faster lookups than the eval_order list
+    is_dep: FxHashMap<String, bool>,
 }
 
 impl DepGraph {
     pub fn new() -> Self {
         Self {
-            graph: Graph::new(),
+            graph: Graph::default(),
             eval_order: None,
+            is_dep: FxHashMap::default(),
         }
     }
 
+    #[allow(dead_code)]
     pub fn has_dependents(&self, name: &str) -> bool {
         self.eval_order.is_some() && self.graph.contains_key(name)
+    }
+
+    pub fn is_dependency(&self, name: &str) -> bool {
+        *self.is_dep.get(name).unwrap_or(&false)
     }
 
     pub fn node(&self, name: &str) -> Option<&Node> {
@@ -81,7 +90,11 @@ impl DepGraph {
         }
 
         if sorted_order.len() == in_degree.len() {
-            self.eval_order = Some(sorted_order)
+            for dep in sorted_order.iter() {
+                self.is_dep.insert(dep.to_string(), true);
+            }
+            self.eval_order =
+                ternary!(sorted_order.is_empty(), None, Some(sorted_order));
         } else {
             self.eval_order = None;
             warn!(
@@ -93,10 +106,10 @@ impl DepGraph {
 
     fn create_reverse_dep_graph_and_order(
         &self,
-    ) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
+    ) -> (FxHashMap<String, Vec<String>>, FxHashMap<String, usize>) {
         // { dependency: [dependents] }
-        let mut graph: HashMap<String, Vec<String>> = HashMap::new();
-        let mut in_degree: HashMap<String, usize> = HashMap::new();
+        let mut graph: FxHashMap<String, Vec<String>> = FxHashMap::default();
+        let mut in_degree: FxHashMap<String, usize> = FxHashMap::default();
 
         // self.graph = { "hot_effect": { param: Hot("hot_anim") }, ... }
         // node_name = "hot_effect"

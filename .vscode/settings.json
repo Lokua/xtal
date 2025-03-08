@@ -12,10 +12,12 @@
     "pmod",
     "randomsmooth",
     "Ripl",
+    "rustc",
     "sccache",
     "smin",
     "thresholded",
     "verts",
     "Vortx"
-  ]
+  ],
+  "rust-analyzer.cargo.features": ["instrumentation"]
 }

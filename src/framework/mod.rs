@@ -10,6 +10,7 @@ pub mod easing;
 pub mod effects;
 pub mod frame_controller;
 pub mod gpu;
+pub mod instrumentation;
 pub mod logging;
 pub mod midi;
 pub mod midi_controls;
