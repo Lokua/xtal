@@ -1,23 +1,29 @@
 {
   "cSpell.words": [
     "arboard",
+    "chrono",
     "Ctrls",
     "Custo",
+    "doctest",
     "Egui",
     "horiz",
     "hyst",
     "kalos",
     "midir",
     "msaa",
+    "nocapture",
     "pmod",
     "randomsmooth",
     "Ripl",
     "rustc",
+    "rwlock",
     "sccache",
+    "serde",
     "smin",
+    "termcolor",
     "thresholded",
     "verts",
     "Vortx"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation"]
+  "rust-analyzer.cargo.features": ["instrumentation", "atomic_frames"]
 }

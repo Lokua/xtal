@@ -15,6 +15,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     gui_h: Some(200),
 };
 
+const COUNT: usize = 512;
+
 #[derive(SketchComponents)]
 pub struct NonYamlDev {
     controls: ControlScript<Timing>,
@@ -23,7 +25,7 @@ pub struct NonYamlDev {
 pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
     let mut ui_controls: Vec<Control> = vec![];
 
-    for i in 0..32 {
+    for i in 0..COUNT {
         ui_controls.push(Control::slider(
             &format!("{}", i),
             100.0,
@@ -43,8 +45,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
 impl Sketch for NonYamlDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         self.controls.update();
-        for i in 0..32 {
+        for i in 0..COUNT {
             self.controls.get(&format!("{}", i));
+            // self.controls.animation.tri(i as f32);
         }
     }
 

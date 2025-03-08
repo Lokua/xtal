@@ -480,6 +480,7 @@ impl AppModel {
             registry.get("template").unwrap()
         });
 
+        frame_controller::ensure_controller(sketch_info.config.fps);
         let sketch = (sketch_info.factory)(app, &self.ctx);
 
         self.sketch = sketch;
@@ -544,8 +545,6 @@ impl AppModel {
                 self.sketch_config.gui_h.unwrap_or(gui_h) as i32,
             );
         });
-
-        frame_controller::ensure_controller(self.sketch_config.fps);
 
         if self.sketch_config.play_mode != PlayMode::Loop {
             frame_controller::set_paused(true);
@@ -613,6 +612,7 @@ fn model(app: &App) -> AppModel {
     let bpm_clone = bpm.clone();
     let ctx = LatticeContext::new(bpm_clone, WindowRect::new(rect));
 
+    frame_controller::ensure_controller(sketch_info.config.fps);
     let sketch = (sketch_info.factory)(app, &ctx);
 
     let gui_window_id = app

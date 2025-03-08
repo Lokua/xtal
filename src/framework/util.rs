@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::f32::EPSILON;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use geom::Ellipse;
 use nannou::color::{LinSrgb, Srgb};
@@ -568,6 +569,25 @@ pub fn str_to_f32_seed(id: &str) -> f32 {
     }
 
     hash as f32
+}
+
+pub struct AtomicF32 {
+    inner: AtomicU32,
+}
+impl AtomicF32 {
+    pub const fn new(value: f32) -> Self {
+        Self {
+            inner: AtomicU32::new(value.to_bits()),
+        }
+    }
+
+    pub fn load(&self, order: Ordering) -> f32 {
+        f32::from_bits(self.inner.load(order))
+    }
+
+    pub fn store(&self, value: f32, order: Ordering) {
+        self.inner.store(value.to_bits(), order)
+    }
 }
 
 #[cfg(test)]
