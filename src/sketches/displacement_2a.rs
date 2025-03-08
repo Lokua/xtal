@@ -171,7 +171,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     ];
 
     let last_position_animation = controls.string("position_animation");
-    let position_animations = animation_fns(&last_position_animation);
+    let position_animations =
+        animation_fns(&last_position_animation, wr.rect());
     for i in 0..displacer_configs.len() {
         displacer_configs[i].position_animation =
             position_animations[i].clone();
@@ -199,7 +200,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
 }
 
 impl Sketch for Displacement2a {
-    fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+        let (w, h) = wr.wh();
         let audio_enabled = self.controls.bool("audio_enabled");
         let clamp_circle_radii = self.controls.bool("clamp_circle_radii");
         let quad_restraint = self.controls.bool("quad_restraint");
@@ -237,7 +240,7 @@ impl Sketch for Displacement2a {
             self.last_position_animation =
                 self.controls.string("position_animation");
             let position_animations =
-                animation_fns(&self.last_position_animation);
+                animation_fns(&self.last_position_animation, wr.rect());
             for i in 0..self.displacer_configs.len() {
                 self.displacer_configs[i].position_animation =
                     position_animations[i].clone();
@@ -318,10 +321,7 @@ impl Sketch for Displacement2a {
                     if quad_restraint {
                         if QuadShape::from_str(&qr_shape).contains_point(
                             config.displacer.position * qr_pos,
-                            vec2(
-                                SKETCH_CONFIG.w as f32 / 3.0,
-                                SKETCH_CONFIG.h as f32 / 3.0,
-                            ) * qr_size,
+                            vec2(w / 3.0, h / 3.0) * qr_size,
                             *point,
                             time,
                         ) {
@@ -563,16 +563,19 @@ fn find_palette_by_name<'a>(
     }
 }
 
-fn animation_fns(position_animations_kind: &str) -> Vec<AnimationFn<Vec2>> {
+fn animation_fns(
+    position_animations_kind: &str,
+    rect: Rect,
+) -> Vec<AnimationFn<Vec2>> {
     match position_animations_kind {
-        "Counter Clockwise" => animations_counter_clockwise(),
-        _ => animations_none(),
+        "Counter Clockwise" => animations_counter_clockwise(rect),
+        _ => animations_none(rect),
     }
 }
 
-fn animations_none() -> Vec<AnimationFn<Vec2>> {
-    let w = SKETCH_CONFIG.w as f32;
-    let h = SKETCH_CONFIG.h as f32;
+fn animations_none(rect: Rect) -> Vec<AnimationFn<Vec2>> {
+    let w = rect.w();
+    let h = rect.h();
 
     vec![
         None,
@@ -583,13 +586,13 @@ fn animations_none() -> Vec<AnimationFn<Vec2>> {
     ]
 }
 
-fn animations_counter_clockwise() -> Vec<AnimationFn<Vec2>> {
+fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
     const BEATS: f32 = 8.0;
     vec![
         None,
         Some(Arc::new(move |_displacer, ax, _controls| {
-            let w = SKETCH_CONFIG.w as f32;
-            let h = SKETCH_CONFIG.h as f32;
+            let w = rect.w();
+            let h = rect.h();
             let xp = w / 4.0;
             let yp = h / 4.0;
             let x = ax.lerp(
