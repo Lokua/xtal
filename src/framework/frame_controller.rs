@@ -320,19 +320,18 @@ mod atomic_impl {
     use crate::framework::prelude::*;
 
     static CONTROLLER: Lazy<RwLock<FrameController>> =
-        Lazy::new(|| RwLock::new(FrameController::new(60.0)));
+        Lazy::new(|| RwLock::new(FrameController::new()));
 
     // Atomics used to lessen the amount of CONTROLLER locks
     static FRAME_COUNT: AtomicU32 = AtomicU32::new(0);
-    static FPS: AtomicF32 = AtomicF32::new(0.0);
+    static FPS: AtomicF32 = AtomicF32::new(60.0);
     static RENDER_FLAG: AtomicBool = AtomicBool::new(false);
     static FORCE_RENDER: AtomicBool = AtomicBool::new(false);
     static PAUSED: AtomicBool = AtomicBool::new(false);
 
+    // Keeping for backwards compat - should replace with set_fps
     pub fn ensure_controller(fps: f32) {
-        let mut controller = CONTROLLER.write();
         FPS.store(fps, Ordering::Release);
-        controller.frame_duration = Duration::from_secs_f32(1.0 / fps);
     }
 
     pub fn wrapped_update<M, F>(
@@ -346,7 +345,7 @@ mod atomic_impl {
         let should_update = {
             let mut controller = CONTROLLER.write();
             controller.update();
-            controller.should_render()
+            should_render()
         };
 
         if should_update {
@@ -363,13 +362,19 @@ mod atomic_impl {
     where
         F: FnOnce(&App, &M, Frame),
     {
-        let should_render = CONTROLLER.read().should_render();
+        let do_render = should_render();
 
-        if should_render {
+        if do_render {
             view_fn(app, model, frame);
         }
 
-        should_render
+        do_render
+    }
+
+    fn should_render() -> bool {
+        FORCE_RENDER.load(Ordering::Acquire)
+            || (!PAUSED.load(Ordering::Acquire)
+                && RENDER_FLAG.load(Ordering::Acquire))
     }
 
     pub fn frame_count() -> u32 {
@@ -389,9 +394,7 @@ mod atomic_impl {
     }
 
     pub fn set_fps(fps: f32) {
-        let mut controller = CONTROLLER.write();
         FPS.store(fps, Ordering::Release);
-        controller.frame_duration = Duration::from_secs_f32(1.0 / fps);
     }
 
     pub fn is_paused() -> bool {
@@ -416,8 +419,11 @@ mod atomic_impl {
         FORCE_RENDER.store(false, Ordering::Release);
     }
 
+    pub fn frame_duration() -> Duration {
+        Duration::from_secs_f32(1.0 / FPS.load(Ordering::Relaxed))
+    }
+
     struct FrameController {
-        frame_duration: Duration,
         last_frame_time: Instant,
         last_render_time: Instant,
         accumulator: Duration,
@@ -426,11 +432,10 @@ mod atomic_impl {
     }
 
     impl FrameController {
-        fn new(fps: f32) -> Self {
+        fn new() -> Self {
             info!("using atomic_impl");
             let now = Instant::now();
             Self {
-                frame_duration: Duration::from_secs_f32(1.0 / fps),
                 last_frame_time: now,
                 last_render_time: now,
                 accumulator: Duration::ZERO,
@@ -447,6 +452,7 @@ mod atomic_impl {
             let elapsed = now - self.last_frame_time;
             self.accumulator += elapsed;
             self.last_frame_time = now;
+            let frame_duration = frame_duration();
             RENDER_FLAG.store(false, Ordering::Release);
 
             if FORCE_RENDER.load(Ordering::Relaxed) {
@@ -457,8 +463,8 @@ mod atomic_impl {
 
             if !PAUSED.load(Ordering::Acquire) {
                 // Render frames for each interval the accumulator surpasses
-                while self.accumulator >= self.frame_duration {
-                    self.accumulator -= self.frame_duration;
+                while self.accumulator >= frame_duration {
+                    self.accumulator -= frame_duration;
                     FRAME_COUNT.fetch_add(1, Ordering::Relaxed);
                     RENDER_FLAG.store(true, Ordering::Relaxed);
                 }
@@ -480,7 +486,7 @@ mod atomic_impl {
                         Time since last render: {:.2?} (expected: {:.2?})",
                     self.frame_count(),
                     now - self.last_render_time,
-                    self.frame_duration
+                    frame_duration
                 );
                 self.last_render_time = now;
             } else {
@@ -489,12 +495,6 @@ mod atomic_impl {
                     elapsed
                 );
             }
-        }
-
-        fn should_render(&self) -> bool {
-            FORCE_RENDER.load(Ordering::Acquire)
-                || (!PAUSED.load(Ordering::Acquire)
-                    && RENDER_FLAG.load(Ordering::Acquire))
         }
 
         fn frame_count(&self) -> u32 {
@@ -552,27 +552,27 @@ mod atomic_impl {
         fn test_frame_pacing() {
             init();
             let clock = MockClock::new();
-            let mut controller = FrameController::new(60.0);
+            let mut controller = FrameController::new();
             controller.last_frame_time = clock.now();
             controller.last_render_time = clock.now();
 
             // Simulate exactly one frame worth of time
-            clock.advance(controller.frame_duration);
+            clock.advance(frame_duration());
             controller.update_with_time(clock.now());
             assert_eq!(controller.frame_count(), 1);
-            assert!(controller.should_render());
+            assert!(should_render());
 
             // Simulate half a frame - should not increment
-            clock.advance(controller.frame_duration / 2);
+            clock.advance(frame_duration() / 2);
             controller.update_with_time(clock.now());
             assert_eq!(controller.frame_count(), 1);
-            assert!(!controller.should_render());
+            assert!(!should_render());
 
             // Simulate the next half - should increment
-            clock.advance(controller.frame_duration / 2);
+            clock.advance(frame_duration() / 2);
             controller.update_with_time(clock.now());
             assert_eq!(controller.frame_count(), 2);
-            assert!(controller.should_render());
+            assert!(should_render());
         }
 
         #[test]
@@ -580,21 +580,21 @@ mod atomic_impl {
         fn test_lag() {
             init();
             let clock = MockClock::new();
-            let mut controller = FrameController::new(60.0);
+            let mut controller = FrameController::new();
             controller.last_frame_time = clock.now();
             controller.last_render_time = clock.now();
 
             // Simulate exactly one frame worth of time
-            clock.advance(controller.frame_duration);
+            clock.advance(frame_duration());
             controller.update_with_time(clock.now());
             assert_eq!(controller.frame_count(), 1);
-            assert!(controller.should_render());
+            assert!(should_render());
 
-            // Simulate being a second
-            clock.advance(controller.frame_duration * 3);
+            // Simulate being seconds ahead of time
+            clock.advance(frame_duration() * 3);
             controller.update_with_time(clock.now());
             assert_eq!(controller.frame_count(), 4);
-            assert!(controller.should_render());
+            assert!(should_render());
         }
     }
 }
