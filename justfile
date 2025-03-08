@@ -29,6 +29,9 @@ test-debug *ARGS:
 test-verbose *ARGS:
   RUST_LOG=lattice=trace cargo test --lib --show-output -- {{ARGS}}  
 
+bench *ARGS:
+  cargo bench {{ARGS}}
+
 generate-markdown-index:
   cargo run -p image-markdown --release
 
@@ -46,3 +49,4 @@ stats:
 
 list_midi_ports:
   RUST_LOG=lattice=debug cargo run --release --bin list_midi_ports
+

@@ -11,6 +11,7 @@ doctest = false
 
 [features]
 instrumentation = []
+atomic_frames = []
 
 # clean with:
 #   rm -rf target/incremental
@@ -19,6 +20,14 @@ incremental = true
 
 [workspace]
 members = ["scripts/image-markdown", "derives"]
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "frame_controller_bench"
+harness = false
+path = "benches/frame_controller_bench.rs"
 
 [dependencies]
 arboard = "3.4.1"
