@@ -116,7 +116,7 @@ struct AudioProcessor {
 impl AudioProcessor {
     pub fn new(sample_rate: usize, frame_rate: f32) -> Self {
         let buffer_size = (sample_rate as f32 / frame_rate).ceil() as usize;
-        debug!("buffer_size: {}", buffer_size);
+        trace!("buffer_size: {}", buffer_size);
         let mut planner: FftPlanner<f32> = FftPlanner::new();
         let fft = planner.plan_fft_forward(buffer_size);
 
@@ -382,10 +382,10 @@ fn init_audio(
         .into_iter()
         .find(|device| {
             let name = device.name().unwrap();
-            debug!("Enumerating devices. Device name: {}", name);
+            trace!("Enumerating devices. Device name: {}", name);
             let found = device.name().unwrap() == audio_device_name;
             if found {
-                debug!("Success. Using: {}", audio_device_name);
+                trace!("Using: {}", audio_device_name);
             }
             found
         })
@@ -395,7 +395,7 @@ fn init_audio(
 
     let input_config = match device.default_input_config() {
         Ok(config) => {
-            debug!("Default output stream config: {:?}", config);
+            trace!("Default output stream config: {:?}", config);
             config
         }
         Err(err) => {

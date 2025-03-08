@@ -55,7 +55,7 @@ impl From<String> for ControlValue {
     }
 }
 
-type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
+pub type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
 
 #[derive(Serialize, Deserialize)]
 pub enum Control {
@@ -245,6 +245,56 @@ impl Control {
     }
 }
 
+impl Clone for Control {
+    fn clone(&self) -> Self {
+        match self {
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                disabled: _,
+            } => Control::Slider {
+                name: name.clone(),
+                value: *value,
+                min: *min,
+                max: *max,
+                step: *step,
+                disabled: None,
+            },
+            Control::Checkbox {
+                name,
+                value,
+                disabled: _,
+            } => Control::Checkbox {
+                name: name.clone(),
+                value: *value,
+                disabled: None,
+            },
+            Control::Select {
+                name,
+                value,
+                options,
+                disabled: _,
+            } => Control::Select {
+                name: name.clone(),
+                value: value.clone(),
+                options: options.clone(),
+                disabled: None,
+            },
+            Control::Button { name, disabled: _ } => Control::Button {
+                name: name.clone(),
+                disabled: None,
+            },
+            Control::Separator {} => Control::Separator {},
+            Control::DynamicSeparator { name } => {
+                Control::DynamicSeparator { name: name.clone() }
+            }
+        }
+    }
+}
+
 impl fmt::Debug for Control {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -301,8 +351,10 @@ pub struct SerializedControls {
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See
 /// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Controls {
+    /// Holds the original Control references and their default values - values
+    /// are not updated!
     items: Vec<Control>,
     values: ControlValues,
     #[serde(skip)]
@@ -501,6 +553,103 @@ impl fmt::Debug for Controls {
     }
 }
 
+pub struct ControlBuilder {
+    controls: Vec<Control>,
+}
+
+impl ControlBuilder {
+    pub fn new() -> Self {
+        Self { controls: vec![] }
+    }
+
+    pub fn control(mut self, control: Control) -> Self {
+        self.controls.push(control);
+        self
+    }
+
+    pub fn button(self, name: &str, disabled: DisabledFn) -> Self {
+        self.control(Control::Button {
+            name: name.to_string(),
+            disabled,
+        })
+    }
+
+    pub fn checkbox(
+        self,
+        name: &str,
+        value: bool,
+        disabled: DisabledFn,
+    ) -> Self {
+        self.control(Control::Checkbox {
+            name: name.to_string(),
+            value,
+            disabled,
+        })
+    }
+
+    pub fn select<S>(
+        self,
+        name: &str,
+        value: &str,
+        options: &[S],
+        disabled: DisabledFn,
+    ) -> Self
+    where
+        S: AsRef<str>,
+    {
+        self.control(Control::Select {
+            name: name.into(),
+            value: value.into(),
+            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
+            disabled,
+        })
+    }
+
+    pub fn separator(self) -> Self {
+        self.control(Control::Separator {})
+    }
+
+    pub fn dynamic_separator(self, name: &str) -> Self {
+        self.control(Control::DynamicSeparator {
+            name: name.to_string(),
+        })
+    }
+
+    pub fn slider(
+        self,
+        name: &str,
+        value: f32,
+        range: (f32, f32),
+        step: f32,
+        disabled: DisabledFn,
+    ) -> Self {
+        self.control(Control::Slider {
+            name: name.to_string(),
+            value,
+            min: range.0,
+            max: range.1,
+            step,
+            disabled,
+        })
+    }
+
+    pub fn slider_normalized(self, name: &str, value: f32) -> Self {
+        self.control(Control::Slider {
+            name: name.to_string(),
+            value,
+            min: 0.0,
+            max: 1.0,
+            step: 0.001,
+            disabled: None,
+        })
+    }
+
+    pub fn build(self) -> Controls {
+        Controls::with_previous(self.controls)
+    }
+}
+
+#[derive(Clone)]
 struct ChangeTracker {
     save_previous: bool,
     changed: bool,

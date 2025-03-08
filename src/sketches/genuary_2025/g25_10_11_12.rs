@@ -143,23 +143,23 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
     );
 
     let midi = MidiControlBuilder::new()
-        .control_mapped("n_lines", (0, 1), (1.0, 256.0), 0.5)
-        .control_mapped("points_per_segment", (0, 2), (10.0, 20_000.0), 0.75)
+        .control("n_lines", (0, 1), (1.0, 256.0), 0.5)
+        .control("points_per_segment", (0, 2), (10.0, 20_000.0), 0.75)
         // ---
-        .control_mapped("noise_scale", (0, 3), (0.0, 0.1), 0.025)
-        .control_mapped("angle_variation", (0, 4), (0.0, TAU), 0.2)
-        .control_mapped("offset_mult", (0, 5), (0.0, 10.0), 0.0)
-        .control("circle_r_min", (0, 6), 0.0)
-        .control("circle_r_max", (0, 7), 1.0)
+        .control("noise_scale", (0, 3), (0.0, 0.1), 0.025)
+        .control("angle_variation", (0, 4), (0.0, TAU), 0.2)
+        .control("offset_mult", (0, 5), (0.0, 10.0), 0.0)
+        .control_n("circle_r_min", (0, 6), 0.0)
+        .control_n("circle_r_max", (0, 7), 1.0)
         // ---
-        .control("wave_amp", (0, 8), 0.0)
-        .control("steep_amp", (0, 9), 0.0)
-        .control("quant_amp", (0, 10), 0.0)
-        .control("stripe_amp", (0, 11), 0.0)
-        .control_mapped("steep_freq", (0, 12), (0.00, 64.0), 1.0)
-        .control_mapped("quant_freq", (0, 13), (0.00, 64.0), 1.0)
-        .control_mapped("stripe_freq", (0, 14), (0.00, 64.0), 1.0)
-        .control_mapped("wave_freq", (0, 15), (0.00, 64.0), 1.0)
+        .control_n("wave_amp", (0, 8), 0.0)
+        .control_n("steep_amp", (0, 9), 0.0)
+        .control_n("quant_amp", (0, 10), 0.0)
+        .control_n("stripe_amp", (0, 11), 0.0)
+        .control("steep_freq", (0, 12), (0.00, 64.0), 1.0)
+        .control("quant_freq", (0, 13), (0.00, 64.0), 1.0)
+        .control("stripe_freq", (0, 14), (0.00, 64.0), 1.0)
+        .control("wave_freq", (0, 15), (0.00, 64.0), 1.0)
         .build();
 
     Template {

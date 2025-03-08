@@ -29,7 +29,7 @@ impl MidiControlConfig {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct MidiState {
     values: HashMap<String, f32>,
 }
@@ -58,7 +58,7 @@ impl MidiState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MidiControls {
     configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,
@@ -199,7 +199,7 @@ impl MidiControlBuilder {
         }
     }
 
-    pub fn control_mapped(
+    pub fn control(
         mut self,
         name: &str,
         midi: (u8, u8),
@@ -211,7 +211,12 @@ impl MidiControlBuilder {
         self
     }
 
-    pub fn control(mut self, name: &str, midi: (u8, u8), default: f32) -> Self {
+    pub fn control_n(
+        mut self,
+        name: &str,
+        midi: (u8, u8),
+        default: f32,
+    ) -> Self {
         self.controls
             .add(name, MidiControlConfig::new(midi, (0.0, 1.0), default));
         self

@@ -64,17 +64,17 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
     ]);
 
     let osc = OscControlBuilder::new()
-        .control_mapped("/wave_phase", (0.0, TAU), 0.0)
-        .control_mapped("/wave_radial_freq", (0.0, 100.0), 0.0)
-        .control_mapped("/wave_horiz_freq", (0.0, 100.0), 0.0)
-        .control_mapped("/wave_vert_freq", (0.0, 100.0), 0.0)
-        .control("/reduce_mix", 0.0)
-        .control("/map_mix", 0.0)
-        .control("/wave_scale", 0.0)
-        .control_mapped("/bg_freq", (0.0, 100.0), 90.0)
-        .control("/wave1_mix", 0.0)
-        .control("/wave2_mix", 0.0)
-        .control("/wave3_mix", 0.0)
+        .control("/wave_phase", (0.0, TAU), 0.0)
+        .control("/wave_radial_freq", (0.0, 100.0), 0.0)
+        .control("/wave_horiz_freq", (0.0, 100.0), 0.0)
+        .control("/wave_vert_freq", (0.0, 100.0), 0.0)
+        .control_n("/reduce_mix", 0.0)
+        .control_n("/map_mix", 0.0)
+        .control_n("/wave_scale", 0.0)
+        .control("/bg_freq", (0.0, 100.0), 90.0)
+        .control_n("/wave1_mix", 0.0)
+        .control_n("/wave2_mix", 0.0)
+        .control_n("/wave3_mix", 0.0)
         .build();
 
     let params = ShaderParams {

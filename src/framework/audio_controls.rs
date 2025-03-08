@@ -180,6 +180,10 @@ impl AudioControls {
         self.is_active
     }
 
+    pub fn set_buffer_processor(&mut self, buffer_processor: BufferProcessor) {
+        self.buffer_processor = buffer_processor
+    }
+
     fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let buffer_processor = self.buffer_processor;

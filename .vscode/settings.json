@@ -2,6 +2,7 @@
   "cSpell.words": [
     "arboard",
     "Ctrls",
+    "Custo",
     "Egui",
     "horiz",
     "hyst",
@@ -10,9 +11,13 @@
     "msaa",
     "pmod",
     "randomsmooth",
+    "Ripl",
+    "rustc",
     "sccache",
     "smin",
     "thresholded",
-    "verts"
-  ]
+    "verts",
+    "Vortx"
+  ],
+  "rust-analyzer.cargo.features": ["instrumentation"]
 }

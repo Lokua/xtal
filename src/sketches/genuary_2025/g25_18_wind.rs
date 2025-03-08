@@ -87,13 +87,13 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
     ]);
 
     let midi = MidiControlBuilder::new()
-        .control_mapped("noise_strength", (0, 1), (0.0, 20.0), 0.0)
-        .control_mapped("noise_vel", (0, 2), (0.0, 0.02), 0.0)
-        .control_mapped("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
-        .control("displace", (0, 4), 0.0)
-        .control("slice_glitch", (0, 5), 1.0)
-        .control_mapped("alg", (0, 6), (0.0, 5.0), 0.0)
-        .control("lightning", (0, 7), 1.0)
+        .control("noise_strength", (0, 1), (0.0, 20.0), 0.0)
+        .control("noise_vel", (0, 2), (0.0, 0.02), 0.0)
+        .control("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
+        .control_n("displace", (0, 4), 0.0)
+        .control_n("slice_glitch", (0, 5), 1.0)
+        .control("alg", (0, 6), (0.0, 5.0), 0.0)
+        .control_n("lightning", (0, 7), 1.0)
         .build();
 
     let params = ShaderParams {

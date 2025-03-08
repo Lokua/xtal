@@ -55,7 +55,7 @@ impl OscState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct OscControls {
     pub is_active: bool,
     configs: HashMap<String, OscControlConfig>,
@@ -150,7 +150,7 @@ impl OscControlBuilder {
         }
     }
 
-    pub fn control_mapped(
+    pub fn control(
         mut self,
         address: &str,
         range: (f32, f32),
@@ -161,7 +161,7 @@ impl OscControlBuilder {
         self
     }
 
-    pub fn control(mut self, address: &str, default: f32) -> Self {
+    pub fn control_n(mut self, address: &str, default: f32) -> Self {
         let config = OscControlConfig::new(address, (0.0, 1.0), default);
         self.controls.add(address, config);
         self

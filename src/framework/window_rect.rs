@@ -90,6 +90,10 @@ impl WindowRect {
         self.state.borrow().current.h() / 4.0
     }
 
+    pub fn wh(&self) -> (f32, f32) {
+        (self.w(), self.h())
+    }
+
     pub fn aspect_ratio(&self) -> f32 {
         let state = self.state.borrow();
         state.current.w() / state.current.h()

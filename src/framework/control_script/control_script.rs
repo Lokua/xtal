@@ -2,9 +2,9 @@
 //! control systems from an external yaml file that can be hot-reloaded.
 
 use notify::{Event, RecursiveMode, Watcher};
+use rustc_hash::FxHashMap;
 use std::{
     cell::RefCell,
-    collections::HashMap,
     error::Error,
     fs,
     path::PathBuf,
@@ -16,9 +16,10 @@ use std::{
 };
 use yaml_merge_keys::merge_keys_serde_yml;
 
-use crate::framework::{
-    control_script::config::MidiConfig, frame_controller, prelude::*,
-};
+use crate::framework::{frame_controller, prelude::*};
+
+#[cfg(feature = "instrumentation")]
+use crate::framework::instrumentation::Instrumentation;
 
 use super::{
     config::*,
@@ -27,6 +28,7 @@ use super::{
     param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
+#[derive(Debug)]
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
@@ -37,29 +39,33 @@ struct UpdateState {
     has_changes: Arc<AtomicBool>,
 }
 
+#[derive(Debug)]
 struct SnapshotTransition {
-    values: HashMap<String, (f32, f32)>,
+    values: FxHashMap<String, (f32, f32)>,
     start_frame: u32,
     end_frame: u32,
 }
 
+#[derive(Debug)]
 pub struct ControlScript<T: TimingSource> {
     pub controls: Controls,
     pub animation: Animation<T>,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
-    animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
-    modulations: HashMap<String, Vec<String>>,
-    effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
-    aliases: HashMap<String, String>,
-    bypassed: HashMap<String, Option<f32>>,
+    animations: FxHashMap<String, (AnimationConfig, KeyframeSequence)>,
+    modulations: FxHashMap<String, Vec<String>>,
+    effects: RefCell<FxHashMap<String, (EffectConfig, Effect)>>,
+    aliases: FxHashMap<String, String>,
+    bypassed: FxHashMap<String, Option<f32>>,
     dep_graph: DepGraph,
     eval_cache: EvalCache,
     update_state: Option<UpdateState>,
-    snapshots: HashMap<String, ControlValues>,
+    snapshots: FxHashMap<String, ControlValues>,
     active_transition: Option<SnapshotTransition>,
     transition_time: f32,
+    #[cfg(feature = "instrumentation")]
+    instrumentation: RefCell<Instrumentation>,
 }
 
 impl<T: TimingSource> ControlScript<T> {
@@ -70,17 +76,21 @@ impl<T: TimingSource> ControlScript<T> {
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
-            animations: HashMap::new(),
-            modulations: HashMap::new(),
-            effects: RefCell::new(HashMap::new()),
-            aliases: HashMap::new(),
-            bypassed: HashMap::new(),
+            animations: FxHashMap::default(),
+            modulations: FxHashMap::default(),
+            effects: RefCell::new(FxHashMap::default()),
+            aliases: FxHashMap::default(),
+            bypassed: FxHashMap::default(),
             eval_cache: EvalCache::new(),
             dep_graph: DepGraph::new(),
             update_state: None,
-            snapshots: HashMap::new(),
+            snapshots: FxHashMap::default(),
             active_transition: None,
             transition_time: 4.0,
+            #[cfg(feature = "instrumentation")]
+            instrumentation: RefCell::new(Instrumentation::new(
+                "ControlScript::get",
+            )),
         };
 
         if let Some(yaml) = yaml_str {
@@ -119,11 +129,20 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
-        let name = &self.aliases.get(name).cloned().unwrap_or(name.to_string());
+        #[cfg(feature = "instrumentation")]
+        let start = self.instrumentation.borrow().start();
+
+        let current_frame = frame_controller::frame_count();
+
+        let name = match self.aliases.get(name) {
+            Some(alias) => alias,
+            None => name,
+        };
 
         if let Some(transition) = &self.active_transition {
             if let Some((from, to)) = transition.values.get(name) {
                 return self.get_tweened(
+                    current_frame,
                     *from,
                     *to,
                     transition.start_frame,
@@ -132,34 +151,37 @@ impl<T: TimingSource> ControlScript<T> {
             }
         }
 
-        if let Some(bypass) = self.bypassed.get(name).and_then(|x| *x) {
-            return bypass;
+        if let Some(Some(bypass)) = self.bypassed.get(name) {
+            return *bypass;
         }
 
-        if self.dep_graph.has_dependents(name) {
-            self.run_dependencies(name);
-        }
+        self.run_dependencies(name, current_frame);
 
-        let value = self.get_raw(name);
+        let value = self.get_raw(name, current_frame);
 
-        match self.modulations.get(name) {
+        let result = match self.modulations.get(name) {
             None => value,
             Some(modulators) => {
                 modulators.iter().fold(value, |v, modulator| {
-                    self.apply_modulators(v, modulator)
+                    self.apply_modulators(v, modulator, current_frame)
                 })
             }
-        }
+        };
+
+        #[cfg(feature = "instrumentation")]
+        self.instrumentation.borrow_mut().record(start);
+
+        result
     }
 
     fn get_tweened(
         &self,
+        current_frame: u32,
         from: f32,
         to: f32,
         start_frame: u32,
         end_frame: u32,
     ) -> f32 {
-        let current_frame = frame_controller::frame_count();
         if current_frame > end_frame || start_frame == end_frame {
             return to;
         }
@@ -169,29 +191,32 @@ impl<T: TimingSource> ControlScript<T> {
         lerp(from, to, t)
     }
 
-    fn run_dependencies(&self, target_name: &str) {
+    fn run_dependencies(&self, target_name: &str, current_frame: u32) {
         if let Some(order) = &self.dep_graph.order() {
-            let frame_count = frame_controller::frame_count();
-
             for name in order.iter() {
                 if name == target_name {
                     break;
                 }
 
-                if self.eval_cache.has(name, frame_count) {
+                if self.eval_cache.has(name, current_frame) {
                     continue;
                 }
 
-                self.get_raw(name);
+                self.get_raw(name, current_frame);
             }
         }
     }
 
-    fn apply_modulators(&self, value: f32, modulator: &str) -> f32 {
+    fn apply_modulators(
+        &self,
+        value: f32,
+        modulator: &str,
+        current_frame: u32,
+    ) -> f32 {
         let mut effects = self.effects.borrow_mut();
 
         if !effects.contains_key(modulator) {
-            return value * self.get_raw(modulator);
+            return value * self.get_raw(modulator, current_frame);
         }
 
         let (config, effect) = effects.get_mut(modulator).unwrap();
@@ -201,33 +226,33 @@ impl<T: TimingSource> ControlScript<T> {
             Effect::RingModulator(m),
         ) = (&config.kind, &mut *effect)
         {
-            m.apply(value, self.get_raw(modulator))
+            m.apply(value, self.get_raw(modulator, current_frame))
         } else {
             match effect {
                 Effect::Constrain(m) => m.apply(value),
                 Effect::Hysteresis(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::Map(m) => m.apply(value),
                 Effect::Math(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::Quantizer(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::Saturator(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::SlewLimiter(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::WaveFolder(m) => {
-                    self.update_effect_params(m, modulator);
+                    self.update_effect_params(m, modulator, current_frame);
                     m.apply(value)
                 }
                 Effect::RingModulator(_) => panic!(),
@@ -241,45 +266,42 @@ impl<T: TimingSource> ControlScript<T> {
         &self,
         effect: &mut impl SetFromParam,
         node_name: &str,
+        current_frame: u32,
     ) {
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                let value = param_value.cold_or(|name| self.get_raw(&name));
+                let value = param_value
+                    .cold_or(|name| self.get_raw(&name, current_frame));
                 effect.set_from_param(param_name, value);
             }
         }
     }
 
-    fn get_raw(&self, name: &str) -> f32 {
-        let frame_count = frame_controller::frame_count();
+    fn get_raw(&self, name: &str, current_frame: u32) -> f32 {
+        let is_dep = self.dep_graph.is_dependency(name);
 
-        if self.eval_cache.has(name, frame_count) {
-            let (_, value) = self.eval_cache.get(name).unwrap();
-            return value;
+        if is_dep {
+            if let Some(value) = self.eval_cache.get(name, current_frame) {
+                return value;
+            }
         }
 
-        let mut value = None;
-
-        if self.controls.has(name) {
-            value = Some(self.controls.float(name));
-        }
-
-        if self.osc_controls.has(name) {
-            value = Some(self.osc_controls.get(name));
-        }
-
-        if self.midi_controls.has(name) {
-            value = Some(self.midi_controls.get(name));
-        }
-
-        if self.audio_controls.has(name) {
-            value = Some(self.audio_controls.get(name));
-        }
-
-        if let Some((config, sequence)) = self.animations.get(name) {
-            let v = match (config, sequence) {
+        let value = if self.controls.has(name) {
+            Some(self.controls.float(name))
+        } else if self.osc_controls.has(name) {
+            Some(self.osc_controls.get(name))
+        } else if self.midi_controls.has(name) {
+            Some(self.midi_controls.get(name))
+        } else if self.audio_controls.has(name) {
+            Some(self.audio_controls.get(name))
+        } else if let Some((config, sequence)) = self.animations.get(name) {
+            Some(match (config, sequence) {
                 (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
-                    let conf = self.resolve_animation_config_params(conf, name);
+                    let conf = self.resolve_animation_config_params(
+                        conf,
+                        name,
+                        current_frame,
+                    );
                     self.animation.triangle(
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
@@ -287,7 +309,11 @@ impl<T: TimingSource> ControlScript<T> {
                     )
                 }
                 (AnimationConfig::Random(conf), KeyframeSequence::None) => {
-                    let conf = self.resolve_animation_config_params(conf, name);
+                    let conf = self.resolve_animation_config_params(
+                        conf,
+                        name,
+                        current_frame,
+                    );
                     self.animation.random(
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
@@ -298,7 +324,11 @@ impl<T: TimingSource> ControlScript<T> {
                     AnimationConfig::RandomSlewed(conf),
                     KeyframeSequence::None,
                 ) => {
-                    let conf = self.resolve_animation_config_params(conf, name);
+                    let conf = self.resolve_animation_config_params(
+                        conf,
+                        name,
+                        current_frame,
+                    );
                     self.animation.random_slewed(
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
@@ -310,23 +340,27 @@ impl<T: TimingSource> ControlScript<T> {
                     AnimationConfig::Automate(conf),
                     KeyframeSequence::Breakpoints(breakpoints),
                 ) => {
-                    let breakpoints =
-                        self.resolve_breakpoint_params(name, breakpoints);
-
+                    let breakpoints = self.resolve_breakpoint_params(
+                        name,
+                        breakpoints,
+                        current_frame,
+                    );
                     self.animation.automate(
                         &breakpoints,
                         Mode::from_str(&conf.mode).unwrap(),
                     )
                 }
                 _ => unimplemented!(),
-            };
-
-            value = Some(v);
-        }
+            })
+        } else {
+            None
+        };
 
         if value.is_some() {
             let value = value.unwrap();
-            self.eval_cache.store(name, frame_count, value);
+            if is_dep {
+                self.eval_cache.store(name, current_frame, value);
+            }
             return value;
         } else {
             warn_once!("No control named {}. Defaulting to 0.0", name);
@@ -338,6 +372,7 @@ impl<T: TimingSource> ControlScript<T> {
         &self,
         node_name: &str,
         breakpoints: &Vec<Breakpoint>,
+        current_frame: u32,
     ) -> Vec<Breakpoint> {
         let mut breakpoints = breakpoints.clone();
 
@@ -351,7 +386,8 @@ impl<T: TimingSource> ControlScript<T> {
                 }
 
                 if let Some(index) = path_segments[1].parse::<usize>().ok() {
-                    let value = param_value.cold_or(|name| self.get_raw(&name));
+                    let value = param_value
+                        .cold_or(|name| self.get_raw(&name, current_frame));
                     breakpoints[index].set_from_param(&param_name, value);
                 }
             }
@@ -364,6 +400,7 @@ impl<T: TimingSource> ControlScript<T> {
         &self,
         config: &P,
         node_name: &str,
+        current_frame: u32,
     ) -> P
     where
         P: SetFromParam + Clone + std::fmt::Debug,
@@ -372,7 +409,8 @@ impl<T: TimingSource> ControlScript<T> {
 
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                let value = param_value.cold_or(|name| self.get_raw(&name));
+                let value = param_value
+                    .cold_or(|name| self.get_raw(&name, current_frame));
                 config.set_from_param(param_name, value);
             }
         }
@@ -408,14 +446,14 @@ impl<T: TimingSource> ControlScript<T> {
 
     pub fn recall_snapshot(&mut self, id: &str) {
         if let Some(snapshot) = self.snapshots.get(id) {
-            let frame_count = frame_controller::frame_count();
+            let current_frame = frame_controller::frame_count();
             let duration =
                 self.animation.beats_to_frames(self.transition_time) as u32;
 
             let mut transition = SnapshotTransition {
-                values: HashMap::new(),
-                start_frame: frame_count,
-                end_frame: frame_count + duration,
+                values: FxHashMap::default(),
+                start_frame: current_frame,
+                end_frame: current_frame + duration,
             };
 
             for (name, value) in snapshot {
@@ -424,7 +462,7 @@ impl<T: TimingSource> ControlScript<T> {
                         ControlValue::Float(v) => {
                             transition.values.insert(
                                 name.to_string(),
-                                (self.get_raw(name), *v),
+                                (self.get_raw(name, current_frame), *v),
                             );
                         }
                         ControlValue::Bool(_) | ControlValue::String(_) => {
@@ -438,7 +476,10 @@ impl<T: TimingSource> ControlScript<T> {
                 {
                     transition.values.insert(
                         name.to_string(),
-                        (self.get_raw(name), value.as_float().unwrap()),
+                        (
+                            self.get_raw(name, current_frame),
+                            value.as_float().unwrap(),
+                        ),
                     );
                     continue;
                 }
@@ -512,7 +553,8 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn float(&self, name: &str) -> f32 {
-        return self.controls.float(name);
+        // return self.controls.float(name);
+        return self.get(name);
     }
     pub fn bool(&self, name: &str) -> bool {
         return self.controls.bool(name);
@@ -548,8 +590,21 @@ impl<T: TimingSource> ControlScript<T> {
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
         let current_values: ControlValues = self.controls.values().clone();
-        let osc_values: HashMap<String, f32> = self.osc_controls.values();
-        let midi_values: HashMap<String, f32> = self.midi_controls.values();
+        // let osc_values: FxHashMap<String, f32> = self.osc_controls.values();
+        // let midi_values: FxHashMap<String, f32> = self.midi_controls.values();
+        let osc_values: FxHashMap<String, f32> = self
+            .osc_controls
+            .values()
+            .iter()
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+
+        let midi_values: FxHashMap<String, f32> = self
+            .midi_controls
+            .values()
+            .iter()
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
 
         self.controls = Controls::with_previous(vec![]);
         self.animations.clear();
@@ -843,7 +898,7 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
-        let mut hot_params = Node::new();
+        let mut hot_params = Node::default();
 
         let obj = match raw_config.as_mapping() {
             Some(mapping) => mapping,
@@ -864,7 +919,8 @@ impl<T: TimingSource> ControlScript<T> {
 
                     for (k, value) in node.iter() {
                         let keypath = format!("{}.{}.{}", key_str, index, k);
-                        let node = Node::from([(keypath, value.clone())]);
+                        let mut node = Node::default();
+                        node.insert(keypath, value.clone());
                         hot_params.extend(node);
                     }
                 }
