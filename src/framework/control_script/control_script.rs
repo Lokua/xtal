@@ -553,7 +553,6 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn float(&self, name: &str) -> f32 {
-        // return self.controls.float(name);
         return self.get(name);
     }
     pub fn bool(&self, name: &str) -> bool {

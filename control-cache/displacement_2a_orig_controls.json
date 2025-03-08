@@ -1,0 +1,100 @@
+{
+  "values": {
+    "displacer_radius": {
+      "Float": 0.001
+    },
+    "displacer_strength": {
+      "Float": 34.0
+    },
+    "quad_3": {
+      "Bool": false
+    },
+    "pattern": {
+      "String": "cos,sin"
+    },
+    "weave_amplitude": {
+      "Float": 0.001
+    },
+    "quad_restraint": {
+      "Bool": false
+    },
+    "center_influence_or_attract": {
+      "Bool": false
+    },
+    "quad_4": {
+      "Bool": false
+    },
+    "scale": {
+      "Float": 1.0
+    },
+    "quad_influence_or_attract": {
+      "Bool": false
+    },
+    "clamp_circle_radii": {
+      "Bool": false
+    },
+    "scaling_power": {
+      "Float": 2.0
+    },
+    "circle_radius_min": {
+      "Float": 1.0
+    },
+    "weave_frequency": {
+      "Float": 0.03
+    },
+    "quad_2": {
+      "Bool": false
+    },
+    "animate_frequency": {
+      "Bool": true
+    },
+    "rise_rate": {
+      "Float": 0.96
+    },
+    "qr_lerp": {
+      "Float": 0.5
+    },
+    "weave_scale": {
+      "Float": 0.05
+    },
+    "gradient_spread": {
+      "Float": 0.99
+    },
+    "qr_size": {
+      "Float": 1.0
+    },
+    "qr_shape": {
+      "String": "Rectangle"
+    },
+    "fall_rate": {
+      "Float": 0.9
+    },
+    "position_animation": {
+      "String": "Counter Clockwise"
+    },
+    "quad_1": {
+      "Bool": false
+    },
+    "color_influence_or_attract": {
+      "Bool": false
+    },
+    "center": {
+      "Bool": true
+    },
+    "qr_divisor": {
+      "Float": 2.0
+    },
+    "qr_pos": {
+      "Float": 1.0
+    },
+    "palette": {
+      "String": "lightcoral"
+    },
+    "circle_radius_max": {
+      "Float": 5.0
+    },
+    "audio_enabled": {
+      "Bool": false
+    }
+  }
+}

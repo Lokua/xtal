@@ -507,7 +507,6 @@ impl AppModel {
 
         self.main_window(app).map(|window| {
             window.set_title(&self.sketch_config.display_name);
-            self.ctx.window_rect().set_current(window.rect());
 
             if !self.perf_mode {
                 set_window_position(app, self.main_window_id, 0, 0);
@@ -517,6 +516,8 @@ impl AppModel {
                     self.sketch_config.h,
                 );
             }
+
+            self.ctx.window_rect().set_current(window.rect());
         });
 
         let (gui_w, gui_h) =
@@ -597,7 +598,11 @@ fn model(app: &App) -> AppModel {
 
     app.set_fullscreen_on_shortcut(false);
 
-    let main_window_id = app.new_window().build().unwrap();
+    let main_window_id = app
+        .new_window()
+        .size(sketch_info.config.w as u32, sketch_info.config.h as u32)
+        .build()
+        .unwrap();
 
     let rect = app
         .window(main_window_id)

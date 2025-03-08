@@ -84,6 +84,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     let wr = ctx.window_rect();
     let w = wr.w();
     let h = wr.h();
+    debug!("init: {} {}", w, h);
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = ControlScriptBuilder::new()
