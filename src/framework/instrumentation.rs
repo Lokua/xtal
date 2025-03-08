@@ -1,9 +1,11 @@
+#[cfg(feature = "instrumentation")]
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "instrumentation")]
 use super::prelude::*;
 
-#[derive(Debug)]
 #[cfg(feature = "instrumentation")]
+#[derive(Debug)]
 pub struct Instrumentation {
     label: String,
     total_duration: Duration,
