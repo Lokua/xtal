@@ -16,9 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct SierpinskiTriangle {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -35,16 +33,16 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: &LatticeContext) -> SierpinskiTriangle {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
-        Control::slider("primary_iterations", 1.0, (0.0, 16.0), 1.0),
-        Control::slider("second_iterations", 1.0, (0.0, 16.0), 1.0),
-        Control::slider("third_iterations", 1.0, (0.0, 16.0), 1.0),
-        Control::slider("fourth_iterations", 1.0, (0.0, 16.0), 1.0),
-        Control::slider("scale", 1.0, (0.0001, 2.0), 0.0001),
-        Control::slide("y_offset", 0.3),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("primary_iterations", 1.0, (0.0, 16.0), 1.0, None)
+        .slider("second_iterations", 1.0, (0.0, 16.0), 1.0, None)
+        .slider("third_iterations", 1.0, (0.0, 16.0), 1.0, None)
+        .slider("fourth_iterations", 1.0, (0.0, 16.0), 1.0, None)
+        .slider("scale", 1.0, (0.0001, 2.0), 0.0001, None)
+        .slider_n("y_offset", 0.3)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -60,11 +58,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> SierpinskiTriangle {
         true,
     );
 
-    SierpinskiTriangle {
-        animation,
-        controls,
-        gpu,
-    }
+    SierpinskiTriangle { controls, gpu }
 }
 
 impl Sketch for SierpinskiTriangle {

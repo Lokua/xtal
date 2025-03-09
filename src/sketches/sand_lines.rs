@@ -26,54 +26,70 @@ type Line = Vec<Vec2>;
 
 #[derive(SketchComponents)]
 pub struct SandLines {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     ref_lines: Vec<Line>,
     sand_lines: Vec<Line>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLines {
-    let disable_octave =
-        |controls: &Controls| controls.string("noise_strategy") != "Octave";
-
-    let disable_curve = |controls: &Controls| {
-        controls.string("distribution_strategy") != "Curved"
-            && controls.string("distribution_strategy") != "TrigFn"
-    };
-
+pub fn init(_app: &App, ctx: &LatticeContext) -> SandLines {
     let trig_fns = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
     ];
 
-    let controls = Controls::with_previous(vec![
-        Control::select("noise_strategy", "Gaussian", &["Gaussian", "Octave"]),
-        Control::select(
+    fn make_disable_octave() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("noise_strategy") != "Octave"
+        }))
+    }
+    fn make_disable_curve() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("distribution_strategy") != "Curved"
+                && controls.string("distribution_strategy") != "TrigFn"
+        }))
+    }
+    fn make_disable_trig_fn() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("distribution_strategy") != "TrigFn"
+        }))
+    }
+
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .select("noise_strategy", "Gaussian", &["Gaussian", "Octave"], None)
+        .select(
             "distribution_strategy",
             "Perpendicular",
             &["Perpendicular", "Curved", "TrigFn"],
-        ),
-        Control::checkbox("show_ref_line", false),
-        Control::checkbox("show_sand_line", true),
-        Control::checkbox("chasm_mode", false),
-        Control::Separator {},
-        Control::select(
+            None,
+        )
+        .checkbox("show_ref_line", false, None)
+        .checkbox("show_sand_line", true, None)
+        .checkbox("chasm_mode", false, None)
+        .separator()
+        .select(
             "wave_type",
             "sine",
             &["sine", "triangle", "square", "saw"],
-        ),
-        Control::slider("wave_freq", 1.0, (0.25, 50.0), 0.25),
-        Control::slider("wave_amp", 1.0, (0.0, 1.0), 0.01),
-        Control::slider("wave_phase", 0.0, (0.0, TWO_PI), 0.1),
-        Control::slider_x("wave_drift", 0.0, (0.0, 1.0), 0.001, |controls| {
-            !controls.bool("chasm_mode")
-        }),
-        Control::Separator {},
-        Control::slider("pad", 18.0, (1.0, 32.0), 1.0),
-        Control::slider("ref_segments", 16.0, (2.0, 32.0), 1.0),
-        Control::slider("ref_deviation", 10.0, (1.0, 100.0), 1.0),
-        Control::slider("ref_smooth", 2.0, (0.0, 10.0), 1.0),
-        Control::Separator {},
-        Control::select(
+            None,
+        )
+        .slider("wave_freq", 1.0, (0.25, 50.0), 0.25, None)
+        .slider("wave_amp", 1.0, (0.0, 1.0), 0.01, None)
+        .slider("wave_phase", 0.0, (0.0, TWO_PI), 0.1, None)
+        .slider(
+            "wave_drift",
+            0.0,
+            (0.0, 1.0),
+            0.001,
+            Some(Box::new(|controls| !controls.bool("chasm_mode"))),
+        )
+        .separator()
+        .slider("pad", 18.0, (1.0, 32.0), 1.0, None)
+        .slider("ref_segments", 16.0, (2.0, 32.0), 1.0, None)
+        .slider("ref_deviation", 10.0, (1.0, 100.0), 1.0, None)
+        .slider("ref_smooth", 2.0, (0.0, 10.0), 1.0, None)
+        .separator()
+        .select(
             "noise_map_mode",
             "linear",
             &[
@@ -83,30 +99,27 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLines {
                 "triangle_reversed",
                 "none",
             ],
-        ),
-        Control::slider("noise_scale", 8.0, (0.25, 32.0), 0.25),
-        Control::slider_x(
+            None,
+        )
+        .slider("noise_scale", 8.0, (0.25, 32.0), 0.25, None)
+        .slider(
             "noise_octaves",
             4.0,
             (1.0, 10.0),
             1.0,
-            disable_octave,
-        ),
-        Control::slider_x(
+            make_disable_octave(),
+        )
+        .slider(
             "noise_persistence",
             0.5,
             (0.0, 1.0),
             0.001,
-            disable_octave,
-        ),
-        Control::Separator {},
-        Control::select_x("trig_fn_a", "cos", &trig_fns, |controls| {
-            controls.string("distribution_strategy") != "TrigFn"
-        }),
-        Control::select_x("trig_fn_b", "sin", &trig_fns, |controls| {
-            controls.string("distribution_strategy") != "TrigFn"
-        }),
-        Control::select(
+            make_disable_octave(),
+        )
+        .separator()
+        .select("trig_fn_a", "cos", &trig_fns, make_disable_trig_fn())
+        .select("trig_fn_b", "sin", &trig_fns, make_disable_trig_fn())
+        .select(
             "angle_map_mode",
             "none",
             &[
@@ -116,11 +129,12 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLines {
                 "triangle_reversed",
                 "none",
             ],
-        ),
-        Control::slider("angle_variation", 0.5, (0.0, TWO_PI), 0.001),
-        Control::slider("points_per_segment", 64.0, (2.0, 128.0), 1.0),
-        Control::slider("passes", 50.0, (1.0, 128.0), 1.0),
-        Control::select_x(
+            None,
+        )
+        .slider("angle_variation", 0.5, (0.0, TWO_PI), 0.001, None)
+        .slider("points_per_segment", 64.0, (2.0, 128.0), 1.0, None)
+        .slider("passes", 50.0, (1.0, 128.0), 1.0, None)
+        .select(
             "curve_map_mode",
             "none",
             &[
@@ -130,21 +144,15 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLines {
                 "triangle_reversed",
                 "none",
             ],
-            disable_curve,
-        ),
-        Control::slider_x(
-            "curvature",
-            0.5,
-            (0.0, 100.0),
-            0.0001,
-            disable_curve,
-        ),
-        Control::slider_x("curve_mult", 1.0, (1.0, 10.0), 1.0, disable_curve),
-        Control::checkbox("curve_wtf", false),
-        Control::slider_x("curve_exp", 1.0, (0.1, 11.0), 0.1, disable_curve),
-        Control::Separator {},
-        Control::slide("alpha", 0.5),
-    ]);
+            make_disable_curve(),
+        )
+        .slider("curvature", 0.5, (0.0, 100.0), 0.0001, make_disable_curve())
+        .slider("curve_mult", 1.0, (1.0, 10.0), 1.0, make_disable_curve())
+        .checkbox("curve_wtf", false, None)
+        .slider("curve_exp", 1.0, (0.1, 11.0), 0.1, make_disable_curve())
+        .separator()
+        .slider_n("alpha", 0.5)
+        .build();
 
     SandLines {
         controls,
@@ -168,19 +176,20 @@ impl Sketch for SandLines {
 
             let noise_map_mode = self.controls.string("noise_map_mode");
             let noise_scale = self.controls.float("noise_scale");
-            let (ns_min, _ns_max) = self.controls.slider_range("noise_scale");
+            let (ns_min, _ns_max) =
+                self.controls.controls.slider_range("noise_scale");
             let noise_octaves = self.controls.float("noise_octaves");
             let noise_persistence = self.controls.float("noise_persistence");
 
             let angle_map_mode = self.controls.string("angle_map_mode");
             let (angle_min, _angle_max) =
-                self.controls.slider_range("angle_variation");
+                self.controls.controls.slider_range("angle_variation");
             let angle_variation = self.controls.float("angle_variation");
             let points_per_segment = self.controls.float("points_per_segment");
             let passes = self.controls.float("passes");
             let curve_map_mode = self.controls.string("curve_map_mode");
             let (curve_min, _curve_max) =
-                self.controls.slider_range("curvature");
+                self.controls.controls.slider_range("curvature");
             let curvature = self.controls.float("curvature");
             let curve_mult = self.controls.float("curve_mult");
             let curve_wtf = self.controls.bool("curve_wtf");

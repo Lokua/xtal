@@ -47,85 +47,84 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct Spiral {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<()>,
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
         // 1 "pass" = 1 million vertices
-        Control::slider("passes", 1.0, (1.0, 20.0), 1.0),
-        Control::slider("n_lines", 64.0, (1.0, 256.0), 1.0),
-        Control::slider("points_per_segment", 100.0, (10.0, 20_000.0), 10.0),
-        Control::slider("point_size", 0.001, (0.0005, 0.01), 0.0001),
-        Control::slider("harmonic_influence", 0.2, (0.01, 10.0), 0.01),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("noise_scale", 0.001, (0.0, 0.1), 0.0001),
-        Control::slider("angle_variation", 0.2, (0.0, TAU), 0.1),
-        Control::checkbox("offset_mult_10", false),
-        Control::slider("offset_mult", 0.9, (0.0, 10.0), 0.001),
-        Control::slide("circle_r_min", 0.5),
-        Control::slide("circle_r_max", 0.9),
-        Control::Separator {}, // -----------------------------------
-        Control::checkbox("invert", false),
-        Control::checkbox("animate_bg", false),
-        Control::checkbox("animate_angle_offset", false),
-        Control::slider("bg_brightness", 1.5, (0.0, 5.0), 0.01),
-        Control::slider("phase_animation_mult", 1.0, (0.0, 1.0), 0.125),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("wave_amp", 0.0, (0.0, 0.5), 0.0001),
-        Control::slider("wave_freq", 10.0, (0.00, 64.0), 1.0),
-        Control::checkbox("animate_wave_phase", false),
-        Control::checkbox("invert_animate_wave_phase", false),
-        Control::slider_x(
+        .slider("passes", 1.0, (1.0, 20.0), 1.0, None)
+        .slider("n_lines", 64.0, (1.0, 256.0), 1.0, None)
+        .slider("points_per_segment", 100.0, (10.0, 20_000.0), 10.0, None)
+        .slider("point_size", 0.001, (0.0005, 0.01), 0.0001, None)
+        .slider("harmonic_influence", 0.2, (0.01, 10.0), 0.01, None)
+        .separator() // -----------------------------------
+        .slider("noise_scale", 0.001, (0.0, 0.1), 0.0001, None)
+        .slider("angle_variation", 0.2, (0.0, TAU), 0.1, None)
+        .checkbox("offset_mult_10", false, None)
+        .slider("offset_mult", 0.9, (0.0, 10.0), 0.001, None)
+        .slider_n("circle_r_min", 0.5)
+        .slider_n("circle_r_max", 0.9)
+        .separator() // -----------------------------------
+        .checkbox("invert", false, None)
+        .checkbox("animate_bg", false, None)
+        .checkbox("animate_angle_offset", false, None)
+        .slider("bg_brightness", 1.5, (0.0, 5.0), 0.01, None)
+        .slider("phase_animation_mult", 1.0, (0.0, 1.0), 0.125, None)
+        .separator() // -----------------------------------
+        .slider("wave_amp", 0.0, (0.0, 0.5), 0.0001, None)
+        .slider("wave_freq", 10.0, (0.00, 64.0), 1.0, None)
+        .checkbox("animate_wave_phase", false, None)
+        .checkbox("invert_animate_wave_phase", false, None)
+        .slider(
             "wave_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_wave_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("stripe_amp", 0.0, (0.0, 0.5), 0.0001),
-        Control::slider("stripe_freq", 10.0, (0.00, 64.0), 1.0),
-        Control::checkbox("animate_stripe_phase", false),
-        Control::checkbox("invert_animate_stripe_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_wave_phase"))),
+        )
+        .separator() // -----------------------------------
+        .slider("stripe_amp", 0.0, (0.0, 0.5), 0.0001, None)
+        .slider("stripe_freq", 10.0, (0.00, 64.0), 1.0, None)
+        .checkbox("animate_stripe_phase", false, None)
+        .checkbox("invert_animate_stripe_phase", false, None)
+        .slider(
             "stripe_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_stripe_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("steep_amp", 0.0, (0.0, 0.5), 0.0001),
-        Control::slider("steep_freq", 10.0, (0.00, 64.0), 1.0),
-        Control::slider("steepness", 10.0, (1.0, 100.0), 1.0),
-        Control::checkbox("animate_steep_phase", false),
-        Control::checkbox("invert_animate_steep_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_stripe_phase"))),
+        )
+        .separator() // -----------------------------------
+        .slider("steep_amp", 0.0, (0.0, 0.5), 0.0001, None)
+        .slider("steep_freq", 10.0, (0.00, 64.0), 1.0, None)
+        .slider("steepness", 10.0, (1.0, 100.0), 1.0, None)
+        .checkbox("animate_steep_phase", false, None)
+        .checkbox("invert_animate_steep_phase", false, None)
+        .slider(
             "steep_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_steep_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("quant_amp", 0.0, (0.0, 0.5), 0.0001),
-        Control::slider("quant_freq", 10.0, (0.00, 64.0), 1.0),
-        Control::checkbox("animate_quant_phase", false),
-        Control::checkbox("invert_animate_quant_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_steep_phase"))),
+        )
+        .separator() // -----------------------------------
+        .slider("quant_amp", 0.0, (0.0, 0.5), 0.0001, None)
+        .slider("quant_freq", 10.0, (0.00, 64.0), 1.0, None)
+        .checkbox("animate_quant_phase", false, None)
+        .checkbox("invert_animate_quant_phase", false, None)
+        .slider(
             "quant_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_quant_phase"),
-        ),
-    ]);
+            Some(Box::new(|controls| controls.bool("animate_quant_phase"))),
+        )
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -147,11 +146,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
         true,
     );
 
-    Spiral {
-        animation,
-        controls,
-        gpu,
-    }
+    Spiral { controls, gpu }
 }
 
 impl Sketch for Spiral {
@@ -179,7 +174,7 @@ impl Sketch for Spiral {
             ],
             d: [
                 self.controls.float("bg_brightness"),
-                self.animation.tri(64.0),
+                self.controls.animation.tri(64.0),
                 bool_to_f32(self.controls.bool("invert")),
                 bool_to_f32(self.controls.bool("animate_angle_offset")),
             ],
@@ -239,9 +234,9 @@ fn get_phase(spiral: &Spiral, param_name: &str, animation_time: f32) -> f32 {
 
     if spiral.controls.bool(&animate_param) {
         if spiral.controls.bool(&invert_param) {
-            spiral.animation.loop_phase(time) * TAU
+            spiral.controls.animation.loop_phase(time) * TAU
         } else {
-            (1.0 - spiral.animation.loop_phase(time)) * TAU
+            (1.0 - spiral.controls.animation.loop_phase(time)) * TAU
         }
     } else {
         spiral.controls.float(&phase_param)

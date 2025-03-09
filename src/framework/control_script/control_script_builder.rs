@@ -104,13 +104,12 @@ impl<T: TimingSource> ControlScriptBuilder<T> {
     }
 
     pub fn separator(self) -> Self {
-        self.ui(Control::Separator {})
-    }
+        // The old separator doesn't work in control_script_context since it
+        // doesn't have a unique ID (name)
+        // ---
+        // self.ui(Control::Separator {})
 
-    pub fn dynamic_separator(self, name: &str) -> Self {
-        self.ui(Control::DynamicSeparator {
-            name: name.to_string(),
-        })
+        self.ui(Control::DynamicSeparator { name: uuid_5() })
     }
 
     pub fn midi_controls(mut self, midi_controls: MidiControls) -> Self {

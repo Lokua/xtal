@@ -1,91 +1,100 @@
 {
-    "values": {
-        "col_freq": {
-            "Float": 52.0
-        },
-        "center_falloff": {
-            "Float": 0.65
-        },
-        "clip_grade": {
-            "Float": 0.26999998
-        },
-        "passes": {
-            "Float": 1.0
-        },
-        "noise_scale": {
-            "Float": 0.0
-        },
-        "row_freq": {
-            "Float": 170.0
-        },
-        "stripe_min": {
-            "Float": 0.0
-        },
-        "width": {
-            "Float": 1.01
-        },
-        "animate_stripe_phase": {
-            "Bool": true
-        },
-        "wave_amp": {
-            "Float": 0.491
-        },
-        "clip_start": {
-            "Float": 0.03
-        },
-        "circle_radius": {
-            "Float": 1.0300001
-        },
-        "center_count": {
-            "Float": 4.0
-        },
-        "distortion": {
-            "Float": 0.25
-        },
-        "invert_animate_stripe_phase": {
-            "Bool": true
-        },
-        "harmonic_influence": {
-            "Float": 0.65
-        },
-        "stripe_mix": {
-            "Float": 0.775
-        },
-        "stripe_step": {
-            "Float": 0.895
-        },
-        "circle_phase": {
-            "Float": 3.1000001
-        },
-        "n_lines": {
-            "Float": 69.0
-        },
-        "stripe_max": {
-            "Float": 0.183
-        },
-        "circle_force": {
-            "Float": 2.2800002
-        },
-        "points_per_segment": {
-            "Float": 17200.0
-        },
-        "stripe_phase": {
-            "Float": 0.0
-        },
-        "stripe_amp": {
-            "Float": 0.36699998
-        },
-        "stripe_freq": {
-            "Float": 7.0
-        },
-        "point_size": {
-            "Float": 0.0008
-        },
-        "angle_variation": {
-            "Float": 0.5
-        },
-        "center_spread": {
-            "Float": 0.75000006
-        }
+  "values": {
+    "stripe_step": {
+      "Float": 0.84
+    },
+    "col_freq": {
+      "Float": 49.0
+    },
+    "width": {
+      "Float": 0.25
+    },
+    "ie104": {
+      "Bool": false
+    },
+    "t2i84": {
+      "Bool": false
+    },
+    "noise_scale": {
+      "Float": 0.00009
+    },
+    "8kp2h": {
+      "Bool": false
+    },
+    "stripe_freq": {
+      "Float": 6.0
+    },
+    "stripe_amp": {
+      "Float": 0.192
+    },
+    "harmonic_influence": {
+      "Float": 0.5
+    },
+    "wave_amp": {
+      "Float": 0.227
+    },
+    "circle_force": {
+      "Float": 2.3300002
+    },
+    "stripe_min": {
+      "Float": 0.185
+    },
+    "center_count": {
+      "Float": 1.0
+    },
+    "clip_start": {
+      "Float": 0.217
+    },
+    "stripe_mix": {
+      "Float": 0.88
+    },
+    "angle_variation": {
+      "Float": 0.3
+    },
+    "passes": {
+      "Float": 1.0
+    },
+    "center_falloff": {
+      "Float": 4.8199997
+    },
+    "stripe_phase": {
+      "Float": 0.83000004
+    },
+    "distortion": {
+      "Float": 6.7999997
+    },
+    "points_per_segment": {
+      "Float": 18300.0
+    },
+    "stripe_max": {
+      "Float": 0.34
+    },
+    "742m8": {
+      "Bool": false
+    },
+    "circle_radius": {
+      "Float": 1.19
+    },
+    "qq25t": {
+      "Bool": false
+    },
+    "row_freq": {
+      "Float": 172.5
+    },
+    "n_lines": {
+      "Float": 112.0
+    },
+    "clip_grade": {
+      "Float": 0.338
+    },
+    "center_spread": {
+      "Float": 1.1600001
+    },
+    "point_size": {
+      "Float": 0.0009999999
+    },
+    "circle_phase": {
+      "Float": 2.7
     }
+  }
 }
