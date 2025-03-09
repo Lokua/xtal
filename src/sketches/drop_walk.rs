@@ -24,8 +24,7 @@ const MAX_DROPS: usize = 5000;
 
 #[derive(SketchComponents)]
 pub struct Drops {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
     droppers: Vec<Dropper>,
@@ -36,28 +35,27 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     let w = ctx.window_rect().w();
     let h = ctx.window_rect().h();
 
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("debug_walker", false, None)
+        .slider("n_drops", 1.0, (1.0, 20.0), 1.0, None)
+        .slider("step_size", 2.0, (1.0, 200.0), 1.0, None)
+        .slider("splatter_radius", 2.0, (1.0, 200.0), 1.0, None)
+        .slider("drop_max_radius", 20.0, (1.0, 50.0), 1.0, None)
+        .separator()
+        .select("palette", "millennial", &["millennial", "gen_x"], None)
+        .slider_n("color_ratio", 0.5)
+        .slider_n("lightness_min", 0.0)
+        .slider_n("lightness_max", 1.0)
+        .build();
 
-    let controls = Controls::new(vec![
-        Control::checkbox("debug_walker", false),
-        Control::slider("n_drops", 1.0, (1.0, 20.0), 1.0),
-        Control::slider("step_size", 2.0, (1.0, 200.0), 1.0),
-        Control::slider("splatter_radius", 2.0, (1.0, 200.0), 1.0),
-        Control::slider("drop_max_radius", 20.0, (1.0, 50.0), 1.0),
-        Control::Separator {},
-        Control::select("palette", "millennial", &["millennial", "gen_x"]),
-        Control::slide("color_ratio", 0.5),
-        Control::slide("lightness_min", 0.0),
-        Control::slide("lightness_max", 1.0),
-    ]);
-
-    let step_size = controls.float("step_size");
-    let drop_max_radius = controls.float("drop_max_radius");
+    let step_size = controls.get("step_size");
+    let drop_max_radius = controls.get("drop_max_radius");
 
     let droppers = vec![
         Dropper::new(
             "center".to_string(),
-            animation.create_trigger(0.5, 0.0),
+            controls.animation.create_trigger(0.5, 0.0),
             Dropper::drop_it,
             1.0,
             drop_max_radius,
@@ -70,7 +68,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "center".to_string(),
-            animation.create_trigger(1.0, 0.0),
+            controls.animation.create_trigger(1.0, 0.0),
             Dropper::drop_it,
             1.0,
             drop_max_radius,
@@ -83,7 +81,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "center".to_string(),
-            animation.create_trigger(1.5, 0.0),
+            controls.animation.create_trigger(1.5, 0.0),
             Dropper::drop_it,
             1.0,
             drop_max_radius,
@@ -97,7 +95,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     ];
 
     Drops {
-        animation,
         controls,
         max_drops: MAX_DROPS,
         drops: Vec::new(),
@@ -131,7 +128,8 @@ impl Sketch for Drops {
             .iter_mut()
             .enumerate()
             .for_each(|(index, dropper)| {
-                if self.animation.should_trigger(&mut dropper.trigger) {
+                if self.controls.animation.should_trigger(&mut dropper.trigger)
+                {
                     dropper.walker.step_size = step_size;
                     dropper.walker.w = wr.w();
                     dropper.walker.h = wr.h();
@@ -159,7 +157,7 @@ impl Sketch for Drops {
                             dropper.walker.to_vec2(),
                             &mut self.drops,
                             self.max_drops,
-                            (color_fn)(&self.controls),
+                            (color_fn)(&self.controls.controls),
                             splatter_radius,
                         );
                     }
@@ -332,10 +330,10 @@ fn palette_by_name(
 
 fn gen_color(controls: &Controls, hue_range: (f32, f32)) -> Hsl {
     let (min, max) = safe_range(
-        controls.float("lightness_min"),
-        controls.float("lightness_max"),
+        controls.get("lightness_min"),
+        controls.get("lightness_max"),
     );
-    if random_f32() > controls.float("color_ratio") {
+    if random_f32() > controls.get("color_ratio") {
         hsl(
             random_range(hue_range.0, hue_range.1),
             0.9,

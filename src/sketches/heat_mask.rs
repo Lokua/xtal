@@ -25,8 +25,7 @@ const GRID_SIZE: usize = 128;
 pub struct HeatMask {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gradient: Gradient<LinSrgb>,
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
@@ -35,106 +34,110 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
     let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
-    let animation = Animation::new(Timing::new(ctx.bpm()));
 
     let modes = ["attract", "influence"];
 
-    let disable_center_controls =
-        |controls: &Controls| controls.bool("animate_center");
-    let disable_corner_controls =
-        |controls: &Controls| controls.bool("animate_corner");
-    let disable_trbl_controls =
-        |controls: &Controls| controls.bool("animate_trbl");
+    fn make_center_control_disabler() -> DisabledFn {
+        Some(Box::new(|controls| controls.bool("animate_center")))
+    }
+    fn make_corner_control_disabler() -> DisabledFn {
+        Some(Box::new(|controls| controls.bool("animate_corner")))
+    }
+    fn make_trbl_control_disabler() -> DisabledFn {
+        Some(Box::new(|controls| controls.bool("animate_trbl")))
+    }
 
-    let controls = Controls::new(vec![
-        Control::checkbox("show_center", false),
-        Control::checkbox("animate_center", false),
-        Control::checkbox("center_use_grain", true),
-        Control::select("center_mode", "attract", &modes),
-        Control::slider_x(
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("show_center", false, None)
+        .checkbox("animate_center", false, None)
+        .checkbox("center_use_grain", true, None)
+        .select("center_mode", "attract", &modes, None)
+        .slider(
             "center_radius",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_center_controls,
-        ),
-        Control::slider_x(
+            make_center_control_disabler(),
+        )
+        .slider(
             "center_strength",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_center_controls,
-        ),
-        Control::Separator {},
-        Control::checkbox("show_corner", true),
-        Control::checkbox("animate_corner", false),
-        Control::checkbox("corner_use_grain", true),
-        Control::select("corner_mode", "attract", &modes),
-        Control::slider_x(
+            make_center_control_disabler(),
+        )
+        .separator()
+        .checkbox("show_corner", true, None)
+        .checkbox("animate_corner", false, None)
+        .checkbox("corner_use_grain", true, None)
+        .select("corner_mode", "attract", &modes, None)
+        .slider(
             "corner_radius",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_corner_controls,
-        ),
-        Control::slider_x(
+            make_corner_control_disabler(),
+        )
+        .slider(
             "corner_strength",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_corner_controls,
-        ),
-        Control::Separator {},
-        Control::checkbox("show_trbl", true),
-        Control::checkbox("animate_trbl", false),
-        Control::checkbox("trbl_use_grain", true),
-        Control::select("trbl_mode", "attract", &modes),
-        Control::slider_x(
+            make_corner_control_disabler(),
+        )
+        .separator()
+        .checkbox("show_trbl", true, None)
+        .checkbox("animate_trbl", false, None)
+        .checkbox("trbl_use_grain", true, None)
+        .select("trbl_mode", "attract", &modes, None)
+        .slider(
             "trbl_radius",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_trbl_controls,
-        ),
-        Control::slider_x(
+            make_trbl_control_disabler(),
+        )
+        .slider(
             "trbl_strength",
             20.0,
             (1.0, 500.0),
             1.0,
-            disable_trbl_controls,
-        ),
-        Control::Separator {},
-        Control::slider("scale", 1.0, (0.1, 4.0), 0.1),
-        Control::checkbox("flip", false),
-        Control::select(
+            make_trbl_control_disabler(),
+        )
+        .separator()
+        .slider("scale", 1.0, (0.1, 4.0), 0.1, None)
+        .checkbox("flip", false, None)
+        .select(
             "sort",
             "radius",
             &["luminance", "radius", "radius_reversed"],
-        ),
-        Control::checkbox("stroke", true),
-        Control::slider_x(
+            None,
+        )
+        .checkbox("stroke", true, None)
+        .slider(
             "stroke_weight",
             1.25,
             (0.25, 3.0),
             0.25,
-            |controls| !controls.bool("stroke"),
-        ),
-        Control::Separator {},
-        Control::checkbox("invert_colors", false),
-        Control::slider("gradient_spread", 1.0, (0.0, 1.0), 0.0001),
-        Control::slider("background_alpha", 1.0, (0.000, 1.0), 0.001),
-        Control::slider("alpha", 1.0, (0.001, 1.0), 0.001),
-        Control::Separator {},
-        Control::slider("size_max", 7.3, (0.1, 20.0), 0.1),
-        Control::slider("t_scale", 1.0, (1.0, 200.0), 1.0),
-        Control::slider("scaling_power", 3.0, (0.5, 11.0), 0.25),
-        Control::slider("mag_mult", 1.0, (1.0, 200.0), 1.0),
-        Control::Separator {},
-        Control::slider("grain_size", 101.0, (1.0, 200.0), 1.0),
-        Control::slider("angle_mult", 48.0, (1.0, 200.0), 1.0),
-        Control::slider("distance_strength", 0.5, (0.001, 1.0), 0.001),
-        Control::slider("angle_frequency", 5.0, (5.0, 500.0), 5.0),
-    ]);
+            Some(Box::new(|controls| !controls.bool("stroke"))),
+        )
+        .separator()
+        .checkbox("invert_colors", false, None)
+        .slider("gradient_spread", 1.0, (0.0, 1.0), 0.0001, None)
+        .slider("background_alpha", 1.0, (0.000, 1.0), 0.001, None)
+        .slider("alpha", 1.0, (0.001, 1.0), 0.001, None)
+        .separator()
+        .slider("size_max", 7.3, (0.1, 20.0), 0.1, None)
+        .slider("t_scale", 1.0, (1.0, 200.0), 1.0, None)
+        .slider("scaling_power", 3.0, (0.5, 11.0), 0.25, None)
+        .slider("mag_mult", 1.0, (1.0, 200.0), 1.0, None)
+        .separator()
+        .slider("grain_size", 101.0, (1.0, 200.0), 1.0, None)
+        .slider("angle_mult", 48.0, (1.0, 200.0), 1.0, None)
+        .slider("distance_strength", 0.5, (0.001, 1.0), 0.001, None)
+        .slider("angle_frequency", 5.0, (5.0, 500.0), 5.0, None)
+        .build();
 
     let mut displacer_configs = vec![
         DisplacerConfig::new_no_anim(
@@ -180,7 +183,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
     HeatMask {
         grid: create_grid(grid_w, grid_h, GRID_SIZE, vec2).0,
         displacer_configs,
-        animation,
         controls,
         gradient: Gradient::new(vec![
             CYAN.into_lin_srgb(),
@@ -262,7 +264,8 @@ impl Sketch for HeatMask {
                 DisplacerConfigKind::Trbl => show_trbl,
             })
             .map(|config| {
-                config.update(&self.animation, &self.controls);
+                config
+                    .update(&self.controls.animation, &self.controls.controls);
                 match config.kind {
                     DisplacerConfigKind::Center => {
                         config.displacer.set_custom_distance_fn(
@@ -274,19 +277,21 @@ impl Sketch for HeatMask {
                         );
                         if animate_center {
                             config.displacer.set_strength(
-                                self.animation.r_ramp(
+                                self.controls.animation.r_ramp(
                                     &[kfr((1.0, 500.0), 8.0)],
                                     0.0,
                                     4.0,
                                     Easing::Linear,
                                 ),
                             );
-                            config.displacer.set_radius(self.animation.r_ramp(
-                                &[kfr((1.0, 500.0), 12.0)],
-                                1.0,
-                                3.0,
-                                Easing::Linear,
-                            ));
+                            config.displacer.set_radius(
+                                self.controls.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 12.0)],
+                                    1.0,
+                                    3.0,
+                                    Easing::Linear,
+                                ),
+                            );
                         } else {
                             config.displacer.set_strength(center_radius);
                             config.displacer.set_radius(center_strength);
@@ -302,19 +307,21 @@ impl Sketch for HeatMask {
                         );
                         if animate_corner {
                             config.displacer.set_strength(
-                                self.animation.r_ramp(
+                                self.controls.animation.r_ramp(
                                     &[kfr((1.0, 500.0), 4.0)],
                                     0.0,
                                     4.0,
                                     Easing::Linear,
                                 ),
                             );
-                            config.displacer.set_radius(self.animation.r_ramp(
-                                &[kfr((1.0, 500.0), 8.0)],
-                                1.0,
-                                3.0,
-                                Easing::Linear,
-                            ));
+                            config.displacer.set_radius(
+                                self.controls.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 8.0)],
+                                    1.0,
+                                    3.0,
+                                    Easing::Linear,
+                                ),
+                            );
                         } else {
                             config.displacer.set_strength(corner_radius);
                             config.displacer.set_radius(corner_strength);
@@ -330,19 +337,21 @@ impl Sketch for HeatMask {
                         );
                         if animate_trbl {
                             config.displacer.set_strength(
-                                self.animation.r_ramp(
+                                self.controls.animation.r_ramp(
                                     &[kfr((1.0, 500.0), 16.0)],
                                     0.0,
                                     6.0,
                                     Easing::Linear,
                                 ),
                             );
-                            config.displacer.set_radius(self.animation.r_ramp(
-                                &[kfr((1.0, 500.0), 24.0)],
-                                2.0,
-                                18.0,
-                                Easing::Linear,
-                            ));
+                            config.displacer.set_radius(
+                                self.controls.animation.r_ramp(
+                                    &[kfr((1.0, 500.0), 24.0)],
+                                    2.0,
+                                    18.0,
+                                    Easing::Linear,
+                                ),
+                            );
                         } else {
                             config.displacer.set_strength(trbl_radius);
                             config.displacer.set_radius(trbl_strength);

@@ -27,7 +27,6 @@ pub fn run() {
             displacement_2a,
             drop,
             drop_walk,
-            floor_supervisor,
             flow_field_basic,
             heat_mask,
             interference,

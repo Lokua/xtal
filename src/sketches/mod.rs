@@ -4,7 +4,6 @@ pub mod brutalism;
 pub mod displacement_2a;
 pub mod drop;
 pub mod drop_walk;
-pub mod floor_supervisor;
 pub mod flow_field_basic;
 pub mod heat_mask;
 pub mod interference;

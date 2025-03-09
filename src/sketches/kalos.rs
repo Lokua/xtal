@@ -16,9 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Kalos {
-    animation: Animation<Timing>,
-    controls: Controls,
-    #[allow(dead_code)]
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -55,42 +53,51 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Kalos {
     let wr = ctx.window_rect();
-    let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    let controls = Controls::with_previous(vec![
-        Control::checkbox("animate", false),
-        Control::checkbox("show_center", false),
-        Control::checkbox("show_corners", false),
-        Control::slider("radius", 0.5, (0.0, 10.0), 0.01),
-        Control::slider("strength", 0.5, (0.0, 5.0), 0.001),
-        Control::slider("corner_radius", 0.5, (0.0, 10.0), 0.01),
-        Control::slider("corner_strength", 0.5, (0.0, 5.0), 0.001),
-        Control::Separator {},
-        Control::slider("scaling_power", 1.0, (0.01, 20.0), 0.01),
-        Control::slide("offset", 0.2),
-        Control::slider("ring_strength", 20.0, (1.0, 100.0), 0.01),
-        Control::slider("angular_variation", 4.0, (1.0, 45.0), 1.0),
-        Control::Separator {},
-        Control::select(
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("animate", false, None)
+        .checkbox("show_center", false, None)
+        .checkbox("show_corners", false, None)
+        .slider("radius", 0.5, (0.0, 10.0), 0.01, None)
+        .slider("strength", 0.5, (0.0, 5.0), 0.001, None)
+        .slider("corner_radius", 0.5, (0.0, 10.0), 0.01, None)
+        .slider("corner_strength", 0.5, (0.0, 5.0), 0.001, None)
+        .separator()
+        .slider("scaling_power", 1.0, (0.01, 20.0), 0.01, None)
+        .slider_n("offset", 0.2)
+        .slider("ring_strength", 20.0, (1.0, 100.0), 0.01, None)
+        .slider("angular_variation", 4.0, (1.0, 45.0), 1.0, None)
+        .separator()
+        .select(
             "alg",
             "distance",
             &["distance", "concentric_waves", "moire"],
-        ),
-        Control::slider_x("j", 0.5, (0.0, 1.0), 0.0001, |controls| {
-            controls.string("alg") == "distance"
-        }),
-        Control::slider_x("k", 0.5, (0.0, 1.0), 0.0001, |controls| {
-            controls.string("alg") != "moire"
-        }),
-        Control::Separator {},
-        Control::checkbox("auto_hue_shift", false),
-        Control::slide("r", 0.5),
-        Control::slide("g", 0.0),
-        Control::slide("b", 1.0),
-        Control::Separator {},
-        Control::slide("threshold", 0.5),
-        Control::slide("mix", 0.5),
-    ]);
+            None,
+        )
+        .slider(
+            "j",
+            0.5,
+            (0.0, 1.0),
+            0.0001,
+            Some(Box::new(|controls| controls.string("alg") == "distance")),
+        )
+        .slider(
+            "k",
+            0.5,
+            (0.0, 1.0),
+            0.0001,
+            Some(Box::new(|controls| controls.string("alg") != "moire")),
+        )
+        .separator()
+        .checkbox("auto_hue_shift", false, None)
+        .slider_n("r", 0.5)
+        .slider_n("g", 0.0)
+        .slider_n("b", 1.0)
+        .separator()
+        .slider_n("threshold", 0.5)
+        .slider_n("mix", 0.5)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -124,18 +131,14 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos {
         true,
     );
 
-    Kalos {
-        animation,
-        controls,
-        gpu,
-    }
+    Kalos { controls, gpu }
 }
 
 impl Sketch for Kalos {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
         let strength = self.controls.float("strength");
-        let strength_range = self.controls.slider_range("strength");
+        let strength_range = self.controls.controls.slider_range("strength");
         let strength_swing = 0.05;
 
         let params = ShaderParams {
@@ -144,7 +147,7 @@ impl Sketch for Kalos {
             show_corners: self.controls.bool("show_corners") as i32 as f32,
             radius: self.controls.float("radius"),
             strength: if self.controls.bool("animate") {
-                self.animation.lrp(
+                self.controls.animation.lrp(
                     &[
                         kf(
                             clamp(

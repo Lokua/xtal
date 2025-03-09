@@ -18,18 +18,15 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct FlowFieldBasic {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     agents: Vec<Agent>,
     noise: PerlinNoise,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::select(
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .select(
             "algorithm",
             "cos,sin",
             &[
@@ -40,18 +37,18 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
                 "plasma",
                 "static",
             ],
-        ),
-        Control::checkbox("randomize_point_size", false),
-        Control::slider("agent_count", 1_000.0, (10.0, 10_000.0), 1.0),
-        Control::slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01),
-        Control::slider("noise_strength", 10.0, (1.0, 20.0), 0.1),
-        Control::slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01),
-        Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
-        Control::slide("bg_alpha", 0.02),
-    ]);
+            None,
+        )
+        .checkbox("randomize_point_size", false, None)
+        .slider("agent_count", 1_000.0, (10.0, 10_000.0), 1.0, None)
+        .slider("noise_scale", 100.0, (1.0, 1_000.0), 0.01, None)
+        .slider("noise_strength", 10.0, (1.0, 20.0), 0.1, None)
+        .slider("noise_vel", 0.01, (0.0, 0.02), 0.000_01, None)
+        .slider("step_range", 5.0, (1.0, 40.0), 0.1, None)
+        .slider_n("bg_alpha", 0.02)
+        .build();
 
     FlowFieldBasic {
-        animation,
         controls,
         agents: vec![],
         noise: PerlinNoise::new(512),

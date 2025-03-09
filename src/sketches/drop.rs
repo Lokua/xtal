@@ -22,26 +22,25 @@ const MAX_DROPS: usize = 2500;
 
 #[derive(SketchComponents)]
 pub struct Drops {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
     droppers: Vec<Dropper>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-    let controls = Controls::new(vec![
-        Control::slider("center_min_radius", 2.0, (1.0, 50.0), 1.0),
-        Control::slider("center_max_radius", 20.0, (1.0, 50.0), 1.0),
-        Control::slider("trbl_min_radius", 2.0, (1.0, 50.0), 1.0),
-        Control::slider("trbl_max_radius", 20.0, (1.0, 50.0), 1.0),
-        Control::slider("corner_min_radius", 2.0, (1.0, 50.0), 1.0),
-        Control::slider("corner_max_radius", 20.0, (1.0, 50.0), 1.0),
-        Control::slider("center_bw_ratio", 0.5, (0.0, 1.0), 0.001),
-        Control::slider("trbl_bw_ratio", 0.5, (0.0, 1.0), 0.001),
-        Control::slider("corner_bw_ratio", 0.5, (0.0, 1.0), 0.001),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("center_min_radius", 2.0, (1.0, 50.0), 1.0, None)
+        .slider("center_max_radius", 20.0, (1.0, 50.0), 1.0, None)
+        .slider("trbl_min_radius", 2.0, (1.0, 50.0), 1.0, None)
+        .slider("trbl_max_radius", 20.0, (1.0, 50.0), 1.0, None)
+        .slider("corner_min_radius", 2.0, (1.0, 50.0), 1.0, None)
+        .slider("corner_max_radius", 20.0, (1.0, 50.0), 1.0, None)
+        .slider("center_bw_ratio", 0.5, (0.0, 1.0), 0.001, None)
+        .slider("trbl_bw_ratio", 0.5, (0.0, 1.0), 0.001, None)
+        .slider("corner_bw_ratio", 0.5, (0.0, 1.0), 0.001, None)
+        .build();
 
     let rect: Rect<f32> = Rect::from_x_y_w_h(
         0.0,
@@ -56,7 +55,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     let droppers = vec![
         Dropper::new(
             "center".to_string(),
-            animation.create_trigger(duration, 0.0),
+            controls.animation.create_trigger(duration, 0.0),
             DropZone::new(vec2(0.0, 0.0)),
             drop_it,
             controls.float("center_min_radius"),
@@ -66,7 +65,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         // Top
         Dropper::new(
             "trbl".to_string(),
-            animation.create_trigger(duration, delay),
+            controls.animation.create_trigger(duration, delay),
             DropZone::new(vec2(0.0, rect.top())),
             drop_it,
             controls.float("trbl_min_radius"),
@@ -75,7 +74,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "corner".to_string(),
-            animation.create_trigger(duration, delay * 2.0),
+            controls.animation.create_trigger(duration, delay * 2.0),
             DropZone::new(rect.top_right()),
             drop_it,
             controls.float("corner_min_radius"),
@@ -85,7 +84,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         // Right
         Dropper::new(
             "trbl".to_string(),
-            animation.create_trigger(duration, delay * 3.0),
+            controls.animation.create_trigger(duration, delay * 3.0),
             DropZone::new(vec2(rect.top(), 0.0)),
             drop_it,
             controls.float("trbl_min_radius"),
@@ -94,7 +93,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "corner".to_string(),
-            animation.create_trigger(duration, delay * 4.0),
+            controls.animation.create_trigger(duration, delay * 4.0),
             DropZone::new(rect.bottom_right()),
             drop_it,
             controls.float("corner_min_radius"),
@@ -104,7 +103,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         // Bottom
         Dropper::new(
             "trbl".to_string(),
-            animation.create_trigger(duration, delay * 5.0),
+            controls.animation.create_trigger(duration, delay * 5.0),
             DropZone::new(vec2(0.0, rect.bottom())),
             drop_it,
             controls.float("trbl_min_radius"),
@@ -113,7 +112,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "corner".to_string(),
-            animation.create_trigger(duration, delay * 6.0),
+            controls.animation.create_trigger(duration, delay * 6.0),
             DropZone::new(rect.bottom_left()),
             drop_it,
             controls.float("corner_min_radius"),
@@ -123,7 +122,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         // Left
         Dropper::new(
             "trbl".to_string(),
-            animation.create_trigger(duration, delay * 7.0),
+            controls.animation.create_trigger(duration, delay * 7.0),
             DropZone::new(vec2(rect.bottom(), 0.0)),
             drop_it,
             controls.float("trbl_min_radius"),
@@ -132,7 +131,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         ),
         Dropper::new(
             "corner".to_string(),
-            animation.create_trigger(duration, delay * 8.0),
+            controls.animation.create_trigger(duration, delay * 8.0),
             DropZone::new(rect.top_left()),
             drop_it,
             controls.float("corner_min_radius"),
@@ -142,7 +141,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     ];
 
     Drops {
-        animation,
         controls,
         max_drops: MAX_DROPS,
         drops: Vec::new(),
@@ -153,11 +151,12 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         let offset = self
+            .controls
             .animation
             .lerp(&[kf(1.0, 2.0), kf(2.0, 2.0), kf(3.0, 2.0)], 0.0);
 
         self.droppers.iter_mut().for_each(|dropper| {
-            if self.animation.should_trigger(&mut dropper.trigger) {
+            if self.controls.animation.should_trigger(&mut dropper.trigger) {
                 match dropper.kind.as_str() {
                     "trbl" => {
                         dropper.min_radius =
@@ -186,7 +185,7 @@ impl Sketch for Drops {
                         dropper.zone.center * offset,
                         &mut self.drops,
                         self.max_drops,
-                        (dropper.color_fn)(&self.controls),
+                        (dropper.color_fn)(&self.controls.controls),
                     );
                 }
             }
@@ -194,11 +193,6 @@ impl Sketch for Drops {
     }
 
     fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
-        let _window_rect = app
-            .window(frame.window_id())
-            .expect("Unable to get window")
-            .rect();
-
         let draw = app.draw();
 
         draw.background().color(hsl(0.0, 0.0, 1.0));

@@ -1,127 +1,28 @@
 {
-  "controls": [
-    {
-      "Checkbox": {
-        "name": "debug_walker",
-        "value": false
-      }
-    },
-    {
-      "Slider": {
-        "name": "n_drops",
-        "value": 1.0,
-        "min": 1.0,
-        "max": 20.0,
-        "step": 1.0
-      }
-    },
-    {
-      "Slider": {
-        "name": "step_size",
-        "value": 2.0,
-        "min": 1.0,
-        "max": 200.0,
-        "step": 1.0
-      }
-    },
-    {
-      "Slider": {
-        "name": "splatter_radius",
-        "value": 2.0,
-        "min": 1.0,
-        "max": 200.0,
-        "step": 1.0
-      }
-    },
-    {
-      "Slider": {
-        "name": "drop_max_radius",
-        "value": 20.0,
-        "min": 1.0,
-        "max": 50.0,
-        "step": 1.0
-      }
-    },
-    {
-      "Separator": {}
-    },
-    {
-      "Select": {
-        "name": "palette",
-        "value": "millenial",
-        "options": [
-          "millenial",
-          "gen_x"
-        ]
-      }
-    },
-    {
-      "Slider": {
-        "name": "color_ratio",
-        "value": 0.5,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    },
-    {
-      "Slider": {
-        "name": "lightness_min",
-        "value": 0.0,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    },
-    {
-      "Slider": {
-        "name": "lightness_max",
-        "value": 1.0,
-        "min": 0.0,
-        "max": 1.0,
-        "step": 0.0001
-      }
-    }
-  ],
   "values": {
-    "lightness_max": {
-      "Float": 1.0
-    },
-    "center_max_radius": {
-      "Float": 23.0
-    },
-    "": {
-      "Bool": false
-    },
-    "n_drops": {
-      "Float": 6.0
-    },
-    "drop_max_radius": {
-      "Float": 48.0
-    },
-    "palette": {
-      "String": "millenial"
-    },
     "step_size": {
       "Float": 82.0
     },
-    "lightness_min": {
-      "Float": 0.0
+    "lightness_max": {
+      "Float": 1.0
     },
     "splatter_radius": {
       "Float": 30.0
     },
-    "center_min_radius": {
-      "Float": 1.0
+    "lightness_min": {
+      "Float": 0.0
     },
-    "aberration_x": {
-      "Float": 20.0
+    "palette": {
+      "String": "gen_x"
     },
     "color_ratio": {
       "Float": 0.19999999
     },
-    "center_bw_ratio": {
-      "Float": 0.69000006
+    "drop_max_radius": {
+      "Float": 48.0
+    },
+    "n_drops": {
+      "Float": 6.0
     },
     "debug_walker": {
       "Bool": false

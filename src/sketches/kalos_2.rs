@@ -16,8 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Kalos2 {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -56,29 +55,31 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
     let resolution = ctx.window_rect().resolution_u32();
-    let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    let disable = |_controls: &Controls| true;
+    fn make_disable() -> DisabledFn {
+        Some(Box::new(|_| true))
+    }
 
-    let controls = Controls::with_previous(vec![
-        Control::slider_x("offset", 0.2, (0.0, 1.0), 0.0001, disable),
-        Control::slider_x("radius", 0.5, (0.0, 10.0), 0.01, disable),
-        Control::slider_x("strength", 0.5, (0.0, 5.0), 0.001, disable),
-        Control::slider("scaling_power", 1.0, (0.01, 20.0), 0.01),
-        Control::Separator {},
-        Control::slide("r", 0.5),
-        Control::slide("g", 0.0),
-        Control::slide("b", 1.0),
-        Control::Separator {},
-        Control::slider("ring_strength", 20.0, (1.0, 100.0), 0.01),
-        Control::slider("ring_harmonics", 1.0, (1.0, 10.0), 1.0),
-        Control::slider("ring_harm_amt", 1.0, (1.0, 100.0), 1.0),
-        Control::slider("angular_variation", 4.0, (1.0, 45.0), 1.0),
-        Control::slider("frequency", 1.0, (0.0, 1000.0), 1.0),
-        Control::slide("lerp", 0.0),
-        Control::slide("threshold", 0.5),
-        Control::slide("mix", 0.5),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("offset", 0.2, (0.0, 1.0), 0.0001, make_disable())
+        .slider("radius", 0.5, (0.0, 10.0), 0.01, make_disable())
+        .slider("strength", 0.5, (0.0, 5.0), 0.001, make_disable())
+        .slider("scaling_power", 1.0, (0.01, 20.0), 0.01, None)
+        .separator()
+        .slider_n("r", 0.5)
+        .slider_n("g", 0.0)
+        .slider_n("b", 1.0)
+        .separator()
+        .slider("ring_strength", 20.0, (1.0, 100.0), 0.01, None)
+        .slider("ring_harmonics", 1.0, (1.0, 10.0), 1.0, None)
+        .slider("ring_harm_amt", 1.0, (1.0, 100.0), 1.0, None)
+        .slider("angular_variation", 4.0, (1.0, 45.0), 1.0, None)
+        .slider("frequency", 1.0, (0.0, 1000.0), 1.0, None)
+        .slider_n("lerp", 0.0)
+        .slider_n("threshold", 0.5)
+        .slider_n("mix", 0.5)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -113,20 +114,16 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
         true,
     );
 
-    Kalos2 {
-        animation,
-        controls,
-        gpu,
-    }
+    Kalos2 { controls, gpu }
 }
 
 impl Sketch for Kalos2 {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
-        let a = &self.animation;
+        let a = &self.controls.animation;
 
-        let r_range = self.controls.slider_range("radius");
-        let s_range = self.controls.slider_range("strength");
+        let r_range = self.controls.controls.slider_range("radius");
+        let s_range = self.controls.controls.slider_range("strength");
 
         let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
             [

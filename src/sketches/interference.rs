@@ -16,9 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Interference {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -45,42 +43,45 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::checkbox("animate_wave1_phase", false),
-        Control::slider("wave1_amp", 1.0, (0.0, 2.0), 0.001),
-        Control::slide("wave1_frequency", 0.02),
-        Control::slider("wave1_angle", 0.0, (0.0, 1.0), 0.125),
-        Control::slider_x(
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("animate_wave1_phase", false, None)
+        .slider("wave1_amp", 1.0, (0.0, 2.0), 0.001, None)
+        .slider_n("wave1_frequency", 0.02)
+        .slider("wave1_angle", 0.0, (0.0, 1.0), 0.125, None)
+        .slider(
             "wave1_phase",
             0.0,
             (0.0, 1.0),
             0.0001,
-            |controls: &Controls| controls.bool("animate_wave1_phase"),
-        ),
-        Control::slide("wave1_y_influence", 0.5),
-        Control::Separator {}, // ------------------------------------------
-        Control::checkbox("animate_wave2_phase", false),
-        Control::slider("wave2_amp", 1.0, (0.0, 2.0), 0.001),
-        Control::slide("wave2_frequency", 0.02),
-        Control::slider("wave2_angle", 0.0, (0.0, 1.0), 0.125),
-        Control::slider_x(
+            Some(Box::new(|controls: &Controls| {
+                controls.bool("animate_wave1_phase")
+            })),
+        )
+        .slider_n("wave1_y_influence", 0.5)
+        .separator()
+        .checkbox("animate_wave2_phase", false, None)
+        .slider("wave2_amp", 1.0, (0.0, 2.0), 0.001, None)
+        .slider_n("wave2_frequency", 0.02)
+        .slider("wave2_angle", 0.0, (0.0, 1.0), 0.125, None)
+        .slider(
             "wave2_phase",
             0.0,
             (0.0, 1.0),
             0.0001,
-            |controls: &Controls| controls.bool("animate_wave2_phase"),
-        ),
-        Control::slide("wave2_y_influence", 0.5),
-        Control::Separator {}, // ------------------------------------------
-        Control::checkbox("checkerboard", false),
-        Control::slide("type_mix", 0.0),
-        Control::slider("curve_freq_x", 0.3, (0.0, 2.0), 0.001),
-        Control::slider("curve_freq_y", 0.3, (0.0, 2.0), 0.001),
-        Control::slide("wave_distort", 0.4),
-        Control::slide("smoothing", 0.5),
-    ]);
+            Some(Box::new(|controls: &Controls| {
+                controls.bool("animate_wave2_phase")
+            })),
+        )
+        .slider_n("wave2_y_influence", 0.5)
+        .separator()
+        .checkbox("checkerboard", false, None)
+        .slider_n("type_mix", 0.0)
+        .slider("curve_freq_x", 0.3, (0.0, 2.0), 0.001, None)
+        .slider("curve_freq_y", 0.3, (0.0, 2.0), 0.001, None)
+        .slider_n("wave_distort", 0.4)
+        .slider_n("smoothing", 0.5)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -99,11 +100,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
         true,
     );
 
-    Interference {
-        animation,
-        controls,
-        gpu,
-    }
+    Interference { controls, gpu }
 }
 
 impl Sketch for Interference {
@@ -120,7 +117,7 @@ impl Sketch for Interference {
             ],
             b: [
                 if self.controls.bool("animate_wave1_phase") {
-                    self.animation.r_ramp(
+                    self.controls.animation.r_ramp(
                         &[kfr((0.0, 1.0), 2.0)],
                         0.0,
                         1.0,
@@ -130,7 +127,7 @@ impl Sketch for Interference {
                     self.controls.float("wave1_phase")
                 },
                 if self.controls.bool("animate_wave2_phase") {
-                    self.animation.r_ramp(
+                    self.controls.animation.r_ramp(
                         &[kfr((0.0, 1.0), 2.0)],
                         1.0,
                         1.0,
