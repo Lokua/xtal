@@ -57,6 +57,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
 
 impl Sketch for FullscreenShader {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

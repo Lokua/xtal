@@ -226,10 +226,10 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
 
 impl Sketch for Model {
     fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
-        let segments = self.controls.float("ref_segments") as usize;
-        let deviation = self.controls.float("ref_deviation");
-        let points_per_segment =
-            self.controls.float("points_per_segment") as u32;
+        self.controls.update();
+        let segments = self.controls.get("ref_segments") as usize;
+        let deviation = self.controls.get("ref_deviation");
+        let points_per_segment = self.controls.get("points_per_segment") as u32;
 
         if self.controls.changed() {
             if self
@@ -247,12 +247,12 @@ impl Sketch for Model {
         let (ns_min, _ns_max) =
             self.controls.controls.slider_range("noise_scale");
         let (ns_min, ns_max) =
-            safe_range(ns_min, self.controls.float("noise_scale"));
+            safe_range(ns_min, self.controls.get("noise_scale"));
 
         let (angle_min, _angle_max) =
             self.controls.controls.slider_range("angle_variation");
         let (angle_min, angle_max) =
-            safe_range(angle_min, self.controls.float("angle_variation"));
+            safe_range(angle_min, self.controls.get("angle_variation"));
 
         let params = ComputeParams {
             n_segments,
@@ -393,7 +393,7 @@ impl Sketch for Model {
 
         if show_sand_line {
             let num_points = (self.reference_points.len() - 1) as u32
-                * self.controls.float("points_per_segment") as u32;
+                * self.controls.get("points_per_segment") as u32;
 
             if let Ok(points) = self.computed_points.lock() {
                 for point in points.iter().take(num_points as usize) {

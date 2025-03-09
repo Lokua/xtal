@@ -130,6 +130,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
 
 impl Sketch for G25_18Wind {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
 
         if self.controls.any_changed_in(&["agent_count"]) {

@@ -63,7 +63,7 @@ impl Displacement2a {
     }
 
     fn weave_frequency(&self) -> f32 {
-        let value = self.controls.float("weave_frequency");
+        let value = self.controls.get("weave_frequency");
         if self.controls.bool("animate_frequency") {
             map_range(
                 self.controls
@@ -202,26 +202,27 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
 
 impl Sketch for Displacement2a {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
         let (w, h) = wr.wh();
         let audio_enabled = self.controls.bool("audio_enabled");
         let clamp_circle_radii = self.controls.bool("clamp_circle_radii");
         let quad_restraint = self.controls.bool("quad_restraint");
         let qr_shape = self.controls.string("qr_shape");
-        let qr_lerp = self.controls.float("qr_lerp");
-        let qr_divisor = self.controls.float("qr_divisor");
-        let qr_pos = self.controls.float("qr_pos");
-        let qr_size = self.controls.float("qr_size");
-        let gradient_spread = self.controls.float("gradient_spread");
-        let displacer_radius = self.controls.float("displacer_radius");
-        let displacer_strength = self.controls.float("displacer_strength");
-        let weave_scale = self.controls.float("weave_scale");
-        let weave_amplitude = self.controls.float("weave_amplitude");
+        let qr_lerp = self.controls.get("qr_lerp");
+        let qr_divisor = self.controls.get("qr_divisor");
+        let qr_pos = self.controls.get("qr_pos");
+        let qr_size = self.controls.get("qr_size");
+        let gradient_spread = self.controls.get("gradient_spread");
+        let displacer_radius = self.controls.get("displacer_radius");
+        let displacer_strength = self.controls.get("displacer_strength");
+        let weave_scale = self.controls.get("weave_scale");
+        let weave_amplitude = self.controls.get("weave_amplitude");
         let pattern = self.controls.string("pattern");
-        let circle_radius_min = self.controls.float("circle_radius_min");
-        let circle_radius_max = self.controls.float("circle_radius_max");
+        let circle_radius_min = self.controls.get("circle_radius_min");
+        let circle_radius_max = self.controls.get("circle_radius_max");
         let weave_frequency = self.weave_frequency();
-        let scaling_power = self.controls.float("scaling_power");
+        let scaling_power = self.controls.get("scaling_power");
         let quad_influence_or_attract =
             self.controls.bool("quad_influence_or_attract");
         let center_influence_or_attract =
@@ -253,8 +254,8 @@ impl Sketch for Displacement2a {
             30.0,
             10_000.0,
             0.0,
-            self.controls.float("rise_rate"),
-            self.controls.float("fall_rate"),
+            self.controls.get("rise_rate"),
+            self.controls.get("fall_rate"),
         );
 
         let cached_trig_fns = self.cached_trig_fns.clone();
@@ -428,7 +429,7 @@ impl Sketch for Displacement2a {
         frame.clear(BLACK);
         draw.background().color(rgba(0.1, 0.1, 0.1, 0.01));
 
-        let scaled_draw = draw.scale(self.controls.float("scale"));
+        let scaled_draw = draw.scale(self.controls.get("scale"));
 
         for (position, radius, color) in &self.ellipses {
             scaled_draw

@@ -63,19 +63,20 @@ pub fn init(app: &App, ctx: &LatticeContext) -> SierpinskiTriangle {
 
 impl Sketch for SierpinskiTriangle {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.float("primary_iterations"),
-                self.controls.float("second_iterations"),
-                self.controls.float("third_iterations"),
-                self.controls.float("fourth_iterations"),
+                self.controls.get("primary_iterations"),
+                self.controls.get("second_iterations"),
+                self.controls.get("third_iterations"),
+                self.controls.get("fourth_iterations"),
             ],
             b: [
-                self.controls.float("scale"),
-                self.controls.float("y_offset"),
+                self.controls.get("scale"),
+                self.controls.get("y_offset"),
                 0.0,
                 0.0,
             ],

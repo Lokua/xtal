@@ -57,8 +57,10 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
 
 impl Sketch for FlowFieldBasic {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+
         if self.controls.any_changed_in(&["agent_count"]) {
-            let agent_count = self.controls.float("agent_count") as usize;
+            let agent_count = self.controls.get("agent_count") as usize;
             let wr = ctx.window_rect();
 
             if self.agents.len() > agent_count {
@@ -72,10 +74,10 @@ impl Sketch for FlowFieldBasic {
             self.controls.mark_unchanged();
         }
 
-        let noise_scale = self.controls.float("noise_scale");
-        let noise_strength = self.controls.float("noise_strength");
-        let noise_vel = self.controls.float("noise_vel");
-        let step_range = self.controls.float("step_range");
+        let noise_scale = self.controls.get("noise_scale");
+        let noise_strength = self.controls.get("noise_strength");
+        let noise_vel = self.controls.get("noise_vel");
+        let step_range = self.controls.get("step_range");
         let algorithm = self.controls.string("algorithm");
         let wr = ctx.window_rect();
 
@@ -102,7 +104,7 @@ impl Sketch for FlowFieldBasic {
             1.0,
             1.0,
             1.0,
-            self.controls.float("bg_alpha"),
+            self.controls.get("bg_alpha"),
         ));
 
         let randomize_point_size = self.controls.bool("randomize_point_size");

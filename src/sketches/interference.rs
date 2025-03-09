@@ -105,15 +105,16 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
 
 impl Sketch for Interference {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.float("wave1_frequency"),
-                self.controls.float("wave1_angle"),
-                self.controls.float("wave2_frequency"),
-                self.controls.float("wave2_angle"),
+                self.controls.get("wave1_frequency"),
+                self.controls.get("wave1_angle"),
+                self.controls.get("wave2_frequency"),
+                self.controls.get("wave2_angle"),
             ],
             b: [
                 if self.controls.bool("animate_wave1_phase") {
@@ -124,7 +125,7 @@ impl Sketch for Interference {
                         Easing::Linear,
                     )
                 } else {
-                    self.controls.float("wave1_phase")
+                    self.controls.get("wave1_phase")
                 },
                 if self.controls.bool("animate_wave2_phase") {
                     self.controls.animation.r_ramp(
@@ -134,26 +135,26 @@ impl Sketch for Interference {
                         Easing::Linear,
                     )
                 } else {
-                    self.controls.float("wave2_phase")
+                    self.controls.get("wave2_phase")
                 },
-                self.controls.float("wave1_y_influence"),
-                self.controls.float("wave2_y_influence"),
+                self.controls.get("wave1_y_influence"),
+                self.controls.get("wave2_y_influence"),
             ],
             c: [
                 0.0,
-                self.controls.float("type_mix"),
+                self.controls.get("type_mix"),
                 0.0,
                 bool_to_f32(self.controls.bool("checkerboard")),
             ],
             d: [
-                self.controls.float("curve_freq_x"),
-                self.controls.float("curve_freq_y"),
-                self.controls.float("wave_distort"),
-                self.controls.float("smoothing"),
+                self.controls.get("curve_freq_x"),
+                self.controls.get("curve_freq_y"),
+                self.controls.get("wave_distort"),
+                self.controls.get("smoothing"),
             ],
             e: [
-                self.controls.float("wave1_amp"),
-                self.controls.float("wave2_amp"),
+                self.controls.get("wave1_amp"),
+                self.controls.get("wave2_amp"),
                 0.0,
                 0.0,
             ],

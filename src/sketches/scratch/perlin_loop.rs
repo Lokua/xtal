@@ -53,6 +53,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
 
 impl Sketch for PerlinLoop {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.controls.update();
+
         let seed = self.controls.get("seed") as u32;
         if seed != self.last_seed {
             self.noise = self.noise.set_seed(seed);

@@ -59,7 +59,7 @@ impl Displacement2 {
     }
 
     fn weave_frequency(&self) -> f32 {
-        let value = self.controls.float("weave_frequency");
+        let value = self.controls.get("weave_frequency");
         if self.controls.bool("animate_frequency") {
             map_range(self.controls.animation.tri(32.0), 0.0, 1.0, 0.01, value)
         } else {
@@ -148,21 +148,23 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
 
 impl Sketch for Displacement2 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.controls.update();
+
         if self.cached_trig_fns == None
             || (self.cached_pattern != self.controls.string("pattern"))
         {
             self.update_trig_fns();
         }
 
-        let displacer_radius = self.controls.float("displacer_radius");
-        let displacer_strength = self.controls.float("displacer_strength");
-        let weave_scale = self.controls.float("weave_scale");
-        let weave_amplitude = self.controls.float("weave_amplitude");
+        let displacer_radius = self.controls.get("displacer_radius");
+        let displacer_strength = self.controls.get("displacer_strength");
+        let weave_scale = self.controls.get("weave_scale");
+        let weave_amplitude = self.controls.get("weave_amplitude");
         let pattern = self.controls.string("pattern");
-        let gradient_spread = self.controls.float("gradient_spread");
+        let gradient_spread = self.controls.get("gradient_spread");
         let clamp_circle_radii = self.controls.bool("clamp_circle_radii");
-        let circle_radius_min = self.controls.float("circle_radius_min");
-        let circle_radius_max = self.controls.float("circle_radius_max");
+        let circle_radius_min = self.controls.get("circle_radius_min");
+        let circle_radius_max = self.controls.get("circle_radius_max");
         let animation = &self.controls.animation;
         let controls = &self.controls;
         let weave_frequency = self.weave_frequency();

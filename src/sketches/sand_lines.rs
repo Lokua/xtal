@@ -163,37 +163,39 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> SandLines {
 
 impl Sketch for SandLines {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+
         if self.controls.changed() {
             let noise_strategy = self.controls.string("noise_strategy");
             let distribution_strategy =
                 self.controls.string("distribution_strategy");
             let chasm_mode = self.controls.bool("chasm_mode");
             let wave_type = self.controls.string("wave_type");
-            let wave_freq = self.controls.float("wave_freq");
-            let wave_amp = self.controls.float("wave_amp");
-            let wave_phase = self.controls.float("wave_phase");
-            let wave_drift = self.controls.float("wave_drift");
+            let wave_freq = self.controls.get("wave_freq");
+            let wave_amp = self.controls.get("wave_amp");
+            let wave_phase = self.controls.get("wave_phase");
+            let wave_drift = self.controls.get("wave_drift");
 
             let noise_map_mode = self.controls.string("noise_map_mode");
-            let noise_scale = self.controls.float("noise_scale");
+            let noise_scale = self.controls.get("noise_scale");
             let (ns_min, _ns_max) =
                 self.controls.controls.slider_range("noise_scale");
-            let noise_octaves = self.controls.float("noise_octaves");
-            let noise_persistence = self.controls.float("noise_persistence");
+            let noise_octaves = self.controls.get("noise_octaves");
+            let noise_persistence = self.controls.get("noise_persistence");
 
             let angle_map_mode = self.controls.string("angle_map_mode");
             let (angle_min, _angle_max) =
                 self.controls.controls.slider_range("angle_variation");
-            let angle_variation = self.controls.float("angle_variation");
-            let points_per_segment = self.controls.float("points_per_segment");
-            let passes = self.controls.float("passes");
+            let angle_variation = self.controls.get("angle_variation");
+            let points_per_segment = self.controls.get("points_per_segment");
+            let passes = self.controls.get("passes");
             let curve_map_mode = self.controls.string("curve_map_mode");
             let (curve_min, _curve_max) =
                 self.controls.controls.slider_range("curvature");
-            let curvature = self.controls.float("curvature");
-            let curve_mult = self.controls.float("curve_mult");
+            let curvature = self.controls.get("curvature");
+            let curve_mult = self.controls.get("curve_mult");
             let curve_wtf = self.controls.bool("curve_wtf");
-            let curve_exp = self.controls.float("curve_exp");
+            let curve_exp = self.controls.get("curve_exp");
             let curvature = curvature * curve_mult;
             let trig_fn_a = self.controls.string("trig_fn_a");
             let trig_fn_b = self.controls.string("trig_fn_b");
@@ -210,10 +212,10 @@ impl Sketch for SandLines {
                 "ref_deviation",
                 "ref_smooth",
             ]) {
-                let ref_segments = self.controls.float("ref_segments");
-                let ref_deviation = self.controls.float("ref_deviation");
-                let ref_smooth = self.controls.float("ref_smooth");
-                let pad = ctx.window_rect().w() / self.controls.float("pad");
+                let ref_segments = self.controls.get("ref_segments");
+                let ref_deviation = self.controls.get("ref_deviation");
+                let ref_smooth = self.controls.get("ref_smooth");
+                let pad = ctx.window_rect().w() / self.controls.get("pad");
 
                 self.ref_lines = (0..N_LINES)
                     .map(|i| {
@@ -467,7 +469,7 @@ impl Sketch for SandLines {
             .w_h(ctx.window_rect().w(), ctx.window_rect().h())
             .hsla(0.0, 0.0, 1.0, 1.0);
 
-        let alpha = self.controls.float("alpha");
+        let alpha = self.controls.get("alpha");
         let show_ref_line = self.controls.bool("show_ref_line");
         let show_sand_line = self.controls.bool("show_sand_line");
 

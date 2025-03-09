@@ -136,8 +136,9 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos {
 
 impl Sketch for Kalos {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
-        let strength = self.controls.float("strength");
+        let strength = self.controls.get("strength");
         let strength_range = self.controls.controls.slider_range("strength");
         let strength_swing = 0.05;
 
@@ -145,7 +146,7 @@ impl Sketch for Kalos {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             show_center: self.controls.bool("show_center") as i32 as f32,
             show_corners: self.controls.bool("show_corners") as i32 as f32,
-            radius: self.controls.float("radius"),
+            radius: self.controls.get("radius"),
             strength: if self.controls.bool("animate") {
                 self.controls.animation.lrp(
                     &[
@@ -171,26 +172,26 @@ impl Sketch for Kalos {
             } else {
                 strength
             },
-            corner_radius: self.controls.float("corner_radius"),
-            corner_strength: self.controls.float("corner_strength"),
-            scaling_power: self.controls.float("scaling_power"),
+            corner_radius: self.controls.get("corner_radius"),
+            corner_strength: self.controls.get("corner_strength"),
+            scaling_power: self.controls.get("scaling_power"),
             auto_hue_shift: self.controls.bool("auto_hue_shift") as i32 as f32,
-            r: self.controls.float("r"),
-            g: self.controls.float("g"),
-            b: self.controls.float("b"),
-            offset: self.controls.float("offset"),
-            ring_strength: self.controls.float("ring_strength"),
-            angular_variation: self.controls.float("angular_variation"),
-            threshold: self.controls.float("threshold"),
-            mix: self.controls.float("mix"),
+            r: self.controls.get("r"),
+            g: self.controls.get("g"),
+            b: self.controls.get("b"),
+            offset: self.controls.get("offset"),
+            ring_strength: self.controls.get("ring_strength"),
+            angular_variation: self.controls.get("angular_variation"),
+            threshold: self.controls.get("threshold"),
+            mix: self.controls.get("mix"),
             alg: match self.controls.string("alg").as_str() {
                 "distance" => 0.0,
                 "concentric_waves" => 1.0,
                 "moire" => 2.0,
                 _ => unreachable!(),
             },
-            j: self.controls.float("j"),
-            k: self.controls.float("k"),
+            j: self.controls.get("j"),
+            k: self.controls.get("k"),
             time: app.time,
         };
 

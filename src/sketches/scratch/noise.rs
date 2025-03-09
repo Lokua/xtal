@@ -52,7 +52,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Noise {
 
 impl Sketch for Noise {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        let seed = self.controls.float("seed") as u32;
+        self.controls.update();
+
+        let seed = self.controls.get("seed") as u32;
         if seed != self.last_seed {
             self.noise = self.noise.set_seed(seed);
             self.last_seed = seed;
@@ -73,11 +75,11 @@ impl Sketch for Noise {
 
         let circle_radius =
             self.controls.animation.tri(8.0) * window_rect.w() * (2.0 / 3.0);
-        let max_rect_length = self.controls.float("max_rect_length");
-        let rect_width = self.controls.float("rect_width");
-        let noise_scale = self.controls.float("noise_scale");
-        let angle_resolution = self.controls.float("angle_resolution");
-        let time_x = self.controls.float("time_x");
+        let max_rect_length = self.controls.get("max_rect_length");
+        let rect_width = self.controls.get("rect_width");
+        let noise_scale = self.controls.get("noise_scale");
+        let angle_resolution = self.controls.get("angle_resolution");
+        let time_x = self.controls.get("time_x");
         let angle_increment = PI / angle_resolution;
         let total_segments = (360.0 / angle_increment) as i32;
 

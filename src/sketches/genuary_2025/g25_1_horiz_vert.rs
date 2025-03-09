@@ -45,10 +45,12 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         self.lines.clear();
+
         let window_rect = ctx.window_rect();
         let spacing = window_rect.w() / (N_LINES as f32 + 1.0);
-        let b = self.controls.float("b") * 100.0;
+        let b = self.controls.get("b") * 100.0;
         let line_length = (window_rect.h() / GRID_SIZE as f32) + b;
         let base_time = self.controls.animation.tri(4.0);
         let lrp_time = 4.0;
@@ -93,7 +95,7 @@ impl Sketch for Template {
             0.0,
             0.0,
             if invert { 1.0 } else { 0.0 },
-            self.controls.float("background_alpha"),
+            self.controls.get("background_alpha"),
         ));
 
         let space = window_rect.h() / GRID_SIZE as f32;
@@ -137,7 +139,7 @@ pub fn draw_lines(
     _color: Hsla,
 ) {
     let time = 6.0;
-    let aberration = template.controls.float("aberration");
+    let aberration = template.controls.get("aberration");
 
     for chunk in template.lines.chunks(2) {
         if let [start, end] = chunk {

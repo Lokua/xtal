@@ -46,6 +46,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let mut wr = ctx.window_rect();
 
         if wr.changed() {

@@ -70,6 +70,8 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_2Layers {
 
 impl Sketch for G25_2Layers {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+
         let wr = ctx.window_rect();
         let time = 8.0;
         let kfs = [kfr((0.0, 1.0), time)];

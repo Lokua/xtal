@@ -119,6 +119,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
 
 impl Sketch for Kalos2 {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
         let a = &self.controls.animation;
 
@@ -143,7 +144,7 @@ impl Sketch for Kalos2 {
                 ),
                 // scaling_power
                 if anim_scaling {
-                    self.controls.float("scaling_power")
+                    self.controls.get("scaling_power")
                 } else {
                     (a.tri(8.0) + 1.0) * 4.0
                 },
@@ -161,21 +162,21 @@ impl Sketch for Kalos2 {
             d_2: corner,
             d_3: corner,
             d_4: corner,
-            radius: self.controls.float("radius"),
-            strength: self.controls.float("strength"),
-            scaling_power: self.controls.float("scaling_power"),
-            r: self.controls.float("r"),
-            g: self.controls.float("g"),
-            b: self.controls.float("b"),
+            radius: self.controls.get("radius"),
+            strength: self.controls.get("strength"),
+            scaling_power: self.controls.get("scaling_power"),
+            r: self.controls.get("r"),
+            g: self.controls.get("g"),
+            b: self.controls.get("b"),
             offset: a.tri(64.0),
-            ring_strength: self.controls.float("ring_strength"),
-            ring_harmonics: self.controls.float("ring_harmonics"),
-            ring_harm_amt: self.controls.float("ring_harm_amt"),
-            angular_variation: self.controls.float("angular_variation"),
-            frequency: self.controls.float("frequency"),
-            lerp: self.controls.float("lerp"),
-            threshold: self.controls.float("threshold"),
-            mix: self.controls.float("mix"),
+            ring_strength: self.controls.get("ring_strength"),
+            ring_harmonics: self.controls.get("ring_harmonics"),
+            ring_harm_amt: self.controls.get("ring_harm_amt"),
+            angular_variation: self.controls.get("angular_variation"),
+            frequency: self.controls.get("frequency"),
+            lerp: self.controls.get("lerp"),
+            threshold: self.controls.get("threshold"),
+            mix: self.controls.get("mix"),
             time: app.time,
         };
 

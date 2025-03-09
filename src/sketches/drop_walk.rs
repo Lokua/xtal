@@ -116,10 +116,12 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 
 impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        let step_size = self.controls.float("step_size");
-        let drop_max_radius = self.controls.float("drop_max_radius");
-        let splatter_radius = self.controls.float("splatter_radius");
-        let n_drops = self.controls.float("n_drops");
+        self.controls.update();
+
+        let step_size = self.controls.get("step_size");
+        let drop_max_radius = self.controls.get("drop_max_radius");
+        let splatter_radius = self.controls.get("splatter_radius");
+        let n_drops = self.controls.get("n_drops");
         let palette_name = self.controls.string("palette");
         let palette = palette_by_name(&self.palettes, &palette_name);
         let wr = ctx.window_rect();

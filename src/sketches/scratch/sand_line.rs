@@ -101,6 +101,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> SandLineSketch {
 
 impl Sketch for SandLineSketch {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
+
         if self.controls.changed() {
             let noise_strategy = self.controls.string("noise_strategy");
             let distribution_strategy =

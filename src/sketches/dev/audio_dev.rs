@@ -45,6 +45,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> AudioDev {
 
 impl Sketch for AudioDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.controls.update();
         self.fft_bands = self.audio.bands(
             N_BANDS,
             30.0,

@@ -58,8 +58,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, 0.0),
             DropZone::new(vec2(0.0, 0.0)),
             drop_it,
-            controls.float("center_min_radius"),
-            controls.float("center_max_radius"),
+            controls.get("center_min_radius"),
+            controls.get("center_max_radius"),
             center_color,
         ),
         // Top
@@ -68,8 +68,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay),
             DropZone::new(vec2(0.0, rect.top())),
             drop_it,
-            controls.float("trbl_min_radius"),
-            controls.float("trbl_max_radius"),
+            controls.get("trbl_min_radius"),
+            controls.get("trbl_max_radius"),
             trbl_color,
         ),
         Dropper::new(
@@ -77,8 +77,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 2.0),
             DropZone::new(rect.top_right()),
             drop_it,
-            controls.float("corner_min_radius"),
-            controls.float("corner_max_radius"),
+            controls.get("corner_min_radius"),
+            controls.get("corner_max_radius"),
             corner_color,
         ),
         // Right
@@ -87,8 +87,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 3.0),
             DropZone::new(vec2(rect.top(), 0.0)),
             drop_it,
-            controls.float("trbl_min_radius"),
-            controls.float("trbl_max_radius"),
+            controls.get("trbl_min_radius"),
+            controls.get("trbl_max_radius"),
             trbl_color,
         ),
         Dropper::new(
@@ -96,8 +96,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 4.0),
             DropZone::new(rect.bottom_right()),
             drop_it,
-            controls.float("corner_min_radius"),
-            controls.float("corner_max_radius"),
+            controls.get("corner_min_radius"),
+            controls.get("corner_max_radius"),
             corner_color,
         ),
         // Bottom
@@ -106,8 +106,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 5.0),
             DropZone::new(vec2(0.0, rect.bottom())),
             drop_it,
-            controls.float("trbl_min_radius"),
-            controls.float("trbl_max_radius"),
+            controls.get("trbl_min_radius"),
+            controls.get("trbl_max_radius"),
             trbl_color,
         ),
         Dropper::new(
@@ -115,8 +115,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 6.0),
             DropZone::new(rect.bottom_left()),
             drop_it,
-            controls.float("corner_min_radius"),
-            controls.float("corner_max_radius"),
+            controls.get("corner_min_radius"),
+            controls.get("corner_max_radius"),
             corner_color,
         ),
         // Left
@@ -125,8 +125,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 7.0),
             DropZone::new(vec2(rect.bottom(), 0.0)),
             drop_it,
-            controls.float("trbl_min_radius"),
-            controls.float("trbl_max_radius"),
+            controls.get("trbl_min_radius"),
+            controls.get("trbl_max_radius"),
             trbl_color,
         ),
         Dropper::new(
@@ -134,8 +134,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
             controls.animation.create_trigger(duration, delay * 8.0),
             DropZone::new(rect.top_left()),
             drop_it,
-            controls.float("corner_min_radius"),
-            controls.float("corner_max_radius"),
+            controls.get("corner_min_radius"),
+            controls.get("corner_max_radius"),
             corner_color,
         ),
     ];
@@ -150,6 +150,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 
 impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.controls.update();
+
         let offset = self
             .controls
             .animation
@@ -160,21 +162,21 @@ impl Sketch for Drops {
                 match dropper.kind.as_str() {
                     "trbl" => {
                         dropper.min_radius =
-                            self.controls.float("trbl_min_radius");
+                            self.controls.get("trbl_min_radius");
                         dropper.max_radius =
-                            self.controls.float("trbl_max_radius");
+                            self.controls.get("trbl_max_radius");
                     }
                     "corner" => {
                         dropper.min_radius =
-                            self.controls.float("corner_min_radius");
+                            self.controls.get("corner_min_radius");
                         dropper.max_radius =
-                            self.controls.float("corner_max_radius");
+                            self.controls.get("corner_max_radius");
                     }
                     "center" => {
                         dropper.min_radius =
-                            self.controls.float("center_min_radius");
+                            self.controls.get("center_min_radius");
                         dropper.max_radius =
-                            self.controls.float("center_max_radius");
+                            self.controls.get("center_max_radius");
                     }
                     _ => {}
                 }
@@ -268,7 +270,7 @@ fn drop_it(
 }
 
 fn center_color(controls: &Controls) -> Hsl {
-    if random_f32() > controls.float("center_bw_ratio") {
+    if random_f32() > controls.get("center_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {
         hsl(0.0, 0.0, 1.0)
@@ -276,7 +278,7 @@ fn center_color(controls: &Controls) -> Hsl {
 }
 
 fn trbl_color(controls: &Controls) -> Hsl {
-    if random_f32() > controls.float("trbl_bw_ratio") {
+    if random_f32() > controls.get("trbl_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {
         hsl(0.0, 0.0, 1.0)
@@ -284,7 +286,7 @@ fn trbl_color(controls: &Controls) -> Hsl {
 }
 
 fn corner_color(controls: &Controls) -> Hsl {
-    if random_f32() > controls.float("corner_bw_ratio") {
+    if random_f32() > controls.get("corner_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {
         hsl(0.0, 0.0, 1.0)

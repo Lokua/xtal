@@ -151,55 +151,56 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
 
 impl Sketch for Spiral {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [-0.9, 0.0, 0.9, 0.0],
             b: [
-                self.controls.float("points_per_segment"),
-                self.controls.float("noise_scale"),
-                self.controls.float("angle_variation"),
-                self.controls.float("n_lines"),
+                self.controls.get("points_per_segment"),
+                self.controls.get("noise_scale"),
+                self.controls.get("angle_variation"),
+                self.controls.get("n_lines"),
             ],
             c: [
-                self.controls.float("point_size"),
-                self.controls.float("circle_r_min"),
-                self.controls.float("circle_r_max"),
+                self.controls.get("point_size"),
+                self.controls.get("circle_r_min"),
+                self.controls.get("circle_r_max"),
                 ternary!(
                     self.controls.bool("offset_mult_10"),
-                    self.controls.float("offset_mult") * 10.0,
-                    self.controls.float("offset_mult")
+                    self.controls.get("offset_mult") * 10.0,
+                    self.controls.get("offset_mult")
                 ),
             ],
             d: [
-                self.controls.float("bg_brightness"),
+                self.controls.get("bg_brightness"),
                 self.controls.animation.tri(64.0),
                 bool_to_f32(self.controls.bool("invert")),
                 bool_to_f32(self.controls.bool("animate_angle_offset")),
             ],
             e: [
-                self.controls.float("wave_amp"),
-                self.controls.float("wave_freq"),
-                self.controls.float("stripe_amp"),
-                self.controls.float("stripe_freq"),
+                self.controls.get("wave_amp"),
+                self.controls.get("wave_freq"),
+                self.controls.get("stripe_amp"),
+                self.controls.get("stripe_freq"),
             ],
             f: [
                 bool_to_f32(self.controls.bool("animate_bg")),
-                self.controls.float("steep_amp"),
-                self.controls.float("steep_freq"),
-                self.controls.float("steepness"),
+                self.controls.get("steep_amp"),
+                self.controls.get("steep_freq"),
+                self.controls.get("steepness"),
             ],
             g: [
-                self.controls.float("quant_amp"),
-                self.controls.float("quant_freq"),
+                self.controls.get("quant_amp"),
+                self.controls.get("quant_freq"),
                 get_phase(self, "quant", 24.0),
                 get_phase(self, "steep", 48.0),
             ],
             h: [
                 get_phase(self, "wave", 32.0),
                 get_phase(self, "stripe", 56.0),
-                self.controls.float("harmonic_influence"),
+                self.controls.get("harmonic_influence"),
                 0.0,
             ],
         };
@@ -214,10 +215,10 @@ impl Sketch for Spiral {
     fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
         frame.clear(WHITE);
 
-        let points_per_line = self.controls.float("points_per_segment") as u32;
-        let n_lines = self.controls.float("n_lines") as u32;
+        let points_per_line = self.controls.get("points_per_segment") as u32;
+        let n_lines = self.controls.get("n_lines") as u32;
         let total_points = points_per_line * n_lines;
-        let density = self.controls.float("passes") as u32;
+        let density = self.controls.get("passes") as u32;
         let spiral_vertices = total_points * 6 * density;
         let background_vertices = 3;
         let total_vertices = background_vertices + spiral_vertices;
@@ -230,7 +231,7 @@ fn get_phase(spiral: &Spiral, param_name: &str, animation_time: f32) -> f32 {
     let animate_param = format!("animate_{}_phase", param_name);
     let invert_param = format!("invert_animate_{}_phase", param_name);
     let phase_param = format!("{}_phase", param_name);
-    let time = animation_time * spiral.controls.float("phase_animation_mult");
+    let time = animation_time * spiral.controls.get("phase_animation_mult");
 
     if spiral.controls.bool(&animate_param) {
         if spiral.controls.bool(&invert_param) {
@@ -239,6 +240,6 @@ fn get_phase(spiral: &Spiral, param_name: &str, animation_time: f32) -> f32 {
             (1.0 - spiral.controls.animation.loop_phase(time)) * TAU
         }
     } else {
-        spiral.controls.float(&phase_param)
+        spiral.controls.get(&phase_param)
     }
 }

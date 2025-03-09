@@ -196,42 +196,43 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
 
 impl Sketch for HeatMask {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let mut wr = ctx.window_rect();
 
         let show_center = self.controls.bool("show_center");
         let animate_center = self.controls.bool("animate_center");
         let center_use_grain = self.controls.bool("center_use_grain");
         let center_mode = self.controls.string("center_mode");
-        let center_radius = self.controls.float("center_radius");
-        let center_strength = self.controls.float("center_strength");
+        let center_radius = self.controls.get("center_radius");
+        let center_strength = self.controls.get("center_strength");
         // ---
         let show_corner = self.controls.bool("show_corner");
         let animate_corner = self.controls.bool("animate_corner");
         let corner_use_grain = self.controls.bool("corner_use_grain");
         let corner_mode = self.controls.string("corner_mode");
-        let corner_radius = self.controls.float("corner_radius");
-        let corner_strength = self.controls.float("corner_strength");
+        let corner_radius = self.controls.get("corner_radius");
+        let corner_strength = self.controls.get("corner_strength");
         // ---
         let show_trbl = self.controls.bool("show_trbl");
         let animate_trbl = self.controls.bool("animate_trbl");
         let trbl_use_grain = self.controls.bool("trbl_use_grain");
         let trbl_mode = self.controls.string("trbl_mode");
-        let trbl_radius = self.controls.float("trbl_radius");
-        let trbl_strength = self.controls.float("trbl_strength");
+        let trbl_radius = self.controls.get("trbl_radius");
+        let trbl_strength = self.controls.get("trbl_strength");
         // ---
         let sort = self.controls.string("sort");
-        let size_max = self.controls.float("size_max");
+        let size_max = self.controls.get("size_max");
         let invert_colors = self.controls.bool("invert_colors");
-        let gradient_spread = self.controls.float("gradient_spread");
-        let scaling_power = self.controls.float("scaling_power");
-        let t_scale = self.controls.float("t_scale");
-        let grain_size = self.controls.float("grain_size");
-        let angle_mult = self.controls.float("angle_mult");
-        let distance_strength = self.controls.float("distance_strength");
-        let angle_frequency = self.controls.float("angle_frequency");
+        let gradient_spread = self.controls.get("gradient_spread");
+        let scaling_power = self.controls.get("scaling_power");
+        let t_scale = self.controls.get("t_scale");
+        let grain_size = self.controls.get("grain_size");
+        let angle_mult = self.controls.get("angle_mult");
+        let distance_strength = self.controls.get("distance_strength");
+        let angle_frequency = self.controls.get("angle_frequency");
 
-        let max_mag = self.displacer_configs.len() as f32
-            * self.controls.float("mag_mult");
+        let max_mag =
+            self.displacer_configs.len() as f32 * self.controls.get("mag_mult");
         let gradient = &self.gradient;
 
         if wr.changed() {
@@ -446,14 +447,14 @@ impl Sketch for HeatMask {
             0.0,
             0.0,
             0.03,
-            self.controls.float("background_alpha"),
+            self.controls.get("background_alpha"),
         ));
 
-        let scaled_draw = draw.scale(self.controls.float("scale"));
+        let scaled_draw = draw.scale(self.controls.get("scale"));
 
-        let alpha = self.controls.float("alpha");
+        let alpha = self.controls.get("alpha");
         let stroke = self.controls.bool("stroke");
-        let stroke_weight = self.controls.float("stroke_weight");
+        let stroke_weight = self.controls.get("stroke_weight");
         let flip = self.controls.bool("flip");
 
         for (position, radius, triangle_height, color) in &self.objects {
