@@ -206,10 +206,16 @@ impl<T: TimingSource> ControlScriptBuilder<T> {
 
         if let Some(midi_controls) = self.midi_controls {
             c.midi_controls = midi_controls;
+            if let Err(e) = c.midi_controls.start() {
+                error!("Unable to start midi_controls: {}", e);
+            }
         }
 
         if let Some(osc_controls) = self.osc_controls {
             c.osc_controls = osc_controls;
+            if let Err(e) = c.osc_controls.start() {
+                error!("Unable to start osc_controls: {}", e);
+            }
         }
 
         if let Some(audio_controls) = self.audio_controls {

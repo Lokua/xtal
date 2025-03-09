@@ -23,25 +23,21 @@ const GRID_SIZE: u32 = 16;
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 0.0, 1.0)")]
 pub struct Template {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     lines: Vec<Vec2>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::new(vec![
-        Control::checkbox("invert", false),
-        Control::slide("a", 0.5),
-        Control::slide("b", 0.5),
-        Control::slider("aberration", 0.5, (0.0, 100.0), 1.0),
-        Control::slide("background_alpha", 1.0),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("invert", false, None)
+        .slider_n("a", 0.5)
+        .slider_n("b", 0.5)
+        .slider("aberration", 0.5, (0.0, 100.0), 1.0, None)
+        .slider_n("background_alpha", 1.0)
+        .build();
 
     Template {
-        animation,
         controls,
         lines: vec![],
     }
@@ -54,7 +50,7 @@ impl Sketch for Template {
         let spacing = window_rect.w() / (N_LINES as f32 + 1.0);
         let b = self.controls.float("b") * 100.0;
         let line_length = (window_rect.h() / GRID_SIZE as f32) + b;
-        let base_time = self.animation.tri(4.0);
+        let base_time = self.controls.animation.tri(4.0);
         let lrp_time = 4.0;
 
         for i in 0..N_LINES {
@@ -65,7 +61,7 @@ impl Sketch for Template {
 
             let position_offset = i_f32 / n_lines * TAU * base_time * 2.0;
 
-            let wave = (self.animation.lrp(
+            let wave = (self.controls.animation.lrp(
                 &[
                     kf(0.0, lrp_time),
                     kf(1.0, lrp_time),
@@ -145,9 +141,10 @@ pub fn draw_lines(
 
     for chunk in template.lines.chunks(2) {
         if let [start, end] = chunk {
-            let range = template.animation.tri(32.0) * wr.hw();
+            let range = template.controls.animation.tri(32.0) * wr.hw();
 
             let animated_center = template
+                .controls
                 .animation
                 .lrp(&[kf(-range, time), kf(range, time)], anim_delay);
 

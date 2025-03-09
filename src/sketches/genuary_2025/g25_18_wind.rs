@@ -41,20 +41,20 @@ struct ShaderParams {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct G25_18Wind {
-    #[allow(dead_code)]
-    animation: Animation<MidiSongTiming>,
-    controls: Controls,
-    midi: MidiControls,
+    controls: ControlScript<MidiSongTiming>,
     agents: Vec<Agent>,
     noise: PerlinNoise,
     gpu: gpu::GpuState<Vertex>,
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
-    let animation = Animation::new(MidiSongTiming::new(ctx.bpm()));
+    fn make_agent_count_disabler() -> DisabledFn {
+        Some(Box::new(|_controls: &Controls| true))
+    }
 
-    let controls = Controls::with_previous(vec![
-        Control::select(
+    let controls = ControlScriptBuilder::new()
+        .timing(MidiSongTiming::new(ctx.bpm()))
+        .select(
             "algorithm",
             "cos,sin",
             &[
@@ -65,35 +65,33 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
                 "plasma",
                 "static",
             ],
-        ),
-        Control::checkbox("randomize_point_size", false),
+            None,
+        )
+        .checkbox("randomize_point_size", false, None)
         // NOTE: this control is broken; needs to be maxed out
-        Control::slider_x(
+        .slider(
             "agent_count",
             MAX_COUNT as f32,
             (10.0, MAX_COUNT as f32),
             1.0,
-            |_controls: &Controls| true,
-        ),
-        Control::slider("agent_size", 0.002, (0.001, 0.01), 0.0001),
-        Control::slider("step_range", 5.0, (1.0, 40.0), 0.1),
-        Control::slide("bg_alpha", 0.02),
-        Control::Separator {},
-        Control::slide("displace", 0.00),
-        Control::slide("slice_glitch", 0.00),
-        Control::slide("b2", 0.00),
-        Control::slide("b3", 0.00),
-        Control::slide("b4", 0.00),
-    ]);
-
-    let midi = MidiControlBuilder::new()
-        .control("noise_strength", (0, 1), (0.0, 20.0), 0.0)
-        .control("noise_vel", (0, 2), (0.0, 0.02), 0.0)
-        .control("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
-        .control_n("displace", (0, 4), 0.0)
-        .control_n("slice_glitch", (0, 5), 1.0)
-        .control("alg", (0, 6), (0.0, 5.0), 0.0)
-        .control_n("lightning", (0, 7), 1.0)
+            make_agent_count_disabler(),
+        )
+        .slider("agent_size", 0.002, (0.001, 0.01), 0.0001, None)
+        .slider("step_range", 5.0, (1.0, 40.0), 0.1, None)
+        .slider_n("bg_alpha", 0.02)
+        .separator()
+        .slider_n("displace", 0.00)
+        .slider_n("slice_glitch", 0.00)
+        .slider_n("b2", 0.00)
+        .slider_n("b3", 0.00)
+        .slider_n("b4", 0.00)
+        .midi("noise_strength", (0, 1), (0.0, 20.0), 0.0)
+        .midi("noise_vel", (0, 2), (0.0, 0.02), 0.0)
+        .midi("noise_scale", (0, 3), (1.0, 1_000.0), 100.0)
+        .midi_n("displace", (0, 4))
+        .midi_n("slice_glitch", (0, 5))
+        .midi("alg", (0, 6), (0.0, 5.0), 0.0)
+        .midi_n("lightning", (0, 7))
         .build();
 
     let params = ShaderParams {
@@ -123,9 +121,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
     );
 
     G25_18Wind {
-        animation,
         controls,
-        midi,
         agents: vec![],
         noise: PerlinNoise::new(512),
         gpu,
@@ -150,7 +146,7 @@ impl Sketch for G25_18Wind {
             self.controls.mark_unchanged();
         }
 
-        let algorithm = match self.midi.get("alg").floor() as u32 {
+        let algorithm = match self.controls.get("alg").floor() as u32 {
             0 => "cos,sin",
             1 => "tanh,cosh",
             2 => "exponential_drift",
@@ -161,9 +157,9 @@ impl Sketch for G25_18Wind {
         };
 
         let agent_size = self.controls.float("agent_size");
-        let noise_scale = self.midi.get("noise_scale");
-        let noise_strength = self.midi.get("noise_strength");
-        let noise_vel = self.midi.get("noise_vel");
+        let noise_scale = self.controls.get("noise_scale");
+        let noise_strength = self.controls.get("noise_strength");
+        let noise_vel = self.controls.get("noise_vel");
         let step_range = self.controls.float("step_range");
         let bg_alpha = self.controls.float("bg_alpha");
 
@@ -183,20 +179,22 @@ impl Sketch for G25_18Wind {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
                 bg_alpha,
-                self.animation.lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
-                self.midi.get("displace"),
-                self.midi.get("slice_glitch"),
+                self.controls
+                    .animation
+                    .lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
+                self.controls.get("displace"),
+                self.controls.get("slice_glitch"),
             ],
             b: [
-                self.midi.get("lightning"),
-                self.animation.tri(6.0),
+                self.controls.get("lightning"),
+                self.controls.animation.tri(6.0),
                 self.controls.float("b3"),
                 self.controls.float("b4"),
             ],
         };
 
         let randomize_point_size = self.controls.bool("randomize_point_size");
-        let (size_min, _) = self.controls.slider_range("agent_size");
+        let (size_min, _) = self.controls.controls.slider_range("agent_size");
         let size_range = safe_range(size_min - 0.000_1, agent_size);
 
         let mut vertices =

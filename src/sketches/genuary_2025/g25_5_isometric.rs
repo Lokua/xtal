@@ -17,9 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -32,14 +30,13 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::new(vec![
-        Control::slider("a1", 0.5, (0.0, 1.0), 0.01),
-        Control::slider("a2", 0.5, (0.0, 1.0), 0.01),
-        Control::slider("a3", 0.5, (0.0, 1.0), 0.01),
-        Control::slider("a4", 0.5, (0.0, 1.0), 0.01),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("a1", 0.5, (0.0, 1.0), 0.01, None)
+        .slider("a2", 0.5, (0.0, 1.0), 0.01, None)
+        .slider("a3", 0.5, (0.0, 1.0), 0.01, None)
+        .slider("a4", 0.5, (0.0, 1.0), 0.01, None)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -56,27 +53,20 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
         true,
     );
 
-    Template {
-        animation,
-        controls,
-        gpu,
-    }
+    Template { controls, gpu }
 }
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+
         let params = ShaderParams {
-            resolution: [
-                ctx.window_rect().w(),
-                ctx.window_rect().h(),
-                0.0,
-                0.0,
-            ],
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.float("a1"),
-                self.controls.float("a2"),
-                self.controls.float("a3"),
-                self.controls.float("a4"),
+                self.controls.get("a1"),
+                self.controls.get("a2"),
+                self.controls.get("a3"),
+                self.controls.get("a4"),
             ],
         };
 

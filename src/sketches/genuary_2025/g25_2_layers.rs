@@ -18,9 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct G25_2Layers {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -35,20 +33,21 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_2Layers {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    fn create_disabled_fn() -> DisabledFn {
+        Some(Box::new(|_controls| true))
+    }
 
-    let disable = |_controls: &Controls| true;
-
-    let controls = Controls::with_previous(vec![
-        Control::slide("smooth_mix", 0.5),
-        Control::slider("contrast", 1.5, (0.1, 5.0), 0.1),
-        Control::Separator {},
-        Control::slider_x("g1", 2.0, (2.0, 32.0), 1.0, disable),
-        Control::slider_x("g2", 4.0, (2.0, 32.0), 1.0, disable),
-        Control::slider_x("g3", 8.0, (2.0, 32.0), 1.0, disable),
-        Control::Separator {},
-        Control::slide("post_mix", 0.5),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider_n("smooth_mix", 0.5)
+        .slider("contrast", 1.5, (0.1, 5.0), 0.1, None)
+        .separator()
+        .slider("g1", 2.0, (2.0, 32.0), 1.0, create_disabled_fn())
+        .slider("g2", 4.0, (2.0, 32.0), 1.0, create_disabled_fn())
+        .slider("g3", 8.0, (2.0, 32.0), 1.0, create_disabled_fn())
+        .separator()
+        .slider_n("post_mix", 0.5)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -66,11 +65,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_2Layers {
         true,
     );
 
-    G25_2Layers {
-        animation,
-        controls,
-        gpu,
-    }
+    G25_2Layers { controls, gpu }
 }
 
 impl Sketch for G25_2Layers {
@@ -84,30 +79,54 @@ impl Sketch for G25_2Layers {
             a: [
                 self.controls.float("contrast"),
                 self.controls.float("smooth_mix"),
-                self.animation.tri(8.0),
-                self.animation.tri(12.0),
+                self.controls.animation.tri(8.0),
+                self.controls.animation.tri(12.0),
             ],
             b: [
-                self.animation
-                    .r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
-                self.animation
-                    .r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
-                self.animation
-                    .r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.0,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.5,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.1,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
                 self.controls.float("post_mix"),
             ],
             c: [
-                self.animation
-                    .r_ramp(&kfs, 0.0, time * 0.5, Easing::EaseInOut),
-                self.animation
-                    .r_ramp(&kfs, 0.5, time * 0.5, Easing::EaseInOut),
-                self.animation
-                    .r_ramp(&kfs, 0.1, time * 0.5, Easing::EaseInOut),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.0,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.5,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
+                self.controls.animation.r_ramp(
+                    &kfs,
+                    0.1,
+                    time * 0.5,
+                    Easing::EaseInOut,
+                ),
                 0.0,
             ],
             d: [
                 2.0,
-                self.animation.lrp(
+                self.controls.animation.lrp(
                     &[
                         kf(2.0, 4.0),  // stay
                         kf(2.0, 4.0),  // transition
@@ -116,7 +135,7 @@ impl Sketch for G25_2Layers {
                     ],
                     0.0,
                 ),
-                self.animation.lrp(
+                self.controls.animation.lrp(
                     &[
                         kf(2.0, 4.0), // stay
                         kf(2.0, 4.0), // transition

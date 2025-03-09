@@ -18,9 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct G25_13Triangle {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
     midi: MidiControls,
 }
@@ -39,12 +37,11 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::slider("scale", 1.0, (0.0001, 2.0), 0.0001),
-        Control::slide("y_offset", 0.3),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("scale", 1.0, (0.0001, 2.0), 0.0001, None)
+        .slider_n("y_offset", 0.3)
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -68,7 +65,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
         .build();
 
     G25_13Triangle {
-        animation,
         controls,
         gpu,
         midi,
@@ -88,8 +84,8 @@ impl Sketch for G25_13Triangle {
                 self.midi.get("fourth_iterations").floor(),
             ],
             b: [
-                self.controls.float("scale"),
-                self.controls.float("y_offset"),
+                self.controls.get("scale"),
+                self.controls.get("y_offset"),
                 0.0,
                 0.0,
             ],

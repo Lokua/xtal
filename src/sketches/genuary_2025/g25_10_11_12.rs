@@ -49,78 +49,78 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<()>,
     midi: MidiControls,
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    fn make_disabled() -> DisabledFn {
+        Some(Box::new(|_| true))
+    }
 
-    let disabled = |_controls: &Controls| true;
-
-    let controls = Controls::with_previous(vec![
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
         // 1 "pass" = 1 million vertices
-        Control::slider("passes", 1.0, (1.0, 20.0), 1.0),
-        Control::slider_x("n_lines", 64.0, (1.0, 256.0), 1.0, disabled),
-        Control::slider_x(
+        .slider("passes", 1.0, (1.0, 20.0), 1.0, None)
+        .slider("n_lines", 64.0, (1.0, 256.0), 1.0, make_disabled())
+        .slider(
             "points_per_segment",
             100.0,
             (10.0, 20_000.0),
             10.0,
-            disabled,
-        ),
-        Control::slider("point_size", 0.001, (0.0005, 0.01), 0.0001),
-        Control::slider("harmonic_influence", 0.2, (0.01, 10.0), 0.01),
-        Control::Separator {}, // -----------------------------------
-        Control::checkbox("invert", false),
-        Control::checkbox("animate_bg", false),
-        Control::checkbox("animate_angle_offset", false),
-        Control::slider("bg_brightness", 1.5, (0.0, 5.0), 0.01),
-        Control::slider("phase_animation_mult", 1.0, (0.0, 1.0), 0.125),
-        Control::Separator {}, // -----------------------------------
-        Control::checkbox("animate_wave_phase", false),
-        Control::checkbox("invert_animate_wave_phase", false),
-        Control::slider_x(
+            make_disabled(),
+        )
+        .slider("point_size", 0.001, (0.0005, 0.01), 0.0001, None)
+        .slider("harmonic_influence", 0.2, (0.01, 10.0), 0.01, None)
+        .separator()
+        .checkbox("invert", false, None)
+        .checkbox("animate_bg", false, None)
+        .checkbox("animate_angle_offset", false, None)
+        .slider("bg_brightness", 1.5, (0.0, 5.0), 0.01, None)
+        .slider("phase_animation_mult", 1.0, (0.0, 1.0), 0.125, None)
+        .separator()
+        .checkbox("animate_wave_phase", false, None)
+        .checkbox("invert_animate_wave_phase", false, None)
+        .slider(
             "wave_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_wave_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::checkbox("animate_stripe_phase", false),
-        Control::checkbox("invert_animate_stripe_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_wave_phase"))),
+        )
+        .separator()
+        .checkbox("animate_stripe_phase", false, None)
+        .checkbox("invert_animate_stripe_phase", false, None)
+        .slider(
             "stripe_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_stripe_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::slider("steepness", 10.0, (1.0, 100.0), 1.0),
-        Control::checkbox("animate_steep_phase", false),
-        Control::checkbox("invert_animate_steep_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_stripe_phase"))),
+        )
+        .separator()
+        .slider("steepness", 10.0, (1.0, 100.0), 1.0, None)
+        .checkbox("animate_steep_phase", false, None)
+        .checkbox("invert_animate_steep_phase", false, None)
+        .slider(
             "steep_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_steep_phase"),
-        ),
-        Control::Separator {}, // -----------------------------------
-        Control::checkbox("animate_quant_phase", false),
-        Control::checkbox("invert_animate_quant_phase", false),
-        Control::slider_x(
+            Some(Box::new(|controls| controls.bool("animate_steep_phase"))),
+        )
+        .separator()
+        .checkbox("animate_quant_phase", false, None)
+        .checkbox("invert_animate_quant_phase", false, None)
+        .slider(
             "quant_phase",
             0.0,
             (0.0, TAU),
             0.001,
-            |controls: &Controls| controls.bool("animate_quant_phase"),
-        ),
-    ]);
+            Some(Box::new(|controls| controls.bool("animate_quant_phase"))),
+        )
+        .build();
 
     let params = ShaderParams {
         resolution: [0.0; 4],
@@ -163,7 +163,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
         .build();
 
     Template {
-        animation,
         controls,
         gpu,
         midi,
@@ -172,13 +171,9 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
         let params = ShaderParams {
-            resolution: [
-                ctx.window_rect().w(),
-                ctx.window_rect().h(),
-                0.0,
-                0.0,
-            ],
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [-0.9, 0.0, 0.9, 0.0],
             b: [
                 self.midi.get("points_per_segment"),
@@ -187,14 +182,14 @@ impl Sketch for Template {
                 self.midi.get("n_lines"),
             ],
             c: [
-                self.controls.float("point_size"),
+                self.controls.get("point_size"),
                 self.midi.get("circle_r_min"),
                 self.midi.get("circle_r_max"),
                 self.midi.get("offset_mult"),
             ],
             d: [
-                self.controls.float("bg_brightness"),
-                self.animation.tri(64.0),
+                self.controls.get("bg_brightness"),
+                self.controls.animation.tri(64.0),
                 bool_to_f32(self.controls.bool("invert")),
                 bool_to_f32(self.controls.bool("animate_angle_offset")),
             ],
@@ -208,7 +203,7 @@ impl Sketch for Template {
                 bool_to_f32(self.controls.bool("animate_bg")),
                 self.midi.get("steep_amp"),
                 self.midi.get("steep_freq").ceil(),
-                self.controls.float("steepness"),
+                self.controls.get("steepness"),
             ],
             g: [
                 self.midi.get("quant_amp"),
@@ -219,7 +214,7 @@ impl Sketch for Template {
             h: [
                 get_phase(self, "wave", 32.0),
                 get_phase(self, "stripe", 56.0),
-                self.controls.float("harmonic_influence"),
+                self.controls.get("harmonic_influence"),
                 0.0,
             ],
         };
@@ -238,7 +233,7 @@ impl Sketch for Template {
         let points_per_line = self.midi.get("points_per_segment") as u32;
         let n_lines = self.midi.get("n_lines") as u32;
         let total_points = points_per_line * n_lines;
-        let density = self.controls.float("passes") as u32;
+        let density = self.controls.get("passes") as u32;
         let spiral_vertices = total_points * 6 * density;
         let background_vertices = 3;
         let total_vertices = background_vertices + spiral_vertices;
@@ -255,15 +250,15 @@ fn get_phase(
     let animate_param = format!("animate_{}_phase", param_name);
     let invert_param = format!("invert_animate_{}_phase", param_name);
     let phase_param = format!("{}_phase", param_name);
-    let time = animation_time * template.controls.float("phase_animation_mult");
+    let time = animation_time * template.controls.get("phase_animation_mult");
 
     if template.controls.bool(&animate_param) {
         if template.controls.bool(&invert_param) {
-            template.animation.loop_phase(time) * TAU
+            template.controls.animation.loop_phase(time) * TAU
         } else {
-            (1.0 - template.animation.loop_phase(time)) * TAU
+            (1.0 - template.controls.animation.loop_phase(time)) * TAU
         }
     } else {
-        template.controls.float(&phase_param)
+        template.controls.get(&phase_param)
     }
 }

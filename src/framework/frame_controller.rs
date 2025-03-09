@@ -129,7 +129,7 @@ mod lock_impl {
 
     impl FrameController {
         fn new(fps: f32) -> Self {
-            info!("using lock_impl");
+            info!("Using lock_impl");
             let now = Instant::now();
             Self {
                 fps,
@@ -433,7 +433,7 @@ mod atomic_impl {
 
     impl FrameController {
         fn new() -> Self {
-            info!("using atomic_impl");
+            info!("Using atomic_impl");
             let now = Instant::now();
             Self {
                 last_frame_time: now,

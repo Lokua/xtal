@@ -20,7 +20,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    animation: Animation<OscTransportTiming>,
     controls: ControlScript<OscTransportTiming>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -48,13 +47,9 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let timing = OscTransportTiming::new(ctx.bpm());
-
-    let animation = Animation::new(timing.clone());
-
     let controls = ControlScript::from_path(
-        to_absolute_path(file!(), "g25_14_black_and_white.yaml"),
-        timing,
+        to_absolute_path(file!(), "./g25_14_black_and_white.yaml"),
+        OscTransportTiming::new(ctx.bpm()),
     );
 
     let params = ShaderParams {
@@ -69,31 +64,23 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
     let gpu = GpuState::new_fullscreen(
         app,
         ctx.window_rect().resolution_u32(),
-        to_absolute_path(file!(), "g25_14_black_and_white.wgsl"),
+        to_absolute_path(file!(), "./g25_14_black_and_white.wgsl"),
         &params,
         true,
     );
 
-    Template {
-        animation,
-        controls,
-        gpu,
-    }
+    Template { controls, gpu }
 }
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         self.controls.update();
 
+        let wr = ctx.window_rect();
         let phase_mod = self.controls.get("phase_mod");
 
         let params = ShaderParams {
-            resolution: [
-                ctx.window_rect().w(),
-                ctx.window_rect().h(),
-                0.0,
-                0.0,
-            ],
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
                 self.controls.get("wave1_freq"),
                 0.0, // wave1_angle
@@ -101,13 +88,13 @@ impl Sketch for Template {
                 0.25, // wave2_angle
             ],
             b: [
-                self.animation.r_ramp(
+                self.controls.animation.r_ramp(
                     &[kfr((0.0, phase_mod), 2.0)],
                     0.0,
                     1.0,
                     Easing::Linear,
                 ),
-                self.animation.r_ramp(
+                self.controls.animation.r_ramp(
                     &[kfr((0.0, phase_mod), 2.0)],
                     1.0,
                     1.0,
@@ -136,11 +123,7 @@ impl Sketch for Template {
             ],
         };
 
-        self.gpu.update_params(
-            app,
-            ctx.window_rect().resolution_u32(),
-            &params,
-        );
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {

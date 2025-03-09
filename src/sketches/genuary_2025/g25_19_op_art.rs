@@ -19,10 +19,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    #[allow(dead_code)]
-    animation: Animation<OscTransportTiming>,
-    osc: OscControls,
-    controls: Controls,
+    controls: ControlScript<OscTransportTiming>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -49,32 +46,28 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(OscTransportTiming::new(ctx.bpm()));
-
-    let controls = Controls::new(vec![
-        Control::slider("wave_power", 5.0, (0.0, 10.0), 0.01),
-        Control::slider("wave_bands", 0.0, (2.0, 10.0), 1.0),
-        Control::slider("wave_threshold", 0.0, (-1.0, 1.0), 0.001),
-        Control::Separator {}, // -------------------
-        Control::checkbox("bg_invert", false),
-        Control::slide("bg_radius", 0.5),
-        Control::slide("bg_gradient_strength", 0.5),
-        Control::Separator {}, // -------------------
-        Control::select("mix_mode", "mix", &["mix", "min_max"]),
-    ]);
-
-    let osc = OscControlBuilder::new()
-        .control("/wave_phase", (0.0, TAU), 0.0)
-        .control("/wave_radial_freq", (0.0, 100.0), 0.0)
-        .control("/wave_horiz_freq", (0.0, 100.0), 0.0)
-        .control("/wave_vert_freq", (0.0, 100.0), 0.0)
-        .control_n("/reduce_mix", 0.0)
-        .control_n("/map_mix", 0.0)
-        .control_n("/wave_scale", 0.0)
-        .control("/bg_freq", (0.0, 100.0), 90.0)
-        .control_n("/wave1_mix", 0.0)
-        .control_n("/wave2_mix", 0.0)
-        .control_n("/wave3_mix", 0.0)
+    let controls = ControlScriptBuilder::new()
+        .timing(OscTransportTiming::new(ctx.bpm()))
+        .slider("wave_power", 5.0, (0.0, 10.0), 0.01, None)
+        .slider("wave_bands", 0.0, (2.0, 10.0), 1.0, None)
+        .slider("wave_threshold", 0.0, (-1.0, 1.0), 0.001, None)
+        .separator()
+        .checkbox("bg_invert", false, None)
+        .slider_n("bg_radius", 0.5)
+        .slider_n("bg_gradient_strength", 0.5)
+        .separator()
+        .select("mix_mode", "mix", &["mix", "min_max"], None)
+        .osc("wave_phase", (0.0, TAU), 0.0)
+        .osc("wave_radial_freq", (0.0, 100.0), 0.0)
+        .osc("wave_horiz_freq", (0.0, 100.0), 0.0)
+        .osc("wave_vert_freq", (0.0, 100.0), 0.0)
+        .osc_n("reduce_mix", 0.0)
+        .osc_n("map_mix", 0.0)
+        .osc_n("wave_scale", 0.0)
+        .osc("bg_freq", (0.0, 100.0), 90.0)
+        .osc_n("wave1_mix", 0.0)
+        .osc_n("wave2_mix", 0.0)
+        .osc_n("wave3_mix", 0.0)
         .build();
 
     let params = ShaderParams {
@@ -94,55 +87,47 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
         true,
     );
 
-    Template {
-        animation,
-        osc,
-        controls,
-        gpu,
-    }
+    Template { controls, gpu }
 }
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+
         let params = ShaderParams {
-            resolution: [
-                ctx.window_rect().w(),
-                ctx.window_rect().h(),
-                0.0,
-                0.0,
-            ],
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.osc.get("/wave_phase"),
-                self.osc.get("/wave_radial_freq"),
-                self.osc.get("/wave_horiz_freq"),
-                self.osc.get("/wave_vert_freq"),
+                self.controls.get("wave_phase"),
+                self.controls.get("wave_radial_freq"),
+                self.controls.get("wave_horiz_freq"),
+                self.controls.get("wave_vert_freq"),
             ],
             b: [
-                self.osc.get("/bg_freq"),
-                self.controls.float("bg_radius"),
-                self.controls.float("bg_gradient_strength"),
-                self.controls.float("wave_power"),
+                self.controls.get("bg_freq"),
+                self.controls.get("bg_radius"),
+                self.controls.get("bg_gradient_strength"),
+                self.controls.get("wave_power"),
             ],
             c: [
-                self.osc.get("/reduce_mix"),
-                self.osc.get("/map_mix"),
-                self.controls.float("wave_bands"),
-                self.controls.float("wave_threshold"),
+                self.controls.get("reduce_mix"),
+                self.controls.get("map_mix"),
+                self.controls.get("wave_bands"),
+                self.controls.get("wave_threshold"),
             ],
             d: [
                 bool_to_f32(self.controls.bool("bg_invert")),
-                self.animation.tri(8.0) * 2.0 - 1.0,
+                self.controls.animation.tri(8.0) * 2.0 - 1.0,
                 match self.controls.string("mix_mode").as_str() {
                     "mix" => 0.0,
                     "min_max" => 1.0,
                     _ => unreachable!(),
                 },
-                self.osc.get("/wave_scale"),
+                self.controls.get("wave_scale"),
             ],
             e: [
-                self.osc.get("/wave1_mix"),
-                self.osc.get("/wave2_mix"),
-                self.osc.get("/wave3_mix"),
+                self.controls.get("wave1_mix"),
+                self.controls.get("wave2_mix"),
+                self.controls.get("wave3_mix"),
                 0.0,
             ],
         };
