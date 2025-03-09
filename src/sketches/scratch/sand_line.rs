@@ -20,66 +20,77 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct SandLineSketch {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     ref_line: Vec<Vec2>,
     sand_line: Vec<Vec2>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> SandLineSketch {
-    let disable_octave =
-        |controls: &Controls| controls.string("noise_strategy") != "Octave";
-
+pub fn init(_app: &App, ctx: &LatticeContext) -> SandLineSketch {
     let trig_fns = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
     ];
 
-    let controls = Controls::with_previous(vec![
-        Control::select("noise_strategy", "Gaussian", &["Gaussian", "Octave"]),
-        Control::select(
+    fn make_disable_octave() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("noise_strategy") != "Octave"
+        }))
+    }
+
+    fn make_disable_curve() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("distribution_strategy") != "Curved"
+                && controls.string("distribution_strategy") != "TrigFn"
+        }))
+    }
+
+    fn make_disable_trig_fn() -> DisabledFn {
+        Some(Box::new(|controls| {
+            controls.string("distribution_strategy") != "TrigFn"
+        }))
+    }
+
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .select("noise_strategy", "Gaussian", &["Gaussian", "Octave"], None)
+        .select(
             "distribution_strategy",
             "Perpendicular",
             &["Perpendicular", "Curved", "TrigFn"],
-        ),
-        Control::checkbox("show_ref_line", false),
-        Control::checkbox("show_sand_line", true),
-        Control::Separator {},
-        Control::slider("ref_segments", 16.0, (2.0, 64.0), 1.0),
-        Control::slider("ref_deviation", 10.0, (1.0, 100.0), 1.0),
-        Control::slider("ref_smooth", 2.0, (0.0, 10.0), 1.0),
-        Control::Separator {},
-        Control::slider("noise_scale", 8.0, (0.25, 32.0), 0.25),
-        Control::slider_x(
+            None,
+        )
+        .checkbox("show_ref_line", false, None)
+        .checkbox("show_sand_line", true, None)
+        .separator()
+        .slider("ref_segments", 16.0, (2.0, 64.0), 1.0, None)
+        .slider("ref_deviation", 10.0, (1.0, 100.0), 1.0, None)
+        .slider("ref_smooth", 2.0, (0.0, 10.0), 1.0, None)
+        .separator()
+        .slider("noise_scale", 8.0, (0.25, 32.0), 0.25, None)
+        .slider(
             "noise_octaves",
             4.0,
             (1.0, 10.0),
             1.0,
-            disable_octave,
-        ),
-        Control::slider_x(
+            make_disable_octave(),
+        )
+        .slider(
             "noise_persistence",
             0.5,
             (0.0, 1.0),
             0.001,
-            disable_octave,
-        ),
-        Control::Separator {},
-        Control::slider("angle_variation", 0.5, (0.0, TWO_PI), 0.001),
-        Control::slider("points_per_segment", 64.0, (2.0, 256.0), 1.0),
-        Control::slider("passes", 50.0, (1.0, 256.0), 1.0),
-        Control::slider_x("curvature", 0.5, (0.0, 2.0), 0.0001, |controls| {
-            controls.string("distribution_strategy") != "Curved"
-                && controls.string("distribution_strategy") != "TrigFn"
-        }),
-        Control::select_x("trig_fn_a", "cos", &trig_fns, |controls| {
-            controls.string("distribution_strategy") != "TrigFn"
-        }),
-        Control::select_x("trig_fn_b", "sin", &trig_fns, |controls| {
-            controls.string("distribution_strategy") != "TrigFn"
-        }),
-        Control::Separator {},
-        Control::slide("alpha", 0.5),
-    ]);
+            make_disable_octave(),
+        )
+        .separator()
+        .slider("angle_variation", 0.5, (0.0, TWO_PI), 0.001, None)
+        .slider("points_per_segment", 64.0, (2.0, 256.0), 1.0, None)
+        .slider("passes", 50.0, (1.0, 256.0), 1.0, None)
+        .slider("curvature", 0.5, (0.0, 2.0), 0.0001, make_disable_curve())
+        .select("trig_fn_a", "cos", &trig_fns, make_disable_trig_fn())
+        .select("trig_fn_b", "sin", &trig_fns, make_disable_trig_fn())
+        .separator()
+        .slider_n("alpha", 0.5)
+        .build();
 
     SandLineSketch {
         controls,
@@ -95,14 +106,14 @@ impl Sketch for SandLineSketch {
             let distribution_strategy =
                 self.controls.string("distribution_strategy");
 
-            let noise_scale = self.controls.float("noise_scale");
-            let noise_octaves = self.controls.float("noise_octaves");
-            let noise_persistence = self.controls.float("noise_persistence");
+            let noise_scale = self.controls.get("noise_scale");
+            let noise_octaves = self.controls.get("noise_octaves");
+            let noise_persistence = self.controls.get("noise_persistence");
 
-            let angle_variation = self.controls.float("angle_variation");
-            let points_per_segment = self.controls.float("points_per_segment");
-            let passes = self.controls.float("passes");
-            let curvature = self.controls.float("curvature");
+            let angle_variation = self.controls.get("angle_variation");
+            let points_per_segment = self.controls.get("points_per_segment");
+            let passes = self.controls.get("passes");
+            let curvature = self.controls.get("curvature");
             let trig_fn_a = self.controls.string("trig_fn_a");
             let trig_fn_b = self.controls.string("trig_fn_b");
 
@@ -113,9 +124,9 @@ impl Sketch for SandLineSketch {
                 "ref_deviation",
                 "ref_smooth",
             ]) {
-                let ref_segments = self.controls.float("ref_segments");
-                let ref_deviation = self.controls.float("ref_deviation");
-                let ref_smooth = self.controls.float("ref_smooth");
+                let ref_segments = self.controls.get("ref_segments");
+                let ref_deviation = self.controls.get("ref_deviation");
+                let ref_smooth = self.controls.get("ref_smooth");
 
                 let pad = wr.w() / 32.0;
                 let start = vec2(-wr.hw() + pad, 0.0);
@@ -170,7 +181,7 @@ impl Sketch for SandLineSketch {
             .w_h(wr.w(), wr.h())
             .hsla(0.0, 0.0, 1.0, 1.0);
 
-        let alpha = self.controls.float("alpha");
+        let alpha = self.controls.get("alpha");
         let show_ref_line = self.controls.bool("show_ref_line");
         let show_sand_line = self.controls.bool("show_sand_line");
 

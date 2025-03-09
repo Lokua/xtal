@@ -24,27 +24,26 @@ const GRID_SIZE: usize = 128;
 pub struct Displacement1a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gradient: Gradient<LinSrgb>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1a {
-    let w = SKETCH_CONFIG.w;
-    let h = SKETCH_CONFIG.h;
-    let grid_w = w as f32 - 80.0;
-    let grid_h = h as f32 - 80.0;
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let wr = ctx.window_rect();
 
-    let controls = Controls::new(vec![
-        Control::slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001),
-        Control::slider("circle_radius_min", 0.1, (0.1, 4.0), 0.1),
-        Control::slider("circle_radius_max", 2.5, (0.1, 4.0), 0.1),
-        Control::slider("displacer_radius", 210.0, (0.0, 500.0), 1.0),
-        Control::slider("displacer_strength", 95.0, (0.0, 500.0), 1.0),
-        Control::slider("scaling_power", 3.0, (0.5, 7.0), 0.25),
-    ]);
+    let grid_w = wr.w() - 80.0;
+    let grid_h = wr.h() - 80.0;
+
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001, None)
+        .slider("circle_radius_min", 0.1, (0.1, 4.0), 0.1, None)
+        .slider("circle_radius_max", 2.5, (0.1, 4.0), 0.1, None)
+        .slider("displacer_radius", 210.0, (0.0, 500.0), 1.0, None)
+        .slider("displacer_strength", 95.0, (0.0, 500.0), 1.0, None)
+        .slider("scaling_power", 3.0, (0.5, 7.0), 0.25, None)
+        .build();
 
     let displacer_configs = vec![DisplacerConfig::new(
         Displacer::new(vec2(0.0, 0.0), 10.0, 50.0, None),
@@ -55,7 +54,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1a {
     Displacement1a {
         grid: create_grid(grid_w, grid_h, GRID_SIZE, vec2).0,
         displacer_configs,
-        animation,
         controls,
         gradient: Gradient::new(vec![
             BEIGE.into_lin_srgb(),
@@ -75,7 +73,7 @@ impl Sketch for Displacement1a {
         let scaling_power = self.controls.float("scaling_power");
 
         for config in &mut self.displacer_configs {
-            config.update(&self.animation, &self.controls);
+            config.update(&self.controls.animation, &self.controls.controls);
             config.displacer.set_strength(strength);
             config.displacer.set_radius(radius);
         }

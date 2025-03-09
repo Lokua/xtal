@@ -17,26 +17,29 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Vertical {
-    animation: Animation<Timing>,
     controls: ControlScript<Timing>,
     lines: Vec<Vec<Point2>>,
     patterns: Vec<XModFn>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
-    let mut controls = ControlScript::new(None, Timing::new(ctx.bpm()));
-    let animation = controls.animation.clone();
-
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 
-    controls.add_controls(vec![
-        Control::slider("scale", 1.0, (0.1, 4.0), 0.1),
-        Control::select("mode", "per_line", &mode_options),
-        Control::slider("n_lines", 64.0, (16.0, 256.0), 2.0),
-        Control::slider("amplitude", 20.0, (0.0, 300.0), 1.0),
-        Control::slider("frequency", 0.1, (0.0, 0.1), 0.00001),
-        Control::slider("weight", 1.0, (0.1, 4.0), 0.1),
-        Control::slider_x(
+    fn disabled_unless_modes(modes: Vec<String>) -> DisabledFn {
+        Some(Box::new(move |controls| {
+            !modes.contains(&controls.string("mode"))
+        }))
+    }
+
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("scale", 1.0, (0.1, 4.0), 0.1, None)
+        .select("mode", "per_line", &mode_options, None)
+        .slider("n_lines", 64.0, (16.0, 256.0), 2.0, None)
+        .slider("amplitude", 20.0, (0.0, 300.0), 1.0, None)
+        .slider("frequency", 0.1, (0.0, 0.1), 0.00001, None)
+        .slider("weight", 1.0, (0.1, 4.0), 0.1, None)
+        .slider(
             "x_line_scaling",
             0.1,
             (0.0, 0.5),
@@ -47,8 +50,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
                 "harmonic_cascade",
                 "quantum_ripples",
             ]),
-        ),
-        Control::slider_x(
+        )
+        .slider(
             "x_phase_shift",
             0.1,
             (0.0, 1.0),
@@ -60,8 +63,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
                 "moire",
                 "standing_waves",
             ]),
-        ),
-        Control::slider_x(
+        )
+        .slider(
             "x_harmonic_ratio",
             2.0,
             (1.0, 4.0),
@@ -75,15 +78,15 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
                 "moire",
                 "quantum_ripples",
             ]),
-        ),
-        Control::slider_x(
+        )
+        .slider(
             "x_distance_scaling",
             0.05,
             (0.0, 0.2),
             0.01,
             disabled_unless_modes(str_vec!["multi_lerp", "ripples"]),
-        ),
-        Control::slider_x(
+        )
+        .slider(
             "x_complexity",
             1.0,
             (0.1, 3.0),
@@ -97,13 +100,12 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
                 "standing_waves",
                 "quantum_ripples",
             ]),
-        ),
-    ]);
+        )
+        .build();
 
-    let lines = Vec::with_capacity(controls.float("n_lines") as usize);
+    let lines = Vec::with_capacity(controls.get("n_lines") as usize);
 
     Vertical {
-        animation,
         controls,
         lines,
         patterns: XMods::to_vec(),
@@ -111,32 +113,33 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
 }
 
 impl Sketch for Vertical {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        let w = SKETCH_CONFIG.w as f32;
-        let h = SKETCH_CONFIG.h as f32;
-        let n_lines = self.controls.float("n_lines") as usize;
-        let a = self.controls.float("amplitude");
-        let f = self.controls.float("frequency");
+    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+
+        let n_lines = self.controls.get("n_lines") as usize;
+        let a = self.controls.get("amplitude");
+        let f = self.controls.get("frequency");
 
         let params = XModParams {
-            line_scaling: self.controls.float("x_line_scaling"),
-            phase_shift: self.controls.float("x_phase_shift"),
-            harmonic_ratio: self.controls.float("x_harmonic_ratio"),
-            distance_scaling: self.controls.float("x_distance_scaling"),
-            complexity: self.controls.float("x_complexity"),
+            line_scaling: self.controls.get("x_line_scaling"),
+            phase_shift: self.controls.get("x_phase_shift"),
+            harmonic_ratio: self.controls.get("x_harmonic_ratio"),
+            distance_scaling: self.controls.get("x_distance_scaling"),
+            complexity: self.controls.get("x_complexity"),
         };
 
         self.lines = Vec::new();
-        let step = w / n_lines as f32;
-        let start_x = -(w / 2.0) + (step / 2.0);
-        let n_points = SKETCH_CONFIG.h as usize / 2;
+        let step = wr.w() / n_lines as f32;
+        let start_x = -(wr.w() / 2.0) + (step / 2.0);
+        let n_points = (wr.h() / 2.0).floor() as usize;
 
         for i in 0..n_lines {
             let x = start_x + i as f32 * step;
             let mut points = Vec::new();
 
             for j in 0..n_points {
-                let y = map_range(j, 0, n_points - 1, -h / 2.0, h / 2.0);
+                let y =
+                    map_range(j, 0, n_points - 1, -wr.h() / 2.0, wr.h() / 2.0);
 
                 let x = match self.controls.string("mode").as_str() {
                     "multi_lerp" => {
@@ -156,7 +159,7 @@ impl Sketch for Vertical {
                             })
                             .collect::<Vec<f32>>();
 
-                        multi_lerp(&values, self.animation.tri(24.0))
+                        multi_lerp(&values, self.controls.animation.tri(24.0))
                     }
                     _ => {
                         let func =
@@ -181,22 +184,18 @@ impl Sketch for Vertical {
             .w_h(window_rect.w(), window_rect.h())
             .hsla(0.0, 0.0, 1.0, 1.0);
 
-        let zoomed_draw = draw.scale(self.controls.float("scale"));
+        let zoomed_draw = draw.scale(self.controls.get("scale"));
 
         for (_, line) in self.lines.iter().enumerate() {
             zoomed_draw
                 .polyline()
-                .weight(self.controls.float("weight"))
+                .weight(self.controls.get("weight"))
                 .points(line.iter().cloned())
                 .color(hsla(0.4, 0.0, 0.0, 0.9));
         }
 
         draw.to_frame(app, &frame).unwrap();
     }
-}
-
-pub fn disabled_unless_modes(modes: Vec<String>) -> impl Fn(&Controls) -> bool {
-    move |controls| !modes.contains(&controls.string("mode"))
 }
 
 type XModFn = fn(f32, f32, f32, f32, f32, f32, &XModParams) -> f32;

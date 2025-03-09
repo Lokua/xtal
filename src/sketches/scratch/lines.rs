@@ -22,7 +22,7 @@ const SPACING: f32 = 32.0;
 
 #[derive(SketchComponents)]
 pub struct Lines {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     slant_points: Vec<(Vec2, Vec2)>,
     jerky_points: Vec<Vec<Vec2>>,
     chaikin_points: Vec<Vec<Vec2>>,
@@ -33,12 +33,13 @@ pub struct Lines {
 pub fn init(_app: &App, ctx: &LatticeContext) -> Lines {
     let wr = ctx.window_rect();
 
-    let controls = Controls::with_previous(vec![
-        Control::slider("deviation", 5.0, (1.0, 10.0), 0.1),
-        Control::slider("n_points", 16.0, (3.0, 64.0), 1.0),
-        Control::slider("chaikin_passes", 4.0, (1.0, 16.0), 1.0),
-        Control::slider("kernel_passes", 2.0, (1.0, 16.0), 1.0),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("deviation", 5.0, (1.0, 10.0), 0.1, None)
+        .slider("n_points", 16.0, (3.0, 64.0), 1.0, None)
+        .slider("chaikin_passes", 4.0, (1.0, 16.0), 1.0, None)
+        .slider("kernel_passes", 2.0, (1.0, 16.0), 1.0, None)
+        .build();
 
     let pad = wr.w() / 20.0;
 
@@ -55,10 +56,10 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Lines {
 impl Sketch for Lines {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         if self.controls.changed() {
-            let deviation = self.controls.float("deviation");
-            let n_points = self.controls.float("n_points") as usize;
-            let chaikin_passes = self.controls.float("chaikin_passes") as usize;
-            let kernel_passes = self.controls.float("kernel_passes") as usize;
+            let deviation = self.controls.get("deviation");
+            let n_points = self.controls.get("n_points") as usize;
+            let chaikin_passes = self.controls.get("chaikin_passes") as usize;
+            let kernel_passes = self.controls.get("kernel_passes") as usize;
             let wr = &ctx.window_rect();
             let params = &LineParams {
                 pad: self.pad,

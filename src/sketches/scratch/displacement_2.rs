@@ -25,8 +25,7 @@ const GRID_SIZE: usize = 128;
 pub struct Displacement2 {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     cached_pattern: String,
     cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
     gradient: Gradient<LinSrgb>,
@@ -62,7 +61,7 @@ impl Displacement2 {
     fn weave_frequency(&self) -> f32 {
         let value = self.controls.float("weave_frequency");
         if self.controls.bool("animate_frequency") {
-            map_range(self.animation.tri(32.0), 0.0, 1.0, 0.01, value)
+            map_range(self.controls.animation.tri(32.0), 0.0, 1.0, 0.01, value)
         } else {
             value
         }
@@ -70,117 +69,27 @@ impl Displacement2 {
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
-    let w = SKETCH_CONFIG.w;
-    let h = SKETCH_CONFIG.h;
-    let animation = Animation::new(Timing::new(ctx.bpm()));
+    let wr = ctx.window_rect();
 
-    let controls = Controls::new(vec![
-        Control::Select {
-            name: "pattern".into(),
-            value: "cos,sin".into(),
-            options: generate_pattern_options(),
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "clamp_circle_radii".into(),
-            value: false,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "animate_frequency".into(),
-            value: false,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "gradient_spread".into(),
-            value: 0.99,
-            min: 0.0,
-            max: 1.0,
-            step: 0.0001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "circle_radius_min".into(),
-            value: 1.0,
-            min: 0.1,
-            max: 12.0,
-            step: 0.1,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "circle_radius_max".into(),
-            value: 5.0,
-            min: 0.1,
-            max: 12.0,
-            step: 0.1,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "displacer_radius".into(),
-            value: 0.001,
-            min: 0.0001,
-            max: 0.01,
-            step: 0.0001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "displacer_strength".into(),
-            value: 34.0,
-            min: 0.5,
-            max: 100.0,
-            step: 0.5,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "weave_frequency".into(),
-            value: 0.01,
-            min: 0.01,
-            max: 0.2,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "weave_scale".into(),
-            value: 0.05,
-            min: 0.001,
-            max: 0.1,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "weave_amplitude".into(),
-            value: 0.001,
-            min: 0.0001,
-            max: 0.01,
-            step: 0.0001,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "center".into(),
-            value: true,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "quad_1".into(),
-            value: false,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "quad_2".into(),
-            value: false,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "quad_3".into(),
-            value: false,
-            disabled: None,
-        },
-        Control::Checkbox {
-            name: "quad_4".into(),
-            value: false,
-            disabled: None,
-        },
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .select("pattern", "cos,sin", &generate_pattern_options(), None)
+        .checkbox("clamp_circle_radii", false, None)
+        .checkbox("animate_frequency", false, None)
+        .slider("gradient_spread", 0.99, (0.0, 1.0), 0.0001, None)
+        .slider("circle_radius_min", 1.0, (0.1, 12.0), 0.1, None)
+        .slider("circle_radius_max", 5.0, (0.1, 12.0), 0.1, None)
+        .slider("displacer_radius", 0.001, (0.0001, 0.01), 0.0001, None)
+        .slider("displacer_strength", 34.0, (0.5, 100.0), 0.5, None)
+        .slider("weave_frequency", 0.01, (0.01, 0.2), 0.001, None)
+        .slider("weave_scale", 0.05, (0.001, 0.1), 0.001, None)
+        .slider("weave_amplitude", 0.001, (0.0001, 0.01), 0.0001, None)
+        .checkbox("center", true, None)
+        .checkbox("quad_1", false, None)
+        .checkbox("quad_2", false, None)
+        .checkbox("quad_3", false, None)
+        .checkbox("quad_4", false, None)
+        .build();
 
     let displacer_configs = vec![
         DisplacerConfig::new(
@@ -191,30 +100,20 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
         ),
         DisplacerConfig::new(
             "quad_1",
-            Displacer::new(
-                vec2(w as f32 / 4.0, h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(wr.w() / 4.0, wr.h() / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
         DisplacerConfig::new(
             "quad_2",
-            Displacer::new(
-                vec2(w as f32 / 4.0, -h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(wr.w() / 4.0, -wr.h() / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
         DisplacerConfig::new(
             "quad_3",
             Displacer::new(
-                vec2(-w as f32 / 4.0, -h as f32 / 4.0),
+                vec2(-wr.w() / 4.0, -wr.h() / 4.0),
                 20.0,
                 10.0,
                 None,
@@ -224,12 +123,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
         ),
         DisplacerConfig::new(
             "quad_4",
-            Displacer::new(
-                vec2(-w as f32 / 4.0, h as f32 / 4.0),
-                20.0,
-                10.0,
-                None,
-            ),
+            Displacer::new(vec2(-wr.w() / 4.0, wr.h() / 4.0), 20.0, 10.0, None),
             None,
             None,
         ),
@@ -239,9 +133,8 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
     let cached_pattern = controls.string("pattern");
 
     Displacement2 {
-        grid: create_grid(w as f32 - pad, h as f32 - pad, GRID_SIZE, vec2).0,
+        grid: create_grid(wr.w() - pad, wr.h() - pad, GRID_SIZE, vec2).0,
         displacer_configs,
-        animation,
         controls,
         cached_pattern,
         cached_trig_fns: None,
@@ -270,7 +163,7 @@ impl Sketch for Displacement2 {
         let clamp_circle_radii = self.controls.bool("clamp_circle_radii");
         let circle_radius_min = self.controls.float("circle_radius_min");
         let circle_radius_max = self.controls.float("circle_radius_max");
-        let animation = &self.animation;
+        let animation = &self.controls.animation;
         let controls = &self.controls;
         let weave_frequency = self.weave_frequency();
 
@@ -291,7 +184,7 @@ impl Sketch for Displacement2 {
             }));
 
         for config in self.displacer_configs.iter_mut() {
-            config.update(animation, controls);
+            config.update(animation, &controls.controls);
             config.displacer.set_custom_distance_fn(distance_fn.clone());
             config.displacer.set_radius(displacer_radius);
             config.displacer.set_strength(displacer_strength);

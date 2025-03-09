@@ -19,28 +19,25 @@ const GRID_SIZE: usize = 32;
 
 #[derive(SketchComponents)]
 pub struct ZSim {
-    controls: Controls,
-    animation: Animation<Timing>,
+    controls: ControlScript<Timing>,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-    let window_rect = ctx.window_rect();
+    let wr = ctx.window_rect();
 
-    let (grid, cell_size) =
-        create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);
+    let (grid, cell_size) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
 
-    let controls = Controls::new(vec![
-        Control::slider("size_mult", 0.5, (0.0125, 2.0), 0.0125),
-        Control::slider("alpha", 0.5, (0.0, 1.0), 0.001),
-        Control::slider("depth_influence", 1.0, (0.0, 5.0), 0.1),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("size_mult", 0.5, (0.0125, 2.0), 0.0125, None)
+        .slider("alpha", 0.5, (0.0, 1.0), 0.001, None)
+        .slider("depth_influence", 1.0, (0.0, 5.0), 0.1, None)
+        .build();
 
     ZSim {
         controls,
-        animation,
         grid,
         cell_size,
     }
@@ -51,9 +48,8 @@ impl Sketch for ZSim {
         let mut wr = ctx.window_rect();
 
         if wr.changed() {
-            let window_rect = ctx.window_rect();
             (self.grid, self.cell_size) =
-                create_grid(window_rect.w(), window_rect.h(), GRID_SIZE, vec2);
+                create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
 
             wr.mark_unchanged();
         }
@@ -76,13 +72,13 @@ impl Sketch for ZSim {
         let max_possible_dist = hw.max(hh);
 
         let center = vec2(
-            self.animation.r_ramp(
+            self.controls.animation.r_ramp(
                 &[kfr((-hw, hw), 2.0)],
                 0.0,
                 1.0,
                 Easing::Linear,
             ),
-            self.animation.r_ramp(
+            self.controls.animation.r_ramp(
                 &[kfr((-hh, hh), 1.0)],
                 0.0,
                 0.5,

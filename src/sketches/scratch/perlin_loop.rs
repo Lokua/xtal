@@ -23,32 +23,28 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct PerlinLoop {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     noise: Perlin,
     last_seed: u32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::new(vec![
-        Control::checkbox("rotate", false),
-        Control::slider("circle_radius", 200.0, (1.0, 500.0), 1.0),
-        Control::slider("max_rect_length", 10.0, (1.0, 200.0), 1.0),
-        Control::slider("rect_width", 1.5, (0.5, 5.0), 0.25),
-        Control::slider("noise_scale", 3.0, (0.5, 10.0), 0.1),
-        Control::slider("seed", 3.0, (3.0, 33_333.0), 33.0),
-        Control::slider("angle_resolution", 45.0, (15.0, 180.0), 1.0),
-        Control::slider("time_x", 1.0, (0.01, 10.0), 0.01),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("rotate", false, None)
+        .slider("circle_radius", 200.0, (1.0, 500.0), 1.0, None)
+        .slider("max_rect_length", 10.0, (1.0, 200.0), 1.0, None)
+        .slider("rect_width", 1.5, (0.5, 5.0), 0.25, None)
+        .slider("noise_scale", 3.0, (0.5, 10.0), 0.1, None)
+        .slider("seed", 3.0, (3.0, 33_333.0), 33.0, None)
+        .slider("angle_resolution", 45.0, (15.0, 180.0), 1.0, None)
+        .slider("time_x", 1.0, (0.01, 10.0), 0.01, None)
+        .build();
 
     let noise = Perlin::new();
     let last_seed = noise.seed();
 
     PerlinLoop {
-        animation,
         controls,
         noise,
         last_seed,
@@ -57,7 +53,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
 
 impl Sketch for PerlinLoop {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        let seed = self.controls.float("seed") as u32;
+        let seed = self.controls.get("seed") as u32;
         if seed != self.last_seed {
             self.noise = self.noise.set_seed(seed);
             self.last_seed = seed;
@@ -68,17 +64,17 @@ impl Sketch for PerlinLoop {
         let draw = app.draw();
         draw.background().hsl(0.0, 0.0, 0.03);
 
-        let circle_radius = self.controls.float("circle_radius");
-        let max_rect_length = self.controls.float("max_rect_length");
-        let rect_width = self.controls.float("rect_width");
-        let noise_scale = self.controls.float("noise_scale");
-        let angle_resolution = self.controls.float("angle_resolution");
-        let time_x = self.controls.float("time_x");
+        let circle_radius = self.controls.get("circle_radius");
+        let max_rect_length = self.controls.get("max_rect_length");
+        let rect_width = self.controls.get("rect_width");
+        let noise_scale = self.controls.get("noise_scale");
+        let angle_resolution = self.controls.get("angle_resolution");
+        let time_x = self.controls.get("time_x");
         let angle_increment = PI / angle_resolution;
         let total_segments = (360.0 / angle_increment) as i32;
 
         let draw_rotated = draw.rotate(if self.controls.bool("rotate") {
-            self.animation.loop_phase(32.0) * PI * 2.0
+            self.controls.animation.loop_phase(32.0) * PI * 2.0
         } else {
             0.0
         });

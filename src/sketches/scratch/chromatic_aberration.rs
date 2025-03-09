@@ -19,25 +19,23 @@ const GRID_SIZE: usize = 8;
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
-    let (grid, cell_size) = create_grid(
-        ctx.window_rect().w(),
-        ctx.window_rect().h(),
-        GRID_SIZE,
-        vec2,
-    );
+    let wr = ctx.window_rect();
 
-    let controls = Controls::new(vec![
-        Control::slider("x_offset", 1.0, (0.0, 20.0), 0.5),
-        Control::slider("y_offset", 1.0, (0.0, 20.0), 0.5),
-        Control::slider("size_mult", 0.5, (0.0125, 2.0), 0.0125),
-        Control::slider("alpha", 0.5, (0.0, 1.0), 0.001),
-    ]);
+    let (grid, cell_size) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
+
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("x_offset", 1.0, (0.0, 20.0), 0.5, None)
+        .slider("y_offset", 1.0, (0.0, 20.0), 0.5, None)
+        .slider("size_mult", 0.5, (0.0125, 2.0), 0.0125, None)
+        .slider("alpha", 0.5, (0.0, 1.0), 0.001, None)
+        .build();
 
     Template {
         controls,
@@ -48,29 +46,29 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        if ctx.window_rect().changed() {
-            (self.grid, self.cell_size) = create_grid(
-                ctx.window_rect().w(),
-                ctx.window_rect().h(),
-                GRID_SIZE,
-                vec2,
-            );
-            ctx.window_rect().mark_unchanged();
+        let mut wr = ctx.window_rect();
+
+        if wr.changed() {
+            (self.grid, self.cell_size) =
+                create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
+            wr.mark_unchanged();
         }
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
         let draw = app.draw();
+        let wr = ctx.window_rect();
 
+        // Background
         draw.rect()
             .x_y(0.0, 0.0)
-            .w_h(ctx.window_rect().w(), ctx.window_rect().h())
+            .w_h(wr.w(), wr.h())
             .hsla(0.0, 0.0, 1.0, 1.0);
 
-        let cell_size = self.cell_size * self.controls.float("size_mult");
-        let x_offset = self.controls.float("x_offset");
-        let y_offset = self.controls.float("y_offset");
-        let alpha = self.controls.float("alpha");
+        let cell_size = self.cell_size * self.controls.get("size_mult");
+        let x_offset = self.controls.get("x_offset");
+        let y_offset = self.controls.get("y_offset");
+        let alpha = self.controls.get("alpha");
 
         for point in self.grid.iter() {
             draw.rect()

@@ -17,18 +17,16 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.2, 0.8, 0.5)")]
 pub struct Vertical2 {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     background_color: Rgba,
     noise: SimplexNoise,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> Vertical2 {
-    let controls = Controls::new(vec![Control::slider(
-        "alpha",
-        0.25,
-        (0.001, 1.0),
-        0.001,
-    )]);
+pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical2 {
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("alpha", 0.25, (0.001, 1.0), 0.001, None)
+        .build();
 
     Vertical2 {
         controls,
@@ -41,17 +39,12 @@ impl Sketch for Vertical2 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
-        let window_rect = ctx.window_rect();
-
-        let w = window_rect.w();
-        let h = window_rect.h();
-        let hh = h / 2.0;
-
+        let wr = ctx.window_rect();
         let draw = app.draw();
 
         draw.rect()
             .x_y(0.0, 0.0)
-            .w_h(w, h)
+            .w_h(wr.w(), wr.h())
             .color(self.background_color);
 
         let alpha = self.controls.float("alpha");
@@ -65,7 +58,7 @@ impl Sketch for Vertical2 {
         ];
 
         for (ns, amp) in params.iter() {
-            for y in (-hh as i32..=hh as i32).rev() {
+            for y in (-wr.hh() as i32..=wr.hh() as i32).rev() {
                 let y = y as f32;
 
                 for i in 1..=*amp as i32 {

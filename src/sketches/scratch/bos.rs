@@ -18,8 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Bos {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -34,10 +33,11 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Bos {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls =
-        Controls::new(vec![Control::slide("a", 0.5), Control::slide("b", 0.5)]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider_n("a", 0.5)
+        .slider_n("b", 0.5)
+        .build();
 
     let params = ShaderParams {
         resolution: ctx.window_rect().resolution(),
@@ -55,28 +55,22 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Bos {
         true,
     );
 
-    Bos {
-        animation,
-        controls,
-        gpu,
-    }
+    Bos { controls, gpu }
 }
 
 impl Sketch for Bos {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+        let wr = ctx.window_rect();
+
         let params = ShaderParams {
-            resolution: ctx.window_rect().resolution(),
-            a: self.controls.float("a"),
-            b: self.controls.float("b"),
-            t: self.animation.tri(4.0),
+            resolution: wr.resolution(),
+            a: self.controls.get("a"),
+            b: self.controls.get("b"),
+            t: self.controls.animation.tri(4.0),
             _pad: 0.0,
         };
 
-        self.gpu.update_params(
-            app,
-            ctx.window_rect().resolution_u32(),
-            &params,
-        );
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
