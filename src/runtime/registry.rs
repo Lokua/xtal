@@ -1,6 +1,6 @@
+use indexmap::IndexMap;
 use nannou::prelude::*;
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::str;
 use std::sync::RwLock;
 
@@ -36,15 +36,15 @@ pub static REGISTRY: Lazy<RwLock<SketchRegistry>> =
     Lazy::new(|| RwLock::new(SketchRegistry::new()));
 
 pub struct SketchRegistry {
-    sketches: HashMap<String, SketchInfo>,
-    sorted_names: Option<Vec<String>>,
+    sketches: IndexMap<String, SketchInfo>,
+    names: Option<Vec<String>>,
 }
 
 impl SketchRegistry {
     fn new() -> Self {
         Self {
-            sketches: HashMap::new(),
-            sorted_names: None,
+            sketches: IndexMap::new(),
+            names: None,
         }
     }
 
@@ -62,7 +62,7 @@ impl SketchRegistry {
                 factory: Box::new(factory),
             },
         );
-        self.sorted_names = None;
+        self.names = None;
     }
 
     pub fn get(&self, name: &str) -> Option<&SketchInfo> {
@@ -70,16 +70,13 @@ impl SketchRegistry {
     }
 
     pub fn prepare(&mut self) {
-        if self.sorted_names.is_none() {
-            let mut names: Vec<String> =
-                self.sketches.keys().cloned().collect();
-            names.sort();
-            self.sorted_names = Some(names);
+        if self.names.is_none() {
+            self.names = Some(self.sketches.keys().cloned().collect());
         }
     }
 
     pub fn names(&self) -> &Vec<String> {
-        self.sorted_names.as_ref().expect(
+        self.names.as_ref().expect(
             "Registry must be prepared before accessing names. \
                 Call prepare() first.",
         )

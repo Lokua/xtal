@@ -25,7 +25,6 @@ pub fn run() {
             breakpoints_2,
             brutalism,
             displacement_2a,
-            displacement_2a_orig,
             drop,
             drop_walk,
             floor_supervisor,
@@ -168,6 +167,7 @@ struct AppModel {
     event_tx: AppEventSender,
     event_rx: AppEventReceiver,
     ctx: LatticeContext,
+    midi_out: Option<midi::MidiOut>,
 }
 
 impl AppModel {
@@ -339,33 +339,26 @@ impl AppModel {
                 }
             }
             AppEvent::SendMidi => {
-                // TODO: put me on AppModel
-                let mut midi_out = midi::MidiOut::new(MIDI_CONTROL_OUT_PORT);
-
-                match midi_out.connect() {
-                    Ok(_) => {}
-                    Err(e) => {
-                        error!("{}", e);
-                        return;
-                    }
-                }
-
-                if let Some(provider) = self.sketch.controls() {
-                    if !provider.is_control_script() {
-                        return;
-                    }
-                    if let Some(midi_controls) = provider.midi_controls() {
-                        for message in midi_controls.messages() {
-                            if let Err(e) = midi_out.send(&message) {
-                                error!(
-                                    "Error sending MIDI message: {:?}; error: {}",
-                                    message,
-                                    e
-                                );
-                                break;
+                if let Some(midi_out) = &mut self.midi_out {
+                    if let Some(provider) = self.sketch.controls() {
+                        if !provider.is_control_script() {
+                            return;
+                        }
+                        if let Some(midi_controls) = provider.midi_controls() {
+                            for message in midi_controls.messages() {
+                                if let Err(e) = midi_out.send(&message) {
+                                    error!(
+                                        "Error sending MIDI message: {:?}; error: {}",
+                                        message,
+                                        e
+                                    );
+                                    break;
+                                }
                             }
                         }
                     }
+                } else {
+                    warn!("Unable to send MIDI; no MIDI out connection");
                 }
             }
             AppEvent::SnapshotRecall(digit) => {
@@ -650,6 +643,16 @@ fn model(app: &App) -> AppModel {
 
     let raw_bpm = bpm.get();
 
+    let mut midi_out = None;
+    let mut midi = midi::MidiOut::new(MIDI_CONTROL_OUT_PORT);
+
+    match midi.connect() {
+        Ok(_) => midi_out = Some(midi),
+        Err(e) => {
+            error!("{}", e);
+        }
+    }
+
     let mut model = AppModel {
         main_window_id,
         gui_window_id,
@@ -666,6 +669,7 @@ fn model(app: &App) -> AppModel {
         main_maximized: Cell::new(false),
         event_tx: AppEventSender::new(raw_event_tx),
         event_rx,
+        midi_out,
         ctx,
     };
 

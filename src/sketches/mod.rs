@@ -2,7 +2,6 @@ pub mod blob;
 pub mod breakpoints_2;
 pub mod brutalism;
 pub mod displacement_2a;
-pub mod displacement_2a_orig;
 pub mod drop;
 pub mod drop_walk;
 pub mod floor_supervisor;

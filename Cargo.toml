@@ -10,6 +10,7 @@ default-run = "lattice"
 doctest = false
 
 [features]
+default = ["atomic_frames"]
 instrumentation = []
 atomic_frames = []
 
