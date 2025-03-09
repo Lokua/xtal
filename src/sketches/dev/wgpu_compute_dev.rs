@@ -245,12 +245,12 @@ impl Sketch for Model {
         let n_segments = (self.reference_points.len() - 1) as u32;
 
         let (ns_min, _ns_max) =
-            self.controls.controls.slider_range("noise_scale");
+            self.controls.ui_controls.slider_range("noise_scale");
         let (ns_min, ns_max) =
             safe_range(ns_min, self.controls.get("noise_scale"));
 
         let (angle_min, _angle_max) =
-            self.controls.controls.slider_range("angle_variation");
+            self.controls.ui_controls.slider_range("angle_variation");
         let (angle_min, angle_max) =
             safe_range(angle_min, self.controls.get("angle_variation"));
 

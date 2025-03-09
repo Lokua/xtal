@@ -2,7 +2,7 @@ use nannou_egui::egui;
 
 use crate::framework::prelude::*;
 
-pub fn draw_controls(controls: &mut Controls, ui: &mut egui::Ui) -> bool {
+pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
     let mut any_changed = false;
     let mut updates = Vec::new();
 

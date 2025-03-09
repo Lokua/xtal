@@ -49,7 +49,7 @@ pub struct G25_18Wind {
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
     fn make_agent_count_disabler() -> DisabledFn {
-        Some(Box::new(|_controls: &Controls| true))
+        Some(Box::new(|_controls: &UiControls| true))
     }
 
     let controls = ControlScriptBuilder::new()
@@ -195,7 +195,8 @@ impl Sketch for G25_18Wind {
         };
 
         let randomize_point_size = self.controls.bool("randomize_point_size");
-        let (size_min, _) = self.controls.controls.slider_range("agent_size");
+        let (size_min, _) =
+            self.controls.ui_controls.slider_range("agent_size");
         let size_range = safe_range(size_min - 0.000_1, agent_size);
 
         let mut vertices =

@@ -265,8 +265,10 @@ impl Sketch for HeatMask {
                 DisplacerConfigKind::Trbl => show_trbl,
             })
             .map(|config| {
-                config
-                    .update(&self.controls.animation, &self.controls.controls);
+                config.update(
+                    &self.controls.animation,
+                    &self.controls.ui_controls,
+                );
                 match config.kind {
                     DisplacerConfigKind::Center => {
                         config.displacer.set_custom_distance_fn(
@@ -501,7 +503,7 @@ impl Sketch for HeatMask {
 }
 
 type AnimationFn<R> = Option<
-    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &UiControls) -> R + Send + Sync>,
 >;
 
 enum DisplacerConfigKind {
@@ -543,7 +545,7 @@ impl DisplacerConfig {
     pub fn update(
         &mut self,
         animation: &Animation<Timing>,
-        controls: &Controls,
+        controls: &UiControls,
     ) {
         if let Some(position_fn) = &self.position_animation {
             self.displacer.position =

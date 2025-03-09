@@ -48,7 +48,7 @@ struct SnapshotTransition {
 
 #[derive(Debug)]
 pub struct ControlScript<T: TimingSource> {
-    pub controls: Controls,
+    pub ui_controls: UiControls,
     pub animation: Animation<T>,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
@@ -71,7 +71,7 @@ pub struct ControlScript<T: TimingSource> {
 impl<T: TimingSource> ControlScript<T> {
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
-            controls: Controls::with_previous(vec![]),
+            ui_controls: UiControls::with_previous(vec![]),
             midi_controls: MidiControls::new(),
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
@@ -286,8 +286,8 @@ impl<T: TimingSource> ControlScript<T> {
             }
         }
 
-        let value = if self.controls.has(name) {
-            Some(self.controls.float(name))
+        let value = if self.ui_controls.has(name) {
+            Some(self.ui_controls.float(name))
         } else if self.osc_controls.has(name) {
             Some(self.osc_controls.get(name))
         } else if self.midi_controls.has(name) {
@@ -433,7 +433,7 @@ impl<T: TimingSource> ControlScript<T> {
     pub fn take_snapshot(&mut self, id: &str) {
         let mut snapshot: ControlValues = ControlValues::new();
 
-        snapshot.extend(self.controls.values().clone());
+        snapshot.extend(self.ui_controls.values().clone());
         snapshot.extend(self.midi_controls.values().iter().map(
             |(key, value)| (key.clone(), ControlValue::from(value.clone())),
         ));
@@ -457,7 +457,7 @@ impl<T: TimingSource> ControlScript<T> {
             };
 
             for (name, value) in snapshot {
-                if self.controls.has(&name) {
+                if self.ui_controls.has(&name) {
                     match value {
                         ControlValue::Float(v) => {
                             transition.values.insert(
@@ -466,7 +466,7 @@ impl<T: TimingSource> ControlScript<T> {
                             );
                         }
                         ControlValue::Bool(_) | ControlValue::String(_) => {
-                            self.controls.update_value(&name, value.clone());
+                            self.ui_controls.update_value(&name, value.clone());
                         }
                     }
                     continue;
@@ -529,9 +529,9 @@ impl<T: TimingSource> ControlScript<T> {
         if let Some(transition) = &self.active_transition {
             if frame_controller::frame_count() > transition.end_frame {
                 for (name, (_from, to)) in &transition.values {
-                    if self.controls.has(&name) {
+                    if self.ui_controls.has(&name) {
                         let value = ControlValue::Float(*to);
-                        self.controls.update_value(name, value);
+                        self.ui_controls.update_value(name, value);
                         continue;
                     }
                     if self.midi_controls.has(&name) {
@@ -549,26 +549,26 @@ impl<T: TimingSource> ControlScript<T> {
     }
 
     pub fn add_controls(&mut self, configs: Vec<Control>) {
-        self.controls.extend(configs);
+        self.ui_controls.extend(configs);
     }
 
     pub fn float(&self, name: &str) -> f32 {
         return self.get(name);
     }
     pub fn bool(&self, name: &str) -> bool {
-        return self.controls.bool(name);
+        return self.ui_controls.bool(name);
     }
     pub fn string(&self, name: &str) -> String {
-        return self.controls.string(name);
+        return self.ui_controls.string(name);
     }
     pub fn changed(&self) -> bool {
-        self.controls.changed()
+        self.ui_controls.changed()
     }
     pub fn any_changed_in(&self, names: &[&str]) -> bool {
-        self.controls.any_changed_in(names)
+        self.ui_controls.any_changed_in(names)
     }
     pub fn mark_unchanged(&mut self) {
-        self.controls.mark_unchanged();
+        self.ui_controls.mark_unchanged();
     }
 
     fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {
@@ -588,7 +588,7 @@ impl<T: TimingSource> ControlScript<T> {
         &mut self,
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
-        let current_values: ControlValues = self.controls.values().clone();
+        let current_values: ControlValues = self.ui_controls.values().clone();
         // let osc_values: FxHashMap<String, f32> = self.osc_controls.values();
         // let midi_values: FxHashMap<String, f32> = self.midi_controls.values();
         let osc_values: FxHashMap<String, f32> = self
@@ -605,7 +605,7 @@ impl<T: TimingSource> ControlScript<T> {
             .map(|(k, v)| (k.clone(), *v))
             .collect();
 
-        self.controls = Controls::with_previous(vec![]);
+        self.ui_controls = UiControls::with_previous(vec![]);
         self.animations.clear();
         self.modulations.clear();
         self.aliases.clear();
@@ -655,7 +655,7 @@ impl<T: TimingSource> ControlScript<T> {
                         conf.step,
                     );
 
-                    self.controls.add(slider);
+                    self.ui_controls.add(slider);
                 }
                 ControlType::Checkbox => {
                     let conf: CheckboxConfig =
@@ -667,7 +667,7 @@ impl<T: TimingSource> ControlScript<T> {
                         .unwrap_or(conf.default);
 
                     let checkbox = Control::checkbox(id.as_str(), value);
-                    self.controls.add(checkbox);
+                    self.ui_controls.add(checkbox);
                 }
                 ControlType::Select => {
                     let conf: SelectConfig =
@@ -680,10 +680,10 @@ impl<T: TimingSource> ControlScript<T> {
 
                     let select =
                         Control::select(id.as_str(), value, &conf.options);
-                    self.controls.add(select);
+                    self.ui_controls.add(select);
                 }
                 ControlType::Separator => {
-                    self.controls.add(Control::dynamic_separator());
+                    self.ui_controls.add(Control::dynamic_separator());
                 }
                 ControlType::Osc => {
                     let conf: OscConfig =
@@ -889,7 +889,7 @@ impl<T: TimingSource> ControlScript<T> {
             }
         }
 
-        self.controls.mark_changed();
+        self.ui_controls.mark_changed();
 
         info!("Controls populated");
 
@@ -1111,7 +1111,7 @@ c:
         controls.take_snapshot("foo");
 
         controls
-            .controls
+            .ui_controls
             .update_value("a", ControlValue::Float(100.0));
         controls.midi_controls.update_value("b", 200.0);
         controls.osc_controls.update_value("c", 300.0);

@@ -8,7 +8,7 @@ use crate::runtime::storage::load_controls;
 /// instances via a single `Model.controls` struct field and have them
 /// automatically show up in the UI in either case.
 pub trait ControlProvider {
-    fn controls_mut(&mut self) -> &mut Controls;
+    fn controls_mut(&mut self) -> &mut UiControls;
     fn items(&self) -> &Vec<Control>;
     fn items_mut(&mut self) -> &mut Vec<Control>;
     fn update_value(&mut self, name: &str, value: ControlValue);
@@ -20,7 +20,7 @@ pub trait ControlProvider {
     fn clear_snapshots(&mut self);
     fn midi_controls(&self) -> Option<MidiControls>;
     fn osc_controls(&self) -> Option<OscControls>;
-    fn controls(&self) -> Option<Controls>;
+    fn controls(&self) -> Option<UiControls>;
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 
@@ -63,13 +63,13 @@ pub trait ControlProvider {
     }
 }
 
-impl ControlProvider for Controls {
-    fn controls_mut(&mut self) -> &mut Controls {
+impl ControlProvider for UiControls {
+    fn controls_mut(&mut self) -> &mut UiControls {
         self
     }
 
     fn items(&self) -> &Vec<Control> {
-        Controls::items(self)
+        UiControls::items(self)
     }
 
     fn items_mut(&mut self) -> &mut Vec<Control> {
@@ -77,11 +77,11 @@ impl ControlProvider for Controls {
     }
 
     fn update_value(&mut self, name: &str, value: ControlValue) {
-        Controls::update_value(self, name, value)
+        UiControls::update_value(self, name, value)
     }
 
     fn to_serialized(&self) -> SerializedControls {
-        Controls::to_serialized(self)
+        UiControls::to_serialized(self)
     }
 
     fn is_control_script(&self) -> bool {
@@ -107,7 +107,7 @@ impl ControlProvider for Controls {
     fn osc_controls(&self) -> Option<OscControls> {
         None
     }
-    fn controls(&self) -> Option<Controls> {
+    fn controls(&self) -> Option<UiControls> {
         Some(self.clone())
     }
 
@@ -120,24 +120,24 @@ impl ControlProvider for Controls {
 }
 
 impl<T: TimingSource + 'static> ControlProvider for ControlScript<T> {
-    fn controls_mut(&mut self) -> &mut Controls {
-        &mut self.controls
+    fn controls_mut(&mut self) -> &mut UiControls {
+        &mut self.ui_controls
     }
 
     fn items(&self) -> &Vec<Control> {
-        self.controls.items()
+        self.ui_controls.items()
     }
 
     fn items_mut(&mut self) -> &mut Vec<Control> {
-        self.controls.items_mut()
+        self.ui_controls.items_mut()
     }
 
     fn update_value(&mut self, name: &str, value: ControlValue) {
-        self.controls.update_value(name, value)
+        self.ui_controls.update_value(name, value)
     }
 
     fn to_serialized(&self) -> SerializedControls {
-        self.controls.to_serialized()
+        self.ui_controls.to_serialized()
     }
 
     fn is_control_script(&self) -> bool {
@@ -163,8 +163,8 @@ impl<T: TimingSource + 'static> ControlProvider for ControlScript<T> {
     fn osc_controls(&self) -> Option<OscControls> {
         Some(self.osc_controls.clone())
     }
-    fn controls(&self) -> Option<Controls> {
-        Some(self.controls.clone())
+    fn controls(&self) -> Option<UiControls> {
+        Some(self.ui_controls.clone())
     }
 
     fn as_any(&self) -> &dyn Any {

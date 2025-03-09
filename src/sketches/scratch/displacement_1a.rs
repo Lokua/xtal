@@ -75,7 +75,7 @@ impl Sketch for Displacement1a {
         let scaling_power = self.controls.get("scaling_power");
 
         for config in &mut self.displacer_configs {
-            config.update(&self.controls.animation, &self.controls.controls);
+            config.update(&self.controls.animation, &self.controls.ui_controls);
             config.displacer.set_strength(strength);
             config.displacer.set_radius(radius);
         }
@@ -135,7 +135,7 @@ impl Sketch for Displacement1a {
 }
 
 type AnimationFn<R> = Option<
-    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &UiControls) -> R + Send + Sync>,
 >;
 
 struct DisplacerConfig {
@@ -160,7 +160,7 @@ impl DisplacerConfig {
     pub fn update(
         &mut self,
         animation: &Animation<Timing>,
-        controls: &Controls,
+        controls: &UiControls,
     ) {
         if let Some(position_fn) = &self.position_animation {
             self.displacer.position =

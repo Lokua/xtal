@@ -4,7 +4,7 @@ use crate::framework::{frame_controller, prelude::*};
 
 pub struct ControlScriptBuilder<T: TimingSource> {
     timing: Option<T>,
-    ui_controls: Option<Controls>,
+    ui_controls: Option<UiControls>,
     midi_controls: Option<MidiControls>,
     osc_controls: Option<OscControls>,
     audio_controls: Option<AudioControls>,
@@ -26,14 +26,14 @@ impl<T: TimingSource> ControlScriptBuilder<T> {
         self
     }
 
-    pub fn ui_controls(mut self, controls: Controls) -> Self {
+    pub fn ui_controls(mut self, controls: UiControls) -> Self {
         self.ui_controls = Some(controls);
         self
     }
 
-    fn ensure_ui_controls(&mut self) -> &mut Controls {
+    fn ensure_ui_controls(&mut self) -> &mut UiControls {
         if self.ui_controls.is_none() {
-            self.ui_controls = Some(Controls::with_previous(vec![]));
+            self.ui_controls = Some(UiControls::with_previous(vec![]));
         }
         self.ui_controls.as_mut().unwrap()
     }
@@ -201,7 +201,7 @@ impl<T: TimingSource> ControlScriptBuilder<T> {
         let mut c = ControlScript::new(None, self.timing.unwrap());
 
         if let Some(controls) = self.ui_controls {
-            c.controls = controls;
+            c.ui_controls = controls;
         }
 
         if let Some(midi_controls) = self.midi_controls {
@@ -234,7 +234,7 @@ mod tests {
     fn test_control_script_builder() {
         let controls: ControlScript<ManualTiming> = ControlScriptBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
-            .ui_controls(Controls::new(vec![Control::slide("foo", 0.5)]))
+            .ui_controls(UiControls::new(vec![Control::slide("foo", 0.5)]))
             .osc_controls(
                 OscControlBuilder::new().control_n("bar", 22.0).build(),
             )

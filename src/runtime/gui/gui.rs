@@ -14,7 +14,7 @@ pub fn init() {
 
 pub fn update(
     sketch_config: &SketchConfig,
-    controls: Option<&mut Controls>,
+    controls: Option<&mut UiControls>,
     alert_text: &mut String,
     perf_mode: &mut bool,
     tap_tempo: &mut bool,
@@ -94,7 +94,7 @@ pub fn update(
         });
 }
 
-pub fn calculate_gui_dimensions(controls: Option<&mut Controls>) -> (u32, u32) {
+pub fn calculate_gui_dimensions(controls: Option<&mut UiControls>) -> (u32, u32) {
     const HEADER_HEIGHT: u32 = 40;
     const ALERT_HEIGHT: u32 = 40;
     const CONTROL_HEIGHT: u32 = 26;
@@ -168,7 +168,7 @@ fn draw_clear_cache_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
 // delegating events to AppEvent handler since we're just going to remove this
 fn draw_copy_controls(
     ui: &mut egui::Ui,
-    controls: &Controls,
+    controls: &UiControls,
     event_tx: &app::AppEventSender,
 ) {
     ui.add(egui::Button::new("CP Ctrls")).clicked().then(|| {
@@ -336,7 +336,7 @@ fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
 
 fn draw_sketch_controls(
     ui: &mut egui::Ui,
-    controls: &mut Controls,
+    controls: &mut UiControls,
     event_tx: &app::AppEventSender,
 ) {
     let any_changed = controls_adapter::draw_controls(controls, ui);

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::prelude::*;
 
 pub struct ConcreteControls {
-    pub controls: Controls,
+    pub controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
 }

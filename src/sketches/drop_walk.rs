@@ -101,14 +101,14 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
         droppers,
         palettes: vec![
             (
-                |controls: &Controls| gen_color(controls, (0.38, 0.47)),
-                |controls: &Controls| gen_color(controls, (0.8, 0.9)),
-                |controls: &Controls| gen_color(controls, (0.6, 0.65)),
+                |controls: &UiControls| gen_color(controls, (0.38, 0.47)),
+                |controls: &UiControls| gen_color(controls, (0.8, 0.9)),
+                |controls: &UiControls| gen_color(controls, (0.6, 0.65)),
             ),
             (
-                |controls: &Controls| gen_color(controls, (0.0, 0.05)),
-                |controls: &Controls| gen_color(controls, (0.28, 0.33)),
-                |controls: &Controls| gen_color(controls, (0.63, 0.68)),
+                |controls: &UiControls| gen_color(controls, (0.0, 0.05)),
+                |controls: &UiControls| gen_color(controls, (0.28, 0.33)),
+                |controls: &UiControls| gen_color(controls, (0.63, 0.68)),
             ),
         ],
     }
@@ -159,7 +159,7 @@ impl Sketch for Drops {
                             dropper.walker.to_vec2(),
                             &mut self.drops,
                             self.max_drops,
-                            (color_fn)(&self.controls.controls),
+                            (color_fn)(&self.controls.ui_controls),
                             splatter_radius,
                         );
                     }
@@ -198,7 +198,7 @@ impl Sketch for Drops {
 }
 
 type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl, f32);
-type ColorFn = fn(&Controls) -> Hsl;
+type ColorFn = fn(&UiControls) -> Hsl;
 
 struct Dropper {
     kind: String,
@@ -330,7 +330,7 @@ fn palette_by_name(
     palettes[index]
 }
 
-fn gen_color(controls: &Controls, hue_range: (f32, f32)) -> Hsl {
+fn gen_color(controls: &UiControls, hue_range: (f32, f32)) -> Hsl {
     let (min, max) = safe_range(
         controls.get("lightness_min"),
         controls.get("lightness_max"),

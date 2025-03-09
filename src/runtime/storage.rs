@@ -20,7 +20,7 @@ pub fn stored_controls(sketch_name: &str) -> Option<ControlValues> {
 
 pub fn persist_controls(
     sketch_name: &str,
-    controls: &Controls,
+    controls: &UiControls,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine the configuration directory")?;
@@ -68,7 +68,7 @@ pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
     let concrete_controls = ConcreteControls {
         controls: control_script
             .controls()
-            .unwrap_or_else(|| Controls::default()),
+            .unwrap_or_else(|| UiControls::default()),
         midi_controls: control_script
             .midi_controls()
             .unwrap_or_else(|| MidiControls::new()),
@@ -111,7 +111,7 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     let mut concrete_controls = ConcreteControls {
         controls: control_script
             .controls()
-            .unwrap_or_else(|| Controls::default()),
+            .unwrap_or_else(|| UiControls::default()),
         midi_controls: control_script
             .midi_controls()
             .unwrap_or_else(|| MidiControls::new()),
@@ -127,7 +127,7 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
         .values()
         .iter()
         .for_each(|(name, value)| {
-            control_script.controls.update_value(name, value.clone());
+            control_script.ui_controls.update_value(name, value.clone());
         });
 
     concrete_controls.midi_controls.values().iter().for_each(

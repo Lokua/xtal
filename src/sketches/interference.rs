@@ -54,7 +54,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
             0.0,
             (0.0, 1.0),
             0.0001,
-            Some(Box::new(|controls: &Controls| {
+            Some(Box::new(|controls: &UiControls| {
                 controls.bool("animate_wave1_phase")
             })),
         )
@@ -69,7 +69,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Interference {
             0.0,
             (0.0, 1.0),
             0.0001,
-            Some(Box::new(|controls: &Controls| {
+            Some(Box::new(|controls: &UiControls| {
                 controls.bool("animate_wave2_phase")
             })),
         )

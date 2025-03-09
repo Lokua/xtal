@@ -123,8 +123,8 @@ impl Sketch for Kalos2 {
         let wr = ctx.window_rect();
         let a = &self.controls.animation;
 
-        let r_range = self.controls.controls.slider_range("radius");
-        let s_range = self.controls.controls.slider_range("strength");
+        let r_range = self.controls.ui_controls.slider_range("radius");
+        let s_range = self.controls.ui_controls.slider_range("strength");
 
         let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
             [

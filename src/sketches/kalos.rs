@@ -139,7 +139,7 @@ impl Sketch for Kalos {
         self.controls.update();
         let wr = ctx.window_rect();
         let strength = self.controls.get("strength");
-        let strength_range = self.controls.controls.slider_range("strength");
+        let strength_range = self.controls.ui_controls.slider_range("strength");
         let strength_swing = 0.05;
 
         let params = ShaderParams {

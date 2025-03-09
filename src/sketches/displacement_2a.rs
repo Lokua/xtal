@@ -289,7 +289,7 @@ impl Sketch for Displacement2a {
             }));
 
         for config in self.displacer_configs.iter_mut() {
-            config.update(animation, &controls.controls);
+            config.update(animation, &controls.ui_controls);
             config.displacer.set_custom_distance_fn(distance_fn.clone());
             config.displacer.set_radius(displacer_radius);
             config.displacer.set_strength(if audio_enabled {
@@ -447,7 +447,7 @@ impl Sketch for Displacement2a {
 }
 
 type AnimationFn<R> = Option<
-    Arc<dyn Fn(&Displacer, &Animation<Timing>, &Controls) -> R + Send + Sync>,
+    Arc<dyn Fn(&Displacer, &Animation<Timing>, &UiControls) -> R + Send + Sync>,
 >;
 
 struct DisplacerConfig {
@@ -475,7 +475,7 @@ impl DisplacerConfig {
     pub fn update(
         &mut self,
         animation: &Animation<Timing>,
-        controls: &Controls,
+        controls: &UiControls,
     ) {
         if let Some(position_fn) = &self.position_animation {
             self.displacer.position =

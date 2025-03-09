@@ -36,7 +36,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
 
     let controls: ControlScript<Timing> = ControlScriptBuilder::new()
         .timing(Timing::new(ctx.bpm()))
-        .ui_controls(Controls::new(ui_controls))
+        .ui_controls(UiControls::new(ui_controls))
         .build();
 
     NonYamlDev { controls }

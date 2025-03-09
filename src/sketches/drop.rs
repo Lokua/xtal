@@ -187,7 +187,7 @@ impl Sketch for Drops {
                         dropper.zone.center * offset,
                         &mut self.drops,
                         self.max_drops,
-                        (dropper.color_fn)(&self.controls.controls),
+                        (dropper.color_fn)(&self.controls.ui_controls),
                     );
                 }
             }
@@ -210,7 +210,7 @@ impl Sketch for Drops {
 }
 
 type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl);
-type ColorFn = fn(&Controls) -> Hsl;
+type ColorFn = fn(&UiControls) -> Hsl;
 
 struct Dropper {
     kind: String,
@@ -269,7 +269,7 @@ fn drop_it(
     }
 }
 
-fn center_color(controls: &Controls) -> Hsl {
+fn center_color(controls: &UiControls) -> Hsl {
     if random_f32() > controls.get("center_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {
@@ -277,7 +277,7 @@ fn center_color(controls: &Controls) -> Hsl {
     }
 }
 
-fn trbl_color(controls: &Controls) -> Hsl {
+fn trbl_color(controls: &UiControls) -> Hsl {
     if random_f32() > controls.get("trbl_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {
@@ -285,7 +285,7 @@ fn trbl_color(controls: &Controls) -> Hsl {
     }
 }
 
-fn corner_color(controls: &Controls) -> Hsl {
+fn corner_color(controls: &UiControls) -> Hsl {
     if random_f32() > controls.get("corner_bw_ratio") {
         hsl(0.0, 0.0, 0.0)
     } else {

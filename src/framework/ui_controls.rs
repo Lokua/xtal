@@ -55,7 +55,7 @@ impl From<String> for ControlValue {
     }
 }
 
-pub type DisabledFn = Option<Box<dyn Fn(&Controls) -> bool>>;
+pub type DisabledFn = Option<Box<dyn Fn(&UiControls) -> bool>>;
 
 #[derive(Serialize, Deserialize)]
 pub enum Control {
@@ -127,7 +127,7 @@ impl Control {
 
     pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> Control
     where
-        F: Fn(&Controls) -> bool + 'static,
+        F: Fn(&UiControls) -> bool + 'static,
     {
         Control::Checkbox {
             name: name.to_string(),
@@ -162,7 +162,7 @@ impl Control {
     ) -> Control
     where
         S: AsRef<str>,
-        F: Fn(&Controls) -> bool + 'static,
+        F: Fn(&UiControls) -> bool + 'static,
     {
         Control::Select {
             name: name.into(),
@@ -208,7 +208,7 @@ impl Control {
         disabled: F,
     ) -> Control
     where
-        F: Fn(&Controls) -> bool + 'static,
+        F: Fn(&UiControls) -> bool + 'static,
     {
         Control::Slider {
             name: name.to_string(),
@@ -220,7 +220,7 @@ impl Control {
         }
     }
 
-    pub fn is_disabled(&self, controls: &Controls) -> bool {
+    pub fn is_disabled(&self, controls: &UiControls) -> bool {
         match self {
             Control::Slider { disabled, .. }
             | Control::Button { disabled, .. }
@@ -352,7 +352,7 @@ pub struct SerializedControls {
 /// with without being coupled to a specific UI framework. See
 /// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Controls {
+pub struct UiControls {
     /// Holds the original Control references and their default values - values
     /// are not updated!
     items: Vec<Control>,
@@ -361,7 +361,7 @@ pub struct Controls {
     change_tracker: ChangeTracker,
 }
 
-impl Controls {
+impl UiControls {
     pub fn new(controls: Vec<Control>) -> Self {
         let values: ControlValues = controls
             .iter()
@@ -538,13 +538,13 @@ impl Controls {
     }
 }
 
-impl Default for Controls {
+impl Default for UiControls {
     fn default() -> Self {
-        Controls::new(vec![])
+        UiControls::new(vec![])
     }
 }
 
-impl fmt::Debug for Controls {
+impl fmt::Debug for UiControls {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_struct = f.debug_struct("Controls");
         debug_struct.field("controls", &self.items);
@@ -553,11 +553,11 @@ impl fmt::Debug for Controls {
     }
 }
 
-pub struct ControlBuilder {
+pub struct UiControlBuilder {
     controls: Vec<Control>,
 }
 
-impl ControlBuilder {
+impl UiControlBuilder {
     pub fn new() -> Self {
         Self { controls: vec![] }
     }
@@ -644,8 +644,8 @@ impl ControlBuilder {
         })
     }
 
-    pub fn build(self) -> Controls {
-        Controls::with_previous(self.controls)
+    pub fn build(self) -> UiControls {
+        UiControls::with_previous(self.controls)
     }
 }
 
@@ -738,7 +738,7 @@ mod tests {
     #[test]
     fn test_controls_changed() {
         let mut controls =
-            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
         assert!(controls.changed());
         controls.mark_unchanged();
         assert!(!controls.changed());
@@ -747,7 +747,7 @@ mod tests {
     #[test]
     fn test_any_changed_in() {
         let mut controls =
-            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
 
         assert!(controls.any_changed_in(&["foo"]));
         controls.mark_unchanged();
@@ -760,7 +760,7 @@ mod tests {
     #[test]
     fn test_mark_unchanged() {
         let mut controls =
-            Controls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
 
         controls.update_value("foo", ControlValue::Float(0.7));
         assert!(controls.changed());
