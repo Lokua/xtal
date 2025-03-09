@@ -21,7 +21,7 @@ pub struct OscDev {
 
 pub fn init(_app: &App, _ctx: &LatticeContext) -> OscDev {
     let osc = OscControlBuilder::new()
-        .control("/a", (0.0, 400.0), 0.5)
+        .control("a", (0.0, 400.0), 0.5)
         .control("b", (0.0, 400.0), 0.5)
         .build();
 
@@ -32,8 +32,8 @@ impl Sketch for OscDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         debug_throttled!(
             1_000,
-            "/a: {}, /b: {}",
-            self.osc.get("/a"),
+            "a: {}, /b: {}",
+            self.osc.get("a"),
             self.osc.get("b")
         );
     }
@@ -44,7 +44,7 @@ impl Sketch for OscDev {
 
         draw.rect().color(BLACK).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-        let a = self.osc.get("/a");
+        let a = self.osc.get("a");
         let b = self.osc.get("b");
 
         draw.ellipse()

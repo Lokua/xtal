@@ -19,9 +19,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct ShaderToTextureDev {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     first_pass: gpu::GpuState<Vertex>,
     second_pass: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -48,14 +46,13 @@ struct PostProcessParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::slide("a1", 0.0),
-        Control::slide("a2", 0.0),
-        Control::slide("a3", 0.0),
-        Control::slide("a4", 0.0),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider_n("a1", 0.0)
+        .slider_n("a2", 0.0)
+        .slider_n("a3", 0.0)
+        .slider_n("a4", 0.0)
+        .build();
 
     let first_pass_params = ShaderParams {
         resolution: [0.0; 4],
@@ -90,7 +87,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
     );
 
     ShaderToTextureDev {
-        animation,
         controls,
         first_pass,
         second_pass,
@@ -104,20 +100,20 @@ impl Sketch for ShaderToTextureDev {
         let first_pass_params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.float("a1"),
-                self.controls.float("a2"),
-                self.controls.float("a3"),
-                self.controls.float("a4"),
+                self.controls.get("a1"),
+                self.controls.get("a2"),
+                self.controls.get("a3"),
+                self.controls.get("a4"),
             ],
         };
 
         let post_process_params = PostProcessParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.float("a1"),
-                self.controls.float("a2"),
-                self.controls.float("a3"),
-                self.controls.float("a4"),
+                self.controls.get("a1"),
+                self.controls.get("a2"),
+                self.controls.get("a3"),
+                self.controls.get("a4"),
             ],
         };
 

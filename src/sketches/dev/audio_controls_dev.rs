@@ -18,20 +18,17 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct AudioControlsDev {
-    controls: Controls,
-    audio: AudioControls,
+    controls: ControlScript<Timing>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioControlsDev {
-    let controls = Controls::with_previous(vec![
-        Control::slide("pre_emphasis", 0.0),
-        Control::slide("detect", 0.0),
-        Control::slide("rise", 0.0),
-        Control::slide("fall", 0.0),
-    ]);
-
-    let audio = AudioControlBuilder::new()
-        .control_from_config(
+pub fn init(_app: &App, ctx: &LatticeContext) -> AudioControlsDev {
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider_n("pre_emphasis", 0.0)
+        .slider_n("detect", 0.0)
+        .slider_n("rise", 0.0)
+        .slider_n("fall", 0.0)
+        .audio(
             "bd",
             AudioControlConfig {
                 channel: 0,
@@ -42,7 +39,7 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioControlsDev {
                 default: 0.0,
             },
         )
-        .control_from_config(
+        .audio(
             "hh",
             AudioControlConfig {
                 channel: 1,
@@ -53,7 +50,7 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioControlsDev {
                 default: 0.0,
             },
         )
-        .control_from_config(
+        .audio(
             "chord",
             AudioControlConfig {
                 channel: 2,
@@ -66,7 +63,7 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioControlsDev {
         )
         .build();
 
-    AudioControlsDev { audio, controls }
+    AudioControlsDev { controls }
 }
 
 impl Sketch for AudioControlsDev {
@@ -79,7 +76,7 @@ impl Sketch for AudioControlsDev {
             let rise = self.controls.float("rise");
             let fall = self.controls.float("fall");
 
-            self.audio.update_controls(|control| {
+            self.controls.audio_controls.update_controls(|control| {
                 control.pre_emphasis = pre_emphasis;
                 control.detect = detect;
                 control.slew_limiter.set_rates(rise, fall);
@@ -95,9 +92,9 @@ impl Sketch for AudioControlsDev {
 
         draw.rect().color(WHITE).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-        let bd = self.audio.get("bd");
-        let hh = self.audio.get("hh");
-        let chord = self.audio.get("chord");
+        let bd = self.controls.get("bd");
+        let hh = self.controls.get("hh");
+        let chord = self.controls.get("chord");
 
         draw.ellipse()
             .color(rgba(0.02, 0.02, 0.02, 0.9))

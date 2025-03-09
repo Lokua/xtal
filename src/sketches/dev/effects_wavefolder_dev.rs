@@ -19,28 +19,26 @@ const N_POINTS: usize = 2048;
 
 #[derive(SketchComponents)]
 pub struct EffectsWavefolderDev {
-    animation: Animation<ManualTiming>,
     lanes: Vec<Vec<[f32; 2]>>,
     wave_folder: WaveFolder,
-    controls: Controls,
+    controls: ControlScript<ManualTiming>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> EffectsWavefolderDev {
-    let animation = Animation::new(ManualTiming::new(ctx.bpm()));
     let wave_folder = WaveFolder::default();
 
-    let controls = Controls::new(vec![
-        Control::slider("gain", 1.0, (1.0, 5.0), 0.125),
-        Control::slider("iterations", 1.0, (1.0, 5.0), 1.0),
-        Control::slider("symmetry", 1.0, (-1.0, 1.0), 0.125),
-        Control::slider("bias", 0.0, (-1.0, 2.0), 0.125),
-        Control::slider("shape", 0.0, (-2.0, 2.0), 0.125),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(ManualTiming::new(ctx.bpm()))
+        .slider("gain", 1.0, (1.0, 5.0), 0.125, None)
+        .slider("iterations", 1.0, (1.0, 5.0), 1.0, None)
+        .slider("symmetry", 1.0, (-1.0, 1.0), 0.125, None)
+        .slider("bias", 0.0, (-1.0, 2.0), 0.125, None)
+        .slider("shape", 0.0, (-2.0, 2.0), 0.125, None)
+        .build();
 
     EffectsWavefolderDev {
         lanes: vec![],
         wave_folder,
-        animation,
         controls,
     }
 }
@@ -54,7 +52,7 @@ impl Sketch for EffectsWavefolderDev {
         self.wave_folder.shape = self.controls.get("shape");
 
         self.lanes = vec![create_points(
-            &mut self.animation,
+            &mut self.controls.animation,
             &[
                 Breakpoint::ramp(0.0, 0.0, Easing::Linear),
                 Breakpoint::ramp(1.0, 1.0, Easing::Linear),

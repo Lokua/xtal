@@ -50,8 +50,7 @@ struct OutputPoint {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     compute_pipeline: wgpu::ComputePipeline,
     params_buffer: wgpu::Buffer,
     params_bind_group: wgpu::BindGroup,
@@ -62,17 +61,16 @@ pub struct Model {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Model {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::checkbox("show_ref_line", false),
-        Control::checkbox("show_sand_line", true),
-        Control::slider("noise_scale", 0.02, (0.001, 0.1), 0.001),
-        Control::slider("angle_variation", 0.2, (0.0, 1.0), 0.0001),
-        Control::slider("points_per_segment", 100.0, (10.0, 500.0), 1.0),
-        Control::slider("ref_segments", 4.0, (2.0, 20.0), 1.0),
-        Control::slider("ref_deviation", 0.1, (0.0, 0.5), 0.0001),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .checkbox("show_ref_line", false, None)
+        .checkbox("show_sand_line", true, None)
+        .slider("noise_scale", 0.02, (0.001, 0.1), 0.001, None)
+        .slider("angle_variation", 0.2, (0.0, 1.0), 0.0001, None)
+        .slider("points_per_segment", 100.0, (10.0, 500.0), 1.0, None)
+        .slider("ref_segments", 4.0, (2.0, 20.0), 1.0, None)
+        .slider("ref_deviation", 0.1, (0.0, 0.5), 0.0001, None)
+        .build();
 
     let window = app.main_window();
     let device = window.device();
@@ -215,7 +213,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
     ]));
 
     Model {
-        animation,
         controls,
         compute_pipeline,
         params_buffer,
@@ -247,12 +244,13 @@ impl Sketch for Model {
 
         let n_segments = (self.reference_points.len() - 1) as u32;
 
-        let (ns_min, _ns_max) = self.controls.slider_range("noise_scale");
+        let (ns_min, _ns_max) =
+            self.controls.controls.slider_range("noise_scale");
         let (ns_min, ns_max) =
             safe_range(ns_min, self.controls.float("noise_scale"));
 
         let (angle_min, _angle_max) =
-            self.controls.slider_range("angle_variation");
+            self.controls.controls.slider_range("angle_variation");
         let (angle_min, angle_max) =
             safe_range(angle_min, self.controls.float("angle_variation"));
 
@@ -260,14 +258,14 @@ impl Sketch for Model {
             n_segments,
             points_per_segment,
             noise_scale: map_range(
-                self.animation.tri(8.0),
+                self.controls.animation.tri(8.0),
                 0.0,
                 1.0,
                 ns_min,
                 ns_max,
             ),
             angle_variation: map_range(
-                self.animation.tri(3.0),
+                self.controls.animation.tri(3.0),
                 0.0,
                 1.0,
                 angle_min,

@@ -16,9 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct FullscreenShader {
-    #[allow(dead_code)]
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -33,12 +31,11 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::with_previous(vec![
-        Control::select("mode", "smooth", &["smooth", "step"]),
-        Control::slide("radius", 0.5),
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .select("mode", "smooth", &["smooth", "step"], None)
+        .slider_n("radius", 0.5)
+        .build();
 
     let wr = ctx.window_rect();
 
@@ -55,11 +52,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
         true,
     );
 
-    FullscreenShader {
-        animation,
-        controls,
-        gpu,
-    }
+    FullscreenShader { controls, gpu }
 }
 
 impl Sketch for FullscreenShader {
@@ -74,7 +67,7 @@ impl Sketch for FullscreenShader {
                     "step" => 1.0,
                     _ => unreachable!(),
                 },
-                self.controls.float("radius"),
+                self.controls.get("radius"),
                 0.0,
                 0.0,
             ],

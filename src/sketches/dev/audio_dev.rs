@@ -20,41 +20,21 @@ const N_BANDS: usize = 8;
 
 #[derive(SketchComponents)]
 pub struct AudioDev {
-    controls: Controls,
+    controls: ControlScript<Timing>,
     audio: Audio,
     fft_bands: Vec<f32>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> AudioDev {
+pub fn init(_app: &App, ctx: &LatticeContext) -> AudioDev {
     let audio =
         Audio::new(crate::config::AUDIO_DEVICE_SAMPLE_RATE, SKETCH_CONFIG.fps);
 
-    let controls = Controls::new(vec![
-        Control::Slider {
-            name: "pre_emphasis".to_string(),
-            value: 0.88,
-            min: 0.0,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "rise".to_string(),
-            value: 0.96,
-            min: 0.001,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
-        Control::Slider {
-            name: "fall".to_string(),
-            value: 0.9,
-            min: 0.0,
-            max: 1.0,
-            step: 0.001,
-            disabled: None,
-        },
-    ]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("pre_emphasis", 0.88, (0.0, 1.0), 0.001, None)
+        .slider("rise", 0.96, (0.001, 1.0), 0.001, None)
+        .slider("fall", 0.9, (0.0, 1.0), 0.001, None)
+        .build();
 
     AudioDev {
         controls,
@@ -69,9 +49,9 @@ impl Sketch for AudioDev {
             N_BANDS,
             30.0,
             10_000.0,
-            self.controls.float("pre_emphasis"),
-            self.controls.float("rise"),
-            self.controls.float("fall"),
+            self.controls.get("pre_emphasis"),
+            self.controls.get("rise"),
+            self.controls.get("fall"),
         );
     }
 

@@ -17,24 +17,18 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    animation: Animation<Timing>,
-    controls: Controls,
+    controls: ControlScript<Timing>,
     radius: f32,
     hue: f32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
-    let animation = Animation::new(Timing::new(ctx.bpm()));
-
-    let controls = Controls::new(vec![Control::slider(
-        "radius",
-        100.0,
-        (10.0, 500.0),
-        1.0,
-    )]);
+    let controls = ControlScriptBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider("radius", 100.0, (10.0, 500.0), 1.0, None)
+        .build();
 
     Template {
-        animation,
         controls,
         radius: 0.0,
         hue: 0.0,
@@ -43,15 +37,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        debug_throttled!(
-            1000,
-            "ctx.bpm: {:?}, anim.bpm: {:?}",
-            ctx.bpm().get(),
-            self.animation.timing.bpm()
-        );
         let radius_max = self.controls.float("radius");
 
-        self.radius = self.animation.automate(
+        self.radius = self.controls.animation.automate(
             &[
                 Breakpoint::ramp(0.0, 10.0, Easing::Linear),
                 Breakpoint::ramp(1.0, ctx.window_rect().hw(), Easing::Linear),
@@ -62,7 +50,7 @@ impl Sketch for Template {
             Mode::Loop,
         );
 
-        self.hue = self.animation.tri(12.0)
+        self.hue = self.controls.animation.tri(12.0)
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
