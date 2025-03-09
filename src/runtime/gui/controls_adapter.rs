@@ -2,6 +2,8 @@ use nannou_egui::egui;
 
 use crate::framework::prelude::*;
 
+use super::theme::DISABLED_OPACITY;
+
 pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
     let mut any_changed = false;
     let mut updates = Vec::new();
@@ -50,7 +52,11 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
 
                 // Create a disabled frame that wraps the entire ComboBox
                 egui::Frame::none()
-                    .multiply_with_opacity(if is_disabled { 0.4 } else { 1.0 })
+                    .multiply_with_opacity(ternary!(
+                        is_disabled,
+                        DISABLED_OPACITY,
+                        1.0
+                    ))
                     .show(ui, |ui| {
                         ui.set_enabled(!is_disabled);
                         egui::ComboBox::from_label(name)

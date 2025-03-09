@@ -3,6 +3,7 @@ use nannou_egui::egui::{self, Color32, FontDefinitions, FontFamily, Visuals};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static USE_LIGHT_THEME: AtomicBool = AtomicBool::new(false);
+pub const DISABLED_OPACITY: f32 = 0.4;
 
 pub fn init_light_dark() {
     let is_light = matches!(dark_light::detect(), dark_light::Mode::Light);

@@ -22,6 +22,7 @@ pub trait ControlProvider {
     fn recall_snapshot(&mut self, id: &str);
     fn delete_snapshot(&mut self, id: &str);
     fn clear_snapshots(&mut self);
+    fn set_transition_time(&mut self, transition_time: f32);
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 
@@ -102,6 +103,10 @@ impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
 
     fn clear_snapshots(&mut self) {
         self.clear_snapshots();
+    }
+
+    fn set_transition_time(&mut self, transition_time: f32) {
+        self.set_transition_time(transition_time);
     }
 
     fn as_any(&self) -> &dyn Any {

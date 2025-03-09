@@ -106,8 +106,8 @@ pub enum AppEvent {
     AdvanceSingleFrame,
     Alert(String),
     CaptureFrame,
-    ClearControlsCache,
     ClearNextFrame,
+    ClearStoredControls,
     MidiContinue,
     MidiStart,
     MidiStop,
@@ -116,6 +116,7 @@ pub enum AppEvent {
     Reset,
     SaveControls,
     SendMidi,
+    SetTransitionTime(f32),
     SnapshotRecall(String),
     SnapshotStore(String),
     SwitchSketch(String),
@@ -166,6 +167,7 @@ struct AppModel {
     event_rx: AppEventReceiver,
     ctx: LatticeContext,
     midi_out: Option<midi::MidiOut>,
+    transition_time: f32,
 }
 
 impl AppModel {
@@ -204,7 +206,10 @@ impl AppModel {
                 self.alert_text = alert_text.clone();
                 info!("{}", alert_text);
             }
-            AppEvent::ClearControlsCache => {
+            AppEvent::ClearNextFrame => {
+                self.clear_next_frame.set(true);
+            }
+            AppEvent::ClearStoredControls => {
                 if let Err(e) =
                     storage::delete_stored_controls(self.sketch_config.name)
                 {
@@ -212,9 +217,6 @@ impl AppModel {
                 } else {
                     self.alert_text = "Controls cache cleared".into();
                 }
-            }
-            AppEvent::ClearNextFrame => {
-                self.clear_next_frame.set(true);
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!(
@@ -285,9 +287,8 @@ impl AppModel {
             AppEvent::SaveControls => {
                 let sketch_name = self.sketch_name();
                 if let Some(provider) = self.sketch.controls() {
-                    let control_script = provider
-                        .as_any()
-                        .downcast_ref::<ControlHub<Timing>>();
+                    let control_script =
+                        provider.as_any().downcast_ref::<ControlHub<Timing>>();
 
                     match storage::save_controls(
                         sketch_name.as_str(),
@@ -322,10 +323,17 @@ impl AppModel {
                                     break;
                                 }
                             }
+                            self.alert_text = "MIDI sent".into();
                         }
                     }
                 } else {
                     warn!("Unable to send MIDI; no MIDI out connection");
+                }
+            }
+            AppEvent::SetTransitionTime(transition_time) => {
+                self.transition_time = transition_time;
+                if let Some(hub) = self.sketch.controls() {
+                    hub.set_transition_time(transition_time);
                 }
             }
             AppEvent::SnapshotRecall(digit) => {
@@ -616,6 +624,7 @@ fn model(app: &App) -> AppModel {
         event_rx,
         midi_out,
         ctx,
+        transition_time: 4.0,
     };
 
     model.init_sketch_environment(app);
@@ -637,6 +646,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             &mut model.perf_mode,
             &mut model.tap_tempo_enabled,
             bpm,
+            model.transition_time,
             &mut model.recording_state,
             &model.event_tx,
             &ctx,

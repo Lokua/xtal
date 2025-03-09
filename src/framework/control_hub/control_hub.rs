@@ -28,6 +28,11 @@ use super::{
     param_mod::{FromColdParams, ParamValue, SetFromParam},
 };
 
+pub const TRANSITION_TIMES: [f32; 15] = [
+    32.0, 24.0, 16.0, 12.0, 16.0, 8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5,
+    0.25,
+];
+
 #[derive(Debug)]
 struct UpdateState {
     _watcher: notify::RecommendedWatcher,
