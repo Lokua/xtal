@@ -6,7 +6,7 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
     let mut any_changed = false;
     let mut updates = Vec::new();
 
-    for control in controls.items() {
+    for control in controls.configs() {
         let is_disabled = control.is_disabled(controls);
 
         match control {

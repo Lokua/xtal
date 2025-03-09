@@ -30,6 +30,7 @@ pub struct AudioControlConfig {
 
     pub slew_limiter: SlewLimiter,
 
+    #[allow(rustdoc::private_intra_doc_links)]
     /// The pre-emphasis factor to apply to the audio signal.
     /// A higher value results in more emphasis on high frequencies.
     /// See [`MultichannelAudioProcessor::apply_pre_emphasis`] for more details

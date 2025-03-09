@@ -234,7 +234,7 @@ mod tests {
     fn test_control_script_builder() {
         let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
-            .ui_controls(UiControls::new(vec![Control::slide("foo", 0.5)]))
+            .ui_controls(UiControls::new(vec![Control::slider_n("foo", 0.5)]))
             .osc_controls(
                 OscControlBuilder::new().control_n("bar", 22.0).build(),
             )

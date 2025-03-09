@@ -1,12 +1,11 @@
 //! A generic abstraction over UI control structures
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
 
 use super::prelude::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ControlValue {
     Float(f32),
     Bool(bool),
@@ -57,7 +56,6 @@ impl From<String> for ControlValue {
 
 pub type DisabledFn = Option<Box<dyn Fn(&UiControls) -> bool>>;
 
-#[derive(Serialize, Deserialize)]
 pub enum Control {
     Slider {
         name: String,
@@ -65,25 +63,21 @@ pub enum Control {
         min: f32,
         max: f32,
         step: f32,
-        #[serde(skip)]
         disabled: DisabledFn,
     },
     Checkbox {
         name: String,
         value: bool,
-        #[serde(skip)]
         disabled: DisabledFn,
     },
     Select {
         name: String,
         value: String,
         options: Vec<String>,
-        #[serde(skip)]
         disabled: DisabledFn,
     },
     Button {
         name: String,
-        #[serde(skip)]
         disabled: DisabledFn,
     },
     Separator {},
@@ -189,7 +183,7 @@ impl Control {
     }
 
     /// Convenience version of [`Self::slider`] with default [0.0, 1.0] range.
-    pub fn slide(name: &str, value: f32) -> Control {
+    pub fn slider_n(name: &str, value: f32) -> Control {
         Control::Slider {
             name: name.to_string(),
             value,
@@ -343,21 +337,16 @@ impl fmt::Debug for Control {
 
 pub type ControlValues = HashMap<String, ControlValue>;
 
-#[derive(Serialize, Deserialize)]
-pub struct SerializedControls {
-    pub values: HashMap<String, ControlValue>,
-}
-
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See
-/// [`crate::runtime::gui::draw_controls`] for a concrete implementation.
-#[derive(Clone, Serialize, Deserialize)]
+/// [`crate::runtime::gui::controls_adapter::draw_controls`] for a concrete
+/// implementation.
+#[derive(Clone)]
 pub struct UiControls {
     /// Holds the original Control references and their default values - values
     /// are not updated!
-    items: Vec<Control>,
+    configs: Vec<Control>,
     values: ControlValues,
-    #[serde(skip)]
     change_tracker: ChangeTracker,
 }
 
@@ -369,7 +358,7 @@ impl UiControls {
             .collect();
 
         Self {
-            items: controls,
+            configs: controls,
             values,
             change_tracker: ChangeTracker::new(false),
         }
@@ -382,7 +371,7 @@ impl UiControls {
             .collect();
 
         Self {
-            items: controls,
+            configs: controls,
             values,
             change_tracker: ChangeTracker::new(true),
         }
@@ -395,15 +384,15 @@ impl UiControls {
             .collect();
 
         self.values.extend(values);
-        self.items.extend(controls);
+        self.configs.extend(controls);
     }
 
-    pub fn items(&self) -> &Vec<Control> {
-        &self.items
+    pub fn configs(&self) -> &Vec<Control> {
+        &self.configs
     }
 
-    pub fn items_mut(&mut self) -> &mut Vec<Control> {
-        &mut self.items
+    pub fn configs_mut(&mut self) -> &mut Vec<Control> {
+        &mut self.configs
     }
 
     pub fn values(&self) -> &ControlValues {
@@ -480,7 +469,7 @@ impl UiControls {
     }
 
     pub fn get_original_config(&self, name: &str) -> Option<&Control> {
-        self.items.iter().find(|control| control.name() == name)
+        self.configs.iter().find(|control| control.name() == name)
     }
 
     pub fn slider_range(&self, name: &str) -> (f32, f32) {
@@ -492,38 +481,15 @@ impl UiControls {
             .unwrap_or_else(|| loud_panic!("Unable to find range for {}", name))
     }
 
-    pub fn to_serialized(&self) -> SerializedControls {
-        let filtered_values: HashMap<String, ControlValue> = self
-            .values
-            .iter()
-            .filter(|(key, _)| !key.is_empty())
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        SerializedControls {
-            values: filtered_values,
-        }
-    }
-
-    pub fn from_serialized(
-        serialized: SerializedControls,
-        controls: Vec<Control>,
-    ) -> Self {
-        Self {
-            items: controls,
-            values: serialized.values,
-            change_tracker: ChangeTracker::new(false),
-        }
-    }
-
     pub fn add(&mut self, control: Control) {
         let name = control.name().to_string();
         let value = control.value();
 
-        if let Some(index) = self.items.iter().position(|c| c.name() == name) {
-            self.items[index] = control;
+        if let Some(index) = self.configs.iter().position(|c| c.name() == name)
+        {
+            self.configs[index] = control;
         } else {
-            self.items.push(control);
+            self.configs.push(control);
         }
 
         self.values.insert(name, value);
@@ -534,7 +500,7 @@ impl UiControls {
     where
         F: FnMut(&Control) -> bool,
     {
-        self.items.retain(f);
+        self.configs.retain(f);
     }
 }
 
@@ -547,7 +513,7 @@ impl Default for UiControls {
 impl fmt::Debug for UiControls {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_struct = f.debug_struct("Controls");
-        debug_struct.field("controls", &self.items);
+        debug_struct.field("controls", &self.configs);
         debug_struct.field("values", &self.values);
         debug_struct.finish()
     }
@@ -738,7 +704,7 @@ mod tests {
     #[test]
     fn test_controls_changed() {
         let mut controls =
-            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slider_n("foo", 0.5)]);
         assert!(controls.changed());
         controls.mark_unchanged();
         assert!(!controls.changed());
@@ -747,7 +713,7 @@ mod tests {
     #[test]
     fn test_any_changed_in() {
         let mut controls =
-            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slider_n("foo", 0.5)]);
 
         assert!(controls.any_changed_in(&["foo"]));
         controls.mark_unchanged();
@@ -760,7 +726,7 @@ mod tests {
     #[test]
     fn test_mark_unchanged() {
         let mut controls =
-            UiControls::with_previous(vec![Control::slide("foo", 0.5)]);
+            UiControls::with_previous(vec![Control::slider_n("foo", 0.5)]);
 
         controls.update_value("foo", ControlValue::Float(0.7));
         assert!(controls.changed());

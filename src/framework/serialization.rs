@@ -82,7 +82,7 @@ impl From<ConcreteControls> for SerializableControls {
     fn from(concretes: ConcreteControls) -> Self {
         let controls = concretes
             .controls
-            .items()
+            .configs()
             .iter()
             .map(|c| {
                 let value = concretes.controls.values().get(c.name());

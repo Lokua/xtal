@@ -17,8 +17,9 @@
 //! ```
 //!
 //! See the [parameter handling documentation](doc-link) for details on how
-//! different parameter types are processed. [link]:
-//! https://github.com/Lokua/lattice/blob/main/docs/parameter_handling.md
+//! different parameter types are processed.
+//!
+//! [link]: https://github.com/Lokua/lattice/blob/main/docs/parameter_handling.md
 
 use std::str::FromStr;
 
@@ -109,7 +110,7 @@ pub trait FromColdParams: Default + SetFromParam {
     /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a
     /// newly created Effect instance. Will use the Effect's default instead of
     /// [`ParamValue::Hot`] since those are swapped in during
-    /// [`ControlScript::get`]. Important that this _only_ deals with ParamValue
+    /// [`ControlHub::get`]. Important that this _only_ deals with ParamValue
     /// (f32) - you still need to deal with copying the non-ParamValues from the
     /// EffectConfig to the Effect instance manually.
     ///

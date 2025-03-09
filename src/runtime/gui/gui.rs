@@ -44,11 +44,6 @@ pub fn update(
                 draw_reset_button(ui, event_tx);
                 draw_clear_button(ui, event_tx);
                 draw_clear_cache_button(ui, event_tx);
-                if let Some(controls) = &controls {
-                    draw_copy_controls(ui, *controls, event_tx);
-                } else {
-                    ui.add_enabled(false, egui::Button::new("CP Ctrls"));
-                }
                 draw_queue_record_button(
                     ui,
                     recording_state.is_queued,
@@ -104,7 +99,7 @@ pub fn calculate_gui_dimensions(
     const MIN_FINAL_GAP: u32 = 4;
 
     let controls_height = controls.map_or(0, |controls| {
-        let count = controls.items().len() as u32;
+        let count = controls.configs().len() as u32;
         let reduced_height = (CONTROL_HEIGHT as f32 * 0.95) as u32;
         let base = THRESHOLD * reduced_height;
         let remaining = count - THRESHOLD;
@@ -163,28 +158,6 @@ fn draw_clear_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
 fn draw_clear_cache_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Clear Cache")).clicked().then(|| {
         event_tx.send(app::AppEvent::ClearControlsCache);
-    });
-}
-
-// Keeping until snapshots are implemented and skipping refactoring of
-// delegating events to AppEvent handler since we're just going to remove this
-fn draw_copy_controls(
-    ui: &mut egui::Ui,
-    controls: &UiControls,
-    event_tx: &app::AppEventSender,
-) {
-    ui.add(egui::Button::new("CP Ctrls")).clicked().then(|| {
-        if let Ok(mut clipboard) = Clipboard::new() {
-            let serialized = controls.to_serialized();
-            if let Ok(json) = serde_json::to_string_pretty(&serialized) {
-                let _ = clipboard.set_text(&json);
-                event_tx.alert("Control state copied to clipboard");
-            } else {
-                event_tx.alert("Failed to serialize controls");
-            }
-        } else {
-            event_tx.alert("Failed to access clipboard");
-        }
     });
 }
 

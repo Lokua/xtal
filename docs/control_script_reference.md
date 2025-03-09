@@ -174,7 +174,7 @@ structs. Some notes about mappings to keep in mind:
 
 # UI
 
-Interface to [Controls][crate::framework::controls]
+Interface to [Controls][crate::framework::ui_controls]
 
 All UI controls are added to the UI in the order they are declared.
 

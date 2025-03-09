@@ -69,11 +69,11 @@ impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
     }
 
     fn ui_control_configs(&self) -> &Vec<Control> {
-        self.ui_controls.items()
+        self.ui_controls.configs()
     }
 
     fn ui_control_configs_mut(&mut self) -> &mut Vec<Control> {
-        self.ui_controls.items_mut()
+        self.ui_controls.configs_mut()
     }
 
     fn update_ui_value(&mut self, name: &str, value: ControlValue) {
