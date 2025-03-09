@@ -19,7 +19,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<OscTransportTiming>,
+    controls: ControlHub<OscTransportTiming>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -46,7 +46,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(OscTransportTiming::new(ctx.bpm()))
         .slider("wave_power", 5.0, (0.0, 10.0), 0.01, None)
         .slider("wave_bands", 0.0, (2.0, 10.0), 1.0, None)

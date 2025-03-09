@@ -17,13 +17,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.2, 0.8, 0.5)")]
 pub struct Vertical2 {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     background_color: Rgba,
     noise: SimplexNoise,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical2 {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("alpha", 0.25, (0.001, 1.0), 0.001, None)
         .build();

@@ -19,11 +19,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct ControlScriptDev {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> ControlScriptDev {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
         Timing::new(ctx.bpm()),
     );

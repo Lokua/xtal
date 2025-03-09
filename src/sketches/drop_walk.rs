@@ -24,7 +24,7 @@ const MAX_DROPS: usize = 5000;
 
 #[derive(SketchComponents)]
 pub struct Drops {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
     droppers: Vec<Dropper>,
@@ -35,7 +35,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
     let w = ctx.window_rect().w();
     let h = ctx.window_rect().h();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("debug_walker", false, None)
         .slider("n_drops", 1.0, (1.0, 20.0), 1.0, None)

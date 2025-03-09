@@ -4,23 +4,24 @@ use std::error::Error;
 use super::prelude::*;
 use crate::runtime::storage::load_controls;
 
-/// Shared trait to enable sketches to use either `Controls` or `ControlScript`
-/// instances via a single `Model.controls` struct field and have them
-/// automatically show up in the UI in either case.
+/// Type erasure trait that enables object-safe access to generic
+/// `ControlScript<T>` instances. This enables boxed sketches to expose their
+/// controls to the UI and runtime systems without breaking object safety rules.
+/// It serves as the interface layer between the type-parameterized
+/// `ControlScript<T>` and the object-safe `SketchAll` trait used in the
+/// registry.
 pub trait ControlProvider {
-    fn controls_mut(&mut self) -> &mut UiControls;
-    fn items(&self) -> &Vec<Control>;
-    fn items_mut(&mut self) -> &mut Vec<Control>;
-    fn update_value(&mut self, name: &str, value: ControlValue);
-    fn to_serialized(&self) -> SerializedControls;
-    fn is_control_script(&self) -> bool;
+    fn ui_controls(&self) -> Option<UiControls>;
+    fn ui_controls_mut(&mut self) -> &mut UiControls;
+    fn ui_control_configs(&self) -> &Vec<Control>;
+    fn ui_control_configs_mut(&mut self) -> &mut Vec<Control>;
+    fn update_ui_value(&mut self, name: &str, value: ControlValue);
+    fn midi_controls(&self) -> Option<MidiControls>;
+    fn osc_controls(&self) -> Option<OscControls>;
     fn take_snapshot(&mut self, id: &str);
     fn recall_snapshot(&mut self, id: &str);
     fn delete_snapshot(&mut self, id: &str);
     fn clear_snapshots(&mut self);
-    fn midi_controls(&self) -> Option<MidiControls>;
-    fn osc_controls(&self) -> Option<OscControls>;
-    fn controls(&self) -> Option<UiControls>;
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 
@@ -28,34 +29,29 @@ pub trait ControlProvider {
         &mut self,
         sketch_name: &str,
     ) -> Option<Result<(), Box<dyn Error>>> {
-        if !self.is_control_script() {
-            return None;
-        }
-
         let cs = self.as_any_mut();
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<Timing>>() {
+        if let Some(c) = cs.downcast_mut::<ControlHub<Timing>>() {
             return Some(load_controls::<Timing>(sketch_name, c));
         }
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<FrameTiming>>() {
+        if let Some(c) = cs.downcast_mut::<ControlHub<FrameTiming>>() {
             return Some(load_controls::<FrameTiming>(sketch_name, c));
         }
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<OscTransportTiming>>()
-        {
+        if let Some(c) = cs.downcast_mut::<ControlHub<OscTransportTiming>>() {
             return Some(load_controls::<OscTransportTiming>(sketch_name, c));
         }
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<MidiSongTiming>>() {
+        if let Some(c) = cs.downcast_mut::<ControlHub<MidiSongTiming>>() {
             return Some(load_controls::<MidiSongTiming>(sketch_name, c));
         }
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<HybridTiming>>() {
+        if let Some(c) = cs.downcast_mut::<ControlHub<HybridTiming>>() {
             return Some(load_controls::<HybridTiming>(sketch_name, c));
         }
 
-        if let Some(c) = cs.downcast_mut::<ControlScript<ManualTiming>>() {
+        if let Some(c) = cs.downcast_mut::<ControlHub<ManualTiming>>() {
             return Some(load_controls::<ManualTiming>(sketch_name, c));
         }
 
@@ -63,108 +59,49 @@ pub trait ControlProvider {
     }
 }
 
-impl ControlProvider for UiControls {
-    fn controls_mut(&mut self) -> &mut UiControls {
-        self
+impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
+    fn ui_controls(&self) -> Option<UiControls> {
+        Some(self.ui_controls.clone())
     }
 
-    fn items(&self) -> &Vec<Control> {
-        UiControls::items(self)
-    }
-
-    fn items_mut(&mut self) -> &mut Vec<Control> {
-        self.items_mut()
-    }
-
-    fn update_value(&mut self, name: &str, value: ControlValue) {
-        UiControls::update_value(self, name, value)
-    }
-
-    fn to_serialized(&self) -> SerializedControls {
-        UiControls::to_serialized(self)
-    }
-
-    fn is_control_script(&self) -> bool {
-        false
-    }
-
-    fn take_snapshot(&mut self, _id: &str) {
-        warn!("Controls doesn't have snapshots");
-    }
-    fn recall_snapshot(&mut self, _id: &str) {
-        warn!("Controls doesn't have snapshots");
-    }
-    fn delete_snapshot(&mut self, _id: &str) {
-        warn!("Controls doesn't have snapshots");
-    }
-    fn clear_snapshots(&mut self) {
-        warn!("Controls doesn't have snapshots");
-    }
-
-    fn midi_controls(&self) -> Option<MidiControls> {
-        None
-    }
-    fn osc_controls(&self) -> Option<OscControls> {
-        None
-    }
-    fn controls(&self) -> Option<UiControls> {
-        Some(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-}
-
-impl<T: TimingSource + 'static> ControlProvider for ControlScript<T> {
-    fn controls_mut(&mut self) -> &mut UiControls {
+    fn ui_controls_mut(&mut self) -> &mut UiControls {
         &mut self.ui_controls
     }
 
-    fn items(&self) -> &Vec<Control> {
+    fn ui_control_configs(&self) -> &Vec<Control> {
         self.ui_controls.items()
     }
 
-    fn items_mut(&mut self) -> &mut Vec<Control> {
+    fn ui_control_configs_mut(&mut self) -> &mut Vec<Control> {
         self.ui_controls.items_mut()
     }
 
-    fn update_value(&mut self, name: &str, value: ControlValue) {
+    fn update_ui_value(&mut self, name: &str, value: ControlValue) {
         self.ui_controls.update_value(name, value)
-    }
-
-    fn to_serialized(&self) -> SerializedControls {
-        self.ui_controls.to_serialized()
-    }
-
-    fn is_control_script(&self) -> bool {
-        true
-    }
-
-    fn take_snapshot(&mut self, id: &str) {
-        self.take_snapshot(id);
-    }
-    fn recall_snapshot(&mut self, id: &str) {
-        self.recall_snapshot(id);
-    }
-    fn delete_snapshot(&mut self, id: &str) {
-        self.delete_snapshot(id);
-    }
-    fn clear_snapshots(&mut self) {
-        self.clear_snapshots();
     }
 
     fn midi_controls(&self) -> Option<MidiControls> {
         Some(self.midi_controls.clone())
     }
+
     fn osc_controls(&self) -> Option<OscControls> {
         Some(self.osc_controls.clone())
     }
-    fn controls(&self) -> Option<UiControls> {
-        Some(self.ui_controls.clone())
+
+    fn take_snapshot(&mut self, id: &str) {
+        self.take_snapshot(id);
+    }
+
+    fn recall_snapshot(&mut self, id: &str) {
+        self.recall_snapshot(id);
+    }
+
+    fn delete_snapshot(&mut self, id: &str) {
+        self.delete_snapshot(id);
+    }
+
+    fn clear_snapshots(&mut self) {
+        self.clear_snapshots();
     }
 
     fn as_any(&self) -> &dyn Any {

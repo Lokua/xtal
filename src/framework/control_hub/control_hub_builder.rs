@@ -1,8 +1,8 @@
-use super::ControlScript;
+use super::ControlHub;
 use crate::config::AUDIO_DEVICE_SAMPLE_RATE;
 use crate::framework::{frame_controller, prelude::*};
 
-pub struct ControlScriptBuilder<T: TimingSource> {
+pub struct ControlHubBuilder<T: TimingSource> {
     timing: Option<T>,
     ui_controls: Option<UiControls>,
     midi_controls: Option<MidiControls>,
@@ -10,7 +10,7 @@ pub struct ControlScriptBuilder<T: TimingSource> {
     audio_controls: Option<AudioControls>,
 }
 
-impl<T: TimingSource> ControlScriptBuilder<T> {
+impl<T: TimingSource> ControlHubBuilder<T> {
     pub fn new() -> Self {
         Self {
             timing: None,
@@ -197,8 +197,8 @@ impl<T: TimingSource> ControlScriptBuilder<T> {
         self
     }
 
-    pub fn build(self) -> ControlScript<T> {
-        let mut c = ControlScript::new(None, self.timing.unwrap());
+    pub fn build(self) -> ControlHub<T> {
+        let mut c = ControlHub::new(None, self.timing.unwrap());
 
         if let Some(controls) = self.ui_controls {
             c.ui_controls = controls;
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_control_script_builder() {
-        let controls: ControlScript<ManualTiming> = ControlScriptBuilder::new()
+        let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
             .ui_controls(UiControls::new(vec![Control::slide("foo", 0.5)]))
             .osc_controls(
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_control_script_builder_helpers() {
-        let controls: ControlScript<ManualTiming> = ControlScriptBuilder::new()
+        let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
             .slider_n("foo", 0.5)
             .osc_n("bar", 22.0)

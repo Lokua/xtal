@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct G25_13Triangle {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
     midi: MidiControls,
 }
@@ -37,7 +37,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("scale", 1.0, (0.0001, 2.0), 0.0001, None)
         .slider_n("y_offset", 0.3)

@@ -22,14 +22,14 @@ const MAX_DROPS: usize = 2500;
 
 #[derive(SketchComponents)]
 pub struct Drops {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     max_drops: usize,
     drops: Vec<(Drop, Hsl)>,
     droppers: Vec<Dropper>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("center_min_radius", 2.0, (1.0, 50.0), 1.0, None)
         .slider("center_max_radius", 20.0, (1.0, 50.0), 1.0, None)

@@ -19,7 +19,7 @@ const GRID_SIZE: usize = 32;
 
 #[derive(SketchComponents)]
 pub struct ZSim {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
@@ -29,7 +29,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
 
     let (grid, cell_size) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("size_mult", 0.5, (0.0125, 2.0), 0.0125, None)
         .slider("alpha", 0.5, (0.0, 1.0), 0.001, None)

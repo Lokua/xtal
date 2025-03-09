@@ -19,7 +19,7 @@ const GRID_SIZE: usize = 8;
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     grid: Vec<Vec2>,
     cell_size: f32,
 }
@@ -29,7 +29,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
     let (grid, cell_size) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("x_offset", 1.0, (0.0, 20.0), 0.5, None)
         .slider("y_offset", 1.0, (0.0, 20.0), 0.5, None)

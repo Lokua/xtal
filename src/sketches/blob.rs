@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Blob {
-    controls: ControlScript<Timing>,
+    hub: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -48,7 +48,7 @@ struct ShaderParams {
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Blob {
     let window_rect = ctx.window_rect();
-    let controls = ControlScript::from_path(
+    let hub = ControlHub::from_path(
         to_absolute_path(file!(), "blob.yaml"),
         Timing::new(ctx.bpm()),
     );
@@ -71,51 +71,51 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Blob {
         true,
     );
 
-    Blob { controls, gpu }
+    Blob { hub, gpu }
 }
 
 impl Sketch for Blob {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
-        self.controls.update();
+        self.hub.update();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                self.controls.get("t1"),
-                self.controls.get("t2"),
-                self.controls.get("t3"),
-                self.controls.get("t4"),
+                self.hub.get("t1"),
+                self.hub.get("t2"),
+                self.hub.get("t3"),
+                self.hub.get("t4"),
             ],
             b: [
-                self.controls.get("invert"),
-                self.controls.get("smoothness"),
-                self.controls.get("blur"),
-                self.controls.get("color_mix"),
+                self.hub.get("invert"),
+                self.hub.get("smoothness"),
+                self.hub.get("blur"),
+                self.hub.get("color_mix"),
             ],
             c: [
-                self.controls.get("t_long"),
-                self.controls.get("center_y"),
-                self.controls.get("outer_scale"),
-                self.controls.get("c4"),
+                self.hub.get("t_long"),
+                self.hub.get("center_y"),
+                self.hub.get("outer_scale"),
+                self.hub.get("c4"),
             ],
             d: [
-                self.controls.get("d1"),
-                self.controls.get("d2"),
-                self.controls.get("d3"),
-                self.controls.get("d4"),
+                self.hub.get("d1"),
+                self.hub.get("d2"),
+                self.hub.get("d3"),
+                self.hub.get("d4"),
             ],
             e: [
-                self.controls.get("e1"),
-                self.controls.get("e2"),
-                self.controls.get("e3"),
-                self.controls.get("e4"),
+                self.hub.get("e1"),
+                self.hub.get("e2"),
+                self.hub.get("e3"),
+                self.hub.get("e4"),
             ],
             f: [
-                self.controls.get("f1"),
-                self.controls.get("f2"),
-                self.controls.get("f3"),
-                self.controls.get("f4"),
+                self.hub.get("f1"),
+                self.hub.get("f2"),
+                self.hub.get("f3"),
+                self.hub.get("f4"),
             ],
         };
 

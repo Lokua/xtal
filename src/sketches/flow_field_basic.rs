@@ -18,13 +18,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct FlowFieldBasic {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     agents: Vec<Agent>,
     noise: PerlinNoise,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select(
             "algorithm",

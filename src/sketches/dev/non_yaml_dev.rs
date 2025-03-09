@@ -19,7 +19,7 @@ const COUNT: usize = 512;
 
 #[derive(SketchComponents)]
 pub struct NonYamlDev {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
@@ -34,7 +34,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
         ));
     }
 
-    let controls: ControlScript<Timing> = ControlScriptBuilder::new()
+    let controls: ControlHub<Timing> = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .ui_controls(UiControls::new(ui_controls))
         .build();

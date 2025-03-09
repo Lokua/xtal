@@ -18,11 +18,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct AudioControlsDev {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> AudioControlsDev {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("pre_emphasis", 0.0)
         .slider_n("detect", 0.0)

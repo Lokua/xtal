@@ -17,13 +17,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     radius: f32,
     hue: f32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("radius", 100.0, (10.0, 500.0), 1.0, None)
         .build();

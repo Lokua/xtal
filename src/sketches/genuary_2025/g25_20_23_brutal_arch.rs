@@ -25,7 +25,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<OscTransportTiming>,
+    controls: ControlHub<OscTransportTiming>,
     main_shader: gpu::GpuState<Vertex>,
     post_shader: gpu::GpuState<BasicPositionVertex>,
 }
@@ -85,7 +85,7 @@ struct PostShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
         OscTransportTiming::new(ctx.bpm()),
     );

@@ -25,7 +25,7 @@ const GRID_SIZE: usize = 128;
 pub struct HeatMask {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gradient: Gradient<LinSrgb>,
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
@@ -47,7 +47,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
         Some(Box::new(|controls| controls.bool("animate_trbl")))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("show_center", false, None)
         .checkbox("animate_center", false, None)

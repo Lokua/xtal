@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Kalos2 {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -60,7 +60,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
         Some(Box::new(|_| true))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("offset", 0.2, (0.0, 1.0), 0.0001, make_disable())
         .slider("radius", 0.5, (0.0, 10.0), 0.01, make_disable())

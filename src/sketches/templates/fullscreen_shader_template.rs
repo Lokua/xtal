@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct FullscreenShader {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -31,7 +31,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select("mode", "smooth", &["smooth", "step"], None)
         .slider_n("radius", 0.5)

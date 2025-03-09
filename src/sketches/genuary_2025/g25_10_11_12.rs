@@ -49,7 +49,7 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<()>,
     midi: MidiControls,
 }
@@ -59,7 +59,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
         Some(Box::new(|_| true))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         // 1 "pass" = 1 million vertices
         .slider("passes", 1.0, (1.0, 20.0), 1.0, None)

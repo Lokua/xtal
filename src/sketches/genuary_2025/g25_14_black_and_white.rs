@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlScript<OscTransportTiming>,
+    controls: ControlHub<OscTransportTiming>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -47,7 +47,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Template {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "./g25_14_black_and_white.yaml"),
         OscTransportTiming::new(ctx.bpm()),
     );

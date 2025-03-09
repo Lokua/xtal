@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Vertical {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     lines: Vec<Vec<Point2>>,
     patterns: Vec<XModFn>,
 }
@@ -31,7 +31,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
         }))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("scale", 1.0, (0.1, 4.0), 0.1, None)
         .select("mode", "per_line", &mode_options, None)

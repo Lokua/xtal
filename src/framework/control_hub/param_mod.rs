@@ -479,7 +479,7 @@ impl SetFromParam for Breakpoint {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::framework::control_script::config::KindConfig;
+    use crate::framework::control_hub::config::KindConfig;
 
     #[test]
     fn test_breakpoint_ramp_conversion() {

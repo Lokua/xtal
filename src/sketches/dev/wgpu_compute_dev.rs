@@ -50,7 +50,7 @@ struct OutputPoint {
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     compute_pipeline: wgpu::ComputePipeline,
     params_buffer: wgpu::Buffer,
     params_bind_group: wgpu::BindGroup,
@@ -61,7 +61,7 @@ pub struct Model {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Model {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("show_ref_line", false, None)
         .checkbox("show_sand_line", true, None)

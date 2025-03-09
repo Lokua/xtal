@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct G25_2Layers {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -37,7 +37,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_2Layers {
         Some(Box::new(|_controls| true))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("smooth_mix", 0.5)
         .slider("contrast", 1.5, (0.1, 5.0), 0.1, None)

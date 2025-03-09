@@ -19,7 +19,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct ShaderToTextureDev {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     first_pass: gpu::GpuState<Vertex>,
     second_pass: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -46,7 +46,7 @@ struct PostProcessParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("a1", 0.0)
         .slider_n("a2", 0.0)

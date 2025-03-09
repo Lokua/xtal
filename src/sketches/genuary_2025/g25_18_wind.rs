@@ -41,7 +41,7 @@ struct ShaderParams {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(1.0, 1.0, 1.0, 1.0)")]
 pub struct G25_18Wind {
-    controls: ControlScript<MidiSongTiming>,
+    controls: ControlHub<MidiSongTiming>,
     agents: Vec<Agent>,
     noise: PerlinNoise,
     gpu: gpu::GpuState<Vertex>,
@@ -52,7 +52,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_18Wind {
         Some(Box::new(|_controls: &UiControls| true))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(MidiSongTiming::new(ctx.bpm()))
         .select(
             "algorithm",

@@ -22,7 +22,7 @@ const SPACING: f32 = 32.0;
 
 #[derive(SketchComponents)]
 pub struct Lines {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     slant_points: Vec<(Vec2, Vec2)>,
     jerky_points: Vec<Vec<Vec2>>,
     chaikin_points: Vec<Vec<Vec2>>,
@@ -33,7 +33,7 @@ pub struct Lines {
 pub fn init(_app: &App, ctx: &LatticeContext) -> Lines {
     let wr = ctx.window_rect();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("deviation", 5.0, (1.0, 10.0), 0.1, None)
         .slider("n_points", 16.0, (3.0, 64.0), 1.0, None)

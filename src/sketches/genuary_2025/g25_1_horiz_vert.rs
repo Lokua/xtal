@@ -23,12 +23,12 @@ const GRID_SIZE: u32 = 16;
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 0.0, 1.0)")]
 pub struct Template {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     lines: Vec<Vec2>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("invert", false, None)
         .slider_n("a", 0.5)

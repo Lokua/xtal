@@ -3,13 +3,13 @@
 //!
 #![doc = include_str!("../../../docs/control_script_reference.md")]
 
-pub mod control_script;
-pub use control_script::ControlScript;
+pub mod control_hub;
+pub use control_hub::ControlHub;
 
 mod config;
 
-mod control_script_builder;
-pub use control_script_builder::ControlScriptBuilder;
+mod control_hub_builder;
+pub use control_hub_builder::ControlHubBuilder;
 
 mod dep_graph;
 mod eval_cache;

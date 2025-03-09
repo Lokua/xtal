@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct ShaderExperiments {
     #[allow(dead_code)]
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -33,7 +33,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> ShaderExperiments {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "./shader_experiments.yaml"),
         Timing::new(ctx.bpm()),
     );

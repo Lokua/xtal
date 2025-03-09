@@ -24,7 +24,7 @@ const GRID_SIZE: usize = 128;
 pub struct Displacement1a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gradient: Gradient<LinSrgb>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
@@ -35,7 +35,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1a {
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("gradient_spread", 0.5, (0.0, 1.0), 0.0001, None)
         .slider("circle_radius_min", 0.1, (0.1, 4.0), 0.1, None)

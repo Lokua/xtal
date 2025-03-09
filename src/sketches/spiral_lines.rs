@@ -47,14 +47,14 @@ struct ShaderParams {
 
 #[derive(SketchComponents)]
 pub struct SpiralLines {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<()>,
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> SpiralLines {
     let wr = ctx.window_rect();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("passes", 1.0, (1.0, 20.0), 1.0, None)
         .slider("n_lines", 64.0, (1.0, 256.0), 1.0, None)

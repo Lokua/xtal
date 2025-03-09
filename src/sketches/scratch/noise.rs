@@ -23,13 +23,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 1.0, 1.0)")]
 pub struct Noise {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     noise: SuperSimplex,
     last_seed: u32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Noise {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("rotate", false, None)
         .slider("max_rect_length", 10.0, (1.0, 400.0), 1.0, None)

@@ -23,13 +23,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct PerlinLoop {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     noise: Perlin,
     last_seed: u32,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("rotate", false, None)
         .slider("circle_radius", 200.0, (1.0, 500.0), 1.0, None)

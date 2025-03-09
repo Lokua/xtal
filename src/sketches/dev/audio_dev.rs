@@ -20,7 +20,7 @@ const N_BANDS: usize = 8;
 
 #[derive(SketchComponents)]
 pub struct AudioDev {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     audio: Audio,
     fft_bands: Vec<f32>,
 }
@@ -29,7 +29,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> AudioDev {
     let audio =
         Audio::new(crate::config::AUDIO_DEVICE_SAMPLE_RATE, SKETCH_CONFIG.fps);
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("pre_emphasis", 0.88, (0.0, 1.0), 0.001, None)
         .slider("rise", 0.96, (0.001, 1.0), 0.001, None)

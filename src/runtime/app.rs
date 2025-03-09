@@ -108,7 +108,6 @@ pub enum AppEvent {
     CaptureFrame,
     ClearControlsCache,
     ClearNextFrame,
-    ControlsChanged,
     MidiContinue,
     MidiStart,
     MidiStop,
@@ -217,31 +216,6 @@ impl AppModel {
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
             }
-            AppEvent::ControlsChanged => {
-                if frame_controller::is_paused()
-                    && self.sketch_config.play_mode != PlayMode::ManualAdvance
-                {
-                    frame_controller::advance_single_frame();
-                }
-
-                match storage::persist_controls(
-                    self.sketch_config.name,
-                    self.sketch.controls_provided().unwrap(),
-                ) {
-                    Ok(path_buf) => {
-                        let message =
-                            format!("Controls persisted at {:?}", path_buf);
-                        self.alert_text = message.clone();
-                        trace!("{}", message);
-                    }
-                    Err(e) => {
-                        let message =
-                            format!("Failed to persist controls: {}", e);
-                        self.alert_text = message.clone();
-                        error!("{}", message);
-                    }
-                }
-            }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!(
                     "Received MIDI Start/Continue message. \
@@ -311,12 +285,9 @@ impl AppModel {
             AppEvent::SaveControls => {
                 let sketch_name = self.sketch_name();
                 if let Some(provider) = self.sketch.controls() {
-                    if !provider.is_control_script() {
-                        return;
-                    }
                     let control_script = provider
                         .as_any()
-                        .downcast_ref::<ControlScript<Timing>>();
+                        .downcast_ref::<ControlHub<Timing>>();
 
                     match storage::save_controls(
                         sketch_name.as_str(),
@@ -340,9 +311,6 @@ impl AppModel {
             AppEvent::SendMidi => {
                 if let Some(midi_out) = &mut self.midi_out {
                     if let Some(provider) = self.sketch.controls() {
-                        if !provider.is_control_script() {
-                            return;
-                        }
                         if let Some(midi_controls) = provider.midi_controls() {
                             for message in midi_controls.messages() {
                                 if let Err(e) = midi_out.send(&message) {
@@ -362,22 +330,18 @@ impl AppModel {
             }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(provider) = self.sketch.controls() {
-                    if provider.is_control_script() {
-                        provider.recall_snapshot(&digit);
-                        let alert = format!("Snapshot {:?} recalled", digit);
-                        self.alert_text = alert;
-                    }
+                    provider.recall_snapshot(&digit);
+                    let alert = format!("Snapshot {:?} recalled", digit);
+                    self.alert_text = alert;
                 } else {
                     warn!("Controls does not support snapshots");
                 }
             }
             AppEvent::SnapshotStore(digit) => {
                 if let Some(provider) = self.sketch.controls() {
-                    if provider.is_control_script() {
-                        provider.take_snapshot(&digit);
-                        let alert = format!("Snapshot {:?} saved", digit);
-                        self.alert_text = alert;
-                    }
+                    provider.take_snapshot(&digit);
+                    let alert = format!("Snapshot {:?} saved", digit);
+                    self.alert_text = alert;
                 } else {
                     warn!("Controls does not support snapshots");
                 }
@@ -481,9 +445,7 @@ impl AppModel {
         self.clear_next_frame.set(true);
 
         if let Some(provider) = self.sketch.controls() {
-            if provider.is_control_script() {
-                provider.clear_snapshots();
-            }
+            provider.clear_snapshots();
         }
 
         self.init_sketch_environment(app);
@@ -514,7 +476,7 @@ impl AppModel {
         });
 
         let (gui_w, gui_h) =
-            gui::calculate_gui_dimensions(self.sketch.controls_provided());
+            gui::calculate_gui_dimensions(self.sketch.ui_controls());
 
         self.gui_window(app).map(|gui_window| {
             gui_window.set_title(&format!(
@@ -543,15 +505,13 @@ impl AppModel {
         }
 
         if let Some(provider) = self.sketch.controls() {
-            if provider.is_control_script() {
-                match provider.load_controls(self.sketch_config.name) {
-                    Some(Ok(())) => info!("Controls restored"),
-                    Some(Err(e)) => {
-                        warn!("Unable to restore controls: {}", e)
-                    }
-                    None => warn!("Unable to restore controls"),
-                };
-            }
+            match provider.load_controls(self.sketch_config.name) {
+                Some(Ok(())) => info!("Controls restored"),
+                Some(Err(e)) => {
+                    warn!("Unable to restore controls: {}", e)
+                }
+                None => warn!("Unable to restore controls"),
+            };
         }
     }
 }
@@ -672,7 +632,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let bpm = model.ctx.bpm().get();
         gui::update(
             &model.sketch_config,
-            model.sketch.controls_provided(),
+            model.sketch.ui_controls(),
             &mut model.alert_text,
             &mut model.perf_mode,
             &mut model.tap_tempo_enabled,

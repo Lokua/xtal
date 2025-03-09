@@ -26,7 +26,7 @@ type Line = Vec<Vec2>;
 
 #[derive(SketchComponents)]
 pub struct SandLines {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     ref_lines: Vec<Line>,
     sand_lines: Vec<Line>,
 }
@@ -54,7 +54,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> SandLines {
         }))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select("noise_strategy", "Gaussian", &["Gaussian", "Octave"], None)
         .select(

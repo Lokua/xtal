@@ -20,7 +20,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct BasicCubeShader {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<Vertex>,
 }
 
@@ -42,7 +42,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> BasicCubeShader {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
         Timing::new(ctx.bpm()),
     );

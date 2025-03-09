@@ -47,7 +47,7 @@ struct SnapshotTransition {
 }
 
 #[derive(Debug)]
-pub struct ControlScript<T: TimingSource> {
+pub struct ControlHub<T: TimingSource> {
     pub ui_controls: UiControls,
     pub animation: Animation<T>,
     pub midi_controls: MidiControls,
@@ -68,7 +68,7 @@ pub struct ControlScript<T: TimingSource> {
     instrumentation: RefCell<Instrumentation>,
 }
 
-impl<T: TimingSource> ControlScript<T> {
+impl<T: TimingSource> ControlHub<T> {
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             ui_controls: UiControls::with_previous(vec![]),
@@ -995,8 +995,8 @@ mod tests {
     // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
     use crate::framework::animation::animation_tests::{init, BPM};
 
-    fn create_instance(yaml: &str) -> ControlScript<FrameTiming> {
-        ControlScript::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))
+    fn create_instance(yaml: &str) -> ControlHub<FrameTiming> {
+        ControlHub::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))
     }
 
     #[test]

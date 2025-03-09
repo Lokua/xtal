@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Breakpoints2 {
     animation: Animation<ManualTiming>,
-    controls: ControlScript<ManualTiming>,
+    controls: ControlHub<ManualTiming>,
     lanes: Vec<Vec<[f32; 2]>>,
     slew_limiter: SlewLimiter,
     hysteresis: Hysteresis,
@@ -31,7 +31,7 @@ pub struct Breakpoints2 {
 pub fn init(_app: &App, ctx: &LatticeContext) -> Breakpoints2 {
     let timing = ManualTiming::new(ctx.bpm());
     let animation = Animation::new(timing.clone());
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "breakpoints_2.yaml"),
         timing,
     );

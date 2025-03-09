@@ -24,7 +24,7 @@ const FOREGROUND: f32 = 1.0;
 
 #[derive(SketchComponents)]
 pub struct Brutalism {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     main_shader: gpu::GpuState<Vertex>,
     post_shader: gpu::GpuState<BasicPositionVertex>,
 }
@@ -84,7 +84,7 @@ struct PostShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Brutalism {
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
         Timing::new(ctx.bpm()),
     );

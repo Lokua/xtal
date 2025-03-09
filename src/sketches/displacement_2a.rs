@@ -29,7 +29,7 @@ const CIRCLE_RESOLUTION: f32 = 6.0;
 pub struct Displacement2a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     cached_pattern: String,
     cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
     palettes: Vec<Gradient<LinSrgb>>,
@@ -87,7 +87,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     debug!("init: {} {}", w, h);
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(Bpm::new(134.0)))
         .checkbox("audio_enabled", false, None)
         .slider("rise_rate", 0.96, (0.001, 1.0), 0.001, None)

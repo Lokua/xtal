@@ -1,3 +1,5 @@
+recursive = true
+
 # Max width of each line
 max_width = 80
 

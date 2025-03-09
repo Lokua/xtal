@@ -21,13 +21,13 @@ const N_POINTS: usize = 2048;
 pub struct EffectsWavefolderDev {
     lanes: Vec<Vec<[f32; 2]>>,
     wave_folder: WaveFolder,
-    controls: ControlScript<ManualTiming>,
+    controls: ControlHub<ManualTiming>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> EffectsWavefolderDev {
     let wave_folder = WaveFolder::default();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(ManualTiming::new(ctx.bpm()))
         .slider("gain", 1.0, (1.0, 5.0), 0.125, None)
         .slider("iterations", 1.0, (1.0, 5.0), 1.0, None)

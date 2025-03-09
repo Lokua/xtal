@@ -20,7 +20,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct SandLineSketch {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     ref_line: Vec<Vec2>,
     sand_line: Vec<Vec2>,
 }
@@ -50,7 +50,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> SandLineSketch {
         }))
     }
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select("noise_strategy", "Gaussian", &["Gaussian", "Octave"], None)
         .select(

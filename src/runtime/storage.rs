@@ -10,41 +10,6 @@ use crate::framework::serialization::{ConcreteControls, SerializableControls};
 /// within the Lattice project's controls_cache folder for easy source control.
 const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
 
-pub fn stored_controls(sketch_name: &str) -> Option<ControlValues> {
-    controls_storage_path(sketch_name)
-        .and_then(|path| fs::read(path).ok())
-        .and_then(|bytes| str::from_utf8(&bytes).ok().map(|s| s.to_owned()))
-        .and_then(|json| serde_json::from_str::<SerializedControls>(&json).ok())
-        .map(|sc| sc.values)
-}
-
-pub fn persist_controls(
-    sketch_name: &str,
-    controls: &UiControls,
-) -> Result<PathBuf, Box<dyn Error>> {
-    let path = controls_storage_path(sketch_name)
-        .ok_or("Could not determine the configuration directory")?;
-    if let Some(parent_dir) = path.parent() {
-        fs::create_dir_all(parent_dir)?;
-    }
-    let serialized = controls.to_serialized();
-    let json = serde_json::to_string_pretty(&serialized)?;
-    fs::write(&path, json)?;
-    Ok(path)
-}
-
-pub fn delete_stored_controls(sketch_name: &str) -> Result<(), Box<dyn Error>> {
-    let path = controls_storage_path(sketch_name)
-        .ok_or("Could not determine the configuration directory")?;
-    if path.exists() {
-        fs::remove_file(path)?;
-        info!("Deleted controls for sketch: {}", sketch_name);
-    } else {
-        warn!("No stored controls found for sketch: {}", sketch_name);
-    }
-    Ok(())
-}
-
 fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
     if STORE_CONTROLS_CACHE_IN_PROJECT {
         return Some(
@@ -63,11 +28,11 @@ fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
 
 pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
-    control_script: &ControlScript<T>,
+    control_script: &ControlHub<T>,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let concrete_controls = ConcreteControls {
         controls: control_script
-            .controls()
+            .ui_controls()
             .unwrap_or_else(|| UiControls::default()),
         midi_controls: control_script
             .midi_controls()
@@ -88,7 +53,7 @@ pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
     Ok(path)
 }
 
-impl<T: TimingSource + std::fmt::Debug + 'static> ControlScript<T> {
+impl<T: TimingSource + std::fmt::Debug + 'static> ControlHub<T> {
     pub fn load_from_storage(
         &mut self,
         sketch_name: &str,
@@ -99,7 +64,7 @@ impl<T: TimingSource + std::fmt::Debug + 'static> ControlScript<T> {
 
 pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
-    control_script: &mut ControlScript<T>,
+    control_script: &mut ControlHub<T>,
 ) -> Result<(), Box<dyn Error>> {
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine controls cache directory")?;
@@ -110,7 +75,7 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
 
     let mut concrete_controls = ConcreteControls {
         controls: control_script
-            .controls()
+            .ui_controls()
             .unwrap_or_else(|| UiControls::default()),
         midi_controls: control_script
             .midi_controls()
@@ -143,5 +108,17 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
             control_script.osc_controls.update_value(name, *value);
         });
 
+    Ok(())
+}
+
+pub fn delete_stored_controls(sketch_name: &str) -> Result<(), Box<dyn Error>> {
+    let path = controls_storage_path(sketch_name)
+        .ok_or("Could not determine the configuration directory")?;
+    if path.exists() {
+        fs::remove_file(path)?;
+        info!("Deleted controls for sketch: {}", sketch_name);
+    } else {
+        warn!("No stored controls found for sketch: {}", sketch_name);
+    }
     Ok(())
 }

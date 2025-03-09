@@ -25,7 +25,7 @@ const GRID_SIZE: usize = 128;
 pub struct Displacement2 {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     cached_pattern: String,
     cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
     gradient: Gradient<LinSrgb>,
@@ -71,7 +71,7 @@ impl Displacement2 {
 pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
     let wr = ctx.window_rect();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select("pattern", "cos,sin", &generate_pattern_options(), None)
         .checkbox("clamp_circle_radii", false, None)

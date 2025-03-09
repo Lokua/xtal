@@ -18,7 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 pub struct Template {
     #[allow(dead_code)]
     animation: Animation<Timing>,
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -39,7 +39,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
     let timing = Timing::new(ctx.bpm());
     let animation = Animation::new(timing.clone());
 
-    let controls = ControlScript::from_path(
+    let controls = ControlHub::from_path(
         to_absolute_path(file!(), "./g25_22_gradients_only.yaml"),
         timing,
     );

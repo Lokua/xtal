@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct SierpinskiTriangle {
-    controls: ControlScript<Timing>,
+    controls: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -34,7 +34,7 @@ struct ShaderParams {
 pub fn init(app: &App, ctx: &LatticeContext) -> SierpinskiTriangle {
     let wr = ctx.window_rect();
 
-    let controls = ControlScriptBuilder::new()
+    let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("primary_iterations", 1.0, (0.0, 16.0), 1.0, None)
         .slider("second_iterations", 1.0, (0.0, 16.0), 1.0, None)
