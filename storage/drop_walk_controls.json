@@ -1,0 +1,53 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "step_size",
+      "value": 82
+    },
+    {
+      "type": "Slider",
+      "name": "lightness_max",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "splatter_radius",
+      "value": 30
+    },
+    {
+      "type": "Slider",
+      "name": "lightness_min",
+      "value": 0
+    },
+    {
+      "type": "Select",
+      "name": "palette",
+      "value": "gen_x"
+    },
+    {
+      "type": "Slider",
+      "name": "color_ratio",
+      "value": 0.19999999
+    },
+    {
+      "type": "Slider",
+      "name": "drop_max_radius",
+      "value": 48
+    },
+    {
+      "type": "Slider",
+      "name": "n_drops",
+      "value": 6
+    },
+    {
+      "type": "Checkbox",
+      "name": "debug_walker",
+      "value": false
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

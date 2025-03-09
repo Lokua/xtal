@@ -1,0 +1,183 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "texture_scale",
+      "value": 1.0699999
+    },
+    {
+      "type": "Slider",
+      "name": "explode",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "corner_translate",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "echo_threshold",
+      "value": 0.76
+    },
+    {
+      "type": "Slider",
+      "name": "grid_size",
+      "value": 8
+    },
+    {
+      "type": "Slider",
+      "name": "phase_twist",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "contrast",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_noise_scale",
+      "value": 6.7
+    },
+    {
+      "type": "Slider",
+      "name": "geo_size",
+      "value": 0.6625
+    },
+    {
+      "type": "Checkbox",
+      "name": "zvmd7",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "m0dje",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "edge_thresh",
+      "value": 0.39999998
+    },
+    {
+      "type": "Slider",
+      "name": "grid_border_size",
+      "value": 0.12
+    },
+    {
+      "type": "Slider",
+      "name": "offs",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "z_offset",
+      "value": -3.9099998
+    },
+    {
+      "type": "Slider",
+      "name": "echo_intensity",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "geo_offs",
+      "value": 4.2
+    },
+    {
+      "type": "Slider",
+      "name": "edge_size",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "bulge",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "grid_contrast",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "diag",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_noise",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "color_spread",
+      "value": 0.26999998
+    },
+    {
+      "type": "Slider",
+      "name": "texture_strength",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 0.565
+    },
+    {
+      "type": "Slider",
+      "name": "twist",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "edge_mix",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "wave",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "geo_mix",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "g6kpx",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "82mt1",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "middle_translate",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "d331e",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "stag",
+      "value": 0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

@@ -1,0 +1,183 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "center_use_grain",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_center",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "grain_size",
+      "value": 56
+    },
+    {
+      "type": "Select",
+      "name": "center_mode",
+      "value": "attract"
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_corner",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "corner_use_grain",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_center",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "size_max",
+      "value": 6.2000003
+    },
+    {
+      "type": "Slider",
+      "name": "t_scale",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "trbl_strength",
+      "value": 50
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 2
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_trbl",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "flip",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "alpha",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "distance_strength",
+      "value": 0.532
+    },
+    {
+      "type": "Slider",
+      "name": "corner_strength",
+      "value": 57
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_weight",
+      "value": 1.25
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_corner",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "corner_radius",
+      "value": 25
+    },
+    {
+      "type": "Slider",
+      "name": "mag_mult",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_colors",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "background_alpha",
+      "value": 0.96500003
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_trbl",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "angle_frequency",
+      "value": 95
+    },
+    {
+      "type": "Select",
+      "name": "trbl_mode",
+      "value": "attract"
+    },
+    {
+      "type": "Checkbox",
+      "name": "trbl_use_grain",
+      "value": true
+    },
+    {
+      "type": "Select",
+      "name": "corner_mode",
+      "value": "attract"
+    },
+    {
+      "type": "Checkbox",
+      "name": "stroke",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "angle_mult",
+      "value": 8
+    },
+    {
+      "type": "Select",
+      "name": "sort",
+      "value": "radius"
+    },
+    {
+      "type": "Slider",
+      "name": "trbl_radius",
+      "value": 63
+    },
+    {
+      "type": "Slider",
+      "name": "center_strength",
+      "value": 20
+    },
+    {
+      "type": "Slider",
+      "name": "center_radius",
+      "value": 35
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

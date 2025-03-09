@@ -1,0 +1,108 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "show_corners",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "mix",
+      "value": 0.78999996
+    },
+    {
+      "type": "Slider",
+      "name": "strength",
+      "value": 1.3000001
+    },
+    {
+      "type": "Slider",
+      "name": "corner_strength",
+      "value": 1.0600001
+    },
+    {
+      "type": "Slider",
+      "name": "g",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "threshold",
+      "value": 0.345
+    },
+    {
+      "type": "Slider",
+      "name": "k",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 1.1
+    },
+    {
+      "type": "Slider",
+      "name": "b",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_center",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "offset",
+      "value": 0.22
+    },
+    {
+      "type": "Slider",
+      "name": "angular_variation",
+      "value": 10
+    },
+    {
+      "type": "Slider",
+      "name": "r",
+      "value": 0.53
+    },
+    {
+      "type": "Slider",
+      "name": "j",
+      "value": 0.11
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "corner_radius",
+      "value": 2.7
+    },
+    {
+      "type": "Select",
+      "name": "alg",
+      "value": "concentric_waves"
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_hue_shift",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 1.3
+    },
+    {
+      "type": "Slider",
+      "name": "ring_strength",
+      "value": 19.5
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

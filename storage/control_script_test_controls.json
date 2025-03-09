@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "hue",
+      "value": 0.49499997
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 106
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

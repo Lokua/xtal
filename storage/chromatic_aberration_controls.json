@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "y_offset",
+      "value": 17.5
+    },
+    {
+      "type": "Slider",
+      "name": "size_mult",
+      "value": 0.4
+    },
+    {
+      "type": "Slider",
+      "name": "x_offset",
+      "value": 18.5
+    },
+    {
+      "type": "Slider",
+      "name": "alpha",
+      "value": 0.95000005
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

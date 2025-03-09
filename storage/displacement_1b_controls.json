@@ -1,0 +1,58 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "corner_strength",
+      "value": 190
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 6.5
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_corner",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 0.35
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_strength",
+      "value": 75
+    },
+    {
+      "type": "Slider",
+      "name": "size_min",
+      "value": 1.7
+    },
+    {
+      "type": "Slider",
+      "name": "size_max",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_radius",
+      "value": 80
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_center",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "corner_radius",
+      "value": 88
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

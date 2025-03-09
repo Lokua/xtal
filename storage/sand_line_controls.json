@@ -1,0 +1,93 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Select",
+      "name": "trig_fn_a",
+      "value": "cos"
+    },
+    {
+      "type": "Slider",
+      "name": "alpha",
+      "value": 0.718
+    },
+    {
+      "type": "Slider",
+      "name": "curvature",
+      "value": 0.515
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_sand_line",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "noise_persistence",
+      "value": 0.065000005
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "angle_variation",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "ref_smooth",
+      "value": 4
+    },
+    {
+      "type": "Slider",
+      "name": "passes",
+      "value": 42
+    },
+    {
+      "type": "Select",
+      "name": "trig_fn_b",
+      "value": "sin"
+    },
+    {
+      "type": "Select",
+      "name": "distribution_strategy",
+      "value": "Perpendicular"
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_ref_line",
+      "value": false
+    },
+    {
+      "type": "Select",
+      "name": "noise_strategy",
+      "value": "Gaussian"
+    },
+    {
+      "type": "Slider",
+      "name": "ref_segments",
+      "value": 23
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 17
+    },
+    {
+      "type": "Slider",
+      "name": "noise_octaves",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "ref_deviation",
+      "value": 56
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

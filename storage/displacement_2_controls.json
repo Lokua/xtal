@@ -1,0 +1,88 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "quad_3",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "weave_amplitude",
+      "value": 0.0021
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_frequency",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_2",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_min",
+      "value": 2.9
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_strength",
+      "value": 11
+    },
+    {
+      "type": "Checkbox",
+      "name": "center",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_4",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_max",
+      "value": 0.1
+    },
+    {
+      "type": "Checkbox",
+      "name": "clamp_circle_radii",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_1",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "weave_frequency",
+      "value": 0.068
+    },
+    {
+      "type": "Slider",
+      "name": "weave_scale",
+      "value": 0.033
+    },
+    {
+      "type": "Select",
+      "name": "pattern",
+      "value": "cos,sin"
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_radius",
+      "value": 0.0023999999
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

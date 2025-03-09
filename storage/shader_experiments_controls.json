@@ -1,0 +1,78 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "07130",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fract_noise_scale",
+      "value": 1.55
+    },
+    {
+      "type": "Slider",
+      "name": "fract_noise_fract",
+      "value": 40
+    },
+    {
+      "type": "Slider",
+      "name": "dist_echo_y",
+      "value": 10
+    },
+    {
+      "type": "Slider",
+      "name": "fract_zoom",
+      "value": 1.133
+    },
+    {
+      "type": "Slider",
+      "name": "wave_reduce_mix",
+      "value": 0.88699996
+    },
+    {
+      "type": "Checkbox",
+      "name": "82yqr",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "d3",
+      "value": 37.5
+    },
+    {
+      "type": "Slider",
+      "name": "fract_noise_shape",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "dist_echo_mix",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "v907r",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fract_noise_mix",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "dist_echo_x",
+      "value": 10
+    },
+    {
+      "type": "Slider",
+      "name": "wave_dist",
+      "value": 0.42299998
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

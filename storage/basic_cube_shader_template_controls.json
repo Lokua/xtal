@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "a4",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "z_offset",
+      "value": -0.5
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 0.125
+    },
+    {
+      "type": "Slider",
+      "name": "rotation",
+      "value": 2.3999999
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

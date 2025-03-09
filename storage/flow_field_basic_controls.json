@@ -1,0 +1,48 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "step_range",
+      "value": 4.8
+    },
+    {
+      "type": "Checkbox",
+      "name": "randomize_point_size",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "noise_strength",
+      "value": 1.4
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 0.61
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 63
+    },
+    {
+      "type": "Slider",
+      "name": "noise_vel",
+      "value": 0.0162
+    },
+    {
+      "type": "Select",
+      "name": "algorithm",
+      "value": "cos,sin"
+    },
+    {
+      "type": "Slider",
+      "name": "agent_count",
+      "value": 6600
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

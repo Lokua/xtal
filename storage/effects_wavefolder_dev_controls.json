@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "iterations",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "gain",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "bias",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "shape",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "symmetry",
+      "value": 1
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

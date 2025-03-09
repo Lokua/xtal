@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "depth_influence",
+      "value": 0.7
+    },
+    {
+      "type": "Slider",
+      "name": "alpha",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "y_offset",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "x_offset",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "size_mult",
+      "value": 0.4375
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

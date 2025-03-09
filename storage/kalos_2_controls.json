@@ -1,0 +1,83 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "offset",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 1.1999999
+    },
+    {
+      "type": "Slider",
+      "name": "g",
+      "value": 0.33499998
+    },
+    {
+      "type": "Slider",
+      "name": "threshold",
+      "value": 0.117
+    },
+    {
+      "type": "Slider",
+      "name": "ring_strength",
+      "value": 11.2
+    },
+    {
+      "type": "Slider",
+      "name": "ring_harm_amt",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "lerp",
+      "value": 0.382
+    },
+    {
+      "type": "Slider",
+      "name": "angular_variation",
+      "value": 35
+    },
+    {
+      "type": "Slider",
+      "name": "strength",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "ring_harmonics",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "mix",
+      "value": 0.78999996
+    },
+    {
+      "type": "Slider",
+      "name": "frequency",
+      "value": 10
+    },
+    {
+      "type": "Slider",
+      "name": "r",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "b",
+      "value": 1
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

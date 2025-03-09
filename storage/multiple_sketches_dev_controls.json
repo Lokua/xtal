@@ -1,0 +1,83 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "d094s",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_breakpoints",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "55tsc",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "white_radius_amt",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "a935f",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 0.96
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_white_circle",
+      "value": true
+    },
+    {
+      "type": "Select",
+      "name": "sketch",
+      "value": "control_script_dev"
+    },
+    {
+      "type": "Slider",
+      "name": "center_hue",
+      "value": 0.3
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_center_circle",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_red_circle",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "01552",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "center_radius",
+      "value": 100
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_audio",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "4wc45",
+      "value": false
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 0.838
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_max",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_min",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_strength",
+      "value": 94
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_radius",
+      "value": 177
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

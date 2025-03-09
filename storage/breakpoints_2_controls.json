@@ -1,0 +1,143 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "sat_drive",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "rm",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "output_low",
+      "value": 0.232
+    },
+    {
+      "type": "Checkbox",
+      "name": "quant",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "slew",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fold_bias",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "sat",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "7l505",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fold_gain",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "output_high",
+      "value": 0.825
+    },
+    {
+      "type": "Slider",
+      "name": "fold_shape",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "upper_threshold",
+      "value": 0.68799996
+    },
+    {
+      "type": "Checkbox",
+      "name": "hyst",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fall",
+      "value": 0.532
+    },
+    {
+      "type": "Slider",
+      "name": "fold_symmetry",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "q8s6r",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "fold",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "rise",
+      "value": 0.59499997
+    },
+    {
+      "type": "Slider",
+      "name": "quant_step",
+      "value": 0.075
+    },
+    {
+      "type": "Checkbox",
+      "name": "t2z2l",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "4uglr",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "lower_threshold",
+      "value": 0.20199999
+    },
+    {
+      "type": "Slider",
+      "name": "rm_mix",
+      "value": 0.578
+    },
+    {
+      "type": "Slider",
+      "name": "fold_iterations",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "hyst_pass_through",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "0a5d1",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "n_points",
+      "value": 3904
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

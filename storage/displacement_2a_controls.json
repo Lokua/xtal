@@ -1,0 +1,168 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "weave_scale",
+      "value": 0.017
+    },
+    {
+      "type": "Slider",
+      "name": "qr_divisor",
+      "value": 1.5
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_2",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "fall_rate",
+      "value": 0.1
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_frequency",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_4",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_min",
+      "value": 2.3
+    },
+    {
+      "type": "Checkbox",
+      "name": "audio_enabled",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_strength",
+      "value": 23
+    },
+    {
+      "type": "Slider",
+      "name": "qr_pos",
+      "value": 0.875
+    },
+    {
+      "type": "Select",
+      "name": "qr_shape",
+      "value": "Rectangle"
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 0.852
+    },
+    {
+      "type": "Slider",
+      "name": "weave_amplitude",
+      "value": 0.0028
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_1",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 1.5
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_influence_or_attract",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "rise_rate",
+      "value": 0.87500006
+    },
+    {
+      "type": "Checkbox",
+      "name": "color_influence_or_attract",
+      "value": false
+    },
+    {
+      "type": "Select",
+      "name": "position_animation",
+      "value": "Counter Clockwise"
+    },
+    {
+      "type": "Checkbox",
+      "name": "clamp_circle_radii",
+      "value": true
+    },
+    {
+      "type": "Select",
+      "name": "palette",
+      "value": "lightcoral"
+    },
+    {
+      "type": "Slider",
+      "name": "weave_frequency",
+      "value": 0.030000001
+    },
+    {
+      "type": "Checkbox",
+      "name": "center",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "qr_size",
+      "value": 0.625
+    },
+    {
+      "type": "Select",
+      "name": "pattern",
+      "value": "cos,sin"
+    },
+    {
+      "type": "Slider",
+      "name": "qr_lerp",
+      "value": 0.64199996
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_3",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "center_influence_or_attract",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "quad_restraint",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_max",
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_radius",
+      "value": 0.0011999999
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

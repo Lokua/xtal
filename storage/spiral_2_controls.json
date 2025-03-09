@@ -1,0 +1,153 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "col_freq",
+      "value": 52
+    },
+    {
+      "type": "Slider",
+      "name": "center_falloff",
+      "value": 0.65
+    },
+    {
+      "type": "Slider",
+      "name": "clip_grade",
+      "value": 0.26999998
+    },
+    {
+      "type": "Slider",
+      "name": "passes",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "row_freq",
+      "value": 170
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_min",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "width",
+      "value": 1.01
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_stripe_phase",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "wave_amp",
+      "value": 0.491
+    },
+    {
+      "type": "Slider",
+      "name": "clip_start",
+      "value": 0.03
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius",
+      "value": 1.0300001
+    },
+    {
+      "type": "Slider",
+      "name": "center_count",
+      "value": 4
+    },
+    {
+      "type": "Slider",
+      "name": "distortion",
+      "value": 0.25
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_stripe_phase",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "harmonic_influence",
+      "value": 0.65
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_mix",
+      "value": 0.775
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_step",
+      "value": 0.895
+    },
+    {
+      "type": "Slider",
+      "name": "circle_phase",
+      "value": 3.1000001
+    },
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 69
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_max",
+      "value": 0.183
+    },
+    {
+      "type": "Slider",
+      "name": "circle_force",
+      "value": 2.2800002
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 17200
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_phase",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_amp",
+      "value": 0.36699998
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_freq",
+      "value": 7
+    },
+    {
+      "type": "Slider",
+      "name": "point_size",
+      "value": 0.0008
+    },
+    {
+      "type": "Slider",
+      "name": "angle_variation",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "center_spread",
+      "value": 0.75000006
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

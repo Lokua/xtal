@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 0.625
+    },
+    {
+      "type": "Select",
+      "name": "mode",
+      "value": "smooth"
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

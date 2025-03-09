@@ -1,0 +1,53 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "trbl_min_radius",
+      "value": 45
+    },
+    {
+      "type": "Slider",
+      "name": "center_bw_ratio",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "trbl_max_radius",
+      "value": 50
+    },
+    {
+      "type": "Slider",
+      "name": "trbl_bw_ratio",
+      "value": 0.437
+    },
+    {
+      "type": "Slider",
+      "name": "corner_max_radius",
+      "value": 49
+    },
+    {
+      "type": "Slider",
+      "name": "center_min_radius",
+      "value": 48
+    },
+    {
+      "type": "Slider",
+      "name": "center_max_radius",
+      "value": 50
+    },
+    {
+      "type": "Slider",
+      "name": "corner_bw_ratio",
+      "value": 0.30200002
+    },
+    {
+      "type": "Slider",
+      "name": "corner_min_radius",
+      "value": 38
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

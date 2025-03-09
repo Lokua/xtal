@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "b",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "a",
+      "value": 0.41
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

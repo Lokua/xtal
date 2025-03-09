@@ -1,0 +1,98 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "wave_distort",
+      "value": 0.14999999
+    },
+    {
+      "type": "Slider",
+      "name": "smoothing",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "wave2_y_influence",
+      "value": 0.162
+    },
+    {
+      "type": "Slider",
+      "name": "wave1_phase",
+      "value": 0.49699998
+    },
+    {
+      "type": "Slider",
+      "name": "wave1_y_influence",
+      "value": 0.26999998
+    },
+    {
+      "type": "Slider",
+      "name": "wave1_amp",
+      "value": 1.705
+    },
+    {
+      "type": "Slider",
+      "name": "wave2_angle",
+      "value": 0.125
+    },
+    {
+      "type": "Slider",
+      "name": "curve_freq_x",
+      "value": 2
+    },
+    {
+      "type": "Checkbox",
+      "name": "checkerboard",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "wave2_phase",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_wave2_phase",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "curve_freq_y",
+      "value": 0.605
+    },
+    {
+      "type": "Slider",
+      "name": "type_mix",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "wave2_frequency",
+      "value": 0.74
+    },
+    {
+      "type": "Slider",
+      "name": "wave2_amp",
+      "value": 1.725
+    },
+    {
+      "type": "Slider",
+      "name": "wave1_angle",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave1_frequency",
+      "value": 0.765
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_wave1_phase",
+      "value": true
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

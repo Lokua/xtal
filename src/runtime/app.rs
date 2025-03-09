@@ -542,29 +542,15 @@ impl AppModel {
             frame_controller::set_paused(true);
         }
 
-        if self.sketch_config.name == "control_script_dev" {
-            if let Some(provider) = self.sketch.controls() {
-                if provider.is_control_script() {
-                    match provider.load_controls(self.sketch_config.name) {
-                        Some(Ok(())) => info!("Controls restored"),
-                        Some(Err(e)) => {
-                            warn!("Unable to restore controls: {}", e)
-                        }
-                        None => warn!("Unable to restore controls"),
-                    };
-                }
-            }
-        } else {
-            if let (Some(values), Some(controls)) = (
-                storage::stored_controls(self.sketch_config.name),
-                self.sketch.controls_provided(),
-            ) {
-                for (name, value) in values.into_iter() {
-                    controls.update_value(&name, value);
-                }
-                info!("Controls restored");
-            } else {
-                warn!("Unable to restore controls");
+        if let Some(provider) = self.sketch.controls() {
+            if provider.is_control_script() {
+                match provider.load_controls(self.sketch_config.name) {
+                    Some(Ok(())) => info!("Controls restored"),
+                    Some(Err(e)) => {
+                        warn!("Unable to restore controls: {}", e)
+                    }
+                    None => warn!("Unable to restore controls"),
+                };
             }
         }
     }

@@ -1,0 +1,48 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 1.9
+    },
+    {
+      "type": "Slider",
+      "name": "rect_width",
+      "value": 5
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius",
+      "value": 295
+    },
+    {
+      "type": "Checkbox",
+      "name": "rotate",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "time_x",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "angle_resolution",
+      "value": 102
+    },
+    {
+      "type": "Slider",
+      "name": "seed",
+      "value": 23298
+    },
+    {
+      "type": "Slider",
+      "name": "max_rect_length",
+      "value": 148
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

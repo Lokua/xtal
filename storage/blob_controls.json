@@ -1,0 +1,63 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "svn56",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "smoothness",
+      "value": 0.49699998
+    },
+    {
+      "type": "Slider",
+      "name": "clamp_min",
+      "value": -0.225
+    },
+    {
+      "type": "Checkbox",
+      "name": "jc5ml",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "color_mix",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "7sv0z",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "outer_size",
+      "value": 0.385
+    },
+    {
+      "type": "Slider",
+      "name": "blur",
+      "value": 20
+    },
+    {
+      "type": "Slider",
+      "name": "invert",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "center_size",
+      "value": 0.96
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [
+    {
+      "name": "outer_pos_t_mix",
+      "value": 0.5
+    }
+  ],
+  "audio_controls": []
+}

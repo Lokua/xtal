@@ -1,0 +1,43 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Checkbox",
+      "name": "bg_invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "bg_radius",
+      "value": 0.847
+    },
+    {
+      "type": "Slider",
+      "name": "wave_power",
+      "value": 5.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave_threshold",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "bg_gradient_strength",
+      "value": 0.78999996
+    },
+    {
+      "type": "Slider",
+      "name": "wave_bands",
+      "value": 3
+    },
+    {
+      "type": "Select",
+      "name": "mix_mode",
+      "value": "mix"
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

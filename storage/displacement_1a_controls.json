@@ -1,0 +1,38 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "circle_radius_max",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_strength",
+      "value": 500
+    },
+    {
+      "type": "Slider",
+      "name": "scaling_power",
+      "value": 1.75
+    },
+    {
+      "type": "Slider",
+      "name": "displacer_radius",
+      "value": 140
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_spread",
+      "value": 0.19
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius_min",
+      "value": 1.2
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

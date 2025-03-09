@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "mix",
+      "value": 0.77
+    },
+    {
+      "type": "Checkbox",
+      "name": "draw_nannou_rect",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "grid_mult",
+      "value": 25
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

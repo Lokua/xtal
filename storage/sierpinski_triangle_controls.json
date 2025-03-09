@@ -1,0 +1,38 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "third_iterations",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 0.90999997
+    },
+    {
+      "type": "Slider",
+      "name": "fourth_iterations",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "second_iterations",
+      "value": 3
+    },
+    {
+      "type": "Slider",
+      "name": "primary_iterations",
+      "value": 4
+    },
+    {
+      "type": "Slider",
+      "name": "y_offset",
+      "value": 0.20699999
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

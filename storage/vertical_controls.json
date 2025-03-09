@@ -1,0 +1,63 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "x_complexity",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "x_harmonic_ratio",
+      "value": 2.4
+    },
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 256
+    },
+    {
+      "type": "Slider",
+      "name": "weight",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "x_distance_scaling",
+      "value": 0.04
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 2.1000001
+    },
+    {
+      "type": "Slider",
+      "name": "frequency",
+      "value": 0.0425
+    },
+    {
+      "type": "Slider",
+      "name": "x_phase_shift",
+      "value": 0.47
+    },
+    {
+      "type": "Slider",
+      "name": "amplitude",
+      "value": 7
+    },
+    {
+      "type": "Slider",
+      "name": "x_line_scaling",
+      "value": 0.11
+    },
+    {
+      "type": "Select",
+      "name": "mode",
+      "value": "multi_lerp"
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

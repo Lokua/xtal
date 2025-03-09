@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "rise_rate",
+      "value": 0.95500004
+    },
+    {
+      "type": "Slider",
+      "name": "fall_rate",
+      "value": 0.43
+    },
+    {
+      "type": "Slider",
+      "name": "pre_emphasis",
+      "value": 0.19500001
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

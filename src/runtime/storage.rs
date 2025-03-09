@@ -49,7 +49,7 @@ fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
     if STORE_CONTROLS_CACHE_IN_PROJECT {
         return Some(
             lattice_project_root()
-                .join("control-cache")
+                .join("storage")
                 .join(format!("{}_controls.json", sketch_name)),
         );
     }

@@ -1,0 +1,43 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "ref_segments",
+      "value": 15
+    },
+    {
+      "type": "Slider",
+      "name": "angle_variation",
+      "value": 0.875
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_ref_line",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 475
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 0.021000002
+    },
+    {
+      "type": "Slider",
+      "name": "ref_deviation",
+      "value": 0.376
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_sand_line",
+      "value": true
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

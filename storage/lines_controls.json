@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "kernel_passes",
+      "value": 4
+    },
+    {
+      "type": "Slider",
+      "name": "n_points",
+      "value": 42
+    },
+    {
+      "type": "Slider",
+      "name": "deviation",
+      "value": 5.7000003
+    },
+    {
+      "type": "Slider",
+      "name": "chaikin_passes",
+      "value": 4
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

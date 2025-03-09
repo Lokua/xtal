@@ -1,0 +1,53 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "wave_frequency",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "wave_width",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "slew_fall",
+      "value": 0.622
+    },
+    {
+      "type": "Select",
+      "name": "wave_easing",
+      "value": "ease_out"
+    },
+    {
+      "type": "Select",
+      "name": "wave_shape",
+      "value": "triangle"
+    },
+    {
+      "type": "Select",
+      "name": "wave_clamp_method",
+      "value": "clamp"
+    },
+    {
+      "type": "Select",
+      "name": "easing",
+      "value": "ease_in"
+    },
+    {
+      "type": "Slider",
+      "name": "slew_rise",
+      "value": 0.398
+    },
+    {
+      "type": "Slider",
+      "name": "wave_amplitude",
+      "value": 0.15
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

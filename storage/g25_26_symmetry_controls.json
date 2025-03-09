@@ -1,0 +1,108 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "signal_steps",
+      "value": 0.095
+    },
+    {
+      "type": "Slider",
+      "name": "wave_freq",
+      "value": 0.14999999
+    },
+    {
+      "type": "Slider",
+      "name": "e3",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "mask_falloff",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "71c25",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "signal_mix",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "distort_mix",
+      "value": 0.074999996
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_scale",
+      "value": 0.227
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_grid_scale",
+      "value": 0.867
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_color_scale",
+      "value": 0.685
+    },
+    {
+      "type": "Slider",
+      "name": "wave_scale",
+      "value": 0.055
+    },
+    {
+      "type": "Slider",
+      "name": "e4",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_grid_mix",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_mix",
+      "value": 0.12
+    },
+    {
+      "type": "Checkbox",
+      "name": "0s12f",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "4n36c",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "8c03r",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "fractal_count",
+      "value": 0.23699999
+    },
+    {
+      "type": "Slider",
+      "name": "wave_y",
+      "value": 0.183
+    },
+    {
+      "type": "Checkbox",
+      "name": "u6yxd",
+      "value": false
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}

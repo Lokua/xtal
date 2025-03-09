@@ -1,0 +1,123 @@
+{
+  "version": "1",
+  "controls": [
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 64
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "harmonic_influence",
+      "value": 0.2
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_bg",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_wave_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "passes",
+      "value": 1
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_quant_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "point_size",
+      "value": 0.0011
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_quant_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "steep_phase",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_angle_offset",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "quant_phase",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_brightness",
+      "value": 1.5
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_stripe_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_phase",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 100
+    },
+    {
+      "type": "Slider",
+      "name": "phase_animation_mult",
+      "value": 1
+    },
+    {
+      "type": "Slider",
+      "name": "wave_phase",
+      "value": 0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_stripe_phase",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_steep_phase",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_steep_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "steepness",
+      "value": 10
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_wave_phase",
+      "value": false
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "audio_controls": []
+}
