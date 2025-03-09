@@ -132,7 +132,7 @@ impl Control {
 
     pub fn dynamic_separator() -> Control {
         Control::DynamicSeparator {
-            name: uuid_5().to_string(),
+            name: format!("__dynamic_slider__{}", uuid(11).to_string()),
         }
     }
 
@@ -236,6 +236,13 @@ impl Control {
             Self::Slider { .. } => "Slider",
         })
         .to_string()
+    }
+
+    pub fn is_separator(&self) -> bool {
+        match self {
+            Self::Separator { .. } | Self::DynamicSeparator { .. } => true,
+            _ => false,
+        }
     }
 }
 
@@ -393,6 +400,10 @@ impl UiControls {
 
     pub fn configs_mut(&mut self) -> &mut Vec<Control> {
         &mut self.configs
+    }
+
+    pub fn config(&self, name: &str) -> Option<&Control> {
+        self.configs.iter().find(|c| c.name() == name)
     }
 
     pub fn values(&self) -> &ControlValues {

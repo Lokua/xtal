@@ -19,7 +19,7 @@ pub trait ControlProvider {
     fn midi_controls(&self) -> Option<MidiControls>;
     fn osc_controls(&self) -> Option<OscControls>;
     fn take_snapshot(&mut self, id: &str);
-    fn recall_snapshot(&mut self, id: &str);
+    fn recall_snapshot(&mut self, id: &str) -> Result<(), String>;
     fn delete_snapshot(&mut self, id: &str);
     fn clear_snapshots(&mut self);
     fn set_transition_time(&mut self, transition_time: f32);
@@ -93,8 +93,8 @@ impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
         self.take_snapshot(id);
     }
 
-    fn recall_snapshot(&mut self, id: &str) {
-        self.recall_snapshot(id);
+    fn recall_snapshot(&mut self, id: &str) -> Result<(), String> {
+        self.recall_snapshot(id)
     }
 
     fn delete_snapshot(&mut self, id: &str) {

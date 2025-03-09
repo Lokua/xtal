@@ -338,11 +338,17 @@ impl AppModel {
             }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(provider) = self.sketch.controls() {
-                    provider.recall_snapshot(&digit);
-                    let alert = format!("Snapshot {:?} recalled", digit);
-                    self.alert_text = alert;
-                } else {
-                    warn!("Controls does not support snapshots");
+                    match provider.recall_snapshot(&digit) {
+                        Ok(_) => {
+                            let alert =
+                                format!("Snapshot {:?} recalled", digit);
+                            self.alert_text = alert;
+                        }
+                        Err(e) => {
+                            warn!("{}", e);
+                            self.alert_text = e;
+                        }
+                    }
                 }
             }
             AppEvent::SnapshotStore(digit) => {

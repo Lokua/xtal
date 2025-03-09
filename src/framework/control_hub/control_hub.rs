@@ -438,7 +438,19 @@ impl<T: TimingSource> ControlHub<T> {
     pub fn take_snapshot(&mut self, id: &str) {
         let mut snapshot: ControlValues = ControlValues::new();
 
-        snapshot.extend(self.ui_controls.values().clone());
+        snapshot.extend(
+            self.ui_controls
+                .values()
+                .into_iter()
+                .filter_map(|(name, value)| {
+                    if self.ui_controls.config(name).unwrap().is_separator() {
+                        None
+                    } else {
+                        Some((name.clone(), value.clone()))
+                    }
+                })
+                .collect::<ControlValues>(),
+        );
         snapshot.extend(self.midi_controls.values().iter().map(
             |(key, value)| (key.clone(), ControlValue::from(value.clone())),
         ));
@@ -446,51 +458,59 @@ impl<T: TimingSource> ControlHub<T> {
             |(key, value)| (key.clone(), ControlValue::from(value.clone())),
         ));
 
+        debug!("snapshot -> id: {}, snapshot: {:#?}", id, snapshot);
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
-    pub fn recall_snapshot(&mut self, id: &str) {
-        if let Some(snapshot) = self.snapshots.get(id) {
-            let current_frame = frame_controller::frame_count();
-            let duration =
-                self.animation.beats_to_frames(self.transition_time) as u32;
+    pub fn recall_snapshot(&mut self, id: &str) -> Result<(), String> {
+        match self.snapshots.get(id) {
+            Some(snapshot) => {
+                let current_frame = frame_controller::frame_count();
+                let duration =
+                    self.animation.beats_to_frames(self.transition_time) as u32;
 
-            let mut transition = SnapshotTransition {
-                values: FxHashMap::default(),
-                start_frame: current_frame,
-                end_frame: current_frame + duration,
-            };
+                let mut transition = SnapshotTransition {
+                    values: FxHashMap::default(),
+                    start_frame: current_frame,
+                    end_frame: current_frame + duration,
+                };
 
-            for (name, value) in snapshot {
-                if self.ui_controls.has(&name) {
-                    match value {
-                        ControlValue::Float(v) => {
-                            transition.values.insert(
-                                name.to_string(),
-                                (self.get_raw(name, current_frame), *v),
-                            );
+                for (name, value) in snapshot {
+                    if self.ui_controls.has(&name) {
+                        match value {
+                            ControlValue::Float(v) => {
+                                transition.values.insert(
+                                    name.to_string(),
+                                    (self.get_raw(name, current_frame), *v),
+                                );
+                            }
+                            ControlValue::Bool(_) | ControlValue::String(_) => {
+                                self.ui_controls
+                                    .update_value(&name, value.clone());
+                            }
                         }
-                        ControlValue::Bool(_) | ControlValue::String(_) => {
-                            self.ui_controls.update_value(&name, value.clone());
-                        }
+                        continue;
                     }
-                    continue;
+
+                    if self.midi_controls.has(&name)
+                        || self.osc_controls.has(&name)
+                    {
+                        transition.values.insert(
+                            name.to_string(),
+                            (
+                                self.get_raw(name, current_frame),
+                                value.as_float().unwrap(),
+                            ),
+                        );
+                        continue;
+                    }
                 }
 
-                if self.midi_controls.has(&name) || self.osc_controls.has(&name)
-                {
-                    transition.values.insert(
-                        name.to_string(),
-                        (
-                            self.get_raw(name, current_frame),
-                            value.as_float().unwrap(),
-                        ),
-                    );
-                    continue;
-                }
+                self.active_transition = Some(transition);
+
+                Ok(())
             }
-
-            self.active_transition = Some(transition);
+            None => Err(format!("No snapshot for {}", id)),
         }
     }
 
@@ -594,8 +614,6 @@ impl<T: TimingSource> ControlHub<T> {
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
         let current_values: ControlValues = self.ui_controls.values().clone();
-        // let osc_values: FxHashMap<String, f32> = self.osc_controls.values();
-        // let midi_values: FxHashMap<String, f32> = self.midi_controls.values();
         let osc_values: FxHashMap<String, f32> = self
             .osc_controls
             .values()
@@ -1123,7 +1141,7 @@ c:
         controls.take_snapshot("bar");
 
         init(0);
-        controls.recall_snapshot("bar");
+        controls.recall_snapshot("bar").unwrap();
         controls.update();
         assert_eq!(controls.get("a"), 100.0);
         assert_eq!(controls.get("b"), 200.0);
@@ -1131,7 +1149,7 @@ c:
 
         init(1);
         controls.update();
-        controls.recall_snapshot("foo");
+        controls.recall_snapshot("foo").unwrap();
         assert_eq!(controls.get("a"), 10.0);
         assert_eq!(controls.get("b"), 20.0);
         assert_eq!(controls.get("c"), 30.0);
