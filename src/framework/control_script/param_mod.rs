@@ -287,7 +287,7 @@ impl From<BreakpointConfig> for Breakpoint {
                 ParamValue::Cold(v) => *v,
                 ParamValue::Hot(_) => 0.0,
             },
-            kind: Kind::default_for_variant_str(variant_name),
+            kind: variant_name.parse().unwrap(),
         };
 
         if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
