@@ -527,6 +527,12 @@ impl<T: TimingSource> ControlHub<T> {
         self.transition_time = transition_time;
     }
 
+    pub fn snapshot_keys_sorted(&self) -> Vec<String> {
+        let mut keys: Vec<_> = self.snapshots.keys().cloned().collect();
+        keys.sort();
+        keys
+    }
+
     pub fn update(&mut self) {
         let new_config = {
             if let Some(update_state) = &self.update_state {

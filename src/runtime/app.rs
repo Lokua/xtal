@@ -105,9 +105,9 @@ pub fn run() {
 pub enum AppEvent {
     AdvanceSingleFrame,
     Alert(String),
+    AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
-    ClearStoredControls,
     MidiContinue,
     MidiStart,
     MidiStop,
@@ -129,6 +129,7 @@ pub enum AppEvent {
     ToggleTapTempo(bool),
 }
 
+#[derive(Clone)]
 pub struct AppEventSender {
     tx: mpsc::Sender<AppEvent>,
 }
@@ -144,6 +145,10 @@ impl AppEventSender {
 
     pub fn alert(&self, message: impl Into<String>) {
         self.send(AppEvent::Alert(message.into()));
+    }
+
+    pub fn alert_and_log(&self, message: impl Into<String>, level: log::Level) {
+        self.send(AppEvent::AlertAndLog(message.into(), level));
     }
 }
 
@@ -183,6 +188,14 @@ impl AppModel {
         self.sketch_config.name.to_string()
     }
 
+    fn control_hub(&mut self) -> Option<&ControlHub<Timing>> {
+        if let Some(provider) = self.sketch.controls() {
+            provider.as_any().downcast_ref::<ControlHub<Timing>>()
+        } else {
+            None
+        }
+    }
+
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
         match event {
             AppEvent::AdvanceSingleFrame => {
@@ -190,6 +203,17 @@ impl AppModel {
             }
             AppEvent::Alert(text) => {
                 self.alert_text = text;
+            }
+            AppEvent::AlertAndLog(text, level) => {
+                self.alert_text = text.clone();
+
+                match level {
+                    log::Level::Error => error!("{}", text),
+                    log::Level::Warn => warn!("{}", text),
+                    log::Level::Info => info!("{}", text),
+                    log::Level::Debug => debug!("{}", text),
+                    log::Level::Trace => trace!("{}", text),
+                }
             }
             AppEvent::CaptureFrame => {
                 let filename =
@@ -202,21 +226,13 @@ impl AppModel {
                     .unwrap()
                     .capture_frame(file_path.clone());
 
-                let alert_text = format!("Image saved to {:?}", file_path);
-                self.alert_text = alert_text.clone();
-                info!("{}", alert_text);
+                self.event_tx.alert_and_log(
+                    format!("Image saved to {:?}", file_path),
+                    log::Level::Info,
+                );
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
-            }
-            AppEvent::ClearStoredControls => {
-                if let Err(e) =
-                    storage::delete_stored_controls(self.sketch_config.name)
-                {
-                    error!("Failed to clear controls cache: {}", e);
-                } else {
-                    self.alert_text = "Controls cache cleared".into();
-                }
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!(
@@ -232,10 +248,10 @@ impl AppModel {
                             self.event_tx.alert(message);
                         }
                         Err(e) => {
-                            let message =
-                                format!("Failed to start recording: {}", e);
-                            self.alert_text = message.clone();
-                            error!("{}", message);
+                            self.event_tx.alert_and_log(
+                                format!("Failed to start recording: {}", e),
+                                log::Level::Error,
+                            );
                         }
                     }
                 }
@@ -250,7 +266,7 @@ impl AppModel {
                     {
                         Ok(_) => {}
                         Err(e) => {
-                            error!("Failed stop recording: {}", e);
+                            error!("Failed to stop recording: {}", e);
                         }
                     }
                 }
@@ -274,9 +290,10 @@ impl AppModel {
                         self.alert_text = message;
                     }
                     Err(e) => {
-                        let message = format!("Recording error: {}", e);
-                        self.alert_text = message.clone();
-                        error!("{}", message);
+                        self.event_tx.alert_and_log(
+                            format!("Recording error: {}", e),
+                            log::Level::Error,
+                        );
                     }
                 }
             }
@@ -286,26 +303,21 @@ impl AppModel {
             }
             AppEvent::SaveControls => {
                 let sketch_name = self.sketch_name();
-                if let Some(provider) = self.sketch.controls() {
-                    let control_script =
-                        provider.as_any().downcast_ref::<ControlHub<Timing>>();
-
-                    match storage::save_controls(
-                        sketch_name.as_str(),
-                        control_script.unwrap(),
-                    ) {
-                        Ok(path_buf) => {
-                            let message =
-                                format!("Controls persisted at {:?}", path_buf);
-                            self.alert_text = message.clone();
-                            info!("{}", message);
-                        }
-                        Err(e) => {
-                            let message =
-                                format!("Failed to persist controls: {}", e);
-                            self.alert_text = message.clone();
-                            error!("{}", message);
-                        }
+                match storage::save_controls(
+                    sketch_name.as_str(),
+                    self.control_hub().unwrap(),
+                ) {
+                    Ok(path_buf) => {
+                        self.event_tx.alert_and_log(
+                            format!("Controls persisted at {:?}", path_buf),
+                            log::Level::Info,
+                        );
+                    }
+                    Err(e) => {
+                        self.event_tx.alert_and_log(
+                            format!("Failed to persist controls: {}", e),
+                            log::Level::Info,
+                        );
                     }
                 }
             }
@@ -340,13 +352,11 @@ impl AppModel {
                 if let Some(provider) = self.sketch.controls() {
                     match provider.recall_snapshot(&digit) {
                         Ok(_) => {
-                            let alert =
+                            self.alert_text =
                                 format!("Snapshot {:?} recalled", digit);
-                            self.alert_text = alert;
                         }
                         Err(e) => {
-                            warn!("{}", e);
-                            self.alert_text = e;
+                            self.event_tx.alert_and_log(e, log::Level::Info);
                         }
                     }
                 }
@@ -354,10 +364,9 @@ impl AppModel {
             AppEvent::SnapshotStore(digit) => {
                 if let Some(provider) = self.sketch.controls() {
                     provider.take_snapshot(&digit);
-                    let alert = format!("Snapshot {:?} saved", digit);
-                    self.alert_text = alert;
+                    self.alert_text = format!("Snapshot {:?} saved", digit);
                 } else {
-                    warn!("Controls does not support snapshots");
+                    error!("Unable to store snapshot ???");
                 }
             }
             AppEvent::SwitchSketch(name) => {
@@ -403,9 +412,10 @@ impl AppModel {
             AppEvent::TogglePlay => {
                 let next_is_paused = !frame_controller::is_paused();
                 frame_controller::set_paused(next_is_paused);
-                self.alert_text =
-                    ternary!(next_is_paused, "Paused", "Resumed").into();
-                info!("Paused: {}", next_is_paused);
+                self.event_tx.alert_and_log(
+                    ternary!(next_is_paused, "Paused", "Resumed"),
+                    log::Level::Info,
+                );
             }
             AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
                 self.tap_tempo_enabled = tap_tempo_enabled;
@@ -518,9 +528,32 @@ impl AppModel {
             frame_controller::set_paused(true);
         }
 
+        self.load_controls();
+    }
+
+    fn load_controls(&mut self) {
+        let event_tx = self.event_tx.clone();
+
         if let Some(provider) = self.sketch.controls() {
             match provider.load_controls(self.sketch_config.name) {
-                Some(Ok(())) => info!("Controls restored"),
+                Some(Ok(())) => {
+                    if let Some(hub) = self.control_hub() {
+                        if hub.snapshots.is_empty() {
+                            event_tx.alert_and_log(
+                                "Controls restored",
+                                log::Level::Info,
+                            );
+                        } else {
+                            event_tx.alert_and_log(
+                                format!(
+                                    "Controls restored. Available snapshots: {:?}",
+                                    hub.snapshot_keys_sorted()
+                                ),
+                                log::Level::Info
+                            );
+                        }
+                    }
+                }
                 Some(Err(e)) => {
                     warn!("Unable to restore controls: {}", e)
                 }
@@ -719,11 +752,8 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
             if let Some(digit) = digit.map(|s| s.to_string()) {
                 if shift_pressed {
                     model.event_tx.send(AppEvent::SnapshotStore(digit));
-                    return;
-                }
-                if logo_pressed {
+                } else if logo_pressed {
                     model.event_tx.send(AppEvent::SnapshotRecall(digit));
-                    return;
                 }
             }
 
