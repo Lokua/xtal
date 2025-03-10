@@ -104,7 +104,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     }
 
     pub fn separator(self) -> Self {
-        // The old separator doesn't work in control_script_context since it
+        // The old separator doesn't work in control_hub context since it
         // doesn't have a unique ID (name)
         // ---
         // self.ui(Control::Separator {})

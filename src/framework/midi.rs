@@ -108,26 +108,6 @@ where
     Ok(())
 }
 
-pub fn print_ports() -> Result<(), Box<dyn Error>> {
-    let mut midi_in = MidiInput::new("midir test input")?;
-    midi_in.ignore(Ignore::None);
-    let midi_out = MidiOutput::new("midir test output")?;
-
-    println!("\nAvailable input ports:");
-    for (i, p) in midi_in.ports().iter().enumerate() {
-        println!("    {}: {}", i, midi_in.port_name(p)?);
-    }
-
-    println!("\nAvailable output ports:");
-    for (i, p) in midi_out.ports().iter().enumerate() {
-        println!("    {}: {}", i, midi_out.port_name(p)?);
-    }
-
-    println!("");
-
-    Ok(())
-}
-
 #[allow(dead_code)]
 pub struct MidiOut {
     port: String,
@@ -164,4 +144,51 @@ impl MidiOut {
         }
         Ok(())
     }
+}
+
+pub type PortIndexAndName = (usize, String);
+
+pub enum InputsOrOutputs {
+    Inputs,
+    Outputs,
+}
+
+pub fn list_ports(
+    inputs_or_ouputs: InputsOrOutputs,
+) -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
+    match inputs_or_ouputs {
+        InputsOrOutputs::Inputs => {
+            let mut midi_in = MidiInput::new("midir_test_input")?;
+            midi_in.ignore(Ignore::None);
+            let mut ports = vec![];
+            for (i, p) in midi_in.ports().iter().enumerate() {
+                ports.push((i, midi_in.port_name(p)?))
+            }
+            Ok(ports)
+        }
+        InputsOrOutputs::Outputs => {
+            let midi_out = MidiOutput::new("midir_test_output")?;
+            let mut ports = vec![];
+            for (i, p) in midi_out.ports().iter().enumerate() {
+                ports.push((i, midi_out.port_name(p)?))
+            }
+            Ok(ports)
+        }
+    }
+}
+
+pub fn print_ports() -> Result<(), Box<dyn Error>> {
+    println!("\nAvailable input ports:");
+    for (index, port_name) in list_ports(InputsOrOutputs::Inputs)? {
+        println!("    {}: {}", index, port_name);
+    }
+
+    println!("\nAvailable output ports:");
+    for (index, port_name) in list_ports(InputsOrOutputs::Outputs)? {
+        println!("    {}: {}", index, port_name);
+    }
+
+    println!("");
+
+    Ok(())
 }

@@ -51,6 +51,8 @@ struct SnapshotTransition {
     end_frame: u32,
 }
 
+pub type Snapshots = FxHashMap<String, ControlValues>;
+
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
     pub ui_controls: UiControls,
@@ -58,6 +60,7 @@ pub struct ControlHub<T: TimingSource> {
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
+    pub snapshots: Snapshots,
     animations: FxHashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: FxHashMap<String, Vec<String>>,
     effects: RefCell<FxHashMap<String, (EffectConfig, Effect)>>,
@@ -66,7 +69,6 @@ pub struct ControlHub<T: TimingSource> {
     dep_graph: DepGraph,
     eval_cache: EvalCache,
     update_state: Option<UpdateState>,
-    snapshots: FxHashMap<String, ControlValues>,
     active_transition: Option<SnapshotTransition>,
     transition_time: f32,
     #[cfg(feature = "instrumentation")]
@@ -436,7 +438,7 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     pub fn take_snapshot(&mut self, id: &str) {
-        let mut snapshot: ControlValues = ControlValues::new();
+        let mut snapshot: ControlValues = ControlValues::default();
 
         snapshot.extend(
             self.ui_controls
@@ -458,7 +460,6 @@ impl<T: TimingSource> ControlHub<T> {
             |(key, value)| (key.clone(), ControlValue::from(value.clone())),
         ));
 
-        debug!("snapshot -> id: {}, snapshot: {:#?}", id, snapshot);
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
@@ -524,6 +525,12 @@ impl<T: TimingSource> ControlHub<T> {
 
     pub fn set_transition_time(&mut self, transition_time: f32) {
         self.transition_time = transition_time;
+    }
+
+    pub fn snapshot_keys_sorted(&self) -> Vec<String> {
+        let mut keys: Vec<_> = self.snapshots.keys().cloned().collect();
+        keys.sort();
+        keys
     }
 
     pub fn update(&mut self) {

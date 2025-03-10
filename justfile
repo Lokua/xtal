@@ -50,3 +50,9 @@ stats:
 list_midi_ports:
   RUST_LOG=lattice=debug cargo run --release --bin list_midi_ports
 
+vmc:
+  RUST_LOG=lattice=info,virtual_midi_controller=info cargo run --release --bin virtual_midi_controller
+
+debug-vmc:
+  RUST_LOG=lattice=debug,virtual_midi_controller=debug cargo run --release --bin virtual_midi_controller
+
