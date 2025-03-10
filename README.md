@@ -3,9 +3,9 @@
 A hobbyist project exploring generative art while learning Rust and
 [nannou][nannou]. Stuff like this:
 
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-627iz.png" alt="displacement_2-627iz">
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
+<img src="./images/displacement_2-627iz.png" alt="displacement_2-627iz">
+<img src="./images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
+<img src="./images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
 
 You can see more screenshots here on github by looking at the auto generated
 [markdown index](index.md) or checkout audio-visual compositions on
@@ -41,6 +41,26 @@ experiments.
 - Automatic store/recall of per-sketch GUI controls/parameters that can be
   source controlled
 - Hot reloadable WGSL shaders with various templates to simplify setup
+- Store snapshots of all GUI, MIDI, and OSC controls by pressing `Shift+Number`
+  to save and `Cmd+Number` to recall. Snapshots are interpolated to/from at a
+  configurable musical length from 1/16th note up to 4bars. Great for live
+  performance!
+
+### Side Quest
+
+To help myself debug I made an on-screen "virtual midi controller" app. This
+should really be its own project but since I had all of my own MIDI handling
+code along with nannou and egui at my fingertips, why not?
+
+![Virtual MIDI Controller](./assets/vmc.png)
+
+Run with
+
+```sh
+cargo run --release --bin virtual_midi_controller
+```
+
+> TODO: hi-res MIDI
 
 ## Requirements
 
