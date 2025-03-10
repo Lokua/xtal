@@ -571,9 +571,11 @@ pub fn str_to_f32_seed(id: &str) -> f32 {
     hash as f32
 }
 
+#[derive(Debug)]
 pub struct AtomicF32 {
     inner: AtomicU32,
 }
+
 impl AtomicF32 {
     pub const fn new(value: f32) -> Self {
         Self {

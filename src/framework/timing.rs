@@ -26,7 +26,7 @@ use std::{
     error::Error,
     sync::{
         atomic::{AtomicBool, AtomicU32, Ordering},
-        Arc, RwLock,
+        Arc,
     },
 };
 
@@ -35,19 +35,19 @@ use super::osc_receiver::SHARED_OSC_RECEIVER;
 use super::prelude::*;
 
 #[derive(Clone, Debug)]
-pub struct Bpm(Arc<RwLock<f32>>);
+pub struct Bpm(Arc<AtomicF32>);
 
 impl Bpm {
     pub fn new(bpm: f32) -> Self {
-        Self(Arc::new(RwLock::new(bpm)))
+        Self(Arc::new(AtomicF32::new(bpm)))
     }
 
     pub fn get(&self) -> f32 {
-        *self.0.read().unwrap()
+        self.0.load(Ordering::Relaxed)
     }
 
     pub fn set(&self, value: f32) {
-        *self.0.write().unwrap() = value;
+        self.0.store(value, Ordering::Release);
     }
 }
 
@@ -291,7 +291,7 @@ pub struct HybridTiming {
 
 impl HybridTiming {
     /// Sync when difference from MTC & MIDI Clock exceeds 1 beat
-    const BEAT_SYNC_THRESHOLD: f32 = 0.5;
+    const SYNC_THRESHOLD: f32 = 0.5;
 
     pub fn new(bpm: Bpm) -> Self {
         let timing = Self {
@@ -389,10 +389,11 @@ impl HybridTiming {
 
                         // Convert rate code to fps
                         let fps = match rate_code {
-                            0 => 24.0,  // 24 fps
-                            1 => 25.0,  // 25 fps
-                            2 => 29.97, // 29.97 fps (drop-frame)
-                            3 => 30.0,  // 30 fps (non-drop frame)
+                            0 => 24.0,
+                            1 => 25.0,
+                            // (drop-frame)
+                            2 => 29.97,
+                            3 => 30.0,
                             _ => unreachable!(),
                         };
 
@@ -412,7 +413,7 @@ impl HybridTiming {
 
                         let beat_difference = (mtc_beats - midi_beats).abs();
 
-                        if beat_difference > Self::BEAT_SYNC_THRESHOLD {
+                        if beat_difference > Self::SYNC_THRESHOLD {
                             let ticks = (mtc_beats
                                 * TICKS_PER_QUARTER_NOTE as f32)
                                 as u32;
