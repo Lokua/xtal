@@ -6,8 +6,10 @@ use serde::{Deserialize, Serialize};
 use super::control_hub::control_hub::Snapshots;
 use super::prelude::*;
 
+pub const VERSION: &'static str = "1.1";
+
 pub struct ConcreteControls {
-    pub controls: UiControls,
+    pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
@@ -16,7 +18,9 @@ pub struct ConcreteControls {
 #[derive(Serialize, Deserialize)]
 pub struct SerializableControls {
     version: String,
-    pub controls: Vec<ControlConfig>,
+    // Backwards compat
+    #[serde(rename = "ui_controls", alias = "controls")]
+    pub ui_controls: Vec<ControlConfig>,
     pub midi_controls: Vec<BasicNameValueConfig>,
     pub osc_controls: Vec<BasicNameValueConfig>,
     // Backwards compat files that don't have snapshots field
@@ -26,7 +30,8 @@ pub struct SerializableControls {
 
 #[derive(Serialize, Deserialize)]
 pub struct SerializableSnapshot {
-    pub controls: Vec<ControlConfig>,
+    #[serde(rename = "ui_controls", alias = "controls")]
+    pub ui_controls: Vec<ControlConfig>,
     pub midi_controls: Vec<BasicNameValueConfig>,
     pub osc_controls: Vec<BasicNameValueConfig>,
 }
@@ -96,14 +101,14 @@ mod control_value_format {
 impl From<&ConcreteControls> for SerializableControls {
     fn from(concretes: &ConcreteControls) -> Self {
         let controls = concretes
-            .controls
+            .ui_controls
             .configs()
             .iter()
             .filter_map(|c| {
                 if c.is_separator() {
                     None
                 } else {
-                    let value = concretes.controls.values().get(c.name());
+                    let value = concretes.ui_controls.values().get(c.name());
                     Some(ControlConfig {
                         kind: c.variant_string(),
                         name: c.name().to_string(),
@@ -145,8 +150,8 @@ impl From<&ConcreteControls> for SerializableControls {
             .collect();
 
         Self {
-            version: "1".to_string(),
-            controls,
+            version: VERSION.to_string(),
+            ui_controls: controls,
             midi_controls,
             osc_controls,
             snapshots,
@@ -160,7 +165,7 @@ fn create_serializable_snapshot(
 ) -> SerializableSnapshot {
     let mut controls = Vec::new();
     for (name, value) in snapshot {
-        if let Some(config) = concretes.controls.config(name) {
+        if let Some(config) = concretes.ui_controls.config(name) {
             controls.push(ControlConfig {
                 kind: config.variant_string(),
                 name: name.clone(),
@@ -190,7 +195,7 @@ fn create_serializable_snapshot(
     }
 
     SerializableSnapshot {
-        controls,
+        ui_controls: controls,
         midi_controls,
         osc_controls,
     }
@@ -203,10 +208,13 @@ impl ConcreteControls {
             &mut ConcreteControls,
         ),
     ) -> &mut ConcreteControls {
-        concrete_controls.controls.values_mut().iter_mut().for_each(
-            |(name, value)| {
+        concrete_controls
+            .ui_controls
+            .values_mut()
+            .iter_mut()
+            .for_each(|(name, value)| {
                 let s = serializable_controls
-                    .controls
+                    .ui_controls
                     .iter()
                     .find(|s| s.name == *name)
                     .map(|s| s.value.clone());
@@ -214,8 +222,7 @@ impl ConcreteControls {
                 if let Some(s) = s {
                     *value = ControlValue::from(s);
                 }
-            },
-        );
+            });
 
         concrete_controls.midi_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
@@ -252,7 +259,7 @@ impl ConcreteControls {
         {
             let mut snapshot_values = FxHashMap::default();
 
-            for control in &serializable_snapshot.controls {
+            for control in &serializable_snapshot.ui_controls {
                 snapshot_values
                     .insert(control.name.clone(), control.value.clone());
             }

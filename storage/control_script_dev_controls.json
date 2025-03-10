@@ -1,6 +1,6 @@
 {
-  "version": "1",
-  "controls": [
+  "version": "1.1",
+  "ui_controls": [
     {
       "type": "Slider",
       "name": "bg_alpha",
@@ -71,7 +71,7 @@
   ],
   "snapshots": {
     "2": {
-      "controls": [
+      "ui_controls": [
         {
           "type": "Checkbox",
           "name": "show_random_section",
@@ -142,7 +142,7 @@
       ]
     },
     "1": {
-      "controls": [
+      "ui_controls": [
         {
           "type": "Checkbox",
           "name": "show_random_section",
