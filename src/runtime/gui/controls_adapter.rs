@@ -89,10 +89,7 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
                     // Handle click
                 }
             }
-            Control::Separator {} => {
-                ui.separator();
-            }
-            Control::DynamicSeparator { .. } => {
+            Control::Separator {} | Control::DynamicSeparator { .. } => {
                 ui.separator();
             }
         }

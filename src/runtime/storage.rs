@@ -28,21 +28,16 @@ fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
 
 pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
-    control_script: &ControlHub<T>,
+    control_hub: &ControlHub<T>,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let concrete_controls = ConcreteControls {
-        controls: control_script
-            .ui_controls()
-            .unwrap_or_else(|| UiControls::default()),
-        midi_controls: control_script
-            .midi_controls()
-            .unwrap_or_else(|| MidiControls::new()),
-        osc_controls: control_script
-            .osc_controls()
-            .unwrap_or_else(|| OscControls::new()),
+        controls: control_hub.ui_controls.clone(),
+        midi_controls: control_hub.midi_controls.clone(),
+        osc_controls: control_hub.osc_controls.clone(),
+        snapshots: control_hub.snapshots.clone(),
     };
 
-    let serializable_controls = SerializableControls::from(concrete_controls);
+    let serializable_controls = SerializableControls::from(&concrete_controls);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine the configuration directory")?;
@@ -64,7 +59,7 @@ impl<T: TimingSource + std::fmt::Debug + 'static> ControlHub<T> {
 
 pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
-    control_script: &mut ControlHub<T>,
+    control_hub: &mut ControlHub<T>,
 ) -> Result<(), Box<dyn Error>> {
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine controls cache directory")?;
@@ -74,15 +69,10 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     let sc = serde_json::from_str::<SerializableControls>(&json)?;
 
     let mut concrete_controls = ConcreteControls {
-        controls: control_script
-            .ui_controls()
-            .unwrap_or_else(|| UiControls::default()),
-        midi_controls: control_script
-            .midi_controls()
-            .unwrap_or_else(|| MidiControls::new()),
-        osc_controls: control_script
-            .osc_controls()
-            .unwrap_or_else(|| OscControls::new()),
+        controls: control_hub.ui_controls.clone(),
+        midi_controls: control_hub.midi_controls.clone(),
+        osc_controls: control_hub.osc_controls.clone(),
+        snapshots: control_hub.snapshots.clone(),
     };
 
     ConcreteControls::merge_serializable_values((sc, &mut concrete_controls));
@@ -92,12 +82,12 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
         .values()
         .iter()
         .for_each(|(name, value)| {
-            control_script.ui_controls.update_value(name, value.clone());
+            control_hub.ui_controls.update_value(name, value.clone());
         });
 
     concrete_controls.midi_controls.values().iter().for_each(
         |(name, value)| {
-            control_script.midi_controls.update_value(name, *value);
+            control_hub.midi_controls.update_value(name, *value);
         },
     );
     concrete_controls
@@ -105,8 +95,12 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
         .values()
         .iter()
         .for_each(|(name, value)| {
-            control_script.osc_controls.update_value(name, *value);
+            control_hub.osc_controls.update_value(name, *value);
         });
+
+    for (name, snapshot) in concrete_controls.snapshots {
+        control_hub.snapshots.insert(name, snapshot);
+    }
 
     Ok(())
 }

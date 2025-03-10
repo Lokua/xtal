@@ -1,16 +1,31 @@
+use std::collections::HashMap;
+
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
+use super::control_hub::control_hub::Snapshots;
 use super::prelude::*;
 
 pub struct ConcreteControls {
     pub controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
+    pub snapshots: Snapshots,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct SerializableControls {
-    pub version: String,
+    version: String,
+    pub controls: Vec<ControlConfig>,
+    pub midi_controls: Vec<BasicNameValueConfig>,
+    pub osc_controls: Vec<BasicNameValueConfig>,
+    // Backwards compat files that don't have snapshots field
+    #[serde(default)]
+    pub snapshots: HashMap<String, SerializableSnapshot>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SerializableSnapshot {
     pub controls: Vec<ControlConfig>,
     pub midi_controls: Vec<BasicNameValueConfig>,
     pub osc_controls: Vec<BasicNameValueConfig>,
@@ -78,18 +93,22 @@ mod control_value_format {
     }
 }
 
-impl From<ConcreteControls> for SerializableControls {
-    fn from(concretes: ConcreteControls) -> Self {
+impl From<&ConcreteControls> for SerializableControls {
+    fn from(concretes: &ConcreteControls) -> Self {
         let controls = concretes
             .controls
             .configs()
             .iter()
-            .map(|c| {
-                let value = concretes.controls.values().get(c.name());
-                ControlConfig {
-                    kind: c.variant_string(),
-                    name: c.name().to_string(),
-                    value: value.unwrap_or(&c.value()).clone(),
+            .filter_map(|c| {
+                if c.is_separator() {
+                    None
+                } else {
+                    let value = concretes.controls.values().get(c.name());
+                    Some(ControlConfig {
+                        kind: c.variant_string(),
+                        name: c.name().to_string(),
+                        value: value.unwrap_or(&c.value()).clone(),
+                    })
                 }
             })
             .collect();
@@ -114,12 +133,66 @@ impl From<ConcreteControls> for SerializableControls {
             })
             .collect();
 
+        let snapshots = concretes
+            .snapshots
+            .iter()
+            .map(|(name, snapshot)| {
+                (
+                    name.clone(),
+                    create_serializable_snapshot(concretes, snapshot),
+                )
+            })
+            .collect();
+
         Self {
             version: "1".to_string(),
             controls,
             midi_controls,
             osc_controls,
+            snapshots,
         }
+    }
+}
+
+fn create_serializable_snapshot(
+    concretes: &ConcreteControls,
+    snapshot: &FxHashMap<String, ControlValue>,
+) -> SerializableSnapshot {
+    let mut controls = Vec::new();
+    for (name, value) in snapshot {
+        if let Some(config) = concretes.controls.config(name) {
+            controls.push(ControlConfig {
+                kind: config.variant_string(),
+                name: name.clone(),
+                value: value.clone(),
+            });
+        }
+    }
+
+    let mut midi_controls = Vec::new();
+    for (name, value) in snapshot {
+        if concretes.midi_controls.has(name) {
+            midi_controls.push(BasicNameValueConfig {
+                name: name.clone(),
+                value: value.as_float().unwrap(),
+            });
+        }
+    }
+
+    let mut osc_controls = Vec::new();
+    for (name, value) in snapshot {
+        if concretes.osc_controls.has(name) {
+            osc_controls.push(BasicNameValueConfig {
+                name: name.clone(),
+                value: value.as_float().unwrap(),
+            });
+        }
+    }
+
+    SerializableSnapshot {
+        controls,
+        midi_controls,
+        osc_controls,
     }
 }
 
@@ -147,10 +220,10 @@ impl ConcreteControls {
         concrete_controls.midi_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
                 let s = serializable_controls
-                    .controls
+                    .midi_controls
                     .iter()
                     .find(|s| s.name == *name)
-                    .map(|s| s.value.as_float().unwrap_or(0.0));
+                    .map(|s| s.value);
 
                 if let Some(s) = s {
                     *value = s
@@ -161,16 +234,47 @@ impl ConcreteControls {
         concrete_controls.osc_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
                 let s = serializable_controls
-                    .controls
+                    .osc_controls
                     .iter()
                     .find(|s| s.name == *name)
-                    .map(|s| s.value.as_float().unwrap_or(0.0));
+                    .map(|s| s.value);
 
                 if let Some(s) = s {
                     *value = s
                 }
             });
         });
+
+        concrete_controls.snapshots.clear();
+
+        for (snapshot_name, serializable_snapshot) in
+            serializable_controls.snapshots
+        {
+            let mut snapshot_values = FxHashMap::default();
+
+            for control in &serializable_snapshot.controls {
+                snapshot_values
+                    .insert(control.name.clone(), control.value.clone());
+            }
+
+            for midi_control in &serializable_snapshot.midi_controls {
+                snapshot_values.insert(
+                    midi_control.name.clone(),
+                    ControlValue::from(midi_control.value),
+                );
+            }
+
+            for osc_control in &serializable_snapshot.osc_controls {
+                snapshot_values.insert(
+                    osc_control.name.clone(),
+                    ControlValue::from(osc_control.value),
+                );
+            }
+
+            concrete_controls
+                .snapshots
+                .insert(snapshot_name, snapshot_values);
+        }
 
         concrete_controls
     }

@@ -1,6 +1,6 @@
 //! A generic abstraction over UI control structures
 
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
 
 use super::prelude::*;
@@ -342,7 +342,7 @@ impl fmt::Debug for Control {
     }
 }
 
-pub type ControlValues = HashMap<String, ControlValue>;
+pub type ControlValues = FxHashMap<String, ControlValue>;
 
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See
@@ -638,7 +638,7 @@ impl ChangeTracker {
         Self {
             changed: true,
             save_previous,
-            previous_values: ControlValues::new(),
+            previous_values: ControlValues::default(),
         }
     }
 
