@@ -160,8 +160,8 @@ impl MidiControls {
                     return;
                 }
 
-                trace!("START {}", "-".repeat(24));
-                trace!("raw message: {:?}", message);
+                trace!("on_message {}", "-".repeat(24));
+                trace!("raw: {:?}", message);
 
                 let channel = message[0] & 0x0F;
                 let cc = message[1];

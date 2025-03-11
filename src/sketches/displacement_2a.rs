@@ -15,7 +15,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 1000,
     h: 1000,
     gui_w: None,
-    gui_h: Some(840),
+    gui_h: Some(900),
     play_mode: PlayMode::Loop,
 };
 
@@ -65,15 +65,7 @@ impl Displacement2a {
     fn weave_frequency(&self) -> f32 {
         let value = self.controls.get("weave_frequency");
         if self.controls.bool("animate_frequency") {
-            map_range(
-                self.controls
-                    .animation
-                    .lerp(&[kf(0.0, 16.0), kf(1.0, 16.0), kf(0.0, 0.0)], 0.0),
-                0.0,
-                1.0,
-                0.01,
-                value,
-            )
+            self.controls.animation.triangle(32.0, (0.01, value), 0.0)
         } else {
             value
         }
@@ -84,7 +76,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     let wr = ctx.window_rect();
     let w = wr.w();
     let h = wr.h();
-    debug!("init: {} {}", w, h);
     let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
 
     let controls = ControlHubBuilder::new()
@@ -590,6 +581,8 @@ fn animations_none(rect: Rect) -> Vec<AnimationFn<Vec2>> {
 
 fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
     const BEATS: f32 = 8.0;
+    const EASE: Easing = Easing::Linear;
+
     vec![
         None,
         Some(Arc::new(move |_displacer, ax, _controls| {
@@ -597,25 +590,25 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             let h = rect.h();
             let xp = w / 4.0;
             let yp = h / 4.0;
-            let x = ax.lerp(
+            let x = ax.automate(
                 &[
-                    kf(xp, BEATS),  // Start at right
-                    kf(-xp, BEATS), // Move to left
-                    kf(-xp, BEATS), // Stay at left
-                    kf(xp, BEATS),  // Move to right
-                    kf(xp, 0.0),    // Complete the cycle
+                    Breakpoint::ramp(0.0, xp, EASE),
+                    Breakpoint::step(BEATS, -xp),
+                    Breakpoint::ramp(BEATS * 2.0, -xp, EASE),
+                    Breakpoint::step(BEATS * 3.0, xp),
+                    Breakpoint::end(BEATS * 4.0, xp),
                 ],
-                0.0,
+                Mode::Loop,
             );
-            let y = ax.lerp(
+            let y = ax.automate(
                 &[
-                    kf(yp, BEATS),  // Start at top
-                    kf(yp, BEATS),  // Stay at top
-                    kf(-yp, BEATS), // Move to bottom
-                    kf(-yp, BEATS), // Stay at bottom
-                    kf(yp, 0.0),    // Move back to top
+                    Breakpoint::step(0.0, yp),
+                    Breakpoint::ramp(BEATS, yp, EASE),
+                    Breakpoint::step(BEATS * 2.0, -yp),
+                    Breakpoint::ramp(BEATS * 3.0, -yp, EASE),
+                    Breakpoint::end(BEATS * 4.0, yp),
                 ],
-                0.0,
+                Mode::Loop,
             );
             vec2(x, y)
         })),
@@ -624,25 +617,25 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             let h = SKETCH_CONFIG.h as f32;
             let xp = w / 4.0;
             let yp = -h / 4.0;
-            let x = ax.lerp(
+            let x = ax.automate(
                 &[
-                    kf(xp, BEATS),  // Start at right
-                    kf(xp, BEATS),  // Stay at right
-                    kf(-xp, BEATS), // Move to left
-                    kf(-xp, BEATS), // Stay at left
-                    kf(xp, 0.0),    // Complete the cycle
+                    Breakpoint::step(0.0, xp),
+                    Breakpoint::ramp(BEATS, xp, EASE),
+                    Breakpoint::step(BEATS * 2.0, -xp),
+                    Breakpoint::ramp(BEATS * 3.0, -xp, EASE),
+                    Breakpoint::end(BEATS * 4.0, xp),
                 ],
-                0.0,
+                Mode::Loop,
             );
-            let y = ax.lerp(
+            let y = ax.automate(
                 &[
-                    kf(yp, BEATS),  // Start at bottom
-                    kf(-yp, BEATS), // Move to top
-                    kf(-yp, BEATS), // Stay at top
-                    kf(yp, BEATS),  // Move at bottom
-                    kf(yp, 0.0),    // Complete the cycle
+                    Breakpoint::ramp(0.0, yp, EASE),
+                    Breakpoint::step(BEATS, -yp),
+                    Breakpoint::ramp(BEATS * 2.0, -yp, EASE),
+                    Breakpoint::step(BEATS * 3.0, yp),
+                    Breakpoint::end(BEATS * 4.0, yp),
                 ],
-                0.0,
+                Mode::Loop,
             );
             vec2(x, y)
         })),
@@ -651,25 +644,25 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             let h = SKETCH_CONFIG.h as f32;
             let xp = -w / 4.0;
             let yp = -h / 4.0;
-            let x = ax.lerp(
+            let x = ax.automate(
                 &[
-                    kf(xp, BEATS),  // Start at left
-                    kf(-xp, BEATS), // Move to right
-                    kf(-xp, BEATS), // Stay to right
-                    kf(xp, BEATS),  // Move to left
-                    kf(xp, 0.0),    // Complete the cycle
+                    Breakpoint::ramp(0.0, xp, EASE),
+                    Breakpoint::step(BEATS, -xp),
+                    Breakpoint::ramp(BEATS * 2.0, -xp, EASE),
+                    Breakpoint::step(BEATS * 3.0, xp),
+                    Breakpoint::end(BEATS * 4.0, xp),
                 ],
-                0.0,
+                Mode::Loop,
             );
-            let y = ax.lerp(
+            let y = ax.automate(
                 &[
-                    kf(yp, BEATS),  // Start at bottom
-                    kf(yp, BEATS),  // Move to top
-                    kf(-yp, BEATS), // Stay at top
-                    kf(-yp, BEATS), // Move to bottom
-                    kf(yp, 0.0),    // Complete the cycle
+                    Breakpoint::step(0.0, yp),
+                    Breakpoint::ramp(BEATS, yp, EASE),
+                    Breakpoint::step(BEATS * 2.0, -yp),
+                    Breakpoint::ramp(BEATS * 3.0, -yp, EASE),
+                    Breakpoint::end(BEATS * 4.0, yp),
                 ],
-                0.0,
+                Mode::Loop,
             );
             vec2(x, y)
         })),
@@ -678,25 +671,25 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             let h = SKETCH_CONFIG.h as f32;
             let xp = -w / 4.0;
             let yp = h / 4.0;
-            let x = ax.lerp(
+            let x = ax.automate(
                 &[
-                    kf(xp, BEATS),  // Start at left
-                    kf(xp, BEATS),  // Stay at left
-                    kf(-xp, BEATS), // Move to right
-                    kf(-xp, BEATS), // Stay at right
-                    kf(xp, 0.0),    // Complete the cycle
+                    Breakpoint::step(0.0, xp),
+                    Breakpoint::ramp(BEATS, xp, EASE),
+                    Breakpoint::step(BEATS * 2.0, -xp),
+                    Breakpoint::ramp(BEATS * 3.0, -xp, EASE),
+                    Breakpoint::end(BEATS * 4.0, xp),
                 ],
-                0.0,
+                Mode::Loop,
             );
-            let y = ax.lerp(
+            let y = ax.automate(
                 &[
-                    kf(yp, BEATS),  // Start at top
-                    kf(-yp, BEATS), // Move to bottom
-                    kf(-yp, BEATS), // Stay at bottom
-                    kf(yp, BEATS),  // Move to top
-                    kf(yp, 0.0),    // Complete the cycle
+                    Breakpoint::ramp(0.0, yp, EASE),
+                    Breakpoint::step(BEATS, -yp),
+                    Breakpoint::ramp(BEATS * 2.0, -yp, EASE),
+                    Breakpoint::step(BEATS * 3.0, yp),
+                    Breakpoint::end(BEATS * 4.0, yp),
                 ],
-                0.0,
+                Mode::Loop,
             );
             vec2(x, y)
         })),
