@@ -41,7 +41,7 @@ pub fn on_message<F>(
     callback: F,
 ) -> Result<(), Box<dyn Error>>
 where
-    F: Fn(&[u8]) + Send + Sync + 'static,
+    F: Fn(u64, &[u8]) + Send + Sync + 'static,
 {
     let midi_in = MidiInput::new(&connection_type.to_string())?;
     let port = port.to_string();
@@ -72,9 +72,9 @@ where
             .connect(
                 &in_port,
                 &connection_name,
-                move |_stamp, message, _| {
-                    trace!("MIDI message: {:?}", message);
-                    callback(message);
+                move |stamp, message, _| {
+                    trace!("MIDI message: {}, {:?}", stamp, message);
+                    callback(stamp, message);
                 },
                 (),
             )

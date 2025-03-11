@@ -618,7 +618,7 @@ fn model(app: &App) -> AppModel {
     let midi_handler_result = midi::on_message(
         midi::ConnectionType::GlobalStartStop,
         crate::config::MIDI_CLOCK_PORT,
-        move |message| match message[0] {
+        move |_stamp, message| match message[0] {
             START => midi_tx.send(AppEvent::MidiStart).unwrap(),
             CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
             STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),

@@ -32,12 +32,15 @@ impl MidiControlConfig {
 #[derive(Debug, Default)]
 struct MidiState {
     values: HashMap<String, f32>,
+    // <(channel, control) (timestamp, value)>
+    // last: HashMap<(u8, u8), (u8, u8)>,
 }
 
 impl MidiState {
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
+            // last: HashMap::new(),
         }
     }
 
@@ -111,36 +114,33 @@ impl MidiControls {
         self.configs.clone()
     }
 
-    pub fn messages(&self) -> Vec<[u8; 3]> {
-        let values = self.values();
-        let mut messages: Vec<[u8; 3]> = vec![];
-        for (name, value) in values.iter() {
-            let mut message: [u8; 3] = [0; 3];
-            let config = self.configs.get(name).unwrap();
-            message[0] = 176 + config.channel;
-            message[1] = config.cc;
-            let value = map_range(*value, config.min, config.max, 0.0, 127.0);
-            let value = constrain::clamp(value, 0.0, 127.0);
-            message[2] = value.round() as u8;
-            messages.push(message);
-        }
-        messages
+    fn configs_by_channel_and_cc(
+        &self,
+    ) -> HashMap<(u8, u8), (String, MidiControlConfig)> {
+        self.configs()
+            .iter()
+            .map(|(name, config)| {
+                ((config.channel, config.cc), (name.clone(), config.clone()))
+            })
+            .collect()
     }
 
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
-        let configs = self.configs.clone();
+        let configs_by_channel_and_cc = self.configs_by_channel_and_cc();
 
         match midi::on_message(
             midi::ConnectionType::Control,
             crate::config::MIDI_CONTROL_IN_PORT,
-            move |message| {
+            //
+            //
+            #[cfg(feature = "hi_res_cc")]
+            move |_stamp, message| {
                 if message.len() < 3 {
                     return;
                 }
 
-                let status = message[0];
-                let channel = status & 0x0F;
+                let channel = message[0] & 0x0F;
                 let cc = message[1];
                 let value = message[2] as f32 / 127.0;
 
@@ -150,11 +150,7 @@ impl MidiControls {
                             value * (config.max - config.min) + config.min;
 
                         trace!(
-                            "Message - \
-                                channel: {}, \
-                                cc: {}, \
-                                value: {}, \
-                                mapped: {}",
+                            "Msg ch: {}, cc: {}, v: {}, mapped: {}",
                             channel,
                             cc,
                             message[2],
@@ -162,7 +158,38 @@ impl MidiControls {
                         );
 
                         state.lock().unwrap().set(name, mapped_value);
+                        break;
                     }
+                }
+            },
+            //
+            //
+            #[cfg(not(feature = "hi_res_cc"))]
+            move |_stamp, message| {
+                if message.len() < 3 {
+                    return;
+                }
+
+                let status = message[0];
+                let channel = status & 0x0F;
+                let cc = message[1];
+                let value = message[2] as f32 / 127.0;
+
+                if let Some((name, config)) =
+                    configs_by_channel_and_cc.get(&(channel, cc))
+                {
+                    let mapped_value =
+                        value * (config.max - config.min) + config.min;
+
+                    trace!(
+                        "Msg ch: {}, cc: {}, v: {}, mapped: {}",
+                        channel,
+                        cc,
+                        message[2],
+                        mapped_value
+                    );
+
+                    state.lock().unwrap().set(name, mapped_value);
                 }
             },
         ) {
@@ -181,6 +208,22 @@ impl MidiControls {
                 Err(e)
             }
         }
+    }
+
+    pub fn messages(&self) -> Vec<[u8; 3]> {
+        let values = self.values();
+        let mut messages: Vec<[u8; 3]> = vec![];
+        for (name, value) in values.iter() {
+            let mut message: [u8; 3] = [0; 3];
+            let config = self.configs.get(name).unwrap();
+            message[0] = 176 + config.channel;
+            message[1] = config.cc;
+            let value = map_range(*value, config.min, config.max, 0.0, 127.0);
+            let value = constrain::clamp(value, 0.0, 127.0);
+            message[2] = value.round() as u8;
+            messages.push(message);
+        }
+        messages
     }
 
     pub fn is_active(&self) -> bool {

@@ -1,10 +1,10 @@
 //! Provides an on-screen MIDI controller which is useful for debugging or
 //! simulating hardware
 
-use std::cell::RefCell;
-
 use nannou::prelude::*;
+use nannou::winit::event::WindowEvent;
 use nannou_egui::{egui, Egui};
+use std::cell::RefCell;
 
 use lattice::framework::prelude::*;
 use lattice::runtime::gui::gui;
@@ -22,7 +22,7 @@ struct Model {
     port: RefCell<String>,
     midi_out: RefCell<midi::MidiOut>,
     channel: u8,
-    controls: Vec<u8>,
+    controls: Vec<f32>,
     hi_res: bool,
 }
 
@@ -30,7 +30,7 @@ fn model(app: &App) -> Model {
     let window_id = app
         .new_window()
         .title("VMC")
-        .size(714, 408)
+        .size(870, 408)
         .resizable(false)
         .view(view_gui)
         .raw_event(handle_raw_event)
@@ -50,7 +50,7 @@ fn model(app: &App) -> Model {
     Model {
         egui,
         midi_out: RefCell::new(midi_out),
-        controls: vec![0; 128],
+        controls: vec![0.0; 128],
         port: RefCell::new(port.to_string()),
         channel: 0,
         hi_res: false,
@@ -66,7 +66,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
     style.spacing.slider_width = 200.0;
     ctx.set_style(style);
 
-    let mut changed: Vec<(usize, u8)> = vec![];
+    let mut changed: Vec<(u8, f32)> = vec![];
 
     let ports =
         midi::list_ports(midi::InputsOrOutputs::Outputs).unwrap_or(vec![]);
@@ -124,19 +124,23 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
             egui::Grid::new("sliders_grid")
                 .num_columns(8)
                 .spacing([4.0, 4.0])
+                .min_col_width(50.0)
                 .show(ui, |ui| {
                     for row in 0..16 {
                         for col in 0..8 {
                             let i = row * 8 + col;
 
+                            let precision = ternary!(model.hi_res, 2, 0);
+
                             let number_box = ui.add(
                                 egui::DragValue::new(&mut model.controls[i])
-                                    .speed(1.0)
-                                    .clamp_range(0..=127),
+                                    .speed(0.5)
+                                    .fixed_decimals(precision)
+                                    .clamp_range(0.0..=127.0),
                             );
 
                             if number_box.changed() {
-                                changed.push((i, model.controls[i]));
+                                changed.push((i as u8, model.controls[i]));
                             }
 
                             ui.label(i.to_string());
@@ -156,14 +160,34 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         *model.midi_out.borrow_mut() = midi_out;
     }
 
-    for (index, value) in changed {
-        match model.midi_out.borrow_mut().send(&[
-            176 + model.channel,
-            index as u8,
-            value,
-        ]) {
-            Err(e) => error!("{}", e),
-            _ => {}
+    for (control, value) in changed {
+        let mut midi_out = model.midi_out.borrow_mut();
+
+        if model.hi_res {
+            let status = 0xB0 | model.channel;
+
+            let value_14bit = (value * 128.0).round() as u16;
+            let value_msb = (value_14bit >> 7) as u8;
+            let value_lsb = (value_14bit & 0x7F) as u8;
+
+            let messages = [
+                [status, control, value_msb],
+                [status, control + 32, value_lsb],
+            ];
+
+            for message in messages {
+                if let Err(e) = midi_out.send(&message) {
+                    error!("{}", e);
+                }
+            }
+        } else {
+            if let Err(e) = midi_out.send(&[
+                0xB0 + model.channel,
+                control,
+                value.round() as u8,
+            ]) {
+                error!("{}", e);
+            }
         }
     }
 }
@@ -173,17 +197,13 @@ fn view_gui(_app: &App, model: &Model, frame: Frame) {
     model.egui.draw_to_frame(&frame).unwrap();
 }
 
-fn handle_raw_event(
-    _app: &App,
-    model: &mut Model,
-    event: &nannou::winit::event::WindowEvent,
-) {
+fn handle_raw_event(_app: &App, model: &mut Model, event: &WindowEvent) {
     log_resize(&event);
     model.egui.handle_raw_event(event)
 }
 
-fn log_resize(event: &nannou::winit::event::WindowEvent) {
-    if let nannou::winit::event::WindowEvent::Resized(physical_size) = event {
+fn log_resize(event: &WindowEvent) {
+    if let WindowEvent::Resized(physical_size) = event {
         debug!(
             "Window resized: {}x{}",
             physical_size.width / 2,

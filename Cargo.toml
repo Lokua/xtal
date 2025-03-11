@@ -13,6 +13,7 @@ doctest = false
 default = ["atomic_frames"]
 instrumentation = []
 atomic_frames = []
+hi_res_cc = []
 
 # clean with:
 #   rm -rf target/incremental

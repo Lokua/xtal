@@ -18,7 +18,7 @@
 //! This provides the most intuitive way to write animations that are in sync
 //! with music.
 //!
-//! [animation]: crate::framework::animation
+//! [animation]: lattice::framework::animation
 
 use nannou_osc as osc;
 use std::{
@@ -188,7 +188,7 @@ impl MidiSongTiming {
         match midi::on_message(
             midi::ConnectionType::Clock,
             crate::config::MIDI_CLOCK_PORT,
-            move |message| {
+            move |_stamp, message| {
                 if message.len() < 1 {
                     return;
                 }
@@ -318,7 +318,7 @@ impl HybridTiming {
         match midi::on_message(
             midi::ConnectionType::Clock,
             crate::config::MIDI_CLOCK_PORT,
-            move |message| {
+            move |_stamp, message| {
                 if message.len() < 2 || message[0] != MTC_QUARTER_FRAME {
                     return;
                 }
@@ -474,8 +474,7 @@ impl TimingSource for HybridTiming {
 /// information.
 ///
 /// [github]: https://github.com/Lokua/lattice
-/// [osc]:
-///     https://github.com/Lokua/lattice/tree/main?tab=readme-ov-file#open-sound-control-osc
+/// [osc]: https://github.com/Lokua/lattice#open-sound-control-osc
 #[derive(Clone, Debug)]
 pub struct OscTransportTiming {
     bpm: Bpm,
