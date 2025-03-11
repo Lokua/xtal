@@ -3,9 +3,21 @@
 A hobbyist project exploring generative art while learning Rust and
 [nannou][nannou]. Stuff like this:
 
-<img src="./images/displacement_2-627iz.png" alt="displacement_2-627iz">
-<img src="./images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9">
-<img src="./images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y.png">
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+   <img src="./images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9" width="33.3%">
+   <img src="./images/sierpinski_triangle-0x9az.png" alt="sierpinski_triangle-0x9az" width="33.3%">
+   <img src="./images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y" width="33.3%">
+</div>
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+   <img src="./images/vertical-1nhw3.png" alt="vertical-1nhw3" width="33.3%">
+   <img src="./images/genuary_2-4psv0.png" alt="genuary_2-4psv0" width="33.3%">
+   <img src="./images/g25_20_23_brutal_arch-360ka.png" alt="g25_20_23_brutal_arch-360ka" width="33.3%">
+</div>
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+   <img src="./images/sand_lines_wgpu-8obz5.png" alt="sand_lines_wgpu-8obz5" width="33.3%">
+   <img src="./images/displacement_2-627iz.png" alt="displacement_2-627iz" width="33.3%">
+   <img src="./images/sand_lines-d8i8g.png" alt="sand_lines-d8i8g.png" width="33.3%">
+</div>
 
 You can see more screenshots here on github by looking at the auto generated
 [markdown index](index.md) or checkout audio-visual compositions on
