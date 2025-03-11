@@ -23,8 +23,10 @@ pub struct MidiDev {
 
 pub fn init(_app: &App, _ctx: &LatticeContext) -> MidiDev {
     let midi = MidiControlBuilder::new()
-        .control_n("a", (0, 1), 0.5)
+        .control_n("a", (0, 0), 0.5)
+        .control_n("b", (0, 1), 0.5)
         .control_n("b", (0, 2), 0.5)
+        .control_n("b", (0, 127), 0.5)
         .build();
 
     MidiDev { midi }
@@ -44,21 +46,17 @@ impl Sketch for MidiDev {
             .w_h(wr.w(), wr.h())
             .hsla(0.0, 0.0, 0.02, 0.1);
 
-        let b = self.midi.get("b");
-        draw.ellipse()
-            .no_fill()
-            .stroke(hsl(map_range(b, 0.0, 1.0, 0.7, 1.0), 0.5, 1.0 - (b * 0.5)))
-            .stroke_weight(5.0)
-            .radius(map_range(sigmoid(b, 12.0), 0.0, 1.0, 1.0, 400.0))
-            .x_y(0.0, 0.0);
+        let pad = 20.0;
 
-        let a = self.midi.get("a");
-        draw.ellipse()
-            .no_fill()
-            .stroke(hsl(0.5, 0.3, a * 0.5))
-            .stroke_weight(10.0)
-            .radius(map_range(sigmoid(a, 12.0), 0.0, 1.0, 1.0, 200.0))
-            .x_y(0.0, 0.0);
+        draw.rect()
+            .color(CYAN)
+            .w_h(20.0, 10.0)
+            .x_y(-wr.hw() - pad, -wr.hh() + self.midi.get("a") * wr.h());
+
+        draw.rect()
+            .color(TURQUOISE)
+            .w_h(20.0, 10.0)
+            .x_y(-wr.hh() + wr.qw() - pad, self.midi.get("b"));
 
         draw.to_frame(app, &frame).unwrap();
     }

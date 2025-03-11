@@ -1,8 +1,10 @@
+use nannou::math::map_range;
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
-use nannou::math::map_range;
+use crate::framework::midi::is_control_change;
 
 use super::prelude::*;
 
@@ -29,18 +31,20 @@ impl MidiControlConfig {
     }
 }
 
+type ChannelAndControl = (u8, u8);
+type TimestampAndMsb = (u64, u8);
+
 #[derive(Debug, Default)]
 struct MidiState {
     values: HashMap<String, f32>,
-    // <(channel, control) (timestamp, value)>
-    // last: HashMap<(u8, u8), (u8, u8)>,
+    last: HashMap<ChannelAndControl, TimestampAndMsb>,
 }
 
 impl MidiState {
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
-            // last: HashMap::new(),
+            last: HashMap::new(),
         }
     }
 
@@ -58,6 +62,22 @@ impl MidiState {
 
     pub fn values(&self) -> HashMap<String, f32> {
         return self.values.clone();
+    }
+
+    pub fn last(&self, ch_cc: ChannelAndControl) -> Option<TimestampAndMsb> {
+        self.last.get(&ch_cc).copied()
+    }
+
+    pub fn set_last(
+        &mut self,
+        ch_cc: ChannelAndControl,
+        ts_msb: TimestampAndMsb,
+    ) {
+        self.last.insert(ch_cc, ts_msb);
+    }
+
+    pub fn remove_last(&mut self, ch_cc: ChannelAndControl) {
+        self.last.remove(&ch_cc);
     }
 }
 
@@ -127,46 +147,111 @@ impl MidiControls {
 
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
-        let configs_by_channel_and_cc = self.configs_by_channel_and_cc();
+        let config_lookup = self.configs_by_channel_and_cc();
 
         match midi::on_message(
             midi::ConnectionType::Control,
             crate::config::MIDI_CONTROL_IN_PORT,
-            //
-            //
             #[cfg(feature = "hi_res_cc")]
-            move |_stamp, message| {
-                if message.len() < 3 {
+            move |this_ts, message| {
+                if message.len() < 3 || !is_control_change(message[0]) {
                     return;
                 }
 
+                trace!("{}", "-".repeat(24));
+                trace!("raw message: {:?}", message);
+
                 let channel = message[0] & 0x0F;
                 let cc = message[1];
-                let value = message[2] as f32 / 127.0;
+                let value = message[2];
 
-                for (name, config) in configs.iter() {
-                    if config.channel == channel && config.cc == cc {
-                        let mapped_value =
-                            value * (config.max - config.min) + config.min;
+                if let Some((name, config)) = config_lookup.get(&(channel, cc))
+                {
+                    let mut state = state.lock().unwrap();
 
+                    // This is a standard 7bit message
+                    if cc > 31 {
+                        let mapped_value = (value as f32 / 127.0)
+                            * (config.max - config.min)
+                            + config.min;
+
+                        state.set(name, mapped_value);
                         trace!(
-                            "Msg ch: {}, cc: {}, v: {}, mapped: {}",
+                            "Std 7bit ch: {}, cc: {}, v: {}, mapped: {}",
                             channel,
                             cc,
                             message[2],
                             mapped_value
                         );
+                    }
+                    // This is the 1st of an MSB/LSB pair (MSB)
+                    else {
+                        let ch_cc = (channel, cc);
 
-                        state.lock().unwrap().set(name, mapped_value);
-                        break;
+                        if let Some(_) = state.last(ch_cc) {
+                            warn!(
+                                "Received a 2nd MSB for the same \
+                                ch_cc key before receiving a matching LSB"
+                            );
+                        }
+
+                        let value_14bit = value as u16 * 128;
+                        let value_msb = (value_14bit >> 7) as u8;
+                        let ts_msb = (this_ts, value_msb);
+
+                        state.set_last(ch_cc, ts_msb);
+                        trace!("Storing MSB - {:?}, {:?}", ch_cc, ts_msb);
                     }
                 }
+                // This might be the 2nd of an MSB/LSB pair (LSB)
+                else if cc > 31 && cc <= 63 {
+                    let mut state = state.lock().unwrap();
+                    let msb_cc = cc - 32;
+
+                    if let Some((last_ts, msb_value)) =
+                        state.last((channel, msb_cc))
+                    {
+                        state.remove_last((channel, msb_cc));
+
+                        let difference = Duration::from_millis(this_ts)
+                            - Duration::from_micros(last_ts);
+
+                        // FIXME: We actually don't know what time units are
+                        // being used. Windows may be using millis; CoreMIDI
+                        // uses micros...
+                        if difference > Duration::from_millis(5) {
+                            let (name, config) =
+                                config_lookup.get(&(channel, msb_cc)).unwrap();
+
+                            let msb = msb_value as u16;
+                            let lsb = value as u16;
+                            let value_14bit = (msb << 7) | lsb;
+                            let normalized_value = value_14bit as f32 / 16383.0;
+
+                            let mapped_value = normalized_value
+                                * (config.max - config.min)
+                                + config.min;
+
+                            state.set(name, mapped_value);
+                            trace!(
+                                "Setting 14-bit - n_value: {}, mapped: {}",
+                                normalized_value,
+                                mapped_value
+                            );
+                        } else {
+                            trace!(
+                                "Timeout for MSB/LSB pair; difference (ms): {}",
+                                difference.as_millis()
+                            );
+                        }
+                    }
+                } else {
+                    trace!("?");
+                }
             },
-            //
-            //
             #[cfg(not(feature = "hi_res_cc"))]
             move |_stamp, message| {
-                if message.len() < 3 {
+                if message.len() < 3 || !is_control_change(message[0]) {
                     return;
                 }
 
@@ -175,8 +260,7 @@ impl MidiControls {
                 let cc = message[1];
                 let value = message[2] as f32 / 127.0;
 
-                if let Some((name, config)) =
-                    configs_by_channel_and_cc.get(&(channel, cc))
+                if let Some((name, config)) = config_lookup.get(&(channel, cc))
                 {
                     let mapped_value =
                         value * (config.max - config.min) + config.min;

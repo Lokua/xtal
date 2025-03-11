@@ -130,11 +130,12 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
                         for col in 0..8 {
                             let i = row * 8 + col;
 
-                            let precision = ternary!(model.hi_res, 2, 0);
+                            let precision =
+                                ternary!(model.hi_res && i < 32, 2, 0);
 
                             let number_box = ui.add(
                                 egui::DragValue::new(&mut model.controls[i])
-                                    .speed(0.5)
+                                    .speed(0.25)
                                     .fixed_decimals(precision)
                                     .clamp_range(0.0..=127.0),
                             );
@@ -163,7 +164,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
     for (control, value) in changed {
         let mut midi_out = model.midi_out.borrow_mut();
 
-        if model.hi_res {
+        if model.hi_res && control < 32 {
             let status = 0xB0 | model.channel;
 
             let value_14bit = (value * 128.0).round() as u16;

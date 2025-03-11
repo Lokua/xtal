@@ -192,3 +192,7 @@ pub fn print_ports() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+pub fn is_control_change(status: u8) -> bool {
+    status & 0xF0 == 0xB0
+}
