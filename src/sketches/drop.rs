@@ -152,10 +152,15 @@ impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         self.controls.update();
 
-        let offset = self
-            .controls
-            .animation
-            .lerp(&[kf(1.0, 2.0), kf(2.0, 2.0), kf(3.0, 2.0)], 0.0);
+        let offset = self.controls.animation.automate(
+            &[
+                Breakpoint::ramp(0.0, 1.0, Easing::Linear),
+                Breakpoint::ramp(2.0, 2.0, Easing::Linear),
+                Breakpoint::ramp(4.0, 3.0, Easing::Linear),
+                Breakpoint::end(6.0, 0.0),
+            ],
+            Mode::Loop,
+        );
 
         self.droppers.iter_mut().for_each(|dropper| {
             if self.controls.animation.should_trigger(&mut dropper.trigger) {

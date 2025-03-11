@@ -20,56 +20,16 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct AnimationDev {
     animation: Animation<Timing>,
-    lerp: f32,
-    ramp: f32,
-    r_ramp: f32,
-    random_anim: f32,
-    slew_limiter: SlewLimiter,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> AnimationDev {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
-    AnimationDev {
-        animation,
-        lerp: 0.0,
-        ramp: 0.0,
-        r_ramp: 0.0,
-        random_anim: 0.0,
-        slew_limiter: SlewLimiter::default(),
-    }
+    AnimationDev { animation }
 }
 
 impl Sketch for AnimationDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.lerp = self
-            .animation
-            .lerp(&[kf(0.0, 2.0), kf(1.0, 2.0), kf(0.0, 0.0)], 0.0);
-
-        self.ramp = self.animation.ramp(
-            &[kf(0.0, 4.0), kf(1.0, 4.0)],
-            0.0,
-            1.0,
-            Easing::Linear,
-        );
-
-        self.r_ramp = self.animation.r_ramp(
-            &[kfr((0.0, 1.0), 4.0)],
-            0.0,
-            1.0,
-            Easing::Linear,
-        );
-
-        let random_anim = self.animation.automate(
-            &[
-                Breakpoint::random(0.0, 0.5, 0.5),
-                Breakpoint::random(2.0, 0.5, 0.5),
-            ],
-            Mode::Loop,
-        );
-        self.random_anim =
-            self.slew_limiter.slew_with_rates(random_anim, 0.8, 0.8);
-    }
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
@@ -86,7 +46,7 @@ impl Sketch for AnimationDev {
 
         // RED BALL
         draw.ellipse()
-            .x_y(map_range(self.lerp, 0.0, 1.0, -edge, edge), hh / 2.0)
+            .x_y(self.animation.triangle(4.0, (-edge, edge), 0.0), hh / 2.0)
             .radius(radius)
             .color(rgb(component_value, 0.0, 0.0));
 
@@ -144,7 +104,16 @@ impl Sketch for AnimationDev {
 
         // GREEN BALL
         draw.ellipse()
-            .x_y(map_range(self.ramp, 0.0, 1.0, -edge, edge), 0.0)
+            .x_y(
+                map_range(
+                    self.animation.loop_phase(8.0),
+                    0.0,
+                    1.0,
+                    -edge,
+                    edge,
+                ),
+                0.0,
+            )
             .radius(radius)
             .color(rgb(0.0, component_value, 0.0));
 
@@ -186,20 +155,20 @@ impl Sketch for AnimationDev {
             .radius(radius * 0.333)
             .color(rgb(0.0, component_value, component_value));
 
-        // BLUE BALL
-        draw.ellipse()
-            .x_y(map_range(self.r_ramp, 0.0, 1.0, -edge, edge), -hh / 2.0)
-            .radius(radius)
-            .color(rgb(0.0, 0.0, component_value));
+        // // BLUE BALL
+        // draw.ellipse()
+        //     .x_y(map_range(self.r_ramp, 0.0, 1.0, -edge, edge), -hh / 2.0)
+        //     .radius(radius)
+        //     .color(rgb(0.0, 0.0, component_value));
 
-        // DARK TURQUOISE BALL
-        draw.ellipse()
-            .x_y(
-                map_range(self.random_anim, 0.0, 1.0, -edge, edge),
-                -hh + hh / 8.0,
-            )
-            .radius(radius * 0.333)
-            .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
+        // // DARK TURQUOISE BALL
+        // draw.ellipse()
+        //     .x_y(
+        //         map_range(self.random_anim, 0.0, 1.0, -edge, edge),
+        //         -hh + hh / 8.0,
+        //     )
+        //     .radius(radius * 0.333)
+        //     .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
 
         // BLACK BALL LEFT
         draw.ellipse()

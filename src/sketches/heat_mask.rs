@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 1000,
     h: 1000,
     gui_w: None,
-    gui_h: Some(920),
+    gui_h: Some(940),
     play_mode: PlayMode::Loop,
 };
 
@@ -280,19 +280,19 @@ impl Sketch for HeatMask {
                         );
                         if animate_center {
                             config.displacer.set_strength(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 8.0)],
-                                    0.0,
-                                    4.0,
-                                    Easing::Linear,
+                                self.controls.animation.random_slewed(
+                                    8.0,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    1,
                                 ),
                             );
                             config.displacer.set_radius(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 12.0)],
-                                    1.0,
-                                    3.0,
-                                    Easing::Linear,
+                                self.controls.animation.random_slewed(
+                                    12.0,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    2,
                                 ),
                             );
                         } else {
@@ -310,19 +310,19 @@ impl Sketch for HeatMask {
                         );
                         if animate_corner {
                             config.displacer.set_strength(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 4.0)],
-                                    0.0,
+                                self.controls.animation.random_slewed(
                                     4.0,
-                                    Easing::Linear,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    3,
                                 ),
                             );
                             config.displacer.set_radius(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 8.0)],
-                                    1.0,
-                                    3.0,
-                                    Easing::Linear,
+                                self.controls.animation.random_slewed(
+                                    8.0,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    4,
                                 ),
                             );
                         } else {
@@ -340,19 +340,19 @@ impl Sketch for HeatMask {
                         );
                         if animate_trbl {
                             config.displacer.set_strength(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 16.0)],
-                                    0.0,
-                                    6.0,
-                                    Easing::Linear,
+                                self.controls.animation.random_slewed(
+                                    4.0,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    6,
                                 ),
                             );
                             config.displacer.set_radius(
-                                self.controls.animation.r_ramp(
-                                    &[kfr((1.0, 500.0), 24.0)],
-                                    2.0,
-                                    18.0,
-                                    Easing::Linear,
+                                self.controls.animation.random_slewed(
+                                    8.0,
+                                    (1.0, 500.0),
+                                    0.8,
+                                    18,
                                 ),
                             );
                         } else {

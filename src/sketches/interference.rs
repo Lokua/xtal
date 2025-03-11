@@ -118,21 +118,22 @@ impl Sketch for Interference {
             ],
             b: [
                 if self.controls.bool("animate_wave1_phase") {
-                    self.controls.animation.r_ramp(
-                        &[kfr((0.0, 1.0), 2.0)],
-                        0.0,
-                        1.0,
-                        Easing::Linear,
+                    self.controls.animation.random_slewed(
+                        2.0,
+                        (0.0, 1.0),
+                        0.8,
+                        0,
                     )
                 } else {
                     self.controls.get("wave1_phase")
                 },
                 if self.controls.bool("animate_wave2_phase") {
-                    self.controls.animation.r_ramp(
-                        &[kfr((0.0, 1.0), 2.0)],
-                        1.0,
-                        1.0,
-                        Easing::Linear,
+                    // TODO: impl delay by 1 beat
+                    self.controls.animation.random_slewed(
+                        2.0,
+                        (0.0, 1.0),
+                        0.8,
+                        0,
                     )
                 } else {
                     self.controls.get("wave2_phase")
