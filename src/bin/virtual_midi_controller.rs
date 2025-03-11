@@ -24,6 +24,7 @@ struct Model {
     channel: u8,
     controls: Vec<f32>,
     hi_res: bool,
+    hi_res_speed: f32,
 }
 
 fn model(app: &App) -> Model {
@@ -54,6 +55,7 @@ fn model(app: &App) -> Model {
         port: RefCell::new(port.to_string()),
         channel: 0,
         hi_res: false,
+        hi_res_speed: 0.5,
     }
 }
 
@@ -116,7 +118,26 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 
                 ui.separator();
 
-                ui.add(egui::Checkbox::new(&mut model.hi_res, "Hi-Res"))
+                ui.add(egui::Checkbox::new(&mut model.hi_res, "Hi-Res"));
+
+                ui.separator();
+
+                egui::Frame::none().show(ui, |ui| {
+                    egui::ComboBox::from_label("Drag Speed")
+                        .selected_text(&model.hi_res_speed.to_string())
+                        .width(52.0)
+                        .show_ui(ui, |ui| {
+                            ui.set_min_width(48.0);
+
+                            for speed in [0.25, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0] {
+                                ui.selectable_value(
+                                    &mut model.hi_res_speed,
+                                    speed,
+                                    speed.to_string(),
+                                );
+                            }
+                        });
+                });
             });
 
             ui.separator();
@@ -135,7 +156,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 
                             let number_box = ui.add(
                                 egui::DragValue::new(&mut model.controls[i])
-                                    .speed(0.25)
+                                    .speed(model.hi_res_speed)
                                     .fixed_decimals(precision)
                                     .clamp_range(0.0..=127.0),
                             );

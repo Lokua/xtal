@@ -149,6 +149,8 @@ impl MidiControls {
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
 
+        debug!("config_lookup: {:#?}", config_lookup);
+
         match midi::on_message(
             midi::ConnectionType::Control,
             crate::config::MIDI_CONTROL_IN_PORT,
@@ -158,7 +160,7 @@ impl MidiControls {
                     return;
                 }
 
-                trace!("{}", "-".repeat(24));
+                trace!("START {}", "-".repeat(24));
                 trace!("raw message: {:?}", message);
 
                 let channel = message[0] & 0x0F;
@@ -167,6 +169,7 @@ impl MidiControls {
 
                 if let Some((name, config)) = config_lookup.get(&(channel, cc))
                 {
+                    trace!("Config exists for ch: {}, cc: {}", channel, cc);
                     let mut state = state.lock().unwrap();
 
                     // This is a standard 7bit message
@@ -177,7 +180,7 @@ impl MidiControls {
 
                         state.set(name, mapped_value);
                         trace!(
-                            "Std 7bit ch: {}, cc: {}, v: {}, mapped: {}",
+                            "Setting std 7bit ch: {}, cc: {}, v: {}, mapped: {}",
                             channel,
                             cc,
                             message[2],
@@ -191,7 +194,10 @@ impl MidiControls {
                         if let Some(_) = state.last(ch_cc) {
                             warn!(
                                 "Received a 2nd MSB for the same \
-                                ch_cc key before receiving a matching LSB"
+                                ch_cc key before receiving a matching LSB. \
+                                It's likely your MIDI controller isn't hi-res \
+                                and you should run the program without the \
+                                hi_res_cc feature enabled"
                             );
                         }
 
@@ -207,43 +213,48 @@ impl MidiControls {
                 else if cc > 31 && cc <= 63 {
                     let mut state = state.lock().unwrap();
                     let msb_cc = cc - 32;
+                    let last = state.last((channel, msb_cc));
 
-                    if let Some((last_ts, msb_value)) =
-                        state.last((channel, msb_cc))
-                    {
-                        state.remove_last((channel, msb_cc));
+                    if last.is_none() {
+                        return;
+                    }
 
-                        let difference = Duration::from_millis(this_ts)
-                            - Duration::from_micros(last_ts);
+                    let (last_ts, msb_value) = last.unwrap();
 
-                        // FIXME: We actually don't know what time units are
-                        // being used. Windows may be using millis; CoreMIDI
-                        // uses micros...
-                        if difference > Duration::from_millis(5) {
-                            let (name, config) =
-                                config_lookup.get(&(channel, msb_cc)).unwrap();
+                    state.remove_last((channel, msb_cc));
 
-                            let msb = msb_value as u16;
-                            let lsb = value as u16;
-                            let value_14bit = (msb << 7) | lsb;
-                            let normalized_value = value_14bit as f32 / 16383.0;
+                    let difference = Duration::from_millis(this_ts)
+                        - Duration::from_micros(last_ts);
 
-                            let mapped_value = normalized_value
-                                * (config.max - config.min)
-                                + config.min;
+                    // FIXME: We actually don't know what time units are
+                    // being used. Windows may be using millis; CoreMIDI
+                    // uses micros...
+                    if difference > Duration::from_millis(5) {
+                        let (name, config) =
+                            config_lookup.get(&(channel, msb_cc)).unwrap();
 
-                            state.set(name, mapped_value);
-                            trace!(
-                                "Setting 14-bit - n_value: {}, mapped: {}",
-                                normalized_value,
-                                mapped_value
-                            );
-                        } else {
-                            trace!(
-                                "Timeout for MSB/LSB pair; difference (ms): {}",
-                                difference.as_millis()
-                            );
-                        }
+                        let msb = msb_value as u16;
+                        let lsb = value as u16;
+                        let value_14bit = (msb << 7) | lsb;
+                        let normalized_value = value_14bit as f32 / 16383.0;
+
+                        let mapped_value = normalized_value
+                            * (config.max - config.min)
+                            + config.min;
+
+                        state.set(name, mapped_value);
+                        trace!(
+                            "Setting 14-bit for ch: {}, cc: {}, n_value: {}, mapped: {}",
+                            channel,
+                            msb_cc,
+                            normalized_value,
+                            mapped_value
+                        );
+                    } else {
+                        trace!(
+                            "Timeout for MSB/LSB pair; difference (ms): {}",
+                            difference.as_millis()
+                        );
                     }
                 } else {
                     trace!("?");

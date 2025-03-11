@@ -25,8 +25,8 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> MidiDev {
     let midi = MidiControlBuilder::new()
         .control_n("a", (0, 0), 0.5)
         .control_n("b", (0, 1), 0.5)
-        .control_n("b", (0, 2), 0.5)
-        .control_n("b", (0, 127), 0.5)
+        .control_n("c", (0, 2), 0.5)
+        .control_n("d", (0, 127), 0.5)
         .build();
 
     MidiDev { midi }
@@ -46,17 +46,31 @@ impl Sketch for MidiDev {
             .w_h(wr.w(), wr.h())
             .hsla(0.0, 0.0, 0.02, 0.1);
 
+        let width = 40.0;
         let pad = 20.0;
 
-        draw.rect()
-            .color(CYAN)
-            .w_h(20.0, 10.0)
-            .x_y(-wr.hw() - pad, -wr.hh() + self.midi.get("a") * wr.h());
+        draw.rect().color(CYAN).w_h(width, 10.0).x_y(
+            //
+            -wr.hw() + pad,
+            -wr.hh() + self.midi.get("a") * wr.h(),
+        );
 
-        draw.rect()
-            .color(TURQUOISE)
-            .w_h(20.0, 10.0)
-            .x_y(-wr.hh() + wr.qw() - pad, self.midi.get("b"));
+        draw.rect().color(TURQUOISE).w_h(width, 10.0).x_y(
+            -wr.hh() + pad + wr.qw(),
+            -wr.hh() + self.midi.get("b") * wr.h(),
+        );
+
+        draw.rect().color(LIGHTSTEELBLUE).w_h(width, 10.0).x_y(
+            //
+            wr.qw() - pad,
+            -wr.hh() + self.midi.get("c") * wr.h(),
+        );
+
+        draw.rect().color(CORNFLOWERBLUE).w_h(width, 10.0).x_y(
+            //
+            wr.hh() - pad,
+            -wr.hh() + self.midi.get("d") * wr.h(),
+        );
 
         draw.to_frame(app, &frame).unwrap();
     }
