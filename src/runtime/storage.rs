@@ -4,7 +4,9 @@ use std::{fs, str};
 
 use super::prelude::*;
 use crate::framework::prelude::*;
-use crate::framework::serialization::{ConcreteControls, SerializableControls};
+use crate::framework::serialization::{
+    ConcreteControls, ImageIndex, SerializableControls,
+};
 
 /// When false will use the appropriate OS config dir; when true will store
 /// within the Lattice project's controls_cache folder for easy source control.
@@ -105,14 +107,25 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     Ok(())
 }
 
-pub fn delete_stored_controls(sketch_name: &str) -> Result<(), Box<dyn Error>> {
-    let path = controls_storage_path(sketch_name)
-        .ok_or("Could not determine the configuration directory")?;
-    if path.exists() {
-        fs::remove_file(path)?;
-        info!("Deleted controls for sketch: {}", sketch_name);
-    } else {
-        warn!("No stored controls found for sketch: {}", sketch_name);
-    }
+// -----------------------------------------------------------------------------
+// Image Index
+// -----------------------------------------------------------------------------
+
+fn image_index_path() -> PathBuf {
+    lattice_project_root().join("images").join("_index.json")
+}
+
+pub fn load_image_index() -> Result<ImageIndex, Box<dyn Error>> {
+    let bytes = fs::read(image_index_path())?;
+    let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
+    let image_index_file: ImageIndex = serde_json::from_str(&json)?;
+    Ok(image_index_file)
+}
+
+pub fn save_image_index(
+    image_index: &ImageIndex,
+) -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string_pretty(image_index)?;
+    fs::write(&image_index_path(), json)?;
     Ok(())
 }

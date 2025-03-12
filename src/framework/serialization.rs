@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -285,4 +286,19 @@ impl ConcreteControls {
 
         concrete_controls
     }
+}
+
+// -----------------------------------------------------------------------------
+// Image Index
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndex {
+    pub items: Vec<ImageIndexItem>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndexItem {
+    pub filename: String,
+    pub created_at: String,
 }

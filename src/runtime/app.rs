@@ -1,3 +1,4 @@
+use chrono::Utc;
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
@@ -7,6 +8,7 @@ use std::{env, str};
 use super::prelude::*;
 use super::tap_tempo::TapTempo;
 use crate::config::MIDI_CONTROL_OUT_PORT;
+use crate::framework::serialization::{ImageIndex, ImageIndexItem};
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -173,6 +175,7 @@ struct AppModel {
     ctx: LatticeContext,
     midi_out: Option<midi::MidiOut>,
     transition_time: f32,
+    image_index: Option<ImageIndex>,
 }
 
 impl AppModel {
@@ -225,6 +228,16 @@ impl AppModel {
                 self.main_window(app)
                     .unwrap()
                     .capture_frame(file_path.clone());
+
+                if let Some(image_index) = &mut self.image_index {
+                    image_index.items.push(ImageIndexItem {
+                        filename,
+                        created_at: Utc::now().to_rfc3339().to_string(),
+                    });
+                    if let Err(e) = storage::save_image_index(image_index) {
+                        error!("{}", e);
+                    }
+                }
 
                 self.event_tx.alert_and_log(
                     format!("Image saved to {:?}", file_path),
@@ -441,7 +454,10 @@ impl AppModel {
         let recording_dir = match &self.recording_state.recording_dir {
             Some(path) => path,
             None => {
-                error!("Unable to capture frame {}", frame_count);
+                error!(
+                    "Unable to access recording dir {:?}",
+                    &self.recording_state.recording_dir
+                );
                 return;
             }
         };
@@ -635,15 +651,20 @@ fn model(app: &App) -> AppModel {
 
     let raw_bpm = bpm.get();
 
-    let mut midi_out = None;
     let mut midi = midi::MidiOut::new(MIDI_CONTROL_OUT_PORT);
-
-    match midi.connect() {
-        Ok(_) => midi_out = Some(midi),
+    let midi_out = match midi.connect() {
+        Ok(_) => Some(midi),
         Err(e) => {
             error!("{}", e);
+            None
         }
-    }
+    };
+
+    let image_index = storage::load_image_index()
+        .map_err(|e| error!("{}", e))
+        .ok();
+
+    debug!("{:#?}", image_index);
 
     let mut model = AppModel {
         main_window_id,
@@ -664,6 +685,7 @@ fn model(app: &App) -> AppModel {
         midi_out,
         ctx,
         transition_time: 4.0,
+        image_index,
     };
 
     model.init_sketch_environment(app);
