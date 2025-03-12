@@ -27,7 +27,8 @@
     "thresholded",
     "trunc",
     "verts",
-    "Vortx"
+    "Vortx",
+    "walkdir"
   ],
   "rust-analyzer.cargo.features": ["instrumentation", "hi_res_cc"]
 }

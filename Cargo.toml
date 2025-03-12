@@ -20,7 +20,7 @@ hi_res_cc = []
 incremental = true
 
 [workspace]
-members = ["scripts/image-markdown", "derives"]
+members = ["derives"]
 
 [dev-dependencies]
 criterion = "0.5.1"
