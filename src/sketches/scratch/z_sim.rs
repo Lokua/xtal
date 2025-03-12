@@ -72,17 +72,19 @@ impl Sketch for ZSim {
         let max_possible_dist = hw.max(hh);
 
         let center = vec2(
-            self.controls.animation.r_ramp(
-                &[kfr((-hw, hw), 2.0)],
+            self.controls.animation.random_slewed(
+                2.0,
+                (-hw, hw),
+                0.8,
                 0.0,
-                1.0,
-                Easing::Linear,
+                946,
             ),
-            self.controls.animation.r_ramp(
-                &[kfr((-hh, hh), 1.0)],
+            self.controls.animation.random_slewed(
+                1.0,
+                (-hw, hw),
+                0.6,
                 0.0,
-                0.5,
-                Easing::Linear,
+                765,
             ),
         );
 

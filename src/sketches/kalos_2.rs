@@ -128,20 +128,8 @@ impl Sketch for Kalos2 {
 
         let gen_anim = |dur: f32, delay: f32, anim_scaling: bool| {
             [
-                // radius
-                a.r_ramp(
-                    &[kfr(r_range, dur)],
-                    delay,
-                    dur * 0.5,
-                    Easing::Linear,
-                ),
-                // strength
-                a.r_ramp(
-                    &[kfr(s_range, dur * 1.5)],
-                    delay + 1.0,
-                    dur * 0.75,
-                    Easing::Linear,
-                ),
+                a.random_slewed(dur, r_range, 0.65, delay, 33344),
+                a.random_slewed(dur * 1.5, s_range, 0.65, delay + 1.0, 77766),
                 // scaling_power
                 if anim_scaling {
                     self.controls.get("scaling_power")
@@ -149,7 +137,7 @@ impl Sketch for Kalos2 {
                     (a.tri(8.0) + 1.0) * 4.0
                 },
                 // offset
-                a.r_ramp(&[kfr((0.0, 1.0), 16.0)], 0.0, 8.0, Easing::Linear),
+                a.random_slewed(16.0, (0.0, 1.0), 0.7, 0.0, 76567),
             ]
         };
 

@@ -74,7 +74,7 @@ impl Sketch for G25_2Layers {
 
         let wr = ctx.window_rect();
         let time = 8.0;
-        let kfs = [kfr((0.0, 1.0), time)];
+        let slew = 0.8;
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
@@ -85,44 +85,50 @@ impl Sketch for G25_2Layers {
                 self.controls.animation.tri(12.0),
             ],
             b: [
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.0,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    887353,
                 ),
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.5,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    9886262,
                 ),
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.1,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    3907823,
                 ),
                 self.controls.float("post_mix"),
             ],
             c: [
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.0,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    2837461,
                 ),
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.5,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    12383,
                 ),
-                self.controls.animation.r_ramp(
-                    &kfs,
+                self.controls.animation.random_slewed(
+                    time,
+                    (0.0, 1.0),
+                    slew,
                     0.1,
-                    time * 0.5,
-                    Easing::EaseInOut,
+                    12344,
                 ),
                 0.0,
             ],
@@ -146,6 +152,7 @@ impl Sketch for G25_2Layers {
                         Breakpoint::ramp(16.0, 4.0, Easing::Linear),
                         Breakpoint::step(24.0, 8.0),
                         Breakpoint::ramp(32.0, 6.0, Easing::Linear),
+                        Breakpoint::end(38.0, 2.0),
                     ],
                     Mode::Loop,
                 ),

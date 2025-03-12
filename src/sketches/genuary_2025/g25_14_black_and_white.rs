@@ -19,7 +19,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 };
 
 #[derive(SketchComponents)]
-pub struct Template {
+pub struct BlackAndWhite {
     controls: ControlHub<OscTransportTiming>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
@@ -46,7 +46,7 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+pub fn init(app: &App, ctx: &LatticeContext) -> BlackAndWhite {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "./g25_14_black_and_white.yaml"),
         OscTransportTiming::new(ctx.bpm()),
@@ -69,10 +69,10 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
         true,
     );
 
-    Template { controls, gpu }
+    BlackAndWhite { controls, gpu }
 }
 
-impl Sketch for Template {
+impl Sketch for BlackAndWhite {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         self.controls.update();
 
@@ -88,17 +88,19 @@ impl Sketch for Template {
                 0.25, // wave2_angle
             ],
             b: [
-                self.controls.animation.r_ramp(
-                    &[kfr((0.0, phase_mod), 2.0)],
+                self.controls.animation.random_slewed(
+                    2.0,
+                    (0.0, 1.0),
+                    0.6,
                     0.0,
-                    1.0,
-                    Easing::Linear,
+                    0,
                 ),
-                self.controls.animation.r_ramp(
-                    &[kfr((0.0, phase_mod), 2.0)],
+                self.controls.animation.random_slewed(
+                    2.0,
+                    (0.0, 1.0),
+                    0.6,
                     1.0,
-                    1.0,
-                    Easing::Linear,
+                    0,
                 ),
                 self.controls.get("wave1_y"),
                 self.controls.get("wave2_y"),
