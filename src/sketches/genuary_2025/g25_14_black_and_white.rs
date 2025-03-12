@@ -90,14 +90,14 @@ impl Sketch for BlackAndWhite {
             b: [
                 self.controls.animation.random_slewed(
                     2.0,
-                    (0.0, 1.0),
+                    (0.0, phase_mod),
                     0.6,
                     0.0,
                     0,
                 ),
                 self.controls.animation.random_slewed(
                     2.0,
-                    (0.0, 1.0),
+                    (0.0, phase_mod),
                     0.6,
                     1.0,
                     0,
