@@ -10,9 +10,8 @@ default-run = "lattice"
 doctest = false
 
 [features]
-default = ["atomic_frames", "hi_res_cc"]
+default = ["hi_res_cc"]
 instrumentation = []
-atomic_frames = []
 hi_res_cc = []
 
 # clean with:

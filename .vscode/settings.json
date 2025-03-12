@@ -29,5 +29,5 @@
     "verts",
     "Vortx"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation", "atomic_frames"]
+  "rust-analyzer.cargo.features": ["instrumentation", "hi_res_cc"]
 }

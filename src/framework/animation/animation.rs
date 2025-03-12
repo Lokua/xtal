@@ -667,7 +667,7 @@ pub mod animation_tests {
     pub fn init(frame_count: u32) {
         INIT.call_once(|| {
             env_logger::builder().is_test(true).init();
-            frame_controller::ensure_controller(FPS);
+            frame_controller::set_fps(FPS);
         });
         frame_controller::set_frame_count(frame_count);
     }
@@ -1125,8 +1125,6 @@ pub mod animation_tests {
             a.automate(
                 &[
                     Breakpoint::ramp(0.0, 0.0, Easing::Linear),
-                    // BUG: jumps from ~0.5 to 0.75, should be exactly 0.5
-                    // ^ Fixed :)!
                     Breakpoint::ramp(32.0, 0.5, Easing::Linear),
                     Breakpoint::ramp(96.0, 1.0, Easing::Linear),
                     Breakpoint::ramp(128.0, 0.75, Easing::Linear),
