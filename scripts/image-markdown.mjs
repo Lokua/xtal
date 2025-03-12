@@ -14,9 +14,31 @@ async function main() {
     const imageFiles = fs.readdirSync(imagesDir).filter(isSupportedImage)
     const imageIndex = JSON.parse(fs.readFileSync(indexFile, 'utf-8'))
 
+    // The index file is because it's way too easy to lose the date_created
+    // field on a file and order is important to me
     imageIndex.items = imageIndex.items
       .filter((item) => imageFiles.includes(item.filename))
-      .toSorted((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    const missingFromImagesDir = imageFiles.filter(
+      (filename) => !imageIndex.items.find((item) => item.filename === filename)
+    )
+    if (missingFromImagesDir.length > 0) {
+      console.warn(
+        'The following index items are missing actual images:',
+        missingFromImagesDir
+      )
+    }
+
+    const missingFromIndex = imageIndex.items.filter(
+      (item) => !imageFiles.includes(item.filename)
+    )
+    if (missingFromIndex.length > 0) {
+      console.warn(
+        'The following images are missing from the index:',
+        missingFromIndex
+      )
+    }
 
     let markdown = 'Files sorted from most to least recent\n\n'
     for (const { filename } of imageIndex.items) {
