@@ -1,7 +1,6 @@
 pub mod animation;
 pub mod audio;
 pub mod audio_controls;
-pub mod automate;
 pub mod control_hub;
 pub mod control_provider;
 pub mod distance;

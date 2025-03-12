@@ -1,5 +1,5 @@
 pub mod animation;
-pub use animation::{Animation, Trigger};
+pub use animation::*;
 
 pub mod easing;
 pub use easing::*;
