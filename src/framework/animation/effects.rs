@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use nannou::math::map_range;
 
-use super::prelude::*;
+use crate::framework::prelude::*;
 
 #[derive(Debug)]
 pub enum Effect {

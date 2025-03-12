@@ -87,32 +87,8 @@ use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
 
-use super::frame_controller;
-use super::prelude::*;
-
-#[derive(Clone, Debug)]
-pub struct KeyframeRandom {
-    pub range: (f32, f32),
-    pub duration: f32,
-}
-
-impl KeyframeRandom {
-    pub fn new(range: (f32, f32), duration: f32) -> Self {
-        Self { range, duration }
-    }
-
-    pub fn generate_value(&self, seed: u64) -> f32 {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let random = rng.gen::<f32>();
-        self.range.0 + (self.range.1 - self.range.0) * random
-    }
-}
-
-/// Convenience method to create keyframes without
-/// the verbosity of [`KeyframeRandom::new`]
-pub fn kfr(range: (f32, f32), duration: f32) -> KeyframeRandom {
-    KeyframeRandom::new(range, duration)
-}
+use crate::framework::frame_controller;
+use crate::framework::prelude::*;
 
 /// Data structure used in conjunction with
 /// [`Animation::create_trigger`] and [`Animation::should_trigger`]

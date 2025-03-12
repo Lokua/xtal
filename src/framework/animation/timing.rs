@@ -30,9 +30,9 @@ use std::{
     },
 };
 
-use super::frame_controller;
-use super::osc_receiver::SHARED_OSC_RECEIVER;
-use super::prelude::*;
+use crate::framework::frame_controller;
+use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
+use crate::framework::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
