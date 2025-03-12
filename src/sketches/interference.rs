@@ -121,7 +121,7 @@ impl Sketch for Interference {
                     self.controls.animation.random_slewed(
                         2.0,
                         (0.0, 1.0),
-                        0.8,
+                        0.6,
                         0.0,
                         0,
                     )
@@ -132,7 +132,7 @@ impl Sketch for Interference {
                     self.controls.animation.random_slewed(
                         2.0,
                         (0.0, 1.0),
-                        0.8,
+                        0.6,
                         1.0,
                         0,
                     )

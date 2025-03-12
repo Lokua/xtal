@@ -180,9 +180,7 @@ impl Sketch for G25_18Wind {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
                 bg_alpha,
-                self.controls
-                    .animation
-                    .lrp(&[kf(40.0, 4.0), kf(70.0, 4.0)], 0.0),
+                self.controls.animation.triangle(8.0, (40.0, 70.0), 0.0),
                 self.controls.get("displace"),
                 self.controls.get("slice_glitch"),
             ],

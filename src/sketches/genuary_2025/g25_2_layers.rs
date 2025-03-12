@@ -128,25 +128,26 @@ impl Sketch for G25_2Layers {
             ],
             d: [
                 2.0,
-                self.controls.animation.lrp(
+                self.controls.animation.automate(
                     &[
-                        kf(2.0, 4.0),  // stay
-                        kf(2.0, 4.0),  // transition
-                        kf(3.0, 24.0), // stay
-                        kf(3.0, 6.0),  // transition
+                        Breakpoint::step(0.0, 2.0),
+                        Breakpoint::ramp(4.0, 2.0, Easing::Linear),
+                        Breakpoint::step(28.0, 3.0),
+                        Breakpoint::ramp(34.0, 3.0, Easing::Linear),
+                        Breakpoint::end(38.0, 2.0),
                     ],
-                    0.0,
+                    Mode::Loop,
                 ),
-                self.controls.animation.lrp(
+                self.controls.animation.automate(
                     &[
-                        kf(2.0, 4.0), // stay
-                        kf(2.0, 4.0), // transition
-                        kf(4.0, 8.0), // stay
-                        kf(4.0, 8.0), // transition
-                        kf(8.0, 8.0), // stay
-                        kf(8.0, 6.0), // transition
+                        Breakpoint::step(0.0, 2.0),
+                        Breakpoint::ramp(4.0, 2.0, Easing::Linear),
+                        Breakpoint::step(8.0, 4.0),
+                        Breakpoint::ramp(16.0, 4.0, Easing::Linear),
+                        Breakpoint::step(24.0, 8.0),
+                        Breakpoint::ramp(32.0, 6.0, Easing::Linear),
                     ],
-                    0.0,
+                    Mode::Loop,
                 ),
                 0.0,
             ],

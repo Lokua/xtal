@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     w: 700,
     h: 700,
     gui_w: None,
-    gui_h: Some(220),
+    gui_h: Some(240),
 };
 
 const N_LINES: u32 = 64;
@@ -22,12 +22,12 @@ const GRID_SIZE: u32 = 16;
 
 #[derive(SketchComponents)]
 #[sketch(clear_color = "hsla(0.0, 0.0, 0.0, 1.0)")]
-pub struct Template {
+pub struct HorizVert {
     controls: ControlHub<Timing>,
     lines: Vec<Vec2>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
+pub fn init(_app: &App, ctx: &LatticeContext) -> HorizVert {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("invert", false, None)
@@ -37,13 +37,13 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
         .slider_n("background_alpha", 1.0)
         .build();
 
-    Template {
+    HorizVert {
         controls,
         lines: vec![],
     }
 }
 
-impl Sketch for Template {
+impl Sketch for HorizVert {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
         self.controls.update();
         self.lines.clear();
@@ -63,16 +63,11 @@ impl Sketch for Template {
 
             let position_offset = i_f32 / n_lines * TAU * base_time * 2.0;
 
-            let wave = (self.controls.animation.lrp(
-                &[
-                    kf(0.0, lrp_time),
-                    kf(1.0, lrp_time),
-                    kf(0.0, lrp_time),
-                    kf(-1.0, lrp_time),
-                ],
-                0.0,
-            ))
-            .sin();
+            let wave = self
+                .controls
+                .animation
+                .triangle(lrp_time * 4.0, (-1.0, 1.0), 0.5)
+                .sin();
 
             let envelope = (i_f32 / n_lines * TAU
                 + base_time * 0.5
@@ -133,7 +128,7 @@ impl Sketch for Template {
 
 pub fn draw_lines(
     draw: &Draw,
-    template: &Template,
+    template: &HorizVert,
     wr: WindowRect,
     anim_delay: f32,
     _color: Hsla,
@@ -145,10 +140,11 @@ pub fn draw_lines(
         if let [start, end] = chunk {
             let range = template.controls.animation.tri(32.0) * wr.hw();
 
-            let animated_center = template
-                .controls
-                .animation
-                .lrp(&[kf(-range, time), kf(range, time)], anim_delay);
+            let animated_center = template.controls.animation.triangle(
+                time * 2.0,
+                (-range, range),
+                anim_delay,
+            );
 
             let distance_from_center =
                 ((start.x - animated_center) / wr.hw()).abs();

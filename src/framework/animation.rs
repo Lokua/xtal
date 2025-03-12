@@ -236,7 +236,7 @@ impl<T: TimingSource> Animation<T> {
         let value = rng.gen_range(min..=max);
 
         // Ensures two different calls that share the same seed but differ in
-        // delay have the same pattern, yet phase shifted time-wise
+        // delay have the same overall pattern
         let key = stem + (delay.to_bits() as u64 * 10_000_000);
 
         let mut prev_values = self.random_smooth_previous_values.borrow_mut();

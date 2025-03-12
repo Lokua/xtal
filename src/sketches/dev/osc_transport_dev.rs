@@ -34,8 +34,8 @@ impl Sketch for OscTransportDev {
 
         draw.rect().color(BLACK).x_y(0.0, 0.0).w_h(wr.w(), wr.h());
 
-        let a = self.animation.lrp(&[kf(0.0, 4.0), kf(200.0, 4.0)], 0.0);
-        let b = self.animation.lrp(&[kf(0.0, 2.0), kf(200.0, 2.0)], 0.0);
+        let a = self.animation.triangle(8.0, (0.0, 200.0), 0.0);
+        let b = self.animation.triangle(4.0, (0.0, 200.0), 0.0);
 
         draw.ellipse()
             .color(rgba(1.0, 0.0, 0.0, 0.5))

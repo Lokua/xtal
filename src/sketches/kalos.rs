@@ -148,26 +148,23 @@ impl Sketch for Kalos {
             show_corners: self.controls.bool("show_corners") as i32 as f32,
             radius: self.controls.get("radius"),
             strength: if self.controls.bool("animate") {
-                self.controls.animation.lrp(
+                let min = clamp(
+                    strength - strength_swing,
+                    strength_range.0,
+                    strength_range.1,
+                );
+                let max = clamp(
+                    strength + strength_swing,
+                    strength_range.0,
+                    strength_range.1,
+                );
+                self.controls.animation.automate(
                     &[
-                        kf(
-                            clamp(
-                                strength - strength_swing,
-                                strength_range.0,
-                                strength_range.1,
-                            ),
-                            1.0,
-                        ),
-                        kf(
-                            clamp(
-                                strength + strength_swing,
-                                strength_range.0,
-                                strength_range.1,
-                            ),
-                            1.0,
-                        ),
+                        Breakpoint::ramp(0.0, min, Easing::Linear),
+                        Breakpoint::ramp(1.0, max, Easing::Linear),
+                        Breakpoint::end(2.0, min),
                     ],
-                    0.0,
+                    Mode::Loop,
                 )
             } else {
                 strength
