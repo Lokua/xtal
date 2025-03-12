@@ -155,36 +155,93 @@ impl Sketch for AnimationDev {
             .radius(radius * 0.333)
             .color(rgb(0.0, component_value, component_value));
 
-        // // BLUE BALL
-        // draw.ellipse()
-        //     .x_y(map_range(self.r_ramp, 0.0, 1.0, -edge, edge), -hh / 2.0)
-        //     .radius(radius)
-        //     .color(rgb(0.0, 0.0, component_value));
+        // Testing syncopated delay
+        {
+            // BLUE BALL
+            draw.ellipse()
+                .x_y(
+                    self.animation.random(2.0, (-edge, edge), 0.0, 9),
+                    -hh / 2.0,
+                )
+                .radius(radius)
+                .color(rgb(0.0, 0.0, component_value));
 
-        // // DARK TURQUOISE BALL
-        // draw.ellipse()
-        //     .x_y(
-        //         map_range(self.random_anim, 0.0, 1.0, -edge, edge),
-        //         -hh + hh / 8.0,
-        //     )
-        //     .radius(radius * 0.333)
-        //     .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
+            // DARK TURQUOISE BALL
+            draw.ellipse()
+                .x_y(
+                    self.animation.random(
+                        2.0,
+                        (-edge, edge),
+                        1.0, // delay by 1 beat
+                        9,   // same seed for easier comparison
+                    ),
+                    -hh + hh / 8.0,
+                )
+                .radius(radius)
+                .color(rgb(0.0, 1.0 - component_value, 1.0 - component_value));
+        }
+        // Testing syncopated delay (smooth version - should follow the above)
+        {
+            // GRAY RING
+            draw.ellipse()
+                .x_y(
+                    self.animation.random_slewed(
+                        2.0,
+                        (-edge, edge),
+                        0.6,
+                        0.0,
+                        9,
+                    ),
+                    -hh / 2.0,
+                )
+                .radius(radius * 0.666)
+                .no_fill()
+                .stroke_weight(4.0)
+                .stroke(GRAY);
 
-        // BLACK BALL LEFT
-        draw.ellipse()
-            .x_y(-wr.qw(), self.animation.random(1.0, (-wr.hh(), wr.hh()), 9))
-            .radius(20.0)
-            .color(BLACK);
+            // LIGHT-GRAY RING
+            draw.ellipse()
+                .x_y(
+                    self.animation.random_slewed(
+                        2.0,
+                        (-edge, edge),
+                        0.6,
+                        1.0, // delay by 1 beat
+                        9,   // same seed for easier comparison
+                    ),
+                    -hh + hh / 8.0,
+                )
+                .radius(radius * 0.666)
+                .no_fill()
+                .stroke_weight(4.0)
+                .stroke(LIGHTGRAY);
+        }
 
-        // BLACK BALL RIGHT
-        draw.ellipse()
-            .x_y(
-                wr.qw(),
-                self.animation
-                    .random_slewed(1.0, (-wr.hh(), wr.hh()), 0.7, 99),
-            )
-            .radius(20.0)
-            .color(BLACK);
+        {
+            // BLACK BALL LEFT
+            draw.ellipse()
+                .x_y(
+                    -wr.qw(),
+                    self.animation.random(1.0, (-wr.hh(), wr.hh()), 0.0, 999),
+                )
+                .radius(20.0)
+                .color(BLACK);
+
+            // BLACK BALL RIGHT
+            draw.ellipse()
+                .x_y(
+                    wr.qw(),
+                    self.animation.random_slewed(
+                        1.0,
+                        (-wr.hh(), wr.hh()),
+                        0.7,
+                        0.0,
+                        99,
+                    ),
+                )
+                .radius(20.0)
+                .color(BLACK);
+        }
 
         draw.to_frame(app, &frame).unwrap();
     }

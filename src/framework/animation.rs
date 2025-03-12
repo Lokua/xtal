@@ -203,9 +203,11 @@ impl<T: TimingSource> Animation<T> {
         &self,
         duration: f32,
         (min, max): (f32, f32),
+        delay: f32,
         stem: u64,
     ) -> f32 {
-        let loop_count = (self.beats() / duration).floor();
+        let beats = self.beats() - delay;
+        let loop_count = ternary!(beats < 0.0, 0.0, (beats / duration).floor());
         let seed = stem + ((duration + (max - min) + loop_count) as u64);
         let mut rng = StdRng::seed_from_u64(seed);
         rng.gen_range(min..=max)
@@ -213,34 +215,36 @@ impl<T: TimingSource> Animation<T> {
 
     /// Generate a randomized value once during every cycle of `duration`. The
     /// function is completely deterministic given the same parameters in
-    /// relation to the current beat. The `stem` - which serves as the root of
+    /// relation to the current beat. The `seed` - which serves as the root of
     /// an internal seed generator - is also a unique ID for internal slew state
     /// and for that reason you should make sure all animations in your sketch
-    /// have unique stems. `slew` controls smoothing when the value changes with
-    /// 0.0 being instant and 1.0 being essentially frozen.
+    /// have unique seeds (unless you want identical animations of course).
+    /// `slew` controls smoothing when the value changes with 0.0 being instant
+    /// and 1.0 being essentially frozen.
     pub fn random_slewed(
         &self,
         duration: f32,
         (min, max): (f32, f32),
         slew: f32,
+        delay: f32,
         stem: u64,
     ) -> f32 {
-        let loop_count = (self.beats() / duration).floor();
-
-        let seed = stem
-            + duration.to_bits() as u64
-            + (max - min).to_bits() as u64
-            + loop_count as u64;
-
+        let beats = self.beats() - delay;
+        let loop_count = ternary!(beats < 0.0, 0.0, (beats / duration).floor());
+        let seed = stem + ((duration + (max - min) + loop_count) as u64);
         let mut rng = StdRng::seed_from_u64(seed);
         let value = rng.gen_range(min..=max);
 
+        // Ensures two different calls that share the same seed but differ in
+        // delay have the same pattern, yet phase shifted time-wise
+        let key = stem + (delay.to_bits() as u64 * 10_000_000);
+
         let mut prev_values = self.random_smooth_previous_values.borrow_mut();
-        let value = prev_values.get(&stem).map_or(value, |prev| {
+        let value = prev_values.get(&key).map_or(value, |prev| {
             SlewLimiter::slew_pure(*prev, value, slew, slew)
         });
 
-        prev_values.insert(stem, value);
+        prev_values.insert(key, value);
 
         value
     }
@@ -269,16 +273,16 @@ impl<T: TimingSource> Animation<T> {
     ///   // do stuff
     /// }
     /// ```
-    pub fn should_trigger(&self, config: &mut Trigger) -> bool {
+    pub fn should_trigger(&self, trigger: &mut Trigger) -> bool {
         let total_beats = self.beats();
-        let current_interval = (total_beats / config.every).floor();
-        let position_in_interval = total_beats % config.every;
+        let current_interval = (total_beats / trigger.every).floor();
+        let position_in_interval = total_beats % trigger.every;
 
-        let should_trigger = current_interval != config.last_trigger_count
-            && position_in_interval >= config.delay;
+        let should_trigger = current_interval != trigger.last_trigger_count
+            && position_in_interval >= trigger.delay;
 
         if should_trigger {
-            config.last_trigger_count = current_interval;
+            trigger.last_trigger_count = current_interval;
         }
 
         should_trigger
@@ -559,8 +563,14 @@ impl<T: TimingSource> Animation<T> {
             current_value
         };
 
-        trace!("adjusted_beats: {}, ramp_progress: {}, clamped_progress: {}, eased_progress: {}, value: {}", 
-            adjusted_beats, ramp_progress, clamped_progress, eased_progress, value
+        trace!(
+            "adjusted_beats: {}, ramp_progress: {}, clamped_progress: {}, \
+            eased_progress: {}, value: {}",
+            adjusted_beats,
+            ramp_progress,
+            clamped_progress,
+            eased_progress,
+            value
         );
 
         value
@@ -1028,39 +1038,66 @@ pub mod animation_tests {
     #[serial]
     fn test_random() {
         let a = create_instance();
+        let r = || a.random(1.0, (0.0, 1.0), 0.0, 999);
 
         init(0);
-        let n = a.random(1.0, (0.0, 1.0), 999);
+        let n = r();
 
         init(1);
-        let n2 = a.random(1.0, (0.0, 1.0), 999);
+        let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
         init(2);
-        let n3 = a.random(1.0, (0.0, 1.0), 999);
+        let n3 = r();
         assert_eq!(n, n3, "should return same N for full cycle");
 
         init(3);
-        let n4 = a.random(1.0, (0.0, 1.0), 999);
+        let n4 = r();
         assert_eq!(n, n4, "should return same N for full cycle");
 
         init(4);
-        let n5 = a.random(1.0, (0.0, 1.0), 999);
+        let n5 = r();
         assert_ne!(n, n5, "should return new number on next cycle");
+    }
+
+    #[test]
+    #[serial]
+    fn test_random_with_delay() {
+        let a = create_instance();
+        let r = || a.random(1.0, (0.0, 1.0), 0.5, 999);
+
+        init(0);
+        let n = r();
+
+        init(4);
+        let n2 = r();
+        assert_eq!(n, n2, "should return same N for full cycle");
+
+        init(6);
+        let n3 = r();
+        assert_ne!(n, n3, "should return new number on 2nd cycle");
+        init(9);
+        let n4 = r();
+        assert_eq!(n3, n4, "should stay within 2nd cycle");
+
+        init(10);
+        let n5 = r();
+        assert_ne!(n4, n5, "should return new number on 3rd cycle");
     }
 
     #[test]
     #[serial]
     fn test_random_stem() {
         let a = create_instance();
+        let r = |stem: u64| a.random(1.0, (0.0, 1.0), 0.0, stem);
 
         init(0);
-        let n1 = a.random(1.0, (0.0, 1.0), 99);
-        let n2 = a.random(1.0, (0.0, 1.0), 99);
+        let n1 = r(99);
+        let n2 = r(99);
 
         assert_eq!(n1, n2, "should return same N for same args");
 
-        let n3 = a.random(1.0, (0.0, 1.0), 100);
+        let n3 = r(100);
         assert_ne!(n1, n3, "should return different N for diff stems");
     }
 
@@ -1068,24 +1105,50 @@ pub mod animation_tests {
     #[serial]
     fn test_random_smooth() {
         let a = create_instance();
+        let r = || a.random_slewed(1.0, (0.0, 1.0), 0.0, 0.0, 9);
 
         init(0);
-        let n = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
+        let n = r();
 
         init(1);
-        let n2 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
+        let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
         init(2);
-        let n3 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
+        let n3 = r();
         assert_eq!(n, n3, "should return same N for full cycle");
 
         init(3);
-        let n4 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
+        let n4 = r();
         assert_eq!(n, n4, "should return same N for full cycle");
 
         init(4);
-        let n5 = a.random_slewed(1.0, (0.0, 1.0), 0.0, 9);
+        let n5 = r();
         assert_ne!(n, n5, "should return new number on next cycle");
+    }
+
+    #[test]
+    #[serial]
+    fn test_random_smooth_with_delay() {
+        let a = create_instance();
+        let r = || a.random_slewed(1.0, (0.0, 1.0), 0.0, 0.5, 999);
+
+        init(0);
+        let n = r();
+
+        init(4);
+        let n2 = r();
+        assert_eq!(n, n2, "should return same N for full cycle");
+
+        init(6);
+        let n3 = r();
+        assert_ne!(n, n3, "should return new number on 2nd cycle");
+        init(9);
+        let n4 = r();
+        assert_eq!(n3, n4, "should stay within 2nd cycle");
+
+        init(10);
+        let n5 = r();
+        assert_ne!(n4, n5, "should return new number on 3rd cycle");
     }
 }

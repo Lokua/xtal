@@ -254,6 +254,7 @@ impl SetFromParam for RandomConfig {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
+            "delay" => self.delay = ParamValue::Cold(value),
             _ => warn_for("Random", name),
         }
     }
@@ -263,6 +264,7 @@ impl SetFromParam for RandomSlewedConfig {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
+            "delay" => self.delay = ParamValue::Cold(value),
             "slew" => self.slew = ParamValue::Cold(value),
             _ => warn_for("RandomSlewed", name),
         }

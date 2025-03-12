@@ -324,6 +324,7 @@ impl<T: TimingSource> ControlHub<T> {
                     self.animation.random(
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
+                        conf.delay.as_float(),
                         conf.stem,
                     )
                 }
@@ -340,6 +341,7 @@ impl<T: TimingSource> ControlHub<T> {
                         conf.beats.as_float(),
                         (conf.range[0], conf.range[1]),
                         conf.slew.as_float(),
+                        conf.delay.as_float(),
                         conf.stem,
                     )
                 }

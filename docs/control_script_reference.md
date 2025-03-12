@@ -352,6 +352,7 @@ beat.
 - `type` - `random`
 - `beats` - defaults to `1.0`
 - `range` - defaults to `[0.0, 1.0]`
+- `delay` - defaults to `0.0`
 - `stem` - the "seed" to differentiate this animation from otherwise identical
   animations
 
@@ -362,6 +363,7 @@ random_example:
   type: random
   beats: 1.0
   range: [0.0, 1.0]
+  delay: 0.0
   stem: 44
 ```
 
@@ -379,6 +381,7 @@ when the value changes with 0.0 being instant and 1.0 being essentially frozen.
 - `type` - `random`
 - `beats` - defaults to `1.0`
 - `range` - defaults to `[0.0, 1.0]`
+- `delay` - defaults to `0.0`
 - `slew` - control the rise/fall of internal slew limiter. defaults to `0.65`
 - `stem` - the "seed" + unique ID for this animation
 
@@ -390,6 +393,7 @@ random_slewed_example:
   beats: 1.0
   range: [0.0, 1.0]
   slew: 0.65
+  delay: 0.0
   stem: 88
 ```
 

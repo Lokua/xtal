@@ -284,6 +284,7 @@ impl Sketch for HeatMask {
                                     8.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     1,
                                 ),
                             );
@@ -292,6 +293,7 @@ impl Sketch for HeatMask {
                                     12.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     2,
                                 ),
                             );
@@ -314,6 +316,7 @@ impl Sketch for HeatMask {
                                     4.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     3,
                                 ),
                             );
@@ -322,6 +325,7 @@ impl Sketch for HeatMask {
                                     8.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     4,
                                 ),
                             );
@@ -344,6 +348,7 @@ impl Sketch for HeatMask {
                                     4.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     6,
                                 ),
                             );
@@ -352,6 +357,7 @@ impl Sketch for HeatMask {
                                     8.0,
                                     (1.0, 500.0),
                                     0.8,
+                                    0.0,
                                     18,
                                 ),
                             );
