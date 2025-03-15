@@ -32,11 +32,8 @@ test-verbose *ARGS:
 bench *ARGS:
   cargo bench {{ARGS}}
 
-open-docs:
-  cargo doc --open --release --document-private-items --no-deps -p lattice
-
 docs:
-  cargo doc --release --no-deps --document-private-items -p derives -p lattice
+  cargo doc --open --release --document-private-items --no-deps -p lattice
 
 stats:
   sccache --show-stats
