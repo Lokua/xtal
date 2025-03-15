@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
@@ -23,7 +25,7 @@ pub fn sketch_components(input: TokenStream) -> TokenStream {
                 if meta.path.is_ident("clear_color") {
                     if let Ok(value) = meta.value() {
                         if let Ok(lit_str) = value.parse::<syn::LitStr>() {
-                            if let Some(color_format) =
+                            if let Ok(color_format) =
                                 ColorFormat::from_str(&lit_str.value())
                             {
                                 clear_color = Some(color_format);
@@ -99,11 +101,13 @@ enum ColorFormat {
     Hsla(Vec<f32>),
 }
 
-impl ColorFormat {
-    fn from_str(s: &str) -> Option<Self> {
+impl FromStr for ColorFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split('(').collect();
         if parts.len() != 2 {
-            return None;
+            return Err("Invalid color format".to_string());
         }
 
         let format = parts[0].trim();
@@ -112,30 +116,28 @@ impl ColorFormat {
             .split(',')
             .map(|s| s.trim().parse::<f32>())
             .collect::<Result<_, _>>()
-            .ok()?;
+            .map_err(|_| "Invalid numeric values".to_string())?;
 
         match format {
             "rgba" => {
                 if numbers.len() == 4 {
-                    Some(ColorFormat::Rgba(numbers))
+                    Ok(ColorFormat::Rgba(numbers))
                 } else {
-                    None
+                    Err("Incorrect number of components for rgba".to_string())
                 }
             }
             "hsla" => {
                 if numbers.len() == 4 {
-                    Some(ColorFormat::Hsla(numbers))
+                    Ok(ColorFormat::Hsla(numbers))
                 } else {
-                    None
+                    Err("Incorrect number of components for hsla".to_string())
                 }
             }
-            _ => {
-                panic!(
-                    "Unsupported color format: '{}'. \
+            _ => Err(format!(
+                "Unsupported color format: '{}'. \
                     Use 'rgba(r,g,b,a)' or 'hsla(h,s,l,a)'",
-                    format
-                );
-            }
+                format
+            )),
         }
     }
 }

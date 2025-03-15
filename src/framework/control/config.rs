@@ -104,22 +104,13 @@ impl Default for SliderConfig {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct CheckboxConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
     pub default: bool,
-}
-
-impl Default for CheckboxConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            default: false,
-        }
-    }
 }
 
 #[derive(Deserialize, Debug)]

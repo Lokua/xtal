@@ -145,12 +145,9 @@ impl Sketch for Drops {
 
                     dropper.walker.step();
 
-                    match dropper.kind.as_str() {
-                        "center" => {
-                            dropper.min_radius = 0.1;
-                            dropper.max_radius = drop_max_radius;
-                        }
-                        _ => {}
+                    if dropper.kind.as_str() == "center" {
+                        dropper.min_radius = 0.1;
+                        dropper.max_radius = drop_max_radius;
                     }
 
                     for _ in 0..n_drops as i32 {
@@ -319,7 +316,7 @@ impl Default for Walker {
 }
 
 fn palette_by_name(
-    palettes: &Vec<(ColorFn, ColorFn, ColorFn)>,
+    palettes: &[(ColorFn, ColorFn, ColorFn)],
     name: &str,
 ) -> (ColorFn, ColorFn, ColorFn) {
     let index = match name {

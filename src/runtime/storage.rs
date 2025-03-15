@@ -126,6 +126,6 @@ pub fn save_image_index(
     image_index: &ImageIndex,
 ) -> Result<(), Box<dyn Error>> {
     let json = serde_json::to_string_pretty(image_index)?;
-    fs::write(&image_index_path(), json)?;
+    fs::write(image_index_path(), json)?;
     Ok(())
 }

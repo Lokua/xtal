@@ -228,7 +228,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         let (config, effect) = effects.get_mut(modulator).unwrap();
 
-        let modulated = if let (
+        if let (
             EffectKind::RingModulator { modulator, .. },
             Effect::RingModulator(m),
         ) = (&config.kind, &mut *effect)
@@ -264,9 +264,7 @@ impl<T: TimingSource> ControlHub<T> {
                 }
                 Effect::RingModulator(_) => panic!(),
             }
-        };
-
-        modulated
+        }
     }
 
     fn update_effect_params(
@@ -370,20 +368,20 @@ impl<T: TimingSource> ControlHub<T> {
             if is_dep {
                 self.eval_cache.store(name, current_frame, value);
             }
-            return value;
+            value
         } else {
             warn_once!("No control named {}. Defaulting to 0.0", name);
-            return 0.0;
+            0.0
         }
     }
 
     fn resolve_breakpoint_params(
         &self,
         node_name: &str,
-        breakpoints: &Vec<Breakpoint>,
+        breakpoints: &[Breakpoint],
         current_frame: u32,
     ) -> Vec<Breakpoint> {
-        let mut breakpoints = breakpoints.clone();
+        let mut breakpoints = breakpoints.to_vec();
 
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
@@ -394,10 +392,10 @@ impl<T: TimingSource> ControlHub<T> {
                     continue;
                 }
 
-                if let Some(index) = path_segments[1].parse::<usize>().ok() {
+                if let Ok(index) = path_segments[1].parse::<usize>() {
                     let value = param_value
                         .cold_or(|name| self.get_raw(&name, current_frame));
-                    breakpoints[index].set_from_param(&param_name, value);
+                    breakpoints[index].set_from_param(param_name, value);
                 }
             }
         }
@@ -445,7 +443,7 @@ impl<T: TimingSource> ControlHub<T> {
         snapshot.extend(
             self.ui_controls
                 .values()
-                .into_iter()
+                .iter()
                 .filter_map(|(name, value)| {
                     if self.ui_controls.config(name).unwrap().is_separator() {
                         None
@@ -455,12 +453,18 @@ impl<T: TimingSource> ControlHub<T> {
                 })
                 .collect::<ControlValues>(),
         );
-        snapshot.extend(self.midi_controls.values().iter().map(
-            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
-        ));
-        snapshot.extend(self.osc_controls.values().iter().map(
-            |(key, value)| (key.clone(), ControlValue::from(value.clone())),
-        ));
+        snapshot.extend(
+            self.midi_controls
+                .values()
+                .iter()
+                .map(|(key, value)| (key.clone(), ControlValue::from(*value))),
+        );
+        snapshot.extend(
+            self.osc_controls
+                .values()
+                .iter()
+                .map(|(key, value)| (key.clone(), ControlValue::from(*value))),
+        );
 
         self.snapshots.insert(id.to_string(), snapshot);
     }
@@ -479,7 +483,7 @@ impl<T: TimingSource> ControlHub<T> {
                 };
 
                 for (name, value) in snapshot {
-                    if self.ui_controls.has(&name) {
+                    if self.ui_controls.has(name) {
                         match value {
                             ControlValue::Float(v) => {
                                 transition.values.insert(
@@ -489,14 +493,14 @@ impl<T: TimingSource> ControlHub<T> {
                             }
                             ControlValue::Bool(_) | ControlValue::String(_) => {
                                 self.ui_controls
-                                    .update_value(&name, value.clone());
+                                    .update_value(name, value.clone());
                             }
                         }
                         continue;
                     }
 
-                    if self.midi_controls.has(&name)
-                        || self.osc_controls.has(&name)
+                    if self.midi_controls.has(name)
+                        || self.osc_controls.has(name)
                     {
                         transition.values.insert(
                             name.to_string(),
@@ -563,16 +567,16 @@ impl<T: TimingSource> ControlHub<T> {
         if let Some(transition) = &self.active_transition {
             if frame_controller::frame_count() > transition.end_frame {
                 for (name, (_from, to)) in &transition.values {
-                    if self.ui_controls.has(&name) {
+                    if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
                         self.ui_controls.update_value(name, value);
                         continue;
                     }
-                    if self.midi_controls.has(&name) {
+                    if self.midi_controls.has(name) {
                         self.midi_controls.update_value(name, *to);
                         continue;
                     }
-                    if self.osc_controls.has(&name) {
+                    if self.osc_controls.has(name) {
                         self.osc_controls.update_value(name, *to);
                         continue;
                     }
@@ -587,13 +591,13 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     pub fn float(&self, name: &str) -> f32 {
-        return self.get(name);
+        self.get(name)
     }
     pub fn bool(&self, name: &str) -> bool {
-        return self.ui_controls.bool(name);
+        self.ui_controls.bool(name)
     }
     pub fn string(&self, name: &str) -> String {
-        return self.ui_controls.string(name);
+        self.ui_controls.string(name)
     }
     pub fn changed(&self) -> bool {
         self.ui_controls.changed()
@@ -606,7 +610,7 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {
-        let raw_config = serde_yml::from_str(&yaml_str)?;
+        let raw_config = serde_yml::from_str(yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;
         let config: ConfigFile = serde_yml::from_value(merged_config)?;
         Ok(config)
@@ -728,7 +732,7 @@ impl<T: TimingSource> ControlHub<T> {
                     };
 
                     let osc_control = OscControlConfig::new(
-                        &id,
+                        id,
                         (conf.range[0], conf.range[1]),
                         conf.default,
                     );
@@ -756,10 +760,10 @@ impl<T: TimingSource> ControlHub<T> {
                         conf.default,
                     );
 
-                    self.midi_controls.add(&id, midi_control);
+                    self.midi_controls.add(id, midi_control);
 
                     if let Some(value) = existing_value {
-                        self.midi_controls.set(&id, *value);
+                        self.midi_controls.set(id, *value);
                     }
                 }
                 ControlType::Audio => {
@@ -866,7 +870,7 @@ impl<T: TimingSource> ControlHub<T> {
                             operator: ref op, ..
                         } => {
                             let mut effect = Math::from_cold_params(&conf);
-                            effect.operator = Operator::from_str(&op).unwrap();
+                            effect.operator = Operator::from_str(op).unwrap();
                             Effect::Math(effect)
                         }
                         EffectKind::Quantizer { range, .. } => {
@@ -1025,7 +1029,7 @@ mod tests {
     use serial_test::serial;
 
     // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
-    use crate::framework::animation::animation_tests::{init, BPM};
+    use crate::framework::motion::animation_tests::{init, BPM};
 
     fn create_instance(yaml: &str) -> ControlHub<FrameTiming> {
         ControlHub::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))

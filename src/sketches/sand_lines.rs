@@ -226,8 +226,7 @@ impl Sketch for SandLines {
                                 let angle = t * TWO_PI * wave_freq;
                                 let shifted_angle = angle + wave_phase;
                                 let raw_sine = shifted_angle.sin();
-                                let normalized_sine = raw_sine * 0.5 + 0.5;
-                                normalized_sine
+                                raw_sine * 0.5 + 0.5
                             }
                             "triangle" => {
                                 let angle = (t * wave_freq + wave_phase) % 1.0;

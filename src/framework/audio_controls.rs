@@ -79,14 +79,13 @@ pub fn default_buffer_processor(
     buffer: &[f32],
     config: &AudioControlConfig,
 ) -> f32 {
-    let emphasized = MultichannelAudioProcessor::apply_pre_emphasis(
-        buffer,
-        config.pre_emphasis,
-    );
-    let smoothed =
-        MultichannelAudioProcessor::detect(&emphasized, config.detect);
-
-    smoothed
+    MultichannelAudioProcessor::detect(
+        &MultichannelAudioProcessor::apply_pre_emphasis(
+            buffer,
+            config.pre_emphasis,
+        ),
+        config.detect,
+    )
 }
 
 /// A "dummy" processor that simply returns that last value of the
@@ -204,7 +203,7 @@ impl AudioControls {
                             state.processor.channel_buffer(config.channel);
 
                         let processed_value =
-                            buffer_processor(channel_buffer, &config);
+                            buffer_processor(channel_buffer, config);
 
                         let value = config.slew_limiter.apply(processed_value);
 
@@ -258,8 +257,8 @@ pub struct AudioControlBuilder {
     controls: AudioControls,
 }
 
-impl AudioControlBuilder {
-    pub fn new() -> Self {
+impl Default for AudioControlBuilder {
+    fn default() -> Self {
         Self {
             controls: AudioControls::new(
                 frame_controller::fps(),
@@ -267,6 +266,12 @@ impl AudioControlBuilder {
                 default_buffer_processor,
             ),
         }
+    }
+}
+
+impl AudioControlBuilder {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// See [`BufferProcessor`]
@@ -283,7 +288,7 @@ impl AudioControlBuilder {
         name: &str,
         config: AudioControlConfig,
     ) -> Self {
-        self.controls.add(&name, config);
+        self.controls.add(name, config);
         self
     }
 
@@ -322,23 +327,22 @@ impl MultichannelAudioProcessor {
     }
 
     fn add_samples(&mut self, samples: &[f32]) {
-        for (_, chunk) in samples.chunks(CHANNEL_COUNT).enumerate() {
+        for chunk in samples.chunks(CHANNEL_COUNT) {
             for (channel, &sample) in chunk.iter().enumerate() {
-                if let Some(channel_buffer) = self.channel_data.get_mut(channel)
-                {
-                    channel_buffer.push(sample);
+                let ch_data = self.channel_data.get_mut(channel);
+                if let Some(buffer) = ch_data {
+                    buffer.push(sample);
                 }
             }
         }
 
         // Ensure buffers are filled to their exact size
-        for channel_buffer in &mut self.channel_data {
-            if channel_buffer.len() > self.buffer_size {
-                channel_buffer
-                    .drain(0..(channel_buffer.len() - self.buffer_size));
+        for buffer in &mut self.channel_data {
+            if buffer.len() > self.buffer_size {
+                buffer.drain(0..(buffer.len() - self.buffer_size));
             }
-            while channel_buffer.len() < self.buffer_size {
-                channel_buffer.push(0.0);
+            while buffer.len() < self.buffer_size {
+                buffer.push(0.0);
             }
         }
     }
@@ -377,7 +381,7 @@ impl MultichannelAudioProcessor {
         let peak = Self::peak(buffer);
         let rms = Self::rms(buffer);
 
-        return (peak * method_mix) + (rms * (1.0 - method_mix));
+        (peak * method_mix) + (rms * (1.0 - method_mix))
     }
 
     fn peak(buffer: &[f32]) -> f32 {

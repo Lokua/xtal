@@ -209,6 +209,7 @@ impl Sketch for Breakpoints2 {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_points(
     animation: &mut Animation<ManualTiming>,
     breakpoints: &[Breakpoint],
@@ -265,6 +266,7 @@ fn post_pipeline(
     value
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_modulated_points(
     animation: &mut Animation<ManualTiming>,
     carrier: &[Breakpoint],
@@ -299,6 +301,7 @@ fn create_modulated_points(
     points
 }
 
+#[allow(clippy::too_many_arguments)]
 fn modulated_post_pipeline(
     value_a: f32,
     value_b: f32,

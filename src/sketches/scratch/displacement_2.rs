@@ -21,13 +21,15 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const GRID_SIZE: usize = 128;
 
+type TrigFnFns = Option<(fn(f32) -> f32, fn(f32) -> f32)>;
+
 #[derive(SketchComponents)]
 pub struct Displacement2 {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
     controls: ControlHub<Timing>,
     cached_pattern: String,
-    cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
+    cached_trig_fns: TrigFnFns,
     gradient: Gradient<LinSrgb>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
@@ -150,7 +152,7 @@ impl Sketch for Displacement2 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         self.controls.update();
 
-        if self.cached_trig_fns == None
+        if self.cached_trig_fns.is_none()
             || (self.cached_pattern != self.controls.string("pattern"))
         {
             self.update_trig_fns();
@@ -169,7 +171,7 @@ impl Sketch for Displacement2 {
         let controls = &self.controls;
         let weave_frequency = self.weave_frequency();
 
-        let cached_trig_fns = self.cached_trig_fns.clone();
+        let cached_trig_fns = self.cached_trig_fns;
         let distance_fn: CustomDistanceFn =
             Some(Arc::new(move |grid_point, position| {
                 weave(
@@ -309,6 +311,7 @@ impl DisplacerConfig {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn weave(
     grid_x: f32,
     grid_y: f32,
@@ -318,7 +321,7 @@ pub fn weave(
     distance_scale: f32,
     amplitude: f32,
     pattern: String,
-    trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
+    trig_fns: TrigFnFns,
 ) -> f32 {
     let x = grid_x * frequency;
     let y = grid_y * frequency;
@@ -355,7 +358,7 @@ fn trig_fn_lookup() -> HashMap<&'static str, fn(f32) -> f32> {
 }
 
 fn generate_pattern_options() -> Vec<String> {
-    let functions = vec![
+    let functions = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
     ];

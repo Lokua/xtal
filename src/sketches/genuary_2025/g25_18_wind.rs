@@ -136,12 +136,16 @@ impl Sketch for G25_18Wind {
         if self.controls.any_changed_in(&["agent_count"]) {
             let agent_count = MAX_COUNT;
 
-            if self.agents.len() > agent_count {
-                self.agents.truncate(agent_count);
-            } else if self.agents.len() < agent_count {
-                let new_agents = (self.agents.len()..agent_count)
-                    .map(|_| Agent::new(random_point(&wr)));
-                self.agents.extend(new_agents);
+            match self.agents.len().cmp(&agent_count) {
+                std::cmp::Ordering::Greater => {
+                    self.agents.truncate(agent_count)
+                }
+                std::cmp::Ordering::Less => {
+                    let new_agents = (self.agents.len()..agent_count)
+                        .map(|_| Agent::new(random_point(&wr)));
+                    self.agents.extend(new_agents);
+                }
+                _ => {}
             }
 
             self.controls.mark_unchanged();

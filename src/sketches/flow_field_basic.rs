@@ -63,12 +63,16 @@ impl Sketch for FlowFieldBasic {
             let agent_count = self.controls.get("agent_count") as usize;
             let wr = ctx.window_rect();
 
-            if self.agents.len() > agent_count {
-                self.agents.truncate(agent_count);
-            } else if self.agents.len() < agent_count {
-                let new_agents = (self.agents.len()..agent_count)
-                    .map(|_| Agent::new(random_point(&wr)));
-                self.agents.extend(new_agents);
+            match self.agents.len().cmp(&agent_count) {
+                std::cmp::Ordering::Greater => {
+                    self.agents.truncate(agent_count)
+                }
+                std::cmp::Ordering::Less => {
+                    let new_agents = (self.agents.len()..agent_count)
+                        .map(|_| Agent::new(random_point(&wr)));
+                    self.agents.extend(new_agents);
+                }
+                _ => {}
             }
 
             self.controls.mark_unchanged();

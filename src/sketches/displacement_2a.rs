@@ -25,13 +25,15 @@ const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 const CIRCLE_RESOLUTION: f32 = 6.0;
 
+type TrigFnFns = Option<(fn(f32) -> f32, fn(f32) -> f32)>;
+
 #[derive(SketchComponents)]
 pub struct Displacement2a {
     grid: Vec<Vec2>,
     displacer_configs: Vec<DisplacerConfig>,
     controls: ControlHub<Timing>,
     cached_pattern: String,
-    cached_trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
+    cached_trig_fns: TrigFnFns,
     palettes: Vec<Gradient<LinSrgb>>,
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
     audio: Audio,
@@ -234,9 +236,9 @@ impl Sketch for Displacement2a {
                 self.controls.string("position_animation");
             let position_animations =
                 animation_fns(&self.last_position_animation, wr.rect());
-            for i in 0..self.displacer_configs.len() {
-                self.displacer_configs[i].position_animation =
-                    position_animations[i].clone();
+
+            for (i, config) in self.displacer_configs.iter_mut().enumerate() {
+                config.position_animation = position_animations[i].clone();
             }
         }
 
@@ -249,7 +251,7 @@ impl Sketch for Displacement2a {
             self.controls.get("fall_rate"),
         );
 
-        let cached_trig_fns = self.cached_trig_fns.clone();
+        let cached_trig_fns = self.cached_trig_fns;
         let animation = &self.controls.animation;
         let controls = &self.controls;
         let band_for_freq = self.fft_bands[0];
@@ -311,16 +313,16 @@ impl Sketch for Displacement2a {
                 let mut current_qr_kind = "center";
 
                 for config in &enabled_displacer_configs {
-                    if quad_restraint {
-                        if QuadShape::from_str(&qr_shape).contains_point(
+                    if quad_restraint
+                        && QuadShape::from_str(&qr_shape).contains_point(
                             config.displacer.position * qr_pos,
                             vec2(w / 3.0, h / 3.0) * qr_size,
                             *point,
                             time,
-                        ) {
-                            current_qr_kind = config.kind;
-                            quad_contains = true;
-                        }
+                        )
+                    {
+                        current_qr_kind = config.kind;
+                        quad_contains = true;
                     }
                     let displacement = if config.kind == "center" {
                         if center_influence_or_attract {
@@ -330,15 +332,12 @@ impl Sketch for Displacement2a {
                                 .displacer
                                 .core_influence(*point, scaling_power)
                         }
+                    } else if quad_influence_or_attract {
+                        config.displacer.attract(*point, scaling_power)
                     } else {
-                        if quad_influence_or_attract {
-                            config.displacer.attract(*point, scaling_power)
-                        } else {
-                            config
-                                .displacer
-                                .core_influence(*point, scaling_power)
-                        }
+                        config.displacer.core_influence(*point, scaling_power)
                     };
+
                     let influence = displacement.length();
                     total_displacement += displacement;
                     total_influence += influence;
@@ -479,6 +478,7 @@ impl DisplacerConfig {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn weave(
     grid_x: f32,
     grid_y: f32,
@@ -488,7 +488,7 @@ pub fn weave(
     distance_scale: f32,
     amplitude: f32,
     pattern: String,
-    trig_fns: Option<(fn(f32) -> f32, fn(f32) -> f32)>,
+    trig_fns: TrigFnFns,
 ) -> f32 {
     let x = grid_x * frequency;
     let y = grid_y * frequency;
@@ -525,7 +525,7 @@ pub fn weave(
 }
 
 fn generate_pattern_options() -> Vec<String> {
-    let functions = vec![
+    let functions = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
     ];
@@ -547,7 +547,7 @@ fn generate_pattern_options() -> Vec<String> {
 
 fn find_palette_by_name<'a>(
     name: &str,
-    palettes: &'a Vec<Gradient<LinSrgb>>,
+    palettes: &'a [Gradient<LinSrgb>],
 ) -> &'a Gradient<LinSrgb> {
     match name {
         "lightcoral" => &palettes[0],

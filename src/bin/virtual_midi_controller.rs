@@ -7,8 +7,8 @@ use nannou_egui::{egui, Egui};
 use std::cell::RefCell;
 
 use lattice::framework::prelude::*;
-use lattice::runtime::gui::gui;
-use lattice::runtime::gui::theme;
+use lattice::runtime::ui::gui;
+use lattice::runtime::ui::theme;
 use lattice::*;
 
 fn main() {
@@ -41,11 +41,11 @@ fn model(app: &App) -> Model {
     let window = app.window(window_id).unwrap();
     let egui = Egui::from_window(&window);
 
+    // TODO: we shouldn't panic as we can just let the user select in the UI
     let port = config::MIDI_CONTROL_OUT_PORT;
     let mut midi_out = midi::MidiOut::new(port);
-    match midi_out.connect() {
-        Err(e) => panic!("{}", e),
-        _ => {}
+    if let Err(e) = midi_out.connect() {
+        panic!("{}", e)
     }
 
     Model {
@@ -71,7 +71,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
     let mut changed: Vec<(u8, f32)> = vec![];
 
     let ports =
-        midi::list_ports(midi::InputsOrOutputs::Outputs).unwrap_or(vec![]);
+        midi::list_ports(midi::InputsOrOutputs::Outputs).unwrap_or_default();
 
     let mut selected_port = model.port.borrow().clone();
 
@@ -101,7 +101,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 
                 egui::Frame::none().show(ui, |ui| {
                     egui::ComboBox::from_label("Channel")
-                        .selected_text(&model.channel.to_string())
+                        .selected_text(model.channel.to_string())
                         .width(48.0)
                         .show_ui(ui, |ui| {
                             ui.set_min_width(48.0);
@@ -124,7 +124,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 
                 egui::Frame::none().show(ui, |ui| {
                     egui::ComboBox::from_label("Drag Speed")
-                        .selected_text(&model.hi_res_speed.to_string())
+                        .selected_text(model.hi_res_speed.to_string())
                         .width(52.0)
                         .show_ui(ui, |ui| {
                             ui.set_min_width(48.0);
@@ -175,9 +175,8 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
     if selected_port != *model.port.borrow() {
         *model.port.borrow_mut() = selected_port.clone();
         let mut midi_out = midi::MidiOut::new(selected_port.as_str());
-        match midi_out.connect() {
-            Err(e) => panic!("{}", e),
-            _ => {}
+        if let Err(e) = midi_out.connect() {
+            panic!("{}", e)
         }
         *model.midi_out.borrow_mut() = midi_out;
     }
@@ -202,14 +201,10 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
                     error!("{}", e);
                 }
             }
-        } else {
-            if let Err(e) = midi_out.send(&[
-                0xB0 + model.channel,
-                control,
-                value.round() as u8,
-            ]) {
-                error!("{}", e);
-            }
+        } else if let Err(e) =
+            midi_out.send(&[0xB0 + model.channel, control, value.round() as u8])
+        {
+            error!("{}", e);
         }
     }
 }
@@ -220,7 +215,7 @@ fn view_gui(_app: &App, model: &Model, frame: Frame) {
 }
 
 fn handle_raw_event(_app: &App, model: &mut Model, event: &WindowEvent) {
-    log_resize(&event);
+    log_resize(event);
     model.egui.handle_raw_event(event)
 }
 

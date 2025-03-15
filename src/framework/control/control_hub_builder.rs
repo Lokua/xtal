@@ -10,8 +10,8 @@ pub struct ControlHubBuilder<T: TimingSource> {
     audio_controls: Option<AudioControls>,
 }
 
-impl<T: TimingSource> ControlHubBuilder<T> {
-    pub fn new() -> Self {
+impl<T: TimingSource> Default for ControlHubBuilder<T> {
+    fn default() -> Self {
         Self {
             timing: None,
             ui_controls: None,
@@ -19,6 +19,12 @@ impl<T: TimingSource> ControlHubBuilder<T> {
             osc_controls: None,
             audio_controls: None,
         }
+    }
+}
+
+impl<T: TimingSource> ControlHubBuilder<T> {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn timing(mut self, timing: T) -> Self {

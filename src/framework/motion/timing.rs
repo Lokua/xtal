@@ -189,7 +189,7 @@ impl MidiSongTiming {
             midi::ConnectionType::Clock,
             crate::config::MIDI_CLOCK_PORT,
             move |_stamp, message| {
-                if message.len() < 1 {
+                if message.is_empty() {
                     return;
                 }
                 match message[0] {
@@ -212,7 +212,7 @@ impl MidiSongTiming {
                         // Song position is a 14-bit value split across two bytes
                         let lsb = message[1] as u32;
                         let msb = message[2] as u32;
-                        let position = ((msb << 7) | lsb) as u32;
+                        let position = (msb << 7) | lsb;
 
                         debug!(
                             "Received SPP message: position={} (msb={}, lsb={})",
@@ -510,24 +510,19 @@ impl OscTransportTiming {
         let beats = self.beats.clone();
         let ticks = self.ticks.clone();
 
-        SHARED_OSC_RECEIVER.register_callback("/transport", move |msg| match (
-            &msg.args[0],
-            &msg.args[1],
-            &msg.args[2],
-            &msg.args[3],
-        ) {
-            (
+        SHARED_OSC_RECEIVER.register_callback("/transport", move |msg| {
+            if let (
                 osc::Type::Int(a),
                 osc::Type::Int(b),
                 osc::Type::Int(c),
                 osc::Type::Float(d),
-            ) => {
+            ) = (&msg.args[0], &msg.args[1], &msg.args[2], &msg.args[3])
+            {
                 is_playing.store(*a != 0, Ordering::Release);
                 bars.store(*b as u32 - 1, Ordering::Release);
                 beats.store(*c as u32 - 1, Ordering::Release);
                 ticks.store(d.to_bits(), Ordering::Release);
             }
-            _ => {}
         });
 
         Ok(())

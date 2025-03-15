@@ -34,9 +34,8 @@ impl Receiver {
         F: Fn(&osc::Message) + Send + Sync + 'static,
     {
         let mut callbacks = self.callbacks.lock().unwrap();
-        let address_callbacks = callbacks
-            .entry(address.to_string())
-            .or_insert_with(Vec::new);
+        let address_callbacks =
+            callbacks.entry(address.to_string()).or_default();
         address_callbacks.push(Box::new(callback));
     }
 

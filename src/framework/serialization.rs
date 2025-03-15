@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use super::control_hub::control_hub::Snapshots;
+use super::control::control_hub::Snapshots;
 use super::prelude::*;
 
-pub const VERSION: &'static str = "1.1";
+pub const VERSION: &str = "1.1";
 
 pub struct ConcreteControls {
     pub ui_controls: UiControls,
@@ -220,7 +220,7 @@ impl ConcreteControls {
                     .map(|s| s.value.clone());
 
                 if let Some(s) = s {
-                    *value = ControlValue::from(s);
+                    *value = s;
                 }
             });
 

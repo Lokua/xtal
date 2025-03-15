@@ -78,9 +78,10 @@ pub struct OctaveNoise {
     octaves: u32,
 
     /// How quickly each octave's influence decreases (between 0.0 and 1.0).
+    ///
     /// - Values closer to 0 mean later octaves contribute very little
     /// - Values closer to 1 mean all octaves contribute more equally
-    /// Typical values are 0.5 to 0.8
+    /// - Typical values are 0.5 to 0.8
     persistence: f32,
 }
 impl OctaveNoise {
@@ -190,11 +191,12 @@ impl PointDistributionStrategy for PerpendicularDistribution {
 
 pub struct CurvedDistribution {
     /// Controls how much the distribution curves away from perpendicular.
+    /// Recommended range: 0.0 to 1.0
+    ///
     /// - 0.0: No curve (same as perpendicular)
     /// - 1.0: Curves up to ±57 degrees from perpendicular
     /// - PI/2 (≈1.57): Curves up to ±90 degrees
     /// - Values above 2.0 create extreme curves
-    /// Recommended range: 0.0 to 1.0
     curvature: f32,
 }
 impl CurvedDistribution {

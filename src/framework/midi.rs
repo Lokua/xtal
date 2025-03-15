@@ -188,7 +188,7 @@ pub fn print_ports() -> Result<(), Box<dyn Error>> {
         println!("    {}: {}", index, port_name);
     }
 
-    println!("");
+    println!();
 
     Ok(())
 }

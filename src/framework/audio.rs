@@ -5,6 +5,7 @@ use cpal::traits::*;
 use cpal::BuildStreamError;
 use rustfft::num_complex::Complex;
 use rustfft::{Fft, FftPlanner};
+use std::cmp::Ordering;
 use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
@@ -131,17 +132,20 @@ impl AudioProcessor {
     pub fn add_samples(&mut self, samples: &[f32]) {
         self.buffer.extend_from_slice(samples);
 
-        if self.buffer.len() > self.buffer_size {
-            self.buffer.drain(0..(self.buffer.len() - self.buffer_size));
-        }
-        // Deal with race condition of sketch update happening and
+        // Deal with possible race condition of sketch update happening and
         // requesting data before the buffer is full.
         // "Provided FFT buffer was too small. Expected len = 1600, got len = 1536"
-        else if self.buffer.len() < self.buffer_size {
-            while self.buffer.len() < self.buffer_size {
-                self.buffer.push(0.0);
+        match self.buffer.len().cmp(&self.buffer_size) {
+            Ordering::Greater => {
+                self.buffer.drain(0..(self.buffer.len() - self.buffer_size));
             }
-        }
+            Ordering::Less => {
+                while self.buffer.len() < self.buffer_size {
+                    self.buffer.push(0.0);
+                }
+            }
+            _ => {}
+        };
     }
 
     /// Standard pre-emphasis filter: `y[n] = x[n] - α * x[n-1]`
@@ -170,14 +174,14 @@ impl AudioProcessor {
     }
 
     #[allow(dead_code)]
-    pub fn bands(&self, cutoffs: &Vec<f32>) -> Vec<f32> {
+    pub fn bands(&self, cutoffs: &[f32]) -> Vec<f32> {
         self.bands_from_buffer(&self.buffer, cutoffs)
     }
 
     pub fn bands_from_buffer(
         &self,
-        buffer: &Vec<f32>,
-        cutoffs: &Vec<f32>,
+        buffer: &[f32],
+        cutoffs: &[f32],
     ) -> Vec<f32> {
         let mut complex_input: Vec<Complex<f32>> =
             buffer.iter().map(|&x| Complex::new(x, 0.0)).collect();
@@ -214,7 +218,7 @@ impl AudioProcessor {
                 .unwrap()
         };
 
-        let normalize = |db: f32| ((db + 80.0) / 60.0).max(0.0).min(1.0);
+        let normalize = |db: f32| ((db + 80.0) / 60.0).clamp(0.0, 1.0);
 
         let bands: Vec<f32> = stops
             .iter()
@@ -389,9 +393,9 @@ fn init_audio(
             }
             found
         })
-        .expect(
-            format!("No device named {} found", audio_device_name).as_str(),
-        );
+        .unwrap_or_else(|| {
+            panic!("No device named {} found", audio_device_name)
+        });
 
     let input_config = match device.default_input_config() {
         Ok(config) => {

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::f32::EPSILON;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
@@ -13,7 +12,7 @@ use nannou::{
 
 use super::prelude::*;
 
-pub const PHI_F32: f32 = 1.618033988749894_f32;
+pub const PHI_F32: f32 = 1.618_033_9;
 pub const TWO_PI: f32 = PI * 2.0;
 
 pub const QUAD_POSITIONS: [[f32; 3]; 6] = [
@@ -274,21 +273,6 @@ pub fn trig_fn_lookup() -> HashMap<&'static str, fn(f32) -> f32> {
     map
 }
 
-fn _trig_pattern_to_fns(
-    pattern: &str,
-) -> Option<(fn(f32) -> f32, fn(f32) -> f32)> {
-    let lookup = trig_fn_lookup();
-    let parts: Vec<&str> = pattern.split(',').collect();
-
-    match (lookup.get(parts[0]), lookup.get(parts[1])) {
-        (Some(&f_a), Some(&f_b)) => Some((f_a, f_b)),
-        _ => {
-            error!("Unknown function(s) in pattern: {}", pattern);
-            None
-        }
-    }
-}
-
 pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
     start + (end - start) * t
 }
@@ -323,12 +307,10 @@ pub mod constrain {
             } else {
                 max - remainder
             }
+        } else if value >= 0.0 {
+            max - remainder
         } else {
-            if value >= 0.0 {
-                max - remainder
-            } else {
-                min + remainder
-            }
+            min + remainder
         }
     }
 
@@ -380,7 +362,7 @@ pub fn safe_range(min: f32, max: f32) -> (f32, f32) {
     let a = if max < min { max } else { min };
     let mut b = if min > max { min } else { max };
     if a == b {
-        b += EPSILON;
+        b += f32::EPSILON;
     }
     (a, b)
 }

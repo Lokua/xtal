@@ -1,15 +1,15 @@
 pub use crate::debug_once;
 pub use crate::debug_throttled;
-pub use crate::framework::animation::*;
 pub use crate::framework::audio::*;
 pub use crate::framework::audio_controls::*;
-pub use crate::framework::control_hub::*;
+pub use crate::framework::control::*;
 pub use crate::framework::control_provider::*;
 pub use crate::framework::distance::*;
 pub use crate::framework::gpu;
 pub use crate::framework::logging::*;
 pub use crate::framework::midi;
 pub use crate::framework::midi_controls::*;
+pub use crate::framework::motion::*;
 pub use crate::framework::noise::*;
 pub use crate::framework::osc_controls::*;
 pub use crate::framework::sketch::*;

@@ -1,7 +1,6 @@
-pub mod animation;
 pub mod audio;
 pub mod audio_controls;
-pub mod control_hub;
+pub mod control;
 pub mod control_provider;
 pub mod distance;
 pub mod frame_controller;
@@ -10,6 +9,7 @@ pub mod instrumentation;
 pub mod logging;
 pub mod midi;
 pub mod midi_controls;
+pub mod motion;
 pub mod noise;
 pub mod osc_controls;
 pub mod osc_receiver;

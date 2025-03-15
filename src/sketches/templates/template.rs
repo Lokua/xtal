@@ -17,7 +17,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct Template {
-    controls: ControlHub<Timing>,
+    hub: ControlHub<Timing>,
     radius: f32,
     hue: f32,
 }
@@ -29,7 +29,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
         .build();
 
     Template {
-        controls,
+        hub: controls,
         radius: 0.0,
         hue: 0.0,
     }
@@ -37,9 +37,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        let radius_max = self.controls.float("radius");
+        let radius_max = self.hub.float("radius");
 
-        self.radius = self.controls.animation.automate(
+        self.radius = self.hub.animation.automate(
             &[
                 Breakpoint::ramp(0.0, 10.0, Easing::Linear),
                 Breakpoint::ramp(1.0, ctx.window_rect().hw(), Easing::Linear),
@@ -50,7 +50,7 @@ impl Sketch for Template {
             Mode::Loop,
         );
 
-        self.hue = self.controls.animation.tri(12.0)
+        self.hue = self.hub.animation.tri(12.0)
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {

@@ -23,7 +23,7 @@
 //! # Basic Usage
 //!
 //! ```rust
-//! let animation = Animation::new(Timing::new(ctx.bpm()));
+//! let animation = Ani::new(Timing::new(ctx.bpm()));
 //!
 //! // Simple oscillation between 0-1 over 4 beats
 //! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
@@ -41,7 +41,7 @@
 //!
 //! # Advanced Automation
 //!
-//! The [`Animation::automate`] method provides DAW-style automation curves with
+//! The [`Ani::automate`] method provides DAW-style automation curves with
 //! multiple breakpoint types and transition modes:
 //!
 //! ```rust
@@ -83,7 +83,6 @@ use nannou::rand::rngs::StdRng;
 use nannou::rand::{Rng, SeedableRng};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::f32::EPSILON;
 use std::str::FromStr;
 
 use crate::framework::frame_controller;
@@ -146,6 +145,7 @@ impl Breakpoint {
     /// wave. Beware this method can produce values outside of the otherwise
     /// normalized \[0, 1\] range when the `constrain` parameter is set to
     /// [`Constrain::None`].
+    #[allow(clippy::too_many_arguments)]
     pub fn wave(
         position: f32,
         value: f32,
@@ -174,7 +174,7 @@ impl Breakpoint {
     /// specifies the range of possible deviation from `value`.
     ///
     /// > TIP: you can make this a smooth random by applying a
-    /// [`SlewLimiter`] to the output.
+    /// > [`SlewLimiter`] to the output.
     pub fn random(position: f32, value: f32, amplitude: f32) -> Self {
         Self::new(Kind::Random { amplitude }, position, value)
     }
@@ -467,7 +467,7 @@ impl<T: TimingSource> Animation<T> {
     ///
     /// [breakpoints]: https://github.com/Lokua/lattice/blob/main/src/sketches/breakpoints.rs
     pub fn automate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
-        assert!(breakpoints.len() >= 1, "At least 1 breakpoint is required");
+        assert!(!breakpoints.is_empty(), "At least 1 breakpoint is required");
         assert!(
             breakpoints[0].position == 0.0,
             "First breakpoint must be 0.0"
@@ -589,8 +589,7 @@ impl<T: TimingSource> Animation<T> {
                         + loop_count) as u64;
                     let mut rng = StdRng::seed_from_u64(seed);
                     let y = p1.value;
-                    let value = rng.gen_range(y - amplitude..=y + amplitude);
-                    value
+                    rng.gen_range(y - amplitude..=y + amplitude)
                 }
                 Kind::RandomSmooth {
                     frequency,
@@ -622,7 +621,7 @@ impl<T: TimingSource> Animation<T> {
                         -1.0,
                         1.0,
                         -amplitude,
-                        amplitude + EPSILON,
+                        amplitude + f32::EPSILON,
                     );
 
                     constrain.apply(value + random_mapped)
@@ -646,8 +645,7 @@ impl<T: TimingSource> Animation<T> {
     ) -> f32 {
         let duration = p2.position - p1.position;
         let t = easing.apply(((beats_elapsed - p1.position) / duration) % 1.0);
-        let value = lerp(p1.value, p2.value, t);
-        value
+        lerp(p1.value, p2.value, t)
     }
 }
 

@@ -49,7 +49,7 @@ impl Sketch for Vertical2 {
 
         let alpha = self.controls.float("alpha");
         let size = 1.0;
-        let params = vec![
+        let params = [
             (0.005, 10.0),
             (0.03, 12.0),
             (0.07, 14.0),
@@ -63,7 +63,7 @@ impl Sketch for Vertical2 {
 
                 for i in 1..=*amp as i32 {
                     let i = i as f32;
-                    let amp = y / (amp - i as f32);
+                    let amp = y / (amp - i);
                     let x = self.noise.get([i * ns, y * ns]) * amp;
                     let color = hsla(0.0, 0.0, 0.0, alpha);
                     draw.rect().x_y(x, y).w_h(size, size).color(color);

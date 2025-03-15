@@ -69,9 +69,9 @@ pub fn run() {
             g25_20_23_brutal_arch,
             g25_22_gradients_only,
             g25_26_symmetry,
-            // ---------------------------------------------------------------------
+            // -----------------------------------------------------------------
             // SCRATCH
-            // ---------------------------------------------------------------------
+            // -----------------------------------------------------------------
             bos,
             chromatic_aberration,
             displacement_1,
@@ -497,11 +497,11 @@ impl AppModel {
     fn init_sketch_environment(&mut self, app: &App) {
         self.recording_state = RecordingState::new(frames_dir(
             &self.session_id,
-            &self.sketch_config.name,
+            self.sketch_config.name,
         ));
 
-        self.main_window(app).map(|window| {
-            window.set_title(&self.sketch_config.display_name);
+        if let Some(window) = self.main_window(app) {
+            window.set_title(self.sketch_config.display_name);
 
             if !self.perf_mode {
                 set_window_position(app, self.main_window_id, 0, 0);
@@ -513,12 +513,12 @@ impl AppModel {
             }
 
             self.ctx.window_rect().set_current(window.rect());
-        });
+        }
 
         let (gui_w, gui_h) =
             gui::calculate_gui_dimensions(self.sketch.ui_controls());
 
-        self.gui_window(app).map(|gui_window| {
+        if let Some(gui_window) = self.gui_window(app) {
             gui_window.set_title(&format!(
                 "{} Controls",
                 self.sketch_config.display_name
@@ -538,7 +538,7 @@ impl AppModel {
                 self.sketch_config.gui_w.unwrap_or(gui_w) as i32,
                 self.sketch_config.gui_h.unwrap_or(gui_h) as i32,
             );
-        });
+        }
 
         if self.sketch_config.play_mode != PlayMode::Loop {
             frame_controller::set_paused(true);
@@ -664,8 +664,6 @@ fn model(app: &App) -> AppModel {
         .map_err(|e| error!("{}", e))
         .ok();
 
-    debug!("{:#?}", image_index);
-
     let mut model = AppModel {
         main_window_id,
         gui_window_id,
@@ -701,7 +699,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         let ctx = egui.begin_frame();
         let bpm = model.ctx.bpm().get();
         gui::update(
-            &model.sketch_config,
+            model.sketch_config,
             model.sketch.ui_controls(),
             &mut model.alert_text,
             &mut model.perf_mode,
@@ -718,14 +716,14 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.on_app_event(app, event);
     }
 
-    model.main_window(app).map(|window| {
+    if let Some(window) = model.main_window(app) {
         let rect = window.rect();
         let cwr = &mut model.ctx.window_rect();
 
         if rect.w() != cwr.w() || rect.h() != cwr.h() {
             cwr.set_current(rect);
         }
-    });
+    }
 
     frame_controller::wrapped_update(
         app,
@@ -736,7 +734,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     if model.recording_state.is_encoding {
         model.recording_state.on_encoding_message(
-            &model.sketch_config,
+            model.sketch_config,
             &mut model.session_id,
             &model.event_tx,
         );
@@ -745,6 +743,8 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
 /// Shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
+    // We are likely to add other event handlers
+    #[allow(clippy::single_match)]
     match event {
         Event::WindowEvent {
             simple: Some(KeyPressed(key)),

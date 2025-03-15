@@ -17,10 +17,11 @@ pub fn init() {
     theme::init_light_dark();
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update(
     sketch_config: &SketchConfig,
     controls: Option<&mut UiControls>,
-    alert_text: &mut String,
+    alert_text: &mut str,
     perf_mode: &mut bool,
     tap_tempo: &mut bool,
     bpm: f32,
@@ -74,7 +75,7 @@ pub fn update(
                 draw_sketch_selector(
                     ui,
                     recording_state.is_recording,
-                    &sketch_config.name,
+                    sketch_config.name,
                     &sketch_names,
                     event_tx,
                 );
@@ -269,7 +270,7 @@ fn draw_perf_mode_checkbox(
     event_tx: &app::AppEventSender,
 ) {
     if ui.add(egui::Checkbox::new(perf_mode, "Perf")).changed() {
-        event_tx.send(app::AppEvent::TogglePerfMode(perf_mode.clone()))
+        event_tx.send(app::AppEvent::TogglePerfMode(*perf_mode))
     }
 }
 
@@ -285,7 +286,7 @@ fn draw_tap_tempo_checkbox(
     event_tx: &app::AppEventSender,
 ) {
     if ui.add(egui::Checkbox::new(tap_tempo, "Tap")).changed() {
-        event_tx.send(app::AppEvent::ToggleTapTempo(tap_tempo.clone()))
+        event_tx.send(app::AppEvent::ToggleTapTempo(*tap_tempo))
     }
 }
 

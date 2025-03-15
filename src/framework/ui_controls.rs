@@ -132,7 +132,7 @@ impl Control {
 
     pub fn dynamic_separator() -> Control {
         Control::DynamicSeparator {
-            name: format!("__dynamic_slider__{}", uuid(11).to_string()),
+            name: format!("__dynamic_slider__{}", uuid(11)),
         }
     }
 
@@ -220,7 +220,7 @@ impl Control {
             | Control::Button { disabled, .. }
             | Control::Checkbox { disabled, .. }
             | Control::Select { disabled, .. } => {
-                disabled.as_ref().map_or(false, |f| f(controls))
+                disabled.as_ref().is_some_and(|f| f(controls))
             }
             _ => false,
         }
@@ -239,10 +239,7 @@ impl Control {
     }
 
     pub fn is_separator(&self) -> bool {
-        match self {
-            Self::Separator { .. } | Self::DynamicSeparator { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::Separator { .. } | Self::DynamicSeparator { .. })
     }
 }
 
@@ -530,13 +527,14 @@ impl fmt::Debug for UiControls {
     }
 }
 
+#[derive(Default)]
 pub struct UiControlBuilder {
     controls: Vec<Control>,
 }
 
 impl UiControlBuilder {
     pub fn new() -> Self {
-        Self { controls: vec![] }
+        Self::default()
     }
 
     pub fn control(mut self, control: Control) -> Self {

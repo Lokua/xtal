@@ -256,6 +256,7 @@ impl Sketch for HeatMask {
                 )
             }));
 
+        #[allow(clippy::manual_inspect)]
         let configs: Vec<&mut DisplacerConfig> = self
             .displacer_configs
             .iter_mut()
@@ -566,7 +567,7 @@ impl DisplacerConfig {
 
 fn update_positions(
     wr: &WindowRect,
-    displacer_configs: &mut Vec<DisplacerConfig>,
+    displacer_configs: &mut [DisplacerConfig],
 ) {
     let w = wr.w() / 4.0;
     let h = wr.w() / 4.0;

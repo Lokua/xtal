@@ -11,9 +11,9 @@ macro_rules! register_sketches {
     ($registry:expr, $($module:ident),*) => {
         $(
             $registry.register(
-                &crate::sketches::$module::SKETCH_CONFIG,
+                &$crate::sketches::$module::SKETCH_CONFIG,
                 |app, ctx| {
-                    Box::new(crate::sketches::$module::init(
+                    Box::new($crate::sketches::$module::init(
                         app,
                         ctx
                     )) as Box<dyn SketchAll>
@@ -23,13 +23,15 @@ macro_rules! register_sketches {
     };
 }
 
+type DynamicSketchFn = Box<
+    dyn for<'a> Fn(&'a App, &LatticeContext) -> Box<dyn SketchAll + 'static>
+        + Send
+        + Sync,
+>;
+
 pub struct SketchInfo {
     pub config: &'static SketchConfig,
-    pub factory: Box<
-        dyn for<'a> Fn(&'a App, &LatticeContext) -> Box<dyn SketchAll + 'static>
-            + Send
-            + Sync,
-    >,
+    pub factory: DynamicSketchFn,
 }
 
 pub static REGISTRY: Lazy<RwLock<SketchRegistry>> =

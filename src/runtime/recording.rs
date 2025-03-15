@@ -103,7 +103,7 @@ impl RecordingState {
     ) -> Result<String, Box<dyn Error>> {
         if self.is_recording {
             self.stop_recording(sketch_config, session_id)
-                .and_then(|_| Ok("".to_string()))
+                .map(|_| "".to_string())
         } else {
             self.start_recording()
         }
@@ -264,32 +264,32 @@ pub fn frames_to_video(
     let error_sender = progress_sender.clone();
 
     let error_thread = thread::spawn(move || -> Result<(), String> {
-        for line in stderr_reader.lines() {
-            if let Ok(line) = line {
-                debug!("stderr line: {}", line);
-                if line.contains("warning") {
-                    warn!("Detected ffmpeg warning: {}", line);
-                } else if line.contains("warning") || line.contains("fatal") {
-                    error!("Detected ffmpeg error: {}", line);
-                    let message = EncodingMessage::Error(line.clone());
-                    let _ = error_sender.send(message);
-                    return Err(line);
-                }
+        for line in stderr_reader.lines().map_while(Result::ok) {
+            debug!("stderr line: {}", line);
+            if line.contains("warning") {
+                warn!("Detected ffmpeg warning: {}", line);
+            } else if line.contains("warning") || line.contains("fatal") {
+                error!("Detected ffmpeg error: {}", line);
+                let message = EncodingMessage::Error(line.clone());
+                let _ = error_sender.send(message);
+                return Err(line);
             }
         }
         Ok(())
     });
 
-    for line in stdout_reader.lines() {
-        if let Ok(line) = line {
-            if line.starts_with("frame=") {
-                let frame_str = line[6..].split_whitespace().next();
-                if let Ok(frame) = frame_str.unwrap().parse::<u32>() {
-                    let progress = frame as f32 / total_frames as f32;
-                    debug!("frames_to_video progress: {}", progress);
-                    let message = EncodingMessage::Progress(progress);
-                    progress_sender.send(message)?;
-                }
+    for line in stdout_reader.lines().map_while(Result::ok) {
+        if line.starts_with("frame=") {
+            let frame_str = line
+                .strip_prefix("frame=")
+                .unwrap()
+                .split_whitespace()
+                .next();
+            if let Ok(frame) = frame_str.unwrap().parse::<u32>() {
+                let progress = frame as f32 / total_frames as f32;
+                debug!("frames_to_video progress: {}", progress);
+                let message = EncodingMessage::Progress(progress);
+                progress_sender.send(message)?;
             }
         }
     }

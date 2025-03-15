@@ -4,7 +4,7 @@
 #![doc = include_str!("../../../docs/control_script_reference.md")]
 
 pub mod control_hub;
-pub use control_hub::ControlHub;
+pub use control_hub::*;
 
 mod config;
 

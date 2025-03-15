@@ -78,7 +78,7 @@ impl Sketch for AudioDev {
                     start_x + index as f32 * cell_size + cell_size / 2.0,
                     -wr.h() / 2.0 + (band * wr.h()) / 2.0,
                 )
-                .w_h(cell_size as f32 - cell_pad, band * wr.h())
+                .w_h(cell_size - cell_pad, band * wr.h())
                 .color(
                     gradient.get(index as f32 / self.fft_bands.len() as f32),
                 );

@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
+    "algs",
     "arboard",
+    "chebyshev",
     "chrono",
     "Ctrls",
     "Custo",
@@ -13,6 +15,7 @@
     "LIGHTSKYBLUE",
     "LIGHTSTEELBLUE",
     "midir",
+    "minkowski",
     "msaa",
     "nocapture",
     "pmod",
@@ -30,5 +33,6 @@
     "Vortx",
     "walkdir"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation", "hi_res_cc"]
+  "rust-analyzer.cargo.features": ["instrumentation", "hi_res_cc"],
+  "rust-analyzer.check.command": "clippy"
 }

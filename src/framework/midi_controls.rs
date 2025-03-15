@@ -61,7 +61,7 @@ impl MidiState {
     }
 
     pub fn values(&self) -> HashMap<String, f32> {
-        return self.values.clone();
+        self.values.clone()
     }
 
     pub fn last(&self, ch_cc: ChannelAndControl) -> Option<TimestampAndMsb> {
@@ -88,13 +88,19 @@ pub struct MidiControls {
     is_active: bool,
 }
 
-impl MidiControls {
-    pub fn new() -> Self {
+impl Default for MidiControls {
+    fn default() -> Self {
         Self {
             configs: HashMap::new(),
             state: Arc::new(Mutex::new(MidiState::new())),
             is_active: false,
         }
+    }
+}
+
+impl MidiControls {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn add(&mut self, name: &str, config: MidiControlConfig) {
@@ -115,7 +121,7 @@ impl MidiControls {
     }
 
     pub fn update_value(&mut self, name: &str, value: f32) {
-        self.state.lock().unwrap().set(&name, value);
+        self.state.lock().unwrap().set(name, value);
     }
 
     pub fn values(&self) -> HashMap<String, f32> {
@@ -191,7 +197,7 @@ impl MidiControls {
                     else {
                         let ch_cc = (channel, cc);
 
-                        if let Some(_) = state.last(ch_cc) {
+                        if state.last(ch_cc).is_some() {
                             warn!(
                                 "Received a 2nd MSB for the same \
                                 ch_cc key before receiving a matching LSB. \
@@ -330,11 +336,16 @@ pub struct MidiControlBuilder {
     controls: MidiControls,
 }
 
-impl MidiControlBuilder {
-    pub fn new() -> Self {
+impl Default for MidiControlBuilder {
+    fn default() -> Self {
         Self {
             controls: MidiControls::new(),
         }
+    }
+}
+impl MidiControlBuilder {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn control(

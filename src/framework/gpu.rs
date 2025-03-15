@@ -63,6 +63,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     /// See a full example at `src/sketches/genuary_2025/g25_18_wind.rs`.
     /// See the specialized `new_procedural` and `new_full_screen` constructors
     /// for easier to get up and running shaders.
+    #[allow(clippy::too_many_arguments)]
     pub fn new<P: Pod + Zeroable>(
         app: &App,
         window_size_logical: [u32; 2],
@@ -448,12 +449,12 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         let window = app.main_window();
         let device = window.device();
 
-        if vertices.len() as u32 != self.n_vertices {
-            if self.vertex_buffer.is_some() {
-                self.vertex_buffer =
-                    Some(Self::create_vertex_buffer(device, vertices));
-                self.n_vertices = vertices.len() as u32;
-            }
+        if vertices.len() as u32 != self.n_vertices
+            && self.vertex_buffer.is_some()
+        {
+            self.vertex_buffer =
+                Some(Self::create_vertex_buffer(device, vertices));
+            self.n_vertices = vertices.len() as u32;
         }
 
         window.queue().write_buffer(
@@ -484,7 +485,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             Err(_) => return,
         };
 
-        if let Ok(_) = self.validate_shader(&shader_content) {
+        if self.validate_shader(&shader_content).is_ok() {
             self.recreate_pipeline(app, &shader_content);
             info!("Shader pipeline successfully recreated");
         }
@@ -662,7 +663,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                             .store_op(true)
                             .resolve_target(Some(&resolve_view))
                     })
-                    .depth_stencil_attachment(&depth_view, |depth| depth)
+                    .depth_stencil_attachment(depth_view, |depth| depth)
                     .begin(&mut encoder)
             } else {
                 wgpu::RenderPassBuilder::new()
@@ -700,9 +701,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         match V::type_info() {
             TypeInfo::Struct(struct_info) => {
-                for (i, field) in
-                    struct_info.field_names().into_iter().enumerate()
-                {
+                for (i, field) in struct_info.field_names().iter().enumerate() {
                     if let Some(field_info) = struct_info.field(field) {
                         trace!("Field: {} -> {:?}", field, field_info);
 

@@ -186,7 +186,7 @@ impl Sketch for Vertical {
 
         let zoomed_draw = draw.scale(self.controls.get("scale"));
 
-        for (_, line) in self.lines.iter().enumerate() {
+        for line in self.lines.iter() {
             zoomed_draw
                 .polyline()
                 .weight(self.controls.get("weight"))
