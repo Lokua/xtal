@@ -144,8 +144,8 @@ impl Sketch for Kalos {
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
-            show_center: self.controls.bool("show_center") as i32 as f32,
-            show_corners: self.controls.bool("show_corners") as i32 as f32,
+            show_center: self.controls.bool_as_f32("show_center"),
+            show_corners: self.controls.bool_as_f32("show_corners"),
             radius: self.controls.get("radius"),
             strength: if self.controls.bool("animate") {
                 let min = clamp(
@@ -161,8 +161,8 @@ impl Sketch for Kalos {
                 self.controls.animation.automate(
                     &[
                         Breakpoint::ramp(0.0, min, Easing::Linear),
-                        Breakpoint::ramp(1.0, max, Easing::Linear),
-                        Breakpoint::end(2.0, min),
+                        Breakpoint::ramp(4.0, max, Easing::Linear),
+                        Breakpoint::end(8.0, min),
                     ],
                     Mode::Loop,
                 )

@@ -440,6 +440,10 @@ impl UiControls {
             })
     }
 
+    pub fn bool_as_f32(&self, name: &str) -> f32 {
+        bool_to_f32(self.bool(name))
+    }
+
     pub fn string(&self, name: &str) -> String {
         self.values
             .get(name)

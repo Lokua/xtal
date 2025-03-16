@@ -596,6 +596,9 @@ impl<T: TimingSource> ControlHub<T> {
     pub fn bool(&self, name: &str) -> bool {
         self.ui_controls.bool(name)
     }
+    pub fn bool_as_f32(&self, name: &str) -> f32 {
+        self.ui_controls.bool_as_f32(name)
+    }
     pub fn string(&self, name: &str) -> String {
         self.ui_controls.string(name)
     }

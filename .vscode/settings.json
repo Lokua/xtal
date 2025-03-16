@@ -6,6 +6,7 @@
     "chrono",
     "Ctrls",
     "Custo",
+    "disp",
     "doctest",
     "Egui",
     "horiz",
