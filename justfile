@@ -54,3 +54,6 @@ debug-vmc:
 # ------------------------------------------------------------------------------
 md:
   node scripts/image-markdown.mjs
+
+gen *ARGS:
+  node scripts/gen-uniforms.mjs {{ARGS}}

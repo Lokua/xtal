@@ -1,8 +1,12 @@
 use std::str::FromStr;
 
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
+use quote::{format_ident, quote};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, Data, DataStruct, DeriveInput, Fields, Ident, LitInt,
+    Token,
+};
 
 #[proc_macro_derive(SketchComponents, attributes(sketch))]
 pub fn sketch_components(input: TokenStream) -> TokenStream {
@@ -140,4 +144,88 @@ impl FromStr for ColorFormat {
             )),
         }
     }
+}
+
+struct UniformsArgs {
+    count: usize,
+}
+
+impl Parse for UniformsArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut count = 4; // Default count
+
+        if !input.is_empty() {
+            let name: Ident = input.parse()?;
+            if name != "count" {
+                return Err(syn::Error::new(
+                    name.span(),
+                    "Expected `count` parameter",
+                ));
+            }
+
+            input.parse::<Token![=]>()?;
+            let value: LitInt = input.parse()?;
+            count = value.base10_parse()?;
+        }
+
+        Ok(UniformsArgs { count })
+    }
+}
+
+#[proc_macro_attribute]
+pub fn uniforms(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the input struct
+    let input = parse_macro_input!(item as DeriveInput);
+
+    // Parse attribute arguments to get the count (number of arrays to create)
+    let args = parse_macro_input!(attr as UniformsArgs);
+    let count = args.count;
+
+    // Generate field names (a, b, c, d, etc.) based on the count parameter
+    let field_names = generate_field_names(count);
+
+    // Get the struct name for later use
+    let struct_name = &input.ident;
+
+    // Generate the modified struct with fields
+    let expanded_struct = quote! {
+        use lattice::framework::prelude::*;
+
+        struct #struct_name {
+            #(#field_names: [f32; 4],)*
+        }
+
+        impl Default for #struct_name {
+            fn default() -> Self {
+                Self {
+                    #(#field_names: [0.0; 4],)*
+                }
+            }
+        }
+
+        impl #struct_name {
+            fn from_hub<T: TimingSource>(hub: &ControlHub<T>) -> Self {
+                Self {
+                    #(#field_names: [
+                        hub.get(&format!("{}{}", stringify!(#field_names), 1)),
+                        hub.get(&format!("{}{}", stringify!(#field_names), 2)),
+                        hub.get(&format!("{}{}", stringify!(#field_names), 3)),
+                        hub.get(&format!("{}{}", stringify!(#field_names), 4)),
+                    ],)*
+                }
+            }
+        }
+    };
+
+    expanded_struct.into()
+}
+
+// Generate field names (a, b, c, d, ...)
+fn generate_field_names(count: usize) -> Vec<syn::Ident> {
+    (0..count)
+        .map(|i| {
+            let c = (b'a' + i as u8) as char;
+            format_ident!("{}", c)
+        })
+        .collect()
 }
