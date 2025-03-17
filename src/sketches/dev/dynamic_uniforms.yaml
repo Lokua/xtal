@@ -48,11 +48,19 @@ color_invert:
   var: d4
   type: checkbox
 
+color_select_test:
+  type: select
+  default: a
+  options: [a, b, c]
+
 color_amt:
   var: c1
   type: slider
   range: [0, 2]
   default: 0.5
+  disabled:
+    cond: color_select_test == b
+    then: _
 
 color_freq:
   var: c2

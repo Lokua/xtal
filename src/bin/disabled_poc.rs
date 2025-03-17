@@ -2,35 +2,23 @@ use lattice::framework::prelude::*;
 use serde::{Deserialize, Deserializer};
 use std::error::Error;
 
-// This won't be able to just be dropped into control/config because we can't
-// make it work with Reflect.
-
 fn main() -> Result<(), Box<dyn Error>> {
     let config: Result<Config, _> = serde_yml::from_str(
         r#"
-disabled:
-  cond: >
-    bar != c &&
-    !qux
-  then: corge
+disabled: bar is not c and not qux
         "#,
     );
 
     let config = config.unwrap();
 
     let controls = UiControlBuilder::new()
-        .slider("foo", 0.0, (0.0, 1.0), 0.001, config.disabled.disabled)
+        .slider("foo", 0.0, (0.0, 1.0), 0.001, config.disabled)
         .select("bar", "a", &["a", "b", "c"], None)
         .checkbox("qux", false, None)
         .slider("corge", 50.0, (0.0, 100.0), 1.0, None)
         .build();
 
     println!("foo is disabled: {}", controls.disabled("foo").unwrap());
-    println!("then action: {}", config.disabled.then);
-    println!(
-        "then action result: {}",
-        controls.get(&config.disabled.then)
-    );
 
     Ok(())
 }
@@ -38,47 +26,26 @@ disabled:
 #[derive(Deserialize)]
 struct Config {
     #[serde(default, deserialize_with = "to_disabled_fn")]
-    pub disabled: DisabledConfig,
-}
-
-struct DisabledConfig {
     pub disabled: DisabledFn,
-    pub then: String,
 }
 
-impl Default for DisabledConfig {
-    fn default() -> Self {
-        DisabledConfig {
-            disabled: None,
-            then: "".to_string(),
-        }
-    }
-}
-
-fn to_disabled_fn<'de, D>(deserializer: D) -> Result<DisabledConfig, D::Error>
+fn to_disabled_fn<'de, D>(deserializer: D) -> Result<DisabledFn, D::Error>
 where
     D: Deserializer<'de>,
 {
-    #[derive(Deserialize)]
-    struct CondThen {
-        cond: String,
-        then: String,
+    let expression = match String::deserialize(deserializer) {
+        Ok(expr) => expr,
+        Err(_) => return Ok(None),
+    };
+
+    if expression.trim().is_empty() {
+        return Ok(None);
     }
 
-    if let Ok(structured) = CondThen::deserialize(deserializer) {
-        println!("Raw structured expression: {}", structured.cond.trim());
-        match parse_disabled_expression(&structured.cond) {
-            Ok(disabled_fn) => {
-                return Ok(DisabledConfig {
-                    disabled: disabled_fn,
-                    then: structured.then,
-                });
-            }
-            Err(e) => return Err(serde::de::Error::custom(e)),
-        }
+    match parse_disabled_expression(&expression) {
+        Ok(disabled_fn) => Ok(disabled_fn),
+        Err(e) => Err(serde::de::Error::custom(e)),
     }
-
-    Ok(DisabledConfig::default())
 }
 
 fn parse_disabled_expression(expr: &str) -> Result<DisabledFn, Box<dyn Error>> {
@@ -86,12 +53,13 @@ fn parse_disabled_expression(expr: &str) -> Result<DisabledFn, Box<dyn Error>> {
         return Ok(None);
     }
 
-    let or_conditions: Vec<&str> = expr.split("||").map(|s| s.trim()).collect();
+    let or_conditions: Vec<&str> =
+        expr.split(" or ").map(|s| s.trim()).collect();
     let mut condition_closures = Vec::new();
 
     for or_condition in or_conditions {
         let and_conditions: Vec<&str> =
-            or_condition.split("&&").map(|s| s.trim()).collect();
+            or_condition.split(" and ").map(|s| s.trim()).collect();
 
         if and_conditions.len() == 1 {
             let closure = parse_condition(and_conditions[0])?;
@@ -133,7 +101,7 @@ type ParseResult =
 fn parse_condition(condition: &str) -> ParseResult {
     let condition = condition.trim();
 
-    if let Some(inner_condition) = condition.strip_prefix('!') {
+    if let Some(inner_condition) = condition.strip_prefix("not ") {
         let inner_closure = parse_condition(inner_condition)?;
 
         if let Some(f) = inner_closure {
@@ -144,18 +112,16 @@ fn parse_condition(condition: &str) -> ParseResult {
         return Ok(None);
     }
 
-    if condition.contains("!=") {
-        let parts: Vec<&str> =
-            condition.split("!=").map(|s| s.trim()).collect();
-
+    if condition.contains(" is not ") {
+        let parts: Vec<&str> = condition.split(" is not ").collect();
         if parts.len() != 2 {
             return Err(
                 format!("Invalid condition format: {}", condition).into()
             );
         }
 
-        let field_name = parts[0].to_string();
-        let value = parts[1].to_string();
+        let field_name = parts[0].trim().to_string();
+        let value = parts[1].trim().to_string();
 
         let closure = Box::new(move |controls: &UiControls| {
             controls.string(&field_name) != value
@@ -164,18 +130,16 @@ fn parse_condition(condition: &str) -> ParseResult {
         return Ok(Some(closure));
     }
 
-    if condition.contains("==") {
-        let parts: Vec<&str> =
-            condition.split("==").map(|s| s.trim()).collect();
-
+    if condition.contains(" is ") {
+        let parts: Vec<&str> = condition.split(" is ").collect();
         if parts.len() != 2 {
             return Err(
                 format!("Invalid condition format: {}", condition).into()
             );
         }
 
-        let field_name = parts[0].to_string();
-        let value = parts[1].to_string();
+        let field_name = parts[0].trim().to_string();
+        let value = parts[1].trim().to_string();
 
         let closure = Box::new(move |controls: &UiControls| {
             controls.string(&field_name) == value

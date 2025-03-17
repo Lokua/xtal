@@ -2,6 +2,11 @@
   "version": "1.1",
   "ui_controls": [
     {
+      "type": "Checkbox",
+      "name": "wave_phase_animation",
+      "value": true
+    },
+    {
       "type": "Slider",
       "name": "wave_phase_speed",
       "value": 2.0
@@ -22,9 +27,14 @@
       "value": 29.0
     },
     {
+      "type": "Checkbox",
+      "name": "color_invert",
+      "value": true
+    },
+    {
       "type": "Slider",
-      "name": "color_intensity",
-      "value": 0.63
+      "name": "color_amt",
+      "value": 0.5
     },
     {
       "type": "Slider",
