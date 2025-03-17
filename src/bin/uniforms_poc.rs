@@ -1,16 +1,18 @@
+use nannou::geom::Rect;
+use nannou::glam::vec2;
 use std::error::Error;
 
 use derives::uniforms;
-use nannou::geom::Rect;
-use nannou::glam::vec2;
+use lattice::framework::prelude::*;
 
-#[uniforms(count = 5)]
+#[uniforms(banks = 5)]
 struct Foo {}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let x = Foo::default();
     println!("a: {:?}", x.a);
     println!("e: {:?}", x.e);
+    println!();
 
     let hub = ControlHubBuilder::new()
         .timing(ManualTiming::new(Bpm::new(120.0)))
@@ -20,8 +22,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let wr = WindowRect::new(Rect::from_wh(vec2(500.0, 300.0)));
 
-    let x = Foo::from((window_rect, &hub));
+    let mut x = Foo::from((&wr, &hub));
+    x.set("b4", 99.0);
     println!("a: {:?}", x.a);
+    println!("b: {:?}", x.b);
     println!("e: {:?}", x.e);
 
     Ok(())

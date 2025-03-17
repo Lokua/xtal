@@ -27,6 +27,7 @@
     "sccache",
     "serde",
     "smin",
+    "stddev",
     "termcolor",
     "thresholded",
     "trunc",

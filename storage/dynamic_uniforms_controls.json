@@ -1,0 +1,63 @@
+{
+  "version": "1.1",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "wave_phase_speed",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "wave_dist",
+      "value": 53.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave_x_freq",
+      "value": 13.0
+    },
+    {
+      "type": "Slider",
+      "name": "wave_y_freq",
+      "value": 29.0
+    },
+    {
+      "type": "Slider",
+      "name": "color_intensity",
+      "value": 0.63
+    },
+    {
+      "type": "Slider",
+      "name": "color_freq",
+      "value": 1.8199999
+    },
+    {
+      "type": "Slider",
+      "name": "color_phase",
+      "value": 1.27
+    },
+    {
+      "type": "Slider",
+      "name": "r_amp",
+      "value": 0.743
+    },
+    {
+      "type": "Slider",
+      "name": "g_amp",
+      "value": 0.32
+    },
+    {
+      "type": "Slider",
+      "name": "b_amp",
+      "value": 0.968
+    },
+    {
+      "type": "Slider",
+      "name": "color_shift",
+      "value": 0.802
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {}
+}

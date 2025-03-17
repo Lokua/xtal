@@ -415,9 +415,19 @@ impl UiControls {
         self.values.contains_key(name)
     }
 
-    #[doc(alias = "float")]
+    /// Same as `float`, only will try to coerce a possibly existing bool to 0.0
+    /// or 1.0 in the case a float value doesn't exist
     pub fn get(&self, name: &str) -> f32 {
-        self.float(name)
+        self.values
+            .get(name)
+            .and_then(ControlValue::as_float)
+            .unwrap_or_else(|| {
+                warn_once!(
+                    "No float for `{}`. Attempting to coerce bool.",
+                    name
+                );
+                self.bool_as_f32(name)
+            })
     }
 
     pub fn float(&self, name: &str) -> f32 {

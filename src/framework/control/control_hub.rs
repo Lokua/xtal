@@ -292,7 +292,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
 
         let value = if self.ui_controls.has(name) {
-            Some(self.ui_controls.float(name))
+            Some(self.ui_controls.get(name))
         } else if self.osc_controls.has(name) {
             Some(self.osc_controls.get(name))
         } else if self.midi_controls.has(name) {
