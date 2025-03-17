@@ -1,0 +1,116 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Wave
+# ------------------------------------------------------------------------------
+
+wave_phase_animation:
+  var: e1
+  type: checkbox
+  default: true
+
+wave_phase_speed:
+  type: slider
+  range: [1, 32]
+  step: 1
+  default: 1
+  disabled: not wave_phase_animation
+
+wave_phase:
+  var: b1
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0
+    - kind: end
+      position: $wave_phase_speed
+      value: *TAU
+
+wave_dist:
+  var: b2
+  type: slider
+  range: [0, 200]
+
+wave_x_freq:
+  var: b3
+  type: slider
+  range: [0, 100]
+
+wave_y_freq:
+  var: b4
+  type: slider
+  range: [0, 100]
+
+animate_origin:
+  var: e4
+  type: checkbox
+  default: false
+
+origin_offset_x:
+  var: e2
+  type: random_slewed
+  beats: 4.0
+  range: [-1.0, 1.0]
+  slew: 0.65
+  stem: 88
+
+origin_offset_y:
+  var: e3
+  type: random_slewed
+  beats: 4.0
+  range: [-1.0, 1.0]
+  delay: 2.0
+  slew: 0.65
+  stem: 89
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_separator:
+  type: separator
+
+color_invert:
+  var: d4
+  type: checkbox
+
+color_select_test:
+  type: select
+  default: a
+  options: [a, b, c]
+
+color_amt:
+  var: c1
+  type: slider
+  range: [0, 2]
+  default: 0.5
+  disabled: color_select_test is b
+
+color_freq:
+  var: c2
+  type: slider
+  range: [0, 10]
+
+color_phase:
+  var: c3
+  type: slider
+  range: [0, 5]
+
+r_amp:
+  var: c4
+  type: slider
+
+g_amp:
+  var: d1
+  type: slider
+
+b_amp:
+  var: d2
+  type: slider
+
+color_shift:
+  var: d3
+  type: slider
+  range: [0, *TAU]

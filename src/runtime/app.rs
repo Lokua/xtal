@@ -47,6 +47,7 @@ pub fn run() {
             audio_dev,
             control_script_dev,
             cv_dev,
+            dynamic_uniforms,
             effects_wavefolder_dev,
             midi_dev,
             non_yaml_dev,

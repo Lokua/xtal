@@ -3,6 +3,7 @@ pub mod audio_controls_dev;
 pub mod audio_dev;
 pub mod control_script_dev;
 pub mod cv_dev;
+pub mod dynamic_uniforms;
 pub mod effects_wavefolder_dev;
 pub mod midi_dev;
 pub mod non_yaml_dev;

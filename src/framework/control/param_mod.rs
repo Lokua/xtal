@@ -21,18 +21,16 @@
 //!
 //! [link]: https://github.com/Lokua/lattice/blob/main/docs/parameter_handling.md
 
+use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
-use bevy_reflect::{Reflect, ReflectRef};
-use serde::{Deserialize, Deserializer};
-
 use super::config::{
-    BreakpointConfig, EffectConfig, RandomConfig, RandomSlewedConfig,
-    TriangleConfig,
+    BreakpointConfig, EffectConfig, EffectKind, KindConfig, RandomConfig,
+    RandomSlewedConfig, TriangleConfig,
 };
 use crate::framework::prelude::*;
 
-#[derive(Clone, Debug, Reflect)]
+#[derive(Clone, Debug)]
 pub enum ParamValue {
     Cold(f32),
     Hot(String),
@@ -101,6 +99,14 @@ impl<'de> Deserialize<'de> for ParamValue {
     }
 }
 
+pub trait SetFromParam {
+    fn set_from_param(&mut self, name: &str, value: f32);
+}
+
+fn warn_for(thing: &str, field: &str) {
+    warn_once!("{} does not support field: {}", thing, field);
+}
+
 //------------------------------------------------------------------------------
 // Effects
 //------------------------------------------------------------------------------
@@ -110,60 +116,123 @@ pub trait FromColdParams: Default + SetFromParam {
     /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a
     /// newly created Effect instance. Will use the Effect's default instead of
     /// [`ParamValue::Hot`] since those are swapped in during
-    /// [`ControlHub::get`]. Important that this _only_ deals with ParamValue
-    /// (f32) - you still need to deal with copying the non-ParamValues from the
-    /// EffectConfig to the Effect instance manually.
-    ///
-    /// # IMPORTANT!
-    /// This _may_ suffer from the same issue that was addressed in [this
-    /// commit](https://github.com/Lokua/lattice/commit/05f5aa6) (non-param
-    /// fields being stuck with their defaults instead of the config values)
+    /// [`ControlHub::get`].
+    fn from_cold_params(config: &EffectConfig) -> Self;
+}
+
+fn apply_if_cold<T: SetFromParam>(
+    instance: &mut T,
+    param: &ParamValue,
+    field: &str,
+) {
+    if let ParamValue::Cold(value) = param {
+        instance.set_from_param(field, *value);
+    }
+}
+
+impl FromColdParams for Hysteresis {
     fn from_cold_params(config: &EffectConfig) -> Self {
         let mut instance = Self::default();
 
-        let kind_reflect: &dyn Reflect = &config.kind;
-
-        if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
-            for field_index in 0..enum_ref.field_len() {
-                if let Some(field_value) = enum_ref.field_at(field_index) {
-                    let field_name =
-                        enum_ref.name_at(field_index).unwrap_or("");
-
-                    if let ReflectRef::Enum(inner_enum) =
-                        &field_value.reflect_ref()
-                    {
-                        if inner_enum.variant_name() == "Cold" {
-                            if let Some(inner_value) = inner_enum.field_at(0) {
-                                if let Some(value) =
-                                    inner_value.try_downcast_ref::<f32>()
-                                {
-                                    instance.set_from_param(field_name, *value);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if let EffectKind::Hysteresis {
+            lower_threshold,
+            upper_threshold,
+            output_low,
+            output_high,
+            ..
+        } = &config.kind
+        {
+            apply_if_cold(&mut instance, lower_threshold, "lower_threshold");
+            apply_if_cold(&mut instance, upper_threshold, "upper_threshold");
+            apply_if_cold(&mut instance, output_low, "output_low");
+            apply_if_cold(&mut instance, output_high, "output_high");
         }
 
         instance
     }
 }
 
-impl FromColdParams for Hysteresis {}
-impl FromColdParams for Math {}
-impl FromColdParams for Quantizer {}
-impl FromColdParams for RingModulator {}
-impl FromColdParams for Saturator {}
-impl FromColdParams for SlewLimiter {}
-impl FromColdParams for WaveFolder {}
+impl FromColdParams for Math {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
 
-pub trait SetFromParam {
-    fn set_from_param(&mut self, name: &str, value: f32);
+        if let EffectKind::Math { operand, .. } = &config.kind {
+            apply_if_cold(&mut instance, operand, "operand");
+        }
+
+        instance
+    }
 }
 
-fn warn_for(effect: &str, field: &str) {
-    warn_once!("{} does not support field: {}", effect, field);
+impl FromColdParams for Quantizer {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
+
+        if let EffectKind::Quantizer { step, .. } = &config.kind {
+            apply_if_cold(&mut instance, step, "step");
+        }
+
+        instance
+    }
+}
+
+impl FromColdParams for RingModulator {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
+
+        if let EffectKind::RingModulator { mix, .. } = &config.kind {
+            apply_if_cold(&mut instance, mix, "mix");
+        }
+
+        instance
+    }
+}
+
+impl FromColdParams for Saturator {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
+
+        if let EffectKind::Saturator { drive, .. } = &config.kind {
+            apply_if_cold(&mut instance, drive, "drive");
+        }
+
+        instance
+    }
+}
+
+impl FromColdParams for SlewLimiter {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
+
+        if let EffectKind::SlewLimiter { rise, fall, .. } = &config.kind {
+            apply_if_cold(&mut instance, rise, "rise");
+            apply_if_cold(&mut instance, fall, "fall");
+        }
+
+        instance
+    }
+}
+
+impl FromColdParams for WaveFolder {
+    fn from_cold_params(config: &EffectConfig) -> Self {
+        let mut instance = Self::default();
+
+        if let EffectKind::WaveFolder {
+            gain,
+            symmetry,
+            bias,
+            shape,
+            ..
+        } = &config.kind
+        {
+            apply_if_cold(&mut instance, gain, "gain");
+            apply_if_cold(&mut instance, symmetry, "symmetry");
+            apply_if_cold(&mut instance, bias, "bias");
+            apply_if_cold(&mut instance, shape, "shape");
+        }
+
+        instance
+    }
 }
 
 impl SetFromParam for Hysteresis {
@@ -271,67 +340,84 @@ impl SetFromParam for RandomSlewedConfig {
     }
 }
 
+fn cold_or_default(param: &ParamValue, default: f32) -> f32 {
+    match param {
+        ParamValue::Cold(v) => *v,
+        ParamValue::Hot(_) => default,
+    }
+}
+
 impl From<BreakpointConfig> for Breakpoint {
     fn from(config: BreakpointConfig) -> Self {
-        let kind_reflect: &dyn Reflect = &config.kind;
-        let variant_name =
-            if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
-                enum_ref.variant_name()
-            } else {
-                "Step"
-            };
+        let position = cold_or_default(&config.position, 0.0);
+        let value = cold_or_default(&config.value, 0.0);
 
         let mut breakpoint = Breakpoint {
-            position: match &config.position {
-                ParamValue::Cold(v) => *v,
-                ParamValue::Hot(_) => 0.0,
-            },
-            value: match &config.value {
-                ParamValue::Cold(v) => *v,
-                ParamValue::Hot(_) => 0.0,
-            },
-            kind: variant_name.parse().unwrap(),
+            position,
+            value,
+            kind: Kind::Step,
         };
 
-        if let ReflectRef::Enum(enum_ref) = kind_reflect.reflect_ref() {
-            for field_index in 0..enum_ref.field_len() {
-                if let Some(field_value) = enum_ref.field_at(field_index) {
-                    if let Some(field_name) = enum_ref.name_at(field_index) {
-                        if let ReflectRef::Enum(inner_enum) =
-                            field_value.reflect_ref()
-                        {
-                            let inner_variant = inner_enum.variant_name();
+        match &config.kind {
+            KindConfig::Step => {
+                breakpoint.kind = Kind::Step;
+            }
+            KindConfig::Ramp { easing } => {
+                let easing = Easing::from_str(easing).unwrap_or(Easing::Linear);
+                breakpoint.kind = Kind::Ramp { easing };
+            }
+            KindConfig::Random { amplitude } => {
+                let amplitude = cold_or_default(amplitude, 0.0);
+                breakpoint.kind = Kind::Random { amplitude };
+            }
+            KindConfig::RandomSmooth {
+                amplitude,
+                frequency,
+                easing,
+                constrain,
+            } => {
+                let amplitude = cold_or_default(amplitude, 0.0);
+                let frequency = cold_or_default(frequency, 0.0);
+                let easing = Easing::from_str(easing).unwrap_or(Easing::Linear);
+                let constrain =
+                    Constrain::try_from((constrain.as_str(), 0.0, 1.0))
+                        .unwrap_or(Constrain::None);
 
-                            if inner_variant == "Cold" {
-                                if let Some(param_field) =
-                                    inner_enum.field_at(0)
-                                {
-                                    if let Some(value) =
-                                        param_field.try_downcast_ref::<f32>()
-                                    {
-                                        breakpoint
-                                            .set_field(field_name, *value);
-                                    }
-                                }
-                            } else if inner_variant == "Hot" {
-                                // Hot params get skipped and live with their
-                                // defaults until they are replaced at "get"
-                                // time from the dep_graph and `set_from_param`
-                            }
-                        } else {
-                            // non-ParamValue fields like Easing, Constrain,
-                            // Shape, etc.
-                            if let Some(reflect_value) =
-                                field_value.try_as_reflect()
-                            {
-                                breakpoint.set_non_param_field(
-                                    field_name,
-                                    reflect_value,
-                                );
-                            }
-                        }
-                    }
-                }
+                breakpoint.kind = Kind::RandomSmooth {
+                    amplitude,
+                    frequency,
+                    easing,
+                    constrain,
+                };
+            }
+            KindConfig::Wave {
+                amplitude,
+                frequency,
+                width,
+                easing,
+                shape,
+                constrain,
+            } => {
+                let amplitude = cold_or_default(amplitude, 0.0);
+                let frequency = cold_or_default(frequency, 0.0);
+                let width = cold_or_default(width, 0.5);
+                let easing = Easing::from_str(easing).unwrap_or(Easing::Linear);
+                let shape = Shape::from_str(shape).unwrap_or(Shape::Sine);
+                let constrain =
+                    Constrain::try_from((constrain.as_str(), 0.0, 1.0))
+                        .unwrap_or(Constrain::None);
+
+                breakpoint.kind = Kind::Wave {
+                    amplitude,
+                    frequency,
+                    width,
+                    easing,
+                    shape,
+                    constrain,
+                };
+            }
+            KindConfig::End => {
+                breakpoint.kind = Kind::End;
             }
         }
 
@@ -352,9 +438,7 @@ impl Breakpoint {
 
         match self.kind {
             Kind::Step => {}
-            Kind::Random {
-                ref mut amplitude, ..
-            } => {
+            Kind::Random { ref mut amplitude } => {
                 if name == "amplitude" {
                     *amplitude = value;
                 }
@@ -384,81 +468,6 @@ impl Breakpoint {
             }
         }
     }
-
-    fn set_non_param_field(&mut self, name: &str, value: &dyn Reflect) {
-        match self.kind {
-            Kind::Ramp { ref mut easing } => {
-                if name == "easing" {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
-                            *easing = parsed_easing;
-                        }
-                    }
-                }
-            }
-            Kind::Wave {
-                ref mut easing,
-                ref mut shape,
-                ref mut constrain,
-                ..
-            } => match name {
-                "easing" => {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
-                            *easing = parsed_easing;
-                        }
-                    }
-                }
-                "shape" => {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_shape) = Shape::from_str(str_value) {
-                            *shape = parsed_shape;
-                        }
-                    }
-                }
-                "constrain" => {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_constrain) =
-                            Constrain::try_from((str_value.as_str(), 0.0, 1.0))
-                        {
-                            *constrain = parsed_constrain;
-                        }
-                    }
-                }
-                _ => {
-                    warn!("Unrecognized field for Wave kind: {}", name);
-                }
-            },
-            Kind::RandomSmooth {
-                ref mut easing,
-                ref mut constrain,
-                ..
-            } => match name {
-                "easing" => {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_easing) = Easing::from_str(str_value) {
-                            *easing = parsed_easing;
-                        }
-                    }
-                }
-                "constrain" => {
-                    if let Some(str_value) = value.downcast_ref::<String>() {
-                        if let Ok(parsed_constrain) =
-                            Constrain::try_from((str_value.as_str(), 0.0, 1.0))
-                        {
-                            *constrain = parsed_constrain;
-                        }
-                    }
-                }
-                _ => {
-                    warn!("Unrecognized field for Wave kind: {}", name);
-                }
-            },
-            _ => {
-                warn!("No handler for non-param field: {}", name);
-            }
-        }
-    }
 }
 
 impl SetFromParam for Breakpoint {
@@ -482,7 +491,6 @@ impl SetFromParam for Breakpoint {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::framework::control::config::KindConfig;
 
     #[test]
     fn test_breakpoint_ramp_conversion() {

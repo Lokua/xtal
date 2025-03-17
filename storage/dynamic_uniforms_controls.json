@@ -1,0 +1,78 @@
+{
+  "version": "1.1",
+  "ui_controls": [
+    {
+      "type": "Checkbox",
+      "name": "wave_phase_animation",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "wave_phase_speed",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "wave_dist",
+      "value": 38.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave_x_freq",
+      "value": 10.2
+    },
+    {
+      "type": "Slider",
+      "name": "wave_y_freq",
+      "value": 11.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "color_invert",
+      "value": true
+    },
+    {
+      "type": "Select",
+      "name": "color_select_test",
+      "value": "b"
+    },
+    {
+      "type": "Slider",
+      "name": "color_amt",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "color_freq",
+      "value": 1.4699999
+    },
+    {
+      "type": "Slider",
+      "name": "color_phase",
+      "value": 2.29
+    },
+    {
+      "type": "Slider",
+      "name": "r_amp",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "g_amp",
+      "value": 0.63699996
+    },
+    {
+      "type": "Slider",
+      "name": "b_amp",
+      "value": 0.198
+    },
+    {
+      "type": "Slider",
+      "name": "color_shift",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {}
+}
