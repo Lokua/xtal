@@ -2,8 +2,8 @@ use nannou_osc as osc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use super::osc_receiver::SHARED_OSC_RECEIVER;
-use super::prelude::*;
+use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
+use crate::framework::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct OscControlConfig {

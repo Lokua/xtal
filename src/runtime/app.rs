@@ -8,7 +8,6 @@ use std::{env, str};
 use super::prelude::*;
 use super::tap_tempo::TapTempo;
 use crate::config::MIDI_CONTROL_OUT_PORT;
-use crate::framework::serialization::{ImageIndex, ImageIndexItem};
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {

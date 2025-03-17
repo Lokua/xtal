@@ -3,7 +3,7 @@
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
 
-use super::prelude::*;
+use crate::framework::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ControlValue {

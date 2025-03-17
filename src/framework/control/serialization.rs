@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use super::control::control_hub::Snapshots;
-use super::prelude::*;
+use crate::framework::control::control_hub::Snapshots;
+use crate::framework::prelude::*;
 
 pub const VERSION: &str = "1.1";
 

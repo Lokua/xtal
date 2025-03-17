@@ -1,6 +1,5 @@
 use nannou::prelude::*;
 
-use super::control_provider::ControlProvider;
 use super::prelude::*;
 
 /// A configuration that all sketches must export in order to integrate

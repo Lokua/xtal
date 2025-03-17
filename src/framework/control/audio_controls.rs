@@ -18,8 +18,8 @@ use crate::config::{
     MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE as SAMPLE_RATE,
 };
 
-use super::frame_controller;
-use super::prelude::*;
+use crate::framework::frame_controller;
+use crate::framework::prelude::*;
 
 // const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 

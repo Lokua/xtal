@@ -1,14 +1,14 @@
 use std::any::Any;
 use std::error::Error;
 
-use super::prelude::*;
+use crate::framework::prelude::*;
 use crate::runtime::storage::load_controls;
 
 /// Type erasure trait that enables object-safe access to generic
-/// `ControlScript<T>` instances. This enables boxed sketches to expose their
+/// `ControlHub<T>` instances. This enables boxed sketches to expose their
 /// controls to the UI and runtime systems without breaking object safety rules.
 /// It serves as the interface layer between the type-parameterized
-/// `ControlScript<T>` and the object-safe `SketchAll` trait used in the
+/// `ControlHub<T>` and the object-safe `SketchAll` trait used in the
 /// registry.
 pub trait ControlProvider {
     fn ui_controls(&self) -> Option<UiControls>;

@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use std::{fs, str};
 
 use super::prelude::*;
-use crate::framework::prelude::*;
-use crate::framework::serialization::{
+use crate::framework::control::serialization::{
     ConcreteControls, ImageIndex, SerializableControls,
 };
+use crate::framework::prelude::*;
 
 /// When false will use the appropriate OS config dir; when true will store
 /// within the Lattice project's controls_cache folder for easy source control.
