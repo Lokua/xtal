@@ -174,20 +174,17 @@ impl Parse for UniformsArgs {
 
 #[proc_macro_attribute]
 pub fn uniforms(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse the input struct
     let input = parse_macro_input!(item as DeriveInput);
-
-    // Parse attribute arguments to get the count (number of arrays to create)
     let args = parse_macro_input!(attr as UniformsArgs);
     let count = args.count;
-
-    // Generate field names (a, b, c, d, etc.) based on the count parameter
     let field_names = generate_field_names(count);
-
-    // Get the struct name for later use
     let struct_name = &input.ident;
 
-    // Generate the modified struct with fields
+    // Special handling for the first bank (a)
+    let first_bank = field_names.first().cloned();
+    let remaining_banks =
+        field_names.iter().skip(1).cloned().collect::<Vec<_>>();
+
     let expanded_struct = quote! {
         use lattice::framework::prelude::*;
 
@@ -215,12 +212,30 @@ pub fn uniforms(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
         }
+
+        impl<T: TimingSource> From<(WindowRect, &ControlHub<T>)> for #struct_name {
+            fn from((window_rect, hub): (WindowRect, &ControlHub<T>)) -> Self {
+                Self {
+                    #first_bank: [
+                        window_rect.w(),
+                        window_rect.h(),
+                        hub.get(&format!("{}{}", stringify!(#first_bank), 3)),
+                        hub.get(&format!("{}{}", stringify!(#first_bank), 4)),
+                    ],
+                    #(#remaining_banks: [
+                        hub.get(&format!("{}{}", stringify!(#remaining_banks), 1)),
+                        hub.get(&format!("{}{}", stringify!(#remaining_banks), 2)),
+                        hub.get(&format!("{}{}", stringify!(#remaining_banks), 3)),
+                        hub.get(&format!("{}{}", stringify!(#remaining_banks), 4)),
+                    ],)*
+                }
+            }
+        }
     };
 
     expanded_struct.into()
 }
 
-// Generate field names (a, b, c, d, ...)
 fn generate_field_names(count: usize) -> Vec<syn::Ident> {
     (0..count)
         .map(|i| {
