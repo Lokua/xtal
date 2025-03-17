@@ -292,11 +292,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
 
         let value = if self.ui_controls.has(name) {
-            if let Some(true) = self.ui_controls.disabled(name) {
-                Some(0.33)
-            } else {
-                Some(self.ui_controls.get(name))
-            }
+            Some(self.ui_controls.get(name))
         } else if self.osc_controls.has(name) {
             Some(self.osc_controls.get(name))
         } else if self.midi_controls.has(name) {
@@ -691,13 +687,7 @@ impl<T: TimingSource> ControlHub<T> {
                         .and_then(ControlValue::as_float)
                         .unwrap_or(conf.default);
 
-                    let disabled_fn = if let Some(disabled_config) =
-                        &mut conf.shared.disabled
-                    {
-                        disabled_config.disabled_fn.take()
-                    } else {
-                        None
-                    };
+                    let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
                     let slider = Control::Slider {
                         name: id.to_string(),
@@ -705,13 +695,13 @@ impl<T: TimingSource> ControlHub<T> {
                         min: conf.range[0],
                         max: conf.range[1],
                         step: conf.step,
-                        disabled: disabled_fn,
+                        disabled,
                     };
 
                     self.ui_controls.add(slider);
                 }
                 ControlType::Checkbox => {
-                    let conf: CheckboxConfig =
+                    let mut conf: CheckboxConfig =
                         serde_yml::from_value(config.config.clone())?;
 
                     let value = current_values
@@ -719,11 +709,17 @@ impl<T: TimingSource> ControlHub<T> {
                         .and_then(ControlValue::as_bool)
                         .unwrap_or(conf.default);
 
-                    let checkbox = Control::checkbox(id.as_str(), value);
+                    let disabled = Self::extract_disabled_fn(&mut conf.shared);
+
+                    let checkbox = Control::Checkbox {
+                        name: id.to_string(),
+                        value,
+                        disabled,
+                    };
                     self.ui_controls.add(checkbox);
                 }
                 ControlType::Select => {
-                    let conf: SelectConfig =
+                    let mut conf: SelectConfig =
                         serde_yml::from_value(config.config.clone())?;
 
                     let value = current_values
@@ -731,8 +727,15 @@ impl<T: TimingSource> ControlHub<T> {
                         .and_then(ControlValue::as_string)
                         .unwrap_or(conf.default.as_str());
 
-                    let select =
-                        Control::select(id.as_str(), value, &conf.options);
+                    let disabled = Self::extract_disabled_fn(&mut conf.shared);
+
+                    let select = Control::Select {
+                        name: id.to_string(),
+                        value: value.to_string(),
+                        options: conf.options,
+                        disabled,
+                    };
+
                     self.ui_controls.add(select);
                 }
                 ControlType::Separator => {
@@ -947,6 +950,14 @@ impl<T: TimingSource> ControlHub<T> {
         info!("Controls populated");
 
         Ok(())
+    }
+
+    fn extract_disabled_fn(shared: &mut Shared) -> DisabledFn {
+        if let Some(disabled_config) = &mut shared.disabled {
+            disabled_config.disabled_fn.take()
+        } else {
+            None
+        }
     }
 
     fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
@@ -1196,9 +1207,7 @@ c:
             r#"
 foo:
   type: slider
-  disabled:
-    cond: bar == a && baz
-    then: qux
+  disabled: bar is a and baz
 
 bar:
   type: select
@@ -1208,13 +1217,9 @@ bar:
 baz:
   type: checkbox
   default: true
-
-qux:
-  type: slider
-  default: 0.33
             "#,
         );
 
-        assert_eq!(hub.get("foo"), 0.33);
+        assert_eq!(hub.ui_controls.disabled("foo"), Some(true));
     }
 }

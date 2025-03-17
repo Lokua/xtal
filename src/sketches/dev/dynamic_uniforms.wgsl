@@ -46,17 +46,39 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let b_amp = params.d.y;
     let color_shift = params.d.z;
     let color_invert = params.d.w;
+    let wave_phase_animation = params.e.x;
+    let origin_offset_x = params.e.y;
+    let origin_offset_y = params.e.z;
+    let animate_origin = params.e.w;
 
     let p = correct_aspect(position);
-    let d = length(p);
 
-    let wave1 = cos(d * wave_dist - wave_phase);
-    let wave2 = cos(p.x * wave_x_freq);
+    var origin_offset: vec2f; 
+    if animate_origin == 1.0 {
+        origin_offset = vec2f(origin_offset_x, origin_offset_y);
+    } else {
+        origin_offset = vec2f(0.0);
+    }
+
+    let centered_p = p - origin_offset;
+    let d = length(centered_p);
+
+    var phase: f32;
+    if wave_phase_animation == 1.0 {
+        phase = wave_phase;
+    } else {
+        phase = 0.0;
+    }
+
+    let wave1 = 
+        cos(d * wave_dist - phase) + 0.5 * cos((d * wave_dist - phase) * 3.0);
+    let wave2 = 
+        cos(p.x * wave_x_freq) + 0.5 * cos((p.x * wave_x_freq) * 2.0);
     let wave3 = sin(p.y * wave_y_freq);
+    
     let waves = (wave1 + wave2 + wave3);
 
     var c_val = ease(0.5 + (cos(waves) * 0.5));
-    
     let color_wave = waves * color_freq + color_phase;
     
     let r = c_val + r_amp * sin(color_wave) * color_amt;

@@ -5,11 +5,17 @@ _vars:
 #  Wave
 # ------------------------------------------------------------------------------
 
+wave_phase_animation:
+  var: e1
+  type: checkbox
+  default: true
+
 wave_phase_speed:
   type: slider
   range: [1, 32]
   step: 1
   default: 1
+  disabled: not wave_phase_animation
 
 wave_phase:
   var: b1
@@ -37,6 +43,28 @@ wave_y_freq:
   type: slider
   range: [0, 100]
 
+animate_origin:
+  var: e4
+  type: checkbox
+  default: false
+
+origin_offset_x:
+  var: e2
+  type: random_slewed
+  beats: 4.0
+  range: [-1.0, 1.0]
+  slew: 0.65
+  stem: 88
+
+origin_offset_y:
+  var: e3
+  type: random_slewed
+  beats: 4.0
+  range: [-1.0, 1.0]
+  delay: 2.0
+  slew: 0.65
+  stem: 89
+
 # ------------------------------------------------------------------------------
 #  Color
 # ------------------------------------------------------------------------------
@@ -58,9 +86,7 @@ color_amt:
   type: slider
   range: [0, 2]
   default: 0.5
-  disabled:
-    cond: color_select_test == b
-    then: _
+  disabled: color_select_test is b
 
 color_freq:
   var: c2

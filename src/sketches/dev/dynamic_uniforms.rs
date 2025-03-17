@@ -47,10 +47,7 @@ impl Sketch for DynamicUniformsDev {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         self.hub.update();
         let wr = ctx.window_rect();
-
-        let mut params = ShaderParams::from((&wr, &self.hub));
-        params.set("e1", self.hub.bool_as_f32("color_invert"));
-
+        let params = ShaderParams::from((&wr, &self.hub));
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
