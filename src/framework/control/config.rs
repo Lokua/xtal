@@ -312,7 +312,7 @@ impl Default for AutomateConfig {
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Reflect)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct BreakpointConfig {
     pub position: ParamValue,
     pub value: ParamValue,
@@ -320,7 +320,7 @@ pub struct BreakpointConfig {
     pub kind: KindConfig,
 }
 
-#[derive(Clone, Deserialize, Debug, Reflect)]
+#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum KindConfig {
     Step,
@@ -372,7 +372,7 @@ pub struct ModulationConfig {
     pub modulators: Vec<String>,
 }
 
-#[derive(Clone, Deserialize, Debug, Reflect)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct EffectConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
@@ -381,7 +381,7 @@ pub struct EffectConfig {
     pub kind: EffectKind,
 }
 
-#[derive(Clone, Deserialize, Debug, Reflect)]
+#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum EffectKind {
     Constrain {
