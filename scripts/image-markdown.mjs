@@ -1,12 +1,13 @@
 import fs from 'node:fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { latticeRoot } from './helpers.mjs'
 
 main()
 
 async function main() {
   try {
-    const root = path.resolve(`${getScriptPath(import.meta.url)}/..`)
+    const root = latticeRoot()
     const imagesDir = path.join(root, '/images')
     const indexFile = path.join(imagesDir, '_index.json')
     const outputFile = path.join(root, 'index.md')

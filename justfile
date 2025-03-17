@@ -57,3 +57,6 @@ md:
 
 gen *ARGS:
   node scripts/gen-uniforms.mjs {{ARGS}}
+
+unpack *ARGS:
+  node scripts/unpack.mjs {{ARGS}}

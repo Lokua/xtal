@@ -5,3 +5,4 @@ out*.txt
 /control-snaps
 debug.txt
 *.log
+scripts/node_modules

@@ -38,7 +38,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let wave_dist = params.b.y;
     let wave_x_freq = params.b.z;
     let wave_y_freq = params.b.w;
-    let hue = params.c.y;
     let color_amt = params.c.x;
     let color_freq = params.c.y;
     let color_phase = params.c.z;
