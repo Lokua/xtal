@@ -2,6 +2,9 @@ use lattice::framework::prelude::*;
 use serde::{Deserialize, Deserializer};
 use std::error::Error;
 
+// This won't be able to just be dropped into control/config because we can't
+// make it work with Reflect.
+
 fn main() -> Result<(), Box<dyn Error>> {
     let config: Result<Config, _> = serde_yml::from_str(
         r#"
