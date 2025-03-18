@@ -7,7 +7,6 @@
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
 use cpal::{traits::*, Device, StreamConfig};
 use nannou::math::map_range;
-use rustc_hash::FxHashMap;
 use std::{
     error::Error,
     sync::{Arc, Mutex},
@@ -98,9 +97,9 @@ pub fn thru_buffer_processor(
 
 #[derive(Debug)]
 struct AudioControlState {
-    configs: FxHashMap<String, AudioControlConfig>,
+    configs: HashMap<String, AudioControlConfig>,
     processor: MultichannelAudioProcessor,
-    values: FxHashMap<String, f32>,
+    values: HashMap<String, f32>,
     previous_values: [f32; CHANNEL_COUNT],
 }
 
@@ -123,8 +122,8 @@ impl AudioControls {
             is_active: false,
             buffer_processor,
             state: Arc::new(Mutex::new(AudioControlState {
-                configs: FxHashMap::default(),
-                values: FxHashMap::default(),
+                configs: HashMap::default(),
+                values: HashMap::default(),
                 processor,
                 previous_values: [0.0; CHANNEL_COUNT],
             })),

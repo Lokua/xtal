@@ -3,7 +3,6 @@
 //! Sketches do not need to interact with this module directly - see
 //! [`ControlHub`].
 use nannou_osc as osc;
-use rustc_hash::FxHashMap;
 use std::sync::{Arc, Mutex};
 
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
@@ -32,13 +31,13 @@ impl OscControlConfig {
 
 #[derive(Debug, Default)]
 struct OscState {
-    values: FxHashMap<String, f32>,
+    values: HashMap<String, f32>,
 }
 
 impl OscState {
     fn new() -> Self {
         Self {
-            values: FxHashMap::default(),
+            values: HashMap::default(),
         }
     }
 
@@ -54,7 +53,7 @@ impl OscState {
         self.values.contains_key(address)
     }
 
-    fn values(&self) -> FxHashMap<String, f32> {
+    fn values(&self) -> HashMap<String, f32> {
         self.values.clone()
     }
 }
@@ -62,14 +61,14 @@ impl OscState {
 #[derive(Clone, Debug)]
 pub struct OscControls {
     pub is_active: bool,
-    configs: FxHashMap<String, OscControlConfig>,
+    configs: HashMap<String, OscControlConfig>,
     state: Arc<Mutex<OscState>>,
 }
 
 impl Default for OscControls {
     fn default() -> Self {
         Self {
-            configs: FxHashMap::default(),
+            configs: HashMap::default(),
             state: Arc::new(Mutex::new(OscState::new())),
             is_active: false,
         }
@@ -102,13 +101,13 @@ impl OscControls {
         self.state.lock().unwrap().set(address, value);
     }
 
-    pub fn values(&self) -> FxHashMap<String, f32> {
+    pub fn values(&self) -> HashMap<String, f32> {
         return self.state.lock().unwrap().values();
     }
 
     pub fn with_values_mut<F>(&self, f: F)
     where
-        F: FnOnce(&mut FxHashMap<String, f32>),
+        F: FnOnce(&mut HashMap<String, f32>),
     {
         let mut state = self.state.lock().unwrap();
         f(&mut state.values);

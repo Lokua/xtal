@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
 use std::cell::RefCell;
+
+use crate::framework::prelude::*;
 
 type NodeName = String;
 type Frame = u32;
@@ -7,13 +8,13 @@ type CachedValue = f32;
 
 #[derive(Debug)]
 pub struct EvalCache {
-    cache: RefCell<FxHashMap<NodeName, (Frame, CachedValue)>>,
+    cache: RefCell<HashMap<NodeName, (Frame, CachedValue)>>,
 }
 
 impl EvalCache {
     pub fn new() -> Self {
         Self {
-            cache: RefCell::new(FxHashMap::default()),
+            cache: RefCell::new(HashMap::default()),
         }
     }
 

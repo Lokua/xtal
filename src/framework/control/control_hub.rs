@@ -3,7 +3,6 @@
 #![doc = include_str!("../../../docs/control_script_reference.md")]
 
 use notify::{Event, RecursiveMode, Watcher};
-use rustc_hash::FxHashMap;
 use std::{
     cell::RefCell,
     error::Error,
@@ -47,12 +46,12 @@ struct UpdateState {
 
 #[derive(Debug)]
 struct SnapshotTransition {
-    values: FxHashMap<String, (f32, f32)>,
+    values: HashMap<String, (f32, f32)>,
     start_frame: u32,
     end_frame: u32,
 }
 
-pub type Snapshots = FxHashMap<String, ControlValues>;
+pub type Snapshots = HashMap<String, ControlValues>;
 
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
@@ -62,11 +61,11 @@ pub struct ControlHub<T: TimingSource> {
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
     pub snapshots: Snapshots,
-    animations: FxHashMap<String, (AnimationConfig, KeyframeSequence)>,
-    modulations: FxHashMap<String, Vec<String>>,
-    effects: RefCell<FxHashMap<String, (EffectConfig, Effect)>>,
-    aliases: FxHashMap<String, String>,
-    bypassed: FxHashMap<String, Option<f32>>,
+    animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
+    modulations: HashMap<String, Vec<String>>,
+    effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
+    aliases: HashMap<String, String>,
+    bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
     eval_cache: EvalCache,
     update_state: Option<UpdateState>,
@@ -84,15 +83,15 @@ impl<T: TimingSource> ControlHub<T> {
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
-            animations: FxHashMap::default(),
-            modulations: FxHashMap::default(),
-            effects: RefCell::new(FxHashMap::default()),
-            aliases: FxHashMap::default(),
-            bypassed: FxHashMap::default(),
+            animations: HashMap::default(),
+            modulations: HashMap::default(),
+            effects: RefCell::new(HashMap::default()),
+            aliases: HashMap::default(),
+            bypassed: HashMap::default(),
             eval_cache: EvalCache::new(),
             dep_graph: DepGraph::new(),
             update_state: None,
-            snapshots: FxHashMap::default(),
+            snapshots: HashMap::default(),
             active_transition: None,
             transition_time: 4.0,
             #[cfg(feature = "instrumentation")]
@@ -478,7 +477,7 @@ impl<T: TimingSource> ControlHub<T> {
                     self.animation.beats_to_frames(self.transition_time) as u32;
 
                 let mut transition = SnapshotTransition {
-                    values: FxHashMap::default(),
+                    values: HashMap::default(),
                     start_frame: current_frame,
                     end_frame: current_frame + duration,
                 };
@@ -631,14 +630,14 @@ impl<T: TimingSource> ControlHub<T> {
         control_configs: &ConfigFile,
     ) -> Result<(), Box<dyn Error>> {
         let current_values: ControlValues = self.ui_controls.values().clone();
-        let osc_values: FxHashMap<String, f32> = self
+        let osc_values: HashMap<String, f32> = self
             .osc_controls
             .values()
             .iter()
             .map(|(k, v)| (k.clone(), *v))
             .collect();
 
-        let midi_values: FxHashMap<String, f32> = self
+        let midi_values: HashMap<String, f32> = self
             .midi_controls
             .values()
             .iter()

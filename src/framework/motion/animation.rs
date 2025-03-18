@@ -75,7 +75,6 @@
 use nannou::math::map_range;
 use nannou::rand::rngs::StdRng;
 use nannou::rand::{Rng, SeedableRng};
-use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::str::FromStr;
 
@@ -306,14 +305,14 @@ impl FromStr for Mode {
 #[derive(Clone, Debug)]
 pub struct Animation<T: TimingSource> {
     pub timing: T,
-    random_smooth_previous_values: RefCell<FxHashMap<u64, f32>>,
+    random_smooth_previous_values: RefCell<HashMap<u64, f32>>,
 }
 
 impl<T: TimingSource> Animation<T> {
     pub fn new(timing: T) -> Self {
         Self {
             timing,
-            random_smooth_previous_values: RefCell::new(FxHashMap::default()),
+            random_smooth_previous_values: RefCell::new(HashMap::default()),
         }
     }
 

@@ -1,14 +1,13 @@
-use rustc_hash::FxHashMap;
 use std::collections::VecDeque;
 
 use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
 
 /// { "symmetry" -> Param::Hot("t1"), ... }
-pub type Node = FxHashMap<String, ParamValue>;
+pub type Node = HashMap<String, ParamValue>;
 
 /// "t2" -> { "symmetry" -> Param::Hot("t1"), ... }
-pub type Graph = FxHashMap<String, Node>;
+pub type Graph = HashMap<String, Node>;
 
 pub type EvalOrder = Option<Vec<String>>;
 
@@ -17,7 +16,7 @@ pub struct DepGraph {
     graph: Graph,
     eval_order: EvalOrder,
     /// Provides faster lookups than the eval_order list
-    is_dep: FxHashMap<String, bool>,
+    is_dep: HashMap<String, bool>,
 }
 
 impl DepGraph {
@@ -25,7 +24,7 @@ impl DepGraph {
         Self {
             graph: Graph::default(),
             eval_order: None,
-            is_dep: FxHashMap::default(),
+            is_dep: HashMap::default(),
         }
     }
 
@@ -106,10 +105,10 @@ impl DepGraph {
 
     fn create_reverse_dep_graph_and_order(
         &self,
-    ) -> (FxHashMap<String, Vec<String>>, FxHashMap<String, usize>) {
+    ) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
         // { dependency: [dependents] }
-        let mut graph: FxHashMap<String, Vec<String>> = FxHashMap::default();
-        let mut in_degree: FxHashMap<String, usize> = FxHashMap::default();
+        let mut graph: HashMap<String, Vec<String>> = HashMap::default();
+        let mut in_degree: HashMap<String, usize> = HashMap::default();
 
         // self.graph = { "hot_effect": { param: Hot("hot_anim") }, ... }
         // node_name = "hot_effect"

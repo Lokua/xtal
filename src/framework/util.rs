@@ -8,12 +8,13 @@ use nannou::{
     prelude::*,
     rand::{thread_rng, Rng},
 };
-use rustc_hash::FxHashMap;
 
 use super::prelude::*;
 
 pub const PHI_F32: f32 = 1.618_033_9;
 pub const TWO_PI: f32 = PI * 2.0;
+
+pub use nannou_egui::egui::ahash::HashMap;
 
 pub const QUAD_POSITIONS: [[f32; 3]; 6] = [
     // Bottom-left
@@ -258,8 +259,8 @@ impl TrigonometricExt for f32 {
     }
 }
 
-pub fn trig_fn_lookup() -> FxHashMap<&'static str, fn(f32) -> f32> {
-    let mut map = FxHashMap::default();
+pub fn trig_fn_lookup() -> HashMap<&'static str, fn(f32) -> f32> {
+    let mut map = HashMap::default();
     map.insert("cos", f32::cos as fn(f32) -> f32);
     map.insert("sin", f32::sin as fn(f32) -> f32);
     map.insert("tan", f32::tan as fn(f32) -> f32);

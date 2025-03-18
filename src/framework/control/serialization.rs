@@ -1,4 +1,3 @@
-use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::framework::control::control_hub::Snapshots;
@@ -23,7 +22,7 @@ pub struct SerializableControls {
     pub osc_controls: Vec<BasicNameValueConfig>,
     // Backwards compat files that don't have snapshots field
     #[serde(default)]
-    pub snapshots: FxHashMap<String, SerializableSnapshot>,
+    pub snapshots: HashMap<String, SerializableSnapshot>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -159,7 +158,7 @@ impl From<&ConcreteControls> for SerializableControls {
 
 fn create_serializable_snapshot(
     concretes: &ConcreteControls,
-    snapshot: &FxHashMap<String, ControlValue>,
+    snapshot: &HashMap<String, ControlValue>,
 ) -> SerializableSnapshot {
     let mut controls = Vec::new();
     for (name, value) in snapshot {
@@ -255,7 +254,7 @@ impl ConcreteControls {
         for (snapshot_name, serializable_snapshot) in
             serializable_controls.snapshots
         {
-            let mut snapshot_values = FxHashMap::default();
+            let mut snapshot_values = HashMap::default();
 
             for control in &serializable_snapshot.ui_controls {
                 snapshot_values

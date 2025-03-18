@@ -2,7 +2,6 @@
 //!
 //! Sketches do not need to interact with this module directly - see
 //! [`ControlHub`].
-use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
 
 use crate::framework::prelude::*;
@@ -341,7 +340,7 @@ impl fmt::Debug for Control {
     }
 }
 
-pub type ControlValues = FxHashMap<String, ControlValue>;
+pub type ControlValues = HashMap<String, ControlValue>;
 
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See

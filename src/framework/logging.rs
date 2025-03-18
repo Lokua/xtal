@@ -93,13 +93,12 @@ macro_rules! debug_throttled {
         {
             use std::time::{Duration, Instant};
             use std::sync::Mutex;
-            use rustc_hash::FxHashMap;
             use log::debug;
 
             // Lazy initialization of throttle map
             lazy_static::lazy_static! {
-                static ref DEBUG_THROTTLE: Mutex<FxHashMap<&'static str, Instant>> =
-                    Mutex::new(FxHashMap::default());
+                static ref DEBUG_THROTTLE: Mutex<HashMap<&'static str, Instant>> =
+                    Mutex::new(HashMap::default());
             }
 
             // Throttle logic

@@ -1,5 +1,4 @@
 use nannou_osc as osc;
-use rustc_hash::FxHashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -19,13 +18,13 @@ type OscCallback = Box<dyn Fn(&osc::Message) + Send + Sync>;
 
 #[derive(Default)]
 pub struct Receiver {
-    callbacks: Arc<Mutex<FxHashMap<String, Vec<OscCallback>>>>,
+    callbacks: Arc<Mutex<HashMap<String, Vec<OscCallback>>>>,
 }
 
 impl Receiver {
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
-            callbacks: Arc::new(Mutex::new(FxHashMap::default())),
+            callbacks: Arc::new(Mutex::new(HashMap::default())),
         })
     }
 
