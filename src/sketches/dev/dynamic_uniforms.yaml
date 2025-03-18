@@ -111,6 +111,12 @@ color_shift:
   type: slider
   range: [0, *TAU]
 
+color_steps:
+  var: f4
+  type: slider
+  range: [1, 50]
+  step: 1
+
 # ------------------------------------------------------------------------------
 #  Distance Params
 # ------------------------------------------------------------------------------
@@ -125,9 +131,9 @@ distance_mix:
 grain_size:
   var: f1
   type: slider
-  range: [0, 100]
+  range: [0, 10]
 
 angle_mult:
   var: f2
   type: slider
-  range: [0, 100]
+  range: [0, 10]

@@ -53,6 +53,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let grain_size = params.f.x;
     let angle_mult = params.f.y;
     let distance_mix = params.f.z;
+    let color_steps = params.f.w;
 
     if link_axes == 1.0 {
         wave_y_freq = wave_x_freq;
@@ -104,6 +105,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     if color_invert == 1.0 {
         color = 1.0 - color;
     }
+
+    color = vec3f(
+        floor(color.r * color_steps) / color_steps, 
+        floor(color.g * color_steps) / color_steps, 
+        floor(color.b * color_steps) / color_steps
+    );
 
     return vec4f(color, 1.0);
 }

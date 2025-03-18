@@ -4,6 +4,10 @@ Files sorted from most to least recent
 
 <img src="images/wgpu_learn-but2b.png" alt="wgpu_learn-but2b.png">
 
+## dynamic_uniforms-88sf0.png
+
+<img src="images/dynamic_uniforms-88sf0.png" alt="dynamic_uniforms-88sf0.png">
+
 ## breakpoints-5kjgs.png
 
 <img src="images/breakpoints-5kjgs.png" alt="breakpoints-5kjgs.png">
