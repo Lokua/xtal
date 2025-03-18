@@ -4,6 +4,7 @@
 //! [`ControlHub`].
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
+use std::ops::Index;
 
 use crate::framework::prelude::*;
 
@@ -418,17 +419,22 @@ impl UiControls {
     }
 
     /// Same as `float`, only will try to coerce a possibly existing bool to 0.0
-    /// or 1.0 in the case a float value doesn't exist
+    /// or 1.0 or a select into its matching option index (useful in shader
+    /// context)
     pub fn get(&self, name: &str) -> f32 {
         self.values
             .get(name)
             .and_then(ControlValue::as_float)
-            .unwrap_or_else(|| {
-                warn_once!(
-                    "No float for `{}`. Attempting to coerce bool.",
-                    name
-                );
-                self.bool_as_f32(name)
+            .unwrap_or_else(|| match self.config(name) {
+                Some(Control::Checkbox { .. }) => self.bool_as_f32(name),
+                Some(Control::Select { .. }) => self.string_as_f32(name),
+                _ => {
+                    warn_once!(
+                        "`get` does not support `{}`. Returning 0.0",
+                        name
+                    );
+                    0.0
+                }
             })
     }
 
@@ -452,6 +458,7 @@ impl UiControls {
             })
     }
 
+    /// Converts checkbox value into 0.0 or 1.0 (useful in shader context)
     pub fn bool_as_f32(&self, name: &str) -> f32 {
         bool_to_f32(self.bool(name))
     }
@@ -468,6 +475,17 @@ impl UiControls {
                 );
                 "".to_string()
             })
+    }
+
+    /// Returns the matching option index of a select as f32 (useful in shader
+    /// context)
+    pub fn string_as_f32(&self, name: &str) -> f32 {
+        let value = self.string(name);
+        if let Some(Control::Select { options, .. }) = self.config(name) {
+            return options.iter().position(|x| *x == value).unwrap_or(0)
+                as f32;
+        }
+        0.0
     }
 
     pub fn changed(&self) -> bool {

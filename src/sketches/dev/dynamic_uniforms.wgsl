@@ -37,7 +37,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let wave_phase = params.b.x;
     let wave_dist = params.b.y;
     let wave_x_freq = params.b.z;
-    let wave_y_freq = params.b.w;
+    var wave_y_freq = params.b.w;
     let color_amt = params.c.x;
     let color_freq = params.c.y;
     let color_phase = params.c.z;
@@ -47,21 +47,36 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let color_shift = params.d.z;
     let color_invert = params.d.w;
     let wave_phase_animation = params.e.x;
-    let origin_offset_x = params.e.y;
-    let origin_offset_y = params.e.z;
-    let animate_origin = params.e.w;
+    let link_axes = params.e.y;
+    let origin = params.e.z;
+    let origin_offset = params.e.w;
+    let grain_size = params.f.x;
+    let angle_mult = params.f.y;
+    let distance_mix = params.f.z;
 
-    let p = correct_aspect(position);
-
-    var origin_offset: vec2f; 
-    if animate_origin == 1.0 {
-        origin_offset = vec2f(origin_offset_x, origin_offset_y);
-    } else {
-        origin_offset = vec2f(0.0);
+    if link_axes == 1.0 {
+        wave_y_freq = wave_x_freq;
     }
 
-    let centered_p = p - origin_offset;
-    let d = length(centered_p);
+    let p = correct_aspect(position * 0.5);
+
+    let offs = origin_offset;
+    var center: vec2f;
+    if origin == 0.0 {
+        center = vec2f(0.0);
+    } else if origin == 1.0 {
+        center = vec2f(1.0 - offs);
+    } else if origin == 2.0 {
+        center = vec2f(1.0 - offs, -1.0 + offs);
+    } else if origin == 3.0 {
+        center = vec2f(-1.0 + offs);
+    } else if origin == 4.0 {
+        center = vec2f(-1.0 + offs, 1.0 - offs);
+    }
+
+    let cp = p - center;
+    var d = abs(concentric_waves(cp.x, cp.y, 0.0, 0.0, grain_size, angle_mult));
+    d = mix(length(cp), d, distance_mix);
 
     var phase: f32;
     if wave_phase_animation == 1.0 {
@@ -89,6 +104,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     if color_invert == 1.0 {
         color = 1.0 - color;
     }
+
     return vec4f(color, 1.0);
 }
 
@@ -103,6 +119,32 @@ fn correct_aspect(position: vec2f) -> vec2f {
 
 fn ease(t: f32) -> f32 {
     return t * t * t;
+}
+
+fn custom_distance(
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    grain_size: f32,
+    angle_mult: f32,
+) -> f32 {
+    let distance = sqrt(pow(x2 - x1, 2.0) + pow(y2 - y1, 2.0));
+    let angle = atan2(y2 - y1, x2 - x1);
+    return sin(distance / grain_size) * distance * 0.5 + 
+        sin(angle * 10.0) * angle_mult;
+}
+
+fn concentric_waves(
+    x1: f32,
+    y1: f32,
+    x2: f32,
+    y2: f32,
+    frequency: f32,
+    decay: f32,
+) -> f32 {
+    let distance = sqrt(pow(x2 - x1, 2.0) + pow(y2 - y1, 2.0));
+    return abs(sin(distance * frequency)) * exp(-distance * decay);
 }
 
 fn hsl_to_rgb(hsl: vec3f) -> vec3f {
