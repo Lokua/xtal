@@ -2,16 +2,12 @@ use arboard::Clipboard;
 use nannou_egui::egui;
 use std::str;
 
+use super::theme::DISABLED_OPACITY;
 use crate::framework::{frame_controller, prelude::*};
 use crate::runtime::app;
 use crate::runtime::prelude::*;
 
-use super::theme::DISABLED_OPACITY;
-
 pub const GUI_WIDTH: u32 = 538;
-
-// Not sure this is really needed
-pub const DRAW_CLEAR_STORED_CONTROLS_BUTTON: bool = false;
 
 pub fn init() {
     theme::init_light_dark();
@@ -26,6 +22,7 @@ pub fn update(
     tap_tempo: &mut bool,
     bpm: f32,
     transition_time: f32,
+    midi_map_mode: &app::MapMode,
     recording_state: &mut RecordingState,
     event_tx: &app::AppEventSender,
     ctx: &egui::Context,
@@ -99,7 +96,11 @@ pub fn update(
             ui.separator();
 
             if let Some(controls) = controls {
-                draw_sketch_controls(ui, controls);
+                if midi_map_mode.enabled {
+                    draw_midi_map_mode(ui, controls, midi_map_mode, event_tx);
+                } else {
+                    draw_sketch_controls(ui, controls);
+                }
             }
 
             draw_alert_panel(ctx, alert_text);
@@ -367,6 +368,61 @@ fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
             if response.clicked() {
                 if let Ok(mut clipboard) = Clipboard::new() {
                     let _ = clipboard.set_text(alert_text);
+                }
+            }
+        });
+}
+
+fn draw_midi_map_mode(
+    ui: &mut egui::Ui,
+    controls: &mut UiControls,
+    map_mode: &app::MapMode,
+    event_tx: &app::AppEventSender,
+) {
+    egui::Grid::new("midi_map_grid")
+        .num_columns(2)
+        .spacing([4.0, 4.0])
+        .min_col_width(ui.available_width() / 3.0)
+        .show(ui, |ui| {
+            for config in controls.configs() {
+                if matches!(config, Control::Slider { .. }) {
+                    let name = config.name();
+                    ui.label(name);
+
+                    let mapping_name =
+                        map_mode.currently_mapping.clone().unwrap_or_default();
+
+                    let is_mapping = mapping_name == name;
+                    let is_mapped = map_mode.mapped(name);
+
+                    let label_text = match (is_mapping, is_mapped) {
+                        (false, false) => " - ".to_string(),
+                        (true, false) => "...".to_string(),
+                        (_, true) => map_mode.formatted_mapping(name),
+                    };
+
+                    let button = if is_mapping {
+                        ui.add(
+                            egui::Button::new(label_text)
+                                .min_size(egui::vec2(50.0, 0.0)),
+                        )
+                        .highlight()
+                    } else {
+                        ui.add(
+                            egui::Button::new(label_text)
+                                .min_size(egui::vec2(50.0, 0.0)),
+                        )
+                    };
+
+                    if button.clicked() {
+                        event_tx.send(
+                            app::AppEvent::MapModeSetCurrentlyMapping(
+                                name.to_string(),
+                            ),
+                        )
+                    }
+
+                    ui.end_row();
                 }
             }
         });

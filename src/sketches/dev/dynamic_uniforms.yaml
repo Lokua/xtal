@@ -66,6 +66,7 @@ origin:
 origin_offset:
   var: e4
   type: slider
+  disabled: origin is center
 
 # ------------------------------------------------------------------------------
 #  Color

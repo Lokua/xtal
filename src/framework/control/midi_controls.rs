@@ -33,7 +33,7 @@ impl MidiControlConfig {
     }
 }
 
-type ChannelAndControl = (u8, u8);
+pub type ChannelAndControl = (u8, u8);
 type TimestampAndMsb = (u64, u8);
 
 #[derive(Debug, Default)]
@@ -153,7 +153,7 @@ impl MidiControls {
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
 
-        debug!("config_lookup: {:#?}", config_lookup);
+        trace!("config_lookup: {:#?}", config_lookup);
 
         match midi::on_message(
             midi::ConnectionType::Control,
@@ -307,6 +307,11 @@ impl MidiControls {
                 Err(e)
             }
         }
+    }
+
+    pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
+        self.is_active = false;
+        self.start()
     }
 
     pub fn messages(&self) -> Vec<[u8; 3]> {

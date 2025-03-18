@@ -11,6 +11,7 @@ doctest = false
 
 [features]
 default = ["hi_res_cc"]
+# default = []
 instrumentation = []
 hi_res_cc = []
 

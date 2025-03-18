@@ -141,10 +141,15 @@ impl<T: TimingSource> ControlHub<T> {
 
         let current_frame = frame_controller::frame_count();
 
-        let name = match self.aliases.get(name) {
+        let mut name = match self.aliases.get(name) {
             Some(alias) => alias,
             None => name,
         };
+
+        let midi_proxy_name = format!("{}__proxy", name);
+        if self.midi_controls.has(&midi_proxy_name) {
+            name = &midi_proxy_name;
+        }
 
         if let Some(transition) = &self.active_transition {
             if let Some((from, to)) = transition.values.get(name) {
@@ -291,6 +296,7 @@ impl<T: TimingSource> ControlHub<T> {
             }
         }
 
+        // Fixme: just try to get instead of has then get
         let value = if self.ui_controls.has(name) {
             Some(self.ui_controls.get(name))
         } else if self.osc_controls.has(name) {

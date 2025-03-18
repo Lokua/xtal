@@ -22,6 +22,7 @@ pub enum ConnectionType {
     Clock,
     Control,
     GlobalStartStop,
+    Mapping,
 }
 
 impl fmt::Display for ConnectionType {
@@ -30,6 +31,7 @@ impl fmt::Display for ConnectionType {
             ConnectionType::Clock => write!(f, "Clock"),
             ConnectionType::Control => write!(f, "Control"),
             ConnectionType::GlobalStartStop => write!(f, "GlobalStartStop"),
+            ConnectionType::Mapping => write!(f, "Mapping"),
         }
     }
 }
