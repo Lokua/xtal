@@ -1,3 +1,7 @@
+//! Control sketch parameters with MIDI.
+//!
+//! Sketches do not need to interact with this module directly - see
+//! [`ControlHub`].
 use nannou::math::map_range;
 use std::collections::HashMap;
 use std::error::Error;
@@ -40,42 +44,38 @@ struct MidiState {
 }
 
 impl MidiState {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             values: HashMap::new(),
             last: HashMap::new(),
         }
     }
 
-    pub fn get(&self, name: &str) -> f32 {
+    fn get(&self, name: &str) -> f32 {
         *self.values.get(name).unwrap_or(&0.0)
     }
 
-    pub fn set(&mut self, name: &str, value: f32) {
+    fn set(&mut self, name: &str, value: f32) {
         self.values.insert(name.to_string(), value);
     }
 
-    pub fn has(&self, name: &str) -> bool {
+    fn has(&self, name: &str) -> bool {
         self.values.contains_key(name)
     }
 
-    pub fn values(&self) -> HashMap<String, f32> {
+    fn values(&self) -> HashMap<String, f32> {
         self.values.clone()
     }
 
-    pub fn last(&self, ch_cc: ChannelAndControl) -> Option<TimestampAndMsb> {
+    fn last(&self, ch_cc: ChannelAndControl) -> Option<TimestampAndMsb> {
         self.last.get(&ch_cc).copied()
     }
 
-    pub fn set_last(
-        &mut self,
-        ch_cc: ChannelAndControl,
-        ts_msb: TimestampAndMsb,
-    ) {
+    fn set_last(&mut self, ch_cc: ChannelAndControl, ts_msb: TimestampAndMsb) {
         self.last.insert(ch_cc, ts_msb);
     }
 
-    pub fn remove_last(&mut self, ch_cc: ChannelAndControl) {
+    fn remove_last(&mut self, ch_cc: ChannelAndControl) {
         self.last.remove(&ch_cc);
     }
 }
@@ -141,7 +141,7 @@ impl MidiControls {
 
     fn configs_by_channel_and_cc(
         &self,
-    ) -> HashMap<(u8, u8), (String, MidiControlConfig)> {
+    ) -> HashMap<ChannelAndControl, (String, MidiControlConfig)> {
         self.configs()
             .iter()
             .map(|(name, config)| {
@@ -342,6 +342,7 @@ impl Default for MidiControlBuilder {
         }
     }
 }
+
 impl MidiControlBuilder {
     pub fn new() -> Self {
         Self::default()

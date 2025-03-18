@@ -1,5 +1,7 @@
-//! A generic abstraction over UI control structures
-
+//! Control sketch parameters with GUI controls.
+//!
+//! Sketches do not need to interact with this module directly - see
+//! [`ControlHub`].
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
 
@@ -343,7 +345,7 @@ pub type ControlValues = FxHashMap<String, ControlValue>;
 
 /// A generic abstraction over UI controls that sketches can directly interact
 /// with without being coupled to a specific UI framework. See
-/// [`crate::runtime::gui::controls_adapter::draw_controls`] for a concrete
+/// [`crate::runtime::ui::controls_adapter::draw_controls`] for a concrete
 /// implementation.
 #[derive(Clone)]
 pub struct UiControls {

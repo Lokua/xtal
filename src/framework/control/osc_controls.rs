@@ -1,3 +1,7 @@
+//! Control sketch parameters with OSC.
+//!
+//! Sketches do not need to interact with this module directly - see
+//! [`ControlHub`].
 use nannou_osc as osc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -27,30 +31,30 @@ impl OscControlConfig {
 }
 
 #[derive(Debug, Default)]
-pub struct OscState {
+struct OscState {
     values: HashMap<String, f32>,
 }
 
 impl OscState {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             values: HashMap::new(),
         }
     }
 
-    pub fn set(&mut self, address: &str, value: f32) {
+    fn set(&mut self, address: &str, value: f32) {
         self.values.insert(address.to_string(), value);
     }
 
-    pub fn get(&self, address: &str) -> f32 {
+    fn get(&self, address: &str) -> f32 {
         *self.values.get(address).unwrap_or(&0.0)
     }
 
-    pub fn has(&self, address: &str) -> bool {
+    fn has(&self, address: &str) -> bool {
         self.values.contains_key(address)
     }
 
-    pub fn values(&self) -> HashMap<String, f32> {
+    fn values(&self) -> HashMap<String, f32> {
         self.values.clone()
     }
 }

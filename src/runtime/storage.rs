@@ -2,9 +2,11 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::{fs, str};
 
+use serde::{Deserialize, Serialize};
+
 use super::prelude::*;
 use crate::framework::control::serialization::{
-    ConcreteControls, ImageIndex, SerializableControls,
+    ConcreteControls, SerializableControls,
 };
 use crate::framework::prelude::*;
 
@@ -110,6 +112,17 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
 // -----------------------------------------------------------------------------
 // Image Index
 // -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndex {
+    pub items: Vec<ImageIndexItem>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndexItem {
+    pub filename: String,
+    pub created_at: String,
+}
 
 fn image_index_path() -> PathBuf {
     lattice_project_root().join("images").join("_index.json")

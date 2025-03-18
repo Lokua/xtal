@@ -175,7 +175,7 @@ struct AppModel {
     ctx: LatticeContext,
     midi_out: Option<midi::MidiOut>,
     transition_time: f32,
-    image_index: Option<ImageIndex>,
+    image_index: Option<storage::ImageIndex>,
 }
 
 impl AppModel {
@@ -230,7 +230,7 @@ impl AppModel {
                     .capture_frame(file_path.clone());
 
                 if let Some(image_index) = &mut self.image_index {
-                    image_index.items.push(ImageIndexItem {
+                    image_index.items.push(storage::ImageIndexItem {
                         filename,
                         created_at: Utc::now().to_rfc3339().to_string(),
                     });

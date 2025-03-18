@@ -53,12 +53,6 @@ impl Receiver {
                             handler(&msg);
                         }
                     }
-
-                    if let Some(handlers) = callbacks.get("*") {
-                        for handler in handlers {
-                            handler(&msg);
-                        }
-                    }
                 }
             }
         });

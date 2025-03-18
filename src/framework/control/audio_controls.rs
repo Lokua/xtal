@@ -1,9 +1,10 @@
-//! Control sketch parameters with audio signals. Supports any number of
-//! channels of the device you can specify in
-//! [`MULTICHANNEL_AUDIO_DEVICE_NAME`][device].
+//! Control sketch parameters with audio signals.
+//!
+//! Supports any number of channels of the device you can specify in
+//! [`MULTICHANNEL_AUDIO_DEVICE_NAME`][device]. Note that sketches do not need
+//! to interact with this module directly - see [`ControlHub`].
 //!
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
-
 use cpal::{traits::*, Device, StreamConfig};
 use nannou::math::map_range;
 use std::{
@@ -20,8 +21,6 @@ use crate::config::{
 
 use crate::framework::frame_controller;
 use crate::framework::prelude::*;
-
-// const CHANNEL_COUNT: usize = crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT;
 
 #[derive(Clone, Debug)]
 pub struct AudioControlConfig {

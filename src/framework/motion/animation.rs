@@ -1,9 +1,7 @@
-//! Animation module providing timing-synchronized animation and transition
+//! Animation module providing musically-timed animation and transition
 //! controls.
 //!
-//! This module offers a flexible system for creating time-based animations that
-//! are synchronized to musical time (beats) through various timing sources. The
-//! core animation system supports:
+//! The core animation system supports:
 //!
 //! - Beat-synchronized timing with support for various clock sources (MIDI,
 //!   OSC, manual)
@@ -16,14 +14,14 @@
 //!
 //! All animations are synchronized to musical time expressed in beats, where
 //! one beat equals one quarter note. The animation system can be driven by
-//! different timing sources (Frame, MIDI, OSC) that provide the current beat
-//! position, allowing animations to stay in sync with external music software
-//! or hardware.
+//! different timing sources (Frame, MIDI, OSC) that provide the current beat,
+//! allowing animations to stay in sync with external music software or
+//! hardware.
 //!
 //! # Basic Usage
 //!
 //! ```rust
-//! let animation = Ani::new(Timing::new(ctx.bpm()));
+//! let animation = Animation::new(Timing::new(ctx.bpm()));
 //!
 //! // Simple oscillation between 0-1 over 4 beats
 //! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
@@ -41,7 +39,7 @@
 //!
 //! # Advanced Automation
 //!
-//! The [`Ani::automate`] method provides DAW-style automation curves with
+//! The [`Animation::automate`] method provides DAW-style automation curves with
 //! multiple breakpoint types and transition modes:
 //!
 //! ```rust
@@ -73,10 +71,6 @@
 //!     Mode::Loop
 //! );
 //! ```
-//!
-//! The module supports both one-shot and looping animations, with precise
-//! control over timing, transitions, and modulation. All animations
-//! automatically sync to the provided timing source's beat position.
 
 use nannou::math::map_range;
 use nannou::rand::rngs::StdRng;

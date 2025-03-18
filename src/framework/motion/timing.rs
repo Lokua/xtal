@@ -18,7 +18,7 @@
 //! This provides the most intuitive way to write animations that are in sync
 //! with music.
 //!
-//! [animation]: lattice::framework::animation
+//! [animation]: crate::framework::motion::animation
 
 use nannou_osc as osc;
 use std::{

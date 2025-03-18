@@ -5,7 +5,7 @@ import { latticeRoot } from './helpers.mjs'
 
 main()
 
-async function main() {
+function main() {
   try {
     const root = latticeRoot()
     const imagesDir = path.join(root, '/images')
