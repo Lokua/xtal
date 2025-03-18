@@ -4,7 +4,6 @@
 //! [`ControlHub`].
 use rustc_hash::FxHashMap;
 use std::fmt::{self, Debug};
-use std::ops::Index;
 
 use crate::framework::prelude::*;
 

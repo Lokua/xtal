@@ -116,6 +116,7 @@ pub enum AppEvent {
     QueueRecord,
     Record,
     Reset,
+    Resize,
     SaveControls,
     SendMidi,
     SetTransitionTime(f32),
@@ -313,6 +314,18 @@ impl AppModel {
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
                 self.alert_text = "Reset".into();
+            }
+            AppEvent::Resize => {
+                if let Some(window) = self.main_window(app) {
+                    let rect = window.rect();
+                    let window_rect = &mut self.ctx.window_rect();
+
+                    if rect.w() != window_rect.w()
+                        || rect.h() != window_rect.h()
+                    {
+                        window_rect.set_current(rect);
+                    }
+                }
             }
             AppEvent::SaveControls => {
                 let sketch_name = self.sketch_name();
@@ -716,15 +729,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.on_app_event(app, event);
     }
 
-    if let Some(window) = model.main_window(app) {
-        let rect = window.rect();
-        let cwr = &mut model.ctx.window_rect();
-
-        if rect.w() != cwr.w() || rect.h() != cwr.h() {
-            cwr.set_current(rect);
-        }
-    }
-
     frame_controller::wrapped_update(
         app,
         &mut model.sketch,
@@ -743,7 +747,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
 /// Shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
-    // We are likely to add other event handlers
     #[allow(clippy::single_match)]
     match event {
         Event::WindowEvent {
@@ -808,6 +811,15 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                     model.event_tx.send(AppEvent::CaptureFrame);
                 }
                 _ => {}
+            }
+        }
+        Event::WindowEvent {
+            id,
+            simple: Some(Resized(_)),
+            ..
+        } => {
+            if id == model.main_window_id {
+                model.event_tx.send(AppEvent::Resize);
             }
         }
         _ => {}

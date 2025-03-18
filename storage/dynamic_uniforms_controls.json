@@ -79,22 +79,27 @@
     {
       "type": "Slider",
       "name": "color_shift",
-      "value": 0.0
+      "value": 0.56
+    },
+    {
+      "type": "Slider",
+      "name": "color_steps",
+      "value": 4.0
     },
     {
       "type": "Slider",
       "name": "distance_mix",
-      "value": 0.145
+      "value": 0.225
     },
     {
       "type": "Slider",
       "name": "grain_size",
-      "value": 6.5
+      "value": 6.18
     },
     {
       "type": "Slider",
       "name": "angle_mult",
-      "value": 2.2
+      "value": 2.3799999
     }
   ],
   "midi_controls": [],
