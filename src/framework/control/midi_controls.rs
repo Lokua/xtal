@@ -3,7 +3,7 @@
 //! Sketches do not need to interact with this module directly - see
 //! [`ControlHub`].
 use nannou::math::map_range;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -39,15 +39,15 @@ type TimestampAndMsb = (u64, u8);
 
 #[derive(Debug, Default)]
 struct MidiState {
-    values: HashMap<String, f32>,
-    last: HashMap<ChannelAndControl, TimestampAndMsb>,
+    values: FxHashMap<String, f32>,
+    last: FxHashMap<ChannelAndControl, TimestampAndMsb>,
 }
 
 impl MidiState {
     fn new() -> Self {
         Self {
-            values: HashMap::new(),
-            last: HashMap::new(),
+            values: FxHashMap::default(),
+            last: FxHashMap::default(),
         }
     }
 
@@ -63,7 +63,7 @@ impl MidiState {
         self.values.contains_key(name)
     }
 
-    fn values(&self) -> HashMap<String, f32> {
+    fn values(&self) -> FxHashMap<String, f32> {
         self.values.clone()
     }
 
@@ -82,7 +82,7 @@ impl MidiState {
 
 #[derive(Clone, Debug)]
 pub struct MidiControls {
-    configs: HashMap<String, MidiControlConfig>,
+    configs: FxHashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,
     is_active: bool,
 }
@@ -90,7 +90,7 @@ pub struct MidiControls {
 impl Default for MidiControls {
     fn default() -> Self {
         Self {
-            configs: HashMap::new(),
+            configs: FxHashMap::default(),
             state: Arc::new(Mutex::new(MidiState::new())),
             is_active: false,
         }
@@ -123,25 +123,25 @@ impl MidiControls {
         self.state.lock().unwrap().set(name, value);
     }
 
-    pub fn values(&self) -> HashMap<String, f32> {
+    pub fn values(&self) -> FxHashMap<String, f32> {
         return self.state.lock().unwrap().values();
     }
 
     pub fn with_values_mut<F>(&self, f: F)
     where
-        F: FnOnce(&mut HashMap<String, f32>),
+        F: FnOnce(&mut FxHashMap<String, f32>),
     {
         let mut state = self.state.lock().unwrap();
         f(&mut state.values);
     }
 
-    pub fn configs(&self) -> HashMap<String, MidiControlConfig> {
+    pub fn configs(&self) -> FxHashMap<String, MidiControlConfig> {
         self.configs.clone()
     }
 
     fn configs_by_channel_and_cc(
         &self,
-    ) -> HashMap<ChannelAndControl, (String, MidiControlConfig)> {
+    ) -> FxHashMap<ChannelAndControl, (String, MidiControlConfig)> {
         self.configs()
             .iter()
             .map(|(name, config)| {

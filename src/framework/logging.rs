@@ -91,15 +91,15 @@ macro_rules! loud_panic {
 macro_rules! debug_throttled {
     ($interval_ms:expr, $($arg:tt)*) => {
         {
-            use std::collections::HashMap;
             use std::time::{Duration, Instant};
             use std::sync::Mutex;
+            use rustc_hash::FxHashMap;
             use log::debug;
 
             // Lazy initialization of throttle map
             lazy_static::lazy_static! {
-                static ref DEBUG_THROTTLE: Mutex<HashMap<&'static str, Instant>> =
-                    Mutex::new(HashMap::new());
+                static ref DEBUG_THROTTLE: Mutex<FxHashMap<&'static str, Instant>> =
+                    Mutex::new(FxHashMap::default());
             }
 
             // Throttle logic

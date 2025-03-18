@@ -4,7 +4,7 @@ use midir::MidiInput;
 use midir::MidiInputConnection;
 use midir::MidiOutput;
 use midir::MidiOutputConnection;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
@@ -14,8 +14,8 @@ use std::thread;
 use super::prelude::*;
 
 lazy_static! {
-    static ref THREADS: Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>> =
-        Mutex::new(HashMap::new());
+    static ref THREADS: Mutex<FxHashMap<ConnectionType, thread::JoinHandle<()>>> =
+        Mutex::new(FxHashMap::default());
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

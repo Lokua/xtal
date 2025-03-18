@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +23,7 @@ pub struct SerializableControls {
     pub osc_controls: Vec<BasicNameValueConfig>,
     // Backwards compat files that don't have snapshots field
     #[serde(default)]
-    pub snapshots: HashMap<String, SerializableSnapshot>,
+    pub snapshots: FxHashMap<String, SerializableSnapshot>,
 }
 
 #[derive(Serialize, Deserialize)]

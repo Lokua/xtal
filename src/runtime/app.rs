@@ -318,12 +318,10 @@ impl AppModel {
             AppEvent::Resize => {
                 if let Some(window) = self.main_window(app) {
                     let rect = window.rect();
-                    let window_rect = &mut self.ctx.window_rect();
+                    let wr = &mut self.ctx.window_rect();
 
-                    if rect.w() != window_rect.w()
-                        || rect.h() != window_rect.h()
-                    {
-                        window_rect.set_current(rect);
+                    if rect.w() != wr.w() || rect.h() != wr.h() {
+                        wr.set_current(rect);
                     }
                 }
             }

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -9,6 +8,7 @@ use nannou::{
     prelude::*,
     rand::{thread_rng, Rng},
 };
+use rustc_hash::FxHashMap;
 
 use super::prelude::*;
 
@@ -258,8 +258,8 @@ impl TrigonometricExt for f32 {
     }
 }
 
-pub fn trig_fn_lookup() -> HashMap<&'static str, fn(f32) -> f32> {
-    let mut map = HashMap::new();
+pub fn trig_fn_lookup() -> FxHashMap<&'static str, fn(f32) -> f32> {
+    let mut map = FxHashMap::default();
     map.insert("cos", f32::cos as fn(f32) -> f32);
     map.insert("sin", f32::sin as fn(f32) -> f32);
     map.insert("tan", f32::tan as fn(f32) -> f32);
