@@ -12,6 +12,7 @@
     "doctest",
     "Egui",
     "horiz",
+    "HRCC",
     "hyst",
     "kalos",
     "LIGHTGRAY",
@@ -20,6 +21,7 @@
     "midir",
     "minkowski",
     "msaa",
+    "msbs",
     "nocapture",
     "pmod",
     "randomsmooth",
@@ -37,6 +39,6 @@
     "Vortx",
     "walkdir"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation", "hi_res_cc"],
+  "rust-analyzer.cargo.features": ["instrumentation"],
   "rust-analyzer.check.command": "clippy"
 }

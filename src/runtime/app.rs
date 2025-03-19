@@ -2,12 +2,11 @@ use chrono::Utc;
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::{env, str};
 
 use super::prelude::*;
 use super::tap_tempo::TapTempo;
-use crate::config::MIDI_CONTROL_OUT_PORT;
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -110,6 +109,8 @@ pub enum AppEvent {
     AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
+    MapModeToggle,
+    MapModeSetCurrentlyMapping(String),
     MidiContinue,
     MidiStart,
     MidiStop,
@@ -126,6 +127,7 @@ pub enum AppEvent {
     Tap,
     ToggleFullScreen,
     ToggleGuiFocus,
+    ToggleHrcc,
     ToggleMainFocus,
     TogglePerfMode(bool),
     TogglePlay,
@@ -157,6 +159,41 @@ impl AppEventSender {
 
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 
+pub struct MapModeState {
+    mappings: HashMap<String, ChannelAndControl>,
+    /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
+    msb_ccs: Vec<ChannelAndControl>,
+}
+
+pub struct MapMode {
+    pub enabled: bool,
+    /// The name of the current slider that has been selected for live mapping
+    pub currently_mapping: Option<String>,
+    pub state: Arc<Mutex<MapModeState>>,
+}
+
+impl MapMode {
+    pub fn mapped(&self, name: &str) -> bool {
+        if let Ok(state) = self.state.lock() {
+            state.mappings.contains_key(name)
+        } else {
+            false
+        }
+    }
+
+    pub fn formatted_mapping(&self, name: &str) -> String {
+        if let Ok(state) = self.state.lock() {
+            state
+                .mappings
+                .get(name)
+                .map(|(ch, cc)| format!("{}/{}", ch, cc))
+                .unwrap_or_default()
+        } else {
+            "".to_string()
+        }
+    }
+}
+
 struct AppModel {
     main_window_id: window::Id,
     gui_window_id: window::Id,
@@ -177,6 +214,9 @@ struct AppModel {
     midi_out: Option<midi::MidiOut>,
     transition_time: f32,
     image_index: Option<storage::ImageIndex>,
+    map_mode: MapMode,
+    /// "High Resolution CC"
+    hrcc: bool,
 }
 
 impl AppModel {
@@ -195,6 +235,14 @@ impl AppModel {
     fn control_hub(&mut self) -> Option<&ControlHub<Timing>> {
         if let Some(provider) = self.sketch.controls() {
             provider.as_any().downcast_ref::<ControlHub<Timing>>()
+        } else {
+            None
+        }
+    }
+
+    fn control_hub_mut(&mut self) -> Option<&mut ControlHub<Timing>> {
+        if let Some(provider) = self.sketch.controls() {
+            provider.as_any_mut().downcast_mut::<ControlHub<Timing>>()
         } else {
             None
         }
@@ -248,11 +296,111 @@ impl AppModel {
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
             }
-            AppEvent::MidiStart | AppEvent::MidiContinue => {
-                info!(
-                    "Received MIDI Start/Continue message. \
-                    Resetting frame count."
+            AppEvent::MapModeToggle => {
+                self.map_mode.currently_mapping = None;
+                self.map_mode.enabled = !self.map_mode.enabled;
+
+                if self.map_mode.enabled {
+                    return;
+                }
+
+                let mappings = if let Ok(state) = self.map_mode.state.lock() {
+                    state
+                        .mappings
+                        .iter()
+                        .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
+                        .collect::<Vec<_>>()
+                } else {
+                    error!("Failed to acquire lock on mappings");
+                    return;
+                };
+
+                if let Some(hub) = self.control_hub_mut() {
+                    for (name, (ch, cc)) in mappings {
+                        let (min, max) = hub.ui_controls.slider_range(&name);
+                        hub.midi_controls.add(
+                            &format!("{}__proxy", name),
+                            MidiControlConfig::new((ch, cc), (min, max), 0.0),
+                        );
+                    }
+
+                    if let Err(e) = hub.midi_controls.restart() {
+                        error!("{}", e);
+                    }
+                }
+            }
+            AppEvent::MapModeSetCurrentlyMapping(name) => {
+                if let Ok(mut state) = self.map_mode.state.lock() {
+                    state.mappings.remove(&name);
+                    // TODO: remove from midi controls as well
+                }
+
+                let name = name.clone();
+                let state = self.map_mode.state.clone();
+                let hrcc = self.hrcc;
+
+                self.map_mode.currently_mapping = Some(name.clone());
+
+                let connection_result = midi::on_message(
+                    midi::ConnectionType::Mapping,
+                    crate::config::MIDI_CONTROL_IN_PORT,
+                    move |_, msg| {
+                        if msg.len() < 3 || !midi::is_control_change(msg[0]) {
+                            return;
+                        }
+
+                        let mut state = state.lock().unwrap();
+
+                        let status = msg[0];
+                        let ch = status & 0x0F;
+                        let cc = msg[1];
+
+                        // This is a standard 7bit message
+                        if !hrcc || cc > 63 {
+                            state.mappings.insert(name.clone(), (ch, cc));
+
+                            return;
+                        }
+
+                        // This is first of an MSB/LSB pair
+                        if cc < 32 {
+                            let key = (ch, cc);
+
+                            if state.msb_ccs.contains(&key) {
+                                warn!(
+                                    "Received consecutive MSB \
+                                    without matching LSB"
+                                );
+                            } else {
+                                state.msb_ccs.push(key);
+                            }
+
+                            return;
+                        }
+
+                        let msb_cc = cc - 32;
+                        let msb_key = (ch, msb_cc);
+
+                        // This is a regular 32-63 7bit message
+                        if !state.msb_ccs.contains(&msb_key) {
+                            state.mappings.insert(name.clone(), (ch, cc));
+
+                            return;
+                        }
+
+                        // This is the LSB of an MSB/LSB pair
+
+                        state.mappings.insert(name.clone(), msb_key);
+                        state.msb_ccs.retain(|k| *k != msb_key);
+                    },
                 );
+
+                if let Err(connection_result) = connection_result {
+                    error!("{}", connection_result);
+                }
+            }
+            AppEvent::MidiStart | AppEvent::MidiContinue => {
+                info!("Received MIDI Start/Continue. Resetting frame count.");
 
                 frame_controller::reset_frame_count();
 
@@ -274,14 +422,11 @@ impl AppModel {
                 if self.recording_state.is_recording
                     && !self.recording_state.is_encoding
                 {
-                    match self
+                    if let Err(e) = self
                         .recording_state
                         .stop_recording(self.sketch_config, &self.session_id)
                     {
-                        Ok(_) => {}
-                        Err(e) => {
-                            error!("Failed to stop recording: {}", e);
-                        }
+                        error!("Failed to stop recording: {}", e);
                     }
                 }
             }
@@ -346,25 +491,28 @@ impl AppModel {
                 }
             }
             AppEvent::SendMidi => {
-                if let Some(midi_out) = &mut self.midi_out {
-                    if let Some(provider) = self.sketch.controls() {
-                        if let Some(midi_controls) = provider.midi_controls() {
-                            for message in midi_controls.messages() {
-                                if let Err(e) = midi_out.send(&message) {
-                                    error!(
-                                        "Error sending MIDI message: {:?}; error: {}",
-                                        message,
-                                        e
-                                    );
-                                    break;
-                                }
-                            }
-                            self.alert_text = "MIDI sent".into();
-                        }
-                    }
-                } else {
+                let Some(midi_out) = &mut self.midi_out else {
                     warn!("Unable to send MIDI; no MIDI out connection");
+                    return;
+                };
+                let Some(provider) = self.sketch.controls() else {
+                    return;
+                };
+                let Some(midi_controls) = provider.midi_controls() else {
+                    return;
+                };
+
+                for message in midi_controls.messages() {
+                    if let Err(e) = midi_out.send(&message) {
+                        error!(
+                            "Error sending MIDI message: {:?}; error: {}",
+                            message, e
+                        );
+                        break;
+                    }
                 }
+
+                self.alert_text = "MIDI sent".into();
             }
             AppEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
@@ -426,6 +574,13 @@ impl AppModel {
             }
             AppEvent::ToggleGuiFocus => {
                 self.gui_window(app).unwrap().set_visible(true);
+            }
+            AppEvent::ToggleHrcc => {
+                let value = self.hrcc;
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_controls.hrcc = value;
+                    hub.midi_controls.restart().unwrap();
+                }
             }
             AppEvent::ToggleMainFocus => {
                 self.main_window(app).unwrap().set_visible(true);
@@ -662,7 +817,7 @@ fn model(app: &App) -> AppModel {
 
     let raw_bpm = bpm.get();
 
-    let mut midi = midi::MidiOut::new(MIDI_CONTROL_OUT_PORT);
+    let mut midi = midi::MidiOut::new(crate::config::MIDI_CONTROL_OUT_PORT);
     let midi_out = match midi.connect() {
         Ok(_) => Some(midi),
         Err(e) => {
@@ -695,6 +850,15 @@ fn model(app: &App) -> AppModel {
         ctx,
         transition_time: 4.0,
         image_index,
+        map_mode: MapMode {
+            enabled: false,
+            currently_mapping: None,
+            state: Arc::new(Mutex::new(MapModeState {
+                mappings: HashMap::default(),
+                msb_ccs: vec![],
+            })),
+        },
+        hrcc: false,
     };
 
     model.init_sketch_environment(app);
@@ -717,6 +881,8 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             &mut model.tap_tempo_enabled,
             bpm,
             model.transition_time,
+            &model.map_mode,
+            &mut model.hrcc,
             &mut model.recording_state,
             &model.event_tx,
             &ctx,
@@ -797,8 +963,12 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                     model.event_tx.send(AppEvent::ToggleGuiFocus);
                 }
                 // Cmd + M
-                Key::M if logo_pressed => {
+                Key::M if logo_pressed && !shift_pressed => {
                     model.event_tx.send(AppEvent::ToggleMainFocus);
+                }
+                // Cmd + Shift + M
+                Key::M if logo_pressed && shift_pressed => {
+                    model.event_tx.send(AppEvent::MapModeToggle);
                 }
                 // R
                 Key::R if has_no_modifiers => {

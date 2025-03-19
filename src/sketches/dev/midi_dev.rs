@@ -18,22 +18,25 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct MidiDev {
-    midi: MidiControls,
+    hub: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> MidiDev {
-    let midi = MidiControlBuilder::new()
-        .control_n("a", (0, 0), 0.5)
-        .control_n("b", (0, 1), 0.5)
-        .control_n("c", (0, 2), 0.5)
-        .control_n("d", (0, 127), 0.5)
+pub fn init(_app: &App, ctx: &LatticeContext) -> MidiDev {
+    let hub = ControlHubBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .hrcc(true)
+        .midi_n("a", (0, 0))
+        .midi_n("b", (0, 32))
+        .midi_n("c", (0, 2))
+        .midi_n("d", (0, 127))
         .build();
 
-    MidiDev { midi }
+    MidiDev { hub }
 }
 
 impl Sketch for MidiDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        self.hub.update();
         // debug!("{}", self.midi.get("a"));
     }
 
@@ -52,24 +55,24 @@ impl Sketch for MidiDev {
         draw.rect().color(CYAN).w_h(width, 10.0).x_y(
             //
             -wr.hw() + pad,
-            -wr.hh() + self.midi.get("a") * wr.h(),
+            -wr.hh() + self.hub.get("a") * wr.h(),
         );
 
         draw.rect().color(TURQUOISE).w_h(width, 10.0).x_y(
             -wr.hh() + pad + wr.qw(),
-            -wr.hh() + self.midi.get("b") * wr.h(),
+            -wr.hh() + self.hub.get("b") * wr.h(),
         );
 
         draw.rect().color(LIGHTSTEELBLUE).w_h(width, 10.0).x_y(
             //
             wr.qw() - pad,
-            -wr.hh() + self.midi.get("c") * wr.h(),
+            -wr.hh() + self.hub.get("c") * wr.h(),
         );
 
         draw.rect().color(CORNFLOWERBLUE).w_h(width, 10.0).x_y(
             //
             wr.hh() - pad,
-            -wr.hh() + self.midi.get("d") * wr.h(),
+            -wr.hh() + self.hub.get("d") * wr.h(),
         );
 
         draw.to_frame(app, &frame).unwrap();

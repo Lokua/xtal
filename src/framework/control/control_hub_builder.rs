@@ -146,6 +146,11 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         self.midi(name, midi, (0.0, 1.0), 0.0)
     }
 
+    pub fn hrcc(mut self, hrcc: bool) -> Self {
+        self.ensure_midi_controls().hrcc = hrcc;
+        self
+    }
+
     pub fn osc_controls(mut self, osc_controls: OscControls) -> Self {
         self.osc_controls = Some(osc_controls);
         self
