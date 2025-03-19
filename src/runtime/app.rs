@@ -3,6 +3,7 @@ use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
 use std::sync::{mpsc, Arc, Mutex};
+use std::time::Instant;
 use std::{env, str};
 
 use super::prelude::*;
@@ -127,6 +128,7 @@ pub enum AppEvent {
     Tap,
     ToggleFullScreen,
     ToggleGuiFocus,
+    ToggleHrcc,
     ToggleMainFocus,
     TogglePerfMode(bool),
     TogglePlay,
@@ -158,25 +160,32 @@ impl AppEventSender {
 
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 
+pub struct MapModeState {
+    mappings: HashMap<String, ChannelAndControl>,
+    msbs: HashMap<ChannelAndControl, Instant>,
+}
+
 pub struct MapMode {
     pub enabled: bool,
     /// The name of the current slider that has been selected for live mapping
     pub currently_mapping: Option<String>,
-    pub mappings: Arc<Mutex<HashMap<String, ChannelAndControl>>>,
+    pub state: Arc<Mutex<MapModeState>>,
 }
 
 impl MapMode {
     pub fn mapped(&self, name: &str) -> bool {
-        if let Ok(map) = self.mappings.lock() {
-            map.contains_key(name)
+        if let Ok(state) = self.state.lock() {
+            state.mappings.contains_key(name)
         } else {
             false
         }
     }
 
     pub fn formatted_mapping(&self, name: &str) -> String {
-        if let Ok(map) = self.mappings.lock() {
-            map.get(name)
+        if let Ok(state) = self.state.lock() {
+            state
+                .mappings
+                .get(name)
                 .map(|(ch, cc)| format!("{}/{}", ch, cc))
                 .unwrap_or_default()
         } else {
@@ -206,6 +215,8 @@ struct AppModel {
     transition_time: f32,
     image_index: Option<storage::ImageIndex>,
     map_mode: MapMode,
+    /// "High Resolution CC"
+    hrcc: bool,
 }
 
 impl AppModel {
@@ -293,8 +304,10 @@ impl AppModel {
                     return;
                 }
 
-                let mappings = if let Ok(map) = self.map_mode.mappings.lock() {
-                    map.iter()
+                let mappings = if let Ok(state) = self.map_mode.state.lock() {
+                    state
+                        .mappings
+                        .iter()
                         .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
                         .collect::<Vec<_>>()
                 } else {
@@ -303,18 +316,11 @@ impl AppModel {
                 };
 
                 if let Some(hub) = self.control_hub_mut() {
-                    for (k, (ch, cc)) in mappings {
+                    for (name, (ch, cc)) in mappings {
+                        let (min, max) = hub.ui_controls.slider_range(&name);
                         hub.midi_controls.add(
-                            &format!("{}__proxy", k),
-                            MidiControlConfig {
-                                channel: ch,
-                                cc,
-                                // TODO: grab range from slider
-                                min: 0.0,
-                                max: 1.0,
-                                // TODO: grab default from slider
-                                default: 0.0,
-                            },
+                            &format!("{}__proxy", name),
+                            MidiControlConfig::new((ch, cc), (min, max), 0.0),
                         );
                     }
 
@@ -324,31 +330,70 @@ impl AppModel {
                 }
             }
             AppEvent::MapModeSetCurrentlyMapping(name) => {
-                if let Ok(mut map) = self.map_mode.mappings.lock() {
-                    map.remove(&name);
+                if let Ok(mut state) = self.map_mode.state.lock() {
+                    state.mappings.remove(&name);
                     // TODO: remove from midi controls as well
                 }
 
-                let name_clone = name.clone();
-                let map = self.map_mode.mappings.clone();
-                self.map_mode.currently_mapping = Some(name);
+                let name = name.clone();
+                let state = self.map_mode.state.clone();
+                let hrcc = self.hrcc;
+
+                self.map_mode.currently_mapping = Some(name.clone());
 
                 let connection_result = midi::on_message(
                     midi::ConnectionType::Mapping,
                     crate::config::MIDI_CONTROL_IN_PORT,
-                    // FIXME: we need to account for hi-res-cc
                     move |_, msg| {
                         if msg.len() < 3 || !midi::is_control_change(msg[0]) {
                             return;
                         }
 
-                        let ch = msg[0] & 0x0F;
+                        let mut state = state.lock().unwrap();
+
+                        let status = msg[0];
+                        let ch = status & 0x0F;
                         let cc = msg[1];
 
-                        if let Ok(mut map) = map.lock() {
-                            map.insert(name_clone.clone(), (ch, cc));
-                        } else {
-                            error!("Failed to acquire lock");
+                        // This is a standard 7bit message
+                        if !hrcc || cc > 63 {
+                            state.mappings.insert(name.clone(), (ch, cc));
+
+                            return;
+                        }
+
+                        // This is first of an MSB/LSB pair
+                        if cc < 32 {
+                            let key = (ch, cc);
+                            if state.msbs.contains_key(&key) {
+                                warn!(
+                                    "Received consecutive MSB \
+                                    without matching LSB"
+                                );
+                            }
+                            state.msbs.insert(key, Instant::now());
+
+                            return;
+                        }
+
+                        let msb_cc = cc - 32;
+                        let key = (ch, msb_cc);
+
+                        // This is the LSB
+                        if let Some(ts) = state.msbs.get(&key) {
+                            let difference = (Instant::now() - *ts).as_millis();
+
+                            if difference < 5 {
+                                state.mappings.insert(name.clone(), key);
+                            } else {
+                                warn!(
+                                    "Timeout for MSB/LSB pair. \
+                                    Difference (ms): {}",
+                                    difference
+                                );
+                            }
+
+                            state.msbs.remove(&key);
                         }
                     },
                 );
@@ -532,6 +577,13 @@ impl AppModel {
             }
             AppEvent::ToggleGuiFocus => {
                 self.gui_window(app).unwrap().set_visible(true);
+            }
+            AppEvent::ToggleHrcc => {
+                let value = self.hrcc;
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_controls.hrcc = value;
+                    hub.midi_controls.restart().unwrap();
+                }
             }
             AppEvent::ToggleMainFocus => {
                 self.main_window(app).unwrap().set_visible(true);
@@ -804,8 +856,12 @@ fn model(app: &App) -> AppModel {
         map_mode: MapMode {
             enabled: false,
             currently_mapping: None,
-            mappings: Arc::new(Mutex::new(HashMap::default())),
+            state: Arc::new(Mutex::new(MapModeState {
+                mappings: HashMap::default(),
+                msbs: HashMap::default(),
+            })),
         },
+        hrcc: false,
     };
 
     model.init_sketch_environment(app);
@@ -829,6 +885,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             bpm,
             model.transition_time,
             &model.map_mode,
+            &mut model.hrcc,
             &mut model.recording_state,
             &model.event_tx,
             &ctx,

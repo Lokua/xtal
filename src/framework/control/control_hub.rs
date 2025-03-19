@@ -146,11 +146,6 @@ impl<T: TimingSource> ControlHub<T> {
             None => name,
         };
 
-        let midi_proxy_name = format!("{}__proxy", name);
-        if self.midi_controls.has(&midi_proxy_name) {
-            name = &midi_proxy_name;
-        }
-
         if let Some(transition) = &self.active_transition {
             if let Some((from, to)) = transition.values.get(name) {
                 return self.get_tweened(
@@ -161,6 +156,11 @@ impl<T: TimingSource> ControlHub<T> {
                     transition.end_frame,
                 );
             }
+        }
+
+        let midi_proxy_name = format!("{}__proxy", name);
+        if self.midi_controls.has(&midi_proxy_name) {
+            name = &midi_proxy_name;
         }
 
         if let Some(Some(bypass)) = self.bypassed.get(name) {
@@ -302,6 +302,13 @@ impl<T: TimingSource> ControlHub<T> {
         } else if self.osc_controls.has(name) {
             Some(self.osc_controls.get(name))
         } else if self.midi_controls.has(name) {
+            if name == "wave_dist__proxy" {
+                debug_throttled!(
+                    500,
+                    "wave_dist__proxy: {}",
+                    self.midi_controls.get(name)
+                );
+            }
             Some(self.midi_controls.get(name))
         } else if self.audio_controls.has(name) {
             Some(self.audio_controls.get(name))
@@ -595,7 +602,6 @@ impl<T: TimingSource> ControlHub<T> {
     pub fn add_controls(&mut self, configs: Vec<Control>) {
         self.ui_controls.extend(configs);
     }
-
     pub fn float(&self, name: &str) -> f32 {
         self.get(name)
     }

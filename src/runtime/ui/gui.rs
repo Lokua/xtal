@@ -23,6 +23,7 @@ pub fn update(
     bpm: f32,
     transition_time: f32,
     midi_map_mode: &app::MapMode,
+    hrcc: &mut bool,
     recording_state: &mut RecordingState,
     event_tx: &app::AppEventSender,
     ctx: &egui::Context,
@@ -97,7 +98,13 @@ pub fn update(
 
             if let Some(controls) = controls {
                 if midi_map_mode.enabled {
-                    draw_midi_map_mode(ui, controls, midi_map_mode, event_tx);
+                    draw_midi_map_mode(
+                        ui,
+                        controls,
+                        hrcc,
+                        midi_map_mode,
+                        event_tx,
+                    );
                 } else {
                     draw_sketch_controls(ui, controls);
                 }
@@ -376,9 +383,18 @@ fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
 fn draw_midi_map_mode(
     ui: &mut egui::Ui,
     controls: &mut UiControls,
+    hrcc: &mut bool,
     map_mode: &app::MapMode,
     event_tx: &app::AppEventSender,
 ) {
+    ui.horizontal(|ui| {
+        if ui.checkbox(hrcc, "HRCC").clicked() {
+            event_tx.send(app::AppEvent::ToggleHrcc);
+        }
+    });
+
+    ui.separator();
+
     egui::Grid::new("midi_map_grid")
         .num_columns(2)
         .spacing([4.0, 4.0])

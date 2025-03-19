@@ -34,7 +34,7 @@ impl MidiControlConfig {
 }
 
 pub type ChannelAndControl = (u8, u8);
-type TimestampAndMsb = (u64, u8);
+pub type TimestampAndMsb = (u64, u8);
 
 #[derive(Debug, Default)]
 struct MidiState {
@@ -81,6 +81,8 @@ impl MidiState {
 
 #[derive(Clone, Debug)]
 pub struct MidiControls {
+    /// "High Resolution CC" AKA 14bit MIDI control change for CCs 0-31
+    pub hrcc: bool,
     configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<MidiState>>,
     is_active: bool,
@@ -92,6 +94,7 @@ impl Default for MidiControls {
             configs: HashMap::default(),
             state: Arc::new(Mutex::new(MidiState::new())),
             is_active: false,
+            hrcc: false,
         }
     }
 }
@@ -152,15 +155,42 @@ impl MidiControls {
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
+        let hrcc = self.hrcc;
 
         trace!("config_lookup: {:#?}", config_lookup);
 
         match midi::on_message(
             midi::ConnectionType::Control,
             crate::config::MIDI_CONTROL_IN_PORT,
-            #[cfg(feature = "hi_res_cc")]
+            // TODO: refactor - this is pretty hard to follow
             move |this_ts, message| {
                 if message.len() < 3 || !is_control_change(message[0]) {
+                    return;
+                }
+
+                if !hrcc {
+                    let status = message[0];
+                    let channel = status & 0x0F;
+                    let cc = message[1];
+                    let value = message[2] as f32 / 127.0;
+
+                    if let Some((name, config)) =
+                        config_lookup.get(&(channel, cc))
+                    {
+                        let mapped_value =
+                            value * (config.max - config.min) + config.min;
+
+                        trace!(
+                            "Msg ch: {}, cc: {}, v: {}, mapped: {}",
+                            channel,
+                            cc,
+                            message[2],
+                            mapped_value
+                        );
+
+                        state.lock().unwrap().set(name, mapped_value);
+                    }
+
                     return;
                 }
 
@@ -232,7 +262,7 @@ impl MidiControls {
 
                     // FIXME: We actually don't know what time units are
                     // being used. Windows may be using millis; CoreMIDI
-                    // uses micros...
+                    // uses micros. Solution: use our own timestamps.
                     if difference > Duration::from_millis(5) {
                         let (name, config) =
                             config_lookup.get(&(channel, msb_cc)).unwrap();
@@ -262,33 +292,6 @@ impl MidiControls {
                     }
                 } else {
                     trace!("?");
-                }
-            },
-            #[cfg(not(feature = "hi_res_cc"))]
-            move |_stamp, message| {
-                if message.len() < 3 || !is_control_change(message[0]) {
-                    return;
-                }
-
-                let status = message[0];
-                let channel = status & 0x0F;
-                let cc = message[1];
-                let value = message[2] as f32 / 127.0;
-
-                if let Some((name, config)) = config_lookup.get(&(channel, cc))
-                {
-                    let mapped_value =
-                        value * (config.max - config.min) + config.min;
-
-                    trace!(
-                        "Msg ch: {}, cc: {}, v: {}, mapped: {}",
-                        channel,
-                        cc,
-                        message[2],
-                        mapped_value
-                    );
-
-                    state.lock().unwrap().set(name, mapped_value);
                 }
             },
         ) {

@@ -19,17 +19,17 @@
     {
       "type": "Checkbox",
       "name": "link_axes",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
       "name": "wave_x_freq",
-      "value": 24.199999
+      "value": 77.0
     },
     {
       "type": "Slider",
       "name": "wave_y_freq",
-      "value": 92.0
+      "value": 5.7
     },
     {
       "type": "Select",
@@ -49,17 +49,17 @@
     {
       "type": "Slider",
       "name": "color_amt",
-      "value": 0.5
+      "value": 0.41
     },
     {
       "type": "Slider",
       "name": "color_freq",
-      "value": 1.4699999
+      "value": 1.75
     },
     {
       "type": "Slider",
       "name": "color_phase",
-      "value": 2.29
+      "value": 3.9699998
     },
     {
       "type": "Slider",
@@ -69,17 +69,17 @@
     {
       "type": "Slider",
       "name": "g_amp",
-      "value": 0.63699996
+      "value": 0.89699996
     },
     {
       "type": "Slider",
       "name": "b_amp",
-      "value": 0.198
+      "value": 0.19
     },
     {
       "type": "Slider",
       "name": "color_shift",
-      "value": 0.56
+      "value": 4.0699997
     },
     {
       "type": "Slider",
@@ -89,17 +89,17 @@
     {
       "type": "Slider",
       "name": "distance_mix",
-      "value": 0.225
+      "value": 0.24499999
     },
     {
       "type": "Slider",
       "name": "grain_size",
-      "value": 6.18
+      "value": 6.5499997
     },
     {
       "type": "Slider",
       "name": "angle_mult",
-      "value": 2.3799999
+      "value": 3.25
     }
   ],
   "midi_controls": [],

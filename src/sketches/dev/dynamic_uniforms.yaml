@@ -88,12 +88,12 @@ color_amt:
 color_freq:
   var: c2
   type: slider
-  range: [0, 10]
+  range: [0, 20]
 
 color_phase:
   var: c3
   type: slider
-  range: [0, 5]
+  range: [0, *TAU]
 
 r_amp:
   var: c4

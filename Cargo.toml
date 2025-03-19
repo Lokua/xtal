@@ -10,10 +10,8 @@ default-run = "lattice"
 doctest = false
 
 [features]
-default = ["hi_res_cc"]
-# default = []
+default = []
 instrumentation = []
-hi_res_cc = []
 
 # clean with:
 #   rm -rf target/incremental

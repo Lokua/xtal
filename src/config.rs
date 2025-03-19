@@ -21,8 +21,9 @@ pub const CV_DEVICE_SAMPLE_RATE: usize = 48_000;
 pub const MIDI_CLOCK_PORT: &str = "IAC Driver Lattice In";
 
 /// The name of the MIDI device/port that will be used for parameter control
-pub const MIDI_CONTROL_IN_PORT: &str = "IAC Driver Lattice In";
-pub const MIDI_CONTROL_OUT_PORT: &str = "IAC Driver Lattice In";
-
+pub const MIDI_CONTROL_IN_PORT: &str = "Faderfox EC4";
+pub const MIDI_CONTROL_OUT_PORT: &str = "Faderfox EC4";
+// pub const MIDI_CONTROL_IN_PORT: &str = "IAC Driver Lattice In";
+// pub const MIDI_CONTROL_OUT_PORT: &str = "IAC Driver Lattice In";
 // pub const MIDI_CONTROL_IN_PORT: &str = "MFT Midi Fighter Twister";
 // pub const MIDI_CONTROL_OUT_PORT: &str = "MFT Midi Fighter Twister";
