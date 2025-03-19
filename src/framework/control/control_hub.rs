@@ -299,19 +299,11 @@ impl<T: TimingSource> ControlHub<T> {
             }
         }
 
-        // Fixme: just try to get instead of has then get
         let value = if self.ui_controls.has(name) {
             Some(self.ui_controls.get(name))
         } else if self.osc_controls.has(name) {
             Some(self.osc_controls.get(name))
         } else if self.midi_controls.has(name) {
-            if name == "wave_dist__proxy" {
-                debug_throttled!(
-                    500,
-                    "wave_dist__proxy: {}",
-                    self.midi_controls.get(name)
-                );
-            }
             Some(self.midi_controls.get(name))
         } else if self.audio_controls.has(name) {
             Some(self.audio_controls.get(name))
@@ -379,15 +371,17 @@ impl<T: TimingSource> ControlHub<T> {
             None
         };
 
-        if value.is_some() {
-            let value = value.unwrap();
-            if is_dep {
-                self.eval_cache.store(name, current_frame, value);
+        match value {
+            Some(value) => {
+                if is_dep {
+                    self.eval_cache.store(name, current_frame, value);
+                }
+                value
             }
-            value
-        } else {
-            warn_once!("No control named {}. Defaulting to 0.0", name);
-            0.0
+            None => {
+                warn_once!("No control named {}. Defaulting to 0.0", name);
+                0.0
+            }
         }
     }
 
