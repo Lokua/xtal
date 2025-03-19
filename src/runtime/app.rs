@@ -3,7 +3,6 @@ use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::Instant;
 use std::{env, str};
 
 use super::prelude::*;
@@ -162,7 +161,8 @@ pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 
 pub struct MapModeState {
     mappings: HashMap<String, ChannelAndControl>,
-    msbs: HashMap<ChannelAndControl, Instant>,
+    /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
+    msb_ccs: Vec<ChannelAndControl>,
 }
 
 pub struct MapMode {
@@ -365,36 +365,33 @@ impl AppModel {
                         // This is first of an MSB/LSB pair
                         if cc < 32 {
                             let key = (ch, cc);
-                            if state.msbs.contains_key(&key) {
+
+                            if state.msb_ccs.contains(&key) {
                                 warn!(
                                     "Received consecutive MSB \
                                     without matching LSB"
                                 );
+                            } else {
+                                state.msb_ccs.push(key);
                             }
-                            state.msbs.insert(key, Instant::now());
 
                             return;
                         }
 
                         let msb_cc = cc - 32;
-                        let key = (ch, msb_cc);
+                        let msb_key = (ch, msb_cc);
 
-                        // This is the LSB
-                        if let Some(ts) = state.msbs.get(&key) {
-                            let difference = (Instant::now() - *ts).as_millis();
+                        // This is a regular 32-63 7bit message
+                        if !state.msb_ccs.contains(&msb_key) {
+                            state.mappings.insert(name.clone(), (ch, cc));
 
-                            if difference < 5 {
-                                state.mappings.insert(name.clone(), key);
-                            } else {
-                                warn!(
-                                    "Timeout for MSB/LSB pair. \
-                                    Difference (ms): {}",
-                                    difference
-                                );
-                            }
-
-                            state.msbs.remove(&key);
+                            return;
                         }
+
+                        // This is the LSB of an MSB/LSB pair
+
+                        state.mappings.insert(name.clone(), msb_key);
+                        state.msb_ccs.retain(|k| *k != msb_key);
                     },
                 );
 
@@ -858,7 +855,7 @@ fn model(app: &App) -> AppModel {
             currently_mapping: None,
             state: Arc::new(Mutex::new(MapModeState {
                 mappings: HashMap::default(),
-                msbs: HashMap::default(),
+                msb_ccs: vec![],
             })),
         },
         hrcc: false,

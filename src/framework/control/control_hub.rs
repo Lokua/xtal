@@ -39,8 +39,7 @@ struct UpdateState {
     state: Arc<Mutex<Option<ConfigFile>>>,
 
     /// Optimization to speed up checking for changes vs having to acquire a
-    /// lock on the above state mutex (~1-5 ns vs ~25-100 ns uncontended or
-    /// 1_000 ns contented)
+    /// lock on the above state mutex
     has_changes: Arc<AtomicBool>,
 }
 
@@ -55,8 +54,8 @@ pub type Snapshots = HashMap<String, ControlValues>;
 
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
-    pub ui_controls: UiControls,
     pub animation: Animation<T>,
+    pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
@@ -64,6 +63,10 @@ pub struct ControlHub<T: TimingSource> {
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
+
+    /// Used to allow `get` to be called with the name used in a YAML `var`
+    /// field. See ./docs/control_script_reference.md **Using `var`** section
+    /// for more info.
     aliases: HashMap<String, String>,
     bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
@@ -622,6 +625,9 @@ impl<T: TimingSource> ControlHub<T> {
     }
     pub fn mark_unchanged(&mut self) {
         self.ui_controls.mark_unchanged();
+    }
+    pub fn hrcc(&mut self, hrcc: bool) {
+        self.midi_controls.hrcc = hrcc;
     }
 
     fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {

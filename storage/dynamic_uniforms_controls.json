@@ -102,7 +102,12 @@
       "value": 3.25
     }
   ],
-  "midi_controls": [],
+  "midi_controls": [
+    {
+      "name": "wave_dist__proxy",
+      "value": 30.604897
+    }
+  ],
   "osc_controls": [],
   "snapshots": {}
 }
