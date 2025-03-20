@@ -1,10 +1,15 @@
 use nannou_egui::egui;
 
 use crate::framework::prelude::*;
+use crate::runtime::prelude::MapMode;
 
 use super::theme::DISABLED_OPACITY;
 
-pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
+pub fn draw_controls(
+    ui: &mut egui::Ui,
+    controls: &mut UiControls,
+    map_mode: &MapMode,
+) -> bool {
     let mut any_changed = false;
     let mut updates = Vec::new();
 
@@ -19,16 +24,22 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
                 step,
                 ..
             } => {
+                let has_mapping = map_mode.has(name);
+                let is_disabled = is_disabled || has_mapping;
                 let mut value = controls.float(name);
-                if ui
-                    .add_enabled(
-                        !is_disabled,
-                        egui::Slider::new(&mut value, *min..=*max)
-                            .text(name)
-                            .step_by((*step).into()),
-                    )
-                    .changed()
-                {
+
+                let slider = ui.add_enabled(
+                    !is_disabled,
+                    egui::Slider::new(&mut value, *min..=*max)
+                        .text(ternary!(
+                            has_mapping,
+                            format!("*{}*", name),
+                            name.to_string()
+                        ))
+                        .step_by((*step).into()),
+                );
+
+                if slider.changed() {
                     updates.push((name.clone(), ControlValue::Float(value)));
                     any_changed = true;
                 }
@@ -50,7 +61,6 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
                 let mut value = controls.string(name);
                 let name_clone = name.clone();
 
-                // Create a disabled frame that wraps the entire ComboBox
                 egui::Frame::none()
                     .multiply_with_opacity(ternary!(
                         is_disabled,
@@ -80,14 +90,6 @@ pub fn draw_controls(controls: &mut UiControls, ui: &mut egui::Ui) -> bool {
                                 }
                             });
                     });
-            }
-            Control::Button { name, .. } => {
-                if ui
-                    .add_enabled(!is_disabled, egui::Button::new(name))
-                    .clicked()
-                {
-                    // Handle click
-                }
             }
             Control::Separator {} | Control::DynamicSeparator { .. } => {
                 ui.separator();

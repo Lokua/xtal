@@ -2,12 +2,10 @@ use chrono::Utc;
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
-use std::error::Error;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::mpsc;
 use std::{env, str};
 
 use super::prelude::*;
-use super::tap_tempo::TapTempo;
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -110,7 +108,6 @@ pub enum AppEvent {
     AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
-    MapModeToggle,
     MapModeSetCurrentlyMapping(String),
     MidiContinue,
     MidiStart,
@@ -133,6 +130,7 @@ pub enum AppEvent {
     TogglePerfMode(bool),
     TogglePlay,
     ToggleTapTempo(bool),
+    ToggleViewMidi,
 }
 
 #[derive(Clone)]
@@ -159,128 +157,6 @@ impl AppEventSender {
 }
 
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
-
-pub struct MapModeState {
-    mappings: HashMap<String, ChannelAndControl>,
-    /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
-    msb_ccs: Vec<ChannelAndControl>,
-}
-
-pub struct MapMode {
-    pub enabled: bool,
-    /// The name of the current slider that has been selected for live mapping
-    pub currently_mapping: Option<String>,
-    pub state: Arc<Mutex<MapModeState>>,
-}
-
-impl MapMode {
-    pub fn mapped(&self, name: &str) -> bool {
-        if let Ok(state) = self.state.lock() {
-            state.mappings.contains_key(name)
-        } else {
-            false
-        }
-    }
-
-    pub fn formatted_mapping(&self, name: &str) -> String {
-        if let Ok(state) = self.state.lock() {
-            state
-                .mappings
-                .get(name)
-                .map(|(ch, cc)| format!("{}/{}", ch, cc))
-                .unwrap_or_default()
-        } else {
-            "".to_string()
-        }
-    }
-
-    pub fn proxy_name(name: &str) -> String {
-        format!("{}__slider_proxy", name)
-    }
-
-    fn mappings_as_vec(&self) -> Vec<(String, ChannelAndControl)> {
-        if let Ok(state) = self.state.lock() {
-            state
-                .mappings
-                .iter()
-                .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
-                .collect::<Vec<_>>()
-        } else {
-            error!("Failed to acquire lock on mappings");
-            vec![]
-        }
-    }
-
-    fn remove(&mut self, name: &str) {
-        if let Ok(mut state) = self.state.lock() {
-            state.mappings.remove(name);
-        }
-    }
-
-    fn listen_for_midi(
-        &self,
-        name: &str,
-        hrcc: bool,
-    ) -> Result<(), Box<dyn Error>> {
-        let state = self.state.clone();
-        let name = name.to_owned();
-
-        midi::on_message(
-            midi::ConnectionType::Mapping,
-            crate::config::MIDI_CONTROL_IN_PORT,
-            move |_, msg| {
-                if msg.len() < 3 || !midi::is_control_change(msg[0]) {
-                    return;
-                }
-
-                let mut state = state.lock().unwrap();
-
-                let status = msg[0];
-                let ch = status & 0x0F;
-                let cc = msg[1];
-
-                // This is a standard 7bit message
-                if !hrcc || cc > 63 {
-                    state.mappings.insert(name.clone(), (ch, cc));
-
-                    return;
-                }
-
-                // This is first of an MSB/LSB pair
-                if cc < 32 {
-                    let key = (ch, cc);
-
-                    if state.msb_ccs.contains(&key) {
-                        warn!(
-                            "Received consecutive MSB \
-                            without matching LSB"
-                        );
-                    } else {
-                        state.msb_ccs.push(key);
-                    }
-
-                    return;
-                }
-
-                let msb_cc = cc - 32;
-                let msb_key = (ch, msb_cc);
-
-                // This is a regular 32-63 7bit message
-                if !state.msb_ccs.contains(&msb_key) {
-                    state.mappings.insert(name.clone(), (ch, cc));
-
-                    return;
-                }
-
-                // This is the LSB of an MSB/LSB pair
-
-                state.mappings.insert(name.clone(), msb_key);
-                state.msb_ccs.retain(|k| *k != msb_key);
-            },
-        )
-    }
-}
-
 struct AppModel {
     main_window_id: window::Id,
     gui_window_id: window::Id,
@@ -304,6 +180,7 @@ struct AppModel {
     map_mode: MapMode,
     /// "High Resolution CC"
     hrcc: bool,
+    view_midi: bool,
 }
 
 impl AppModel {
@@ -382,32 +259,6 @@ impl AppModel {
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
-            }
-            AppEvent::MapModeToggle => {
-                self.map_mode.currently_mapping = None;
-                self.map_mode.enabled = !self.map_mode.enabled;
-
-                if self.map_mode.enabled {
-                    return;
-                }
-
-                let mappings = self.map_mode.mappings_as_vec();
-                let hub = self.control_hub_mut().unwrap();
-
-                for (name, (ch, cc)) in mappings {
-                    hub.midi_controls.add(
-                        &MapMode::proxy_name(&name),
-                        MidiControlConfig::new(
-                            (ch, cc),
-                            hub.ui_controls.slider_range(&name),
-                            0.0,
-                        ),
-                    );
-                }
-
-                if let Err(e) = hub.midi_controls.restart() {
-                    error!("{}", e);
-                }
             }
             AppEvent::MapModeSetCurrentlyMapping(name) => {
                 self.map_mode.remove(&name);
@@ -630,6 +481,32 @@ impl AppModel {
                     "Tap tempo disabled. Sketch BPM has been restored."
                 )
                 .into();
+            }
+            AppEvent::ToggleViewMidi => {
+                self.view_midi = !self.view_midi;
+
+                if self.view_midi || self.control_hub().is_none() {
+                    return;
+                }
+
+                self.map_mode.currently_mapping = None;
+                let mappings = self.map_mode.mappings_as_vec();
+                let hub = self.control_hub_mut().unwrap();
+
+                for (name, (ch, cc)) in mappings {
+                    hub.midi_controls.add(
+                        &MapMode::proxy_name(&name),
+                        MidiControlConfig::new(
+                            (ch, cc),
+                            hub.ui_controls.slider_range(&name),
+                            0.0,
+                        ),
+                    );
+                }
+
+                if let Err(e) = hub.midi_controls.restart() {
+                    error!("{}", e);
+                }
             }
         }
     }
@@ -875,14 +752,8 @@ fn model(app: &App) -> AppModel {
         ctx,
         transition_time: 4.0,
         image_index,
-        map_mode: MapMode {
-            enabled: false,
-            currently_mapping: None,
-            state: Arc::new(Mutex::new(MapModeState {
-                mappings: HashMap::default(),
-                msb_ccs: vec![],
-            })),
-        },
+        view_midi: false,
+        map_mode: MapMode::default(),
         hrcc: false,
     };
 
@@ -906,6 +777,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
             &mut model.tap_tempo_enabled,
             bpm,
             model.transition_time,
+            &model.view_midi,
             &model.map_mode,
             &mut model.hrcc,
             &mut model.recording_state,
@@ -993,7 +865,7 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 }
                 // Cmd + Shift + M
                 Key::M if logo_pressed && shift_pressed => {
-                    model.event_tx.send(AppEvent::MapModeToggle);
+                    model.event_tx.send(AppEvent::ToggleViewMidi);
                 }
                 // R
                 Key::R if has_no_modifiers => {

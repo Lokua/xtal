@@ -104,8 +104,8 @@
   ],
   "midi_controls": [
     {
-      "name": "wave_dist__proxy",
-      "value": 30.604897
+      "name": "angle_mult__slider_proxy",
+      "value": 7.244095
     }
   ],
   "osc_controls": [],

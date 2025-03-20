@@ -22,7 +22,8 @@ pub fn update(
     tap_tempo: &mut bool,
     bpm: f32,
     transition_time: f32,
-    midi_map_mode: &app::MapMode,
+    view_midi: &bool,
+    map_mode: &MapMode,
     hrcc: &mut bool,
     recording_state: &mut RecordingState,
     event_tx: &app::AppEventSender,
@@ -89,25 +90,17 @@ pub fn update(
                     event_tx,
                 );
                 ui.separator();
-                draw_send_midi_button(ui, event_tx);
-                ui.separator();
                 draw_save_controls_button(ui, controls.is_none(), event_tx);
+                ui.separator();
+                draw_view_midi_button(ui, event_tx);
             });
 
             ui.separator();
 
-            if let Some(controls) = controls {
-                if midi_map_mode.enabled {
-                    draw_midi_map_mode(
-                        ui,
-                        controls,
-                        hrcc,
-                        midi_map_mode,
-                        event_tx,
-                    );
-                } else {
-                    draw_sketch_controls(ui, controls);
-                }
+            if *view_midi {
+                draw_midi_pane(ui, controls, hrcc, map_mode, event_tx);
+            } else if let Some(controls) = controls {
+                draw_sketch_controls(ui, controls, map_mode);
             }
 
             draw_alert_panel(ctx, alert_text);
@@ -331,12 +324,6 @@ fn draw_transition_time_selector(
         });
 }
 
-fn draw_send_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
-    ui.add(egui::Button::new("MIDI")).clicked().then(|| {
-        event_tx.send(app::AppEvent::SendMidi);
-    });
-}
-
 fn draw_save_controls_button(
     ui: &mut egui::Ui,
     is_disabled: bool,
@@ -347,6 +334,20 @@ fn draw_save_controls_button(
         .then(|| {
             event_tx.send(app::AppEvent::SaveControls);
         });
+}
+
+fn draw_view_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
+    ui.add(egui::Button::new("MIDI")).clicked().then(|| {
+        event_tx.send(app::AppEvent::ToggleViewMidi);
+    });
+}
+
+fn draw_sketch_controls(
+    ui: &mut egui::Ui,
+    controls: &mut UiControls,
+    map_mode: &MapMode,
+) {
+    controls_adapter::draw_controls(ui, controls, map_mode);
 }
 
 fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
@@ -380,20 +381,29 @@ fn draw_alert_panel(ctx: &egui::Context, alert_text: &str) {
         });
 }
 
-fn draw_midi_map_mode(
+fn draw_midi_pane(
     ui: &mut egui::Ui,
-    controls: &mut UiControls,
+    controls: Option<&mut UiControls>,
     hrcc: &mut bool,
-    map_mode: &app::MapMode,
+    map_mode: &MapMode,
     event_tx: &app::AppEventSender,
 ) {
     ui.horizontal(|ui| {
         if ui.checkbox(hrcc, "HRCC").clicked() {
             event_tx.send(app::AppEvent::ToggleHrcc);
         }
+        ui.separator();
+        draw_send_midi_button(ui, event_tx);
     });
 
     ui.separator();
+
+    let controls = match controls {
+        Some(c) => c,
+        None => {
+            return;
+        }
+    };
 
     egui::Grid::new("midi_map_grid")
         .num_columns(2)
@@ -444,6 +454,8 @@ fn draw_midi_map_mode(
         });
 }
 
-fn draw_sketch_controls(ui: &mut egui::Ui, controls: &mut UiControls) {
-    controls_adapter::draw_controls(controls, ui);
+fn draw_send_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
+    ui.add(egui::Button::new("Send")).clicked().then(|| {
+        event_tx.send(app::AppEvent::SendMidi);
+    });
 }

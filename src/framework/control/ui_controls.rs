@@ -77,10 +77,6 @@ pub enum Control {
         options: Vec<String>,
         disabled: DisabledFn,
     },
-    Button {
-        name: String,
-        disabled: DisabledFn,
-    },
     Separator {},
     DynamicSeparator {
         name: String,
@@ -93,7 +89,6 @@ impl Control {
             Control::Slider { name, .. } => name,
             Control::Checkbox { name, .. } => name,
             Control::Select { name, .. } => name,
-            Control::Button { name, .. } => name,
             Control::Separator {} => "",
             Control::DynamicSeparator { name } => name,
         }
@@ -106,7 +101,6 @@ impl Control {
             Control::Select { value, .. } => {
                 ControlValue::String(value.clone())
             }
-            Control::Button { .. } => ControlValue::Bool(false),
             Control::Separator { .. } => ControlValue::Bool(false),
             Control::DynamicSeparator { .. } => ControlValue::Bool(false),
         }
@@ -218,7 +212,6 @@ impl Control {
     pub fn is_disabled(&self, controls: &UiControls) -> bool {
         match self {
             Control::Slider { disabled, .. }
-            | Control::Button { disabled, .. }
             | Control::Checkbox { disabled, .. }
             | Control::Select { disabled, .. } => {
                 disabled.as_ref().is_some_and(|f| f(controls))
@@ -229,7 +222,6 @@ impl Control {
 
     pub fn variant_string(&self) -> String {
         (match self {
-            Self::Button { .. } => "Button",
             Self::Checkbox { .. } => "Checkbox",
             Self::DynamicSeparator { .. } => "DynamicSeparator",
             Self::Select { .. } => "Select",
@@ -282,10 +274,6 @@ impl Clone for Control {
                 options: options.clone(),
                 disabled: None,
             },
-            Control::Button { name, disabled: _ } => Control::Button {
-                name: name.clone(),
-                disabled: None,
-            },
             Control::Separator {} => Control::Separator {},
             Control::DynamicSeparator { name } => {
                 Control::DynamicSeparator { name: name.clone() }
@@ -328,9 +316,6 @@ impl fmt::Debug for Control {
                 .field("value", value)
                 .field("options", options)
                 .finish(),
-            Control::Button { name, .. } => {
-                f.debug_struct("Button").field("name", name).finish()
-            }
             Control::Separator {} => f.debug_struct("Separator").finish(),
             Control::DynamicSeparator { name, .. } => f
                 .debug_struct("DynamicSeparator")
@@ -578,13 +563,6 @@ impl UiControlBuilder {
         self
     }
 
-    pub fn button(self, name: &str, disabled: DisabledFn) -> Self {
-        self.control(Control::Button {
-            name: name.to_string(),
-            disabled,
-        })
-    }
-
     pub fn checkbox(
         self,
         name: &str,
@@ -667,8 +645,14 @@ struct ChangeTracker {
     previous_values: ControlValues,
 }
 
+impl Default for ChangeTracker {
+    fn default() -> Self {
+        Self::new(false)
+    }
+}
+
 impl ChangeTracker {
-    pub fn new(save_previous: bool) -> Self {
+    fn new(save_previous: bool) -> Self {
         Self {
             changed: true,
             save_previous,
@@ -676,16 +660,12 @@ impl ChangeTracker {
         }
     }
 
-    pub fn changed(&self) -> bool {
+    fn changed(&self) -> bool {
         self.check_can_save_previous();
         self.changed
     }
 
-    pub fn any_changed_in(
-        &self,
-        names: &[&str],
-        values: &ControlValues,
-    ) -> bool {
+    fn any_changed_in(&self, names: &[&str], values: &ControlValues) -> bool {
         self.check_can_save_previous();
 
         if self.previous_values.is_empty() {
@@ -715,13 +695,13 @@ impl ChangeTracker {
         false
     }
 
-    pub fn mark_unchanged(&mut self, latest_values: &ControlValues) {
+    fn mark_unchanged(&mut self, latest_values: &ControlValues) {
         self.check_can_save_previous();
         self.changed = false;
         self.previous_values = latest_values.clone();
     }
 
-    pub fn mark_changed(&mut self) {
+    fn mark_changed(&mut self) {
         self.changed = true;
     }
 
@@ -733,12 +713,6 @@ impl ChangeTracker {
                 "
             );
         }
-    }
-}
-
-impl Default for ChangeTracker {
-    fn default() -> Self {
-        Self::new(false)
     }
 }
 

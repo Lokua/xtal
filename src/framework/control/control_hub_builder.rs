@@ -49,13 +49,6 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         self
     }
 
-    pub fn button(self, name: &str, disabled: DisabledFn) -> Self {
-        self.ui(Control::Button {
-            name: name.to_string(),
-            disabled,
-        })
-    }
-
     pub fn checkbox(
         self,
         name: &str,

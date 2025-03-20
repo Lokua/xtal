@@ -16,16 +16,17 @@ use std::{
 };
 use yaml_merge_keys::merge_keys_serde_yml;
 
-use crate::framework::{frame_controller, prelude::*};
-
-#[cfg(feature = "instrumentation")]
-use crate::framework::instrumentation::Instrumentation;
-
 use super::{
     config::*,
     dep_graph::{DepGraph, Node},
     eval_cache::EvalCache,
     param_mod::{FromColdParams, ParamValue, SetFromParam},
+};
+#[cfg(feature = "instrumentation")]
+use crate::framework::instrumentation::Instrumentation;
+use crate::{
+    framework::{frame_controller, prelude::*},
+    runtime::prelude::MapMode,
 };
 
 pub const TRANSITION_TIMES: [f32; 15] = [
@@ -161,7 +162,7 @@ impl<T: TimingSource> ControlHub<T> {
             }
         }
 
-        let midi_proxy_name = format!("{}__proxy", name);
+        let midi_proxy_name = MapMode::proxy_name(name);
         if self.midi_controls.has(&midi_proxy_name) {
             name = &midi_proxy_name;
         }
