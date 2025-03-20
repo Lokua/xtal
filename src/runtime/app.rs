@@ -9,7 +9,7 @@ use super::map_mode::MapMode;
 use super::recording::{frames_dir, RecordingState};
 use super::registry::REGISTRY;
 use super::shared::lattice_project_root;
-use super::storage;
+use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
 use crate::framework::{frame_controller, prelude::*};
@@ -123,7 +123,7 @@ pub enum AppEvent {
     Record,
     Reset,
     Resize,
-    SaveControls,
+    SaveProgramState,
     SendMidi,
     SetTransitionTime(f32),
     SnapshotRecall(String),
@@ -353,10 +353,11 @@ impl AppModel {
                     }
                 }
             }
-            AppEvent::SaveControls => {
+            AppEvent::SaveProgramState => {
                 let sketch_name = self.sketch_name();
-                match storage::save_controls(
+                match storage::save_program_state(
                     sketch_name.as_str(),
+                    self.hrcc,
                     self.control_hub().unwrap(),
                 ) {
                     Ok(path_buf) => {
@@ -619,37 +620,35 @@ impl AppModel {
             frame_controller::set_paused(true);
         }
 
-        self.load_controls();
+        self.load_program_state();
     }
 
-    fn load_controls(&mut self) {
+    fn load_program_state(&mut self) {
         let event_tx = self.event_tx.clone();
+        let sketch_name = self.sketch_name();
 
-        if let Some(provider) = self.sketch.controls() {
-            match provider.load_controls(self.sketch_config.name) {
-                Some(Ok(())) => {
-                    if let Some(hub) = self.control_hub() {
-                        if hub.snapshots.is_empty() {
-                            event_tx.alert_and_log(
-                                "Controls restored",
-                                log::Level::Info,
-                            );
-                        } else {
-                            event_tx.alert_and_log(
-                                format!(
-                                    "Controls restored. Available snapshots: {:?}",
-                                    hub.snapshot_keys_sorted()
-                                ),
-                                log::Level::Info
-                            );
-                        }
+        if let Some(hub) = self.control_hub_mut() {
+            match load_program_state(&sketch_name, hub) {
+                Ok(()) => {
+                    if hub.snapshots.is_empty() {
+                        event_tx.alert_and_log(
+                            "Controls restored",
+                            log::Level::Info,
+                        );
+                    } else {
+                        event_tx.alert_and_log(
+                            format!(
+                                "Controls restored. Available snapshots: {:?}",
+                                hub.snapshot_keys_sorted()
+                            ),
+                            log::Level::Info,
+                        );
                     }
                 }
-                Some(Err(e)) => {
+                Err(e) => {
                     warn!("Unable to restore controls: {}", e)
                 }
-                None => warn!("Unable to restore controls"),
-            };
+            }
         }
     }
 }

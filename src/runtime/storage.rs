@@ -4,10 +4,9 @@ use std::{fs, str};
 
 use serde::{Deserialize, Serialize};
 
-use super::serialization::{ConcreteControls, SerializableControls};
+use super::serialization::{SaveableProgramState, SerializableProgramState};
 use super::shared::{lattice_config_dir, lattice_project_root};
 use crate::framework::prelude::*;
-use crate::runtime::storage;
 
 /// When false will use the appropriate OS config dir; when true will store
 /// within the Lattice project's controls_cache folder for easy source control.
@@ -29,18 +28,21 @@ fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
     })
 }
 
-pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
+pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
+    hrcc: bool,
     hub: &ControlHub<T>,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    let concrete_controls = ConcreteControls {
+    let concrete_controls = SaveableProgramState {
+        hrcc,
         ui_controls: hub.ui_controls.clone(),
         midi_controls: hub.midi_controls.clone(),
         osc_controls: hub.osc_controls.clone(),
         snapshots: hub.snapshots.clone(),
     };
 
-    let serializable_controls = SerializableControls::from(&concrete_controls);
+    let serializable_controls =
+        SerializableProgramState::from(&concrete_controls);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine the configuration directory")?;
@@ -51,17 +53,9 @@ pub fn save_controls<T: TimingSource + std::fmt::Debug + 'static>(
     Ok(path)
 }
 
-impl<T: TimingSource + std::fmt::Debug + 'static> ControlHub<T> {
-    pub fn load_from_storage(
-        &mut self,
-        sketch_name: &str,
-    ) -> Result<(), Box<dyn Error>> {
-        storage::load_controls::<T>(sketch_name, self)
-    }
-}
-
-pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
+pub fn load_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
+    // hrcc: &mut bool,
     hub: &mut ControlHub<T>,
 ) -> Result<(), Box<dyn Error>> {
     let path = controls_storage_path(sketch_name)
@@ -69,31 +63,34 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
 
-    let sc = serde_json::from_str::<SerializableControls>(&json)?;
+    let serialized = serde_json::from_str::<SerializableProgramState>(&json)?;
 
-    let mut concrete_controls = ConcreteControls {
+    let mut state = SaveableProgramState {
+        // Temporary value...
+        hrcc: false,
         ui_controls: hub.ui_controls.clone(),
         midi_controls: hub.midi_controls.clone(),
         osc_controls: hub.osc_controls.clone(),
         snapshots: hub.snapshots.clone(),
     };
 
-    ConcreteControls::merge_serializable_values((sc, &mut concrete_controls));
+    state.merge(serialized);
 
-    concrete_controls
-        .ui_controls
+    // *hrcc = state.hrcc;
+
+    state.ui_controls.values().iter().for_each(|(name, value)| {
+        hub.ui_controls.update_value(name, value.clone());
+    });
+
+    state
+        .midi_controls
         .values()
         .iter()
         .for_each(|(name, value)| {
-            hub.ui_controls.update_value(name, value.clone());
+            hub.midi_controls.update_value(name, *value);
         });
 
-    concrete_controls.midi_controls.values().iter().for_each(
-        |(name, value)| {
-            hub.midi_controls.update_value(name, *value);
-        },
-    );
-    concrete_controls
+    state
         .osc_controls
         .values()
         .iter()
@@ -101,7 +98,7 @@ pub fn load_controls<T: TimingSource + std::fmt::Debug + 'static>(
             hub.osc_controls.update_value(name, *value);
         });
 
-    for (name, snapshot) in concrete_controls.snapshots {
+    for (name, snapshot) in state.snapshots {
         hub.snapshots.insert(name, snapshot);
     }
 

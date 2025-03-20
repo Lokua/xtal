@@ -5,24 +5,33 @@ use crate::framework::prelude::*;
 
 pub const VERSION: &str = "1.1";
 
-pub struct ConcreteControls {
+/// Everything needed to recall a patch
+#[derive(Serialize, Deserialize)]
+pub struct SerializableProgramState {
+    pub version: String,
+    #[serde(default)]
+    pub hrcc: bool,
+
+    // Backwards compat files before "ui_controls" rename
+    #[serde(rename = "ui_controls", alias = "controls")]
+    pub ui_controls: Vec<ControlConfig>,
+
+    pub midi_controls: Vec<BasicNameValueConfig>,
+    pub osc_controls: Vec<BasicNameValueConfig>,
+
+    // Backwards compat files that don't have snapshots field
+    #[serde(default)]
+    pub snapshots: HashMap<String, SerializableSnapshot>,
+}
+
+/// Intermediary structure used to transfer program state to and from
+/// serialization/transformation methods
+pub struct SaveableProgramState {
+    pub hrcc: bool,
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct SerializableControls {
-    version: String,
-    // Backwards compat
-    #[serde(rename = "ui_controls", alias = "controls")]
-    pub ui_controls: Vec<ControlConfig>,
-    pub midi_controls: Vec<BasicNameValueConfig>,
-    pub osc_controls: Vec<BasicNameValueConfig>,
-    // Backwards compat files that don't have snapshots field
-    #[serde(default)]
-    pub snapshots: HashMap<String, SerializableSnapshot>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -95,9 +104,9 @@ mod control_value_format {
     }
 }
 
-impl From<&ConcreteControls> for SerializableControls {
-    fn from(concretes: &ConcreteControls) -> Self {
-        let controls = concretes
+impl From<&SaveableProgramState> for SerializableProgramState {
+    fn from(state: &SaveableProgramState) -> Self {
+        let controls = state
             .ui_controls
             .configs()
             .iter()
@@ -105,7 +114,7 @@ impl From<&ConcreteControls> for SerializableControls {
                 if c.is_separator() {
                     None
                 } else {
-                    let value = concretes.ui_controls.values().get(c.name());
+                    let value = state.ui_controls.values().get(c.name());
                     Some(ControlConfig {
                         kind: c.variant_string(),
                         name: c.name().to_string(),
@@ -115,7 +124,7 @@ impl From<&ConcreteControls> for SerializableControls {
             })
             .collect();
 
-        let midi_controls = concretes
+        let midi_controls = state
             .midi_controls
             .values()
             .iter()
@@ -125,7 +134,7 @@ impl From<&ConcreteControls> for SerializableControls {
             })
             .collect();
 
-        let osc_controls = concretes
+        let osc_controls = state
             .osc_controls
             .values()
             .iter()
@@ -135,19 +144,17 @@ impl From<&ConcreteControls> for SerializableControls {
             })
             .collect();
 
-        let snapshots = concretes
+        let snapshots = state
             .snapshots
             .iter()
             .map(|(name, snapshot)| {
-                (
-                    name.clone(),
-                    create_serializable_snapshot(concretes, snapshot),
-                )
+                (name.clone(), create_serializable_snapshot(state, snapshot))
             })
             .collect();
 
         Self {
             version: VERSION.to_string(),
+            hrcc: state.hrcc,
             ui_controls: controls,
             midi_controls,
             osc_controls,
@@ -157,12 +164,12 @@ impl From<&ConcreteControls> for SerializableControls {
 }
 
 fn create_serializable_snapshot(
-    concretes: &ConcreteControls,
+    state: &SaveableProgramState,
     snapshot: &HashMap<String, ControlValue>,
 ) -> SerializableSnapshot {
     let mut controls = Vec::new();
     for (name, value) in snapshot {
-        if let Some(config) = concretes.ui_controls.config(name) {
+        if let Some(config) = state.ui_controls.config(name) {
             controls.push(ControlConfig {
                 kind: config.variant_string(),
                 name: name.clone(),
@@ -173,7 +180,7 @@ fn create_serializable_snapshot(
 
     let mut midi_controls = Vec::new();
     for (name, value) in snapshot {
-        if concretes.midi_controls.has(name) {
+        if state.midi_controls.has(name) {
             midi_controls.push(BasicNameValueConfig {
                 name: name.clone(),
                 value: value.as_float().unwrap(),
@@ -183,7 +190,7 @@ fn create_serializable_snapshot(
 
     let mut osc_controls = Vec::new();
     for (name, value) in snapshot {
-        if concretes.osc_controls.has(name) {
+        if state.osc_controls.has(name) {
             osc_controls.push(BasicNameValueConfig {
                 name: name.clone(),
                 value: value.as_float().unwrap(),
@@ -198,19 +205,16 @@ fn create_serializable_snapshot(
     }
 }
 
-impl ConcreteControls {
-    pub fn merge_serializable_values(
-        (serializable_controls, concrete_controls): (
-            SerializableControls,
-            &mut ConcreteControls,
-        ),
-    ) -> &mut ConcreteControls {
-        concrete_controls
-            .ui_controls
+impl SaveableProgramState {
+    /// Merge incoming serialized data into self
+    pub fn merge(&mut self, serializable_state: SerializableProgramState) {
+        self.hrcc = serializable_state.hrcc;
+
+        self.ui_controls
             .values_mut()
             .iter_mut()
             .for_each(|(name, value)| {
-                let s = serializable_controls
+                let s = serializable_state
                     .ui_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -221,9 +225,9 @@ impl ConcreteControls {
                 }
             });
 
-        concrete_controls.midi_controls.with_values_mut(|values| {
+        self.midi_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
-                let s = serializable_controls
+                let s = serializable_state
                     .midi_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -235,9 +239,9 @@ impl ConcreteControls {
             });
         });
 
-        concrete_controls.osc_controls.with_values_mut(|values| {
+        self.osc_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
-                let s = serializable_controls
+                let s = serializable_state
                     .osc_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -249,10 +253,10 @@ impl ConcreteControls {
             });
         });
 
-        concrete_controls.snapshots.clear();
+        self.snapshots.clear();
 
         for (snapshot_name, serializable_snapshot) in
-            serializable_controls.snapshots
+            serializable_state.snapshots
         {
             let mut snapshot_values = HashMap::default();
 
@@ -275,11 +279,7 @@ impl ConcreteControls {
                 );
             }
 
-            concrete_controls
-                .snapshots
-                .insert(snapshot_name, snapshot_values);
+            self.snapshots.insert(snapshot_name, snapshot_values);
         }
-
-        concrete_controls
     }
 }

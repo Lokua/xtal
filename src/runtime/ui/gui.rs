@@ -335,7 +335,7 @@ fn draw_save_controls_button(
     ui.add_enabled(!is_disabled, egui::Button::new("Save"))
         .clicked()
         .then(|| {
-            event_tx.send(app::AppEvent::SaveControls);
+            event_tx.send(app::AppEvent::SaveProgramState);
         });
 }
 

@@ -1,8 +1,6 @@
 use std::any::Any;
-use std::error::Error;
 
 use crate::framework::prelude::*;
-use crate::runtime::storage::load_controls;
 
 /// Type erasure trait that enables object-safe access to generic
 /// `ControlHub<T>` instances. This enables boxed sketches to expose their
@@ -25,39 +23,6 @@ pub trait ControlProvider {
     fn set_transition_time(&mut self, transition_time: f32);
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
-
-    fn load_controls(
-        &mut self,
-        sketch_name: &str,
-    ) -> Option<Result<(), Box<dyn Error>>> {
-        let cs = self.as_any_mut();
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<Timing>>() {
-            return Some(load_controls::<Timing>(sketch_name, c));
-        }
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<FrameTiming>>() {
-            return Some(load_controls::<FrameTiming>(sketch_name, c));
-        }
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<OscTransportTiming>>() {
-            return Some(load_controls::<OscTransportTiming>(sketch_name, c));
-        }
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<MidiSongTiming>>() {
-            return Some(load_controls::<MidiSongTiming>(sketch_name, c));
-        }
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<HybridTiming>>() {
-            return Some(load_controls::<HybridTiming>(sketch_name, c));
-        }
-
-        if let Some(c) = cs.downcast_mut::<ControlHub<ManualTiming>>() {
-            return Some(load_controls::<ManualTiming>(sketch_name, c));
-        }
-
-        None
-    }
 }
 
 impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
