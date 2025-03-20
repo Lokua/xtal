@@ -2,6 +2,7 @@ use chrono::Utc;
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
+use std::error::Error;
 use std::sync::{mpsc, Arc, Mutex};
 use std::{env, str};
 
@@ -192,6 +193,92 @@ impl MapMode {
             "".to_string()
         }
     }
+
+    pub fn proxy_name(name: &str) -> String {
+        format!("{}__slider_proxy", name)
+    }
+
+    fn mappings_as_vec(&self) -> Vec<(String, ChannelAndControl)> {
+        if let Ok(state) = self.state.lock() {
+            state
+                .mappings
+                .iter()
+                .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
+                .collect::<Vec<_>>()
+        } else {
+            error!("Failed to acquire lock on mappings");
+            vec![]
+        }
+    }
+
+    fn remove(&mut self, name: &str) {
+        if let Ok(mut state) = self.state.lock() {
+            state.mappings.remove(name);
+        }
+    }
+
+    fn listen_for_midi(
+        &self,
+        name: &str,
+        hrcc: bool,
+    ) -> Result<(), Box<dyn Error>> {
+        let state = self.state.clone();
+        let name = name.to_owned();
+
+        midi::on_message(
+            midi::ConnectionType::Mapping,
+            crate::config::MIDI_CONTROL_IN_PORT,
+            move |_, msg| {
+                if msg.len() < 3 || !midi::is_control_change(msg[0]) {
+                    return;
+                }
+
+                let mut state = state.lock().unwrap();
+
+                let status = msg[0];
+                let ch = status & 0x0F;
+                let cc = msg[1];
+
+                // This is a standard 7bit message
+                if !hrcc || cc > 63 {
+                    state.mappings.insert(name.clone(), (ch, cc));
+
+                    return;
+                }
+
+                // This is first of an MSB/LSB pair
+                if cc < 32 {
+                    let key = (ch, cc);
+
+                    if state.msb_ccs.contains(&key) {
+                        warn!(
+                            "Received consecutive MSB \
+                            without matching LSB"
+                        );
+                    } else {
+                        state.msb_ccs.push(key);
+                    }
+
+                    return;
+                }
+
+                let msb_cc = cc - 32;
+                let msb_key = (ch, msb_cc);
+
+                // This is a regular 32-63 7bit message
+                if !state.msb_ccs.contains(&msb_key) {
+                    state.mappings.insert(name.clone(), (ch, cc));
+
+                    return;
+                }
+
+                // This is the LSB of an MSB/LSB pair
+
+                state.mappings.insert(name.clone(), msb_key);
+                state.msb_ccs.retain(|k| *k != msb_key);
+            },
+        )
+    }
 }
 
 struct AppModel {
@@ -304,98 +391,36 @@ impl AppModel {
                     return;
                 }
 
-                let mappings = if let Ok(state) = self.map_mode.state.lock() {
-                    state
-                        .mappings
-                        .iter()
-                        .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
-                        .collect::<Vec<_>>()
-                } else {
-                    error!("Failed to acquire lock on mappings");
-                    return;
-                };
+                let mappings = self.map_mode.mappings_as_vec();
+                let hub = self.control_hub_mut().unwrap();
 
-                if let Some(hub) = self.control_hub_mut() {
-                    for (name, (ch, cc)) in mappings {
-                        let (min, max) = hub.ui_controls.slider_range(&name);
-                        hub.midi_controls.add(
-                            &format!("{}__proxy", name),
-                            MidiControlConfig::new((ch, cc), (min, max), 0.0),
-                        );
-                    }
+                for (name, (ch, cc)) in mappings {
+                    hub.midi_controls.add(
+                        &MapMode::proxy_name(&name),
+                        MidiControlConfig::new(
+                            (ch, cc),
+                            hub.ui_controls.slider_range(&name),
+                            0.0,
+                        ),
+                    );
+                }
 
-                    if let Err(e) = hub.midi_controls.restart() {
-                        error!("{}", e);
-                    }
+                if let Err(e) = hub.midi_controls.restart() {
+                    error!("{}", e);
                 }
             }
             AppEvent::MapModeSetCurrentlyMapping(name) => {
-                if let Ok(mut state) = self.map_mode.state.lock() {
-                    state.mappings.remove(&name);
-                    // TODO: remove from midi controls as well
-                }
-
-                let name = name.clone();
-                let state = self.map_mode.state.clone();
-                let hrcc = self.hrcc;
+                self.map_mode.remove(&name);
+                self.control_hub_mut()
+                    .unwrap()
+                    .midi_controls
+                    .remove(&MapMode::proxy_name(&name));
 
                 self.map_mode.currently_mapping = Some(name.clone());
 
-                let connection_result = midi::on_message(
-                    midi::ConnectionType::Mapping,
-                    crate::config::MIDI_CONTROL_IN_PORT,
-                    move |_, msg| {
-                        if msg.len() < 3 || !midi::is_control_change(msg[0]) {
-                            return;
-                        }
-
-                        let mut state = state.lock().unwrap();
-
-                        let status = msg[0];
-                        let ch = status & 0x0F;
-                        let cc = msg[1];
-
-                        // This is a standard 7bit message
-                        if !hrcc || cc > 63 {
-                            state.mappings.insert(name.clone(), (ch, cc));
-
-                            return;
-                        }
-
-                        // This is first of an MSB/LSB pair
-                        if cc < 32 {
-                            let key = (ch, cc);
-
-                            if state.msb_ccs.contains(&key) {
-                                warn!(
-                                    "Received consecutive MSB \
-                                    without matching LSB"
-                                );
-                            } else {
-                                state.msb_ccs.push(key);
-                            }
-
-                            return;
-                        }
-
-                        let msb_cc = cc - 32;
-                        let msb_key = (ch, msb_cc);
-
-                        // This is a regular 32-63 7bit message
-                        if !state.msb_ccs.contains(&msb_key) {
-                            state.mappings.insert(name.clone(), (ch, cc));
-
-                            return;
-                        }
-
-                        // This is the LSB of an MSB/LSB pair
-
-                        state.mappings.insert(name.clone(), msb_key);
-                        state.msb_ccs.retain(|k| *k != msb_key);
-                    },
-                );
-
-                if let Err(connection_result) = connection_result {
+                if let Err(connection_result) =
+                    self.map_mode.listen_for_midi(&name, self.hrcc)
+                {
                     error!("{}", connection_result);
                 }
             }

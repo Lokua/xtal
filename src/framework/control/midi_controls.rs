@@ -61,6 +61,10 @@ impl MidiState {
         self.values.contains_key(name)
     }
 
+    fn remove(&mut self, name: &str) {
+        self.values.remove(name);
+    }
+
     fn values(&self) -> HashMap<String, f32> {
         self.values.clone()
     }
@@ -118,6 +122,11 @@ impl MidiControls {
 
     pub fn has(&self, name: &str) -> bool {
         self.state.lock().unwrap().has(name)
+    }
+
+    pub fn remove(&mut self, name: &str) {
+        self.state.lock().unwrap().remove(name);
+        self.configs.remove(name);
     }
 
     pub fn update_value(&mut self, name: &str, value: f32) {
@@ -190,6 +199,7 @@ impl MidiControls {
                     return;
                 }
 
+                // This is the first on an MSB/LSB pair
                 if cc < 32 {
                     if !config_lookup.contains_key(&ch_cc) {
                         return;
