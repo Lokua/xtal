@@ -3,6 +3,7 @@ pub mod map_mode;
 pub mod prelude;
 pub mod recording;
 pub mod registry;
+pub mod serialization;
 pub mod shared;
 pub mod storage;
 pub mod tap_tempo;

@@ -11,7 +11,6 @@ mod eval_cache;
 pub mod midi_controls;
 pub mod osc_controls;
 mod param_mod;
-pub mod serialization;
 pub mod ui_controls;
 
 pub use audio_controls::*;
@@ -20,5 +19,4 @@ pub use control_hub_builder::ControlHubBuilder;
 pub use control_provider::*;
 pub use midi_controls::*;
 pub use osc_controls::*;
-pub use serialization::*;
 pub use ui_controls::*;

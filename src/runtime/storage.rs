@@ -5,9 +5,7 @@ use std::{fs, str};
 use serde::{Deserialize, Serialize};
 
 use super::prelude::*;
-use crate::framework::control::serialization::{
-    ConcreteControls, SerializableControls,
-};
+use super::serialization::{ConcreteControls, SerializableControls};
 use crate::framework::prelude::*;
 
 /// When false will use the appropriate OS config dir; when true will store

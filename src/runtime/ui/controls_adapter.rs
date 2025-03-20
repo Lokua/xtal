@@ -46,13 +46,13 @@ pub fn draw_controls(
             }
             Control::Checkbox { name, .. } => {
                 let mut value = controls.bool(name);
-                if ui
-                    .add_enabled(
-                        !is_disabled,
-                        egui::Checkbox::new(&mut value, name),
-                    )
-                    .changed()
-                {
+
+                let checkbox = ui.add_enabled(
+                    !is_disabled,
+                    egui::Checkbox::new(&mut value, name),
+                );
+
+                if checkbox.changed() {
                     updates.push((name.clone(), ControlValue::Bool(value)));
                     any_changed = true;
                 }
@@ -73,14 +73,13 @@ pub fn draw_controls(
                             .selected_text(&value)
                             .show_ui(ui, |ui| {
                                 for option in options {
-                                    if ui
-                                        .selectable_value(
-                                            &mut value,
-                                            option.clone(),
-                                            option,
-                                        )
-                                        .changed()
-                                    {
+                                    let selectable_value = ui.selectable_value(
+                                        &mut value,
+                                        option.clone(),
+                                        option,
+                                    );
+
+                                    if selectable_value.changed() {
                                         updates.push((
                                             name_clone.clone(),
                                             ControlValue::String(value.clone()),
