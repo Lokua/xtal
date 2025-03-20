@@ -10,8 +10,8 @@ use std::{
     time::Instant,
 };
 
-use super::prelude::*;
-use crate::framework::prelude::*;
+use super::{app, shared::lattice_config_dir};
+use crate::{framework::prelude::*, runtime::shared::generate_session_id};
 
 #[derive(Default)]
 pub struct RecordingState {

@@ -2,10 +2,13 @@ use arboard::Clipboard;
 use nannou_egui::egui;
 use std::str;
 
-use super::theme::DISABLED_OPACITY;
+use super::controls_adapter;
+use super::theme::{self, DISABLED_OPACITY};
 use crate::framework::{frame_controller, prelude::*};
 use crate::runtime::app;
-use crate::runtime::prelude::*;
+use crate::runtime::map_mode::MapMode;
+use crate::runtime::recording::RecordingState;
+use crate::runtime::registry::REGISTRY;
 
 pub const GUI_WIDTH: u32 = 538;
 

@@ -5,8 +5,15 @@ use std::cell::{Cell, Ref, RefCell};
 use std::sync::mpsc;
 use std::{env, str};
 
-use super::prelude::*;
+use super::map_mode::MapMode;
+use super::recording::{frames_dir, RecordingState};
+use super::registry::REGISTRY;
+use super::shared::lattice_project_root;
+use super::storage;
+use super::tap_tempo::TapTempo;
+use super::ui::gui;
 use crate::framework::{frame_controller, prelude::*};
+use crate::register_sketches;
 
 pub fn run() {
     init_logger();

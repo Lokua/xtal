@@ -1,9 +1,8 @@
 use nannou_egui::egui;
 
-use crate::framework::prelude::*;
-use crate::runtime::prelude::MapMode;
-
 use super::theme::DISABLED_OPACITY;
+use crate::framework::prelude::*;
+use crate::runtime::map_mode::MapMode;
 
 pub fn draw_controls(
     ui: &mut egui::Ui,

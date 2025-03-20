@@ -26,7 +26,7 @@ use super::{
 use crate::framework::instrumentation::Instrumentation;
 use crate::{
     framework::{frame_controller, prelude::*},
-    runtime::prelude::MapMode,
+    runtime::map_mode::MapMode,
 };
 
 pub const TRANSITION_TIMES: [f32; 15] = [
