@@ -1,5 +1,6 @@
 {
   "version": "1.1",
+  "hrcc": false,
   "ui_controls": [
     {
       "type": "Checkbox",
@@ -102,12 +103,7 @@
       "value": 3.25
     }
   ],
-  "midi_controls": [
-    {
-      "name": "angle_mult__slider_proxy",
-      "value": 7.244095
-    }
-  ],
+  "midi_controls": [],
   "osc_controls": [],
   "snapshots": {}
 }

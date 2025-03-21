@@ -24,16 +24,6 @@ pub struct SerializableProgramState {
     pub snapshots: HashMap<String, SerializableSnapshot>,
 }
 
-/// Intermediary structure used to transfer program state to and from
-/// serialization/transformation methods
-pub struct SaveableProgramState {
-    pub hrcc: bool,
-    pub ui_controls: UiControls,
-    pub midi_controls: MidiControls,
-    pub osc_controls: OscControls,
-    pub snapshots: Snapshots,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct SerializableSnapshot {
     #[serde(rename = "ui_controls", alias = "controls")]
@@ -202,6 +192,28 @@ fn create_serializable_snapshot(
         ui_controls: controls,
         midi_controls,
         osc_controls,
+    }
+}
+
+/// Intermediary structure used to transfer program state to and from
+/// program/serialization contexts
+pub struct SaveableProgramState {
+    pub hrcc: bool,
+    pub ui_controls: UiControls,
+    pub midi_controls: MidiControls,
+    pub osc_controls: OscControls,
+    pub snapshots: Snapshots,
+}
+
+impl Default for SaveableProgramState {
+    fn default() -> Self {
+        Self {
+            hrcc: false,
+            ui_controls: UiControlBuilder::new().build(),
+            midi_controls: MidiControlBuilder::new().build(),
+            osc_controls: OscControlBuilder::new().build(),
+            snapshots: HashMap::default(),
+        }
     }
 }
 

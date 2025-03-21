@@ -53,56 +53,23 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     Ok(path)
 }
 
-pub fn load_program_state<T: TimingSource + std::fmt::Debug + 'static>(
+/// Takes in an external program state and merges it with a deserialized one.
+/// This ensures that the external state can be the source of truth for ui,
+/// midi, and osc keys rather than possibly loading invalid or outdated data
+/// from file.
+pub fn load_program_state<'a>(
     sketch_name: &str,
-    // hrcc: &mut bool,
-    hub: &mut ControlHub<T>,
-) -> Result<(), Box<dyn Error>> {
+    state: &'a mut SaveableProgramState,
+) -> Result<&'a mut SaveableProgramState, Box<dyn Error>> {
     let path = controls_storage_path(sketch_name)
         .ok_or("Could not determine controls cache directory")?;
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
 
     let serialized = serde_json::from_str::<SerializableProgramState>(&json)?;
-
-    let mut state = SaveableProgramState {
-        // Temporary value...
-        hrcc: false,
-        ui_controls: hub.ui_controls.clone(),
-        midi_controls: hub.midi_controls.clone(),
-        osc_controls: hub.osc_controls.clone(),
-        snapshots: hub.snapshots.clone(),
-    };
-
     state.merge(serialized);
 
-    // *hrcc = state.hrcc;
-
-    state.ui_controls.values().iter().for_each(|(name, value)| {
-        hub.ui_controls.update_value(name, value.clone());
-    });
-
-    state
-        .midi_controls
-        .values()
-        .iter()
-        .for_each(|(name, value)| {
-            hub.midi_controls.update_value(name, *value);
-        });
-
-    state
-        .osc_controls
-        .values()
-        .iter()
-        .for_each(|(name, value)| {
-            hub.osc_controls.update_value(name, *value);
-        });
-
-    for (name, snapshot) in state.snapshots {
-        hub.snapshots.insert(name, snapshot);
-    }
-
-    Ok(())
+    Ok(state)
 }
 
 // -----------------------------------------------------------------------------

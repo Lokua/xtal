@@ -8,6 +8,7 @@ use std::{env, str};
 use super::map_mode::MapMode;
 use super::recording::{frames_dir, RecordingState};
 use super::registry::REGISTRY;
+use super::serialization::SaveableProgramState;
 use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
@@ -520,10 +521,6 @@ impl AppModel {
     }
 
     fn capture_recording_frame(&self, app: &App) {
-        if !self.recording_state.is_recording {
-            return;
-        }
-
         let frame_count = self.recording_state.recorded_frames.get();
         let window = self.main_window(app).unwrap();
 
@@ -627,27 +624,56 @@ impl AppModel {
         let event_tx = self.event_tx.clone();
         let sketch_name = self.sketch_name();
 
-        if let Some(hub) = self.control_hub_mut() {
-            match load_program_state(&sketch_name, hub) {
-                Ok(()) => {
-                    if hub.snapshots.is_empty() {
-                        event_tx.alert_and_log(
-                            "Controls restored",
-                            log::Level::Info,
-                        );
-                    } else {
-                        event_tx.alert_and_log(
-                            format!(
-                                "Controls restored. Available snapshots: {:?}",
-                                hub.snapshot_keys_sorted()
-                            ),
-                            log::Level::Info,
-                        );
-                    }
+        let mut current_state = match self.control_hub() {
+            Some(hub) => SaveableProgramState {
+                ui_controls: hub.ui_controls.clone(),
+                midi_controls: hub.midi_controls.clone(),
+                osc_controls: hub.osc_controls.clone(),
+                snapshots: hub.snapshots.clone(),
+                ..Default::default()
+            },
+            None => SaveableProgramState::default(),
+        };
+
+        match load_program_state(&sketch_name, &mut current_state) {
+            Ok(state) => {
+                self.hrcc = state.hrcc;
+
+                let Some(hub) = self.control_hub_mut() else {
+                    return;
+                };
+
+                for (k, v) in state.ui_controls.values().iter() {
+                    hub.ui_controls.update_value(k, v.clone());
                 }
-                Err(e) => {
-                    warn!("Unable to restore controls: {}", e)
+
+                for (k, v) in state.midi_controls.values().iter() {
+                    hub.midi_controls.update_value(k, *v);
                 }
+
+                for (k, v) in state.osc_controls.values().iter() {
+                    hub.osc_controls.update_value(k, *v);
+                }
+
+                for (k, v) in state.snapshots.clone() {
+                    hub.snapshots.insert(k, v);
+                }
+
+                if hub.snapshots.is_empty() {
+                    event_tx
+                        .alert_and_log("Controls restored", log::Level::Info);
+                } else {
+                    event_tx.alert_and_log(
+                        format!(
+                            "Controls restored. Available snapshots: {:?}",
+                            hub.snapshot_keys_sorted()
+                        ),
+                        log::Level::Info,
+                    );
+                }
+            }
+            Err(e) => {
+                warn!("Unable to restore controls: {}", e)
             }
         }
     }
@@ -912,7 +938,10 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
 
     if did_render {
         frame_controller::clear_force_render();
-        model.capture_recording_frame(app);
+
+        if model.recording_state.is_recording {
+            model.capture_recording_frame(app);
+        }
     }
 }
 
