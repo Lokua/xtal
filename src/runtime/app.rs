@@ -355,9 +355,8 @@ impl AppModel {
                 }
             }
             AppEvent::SaveProgramState => {
-                let sketch_name = self.sketch_name();
                 match storage::save_program_state(
-                    sketch_name.as_str(),
+                    self.sketch_name().as_str(),
                     self.hrcc,
                     self.control_hub().unwrap(),
                 ) {
@@ -376,18 +375,19 @@ impl AppModel {
                 }
             }
             AppEvent::SendMidi => {
+                let messages = {
+                    let Some(hub) = self.control_hub() else {
+                        return;
+                    };
+                    hub.midi_controls.messages()
+                };
+
                 let Some(midi_out) = &mut self.midi_out else {
                     warn!("Unable to send MIDI; no MIDI out connection");
                     return;
                 };
-                let Some(provider) = self.sketch.controls() else {
-                    return;
-                };
-                let Some(midi_controls) = provider.midi_controls() else {
-                    return;
-                };
 
-                for message in midi_controls.messages() {
+                for message in messages {
                     if let Err(e) = midi_out.send(&message) {
                         error!(
                             "Error sending MIDI message: {:?}; error: {}",
@@ -401,13 +401,13 @@ impl AppModel {
             }
             AppEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
-                if let Some(hub) = self.sketch.controls() {
+                if let Some(hub) = self.control_hub_mut() {
                     hub.set_transition_time(transition_time);
                 }
             }
             AppEvent::SnapshotRecall(digit) => {
-                if let Some(provider) = self.sketch.controls() {
-                    match provider.recall_snapshot(&digit) {
+                if let Some(hub) = self.control_hub_mut() {
+                    match hub.recall_snapshot(&digit) {
                         Ok(_) => {
                             self.alert_text =
                                 format!("Snapshot {:?} recalled", digit);
@@ -419,15 +419,15 @@ impl AppModel {
                 }
             }
             AppEvent::SnapshotStore(digit) => {
-                if let Some(provider) = self.sketch.controls() {
-                    provider.take_snapshot(&digit);
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.take_snapshot(&digit);
                     self.alert_text = format!("Snapshot {:?} saved", digit);
                 } else {
                     error!("Unable to store snapshot ???");
                 }
             }
             AppEvent::SwitchSketch(name) => {
-                if self.sketch_config.name != name {
+                if self.sketch_name() != name {
                     self.switch_sketch(app, &name);
                 }
             }
@@ -643,21 +643,7 @@ impl AppModel {
                     return;
                 };
 
-                for (k, v) in state.ui_controls.values().iter() {
-                    hub.ui_controls.update_value(k, v.clone());
-                }
-
-                for (k, v) in state.midi_controls.values().iter() {
-                    hub.midi_controls.update_value(k, *v);
-                }
-
-                for (k, v) in state.osc_controls.values().iter() {
-                    hub.osc_controls.update_value(k, *v);
-                }
-
-                for (k, v) in state.snapshots.clone() {
-                    hub.snapshots.insert(k, v);
-                }
+                hub.merge_program_state(state);
 
                 if hub.snapshots.is_empty() {
                     event_tx
