@@ -1,0 +1,20 @@
+{
+  "name": "gui",
+  "version": "1.0.0",
+  "main": "src/index.html",
+  "type": "module",
+  "scripts": {
+    "start": "vite --config vite.config.mjs --port 3000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "vite": "6.2.2"
+  },
+  "dependencies": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
+}

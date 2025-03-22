@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <main id="app"></main>
+    <script>
+      window.ipc = {
+        postMessage(m) {
+          window.external.invoke(m)
+        },
+      }
+      window.latticeEvents = {
+        subscribe(callback) {
+          window.addEventListener('message', (e) => {
+            if (e.data?.event.startsWith('lattice')) {
+              callback({
+                event: e.data.event,
+                data: e.data.data,
+              })
+            }
+          })
+        },
+      }
+    </script>
+    <script type="module" src="./index.jsx"></script>
+  </body>
+</html>

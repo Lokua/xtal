@@ -6,3 +6,4 @@ out*.txt
 debug.txt
 *.log
 scripts/node_modules
+gui/node_modules
