@@ -1,3 +1,8 @@
-export function postText(text) {
-  window.ipc.postMessage(text)
+export function post(event, data = null) {
+  window.ipc.postMessage(
+    JSON.stringify({
+      event,
+      data,
+    })
+  )
 }

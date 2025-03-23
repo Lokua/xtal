@@ -13,6 +13,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
+use super::web_view as wv;
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -189,6 +190,8 @@ struct AppModel {
     /// "High Resolution CC"
     hrcc: bool,
     view_midi: bool,
+    #[allow(unused)]
+    web_view_tx: wv::Sender,
 }
 
 impl AppModel {
@@ -750,6 +753,10 @@ fn model(app: &App) -> AppModel {
         .map_err(|e| error!("{}", e))
         .ok();
 
+    let event_tx = AppEventSender::new(raw_event_tx);
+
+    let web_view_tx = wv::launch(&event_tx, sketch_info.config.name).unwrap();
+
     let mut model = AppModel {
         main_window_id,
         gui_window_id,
@@ -764,7 +771,7 @@ fn model(app: &App) -> AppModel {
         sketch,
         sketch_config: sketch_info.config,
         main_maximized: Cell::new(false),
-        event_tx: AppEventSender::new(raw_event_tx),
+        event_tx,
         event_rx,
         midi_out,
         ctx,
@@ -773,6 +780,7 @@ fn model(app: &App) -> AppModel {
         view_midi: false,
         map_mode: MapMode::default(),
         hrcc: false,
+        web_view_tx,
     };
 
     model.init_sketch_environment(app);

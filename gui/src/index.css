@@ -1,6 +1,21 @@
 :root {
-  --text-color: #eee;
-  --background-color: #222;
+  --control-margin: 4px;
+  --control-height: 20px;
+  --control-font-size: 10px;
+}
+
+[data-theme='light'] {
+  --background-color: #fff;
+  --text-color: #222;
+  --control-background-color: #eee;
+  --control-text-color: #222;
+}
+
+[data-theme='dark'] {
+  --background-color: #1a1a1a;
+  --text-color: #fff;
+  --control-background-color: #363636;
+  --control-text-color: #eee;
 }
 
 *,
@@ -10,10 +25,27 @@
   font-family: monospace;
 }
 
+html {
+  font-size: 12px;
+}
+
 body {
+  font-size: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
   background: var(--background-color);
   color: var(--text-color);
-  font-size: 12px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+
+  > header {
+    padding: 4px;
+  }
 }
 
 ul {
@@ -22,34 +54,46 @@ ul {
   padding: 0;
 }
 
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.select-wrapper::after {
+  content: '▼';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%) scaleX(1.5);
+  color: var(--control-text-color);
+  pointer-events: none;
+  font-size: 8px;
+}
+
 select {
   appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  height: 20px;
-  padding-right: 8px;
   padding-left: 10px;
-  font-size: 10px;
-  border: none;
-  background-color: #444;
-  color: #fff;
-  border-radius: 2px;
-  cursor: pointer;
   outline: none;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
   appearance: none;
-  background-image: url('data:image/svg+xml;charset=US-ASCII,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"%3e%3cpath fill="%23fff" d="M0 0l5 6 5-6H0z"/%3e%3c/svg%3e');
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 12px;
 }
 
 select::-ms-expand {
   display: none;
 }
 
-select:hover {
-  background-color: #444;
+button {
+  padding: 0 8px;
+}
+
+button,
+select {
+  height: var(--control-height);
+  margin: var(--control-margin);
+  font-size: var(--control-font-size);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  background-color: var(--control-background-color);
+  color: var(--control-text-color);
 }
