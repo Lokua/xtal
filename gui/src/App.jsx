@@ -17,9 +17,9 @@ export default function App() {
 
   useEffect(() => {
     let unsubscribe = window.latticeEvents.subscribe((e) => {
+      console.log('[app] sub e:', e)
       switch (e.event) {
         case 'init': {
-          console.log('init:', e.data)
           const payload = e.data.init
           const toIndexAndPort = ([index, port]) => `${index} - ${port}`
           setIsLightTheme(payload.isLightTheme)
@@ -44,7 +44,7 @@ export default function App() {
       }
     })
 
-    post('ready')
+    post('Ready')
 
     return () => {
       unsubscribe()

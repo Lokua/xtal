@@ -17,7 +17,7 @@
       window.latticeEvents = {
         subscribe(callback) {
           window.addEventListener('message', (e) => {
-            // console.info('raw message handler', e)
+            console.info('raw message handler', e)
             if (e.data?.event) {
               callback({
                 event: e.data.event,

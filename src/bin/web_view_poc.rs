@@ -32,17 +32,14 @@ fn main() -> wry::Result<()> {
         .with_devtools(true)
         .with_ipc_handler(move |message| {
             trace!("ipc_handler message: {:?};", message);
-            let json_string = message.body().to_string();
 
-            let web_view_event =
-                match serde_json::from_str::<wv::Event>(&json_string) {
-                    Ok(event) => event,
-                    Err(e) => {
-                        error!("JSON parse error: {:?}", e);
-                        error!("Problematic JSON: {}", json_string);
-                        wv::Event::new("error")
-                    }
-                };
+            let web_view_event = match message.body().as_str() {
+                "Ready" => wv::Event::Ready,
+                other => {
+                    error!("Unknown message from WebView: {}", other);
+                    wv::Event::Error(format!("Unknown message: {}", other))
+                }
+            };
 
             sender.send(web_view_event).unwrap();
         })
@@ -64,8 +61,8 @@ fn main() -> wry::Result<()> {
                 }
 
                 #[allow(clippy::single_match)]
-                match event.data {
-                    Some(wv::Data::LoadSketch { display_name, .. }) => {
+                match event {
+                    wv::Event::LoadSketch { display_name, .. } => {
                         debug!("Received LoadSketch. Attempting to set title");
                         window.set_title(&format!("{} Controls", display_name));
                     }

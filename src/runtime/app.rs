@@ -14,7 +14,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
-use super::web_view as wv;
+use super::web_view::{self as wv, ToMsg};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -650,25 +650,13 @@ impl AppModel {
             None => None,
         };
 
-        let controls: Vec<wv::SerializableControl> = match ui_controls {
-            Some(controls) => controls
-                .configs()
-                .iter()
-                .map(|config| {
-                    wv::SerializableControl::from((config, &controls))
-                })
-                .collect(),
-            None => vec![],
+        let msg = match ui_controls {
+            Some(controls) => controls.to_msg(),
+            None => "".to_string(),
         };
 
-        let event = wv::Event::with_data(
-            "loadSketch",
-            wv::Data::LoadSketch {
-                sketch_name: self.sketch_name(),
-                display_name: self.sketch_config.display_name.to_string(),
-                controls,
-            },
-        );
+        let event =
+            wv::Event::String(format!("event=load\n\n[ui_controls]\n{}", msg));
 
         if self.web_view_ready {
             self.web_view_tx.send(event).unwrap();

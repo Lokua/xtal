@@ -10,6 +10,14 @@ use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
 
+pub trait ToMsg {
+    fn to_msg(&self) -> String;
+}
+
+pub trait FromMsg {
+    fn from_msg(s: &str) -> Self;
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SerializableControl {
@@ -76,8 +84,33 @@ impl From<(&Control, &UiControls)> for SerializableControl {
     }
 }
 
+impl ToMsg for UiControls {
+    fn to_msg(&self) -> String {
+        self.configs()
+            .iter()
+            .map(|config| match config {
+                Control::Checkbox { name, .. } => {
+                    let value = self.bool(name);
+                    format!(
+                        "type=checkbox;name={};value={};disabled=false",
+                        name, value
+                    )
+                }
+                Control::Slider { name, min, max, step, .. } => {
+                    let value = self.float(name);
+                    format!(
+                        "type=slider;name={};value={};min={};max={};step={};disabled=false",
+                        name, value, min, max, step
+                    )
+                }
+                _ => "".to_string(),
+            })
+            .collect::<Vec<String>>().join("\n")
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub enum Data {
+pub enum Event {
     #[default]
     Empty,
     Tap,
@@ -118,29 +151,7 @@ pub enum Data {
     },
     Test,
     #[serde(rename = "error")]
-    Error,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Event {
-    pub event: String,
-    pub data: Option<Data>,
-}
-
-impl Event {
-    pub fn new(event: &str) -> Self {
-        Self {
-            event: event.to_string(),
-            data: None,
-        }
-    }
-
-    pub fn with_data(event: &str, data: Data) -> Self {
-        Self {
-            event: event.to_string(),
-            data: Some(data),
-        }
-    }
+    Error(String),
 }
 
 pub type Sender = IpcSender<Event>;
@@ -184,35 +195,31 @@ pub fn launch(
         while let Ok(message) = receiver.recv() {
             trace!("Received message from child: {:?}", message);
 
-            if let Some(data) = message.data {
-                match data {
-                    Data::UpdateControlBool { name, value } => app_event_tx
-                        .send(AppEvent::UpdateUiControl((
-                            name,
-                            ControlValue::from(value),
-                        ))),
-                    Data::UpdateControlFloat { name, value } => app_event_tx
-                        .send(AppEvent::UpdateUiControl((
-                            name,
-                            ControlValue::from(value),
-                        ))),
-                    Data::UpdateControlString { name, value } => app_event_tx
-                        .send(AppEvent::UpdateUiControl((
-                            name,
-                            ControlValue::from(value),
-                        ))),
-                    _ => {}
-                };
-            }
-
-            match message.event.to_lowercase().as_str() {
-                "reset" => event_tx_clone.send(AppEvent::Reset),
-                "tap" => event_tx_clone.send(AppEvent::Tap),
-                "ready" => {
+            match &message {
+                Event::UpdateControlBool { name, value } => {
+                    app_event_tx.send(AppEvent::UpdateUiControl((
+                        name.clone(),
+                        ControlValue::from(*value),
+                    )))
+                }
+                Event::UpdateControlFloat { name, value } => {
+                    app_event_tx.send(AppEvent::UpdateUiControl((
+                        name.clone(),
+                        ControlValue::from(*value),
+                    )))
+                }
+                Event::UpdateControlString { name, value } => app_event_tx
+                    .send(AppEvent::UpdateUiControl((
+                        name.clone(),
+                        ControlValue::from(value.clone()),
+                    ))),
+                Event::Reset => event_tx_clone.send(AppEvent::Reset),
+                Event::Tap => event_tx_clone.send(AppEvent::Tap),
+                Event::Ready => {
                     debug!("wv received ready event");
                     let registry = REGISTRY.read().unwrap();
 
-                    let data = Data::Init {
+                    let data = Event::Init {
                         is_light_theme: matches!(
                             dark_light::detect(),
                             dark_light::Mode::Light
@@ -231,11 +238,11 @@ pub fn launch(
                         .unwrap(),
                     };
 
-                    init_sender.send(Event::with_data("init", data)).unwrap();
+                    init_sender.send(data).unwrap();
                     app_event_tx.send(AppEvent::WebViewReady);
                 }
-                _ => trace!("No handler for event: {}", message.event),
-            }
+                _ => trace!("No handler for event: {:?}", message),
+            };
         }
     });
 
