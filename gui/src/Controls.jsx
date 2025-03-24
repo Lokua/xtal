@@ -1,6 +1,7 @@
 import React from 'react'
 import NumberBox from './NumberBox.jsx'
 import Select from './Select.jsx'
+import Separator from './Separator.jsx'
 
 export default function Controls({ controls, onChange: parentOnChange }) {
   function onChange(type, index, value) {
@@ -85,8 +86,4 @@ export default function Controls({ controls, onChange: parentOnChange }) {
 
     return null
   })
-}
-
-function Separator() {
-  return <div className="separator" />
 }

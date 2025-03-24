@@ -20,17 +20,17 @@
     {
       "type": "Checkbox",
       "name": "link_axes",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
       "name": "wave_x_freq",
-      "value": 77.0
+      "value": 37.7622
     },
     {
       "type": "Slider",
       "name": "wave_y_freq",
-      "value": 5.7
+      "value": 5.564
     },
     {
       "type": "Select",
@@ -50,17 +50,17 @@
     {
       "type": "Slider",
       "name": "color_amt",
-      "value": 0.41
+      "value": 0.74
     },
     {
       "type": "Slider",
       "name": "color_freq",
-      "value": 1.75
+      "value": 1.8
     },
     {
       "type": "Slider",
       "name": "color_phase",
-      "value": 3.9699998
+      "value": 3.8500001
     },
     {
       "type": "Slider",
@@ -70,7 +70,7 @@
     {
       "type": "Slider",
       "name": "g_amp",
-      "value": 0.89699996
+      "value": 0.55
     },
     {
       "type": "Slider",

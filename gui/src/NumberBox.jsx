@@ -37,7 +37,7 @@ export default class NumberBox extends Component {
     prevY: 0,
   }
 
-  componentWillReceiveProps({ value }) {
+  UNSAFE__componentWillReceiveProps({ value }) {
     if (value !== this.state.value) {
       this.setState({ value })
     }

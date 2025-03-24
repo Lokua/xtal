@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { post } from './util.mjs'
 import Select from './Select.jsx'
 import Controls from './Controls.jsx'
+import Separator, { VerticalSeparator } from './Separator.jsx'
 
 export default function App() {
   const [view, setView] = useState('controls')
@@ -66,44 +67,125 @@ export default function App() {
         : 'updateControlString'
 
     post(eventName, {
-      [eventName]: {
-        name,
-        value,
-      },
+      name,
+      value,
     })
   }
 
   return (
     <div id="app">
       <header>
-        <Select
-          value={sketchName}
-          options={sketchNames}
-          onChange={(e) => {
-            setSketchName(e.target.value)
-          }}
-        />
-        <button
-          onClick={() => {
-            post('reset')
-          }}
-        >
-          Reset
-        </button>
-        <button
-          onClick={() => {
-            post('tap')
-          }}
-        >
-          Tap
-        </button>
-        <button
-          onClick={() => {
-            post('Debug')
-          }}
-        >
-          Ready
-        </button>
+        <section>
+          <button
+            onClick={() => {
+              post('capture')
+            }}
+          >
+            Image
+          </button>
+          <VerticalSeparator />
+          <button
+            onClick={() => {
+              post('pause')
+            }}
+          >
+            Pause
+          </button>
+          <button
+            disabled
+            onClick={() => {
+              post('advance')
+            }}
+          >
+            Advance
+          </button>
+          <button
+            onClick={() => {
+              post('reset')
+            }}
+          >
+            Reset
+          </button>
+          <VerticalSeparator />
+          <button
+            onClick={() => {
+              post('clearBuf')
+            }}
+          >
+            Clear Buf.
+          </button>
+          <VerticalSeparator />
+          <button
+            onClick={() => {
+              post('qRecord')
+            }}
+          >
+            Q Rec.
+          </button>
+          <button
+            onClick={() => {
+              post('record')
+            }}
+          >
+            Rec.
+          </button>
+          <VerticalSeparator />
+          <div className="meter">
+            FPS: <span className="meter-value">30.0</span>
+          </div>
+        </section>
+        <Separator style={{ margin: '2px 0' }} />
+        <section>
+          <Select
+            value={sketchName}
+            options={sketchNames}
+            onChange={(e) => {
+              setSketchName(e.target.value)
+            }}
+          />
+          <fieldset>
+            <input
+              id="perf"
+              type="checkbox"
+              checked={false}
+              onChange={() => {}}
+            />
+            <label htmlFor="perf">Perf.</label>
+          </fieldset>
+          <VerticalSeparator />
+          <div className="meter">
+            BPM: <span className="meter-value">134.0</span>
+          </div>
+          <button
+            onClick={() => {
+              post('tap')
+            }}
+          >
+            Tap
+          </button>
+          <VerticalSeparator />
+          <Select
+            style={{ width: '48px' }}
+            value="4"
+            options={[32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]}
+            onChange={() => {}}
+          />
+          <VerticalSeparator />
+          <button
+            onClick={() => {
+              post('save')
+            }}
+          >
+            Save
+          </button>
+          <button
+            onClick={() => {
+              post('viewMidi')
+            }}
+          >
+            MIDI
+          </button>
+        </section>
       </header>
       <main>
         {view === 'midi' ? (
