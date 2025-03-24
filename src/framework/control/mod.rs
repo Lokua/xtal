@@ -3,7 +3,7 @@
 pub mod control_hub;
 
 pub mod audio_controls;
-pub mod config;
+mod config;
 pub mod control_hub_builder;
 pub mod control_provider;
 mod dep_graph;

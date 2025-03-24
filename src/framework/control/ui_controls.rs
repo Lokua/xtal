@@ -4,9 +4,11 @@
 //! [`ControlHub`].
 use std::fmt::{self, Debug};
 
+use serde::{Deserialize, Serialize};
+
 use crate::framework::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum ControlValue {
     Float(f32),
     Bool(bool),

@@ -2,6 +2,7 @@ use chrono::Utc;
 use nannou::prelude::*;
 use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
+use std::collections::VecDeque;
 use std::sync::mpsc;
 use std::{env, str};
 
@@ -140,6 +141,8 @@ pub enum AppEvent {
     TogglePlay,
     ToggleTapTempo(bool),
     ToggleViewMidi,
+    UpdateUiControl((String, ControlValue)),
+    WebViewReady,
 }
 
 #[derive(Clone)]
@@ -192,6 +195,8 @@ struct AppModel {
     view_midi: bool,
     #[allow(unused)]
     web_view_tx: wv::Sender,
+    web_view_ready: bool,
+    web_view_pending_messages: VecDeque<wv::Event>,
 }
 
 impl AppModel {
@@ -520,6 +525,24 @@ impl AppModel {
                     error!("{}", e);
                 }
             }
+            AppEvent::UpdateUiControl((name, value)) => {
+                self.control_hub_mut()
+                    .unwrap()
+                    .update_ui_value(&name, value);
+            }
+            AppEvent::WebViewReady => {
+                self.web_view_ready = true;
+                // Helpful for live-reloading of the web-app
+                // TODO: find a better way to playback old messages
+                for message in &self.web_view_pending_messages {
+                    self.web_view_tx.send(message.clone()).unwrap();
+                }
+                // while let Some(message) =
+                //     self.web_view_pending_messages.pop_front()
+                // {
+                //     self.web_view_tx.send(message).unwrap();
+                // }
+            }
         }
     }
 
@@ -621,6 +644,37 @@ impl AppModel {
         }
 
         self.load_program_state();
+
+        let ui_controls = match self.sketch.controls() {
+            Some(provider) => provider.ui_controls(),
+            None => None,
+        };
+
+        let controls: Vec<wv::SerializableControl> = match ui_controls {
+            Some(controls) => controls
+                .configs()
+                .iter()
+                .map(|config| {
+                    wv::SerializableControl::from((config, &controls))
+                })
+                .collect(),
+            None => vec![],
+        };
+
+        let event = wv::Event::with_data(
+            "loadSketch",
+            wv::Data::LoadSketch {
+                sketch_name: self.sketch_name(),
+                display_name: self.sketch_config.display_name.to_string(),
+                controls,
+            },
+        );
+
+        if self.web_view_ready {
+            self.web_view_tx.send(event).unwrap();
+        } else {
+            self.web_view_pending_messages.push_back(event);
+        }
     }
 
     fn load_program_state(&mut self) {
@@ -754,7 +808,6 @@ fn model(app: &App) -> AppModel {
         .ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
-
     let web_view_tx = wv::launch(&event_tx, sketch_info.config.name).unwrap();
 
     let mut model = AppModel {
@@ -767,7 +820,7 @@ fn model(app: &App) -> AppModel {
         perf_mode: false,
         tap_tempo: TapTempo::new(raw_bpm),
         tap_tempo_enabled: false,
-        recording_state: RecordingState::new(frames_dir("", "")),
+        recording_state: RecordingState::default(),
         sketch,
         sketch_config: sketch_info.config,
         main_maximized: Cell::new(false),
@@ -781,6 +834,8 @@ fn model(app: &App) -> AppModel {
         map_mode: MapMode::default(),
         hrcc: false,
         web_view_tx,
+        web_view_ready: false,
+        web_view_pending_messages: VecDeque::new(),
     };
 
     model.init_sketch_environment(app);

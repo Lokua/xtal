@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-
 import { post } from './util.mjs'
 import Select from './Select.jsx'
+import Controls from './Controls.jsx'
 
 export default function App() {
   const [view, setView] = useState('controls')
@@ -12,20 +12,29 @@ export default function App() {
   const [midiInputPorts, setMidiInputPorts] = useState([])
   const [midiOutputPort, setMidiOutputPort] = useState('')
   const [midiOutputPorts, setMidiOutputPorts] = useState([])
+  const [controls, setControls] = useState([])
 
   useEffect(() => {
     let unsubscribe = window.latticeEvents.subscribe((e) => {
       switch (e.event) {
         case 'init': {
-          console.log(e.data)
+          console.log('init:', e.data)
+          const payload = e.data.init
           const toIndexAndPort = ([index, port]) => `${index} - ${port}`
-          setIsLightTheme(e.data.init.isLightTheme)
-          setSketchName(e.data.init.sketchName)
-          setSketchNames(e.data.init.sketchNames)
-          setMidiInputPort(e.data.init.midiInputPort)
-          setMidiOutputPort(e.data.init.midiOutputPort)
-          setMidiInputPorts(e.data.init.midiInputPorts.map(toIndexAndPort))
-          setMidiOutputPorts(e.data.init.midiOutputPorts.map(toIndexAndPort))
+          setIsLightTheme(payload.isLightTheme)
+          setSketchName(payload.sketchName)
+          setSketchNames(payload.sketchNames)
+          setMidiInputPort(payload.midiInputPort)
+          setMidiOutputPort(payload.midiOutputPort)
+          setMidiInputPorts(payload.midiInputPorts.map(toIndexAndPort))
+          setMidiOutputPorts(payload.midiOutputPorts.map(toIndexAndPort))
+          break
+        }
+        case 'loadSketch': {
+          console.log('loadSketch:', e.data)
+          const payload = e.data.loadSketch
+          setSketchName(payload.sketchName)
+          setControls(payload.controls)
           break
         }
         default: {
@@ -34,7 +43,6 @@ export default function App() {
       }
     })
 
-    // Tell parent we're ready to receive the `init` event
     post('ready')
 
     return () => {
@@ -42,8 +50,31 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    document.body.classList.add(isLightTheme ? 'light' : 'dark')
+    document.body.classList.remove(isLightTheme ? 'dark' : 'light')
+  }, [isLightTheme])
+
+  function onControlChange(type, name, value, controls) {
+    setControls(controls)
+
+    const eventName =
+      type === 'checkbox'
+        ? 'updateControlBool'
+        : type === 'slider'
+        ? 'updateControlFloat'
+        : 'updateControlString'
+
+    post(eventName, {
+      [eventName]: {
+        name,
+        value,
+      },
+    })
+  }
+
   return (
-    <div id="app" data-theme="dark">
+    <div id="app">
       <header>
         <Select
           value={sketchName}
@@ -68,7 +99,7 @@ export default function App() {
         </button>
         <button
           onClick={() => {
-            post('ready')
+            post('Debug')
           }}
         >
           Ready
@@ -93,7 +124,7 @@ export default function App() {
             />
           </>
         ) : (
-          <div>TODO: controls</div>
+          <Controls controls={controls} onChange={onControlChange} />
         )}
       </main>
     </div>

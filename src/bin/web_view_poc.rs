@@ -20,11 +20,10 @@ fn main() -> wry::Result<()> {
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
-        // TODO: set title from sketch name
         .with_title("GUI")
         .with_theme(Some(ternary!(is_light, Theme::Light, Theme::Dark)))
         .with_inner_size(LogicalSize::new(538, 700))
-        .with_position(LogicalPosition::new(700 + 538, 0))
+        .with_position(LogicalPosition::new(700, 0))
         .build(&event_loop)
         .unwrap();
 
@@ -34,8 +33,17 @@ fn main() -> wry::Result<()> {
         .with_ipc_handler(move |message| {
             trace!("ipc_handler message: {:?};", message);
             let json_string = message.body().to_string();
+
             let web_view_event =
-                serde_json::from_str::<wv::Event>(&json_string).unwrap();
+                match serde_json::from_str::<wv::Event>(&json_string) {
+                    Ok(event) => event,
+                    Err(e) => {
+                        error!("JSON parse error: {:?}", e);
+                        error!("Problematic JSON: {}", json_string);
+                        wv::Event::new("error")
+                    }
+                };
+
             sender.send(web_view_event).unwrap();
         })
         .build(&window)?;
@@ -53,6 +61,15 @@ fn main() -> wry::Result<()> {
                 );
                 if let Err(e) = web_view.evaluate_script(&script) {
                     error!("Failed to send data to WebView: {:?}", e);
+                }
+
+                #[allow(clippy::single_match)]
+                match event.data {
+                    Some(wv::Data::LoadSketch { display_name, .. }) => {
+                        debug!("Received LoadSketch. Attempting to set title");
+                        window.set_title(&format!("{} Controls", display_name));
+                    }
+                    _ => {}
                 }
             }
             Err(e) => {

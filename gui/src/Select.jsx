@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function Select({ value, options, onChange }) {
+export default function Select({ value, options, onChange, ...rest }) {
   return (
     <span className="select-wrapper">
-      <select value={value} onChange={onChange}>
+      <select value={value} onChange={onChange} {...rest}>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}

@@ -6,10 +6,75 @@ use std::thread;
 
 use super::app::AppEventSender;
 use crate::config::{MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT};
-// use crate::framework::control::config::ControlType;
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SerializableControl {
+    Slider {
+        name: String,
+        value: f32,
+        min: f32,
+        max: f32,
+        step: f32,
+        disabled: bool,
+    },
+    Checkbox {
+        name: String,
+        value: bool,
+        disabled: bool,
+    },
+    Select {
+        name: String,
+        value: String,
+        options: Vec<String>,
+        disabled: bool,
+    },
+    Separator {},
+    DynamicSeparator {
+        name: String,
+    },
+}
+
+impl From<(&Control, &UiControls)> for SerializableControl {
+    fn from((control, ui_controls): (&Control, &UiControls)) -> Self {
+        match control {
+            Control::Slider {
+                name,
+                min,
+                max,
+                step,
+                ..
+            } => SerializableControl::Slider {
+                name: name.clone(),
+                value: ui_controls.float(name),
+                min: *min,
+                max: *max,
+                step: *step,
+                disabled: control.is_disabled(ui_controls),
+            },
+            Control::Checkbox { name, .. } => SerializableControl::Checkbox {
+                name: name.clone(),
+                value: ui_controls.bool(name),
+                disabled: control.is_disabled(ui_controls),
+            },
+            Control::Select { name, options, .. } => {
+                SerializableControl::Select {
+                    name: name.clone(),
+                    value: ui_controls.string(name),
+                    options: options.clone(),
+                    disabled: control.is_disabled(ui_controls),
+                }
+            }
+            Control::Separator {} => SerializableControl::Separator {},
+            Control::DynamicSeparator { name } => {
+                SerializableControl::DynamicSeparator { name: name.clone() }
+            }
+        }
+    }
+}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub enum Data {
@@ -29,9 +94,31 @@ pub enum Data {
         midi_output_port: String,
         midi_input_ports: Vec<(usize, String)>,
         midi_output_ports: Vec<(usize, String)>,
-        // controls: Vec<ControlType>,
+    },
+    #[serde(rename = "loadSketch", rename_all = "camelCase")]
+    LoadSketch {
+        sketch_name: String,
+        display_name: String,
+        controls: Vec<SerializableControl>,
+    },
+    #[serde(rename = "updateControlBool")]
+    UpdateControlBool {
+        name: String,
+        value: bool,
+    },
+    #[serde(rename = "updateControlFloat")]
+    UpdateControlFloat {
+        name: String,
+        value: f32,
+    },
+    #[serde(rename = "updateControlString")]
+    UpdateControlString {
+        name: String,
+        value: String,
     },
     Test,
+    #[serde(rename = "error")]
+    Error,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -69,7 +156,7 @@ pub fn launch(
 
     let mut child = Command::new("cargo")
         .args(["run", "--release", "--bin", "web_view_poc", &server_name])
-        .env("RUST_LOG", "lattice=info,dx_poc=debug")
+        .env("RUST_LOG", "lattice=info,web_view_poc=debug")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
@@ -85,23 +172,44 @@ pub fn launch(
         });
     }
 
-    thread::sleep(std::time::Duration::from_millis(100));
-
     let (_receiver, (sender, receiver)): (IpcReceiver<Bootstrap>, Bootstrap) =
         server.accept()?;
 
     let event_tx_clone = app_event_tx.clone();
     let init_sender = sender.clone();
     let sketch_name = sketch_name.to_owned();
+    let app_event_tx = app_event_tx.clone();
 
     thread::spawn(move || {
         while let Ok(message) = receiver.recv() {
             trace!("Received message from child: {:?}", message);
 
-            match message.event.as_str() {
+            if let Some(data) = message.data {
+                match data {
+                    Data::UpdateControlBool { name, value } => app_event_tx
+                        .send(AppEvent::UpdateUiControl((
+                            name,
+                            ControlValue::from(value),
+                        ))),
+                    Data::UpdateControlFloat { name, value } => app_event_tx
+                        .send(AppEvent::UpdateUiControl((
+                            name,
+                            ControlValue::from(value),
+                        ))),
+                    Data::UpdateControlString { name, value } => app_event_tx
+                        .send(AppEvent::UpdateUiControl((
+                            name,
+                            ControlValue::from(value),
+                        ))),
+                    _ => {}
+                };
+            }
+
+            match message.event.to_lowercase().as_str() {
                 "reset" => event_tx_clone.send(AppEvent::Reset),
                 "tap" => event_tx_clone.send(AppEvent::Tap),
                 "ready" => {
+                    debug!("wv received ready event");
                     let registry = REGISTRY.read().unwrap();
 
                     let data = Data::Init {
@@ -123,9 +231,10 @@ pub fn launch(
                         .unwrap(),
                     };
 
-                    init_sender.send(Event::with_data("init", data)).unwrap()
+                    init_sender.send(Event::with_data("init", data)).unwrap();
+                    app_event_tx.send(AppEvent::WebViewReady);
                 }
-                _ => warn!("Unknown event: {}", message.event),
+                _ => trace!("No handler for event: {}", message.event),
             }
         }
     });

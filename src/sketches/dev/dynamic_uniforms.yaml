@@ -94,6 +94,7 @@ color_phase:
   var: c3
   type: slider
   range: [0, *TAU]
+  step: 0.001
 
 r_amp:
   var: c4
