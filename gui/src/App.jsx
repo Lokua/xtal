@@ -14,6 +14,8 @@ export default function App() {
   const [isLightTheme, setIsLightTheme] = useState(true)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [mappings, setMappings] = useState([])
+  const [mappingsEnabled, setMappingsEnabled] = useState(false)
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState([])
   const [midiOutputPort, setMidiOutputPort] = useState('')
@@ -43,24 +45,28 @@ export default function App() {
         },
         Init() {
           setIsLightTheme(data.isLightTheme)
-          setSketchName(data.sketchName)
-          setSketchNames(data.sketchNames)
           setMidiInputPort(data.midiInputPort)
           setMidiOutputPort(data.midiOutputPort)
           const getPort = ([, port]) => port
           setMidiInputPorts(data.midiInputPorts.map(getPort))
           setMidiOutputPorts(data.midiOutputPorts.map(getPort))
+          setSketchName(data.sketchName)
+          setSketchNames(data.sketchNames)
         },
         HubPopulated() {
           setControls(data)
         },
         LoadSketch() {
-          setSketchName(data.sketchName)
-          setControls(data.controls)
-          setTapTempoEnabled(data.tapTempoEnabled)
           setBpm(data.bpm)
+          setControls(data.controls)
           setFps(data.fps)
+          setMappings(data.mappings)
           setPaused(data.paused)
+          setSketchName(data.sketchName)
+          setTapTempoEnabled(data.tapTempoEnabled)
+        },
+        Mappings() {
+          setMappings(data)
         },
         Record() {
           setIsRecording(true)
@@ -121,7 +127,6 @@ export default function App() {
         KeyM() {
           if (e.shiftKey && e.metaKey) {
             setView(view === 'midi' ? 'controls' : 'midi')
-            // TODO: if leaving midi, send mappings
           } else if (e.metaKey) {
             post('ToggleMainFocus')
           }
@@ -196,6 +201,10 @@ export default function App() {
     setAlertText('Changing ports at runtime is not yet supported')
   }
 
+  function onChangeMappingsEnabled() {
+    setMappingsEnabled(!mappingsEnabled)
+  }
+
   function onChangePerfMode() {
     const value = !perfMode
     setPerfMode(value)
@@ -246,12 +255,20 @@ export default function App() {
     }
   }
 
+  function onRemoveMapping(name) {
+    post('RemoveMapping', name)
+  }
+
   function onReset() {
     post('Reset')
   }
 
   function onSave() {
     post('Save')
+  }
+
+  function onSetCurrentlyMapping(name) {
+    post('SetCurrentlyMapping', name)
   }
 
   function onSwitchSketch(sketchName) {
@@ -304,10 +321,22 @@ export default function App() {
             inputPorts={midiInputPorts}
             outputPort={midiOutputPort}
             outputPorts={midiOutputPorts}
+            mappingsEnabled={mappingsEnabled}
+            mappings={mappings}
+            sliderNames={controls.reduce((names, control) => {
+              const type = Object.keys(control)[0]
+              if (type === 'slider') {
+                names.push(control[type].name)
+              }
+              return names
+            }, [])}
             onChangeHrcc={onChangeHrcc}
             onChangeInputPort={onChangeInputPort}
             onChangeOutputPort={onChangeOutputPort}
+            onChangeMappingsEnabled={onChangeMappingsEnabled}
             onClickSend={onClickSendMidi}
+            onRemoveMapping={onRemoveMapping}
+            onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
         ) : (
           <Controls controls={controls} onChange={onChangeControl} />

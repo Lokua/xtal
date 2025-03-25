@@ -422,7 +422,7 @@ fn draw_midi_pane(
                         map_mode.currently_mapping.clone().unwrap_or_default();
 
                     let is_mapping = mapping_name == name;
-                    let is_mapped = map_mode.mapped(name);
+                    let is_mapped = map_mode.has(name);
 
                     let label_text = match (is_mapping, is_mapped) {
                         (false, false) => " - ".to_string(),
@@ -444,11 +444,9 @@ fn draw_midi_pane(
                     };
 
                     if button.clicked() {
-                        event_tx.emit(
-                            app::AppEvent::MapModeSetCurrentlyMapping(
-                                name.to_string(),
-                            ),
-                        )
+                        event_tx.emit(app::AppEvent::SetCurrentlyMapping(
+                            name.to_string(),
+                        ))
                     }
 
                     ui.end_row();

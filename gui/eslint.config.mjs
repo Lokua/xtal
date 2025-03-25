@@ -26,6 +26,7 @@ export default [
       },
     },
     rules: {
+      'block-scoped-var': 'error',
       'object-shorthand': 'error',
       'prefer-const': 'error',
       'no-undef': 'error',
@@ -44,6 +45,7 @@ export default [
           classes: false,
         },
       ],
+      'react/jsx-no-undef': 'error',
       'react/jsx-uses-vars': 'error',
       'react/jsx-uses-react': 'error',
     },

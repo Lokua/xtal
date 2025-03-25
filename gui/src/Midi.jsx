@@ -1,6 +1,7 @@
 import React from 'react'
 import Select from './Select.jsx'
-import { VerticalSeparator } from './Separator.jsx'
+import Separator, { VerticalSeparator } from './Separator.jsx'
+import MapMode from './MapMode.jsx'
 
 export default function Midi({
   hrcc,
@@ -8,10 +9,16 @@ export default function Midi({
   inputPorts,
   outputPort,
   outputPorts,
+  mappingsEnabled,
+  mappings,
+  sliderNames,
   onChangeHrcc,
   onChangeInputPort,
   onChangeOutputPort,
+  onChangeMappingsEnabled,
   onClickSend,
+  onRemoveMapping,
+  onSetCurrentlyMapping,
 }) {
   return (
     <div className="midi">
@@ -51,8 +58,32 @@ export default function Midi({
           <label htmlFor="hrcc">Hi-Res</label>
         </fieldset>
         <VerticalSeparator style={{ margin: '0 8px' }} />
-        <button onClick={onClickSend}>Send</button>
+        <fieldset title="Enables live overrides of UI sliders via MIDI CCs">
+          <input
+            id="mappings-enabled"
+            type="checkbox"
+            checked={mappingsEnabled}
+            onChange={onChangeMappingsEnabled}
+          />
+          <label htmlFor="mappings-enabled">Mappings</label>
+        </fieldset>
+        <VerticalSeparator style={{ margin: '0 8px' }} />
+        <button
+          title="Sends the state of all CCs to the MIDI output port"
+          onClick={onClickSend}
+        >
+          Send (Resync)
+        </button>
       </section>
+      <Separator />
+      {sliderNames.length && (
+        <MapMode
+          mappings={mappings}
+          sliderNames={sliderNames}
+          onRemoveMapping={onRemoveMapping}
+          onSetCurrentlyMapping={onSetCurrentlyMapping}
+        />
+      )}
     </div>
   )
 }

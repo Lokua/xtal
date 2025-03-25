@@ -15,7 +15,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
-use super::web_view::{self as wv, SerializableControl};
+use super::web_view::{self as wv};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -121,18 +121,21 @@ pub enum AppEvent {
     ClearNextFrame,
     HubPopulated,
     EncodingComplete,
-    MapModeSetCurrentlyMapping(String),
     MidiContinue,
     MidiStart,
     MidiStop,
     QueueRecord,
+    ReceiveMappings(Vec<(String, ChannelAndControl)>),
     Record,
+    RemoveMapping(String),
     Reset,
     Resize,
     SaveProgramState,
     SendMidi,
+    SendMappings,
 
     // new WebView compat events
+    SetCurrentlyMapping(String),
     SetHrcc(bool),
     SetPaused(bool),
     SetPerfMode(bool),
@@ -241,7 +244,7 @@ impl AppModel {
         }
     }
 
-    fn serializable_controls(&mut self) -> Vec<SerializableControl> {
+    fn serializable_controls(&mut self) -> Vec<wv::SerializableControl> {
         let controls: Vec<wv::SerializableControl> = match self.control_hub() {
             Some(hub) => hub
                 .ui_controls
@@ -312,21 +315,6 @@ impl AppModel {
             AppEvent::EncodingComplete => {
                 self.web_view_tx.emit(wv::Event::SetIsEncoding(false));
             }
-            AppEvent::MapModeSetCurrentlyMapping(name) => {
-                self.map_mode.remove(&name);
-                self.control_hub_mut()
-                    .unwrap()
-                    .midi_controls
-                    .remove(&MapMode::proxy_name(&name));
-
-                self.map_mode.currently_mapping = Some(name.clone());
-
-                if let Err(connection_result) =
-                    self.map_mode.listen_for_midi(&name, self.hrcc)
-                {
-                    error!("{}", connection_result);
-                }
-            }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
 
@@ -360,6 +348,9 @@ impl AppModel {
                         "Recording queued. Awaiting MIDI Start message".into();
                 }
             }
+            AppEvent::ReceiveMappings(mappings) => {
+                self.map_mode.update_from_vec(&mappings);
+            }
             AppEvent::Record => {
                 match self
                     .recording_state
@@ -375,6 +366,11 @@ impl AppModel {
                         );
                     }
                 }
+            }
+            AppEvent::RemoveMapping(name) => {
+                self.map_mode.remove(&name);
+                self.map_mode.currently_mapping = None;
+                self.event_tx.emit(AppEvent::SendMappings);
             }
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
@@ -410,12 +406,17 @@ impl AppModel {
                     }
                 }
             }
+            AppEvent::SendMappings => {
+                let mappings = self.map_mode.mappings_as_vec();
+                self.web_view_tx.emit(wv::Event::Mappings(mappings));
+            }
             AppEvent::SendMidi => {
                 let messages = {
-                    let Some(hub) = self.control_hub() else {
+                    if let Some(hub) = self.control_hub() {
+                        hub.midi_controls.messages()
+                    } else {
                         return;
-                    };
-                    hub.midi_controls.messages()
+                    }
                 };
 
                 let Some(midi_out) = &mut self.midi_out else {
@@ -440,6 +441,29 @@ impl AppModel {
                 }
 
                 self.event_tx.alert("MIDI Sent");
+            }
+            AppEvent::SetCurrentlyMapping(name) => {
+                if name.is_empty() {
+                    self.map_mode.stop();
+                    return;
+                }
+
+                self.map_mode.remove(&name);
+                self.control_hub_mut()
+                    .unwrap()
+                    .midi_controls
+                    .remove(&MapMode::proxy_name(&name));
+
+                self.map_mode.currently_mapping = Some(name.clone());
+
+                let tx_for_callback = self.event_tx.clone();
+                if let Err(connection_result) =
+                    self.map_mode.start(&name, self.hrcc, move || {
+                        tx_for_callback.emit(AppEvent::SendMappings);
+                    })
+                {
+                    error!("{}", connection_result);
+                }
             }
             AppEvent::SetHrcc(hrcc) => {
                 self.hrcc = hrcc;
@@ -750,13 +774,14 @@ impl AppModel {
         }
 
         let event = wv::Event::LoadSketch {
-            sketch_name: self.sketch_name(),
-            display_name: self.sketch_config.display_name.to_string(),
-            tap_tempo_enabled: self.tap_tempo_enabled,
-            fps: frame_controller::fps(),
             bpm: self.ctx.bpm().get(),
             controls: self.serializable_controls(),
+            display_name: self.sketch_config.display_name.to_string(),
+            fps: frame_controller::fps(),
+            mappings: self.map_mode.mappings_as_vec(),
             paused,
+            sketch_name: self.sketch_name(),
+            tap_tempo_enabled: self.tap_tempo_enabled,
         };
 
         if self.web_view_ready {
@@ -1089,6 +1114,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
     }
 }
 
-fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
-    model.egui.borrow().draw_to_frame(&frame).unwrap();
-}
+// fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
+//     model.egui.borrow().draw_to_frame(&frame).unwrap();
+// }
+fn view_gui(_app: &App, _model: &AppModel, _frame: Frame) {}

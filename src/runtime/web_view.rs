@@ -11,8 +11,9 @@ use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
 
-/// Used to send/receive data from our web view using ipc-channel. All events
-/// should be assumed to be one-way child->parent unless otherwise documented.
+/// Used to send/receive data from our web view using ipc-channel. Most events
+/// should be assumed to be one-way from child to parent unless otherwise
+/// documented.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
     Advance,
@@ -41,25 +42,30 @@ pub enum Event {
     /// Sent after the child emits [`Event::SwitchSketch`]
     #[serde(rename_all = "camelCase")]
     LoadSketch {
-        sketch_name: String,
-        display_name: String,
-        tap_tempo_enabled: bool,
-        fps: f32,
         bpm: f32,
         controls: Vec<SerializableControl>,
+        display_name: String,
+        fps: f32,
         paused: bool,
+        mappings: Vec<(String, ChannelAndControl)>,
+        sketch_name: String,
+        tap_tempo_enabled: bool,
     },
+
+    // Sent whenever the user physically moves a MIDI control when in map mode
+    Mappings(Vec<(String, ChannelAndControl)>),
     QueueRecord,
     Ready,
 
     /// A two-way message. Can be sent manually from UI, or set from backend
     /// when receiving a MIDI Start when QueueRecording is enabled
     Record,
-
+    RemoveMapping(String),
     Reset,
     Save,
     SendMidi,
     // TODO: "set" is bit ugly - just use the var name
+    SetCurrentlyMapping(String),
     SetHrcc(bool),
     SetIsEncoding(bool),
     SetPaused(bool),
@@ -152,7 +158,7 @@ pub fn launch(
         while let Ok(message) = receiver.recv() {
             debug!("Received message from child: {:?}", message);
 
-            match &message {
+            match message {
                 Event::Advance => {
                     app_event_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
@@ -169,6 +175,9 @@ pub fn launch(
                 Event::HubPopulated(_) => {}
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
+                Event::Mappings(mappings) => {
+                    app_event_tx.emit(AppEvent::ReceiveMappings(mappings));
+                }
                 Event::QueueRecord => {
                     app_event_tx.emit(AppEvent::QueueRecord);
                 }
@@ -194,6 +203,9 @@ pub fn launch(
                 Event::Record => {
                     app_event_tx.emit(AppEvent::StartRecording);
                 }
+                Event::RemoveMapping(name) => {
+                    app_event_tx.emit(AppEvent::RemoveMapping(name));
+                }
                 Event::Reset => {
                     app_event_tx.emit(AppEvent::Reset);
                 }
@@ -203,21 +215,25 @@ pub fn launch(
                 Event::SendMidi => {
                     app_event_tx.emit(AppEvent::SendMidi);
                 }
+                Event::SetCurrentlyMapping(name) => {
+                    app_event_tx
+                        .emit(AppEvent::SetCurrentlyMapping(name.clone()));
+                }
                 Event::SetHrcc(hrcc) => {
-                    app_event_tx.emit(AppEvent::SetHrcc(*hrcc));
+                    app_event_tx.emit(AppEvent::SetHrcc(hrcc));
                 }
                 Event::SetIsEncoding(_) => {}
                 Event::SetPaused(paused) => {
-                    app_event_tx.emit(AppEvent::SetPaused(*paused));
+                    app_event_tx.emit(AppEvent::SetPaused(paused));
                 }
                 Event::SetPerfMode(perf_mode) => {
-                    app_event_tx.emit(AppEvent::SetPerfMode(*perf_mode));
+                    app_event_tx.emit(AppEvent::SetPerfMode(perf_mode));
                 }
                 Event::SetTapTempoEnabled(enabled) => {
-                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(*enabled));
+                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(enabled));
                 }
                 Event::SetTransitionTime(time) => {
-                    app_event_tx.emit(AppEvent::SetTransitionTime(*time));
+                    app_event_tx.emit(AppEvent::SetTransitionTime(time));
                 }
                 Event::SnapshotEnded(_) => {}
                 Event::SnapshotRecall(id) => {
@@ -248,13 +264,13 @@ pub fn launch(
                 Event::UpdateControlBool { name, value } => {
                     app_event_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
-                        ControlValue::from(*value),
+                        ControlValue::from(value),
                     )))
                 }
                 Event::UpdateControlFloat { name, value } => {
                     app_event_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
-                        ControlValue::from(*value),
+                        ControlValue::from(value),
                     )))
                 }
                 Event::UpdateControlString { name, value } => app_event_tx

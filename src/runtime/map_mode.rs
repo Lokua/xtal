@@ -29,10 +29,6 @@ impl Default for MapMode {
 }
 
 impl MapMode {
-    pub fn mapped(&self, name: &str) -> bool {
-        self.state.lock().unwrap().mappings.contains_key(name)
-    }
-
     pub fn formatted_mapping(&self, name: &str) -> String {
         self.state
             .lock()
@@ -57,6 +53,13 @@ impl MapMode {
             .collect::<Vec<_>>()
     }
 
+    pub fn update_from_vec(&mut self, ms: &[(String, ChannelAndControl)]) {
+        let mut state = self.state.lock().unwrap();
+        for m in ms {
+            state.mappings.insert(m.0.clone(), m.1);
+        }
+    }
+
     pub fn has(&self, name: &str) -> bool {
         self.state.lock().unwrap().mappings.contains_key(name)
     }
@@ -65,11 +68,15 @@ impl MapMode {
         self.state.lock().unwrap().mappings.remove(name);
     }
 
-    pub fn listen_for_midi(
+    pub fn start<F>(
         &self,
         name: &str,
         hrcc: bool,
-    ) -> Result<(), Box<dyn Error>> {
+        callback: F,
+    ) -> Result<(), Box<dyn Error>>
+    where
+        F: Fn() + Send + Sync + 'static,
+    {
         let state = self.state.clone();
         let name = name.to_owned();
 
@@ -90,7 +97,7 @@ impl MapMode {
                 // This is a standard 7bit message
                 if !hrcc || cc > 63 {
                     state.mappings.insert(name.clone(), (ch, cc));
-
+                    callback();
                     return;
                 }
 
@@ -116,7 +123,7 @@ impl MapMode {
                 // This is a regular 32-63 7bit message
                 if !state.msb_ccs.contains(&msb_key) {
                     state.mappings.insert(name.clone(), (ch, cc));
-
+                    callback();
                     return;
                 }
 
@@ -124,7 +131,13 @@ impl MapMode {
 
                 state.mappings.insert(name.clone(), msb_key);
                 state.msb_ccs.retain(|k| *k != msb_key);
+                callback();
             },
         )
+    }
+
+    pub fn stop(&mut self) {
+        self.currently_mapping = None;
+        midi::disconnect(midi::ConnectionType::Mapping);
     }
 }

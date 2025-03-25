@@ -12,8 +12,9 @@
   --control-background-color: #eee;
   --control-active-background-color: #fff;
   --control-text-color: #333;
+  --control-text-color-muted: #666;
   --control-track-color: #ddd;
-  --control-knob-color: #666;
+  --control-knob-color: #777;
   --control-disabled-text-color: #aaa;
   --control-on-background-color: #363636;
   --control-on-text-color: #eee;
@@ -28,6 +29,7 @@
   --control-background-color: #363636;
   --control-active-background-color: #555;
   --control-text-color: #eee;
+  --control-text-color-muted: #ccc;
   --control-track-color: #444;
   --control-knob-color: #888;
   --control-disabled-text-color: #777;
@@ -301,6 +303,28 @@ input[type='checkbox']:checked::before {
   > section:first-child,
   > section:nth-child(2) {
     display: flex;
+    align-items: center;
     margin: 4px 0;
+  }
+}
+
+.map-mode {
+  display: grid;
+  grid-template-columns: max-content auto;
+  align-items: center;
+  gap: 0 6px;
+
+  > span > button:first-child {
+    width: 48px;
+  }
+}
+
+.map-button {
+  &.mapping {
+    border: 2px solid var(--meter-color);
+  }
+
+  &.inactive {
+    color: var(--control-text-color-muted);
   }
 }
