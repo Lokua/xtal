@@ -15,7 +15,8 @@
   --control-track-color: #ddd;
   --control-knob-color: #666;
   --control-disabled-text-color: #aaa;
-  --control-on-background-color: green;
+  --control-on-background-color: #363636;
+  --control-on-text-color: #eee;
   --console-background-color: #ddd;
 }
 
@@ -31,6 +32,7 @@
   --control-knob-color: #888;
   --control-disabled-text-color: #777;
   --control-on-background-color: green;
+  --control-on-text-color: var(--control-text-color);
   --console-background-color: #111;
 }
 
@@ -141,7 +143,7 @@ input {
   &::after {
     content: '▼';
     position: absolute;
-    right: 14px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%) scaleX(1.5);
     color: var(--control-text-color);
@@ -151,14 +153,11 @@ input {
 
   select {
     appearance: none;
+    padding-right: 20px;
     padding-left: 6px;
     outline: none;
     box-shadow: none;
     appearance: none;
-  }
-
-  select::-ms-expand {
-    display: none;
   }
 }
 
@@ -171,6 +170,7 @@ button {
 
   &.on {
     background-color: var(--control-on-background-color);
+    color: var(--control-on-text-color);
   }
 
   &.record-button.on {
@@ -180,7 +180,6 @@ button {
 
 input[type='range'] {
   -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
   width: 100%;
   min-width: 64px;
@@ -197,7 +196,6 @@ input[type='range'] {
 
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
   width: 14px;
   height: 14px;
@@ -208,7 +206,6 @@ input[type='range']::-webkit-slider-thumb {
 
 input[type='checkbox'] {
   -webkit-appearance: none;
-  -moz-appearance: none;
   font-family: Arial, Helvetica, sans-serif !important;
   appearance: none;
   width: calc(var(--control-height) - 4px);
@@ -273,10 +270,6 @@ input[type='checkbox']:checked::before {
   padding: 6px;
   user-select: none;
   -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-touch-callout: none;
-  -khtml-user-select: none;
 }
 
 .number-box:focus {
@@ -294,6 +287,7 @@ input[type='checkbox']:checked::before {
 
 .meter-value {
   color: var(--meter-color);
+  font-size: 10px;
 }
 
 .console {

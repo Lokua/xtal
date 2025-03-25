@@ -4,7 +4,8 @@ use nannou_egui::Egui;
 use std::cell::{Cell, Ref, RefCell};
 use std::collections::VecDeque;
 use std::sync::mpsc;
-use std::{env, str};
+use std::time::Duration;
+use std::{env, str, thread};
 
 use super::map_mode::MapMode;
 use super::recording::{frames_dir, RecordingState};
@@ -165,16 +166,16 @@ impl AppEventSender {
         Self { tx }
     }
 
-    pub fn send(&self, event: AppEvent) {
+    pub fn emit(&self, event: AppEvent) {
         self.tx.send(event).expect("Failed to send event");
     }
 
     pub fn alert(&self, message: impl Into<String>) {
-        self.send(AppEvent::Alert(message.into()));
+        self.emit(AppEvent::Alert(message.into()));
     }
 
     pub fn alert_and_log(&self, message: impl Into<String>, level: log::Level) {
-        self.send(AppEvent::AlertAndLog(message.into(), level));
+        self.emit(AppEvent::AlertAndLog(message.into(), level));
     }
 }
 
@@ -204,7 +205,7 @@ struct AppModel {
     hrcc: bool,
     view_midi: bool,
     #[allow(unused)]
-    web_view_tx: wv::Sender,
+    web_view_tx: wv::EventSender,
     web_view_ready: bool,
     web_view_pending_messages: VecDeque<wv::Event>,
 }
@@ -245,13 +246,11 @@ impl AppModel {
             }
             AppEvent::Alert(text) => {
                 self.alert_text = text.clone();
-                self.web_view_tx.send(wv::Event::Alert(text)).unwrap();
+                self.web_view_tx.emit(wv::Event::Alert(text));
             }
             AppEvent::AlertAndLog(text, level) => {
                 self.alert_text = text.clone();
-                self.web_view_tx
-                    .send(wv::Event::Alert(text.clone()))
-                    .unwrap();
+                self.web_view_tx.emit(wv::Event::Alert(text.clone()));
 
                 match level {
                     log::Level::Error => error!("{}", text),
@@ -291,9 +290,7 @@ impl AppModel {
                 self.clear_next_frame.set(true);
             }
             AppEvent::EncodingComplete => {
-                self.web_view_tx
-                    .send(wv::Event::SetIsEncoding(false))
-                    .unwrap();
+                self.web_view_tx.emit(wv::Event::SetIsEncoding(false));
             }
             AppEvent::MapModeSetCurrentlyMapping(name) => {
                 self.map_mode.remove(&name);
@@ -319,7 +316,7 @@ impl AppModel {
                     match self.recording_state.start_recording() {
                         Ok(message) => {
                             self.event_tx.alert(message);
-                            self.web_view_tx.send(wv::Event::Record).unwrap();
+                            self.web_view_tx.emit(wv::Event::Record);
                         }
                         Err(e) => {
                             self.event_tx.alert_and_log(
@@ -331,7 +328,7 @@ impl AppModel {
                 }
             }
             AppEvent::MidiStop => {
-                self.event_tx.send(AppEvent::StopRecording);
+                self.event_tx.emit(AppEvent::StopRecording);
             }
             AppEvent::QueueRecord => {
                 if self.recording_state.is_queued {
@@ -435,6 +432,7 @@ impl AppModel {
             AppEvent::SetTapTempoEnabled(enabled) => {
                 self.tap_tempo_enabled = enabled;
                 self.ctx.bpm().set(self.sketch_config.bpm);
+                self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
             }
             AppEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
@@ -465,8 +463,7 @@ impl AppModel {
                     {
                         Ok(_) => {
                             self.web_view_tx
-                                .send(wv::Event::SetIsEncoding(true))
-                                .unwrap();
+                                .emit(wv::Event::SetIsEncoding(true));
                         }
                         Err(e) => {
                             error!("Failed to stop recording: {}", e);
@@ -504,6 +501,7 @@ impl AppModel {
             AppEvent::Tap => {
                 if self.tap_tempo_enabled {
                     self.ctx.bpm().set(self.tap_tempo.tap());
+                    self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
                 }
             }
             AppEvent::ToggleFullScreen => {
@@ -597,7 +595,7 @@ impl AppModel {
                 // Not clearing the queue as this is great for live reload!
                 // TODO: find a better way since this can undo some state
                 for message in &self.web_view_pending_messages {
-                    self.web_view_tx.send(message.clone()).unwrap();
+                    self.web_view_tx.emit(message.clone());
                 }
             }
         }
@@ -730,7 +728,7 @@ impl AppModel {
         };
 
         if self.web_view_ready {
-            self.web_view_tx.send(event).unwrap();
+            self.web_view_tx.emit(event);
         } else {
             self.web_view_pending_messages.push_back(event);
         }
@@ -868,6 +866,12 @@ fn model(app: &App) -> AppModel {
 
     let event_tx = AppEventSender::new(raw_event_tx);
     let web_view_tx = wv::launch(&event_tx, sketch_info.config.name).unwrap();
+    let wv_tx = web_view_tx.clone();
+
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_millis(1_000));
+        wv_tx.emit(wv::Event::AverageFps(frame_controller::average_fps()));
+    });
 
     let mut model = AppModel {
         main_window_id,
@@ -977,43 +981,43 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
             if let Some(digit) = digit.map(|s| s.to_string()) {
                 if shift_pressed {
-                    model.event_tx.send(AppEvent::SnapshotStore(digit));
+                    model.event_tx.emit(AppEvent::SnapshotStore(digit));
                 } else if logo_pressed {
-                    model.event_tx.send(AppEvent::SnapshotRecall(digit));
+                    model.event_tx.emit(AppEvent::SnapshotRecall(digit));
                 }
             }
 
             match key {
                 Key::Space => {
-                    model.event_tx.send(AppEvent::Tap);
+                    model.event_tx.emit(AppEvent::Tap);
                 }
                 // A
                 Key::A if has_no_modifiers => {
-                    model.event_tx.send(AppEvent::AdvanceSingleFrame);
+                    model.event_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
                 // Cmd + F
                 Key::F if logo_pressed => {
-                    model.event_tx.send(AppEvent::ToggleFullScreen);
+                    model.event_tx.emit(AppEvent::ToggleFullScreen);
                 }
                 // Cmd + G
                 Key::G if logo_pressed => {
-                    model.event_tx.send(AppEvent::ToggleGuiFocus);
+                    model.event_tx.emit(AppEvent::ToggleGuiFocus);
                 }
                 // Cmd + M
                 Key::M if logo_pressed && !shift_pressed => {
-                    model.event_tx.send(AppEvent::ToggleMainFocus);
+                    model.event_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 // Cmd + Shift + M
                 Key::M if logo_pressed && shift_pressed => {
-                    model.event_tx.send(AppEvent::ToggleViewMidi);
+                    model.event_tx.emit(AppEvent::ToggleViewMidi);
                 }
                 // R
                 Key::R if has_no_modifiers => {
-                    model.event_tx.send(AppEvent::Reset);
+                    model.event_tx.emit(AppEvent::Reset);
                 }
                 // S
                 Key::S if has_no_modifiers => {
-                    model.event_tx.send(AppEvent::CaptureFrame);
+                    model.event_tx.emit(AppEvent::CaptureFrame);
                 }
                 _ => {}
             }
@@ -1024,7 +1028,7 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
             ..
         } => {
             if id == model.main_window_id {
-                model.event_tx.send(AppEvent::Resize);
+                model.event_tx.emit(AppEvent::Resize);
             }
         }
         _ => {}

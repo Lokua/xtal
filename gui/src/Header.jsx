@@ -89,9 +89,7 @@ export default function Header({
             id="tap"
             type="checkbox"
             checked={tapTempoEnabled}
-            onChange={(e) => {
-              onChangeTapTempoEnabled(e.target.checked)
-            }}
+            onChange={onChangeTapTempoEnabled}
           />
           <label htmlFor="tap">Tap</label>
         </fieldset>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { post } from './util.mjs'
+import { match, post } from './util.mjs'
 import Header from './Header.jsx'
 import Controls from './Controls.jsx'
 import Midi from './Midi.jsx'
@@ -27,8 +27,17 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = window.latticeEvents.subscribe((event, data) => {
-      console.log('[app] sub event:', event, 'data:', data)
+      console.debug('[app - sub event]:', event, 'data:', data)
+
       switch (event) {
+        case 'AverageFps': {
+          setFps(data.toFixed(1))
+          break
+        }
+        case 'Bpm': {
+          setBpm(data.toFixed(1))
+          break
+        }
         case 'Init': {
           setIsLightTheme(data.isLightTheme)
           setSketchName(data.sketchName)
@@ -80,9 +89,57 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    document.addEventListener('keydown', onKeyDown)
+
+    function onKeyDown(e) {
+      console.log('[onKeyDown] e:', e)
+
+      match(e.code, {
+        KeyA() {
+          if (paused) {
+            post('Advance')
+          }
+        },
+        KeyF() {
+          if (e.metaKey) {
+            post('ToggleFullScreen')
+          }
+        },
+        KeyG() {
+          if (e.metaKey) {
+            post('ToggleGuiFocus')
+          }
+        },
+        KeyM() {
+          if (e.metaKey) {
+            post('ToggleMainFocus')
+          }
+        },
+        Space() {
+          if (tapTempoEnabled) {
+            post('Tap')
+          }
+        },
+      })
+    }
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [paused, tapTempoEnabled])
+
+  useEffect(() => {
     document.body.classList.add(isLightTheme ? 'light' : 'dark')
     document.body.classList.remove(isLightTheme ? 'dark' : 'light')
   }, [isLightTheme])
+
+  function onAdvance() {
+    post('Advance')
+  }
+
+  function onCaptureFrame() {
+    post('CaptureFrame')
+  }
 
   function onChangeControl(type, name, value, controls) {
     setControls(controls)
@@ -100,6 +157,95 @@ export default function App() {
     })
   }
 
+  function onChangeHrcc() {
+    const value = !hrcc
+    setHrcc(value)
+    post('SetHrcc', value)
+    setAlertText(
+      value
+        ? 'Expecting 14bit MIDI on channels 0-31'
+        : 'expecting standard 7bit MIDI messages for all CCs',
+    )
+  }
+
+  function onChangeInputPort(port) {
+    setMidiInputPort(port)
+    setAlertText('changing ports at runtime is not yet supported')
+  }
+
+  function onChangeOutputPort(port) {
+    setMidiOutputPort(port)
+    setAlertText('changing ports at runtime is not yet supported')
+  }
+
+  function onChangePerfMode() {
+    const value = !perfMode
+    setPerfMode(value)
+    post('SetPerfMode', value)
+    setAlertText(
+      value
+        ? 'When `Perf` is enabled, the sketch window will not be resized \
+        when switching sketches.'
+        : '',
+    )
+  }
+
+  function onChangeTapTempoEnabled() {
+    const enabled = !tapTempoEnabled
+    setTapTempoEnabled(enabled)
+    post('SetTapTempoEnabled', enabled)
+    setAlertText(
+      enabled ? 'Tap `Space` key to set BPM' : 'Sketch BPM has been restored',
+    )
+  }
+
+  function onChangeTransitionTime() {
+    post('SetTransitionTime')
+  }
+
+  function onClearBuffer() {
+    post('ClearBuffer')
+  }
+
+  function onQueueRecord() {
+    const value = !isQueued
+    setIsQueued(value)
+    post('QueueRecord')
+    setAlertText(value ? 'Recording queued. Awaiting MIDI start message.' : '')
+  }
+
+  function onRecord() {
+    if (isRecording) {
+      setIsRecording(false)
+      post('StopRecording')
+    } else {
+      setIsRecording(true)
+      post('Record')
+    }
+  }
+
+  function onReset() {
+    post('Reset')
+  }
+
+  function onSave() {
+    post('Save')
+  }
+
+  function onSwitchSketch(sketchName) {
+    post('SwitchSketch', sketchName)
+  }
+
+  function onTogglePlay() {
+    const value = !paused
+    setPaused(value)
+    post('SetPaused', value)
+  }
+
+  function onViewMidi() {
+    setView(view === 'midi' ? 'controls' : 'midi')
+  }
+
   return (
     <div id="app">
       <Header
@@ -114,73 +260,19 @@ export default function App() {
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
         view={view}
-        onAdvance={() => {
-          post('Advance')
-        }}
-        onCaptureFrame={() => {
-          post('CaptureFrame')
-        }}
-        onChangePerfMode={() => {
-          const value = !perfMode
-          setPerfMode(value)
-          post('SetPerfMode', value)
-          setAlertText(
-            value
-              ? 'When `Perf` is enabled, the sketch window will not be resized \
-            when switching sketches.'
-              : '',
-          )
-        }}
-        onChangeTapTempoEnabled={() => {
-          const value = !tapTempoEnabled
-          setTapTempoEnabled(value)
-          post('SetTapTempoEnabled', value)
-          setAlertText(
-            value
-              ? 'Tap `Space` key to set BPM'
-              : 'Sketch BPM has been restored',
-          )
-        }}
-        onChangeTransitionTime={() => {
-          post('SetTransitionTime')
-        }}
-        onClearBuffer={() => {
-          post('ClearBuffer')
-        }}
-        onReset={() => {
-          post('Reset')
-        }}
-        onQueueRecord={() => {
-          const value = !isQueued
-          setIsQueued(value)
-          post('QueueRecord')
-          setAlertText(
-            value ? 'Recording queued. Awaiting MIDI start message.' : '',
-          )
-        }}
-        onRecord={() => {
-          if (isRecording) {
-            setIsRecording(false)
-            post('StopRecording')
-          } else {
-            setIsRecording(true)
-            post('Record')
-          }
-        }}
-        onSave={() => {
-          post('Save')
-        }}
-        onTogglePlay={() => {
-          const value = !paused
-          setPaused(value)
-          post('SetPaused', value)
-        }}
-        onViewMidi={() => {
-          setView(view === 'midi' ? 'controls' : 'midi')
-        }}
-        onSwitchSketch={(sketchName) => {
-          post('SwitchSketch', sketchName)
-        }}
+        onAdvance={onAdvance}
+        onCaptureFrame={onCaptureFrame}
+        onChangePerfMode={onChangePerfMode}
+        onChangeTapTempoEnabled={onChangeTapTempoEnabled}
+        onChangeTransitionTime={onChangeTransitionTime}
+        onClearBuffer={onClearBuffer}
+        onReset={onReset}
+        onQueueRecord={onQueueRecord}
+        onRecord={onRecord}
+        onSave={onSave}
+        onSwitchSketch={onSwitchSketch}
+        onTogglePlay={onTogglePlay}
+        onViewMidi={onViewMidi}
       />
       <main>
         {view === 'midi' ? (
@@ -190,24 +282,9 @@ export default function App() {
             inputPorts={midiInputPorts}
             outputPort={midiOutputPort}
             outputPorts={midiOutputPorts}
-            onChangeHrcc={() => {
-              const value = !hrcc
-              setHrcc(value)
-              post('SetHrcc', value)
-              setAlertText(
-                value
-                  ? 'Expecting 14bit MIDI on channels 0-31'
-                  : 'expecting standard 7bit MIDI messages for all CCs',
-              )
-            }}
-            onChangeInputPort={(port) => {
-              setMidiInputPort(port)
-              setAlertText('changing ports at runtime is not yet supported')
-            }}
-            onChangeOutputPort={(port) => {
-              setMidiOutputPort(port)
-              setAlertText('changing ports at runtime is not yet supported')
-            }}
+            onChangeHrcc={onChangeHrcc}
+            onChangeInputPort={onChangeInputPort}
+            onChangeOutputPort={onChangeOutputPort}
           />
         ) : (
           <Controls controls={controls} onChange={onChangeControl} />

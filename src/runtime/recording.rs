@@ -151,7 +151,7 @@ impl RecordingState {
                             "Encoding complete. Video path: {}",
                             output_path
                         ));
-                        event_tx.send(AppEvent::EncodingComplete);
+                        event_tx.emit(AppEvent::EncodingComplete);
                         *session_id = generate_session_id();
                         self.recorded_frames.set(0);
                         if let Some(new_path) =

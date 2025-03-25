@@ -11,14 +11,22 @@ use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
 
-/// Event enum used to send/receive data from our web view using ipc-channel
+/// Event enum used to send/receive data from our web view using ipc-channel.
+/// All events should be assumed to be one-way child->parent unless otherwise
+/// documented.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
     Advance,
     Alert(String),
+    AverageFps(f32),
+
+    /// Sent from parent after receiving Tap event
+    Bpm(f32),
     CaptureFrame,
     ClearBuffer,
     Error(String),
+
+    /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
     Init {
         is_light_theme: bool,
@@ -29,6 +37,8 @@ pub enum Event {
         sketch_names: Vec<String>,
         sketch_name: String,
     },
+
+    /// Sent after the child emits [`Event::SwitchSketch`]
     #[serde(rename_all = "camelCase")]
     LoadSketch {
         sketch_name: String,
@@ -47,6 +57,7 @@ pub enum Event {
     Record,
 
     Reset,
+    // TODO: "set" is bit ugly - just use the var name
     SetHrcc(bool),
     SetIsEncoding(bool),
     SetPaused(bool),
@@ -60,6 +71,9 @@ pub enum Event {
 
     SwitchSketch(String),
     Tap,
+    ToggleFullScreen,
+    ToggleGuiFocus,
+    ToggleMainFocus,
     UpdateControlBool {
         name: String,
         value: bool,
@@ -77,15 +91,31 @@ pub enum Event {
 pub type Sender = IpcSender<Event>;
 pub type Receiver = IpcReceiver<Event>;
 
+#[derive(Clone)]
+pub struct EventSender {
+    tx: Sender,
+}
+
+impl EventSender {
+    pub fn new(tx: Sender) -> Self {
+        Self { tx }
+    }
+
+    pub fn emit(&self, event: Event) {
+        self.tx.send(event).expect("Failed to send event");
+    }
+}
+
 type Bootstrap = (Sender, Receiver);
 
-/// Launches the tao/wry web_view code as a child process. This is necessary
-/// because both tao and nannou need to run on a main thread and control the
-/// event loop, which we can't have in a single process.
+/// Launches the tao/wry web_view code as a child process and sets up IPC
+/// channels. This is necessary because both tao and nannou need to run on a
+/// main thread and control the event loop, which we can't have in a single
+/// process.
 pub fn launch(
     app_event_tx: &AppEventSender,
     sketch_name: &str,
-) -> Result<Sender, Box<dyn std::error::Error>> {
+) -> Result<EventSender, Box<dyn std::error::Error>> {
     let (server, server_name) = IpcOneShotServer::<Bootstrap>::new()?;
 
     let mut child = Command::new("cargo")
@@ -117,24 +147,24 @@ pub fn launch(
         while let Ok(message) = receiver.recv() {
             debug!("Received message from child: {:?}", message);
 
-            // Empty handlers (() => {}) not marked a todo!() are one-way events
-            // only sent from parent to child
             match &message {
                 Event::Advance => {
-                    app_event_tx.send(AppEvent::AdvanceSingleFrame);
+                    app_event_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
                 Event::Alert(_) => {}
+                Event::AverageFps(_) => {}
+                Event::Bpm(_) => {}
                 Event::CaptureFrame => {
-                    app_event_tx.send(AppEvent::CaptureFrame);
+                    app_event_tx.emit(AppEvent::CaptureFrame);
                 }
                 Event::ClearBuffer => {
-                    app_event_tx.send(AppEvent::ClearNextFrame);
+                    app_event_tx.emit(AppEvent::ClearNextFrame);
                 }
                 Event::Error(e) => error!("Received error from child: {}", e),
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
                 Event::QueueRecord => {
-                    app_event_tx.send(AppEvent::QueueRecord);
+                    app_event_tx.emit(AppEvent::QueueRecord);
                 }
                 Event::Ready => {
                     let registry = REGISTRY.read().unwrap();
@@ -153,54 +183,63 @@ pub fn launch(
                     };
 
                     init_sender.send(data).unwrap();
-                    app_event_tx.send(AppEvent::WebViewReady);
+                    app_event_tx.emit(AppEvent::WebViewReady);
                 }
                 Event::Record => {
-                    app_event_tx.send(AppEvent::StartRecording);
+                    app_event_tx.emit(AppEvent::StartRecording);
                 }
                 Event::Reset => {
-                    app_event_tx.send(AppEvent::Reset);
+                    app_event_tx.emit(AppEvent::Reset);
                 }
                 Event::SetHrcc(hrcc) => {
-                    app_event_tx.send(AppEvent::SetHrcc(*hrcc));
+                    app_event_tx.emit(AppEvent::SetHrcc(*hrcc));
                 }
                 Event::SetIsEncoding(_) => {}
                 Event::SetPaused(paused) => {
-                    app_event_tx.send(AppEvent::SetPaused(*paused));
+                    app_event_tx.emit(AppEvent::SetPaused(*paused));
                 }
                 Event::SetPerfMode(perf_mode) => {
-                    app_event_tx.send(AppEvent::SetPerfMode(*perf_mode));
+                    app_event_tx.emit(AppEvent::SetPerfMode(*perf_mode));
                 }
                 Event::SetTapTempoEnabled(enabled) => {
-                    app_event_tx.send(AppEvent::SetTapTempoEnabled(*enabled));
+                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(*enabled));
                 }
                 Event::SetTransitionTime(time) => {
-                    app_event_tx.send(AppEvent::SetTransitionTime(*time));
+                    app_event_tx.emit(AppEvent::SetTransitionTime(*time));
                 }
                 Event::StopRecording => {
-                    app_event_tx.send(AppEvent::StopRecording);
+                    app_event_tx.emit(AppEvent::StopRecording);
                 }
                 Event::SwitchSketch(sketch_name) => {
                     app_event_tx
-                        .send(AppEvent::SwitchSketch(sketch_name.clone()));
+                        .emit(AppEvent::SwitchSketch(sketch_name.clone()));
                 }
                 Event::Tap => {
-                    app_event_tx.send(AppEvent::Tap);
+                    app_event_tx.emit(AppEvent::Tap);
+                }
+                Event::ToggleFullScreen => {
+                    app_event_tx.emit(AppEvent::ToggleFullScreen);
+                }
+                Event::ToggleGuiFocus => {
+                    app_event_tx.emit(AppEvent::ToggleGuiFocus);
+                }
+                Event::ToggleMainFocus => {
+                    app_event_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 Event::UpdateControlBool { name, value } => {
-                    app_event_tx.send(AppEvent::UpdateUiControl((
+                    app_event_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(*value),
                     )))
                 }
                 Event::UpdateControlFloat { name, value } => {
-                    app_event_tx.send(AppEvent::UpdateUiControl((
+                    app_event_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(*value),
                     )))
                 }
                 Event::UpdateControlString { name, value } => app_event_tx
-                    .send(AppEvent::UpdateUiControl((
+                    .emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(value.clone()),
                     ))),
@@ -208,7 +247,7 @@ pub fn launch(
         }
     });
 
-    Ok(sender)
+    Ok(EventSender::new(sender))
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

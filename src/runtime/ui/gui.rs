@@ -134,7 +134,7 @@ pub fn calculate_gui_dimensions(
 
 fn draw_save_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Image")).clicked().then(|| {
-        event_tx.send(app::AppEvent::CaptureFrame);
+        event_tx.emit(app::AppEvent::CaptureFrame);
     });
 }
 
@@ -149,7 +149,7 @@ fn draw_pause_button(
     )
     .clicked()
     .then(|| {
-        event_tx.send(app::AppEvent::TogglePlay);
+        event_tx.emit(app::AppEvent::TogglePlay);
     });
 }
 
@@ -161,19 +161,19 @@ fn draw_adv_button(
     ui.add_enabled(is_paused, egui::Button::new("Advance"))
         .clicked()
         .then(|| {
-            event_tx.send(app::AppEvent::AdvanceSingleFrame);
+            event_tx.emit(app::AppEvent::AdvanceSingleFrame);
         });
 }
 
 fn draw_reset_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Reset")).clicked().then(|| {
-        event_tx.send(app::AppEvent::Reset);
+        event_tx.emit(app::AppEvent::Reset);
     });
 }
 
 fn draw_clear_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Clear Buf")).clicked().then(|| {
-        event_tx.send(app::AppEvent::ClearNextFrame);
+        event_tx.emit(app::AppEvent::ClearNextFrame);
         event_tx.alert("Cleared");
         info!("Frame cleared");
     });
@@ -192,7 +192,7 @@ fn draw_queue_record_button(
     )
     .clicked()
     .then(|| {
-        event_tx.send(app::AppEvent::QueueRecord);
+        event_tx.emit(app::AppEvent::QueueRecord);
     });
 }
 
@@ -216,7 +216,7 @@ fn draw_record_button(
     )
     .clicked()
     .then(|| {
-        event_tx.send(app::AppEvent::Record);
+        event_tx.emit(app::AppEvent::Record);
     });
 }
 
@@ -259,7 +259,7 @@ fn draw_sketch_selector(
                             )
                             .clicked()
                         {
-                            event_tx.send(app::AppEvent::SwitchSketch(
+                            event_tx.emit(app::AppEvent::SwitchSketch(
                                 name.clone(),
                             ));
                         }
@@ -274,7 +274,7 @@ fn draw_perf_mode_checkbox(
     event_tx: &app::AppEventSender,
 ) {
     if ui.add(egui::Checkbox::new(perf_mode, "Perf")).changed() {
-        event_tx.send(app::AppEvent::TogglePerfMode(*perf_mode))
+        event_tx.emit(app::AppEvent::TogglePerfMode(*perf_mode))
     }
 }
 
@@ -290,7 +290,7 @@ fn draw_tap_tempo_checkbox(
     event_tx: &app::AppEventSender,
 ) {
     if ui.add(egui::Checkbox::new(tap_tempo, "Tap")).changed() {
-        event_tx.send(app::AppEvent::ToggleTapTempo(*tap_tempo))
+        event_tx.emit(app::AppEvent::ToggleTapTempo(*tap_tempo))
     }
 }
 
@@ -320,7 +320,7 @@ fn draw_transition_time_selector(
                             .clicked()
                         {
                             event_tx
-                                .send(app::AppEvent::SetTransitionTime(time));
+                                .emit(app::AppEvent::SetTransitionTime(time));
                         }
                     }
                 });
@@ -335,13 +335,13 @@ fn draw_save_controls_button(
     ui.add_enabled(!is_disabled, egui::Button::new("Save"))
         .clicked()
         .then(|| {
-            event_tx.send(app::AppEvent::SaveProgramState);
+            event_tx.emit(app::AppEvent::SaveProgramState);
         });
 }
 
 fn draw_view_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("MIDI")).clicked().then(|| {
-        event_tx.send(app::AppEvent::ToggleViewMidi);
+        event_tx.emit(app::AppEvent::ToggleViewMidi);
     });
 }
 
@@ -393,7 +393,7 @@ fn draw_midi_pane(
 ) {
     ui.horizontal(|ui| {
         if ui.checkbox(hrcc, "HRCC").clicked() {
-            event_tx.send(app::AppEvent::ToggleHrcc);
+            event_tx.emit(app::AppEvent::ToggleHrcc);
         }
         ui.separator();
         draw_send_midi_button(ui, event_tx);
@@ -444,7 +444,7 @@ fn draw_midi_pane(
                     };
 
                     if button.clicked() {
-                        event_tx.send(
+                        event_tx.emit(
                             app::AppEvent::MapModeSetCurrentlyMapping(
                                 name.to_string(),
                             ),
@@ -459,6 +459,6 @@ fn draw_midi_pane(
 
 fn draw_send_midi_button(ui: &mut egui::Ui, event_tx: &app::AppEventSender) {
     ui.add(egui::Button::new("Send")).clicked().then(|| {
-        event_tx.send(app::AppEvent::SendMidi);
+        event_tx.emit(app::AppEvent::SendMidi);
     });
 }

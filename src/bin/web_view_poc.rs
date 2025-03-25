@@ -22,7 +22,7 @@ fn main() -> wry::Result<()> {
     let window = WindowBuilder::new()
         .with_title("GUI")
         .with_theme(Some(ternary!(is_light, Theme::Light, Theme::Dark)))
-        .with_inner_size(LogicalSize::new(538, 700))
+        .with_inner_size(LogicalSize::new(560, 700))
         .with_position(LogicalPosition::new(700, 0))
         .build(&event_loop)
         .unwrap();
