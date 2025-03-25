@@ -476,11 +476,13 @@ impl AppModel {
                 if let Some(hub) = self.control_hub_mut() {
                     match hub.recall_snapshot(&digit) {
                         Ok(_) => {
-                            self.alert_text =
-                                format!("Snapshot {:?} recalled", digit);
+                            self.event_tx.alert_and_log(
+                                format!("Snapshot {:?} recalled", digit),
+                                log::Level::Info,
+                            );
                         }
                         Err(e) => {
-                            self.event_tx.alert_and_log(e, log::Level::Info);
+                            self.event_tx.alert_and_log(e, log::Level::Error);
                         }
                     }
                 }
@@ -488,9 +490,15 @@ impl AppModel {
             AppEvent::SnapshotStore(digit) => {
                 if let Some(hub) = self.control_hub_mut() {
                     hub.take_snapshot(&digit);
-                    self.alert_text = format!("Snapshot {:?} saved", digit);
+                    self.event_tx.alert_and_log(
+                        format!("Snapshot {:?} saved", digit),
+                        log::Level::Info,
+                    );
                 } else {
-                    error!("Unable to store snapshot ???");
+                    self.event_tx.alert_and_log(
+                        "Unable to store snapshot (no hub)",
+                        log::Level::Error,
+                    );
                 }
             }
             AppEvent::SwitchSketch(name) => {

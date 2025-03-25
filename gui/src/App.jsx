@@ -29,16 +29,14 @@ export default function App() {
     const unsubscribe = window.latticeEvents.subscribe((event, data) => {
       console.debug('[app - sub event]:', event, 'data:', data)
 
-      switch (event) {
-        case 'AverageFps': {
+      match(event, {
+        AverageFps() {
           setFps(data.toFixed(1))
-          break
-        }
-        case 'Bpm': {
+        },
+        Bpm() {
           setBpm(data.toFixed(1))
-          break
-        }
-        case 'Init': {
+        },
+        Init() {
           setIsLightTheme(data.isLightTheme)
           setSketchName(data.sketchName)
           setSketchNames(data.sketchNames)
@@ -47,38 +45,30 @@ export default function App() {
           const getPort = ([, port]) => port
           setMidiInputPorts(data.midiInputPorts.map(getPort))
           setMidiOutputPorts(data.midiOutputPorts.map(getPort))
-          break
-        }
-        case 'Alert': {
+        },
+        Alert() {
           setAlertText(data)
-          break
-        }
-        case 'LoadSketch': {
+        },
+        LoadSketch() {
           setSketchName(data.sketchName)
           setControls(data.controls)
           setTapTempoEnabled(data.tapTempoEnabled)
           setBpm(data.bpm)
           setFps(data.fps)
           setPaused(data.paused)
-          break
-        }
-        case 'Record': {
+        },
+        Record() {
           setIsRecording(true)
           setIsQueued(false)
-          break
-        }
-        case 'SetIsEncoding': {
+        },
+        SetIsEncoding() {
           setIsEncoding(data)
           if (data) {
             setIsQueued(false)
             setIsRecording(false)
           }
-          break
-        }
-        default: {
-          break
-        }
-      }
+        },
+      })
     })
 
     post('Ready')
@@ -93,6 +83,16 @@ export default function App() {
 
     function onKeyDown(e) {
       console.log('[onKeyDown] e:', e)
+
+      if (e.code.startsWith('Digit')) {
+        if (e.metaKey) {
+          post('SnapshotRecall', e.key)
+        } else if (e.shiftKey) {
+          // `key` is no longer "1" or "2" but "!" and "@" at this point
+          const actualKey = e.code.slice('Digit'.length)
+          post('SnapshotStore', actualKey)
+        }
+      }
 
       match(e.code, {
         KeyA() {
@@ -113,6 +113,13 @@ export default function App() {
         KeyM() {
           if (e.metaKey) {
             post('ToggleMainFocus')
+          }
+        },
+        KeyS() {
+          if (e.metaKey || e.shiftKey) {
+            post('Save')
+          } else {
+            post('CaptureFrame')
           }
         },
         Space() {

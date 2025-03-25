@@ -50,12 +50,12 @@
     {
       "type": "Slider",
       "name": "color_amt",
-      "value": 0.74
+      "value": 0.4266
     },
     {
       "type": "Slider",
       "name": "color_freq",
-      "value": 1.8
+      "value": 1.049
     },
     {
       "type": "Slider",
@@ -90,17 +90,17 @@
     {
       "type": "Slider",
       "name": "distance_mix",
-      "value": 0.24499999
+      "value": 0.8252
     },
     {
       "type": "Slider",
       "name": "grain_size",
-      "value": 6.5499997
+      "value": 8.979
     },
     {
       "type": "Slider",
       "name": "angle_mult",
-      "value": 3.25
+      "value": 3.0958
     }
   ],
   "midi_controls": [],

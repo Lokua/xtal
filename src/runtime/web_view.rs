@@ -57,6 +57,7 @@ pub enum Event {
     Record,
 
     Reset,
+    Save,
     // TODO: "set" is bit ugly - just use the var name
     SetHrcc(bool),
     SetIsEncoding(bool),
@@ -64,6 +65,8 @@ pub enum Event {
     SetPerfMode(bool),
     SetTapTempoEnabled(bool),
     SetTransitionTime(f32),
+    SnapshotRecall(String),
+    SnapshotStore(String),
 
     /// A two-way message. Can be sent manually from UI, or set from backend
     /// when receiving a MIDI Stop when QueueRecording is enabled
@@ -191,6 +194,9 @@ pub fn launch(
                 Event::Reset => {
                     app_event_tx.emit(AppEvent::Reset);
                 }
+                Event::Save => {
+                    app_event_tx.emit(AppEvent::SaveProgramState);
+                }
                 Event::SetHrcc(hrcc) => {
                     app_event_tx.emit(AppEvent::SetHrcc(*hrcc));
                 }
@@ -206,6 +212,12 @@ pub fn launch(
                 }
                 Event::SetTransitionTime(time) => {
                     app_event_tx.emit(AppEvent::SetTransitionTime(*time));
+                }
+                Event::SnapshotRecall(id) => {
+                    app_event_tx.emit(AppEvent::SnapshotRecall(id.clone()));
+                }
+                Event::SnapshotStore(id) => {
+                    app_event_tx.emit(AppEvent::SnapshotStore(id.clone()));
                 }
                 Event::StopRecording => {
                     app_event_tx.emit(AppEvent::StopRecording);
