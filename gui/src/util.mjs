@@ -1,17 +1,11 @@
-export function post(event) {
-  window.ipc.postMessage(event)
+export function post(event, data) {
+  if (data !== undefined) {
+    window.ipc.postMessage(
+      JSON.stringify({
+        [event]: data,
+      })
+    )
+  } else {
+    window.ipc.postMessage(JSON.stringify(event))
+  }
 }
-
-// export function post(event, data = null) {
-//   window.ipc.postMessage(
-//     JSON.stringify({
-//       event,
-//       data:
-//         data === null
-//           ? null
-//           : {
-//               [event]: data,
-//             },
-//     })
-//   )
-// }

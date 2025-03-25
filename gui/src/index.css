@@ -7,13 +7,15 @@
 .light {
   --background-color: #fff;
   --text-color: #222;
-  --muted-color: #444;
+  --muted-color: #ccc;
   --meter-color: limegreen;
   --control-background-color: #eee;
   --control-active-background-color: #fff;
   --control-text-color: #333;
-  --control-track-color: #888;
-  --control-knob-color: #333;
+  --control-track-color: #ddd;
+  --control-knob-color: #666;
+  --control-disabled-text-color: #aaa;
+  --control-on-background-color: green;
 }
 
 .dark {
@@ -26,6 +28,8 @@
   --control-text-color: #eee;
   --control-track-color: #444;
   --control-knob-color: #888;
+  --control-disabled-text-color: #777;
+  --control-on-background-color: green;
 }
 
 *,
@@ -48,6 +52,9 @@ body {
 }
 
 #app {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--background-color);
   color: var(--text-color);
   margin: 0;
@@ -56,7 +63,8 @@ body {
   height: 100vh;
 
   > header,
-  > main {
+  > main,
+  > footer {
     padding: 4px 8px;
   }
 
@@ -68,6 +76,16 @@ body {
       align-items: center;
       justify-content: space-between;
     }
+  }
+
+  > main {
+    overflow: auto;
+  }
+
+  > footer {
+    padding: 8px;
+    margin-top: auto;
+    border-top: 1px solid var(--muted-color);
   }
 }
 
@@ -107,6 +125,11 @@ input {
   cursor: pointer;
   background-color: var(--control-background-color);
   color: var(--control-text-color);
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--control-disabled-text-color);
+  }
 }
 
 .select-wrapper {
@@ -126,7 +149,7 @@ input {
 
   select {
     appearance: none;
-    padding-left: 10px;
+    padding-left: 6px;
     outline: none;
     box-shadow: none;
     appearance: none;
@@ -142,6 +165,10 @@ button {
 
   &:active {
     background-color: var(--control-active-background-color);
+  }
+
+  &.on {
+    background-color: var(--control-on-background-color);
   }
 }
 
@@ -261,4 +288,10 @@ input[type='checkbox']:checked::before {
 
 .meter-value {
   color: var(--meter-color);
+}
+
+.console {
+  height: 64px;
+  padding: 8px;
+  background-color: var(--control-background-color);
 }

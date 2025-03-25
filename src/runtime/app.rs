@@ -14,7 +14,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
-use super::web_view::{self as wv, ToMsg};
+use super::web_view::{self as wv};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -128,7 +128,13 @@ pub enum AppEvent {
     Resize,
     SaveProgramState,
     SendMidi,
+
+    // The set methods replace the Toggle* methods
+    SetPaused(bool),
+    SetPerfMode(bool),
+    SetTapTempoEnabled(bool),
     SetTransitionTime(f32),
+
     SnapshotRecall(String),
     SnapshotStore(String),
     SwitchSketch(String),
@@ -234,10 +240,14 @@ impl AppModel {
                 frame_controller::advance_single_frame();
             }
             AppEvent::Alert(text) => {
-                self.alert_text = text;
+                self.alert_text = text.clone();
+                self.web_view_tx.send(wv::Event::Alert(text)).unwrap();
             }
             AppEvent::AlertAndLog(text, level) => {
                 self.alert_text = text.clone();
+                self.web_view_tx
+                    .send(wv::Event::Alert(text.clone()))
+                    .unwrap();
 
                 match level {
                     log::Level::Error => error!("{}", text),
@@ -407,6 +417,18 @@ impl AppModel {
 
                 self.alert_text = "MIDI sent".into();
             }
+
+            AppEvent::SetPaused(paused) => {
+                frame_controller::set_paused(paused);
+            }
+            AppEvent::SetPerfMode(perf_mode) => {
+                self.perf_mode = perf_mode;
+            }
+            AppEvent::SetTapTempoEnabled(enabled) => {
+                self.tap_tempo_enabled = enabled;
+                self.ctx.bpm().set(self.sketch_config.bpm);
+            }
+
             AppEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
                 if let Some(hub) = self.control_hub_mut() {
@@ -532,16 +554,11 @@ impl AppModel {
             }
             AppEvent::WebViewReady => {
                 self.web_view_ready = true;
-                // Helpful for live-reloading of the web-app
-                // TODO: find a better way to playback old messages
+                // Not clearing the queue as this is great for live reload!
+                // TODO: find a better way since this can undo some state
                 for message in &self.web_view_pending_messages {
                     self.web_view_tx.send(message.clone()).unwrap();
                 }
-                // while let Some(message) =
-                //     self.web_view_pending_messages.pop_front()
-                // {
-                //     self.web_view_tx.send(message).unwrap();
-                // }
             }
         }
     }
@@ -639,9 +656,8 @@ impl AppModel {
             );
         }
 
-        if self.sketch_config.play_mode != PlayMode::Loop {
-            frame_controller::set_paused(true);
-        }
+        let paused = self.sketch_config.play_mode != PlayMode::Loop;
+        frame_controller::set_paused(paused);
 
         self.load_program_state();
 
@@ -650,13 +666,28 @@ impl AppModel {
             None => None,
         };
 
-        let msg = match ui_controls {
-            Some(controls) => controls.to_msg(),
-            None => "".to_string(),
+        let controls: Vec<wv::SerializableControl> = match ui_controls {
+            Some(controls) => controls
+                .configs()
+                .iter()
+                .map(|config| {
+                    wv::SerializableControl::from((config, &controls))
+                })
+                .collect(),
+            None => vec![],
         };
 
-        let event =
-            wv::Event::String(format!("event=load\n\n[ui_controls]\n{}", msg));
+        debug!("paused: {}", paused);
+
+        let event = wv::Event::LoadSketch {
+            sketch_name: self.sketch_name(),
+            display_name: self.sketch_config.display_name.to_string(),
+            tap_tempo_enabled: self.tap_tempo_enabled,
+            fps: frame_controller::fps(),
+            bpm: self.ctx.bpm().get(),
+            controls,
+            paused,
+        };
 
         if self.web_view_ready {
             self.web_view_tx.send(event).unwrap();

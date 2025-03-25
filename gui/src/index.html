@@ -10,19 +10,17 @@
     <main id="app"></main>
     <script>
       window.ipc = {
-        postMessage(m) {
-          window.external.invoke(m)
+        postMessage(message) {
+          window.external.invoke(message)
         },
       }
       window.latticeEvents = {
         subscribe(callback) {
           window.addEventListener('message', (e) => {
-            console.info('raw message handler', e)
-            if (e.data?.event) {
-              callback({
-                event: e.data.event,
-                data: e.data.data,
-              })
+            if (e.data) {
+              const event = Object.keys(e.data)[0]
+              const data = e.data[event]
+              callback(event, data)
             }
           })
         },

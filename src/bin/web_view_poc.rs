@@ -32,18 +32,25 @@ fn main() -> wry::Result<()> {
         .with_devtools(true)
         .with_ipc_handler(move |message| {
             trace!("ipc_handler message: {:?};", message);
+            let json_string = message.body().to_string();
 
-            let web_view_event = match message.body().as_str() {
-                "Ready" => wv::Event::Ready,
-                other => {
-                    error!("Unknown message from WebView: {}", other);
-                    wv::Event::Error(format!("Unknown message: {}", other))
-                }
-            };
+            let web_view_event =
+                match serde_json::from_str::<wv::Event>(&json_string) {
+                    Ok(event) => event,
+                    Err(e) => {
+                        error!(
+                            "JSON parse error: {:?}; Problematic JSON: {}",
+                            e, json_string
+                        );
+                        wv::Event::Error(format!("{}", e))
+                    }
+                };
 
             sender.send(web_view_event).unwrap();
         })
         .build(&window)?;
+
+    web_view.open_devtools();
 
     trace!("Child: Starting event loop");
     event_loop.run(move |event, _, control_flow| {

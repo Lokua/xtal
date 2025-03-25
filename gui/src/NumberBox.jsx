@@ -1,15 +1,6 @@
 import React, { Component } from 'react'
 
 export default class NumberBox extends Component {
-  // static propTypes = {
-  //   value: PropTypes.number,
-  //   min: PropTypes.number,
-  //   max: PropTypes.number,
-  //   step: PropTypes.number,
-  //   decimals: PropTypes.number,
-  //   onChange: PropTypes.func.isRequired
-  // }
-
   static defaultProps = {
     value: 0,
     min: 0,
@@ -32,15 +23,19 @@ export default class NumberBox extends Component {
     return Math.round(value * tenTo) / tenTo
   }
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.value !== prevState.value) {
+      return {
+        value: nextProps.value,
+      }
+    }
+
+    return null
+  }
+
   state = {
     value: this.props.value,
     prevY: 0,
-  }
-
-  UNSAFE__componentWillReceiveProps({ value }) {
-    if (value !== this.state.value) {
-      this.setState({ value })
-    }
   }
 
   setValue(x) {
@@ -90,7 +85,6 @@ export default class NumberBox extends Component {
   }
 
   onMouseDown = (e) => {
-    // e.preventDefault()
     window.addEventListener('mousemove', this.onMouseMove)
     window.addEventListener('mouseup', this.onMouseUp)
     this.setState({ prevY: e.clientY })

@@ -3,6 +3,7 @@ import { post } from './util.mjs'
 import Select from './Select.jsx'
 import Controls from './Controls.jsx'
 import Separator, { VerticalSeparator } from './Separator.jsx'
+import Header from './Header.jsx'
 
 export default function App() {
   const [view, setView] = useState('controls')
@@ -14,28 +15,42 @@ export default function App() {
   const [midiOutputPort, setMidiOutputPort] = useState('')
   const [midiOutputPorts, setMidiOutputPorts] = useState([])
   const [controls, setControls] = useState([])
+  const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
+  const [bpm, setBpm] = useState(134)
+  const [fps, setFps] = useState(60)
+  const [paused, setPaused] = useState(false)
+  const [perfMode, setPerfMode] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [isEncoding, setIsEncoding] = useState(false)
+  const [isQueued, setIsQueued] = useState(false)
+  const [alertText, setAlertText] = useState('')
 
   useEffect(() => {
-    let unsubscribe = window.latticeEvents.subscribe((e) => {
-      console.log('[app] sub e:', e)
-      switch (e.event) {
-        case 'init': {
-          const payload = e.data.init
+    let unsubscribe = window.latticeEvents.subscribe((event, data) => {
+      console.log('[app] sub event:', event, 'data:', data)
+      switch (event) {
+        case 'Init': {
+          setIsLightTheme(data.isLightTheme)
+          setSketchName(data.sketchName)
+          setSketchNames(data.sketchNames)
+          setMidiInputPort(data.midiInputPort)
+          setMidiOutputPort(data.midiOutputPort)
           const toIndexAndPort = ([index, port]) => `${index} - ${port}`
-          setIsLightTheme(payload.isLightTheme)
-          setSketchName(payload.sketchName)
-          setSketchNames(payload.sketchNames)
-          setMidiInputPort(payload.midiInputPort)
-          setMidiOutputPort(payload.midiOutputPort)
-          setMidiInputPorts(payload.midiInputPorts.map(toIndexAndPort))
-          setMidiOutputPorts(payload.midiOutputPorts.map(toIndexAndPort))
+          setMidiInputPorts(data.midiInputPorts.map(toIndexAndPort))
+          setMidiOutputPorts(data.midiOutputPorts.map(toIndexAndPort))
           break
         }
-        case 'loadSketch': {
-          console.log('loadSketch:', e.data)
-          const payload = e.data.loadSketch
-          setSketchName(payload.sketchName)
-          setControls(payload.controls)
+        case 'Alert': {
+          setAlertText(data)
+          break
+        }
+        case 'LoadSketch': {
+          setSketchName(data.sketchName)
+          setControls(data.controls)
+          setTapTempoEnabled(data.tapTempoEnabled)
+          setBpm(data.bpm)
+          setFps(data.fps)
+          setPaused(data.paused)
           break
         }
         default: {
@@ -56,17 +71,17 @@ export default function App() {
     document.body.classList.remove(isLightTheme ? 'dark' : 'light')
   }, [isLightTheme])
 
-  function onControlChange(type, name, value, controls) {
+  function onChangeControl(type, name, value, controls) {
     setControls(controls)
 
-    const eventName =
+    const event =
       type === 'checkbox'
-        ? 'updateControlBool'
+        ? 'UpdateControlBool'
         : type === 'slider'
-        ? 'updateControlFloat'
-        : 'updateControlString'
+        ? 'UpdateControlFloat'
+        : 'UpdateControlString'
 
-    post(eventName, {
+    post(event, {
       name,
       value,
     })
@@ -74,119 +89,79 @@ export default function App() {
 
   return (
     <div id="app">
-      <header>
-        <section>
-          <button
-            onClick={() => {
-              post('capture')
-            }}
-          >
-            Image
-          </button>
-          <VerticalSeparator />
-          <button
-            onClick={() => {
-              post('pause')
-            }}
-          >
-            Pause
-          </button>
-          <button
-            disabled
-            onClick={() => {
-              post('advance')
-            }}
-          >
-            Advance
-          </button>
-          <button
-            onClick={() => {
-              post('reset')
-            }}
-          >
-            Reset
-          </button>
-          <VerticalSeparator />
-          <button
-            onClick={() => {
-              post('clearBuf')
-            }}
-          >
-            Clear Buf.
-          </button>
-          <VerticalSeparator />
-          <button
-            onClick={() => {
-              post('qRecord')
-            }}
-          >
-            Q Rec.
-          </button>
-          <button
-            onClick={() => {
-              post('record')
-            }}
-          >
-            Rec.
-          </button>
-          <VerticalSeparator />
-          <div className="meter">
-            FPS: <span className="meter-value">30.0</span>
-          </div>
-        </section>
-        <Separator style={{ margin: '2px 0' }} />
-        <section>
-          <Select
-            value={sketchName}
-            options={sketchNames}
-            onChange={(e) => {
-              setSketchName(e.target.value)
-            }}
-          />
-          <fieldset>
-            <input
-              id="perf"
-              type="checkbox"
-              checked={false}
-              onChange={() => {}}
-            />
-            <label htmlFor="perf">Perf.</label>
-          </fieldset>
-          <VerticalSeparator />
-          <div className="meter">
-            BPM: <span className="meter-value">134.0</span>
-          </div>
-          <button
-            onClick={() => {
-              post('tap')
-            }}
-          >
-            Tap
-          </button>
-          <VerticalSeparator />
-          <Select
-            style={{ width: '48px' }}
-            value="4"
-            options={[32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]}
-            onChange={() => {}}
-          />
-          <VerticalSeparator />
-          <button
-            onClick={() => {
-              post('save')
-            }}
-          >
-            Save
-          </button>
-          <button
-            onClick={() => {
-              post('viewMidi')
-            }}
-          >
-            MIDI
-          </button>
-        </section>
-      </header>
+      <Header
+        fps={fps}
+        bpm={bpm}
+        isEncoding={isEncoding}
+        isQueued={isQueued}
+        isRecording={isRecording}
+        paused={paused}
+        perfMode={perfMode}
+        sketchName={sketchName}
+        sketchNames={sketchNames}
+        tapTempoEnabled={tapTempoEnabled}
+        onAdvance={() => {
+          post('Advance')
+        }}
+        onCaptureFrame={() => {
+          post('CaptureFrame')
+        }}
+        onChangePerfMode={() => {
+          const value = !perfMode
+          setPerfMode(value)
+          post('SetPerfMode', value)
+          setAlertText(
+            value
+              ? 'When `Perf` is enabled, the sketch window will not be resized \
+            when switching sketches.'
+              : ''
+          )
+        }}
+        onChangeTapTempoEnabled={() => {
+          const value = !tapTempoEnabled
+          setTapTempoEnabled(value)
+          post('SetTapTempoEnabled', value)
+          setAlertText(
+            value
+              ? 'Tap `Space` key to set BPM'
+              : 'Sketch BPM has been restored'
+          )
+        }}
+        onChangeTransitionTime={() => {
+          post('SetTransitionTime')
+        }}
+        onClearBuffer={() => {
+          post('ClearBuffer')
+        }}
+        onReset={() => {
+          post('Reset')
+        }}
+        onQueueRecord={() => {
+          const value = !isQueued
+          setIsQueued(value)
+          post('QueueRecord')
+          setAlertText(
+            value ? 'Recording queued. Awaiting MIDI start message.' : ''
+          )
+        }}
+        onRecord={() => {
+          post('Record')
+        }}
+        onSave={() => {
+          post('Save')
+        }}
+        onTogglePlay={() => {
+          const value = !paused
+          setPaused(value)
+          post('SetPaused', value)
+        }}
+        onViewMidi={() => {
+          //
+        }}
+        onSwitchSketch={(sketchName) => {
+          post('SwitchSketch', sketchName)
+        }}
+      />
       <main>
         {view === 'midi' ? (
           <>
@@ -206,9 +181,12 @@ export default function App() {
             />
           </>
         ) : (
-          <Controls controls={controls} onChange={onControlChange} />
+          <Controls controls={controls} onChange={onChangeControl} />
         )}
       </main>
+      <footer>
+        <div className="console">{alertText}</div>
+      </footer>
     </div>
   )
 }
