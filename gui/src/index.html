@@ -18,7 +18,7 @@
       window.latticeEvents = {
         subscribe(callback) {
           window.addEventListener('message', (e) => {
-            console.debug('message e.data:', e.data)
+            // console.debug('message e.data:', e.data)
             if (e.data) {
               if (typeof e.data === 'string') {
                 callback(e.data)

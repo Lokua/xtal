@@ -90,7 +90,7 @@ pub struct ControlHub<T: TimingSource> {
     active_transition: Option<SnapshotTransition>,
     transition_time: f32,
     snapshot_ended_callbacks: Vec<Callback>,
-    // controls_populated_callbacks: Vec<Box<dyn Fn()>>,
+    populated_callbacks: Vec<Callback>,
     #[cfg(feature = "instrumentation")]
     instrumentation: RefCell<Instrumentation>,
 }
@@ -115,7 +115,7 @@ impl<T: TimingSource> ControlHub<T> {
             active_transition: None,
             transition_time: 4.0,
             snapshot_ended_callbacks: vec![],
-            // controls_populated_callbacks: vec![],
+            populated_callbacks: vec![],
             #[cfg(feature = "instrumentation")]
             instrumentation: RefCell::new(Instrumentation::new(
                 "ControlScript::get",
@@ -550,27 +550,20 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
-    pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
-    where
-        F: Fn() + 'static,
-    {
-        self.snapshot_ended_callbacks
-            .push(Callback(Box::new(callback)));
-    }
-
-    // pub fn register_snapshot_ended_callback(
-    //     &mut self,
-    //     callback: Box<dyn Fn()>,
-    // ) {
-    //     self.snapshot_ended_callbacks.push(Callback(callback));
-    // }
-
     pub fn delete_snapshot(&mut self, id: &str) {
         self.snapshots.remove(id);
     }
 
     pub fn clear_snapshots(&mut self) {
         self.snapshots.clear()
+    }
+
+    pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
+    where
+        F: Fn() + 'static,
+    {
+        self.snapshot_ended_callbacks
+            .push(Callback(Box::new(callback)));
     }
 
     pub fn set_transition_time(&mut self, transition_time: f32) {
@@ -649,6 +642,13 @@ impl<T: TimingSource> ControlHub<T> {
         for (k, v) in state.snapshots.clone() {
             self.snapshots.insert(k, v);
         }
+    }
+
+    pub fn register_populated_callback<F>(&mut self, callback: F)
+    where
+        F: Fn() + 'static,
+    {
+        self.populated_callbacks.push(Callback(Box::new(callback)));
     }
 
     pub fn add_controls(&mut self, configs: Vec<Control>) {
@@ -1010,6 +1010,10 @@ impl<T: TimingSource> ControlHub<T> {
             if let Err(e) = self.midi_controls.start() {
                 warn!("Unable to start MIDI receiver. {}", e);
             }
+        }
+
+        for callback in &self.populated_callbacks {
+            callback.call();
         }
 
         self.ui_controls.mark_changed();

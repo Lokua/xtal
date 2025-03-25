@@ -32,6 +32,9 @@ export default function App() {
       }
 
       match(event, {
+        Alert() {
+          setAlertText(data)
+        },
         AverageFps() {
           setFps(data.toFixed(1))
         },
@@ -48,8 +51,8 @@ export default function App() {
           setMidiInputPorts(data.midiInputPorts.map(getPort))
           setMidiOutputPorts(data.midiOutputPorts.map(getPort))
         },
-        Alert() {
-          setAlertText(data)
+        HubPopulated() {
+          setControls(data)
         },
         LoadSketch() {
           setSketchName(data.sketchName)

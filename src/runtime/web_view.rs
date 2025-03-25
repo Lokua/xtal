@@ -24,6 +24,7 @@ pub enum Event {
     CaptureFrame,
     ClearBuffer,
     Error(String),
+    HubPopulated(Vec<SerializableControl>),
 
     /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
@@ -165,6 +166,7 @@ pub fn launch(
                     app_event_tx.emit(AppEvent::ClearNextFrame);
                 }
                 Event::Error(e) => error!("Received error from child: {}", e),
+                Event::HubPopulated(_) => {}
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
                 Event::QueueRecord => {
@@ -295,20 +297,20 @@ pub enum SerializableControl {
     },
 }
 
-impl From<(&Control, &UiControls)> for SerializableControl {
-    fn from((control, ui_controls): (&Control, &UiControls)) -> Self {
+impl From<(&Control, &ControlHub<Timing>)> for SerializableControl {
+    fn from((control, hub): (&Control, &ControlHub<Timing>)) -> Self {
         match control {
             Control::Checkbox { name, .. } => SerializableControl::Checkbox {
                 name: name.clone(),
-                value: ui_controls.bool(name),
-                disabled: control.is_disabled(ui_controls),
+                value: hub.bool(name),
+                disabled: control.is_disabled(&hub.ui_controls),
             },
             Control::Select { name, options, .. } => {
                 SerializableControl::Select {
                     name: name.clone(),
-                    value: ui_controls.string(name),
+                    value: hub.string(name),
                     options: options.clone(),
-                    disabled: control.is_disabled(ui_controls),
+                    disabled: control.is_disabled(&hub.ui_controls),
                 }
             }
             Control::Separator {} => SerializableControl::Separator {},
@@ -323,11 +325,11 @@ impl From<(&Control, &UiControls)> for SerializableControl {
                 ..
             } => SerializableControl::Slider {
                 name: name.clone(),
-                value: ui_controls.float(name),
+                value: hub.get(name),
                 min: *min,
                 max: *max,
                 step: *step,
-                disabled: control.is_disabled(ui_controls),
+                disabled: control.is_disabled(&hub.ui_controls),
             },
         }
     }

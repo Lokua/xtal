@@ -119,6 +119,7 @@ pub enum AppEvent {
     AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
+    HubPopulated,
     EncodingComplete,
     MapModeSetCurrentlyMapping(String),
     MidiContinue,
@@ -241,18 +242,12 @@ impl AppModel {
     }
 
     fn serializable_controls(&mut self) -> Vec<SerializableControl> {
-        let ui_controls = match self.sketch.controls() {
-            Some(provider) => provider.ui_controls(),
-            None => None,
-        };
-
-        let controls: Vec<wv::SerializableControl> = match ui_controls {
-            Some(controls) => controls
+        let controls: Vec<wv::SerializableControl> = match self.control_hub() {
+            Some(hub) => hub
+                .ui_controls
                 .configs()
                 .iter()
-                .map(|config| {
-                    wv::SerializableControl::from((config, &controls))
-                })
+                .map(|config| wv::SerializableControl::from((config, hub)))
                 .collect(),
             None => vec![],
         };
@@ -309,6 +304,10 @@ impl AppModel {
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
+            }
+            AppEvent::HubPopulated => {
+                let controls = self.serializable_controls();
+                self.web_view_tx.emit(wv::Event::HubPopulated(controls));
             }
             AppEvent::EncodingComplete => {
                 self.web_view_tx.emit(wv::Event::SetIsEncoding(false));
@@ -466,37 +465,6 @@ impl AppModel {
                     hub.set_transition_time(transition_time);
                 }
             }
-            AppEvent::StartRecording => {
-                match self.recording_state.start_recording() {
-                    Ok(message) => {
-                        self.event_tx.alert(message);
-                    }
-                    Err(e) => {
-                        self.event_tx.alert_and_log(
-                            format!("Failed to start recording: {}", e),
-                            log::Level::Error,
-                        );
-                    }
-                }
-            }
-            AppEvent::StopRecording => {
-                if self.recording_state.is_recording
-                    && !self.recording_state.is_encoding
-                {
-                    match self
-                        .recording_state
-                        .stop_recording(self.sketch_config, &self.session_id)
-                    {
-                        Ok(_) => {
-                            self.web_view_tx
-                                .emit(wv::Event::SetIsEncoding(true));
-                        }
-                        Err(e) => {
-                            error!("Failed to stop recording: {}", e);
-                        }
-                    }
-                }
-            }
             AppEvent::SnapshotEnded => {
                 let controls = self.serializable_controls();
                 self.web_view_tx.emit(wv::Event::SnapshotEnded(controls));
@@ -528,6 +496,37 @@ impl AppModel {
                         "Unable to store snapshot (no hub)",
                         log::Level::Error,
                     );
+                }
+            }
+            AppEvent::StartRecording => {
+                match self.recording_state.start_recording() {
+                    Ok(message) => {
+                        self.event_tx.alert(message);
+                    }
+                    Err(e) => {
+                        self.event_tx.alert_and_log(
+                            format!("Failed to start recording: {}", e),
+                            log::Level::Error,
+                        );
+                    }
+                }
+            }
+            AppEvent::StopRecording => {
+                if self.recording_state.is_recording
+                    && !self.recording_state.is_encoding
+                {
+                    match self
+                        .recording_state
+                        .stop_recording(self.sketch_config, &self.session_id)
+                    {
+                        Ok(_) => {
+                            self.web_view_tx
+                                .emit(wv::Event::SetIsEncoding(true));
+                        }
+                        Err(e) => {
+                            error!("Failed to stop recording: {}", e);
+                        }
+                    }
                 }
             }
             AppEvent::SwitchSketch(name) => {
@@ -735,6 +734,13 @@ impl AppModel {
         frame_controller::set_paused(paused);
 
         self.load_program_state();
+
+        let tx_for_callback = self.event_tx.clone();
+        if let Some(hub) = self.control_hub_mut() {
+            hub.register_populated_callback(move || {
+                tx_for_callback.emit(AppEvent::HubPopulated);
+            });
+        }
 
         let tx_for_callback = self.event_tx.clone();
         if let Some(hub) = self.control_hub_mut() {
