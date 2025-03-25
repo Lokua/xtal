@@ -70,6 +70,9 @@ export default function App() {
             setIsRecording(false)
           }
         },
+        SnapshotEnded() {
+          setControls(data)
+        },
       })
     })
 

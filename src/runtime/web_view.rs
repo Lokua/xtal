@@ -65,6 +65,7 @@ pub enum Event {
     SetPerfMode(bool),
     SetTapTempoEnabled(bool),
     SetTransitionTime(f32),
+    SnapshotEnded(Vec<SerializableControl>),
     SnapshotRecall(String),
     SnapshotStore(String),
 
@@ -216,6 +217,7 @@ pub fn launch(
                 Event::SetTransitionTime(time) => {
                     app_event_tx.emit(AppEvent::SetTransitionTime(*time));
                 }
+                Event::SnapshotEnded(_) => {}
                 Event::SnapshotRecall(id) => {
                     app_event_tx.emit(AppEvent::SnapshotRecall(id.clone()));
                 }

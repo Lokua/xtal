@@ -15,7 +15,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::ui::gui;
-use super::web_view::{self as wv};
+use super::web_view::{self as wv, SerializableControl};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -142,6 +142,7 @@ pub enum AppEvent {
 
     SnapshotRecall(String),
     SnapshotStore(String),
+    SnapshotEnded,
     SwitchSketch(String),
     Tap,
     ToggleFullScreen,
@@ -237,6 +238,26 @@ impl AppModel {
         } else {
             None
         }
+    }
+
+    fn serializable_controls(&mut self) -> Vec<SerializableControl> {
+        let ui_controls = match self.sketch.controls() {
+            Some(provider) => provider.ui_controls(),
+            None => None,
+        };
+
+        let controls: Vec<wv::SerializableControl> = match ui_controls {
+            Some(controls) => controls
+                .configs()
+                .iter()
+                .map(|config| {
+                    wv::SerializableControl::from((config, &controls))
+                })
+                .collect(),
+            None => vec![],
+        };
+
+        controls
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -476,7 +497,10 @@ impl AppModel {
                     }
                 }
             }
-
+            AppEvent::SnapshotEnded => {
+                let controls = self.serializable_controls();
+                self.web_view_tx.emit(wv::Event::SnapshotEnded(controls));
+            }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(hub) = self.control_hub_mut() {
                     match hub.recall_snapshot(&digit) {
@@ -712,23 +736,12 @@ impl AppModel {
 
         self.load_program_state();
 
-        let ui_controls = match self.sketch.controls() {
-            Some(provider) => provider.ui_controls(),
-            None => None,
-        };
-
-        let controls: Vec<wv::SerializableControl> = match ui_controls {
-            Some(controls) => controls
-                .configs()
-                .iter()
-                .map(|config| {
-                    wv::SerializableControl::from((config, &controls))
-                })
-                .collect(),
-            None => vec![],
-        };
-
-        debug!("paused: {}", paused);
+        let tx_for_callback = self.event_tx.clone();
+        if let Some(hub) = self.control_hub_mut() {
+            hub.register_snapshot_ended_callback(move || {
+                tx_for_callback.emit(AppEvent::SnapshotEnded);
+            });
+        }
 
         let event = wv::Event::LoadSketch {
             sketch_name: self.sketch_name(),
@@ -736,7 +749,7 @@ impl AppModel {
             tap_tempo_enabled: self.tap_tempo_enabled,
             fps: frame_controller::fps(),
             bpm: self.ctx.bpm().get(),
-            controls,
+            controls: self.serializable_controls(),
             paused,
         };
 
