@@ -27,7 +27,9 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = window.latticeEvents.subscribe((event, data) => {
-      console.debug('[app - sub event]:', event, 'data:', data)
+      if (event !== 'AverageFps') {
+        console.debug('[app - sub event]:', event, 'data:', data)
+      }
 
       match(event, {
         AverageFps() {
@@ -82,7 +84,7 @@ export default function App() {
     document.addEventListener('keydown', onKeyDown)
 
     function onKeyDown(e) {
-      console.log('[onKeyDown] e:', e)
+      console.debug('[onKeyDown] e:', e)
 
       if (e.code.startsWith('Digit')) {
         if (e.metaKey) {
@@ -111,7 +113,10 @@ export default function App() {
           }
         },
         KeyM() {
-          if (e.metaKey) {
+          if (e.shiftKey && e.metaKey) {
+            setView(view === 'midi' ? 'controls' : 'midi')
+            // TODO: if leaving midi, send mappings
+          } else if (e.metaKey) {
             post('ToggleMainFocus')
           }
         },
@@ -133,7 +138,7 @@ export default function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [paused, tapTempoEnabled])
+  }, [paused, tapTempoEnabled, view])
 
   useEffect(() => {
     document.body.classList.add(isLightTheme ? 'light' : 'dark')
@@ -171,18 +176,18 @@ export default function App() {
     setAlertText(
       value
         ? 'Expecting 14bit MIDI on channels 0-31'
-        : 'expecting standard 7bit MIDI messages for all CCs',
+        : 'Expecting standard 7bit MIDI messages for all CCs',
     )
   }
 
   function onChangeInputPort(port) {
     setMidiInputPort(port)
-    setAlertText('changing ports at runtime is not yet supported')
+    setAlertText('Changing ports at runtime is not yet supported')
   }
 
   function onChangeOutputPort(port) {
     setMidiOutputPort(port)
-    setAlertText('changing ports at runtime is not yet supported')
+    setAlertText('Changing ports at runtime is not yet supported')
   }
 
   function onChangePerfMode() {
@@ -212,6 +217,10 @@ export default function App() {
 
   function onClearBuffer() {
     post('ClearBuffer')
+  }
+
+  function onClickSendMidi() {
+    post('SendMidi')
   }
 
   function onQueueRecord() {
@@ -292,6 +301,7 @@ export default function App() {
             onChangeHrcc={onChangeHrcc}
             onChangeInputPort={onChangeInputPort}
             onChangeOutputPort={onChangeOutputPort}
+            onClickSend={onClickSendMidi}
           />
         ) : (
           <Controls controls={controls} onChange={onChangeControl} />

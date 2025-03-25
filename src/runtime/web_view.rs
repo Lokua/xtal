@@ -11,9 +11,8 @@ use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
 
-/// Event enum used to send/receive data from our web view using ipc-channel.
-/// All events should be assumed to be one-way child->parent unless otherwise
-/// documented.
+/// Used to send/receive data from our web view using ipc-channel. All events
+/// should be assumed to be one-way child->parent unless otherwise documented.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
     Advance,
@@ -58,6 +57,7 @@ pub enum Event {
 
     Reset,
     Save,
+    SendMidi,
     // TODO: "set" is bit ugly - just use the var name
     SetHrcc(bool),
     SetIsEncoding(bool),
@@ -196,6 +196,9 @@ pub fn launch(
                 }
                 Event::Save => {
                     app_event_tx.emit(AppEvent::SaveProgramState);
+                }
+                Event::SendMidi => {
+                    app_event_tx.emit(AppEvent::SendMidi);
                 }
                 Event::SetHrcc(hrcc) => {
                     app_event_tx.emit(AppEvent::SetHrcc(*hrcc));

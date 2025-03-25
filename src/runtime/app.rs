@@ -358,7 +358,7 @@ impl AppModel {
             }
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
-                self.alert_text = "Reset".into();
+                self.event_tx.alert("Reset");
             }
             AppEvent::Resize => {
                 if let Some(window) = self.main_window(app) {
@@ -385,7 +385,7 @@ impl AppModel {
                     Err(e) => {
                         self.event_tx.alert_and_log(
                             format!("Failed to persist controls: {}", e),
-                            log::Level::Info,
+                            log::Level::Error,
                         );
                     }
                 }
@@ -399,23 +399,28 @@ impl AppModel {
                 };
 
                 let Some(midi_out) = &mut self.midi_out else {
-                    warn!("Unable to send MIDI; no MIDI out connection");
+                    self.event_tx.alert_and_log(
+                        "Unable to send MIDI; no MIDI out connection",
+                        log::Level::Warn,
+                    );
                     return;
                 };
 
                 for message in messages {
                     if let Err(e) = midi_out.send(&message) {
-                        error!(
-                            "Error sending MIDI message: {:?}; error: {}",
-                            message, e
+                        self.event_tx.alert_and_log(
+                            format!(
+                                "Error sending MIDI message: {:?}; error: {}",
+                                message, e
+                            ),
+                            log::Level::Error,
                         );
-                        break;
+                        return;
                     }
                 }
 
-                self.alert_text = "MIDI sent".into();
+                self.event_tx.alert("MIDI Sent");
             }
-
             AppEvent::SetHrcc(hrcc) => {
                 self.hrcc = hrcc;
                 if let Some(hub) = self.control_hub_mut() {

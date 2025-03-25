@@ -17,7 +17,7 @@
   --control-disabled-text-color: #aaa;
   --control-on-background-color: #363636;
   --control-on-text-color: #eee;
-  --console-background-color: #ddd;
+  --console-background-color: #f4f4f4;
 }
 
 .dark {
@@ -295,4 +295,12 @@ input[type='checkbox']:checked::before {
   padding: 8px;
   font-size: 10px;
   background-color: var(--console-background-color);
+}
+
+.midi {
+  > section:first-child,
+  > section:nth-child(2) {
+    display: flex;
+    margin: 4px 0;
+  }
 }
