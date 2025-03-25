@@ -118,6 +118,7 @@ pub enum AppEvent {
     AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
+    EncodingComplete,
     MapModeSetCurrentlyMapping(String),
     MidiContinue,
     MidiStart,
@@ -129,11 +130,14 @@ pub enum AppEvent {
     SaveProgramState,
     SendMidi,
 
-    // The set methods replace the Toggle* methods
+    // new WebView compat events
+    SetHrcc(bool),
     SetPaused(bool),
     SetPerfMode(bool),
     SetTapTempoEnabled(bool),
     SetTransitionTime(f32),
+    StartRecording,
+    StopRecording,
 
     SnapshotRecall(String),
     SnapshotStore(String),
@@ -286,6 +290,11 @@ impl AppModel {
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
             }
+            AppEvent::EncodingComplete => {
+                self.web_view_tx
+                    .send(wv::Event::SetIsEncoding(false))
+                    .unwrap();
+            }
             AppEvent::MapModeSetCurrentlyMapping(name) => {
                 self.map_mode.remove(&name);
                 self.control_hub_mut()
@@ -310,6 +319,7 @@ impl AppModel {
                     match self.recording_state.start_recording() {
                         Ok(message) => {
                             self.event_tx.alert(message);
+                            self.web_view_tx.send(wv::Event::Record).unwrap();
                         }
                         Err(e) => {
                             self.event_tx.alert_and_log(
@@ -321,16 +331,7 @@ impl AppModel {
                 }
             }
             AppEvent::MidiStop => {
-                if self.recording_state.is_recording
-                    && !self.recording_state.is_encoding
-                {
-                    if let Err(e) = self
-                        .recording_state
-                        .stop_recording(self.sketch_config, &self.session_id)
-                    {
-                        error!("Failed to stop recording: {}", e);
-                    }
-                }
+                self.event_tx.send(AppEvent::StopRecording);
             }
             AppEvent::QueueRecord => {
                 if self.recording_state.is_queued {
@@ -348,7 +349,7 @@ impl AppModel {
                     .toggle_recording(self.sketch_config, &self.session_id)
                 {
                     Ok(message) => {
-                        self.alert_text = message;
+                        self.event_tx.alert(message.clone());
                     }
                     Err(e) => {
                         self.event_tx.alert_and_log(
@@ -418,6 +419,13 @@ impl AppModel {
                 self.alert_text = "MIDI sent".into();
             }
 
+            AppEvent::SetHrcc(hrcc) => {
+                self.hrcc = hrcc;
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_controls.hrcc = hrcc;
+                    hub.midi_controls.restart().unwrap();
+                }
+            }
             AppEvent::SetPaused(paused) => {
                 frame_controller::set_paused(paused);
             }
@@ -428,13 +436,45 @@ impl AppModel {
                 self.tap_tempo_enabled = enabled;
                 self.ctx.bpm().set(self.sketch_config.bpm);
             }
-
             AppEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
                 if let Some(hub) = self.control_hub_mut() {
                     hub.set_transition_time(transition_time);
                 }
             }
+            AppEvent::StartRecording => {
+                match self.recording_state.start_recording() {
+                    Ok(message) => {
+                        self.event_tx.alert(message);
+                    }
+                    Err(e) => {
+                        self.event_tx.alert_and_log(
+                            format!("Failed to start recording: {}", e),
+                            log::Level::Error,
+                        );
+                    }
+                }
+            }
+            AppEvent::StopRecording => {
+                if self.recording_state.is_recording
+                    && !self.recording_state.is_encoding
+                {
+                    match self
+                        .recording_state
+                        .stop_recording(self.sketch_config, &self.session_id)
+                    {
+                        Ok(_) => {
+                            self.web_view_tx
+                                .send(wv::Event::SetIsEncoding(true))
+                                .unwrap();
+                        }
+                        Err(e) => {
+                            error!("Failed to stop recording: {}", e);
+                        }
+                    }
+                }
+            }
+
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(hub) = self.control_hub_mut() {
                     match hub.recall_snapshot(&digit) {

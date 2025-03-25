@@ -1,32 +1,32 @@
 import React, { useEffect, useState } from 'react'
 import { post } from './util.mjs'
-import Select from './Select.jsx'
-import Controls from './Controls.jsx'
-import Separator, { VerticalSeparator } from './Separator.jsx'
 import Header from './Header.jsx'
+import Controls from './Controls.jsx'
+import Midi from './Midi.jsx'
 
 export default function App() {
-  const [view, setView] = useState('controls')
+  const [alertText, setAlertText] = useState('')
+  const [bpm, setBpm] = useState(134)
+  const [controls, setControls] = useState([])
+  const [fps, setFps] = useState(60)
+  const [hrcc, setHrcc] = useState(false)
+  const [isEncoding, setIsEncoding] = useState(false)
   const [isLightTheme, setIsLightTheme] = useState(true)
-  const [sketchName, setSketchName] = useState('')
-  const [sketchNames, setSketchNames] = useState([])
+  const [isQueued, setIsQueued] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState([])
   const [midiOutputPort, setMidiOutputPort] = useState('')
   const [midiOutputPorts, setMidiOutputPorts] = useState([])
-  const [controls, setControls] = useState([])
-  const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
-  const [bpm, setBpm] = useState(134)
-  const [fps, setFps] = useState(60)
   const [paused, setPaused] = useState(false)
   const [perfMode, setPerfMode] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [isEncoding, setIsEncoding] = useState(false)
-  const [isQueued, setIsQueued] = useState(false)
-  const [alertText, setAlertText] = useState('')
+  const [sketchName, setSketchName] = useState('')
+  const [sketchNames, setSketchNames] = useState([])
+  const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
+  const [view, setView] = useState('controls')
 
   useEffect(() => {
-    let unsubscribe = window.latticeEvents.subscribe((event, data) => {
+    const unsubscribe = window.latticeEvents.subscribe((event, data) => {
       console.log('[app] sub event:', event, 'data:', data)
       switch (event) {
         case 'Init': {
@@ -35,9 +35,9 @@ export default function App() {
           setSketchNames(data.sketchNames)
           setMidiInputPort(data.midiInputPort)
           setMidiOutputPort(data.midiOutputPort)
-          const toIndexAndPort = ([index, port]) => `${index} - ${port}`
-          setMidiInputPorts(data.midiInputPorts.map(toIndexAndPort))
-          setMidiOutputPorts(data.midiOutputPorts.map(toIndexAndPort))
+          const getPort = ([, port]) => port
+          setMidiInputPorts(data.midiInputPorts.map(getPort))
+          setMidiOutputPorts(data.midiOutputPorts.map(getPort))
           break
         }
         case 'Alert': {
@@ -51,6 +51,19 @@ export default function App() {
           setBpm(data.bpm)
           setFps(data.fps)
           setPaused(data.paused)
+          break
+        }
+        case 'Record': {
+          setIsRecording(true)
+          setIsQueued(false)
+          break
+        }
+        case 'SetIsEncoding': {
+          setIsEncoding(data)
+          if (data) {
+            setIsQueued(false)
+            setIsRecording(false)
+          }
           break
         }
         default: {
@@ -78,8 +91,8 @@ export default function App() {
       type === 'checkbox'
         ? 'UpdateControlBool'
         : type === 'slider'
-        ? 'UpdateControlFloat'
-        : 'UpdateControlString'
+          ? 'UpdateControlFloat'
+          : 'UpdateControlString'
 
     post(event, {
       name,
@@ -100,6 +113,7 @@ export default function App() {
         sketchName={sketchName}
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
+        view={view}
         onAdvance={() => {
           post('Advance')
         }}
@@ -114,7 +128,7 @@ export default function App() {
             value
               ? 'When `Perf` is enabled, the sketch window will not be resized \
             when switching sketches.'
-              : ''
+              : '',
           )
         }}
         onChangeTapTempoEnabled={() => {
@@ -124,7 +138,7 @@ export default function App() {
           setAlertText(
             value
               ? 'Tap `Space` key to set BPM'
-              : 'Sketch BPM has been restored'
+              : 'Sketch BPM has been restored',
           )
         }}
         onChangeTransitionTime={() => {
@@ -141,11 +155,17 @@ export default function App() {
           setIsQueued(value)
           post('QueueRecord')
           setAlertText(
-            value ? 'Recording queued. Awaiting MIDI start message.' : ''
+            value ? 'Recording queued. Awaiting MIDI start message.' : '',
           )
         }}
         onRecord={() => {
-          post('Record')
+          if (isRecording) {
+            setIsRecording(false)
+            post('StopRecording')
+          } else {
+            setIsRecording(true)
+            post('Record')
+          }
         }}
         onSave={() => {
           post('Save')
@@ -156,7 +176,7 @@ export default function App() {
           post('SetPaused', value)
         }}
         onViewMidi={() => {
-          //
+          setView(view === 'midi' ? 'controls' : 'midi')
         }}
         onSwitchSketch={(sketchName) => {
           post('SwitchSketch', sketchName)
@@ -164,22 +184,31 @@ export default function App() {
       />
       <main>
         {view === 'midi' ? (
-          <>
-            <Select
-              value={midiInputPort}
-              options={midiInputPorts}
-              onChange={(e) => {
-                setMidiInputPort(e.target.value)
-              }}
-            />
-            <Select
-              value={midiOutputPort}
-              options={midiOutputPorts}
-              onChange={(e) => {
-                setMidiOutputPort(e.target.value)
-              }}
-            />
-          </>
+          <Midi
+            hrcc={hrcc}
+            inputPort={midiInputPort}
+            inputPorts={midiInputPorts}
+            outputPort={midiOutputPort}
+            outputPorts={midiOutputPorts}
+            onChangeHrcc={() => {
+              const value = !hrcc
+              setHrcc(value)
+              post('SetHrcc', value)
+              setAlertText(
+                value
+                  ? 'Expecting 14bit MIDI on channels 0-31'
+                  : 'expecting standard 7bit MIDI messages for all CCs',
+              )
+            }}
+            onChangeInputPort={(port) => {
+              setMidiInputPort(port)
+              setAlertText('changing ports at runtime is not yet supported')
+            }}
+            onChangeOutputPort={(port) => {
+              setMidiOutputPort(port)
+              setAlertText('changing ports at runtime is not yet supported')
+            }}
+          />
         ) : (
           <Controls controls={controls} onChange={onChangeControl} />
         )}

@@ -11,9 +11,12 @@ use std::{
 };
 
 use super::{app, shared::lattice_config_dir};
-use crate::{framework::prelude::*, runtime::shared::generate_session_id};
+use crate::{
+    framework::prelude::*,
+    runtime::{app::AppEvent, shared::generate_session_id},
+};
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct RecordingState {
     pub is_recording: bool,
     pub is_encoding: bool,
@@ -145,9 +148,10 @@ impl RecordingState {
                                 .to_string_lossy()
                                 .into_owned();
                         event_tx.alert(format!(
-                            "Encoding complete. Video path {}",
+                            "Encoding complete. Video path: {}",
                             output_path
                         ));
+                        event_tx.send(AppEvent::EncodingComplete);
                         *session_id = generate_session_id();
                         self.recorded_frames.set(0);
                         if let Some(new_path) =

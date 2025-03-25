@@ -22,12 +22,12 @@ pub enum Event {
     #[serde(rename_all = "camelCase")]
     Init {
         is_light_theme: bool,
-        sketch_names: Vec<String>,
-        sketch_name: String,
         midi_input_port: String,
         midi_output_port: String,
         midi_input_ports: Vec<(usize, String)>,
         midi_output_ports: Vec<(usize, String)>,
+        sketch_names: Vec<String>,
+        sketch_name: String,
     },
     #[serde(rename_all = "camelCase")]
     LoadSketch {
@@ -41,12 +41,23 @@ pub enum Event {
     },
     QueueRecord,
     Ready,
+
+    /// A two-way message. Can be sent manually from UI, or set from backend
+    /// when receiving a MIDI Start when QueueRecording is enabled
     Record,
+
     Reset,
+    SetHrcc(bool),
+    SetIsEncoding(bool),
     SetPaused(bool),
     SetPerfMode(bool),
     SetTapTempoEnabled(bool),
     SetTransitionTime(f32),
+
+    /// A two-way message. Can be sent manually from UI, or set from backend
+    /// when receiving a MIDI Stop when QueueRecording is enabled
+    StopRecording,
+
     SwitchSketch(String),
     Tap,
     UpdateControlBool {
@@ -106,24 +117,25 @@ pub fn launch(
         while let Ok(message) = receiver.recv() {
             debug!("Received message from child: {:?}", message);
 
+            // Empty handlers (() => {}) not marked a todo!() are one-way events
+            // only sent from parent to child
             match &message {
                 Event::Advance => {
-                    app_event_tx.send(AppEvent::AdvanceSingleFrame)
+                    app_event_tx.send(AppEvent::AdvanceSingleFrame);
                 }
-                // Only sent down
                 Event::Alert(_) => {}
                 Event::CaptureFrame => {
-                    app_event_tx.send(AppEvent::CaptureFrame)
+                    app_event_tx.send(AppEvent::CaptureFrame);
                 }
                 Event::ClearBuffer => {
-                    app_event_tx.send(AppEvent::ClearNextFrame)
+                    app_event_tx.send(AppEvent::ClearNextFrame);
                 }
                 Event::Error(e) => error!("Received error from child: {}", e),
-                // Only sent down
                 Event::Init { .. } => {}
-                // Only sent down
                 Event::LoadSketch { .. } => {}
-                Event::QueueRecord => app_event_tx.send(AppEvent::QueueRecord),
+                Event::QueueRecord => {
+                    app_event_tx.send(AppEvent::QueueRecord);
+                }
                 Event::Ready => {
                     let registry = REGISTRY.read().unwrap();
 
@@ -136,7 +148,6 @@ pub fn launch(
                         sketch_name: sketch_name.to_string(),
                         midi_input_port: MIDI_CONTROL_IN_PORT.to_string(),
                         midi_output_port: MIDI_CONTROL_OUT_PORT.to_string(),
-                        // TODO: replace with list_input_ports etc this is silly
                         midi_input_ports: midi::list_ports(Inputs).unwrap(),
                         midi_output_ports: midi::list_ports(Outputs).unwrap(),
                     };
@@ -144,23 +155,38 @@ pub fn launch(
                     init_sender.send(data).unwrap();
                     app_event_tx.send(AppEvent::WebViewReady);
                 }
-                Event::Record => app_event_tx.send(AppEvent::Record),
-                Event::Reset => app_event_tx.send(AppEvent::Reset),
+                Event::Record => {
+                    app_event_tx.send(AppEvent::StartRecording);
+                }
+                Event::Reset => {
+                    app_event_tx.send(AppEvent::Reset);
+                }
+                Event::SetHrcc(hrcc) => {
+                    app_event_tx.send(AppEvent::SetHrcc(*hrcc));
+                }
+                Event::SetIsEncoding(_) => {}
                 Event::SetPaused(paused) => {
-                    app_event_tx.send(AppEvent::SetPaused(*paused))
+                    app_event_tx.send(AppEvent::SetPaused(*paused));
                 }
                 Event::SetPerfMode(perf_mode) => {
-                    app_event_tx.send(AppEvent::SetPerfMode(*perf_mode))
+                    app_event_tx.send(AppEvent::SetPerfMode(*perf_mode));
                 }
                 Event::SetTapTempoEnabled(enabled) => {
-                    app_event_tx.send(AppEvent::SetTapTempoEnabled(*enabled))
+                    app_event_tx.send(AppEvent::SetTapTempoEnabled(*enabled));
                 }
                 Event::SetTransitionTime(time) => {
-                    app_event_tx.send(AppEvent::SetTransitionTime(*time))
+                    app_event_tx.send(AppEvent::SetTransitionTime(*time));
                 }
-                Event::SwitchSketch(sketch_name) => app_event_tx
-                    .send(AppEvent::SwitchSketch(sketch_name.clone())),
-                Event::Tap => app_event_tx.send(AppEvent::Tap),
+                Event::StopRecording => {
+                    app_event_tx.send(AppEvent::StopRecording);
+                }
+                Event::SwitchSketch(sketch_name) => {
+                    app_event_tx
+                        .send(AppEvent::SwitchSketch(sketch_name.clone()));
+                }
+                Event::Tap => {
+                    app_event_tx.send(AppEvent::Tap);
+                }
                 Event::UpdateControlBool { name, value } => {
                     app_event_tx.send(AppEvent::UpdateUiControl((
                         name.clone(),

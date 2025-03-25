@@ -16,6 +16,7 @@
   --control-knob-color: #666;
   --control-disabled-text-color: #aaa;
   --control-on-background-color: green;
+  --console-background-color: #ddd;
 }
 
 .dark {
@@ -30,6 +31,7 @@
   --control-knob-color: #888;
   --control-disabled-text-color: #777;
   --control-on-background-color: green;
+  --console-background-color: #111;
 }
 
 *,
@@ -44,7 +46,7 @@ html {
 }
 
 body {
-  background: var(--background-color);
+  background: black;
   color: var(--text-color);
   font-size: 12px;
   margin: 0;
@@ -170,6 +172,10 @@ button {
   &.on {
     background-color: var(--control-on-background-color);
   }
+
+  &.record-button.on {
+    background-color: red;
+  }
 }
 
 input[type='range'] {
@@ -293,5 +299,6 @@ input[type='checkbox']:checked::before {
 .console {
   height: 64px;
   padding: 8px;
-  background-color: var(--control-background-color);
+  font-size: 10px;
+  background-color: var(--console-background-color);
 }

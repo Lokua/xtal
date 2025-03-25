@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Select from './Select.jsx'
 import Separator, { VerticalSeparator } from './Separator.jsx'
 
@@ -15,6 +15,7 @@ export default function Header({
   sketchName,
   sketchNames,
   tapTempoEnabled,
+  view,
   onAdvance,
   onCaptureFrame,
   onChangePerfMode,
@@ -42,10 +43,20 @@ export default function Header({
         <VerticalSeparator />
         <button onClick={onClearBuffer}>Clear Buf.</button>
         <VerticalSeparator />
-        <button onClick={onQueueRecord} className={isQueued ? 'on' : ''}>
+        <button
+          className={isQueued ? 'on' : ''}
+          disabled={isRecording || isEncoding}
+          onClick={onQueueRecord}
+        >
           {isQueued ? 'QUEUED' : 'Q Rec.'}
         </button>
-        <button onClick={onRecord}>Rec.</button>
+        <button
+          className={isRecording ? 'record-button on' : 'record-button'}
+          disabled={isEncoding}
+          onClick={onRecord}
+        >
+          {isRecording ? 'STOP' : isEncoding ? 'Encoding' : 'Rec.'}
+        </button>
         <VerticalSeparator />
         <div className="meter">
           FPS: <span className="meter-value">{fps}</span>
@@ -93,7 +104,9 @@ export default function Header({
         />
         <VerticalSeparator />
         <button onClick={onSave}>Save</button>
-        <button onClick={onViewMidi}>MIDI</button>
+        <button className={view === 'midi' ? 'on' : ''} onClick={onViewMidi}>
+          MIDI
+        </button>
       </section>
     </header>
   )

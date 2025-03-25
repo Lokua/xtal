@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "eslint-config-lokua": "10.0.3-beta.0",
+    "eslint-plugin-react": "7.37.4",
     "vite": "6.2.2"
   },
   "dependencies": {

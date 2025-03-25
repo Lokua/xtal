@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Document</title>
     <link rel="stylesheet" href="./index.css" />
   </head>
@@ -17,10 +18,15 @@
       window.latticeEvents = {
         subscribe(callback) {
           window.addEventListener('message', (e) => {
+            console.log('message e.data:', e.data)
             if (e.data) {
-              const event = Object.keys(e.data)[0]
-              const data = e.data[event]
-              callback(event, data)
+              if (typeof e.data === 'string') {
+                callback(e.data)
+              } else {
+                const event = Object.keys(e.data)[0]
+                const data = e.data[event]
+                callback(event, data)
+              }
             }
           })
         },
