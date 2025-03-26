@@ -45,10 +45,6 @@ vmc:
   RUST_LOG=lattice=info,virtual_midi_controller=info cargo run --release \
   --bin virtual_midi_controller
 
-dx:
-  RUST_LOG=lattice=info,dx_poc=debug cargo run --release \
-  --bin dx_poc
-
 debug-vmc:
   RUST_LOG=lattice=debug,virtual_midi_controller=debug cargo run --release \
   --bin virtual_midi_controller

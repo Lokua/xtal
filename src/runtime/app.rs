@@ -313,7 +313,7 @@ impl AppModel {
                 self.web_view_tx.emit(wv::Event::HubPopulated(controls));
             }
             AppEvent::EncodingComplete => {
-                self.web_view_tx.emit(wv::Event::SetIsEncoding(false));
+                self.web_view_tx.emit(wv::Event::Encoding(false));
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
@@ -324,7 +324,7 @@ impl AppModel {
                     match self.recording_state.start_recording() {
                         Ok(message) => {
                             self.event_tx.alert(message);
-                            self.web_view_tx.emit(wv::Event::Record);
+                            self.web_view_tx.emit(wv::Event::StartRecording);
                         }
                         Err(e) => {
                             self.event_tx.alert_and_log(
@@ -544,8 +544,7 @@ impl AppModel {
                         .stop_recording(self.sketch_config, &self.session_id)
                     {
                         Ok(_) => {
-                            self.web_view_tx
-                                .emit(wv::Event::SetIsEncoding(true));
+                            self.web_view_tx.emit(wv::Event::Encoding(true));
                         }
                         Err(e) => {
                             error!("Failed to stop recording: {}", e);

@@ -24,7 +24,10 @@ pub enum Event {
     Bpm(f32),
     CaptureFrame,
     ClearBuffer,
+    CurrentlyMapping(String),
+    Encoding(bool),
     Error(String),
+    Hrcc(bool),
     HubPopulated(Vec<SerializableControl>),
 
     /// Sent from parent after child sends [`Event::Ready`]
@@ -54,27 +57,22 @@ pub enum Event {
 
     // Sent whenever the user physically moves a MIDI control when in map mode
     Mappings(Vec<(String, ChannelAndControl)>),
+    Paused(bool),
+    PerfMode(bool),
     QueueRecord,
     Ready,
 
-    /// A two-way message. Can be sent manually from UI, or set from backend
-    /// when receiving a MIDI Start when QueueRecording is enabled
-    Record,
     RemoveMapping(String),
     Reset,
     Save,
     SendMidi,
-    // TODO: "set" is bit ugly - just use the var name
-    SetCurrentlyMapping(String),
-    SetHrcc(bool),
-    SetIsEncoding(bool),
-    SetPaused(bool),
-    SetPerfMode(bool),
-    SetTapTempoEnabled(bool),
-    SetTransitionTime(f32),
     SnapshotEnded(Vec<SerializableControl>),
     SnapshotRecall(String),
     SnapshotStore(String),
+
+    /// A two-way message. Can be sent manually from UI, or set from backend
+    /// when receiving a MIDI Start when QueueRecording is enabled
+    StartRecording,
 
     /// A two-way message. Can be sent manually from UI, or set from backend
     /// when receiving a MIDI Stop when QueueRecording is enabled
@@ -82,9 +80,11 @@ pub enum Event {
 
     SwitchSketch(String),
     Tap,
+    TapTempoEnabled(bool),
     ToggleFullScreen,
     ToggleGuiFocus,
     ToggleMainFocus,
+    TransitionTime(f32),
     UpdateControlBool {
         name: String,
         value: bool,
@@ -129,9 +129,11 @@ pub fn launch(
 ) -> Result<EventSender, Box<dyn std::error::Error>> {
     let (server, server_name) = IpcOneShotServer::<Bootstrap>::new()?;
 
+    let module = "web_view_process".to_string();
+
     let mut child = Command::new("cargo")
-        .args(["run", "--release", "--bin", "web_view_poc", &server_name])
-        .env("RUST_LOG", "lattice=info,web_view_poc=debug")
+        .args(["run", "--release", "--bin", &module, &server_name])
+        .env("RUST_LOG", format!("lattice=info,{}=debug", module))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
@@ -171,12 +173,26 @@ pub fn launch(
                 Event::ClearBuffer => {
                     app_event_tx.emit(AppEvent::ClearNextFrame);
                 }
+                Event::CurrentlyMapping(name) => {
+                    app_event_tx
+                        .emit(AppEvent::SetCurrentlyMapping(name.clone()));
+                }
+                Event::Encoding(_) => {}
                 Event::Error(e) => error!("Received error from child: {}", e),
+                Event::Hrcc(hrcc) => {
+                    app_event_tx.emit(AppEvent::SetHrcc(hrcc));
+                }
                 Event::HubPopulated(_) => {}
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
                 Event::Mappings(mappings) => {
                     app_event_tx.emit(AppEvent::ReceiveMappings(mappings));
+                }
+                Event::Paused(paused) => {
+                    app_event_tx.emit(AppEvent::SetPaused(paused));
+                }
+                Event::PerfMode(perf_mode) => {
+                    app_event_tx.emit(AppEvent::SetPerfMode(perf_mode));
                 }
                 Event::QueueRecord => {
                     app_event_tx.emit(AppEvent::QueueRecord);
@@ -200,7 +216,7 @@ pub fn launch(
                     init_sender.send(data).unwrap();
                     app_event_tx.emit(AppEvent::WebViewReady);
                 }
-                Event::Record => {
+                Event::StartRecording => {
                     app_event_tx.emit(AppEvent::StartRecording);
                 }
                 Event::RemoveMapping(name) => {
@@ -214,26 +230,6 @@ pub fn launch(
                 }
                 Event::SendMidi => {
                     app_event_tx.emit(AppEvent::SendMidi);
-                }
-                Event::SetCurrentlyMapping(name) => {
-                    app_event_tx
-                        .emit(AppEvent::SetCurrentlyMapping(name.clone()));
-                }
-                Event::SetHrcc(hrcc) => {
-                    app_event_tx.emit(AppEvent::SetHrcc(hrcc));
-                }
-                Event::SetIsEncoding(_) => {}
-                Event::SetPaused(paused) => {
-                    app_event_tx.emit(AppEvent::SetPaused(paused));
-                }
-                Event::SetPerfMode(perf_mode) => {
-                    app_event_tx.emit(AppEvent::SetPerfMode(perf_mode));
-                }
-                Event::SetTapTempoEnabled(enabled) => {
-                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(enabled));
-                }
-                Event::SetTransitionTime(time) => {
-                    app_event_tx.emit(AppEvent::SetTransitionTime(time));
                 }
                 Event::SnapshotEnded(_) => {}
                 Event::SnapshotRecall(id) => {
@@ -252,6 +248,9 @@ pub fn launch(
                 Event::Tap => {
                     app_event_tx.emit(AppEvent::Tap);
                 }
+                Event::TapTempoEnabled(enabled) => {
+                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(enabled));
+                }
                 Event::ToggleFullScreen => {
                     app_event_tx.emit(AppEvent::ToggleFullScreen);
                 }
@@ -260,6 +259,9 @@ pub fn launch(
                 }
                 Event::ToggleMainFocus => {
                     app_event_tx.emit(AppEvent::ToggleMainFocus);
+                }
+                Event::TransitionTime(time) => {
+                    app_event_tx.emit(AppEvent::SetTransitionTime(time));
                 }
                 Event::UpdateControlBool { name, value } => {
                     app_event_tx.emit(AppEvent::UpdateUiControl((
@@ -278,7 +280,7 @@ pub fn launch(
                         name.clone(),
                         ControlValue::from(value.clone()),
                     ))),
-            };
+            }
         }
     });
 

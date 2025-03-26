@@ -29,7 +29,7 @@
   --control-background-color: #363636;
   --control-active-background-color: #555;
   --control-text-color: #eee;
-  --control-text-color-muted: #ccc;
+  --control-text-color-muted: #bbb;
   --control-track-color: #444;
   --control-knob-color: #888;
   --control-disabled-text-color: #777;
@@ -312,6 +312,7 @@ input[type='checkbox']:checked::before {
   display: grid;
   grid-template-columns: max-content auto;
   align-items: center;
+  justify-content: center;
   gap: 0 6px;
 
   > span > button:first-child {

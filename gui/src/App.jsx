@@ -68,11 +68,11 @@ export default function App() {
         Mappings() {
           setMappings(data)
         },
-        Record() {
+        StartRecording() {
           setIsRecording(true)
           setIsQueued(false)
         },
-        SetIsEncoding() {
+        Encoding() {
           setIsEncoding(data)
           if (data) {
             setIsQueued(false)
@@ -183,7 +183,7 @@ export default function App() {
   function onChangeHrcc() {
     const value = !hrcc
     setHrcc(value)
-    post('SetHrcc', value)
+    post('Hrcc', value)
     setAlertText(
       value
         ? 'Expecting 14bit MIDI on channels 0-31'
@@ -208,7 +208,7 @@ export default function App() {
   function onChangePerfMode() {
     const value = !perfMode
     setPerfMode(value)
-    post('SetPerfMode', value)
+    post('PerfMode', value)
     setAlertText(
       value
         ? 'When `Perf` is enabled, the sketch window will not be resized \
@@ -220,14 +220,14 @@ export default function App() {
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
-    post('SetTapTempoEnabled', enabled)
+    post('TapTempoEnabled', enabled)
     setAlertText(
       enabled ? 'Tap `Space` key to set BPM' : 'Sketch BPM has been restored',
     )
   }
 
   function onChangeTransitionTime() {
-    post('SetTransitionTime')
+    post('TransitionTime')
   }
 
   function onClearBuffer() {
@@ -268,7 +268,7 @@ export default function App() {
   }
 
   function onSetCurrentlyMapping(name) {
-    post('SetCurrentlyMapping', name)
+    post('CurrentlyMapping', name)
   }
 
   function onSwitchSketch(sketchName) {
@@ -278,7 +278,7 @@ export default function App() {
   function onTogglePlay() {
     const value = !paused
     setPaused(value)
-    post('SetPaused', value)
+    post('Paused', value)
   }
 
   function onViewMidi() {

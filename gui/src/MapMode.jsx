@@ -10,8 +10,10 @@ export default function MapMode({
 
   useEffect(() => {
     document.addEventListener('click', onOutsideClick)
+    document.addEventListener('keydown', onPressEnter)
     return () => {
       document.removeEventListener('click', onOutsideClick)
+      document.removeEventListener('keydown', onPressEnter)
     }
   }, [currentlyMapping])
 
@@ -19,6 +21,16 @@ export default function MapMode({
     if (currentlyMapping && !e.target.classList.contains('map-button')) {
       clearCurrentlyMapping()
     }
+  }
+
+  function onPressEnter(e) {
+    if (e.code === 'Enter') {
+      clearCurrentlyMapping()
+    }
+  }
+
+  function findMapping(name) {
+    return mappings.find((m) => m[0] === name)
   }
 
   function clearCurrentlyMapping() {
@@ -36,7 +48,7 @@ export default function MapMode({
   return (
     <div className="map-mode">
       {sliderNames.map((name) => {
-        const mapping = mappings.find((m) => m[0] === name)
+        const mapping = findMapping(name)
         const isMapped = !!mapping
         const isMapping = currentlyMapping === name
         let text = ''
