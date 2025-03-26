@@ -1,7 +1,6 @@
 use chrono::Utc;
 use nannou::prelude::*;
-use nannou_egui::Egui;
-use std::cell::{Cell, Ref, RefCell};
+use std::cell::{Cell, Ref};
 use std::collections::VecDeque;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -14,14 +13,12 @@ use super::serialization::SaveableProgramState;
 use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
-use super::ui::gui;
 use super::web_view::{self as wv};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
 pub fn run() {
     init_logger();
-    gui::init();
 
     {
         let mut registry = REGISTRY.write().unwrap();
@@ -119,11 +116,16 @@ pub enum AppEvent {
     AlertAndLog(String, log::Level),
     CaptureFrame,
     ClearNextFrame,
+    CommitMappings,
+    CurrentlyMapping(String),
     HubPopulated,
+    Hrcc(bool),
     EncodingComplete,
     MidiContinue,
     MidiStart,
     MidiStop,
+    Paused(bool),
+    PerfMode(bool),
     QueueRecord,
     ReceiveMappings(Vec<(String, ChannelAndControl)>),
     Record,
@@ -133,30 +135,18 @@ pub enum AppEvent {
     SaveProgramState,
     SendMidi,
     SendMappings,
-
-    // new WebView compat events
-    SetCurrentlyMapping(String),
-    SetHrcc(bool),
-    SetPaused(bool),
-    SetPerfMode(bool),
-    SetTapTempoEnabled(bool),
-    SetTransitionTime(f32),
-    StartRecording,
-    StopRecording,
-
     SnapshotRecall(String),
     SnapshotStore(String),
     SnapshotEnded,
     SwitchSketch(String),
     Tap,
+    TapTempoEnabled(bool),
+    TransitionTime(f32),
+    StartRecording,
+    StopRecording,
     ToggleFullScreen,
     ToggleGuiFocus,
-    ToggleHrcc,
     ToggleMainFocus,
-    TogglePerfMode(bool),
-    TogglePlay,
-    ToggleTapTempo(bool),
-    ToggleViewMidi,
     UpdateUiControl((String, ControlValue)),
     WebViewReady,
 }
@@ -187,10 +177,7 @@ impl AppEventSender {
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 struct AppModel {
     main_window_id: window::Id,
-    gui_window_id: window::Id,
-    egui: RefCell<Egui>,
     session_id: String,
-    alert_text: String,
     clear_next_frame: Cell<bool>,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
@@ -206,10 +193,7 @@ struct AppModel {
     transition_time: f32,
     image_index: Option<storage::ImageIndex>,
     map_mode: MapMode,
-    /// "High Resolution CC"
     hrcc: bool,
-    view_midi: bool,
-    #[allow(unused)]
     web_view_tx: wv::EventSender,
     web_view_ready: bool,
     web_view_pending_messages: VecDeque<wv::Event>,
@@ -218,10 +202,6 @@ struct AppModel {
 impl AppModel {
     fn main_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
         app.window(self.main_window_id)
-    }
-
-    fn gui_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
-        app.window(self.gui_window_id)
     }
 
     fn sketch_name(&self) -> String {
@@ -244,7 +224,7 @@ impl AppModel {
         }
     }
 
-    fn serializable_controls(&mut self) -> Vec<wv::SerializableControl> {
+    fn web_view_controls(&mut self) -> Vec<wv::SerializableControl> {
         let controls: Vec<wv::SerializableControl> = match self.control_hub() {
             Some(hub) => hub
                 .ui_controls
@@ -264,11 +244,9 @@ impl AppModel {
                 frame_controller::advance_single_frame();
             }
             AppEvent::Alert(text) => {
-                self.alert_text = text.clone();
                 self.web_view_tx.emit(wv::Event::Alert(text));
             }
             AppEvent::AlertAndLog(text, level) => {
-                self.alert_text = text.clone();
                 self.web_view_tx.emit(wv::Event::Alert(text.clone()));
 
                 match level {
@@ -308,8 +286,62 @@ impl AppModel {
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
             }
+            AppEvent::CommitMappings => {
+                if self.control_hub().is_none() {
+                    return;
+                }
+
+                self.map_mode.currently_mapping = None;
+                let mappings = self.map_mode.mappings_as_vec();
+                let hub = self.control_hub_mut().unwrap();
+
+                for (name, (ch, cc)) in mappings {
+                    hub.midi_controls.add(
+                        &MapMode::proxy_name(&name),
+                        MidiControlConfig::new(
+                            (ch, cc),
+                            hub.ui_controls.slider_range(&name),
+                            0.0,
+                        ),
+                    );
+                }
+
+                if let Err(e) = hub.midi_controls.restart() {
+                    error!("{}", e);
+                }
+            }
+            AppEvent::CurrentlyMapping(name) => {
+                if name.is_empty() {
+                    self.map_mode.stop();
+                    return;
+                }
+
+                self.map_mode.remove(&name);
+                self.control_hub_mut()
+                    .unwrap()
+                    .midi_controls
+                    .remove(&MapMode::proxy_name(&name));
+
+                self.map_mode.currently_mapping = Some(name.clone());
+
+                let tx_for_callback = self.event_tx.clone();
+                if let Err(connection_result) =
+                    self.map_mode.start(&name, self.hrcc, move || {
+                        tx_for_callback.emit(AppEvent::SendMappings);
+                    })
+                {
+                    error!("{}", connection_result);
+                }
+            }
+            AppEvent::Hrcc(hrcc) => {
+                self.hrcc = hrcc;
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_controls.hrcc = hrcc;
+                    hub.midi_controls.restart().unwrap();
+                }
+            }
             AppEvent::HubPopulated => {
-                let controls = self.serializable_controls();
+                let controls = self.web_view_controls();
                 self.web_view_tx.emit(wv::Event::HubPopulated(controls));
             }
             AppEvent::EncodingComplete => {
@@ -338,15 +370,15 @@ impl AppModel {
             AppEvent::MidiStop => {
                 self.event_tx.emit(AppEvent::StopRecording);
             }
+            AppEvent::Paused(paused) => {
+                frame_controller::set_paused(paused);
+            }
+            AppEvent::PerfMode(perf_mode) => {
+                self.perf_mode = perf_mode;
+            }
             AppEvent::QueueRecord => {
-                if self.recording_state.is_queued {
-                    self.recording_state.is_queued = false;
-                    self.alert_text = "".into();
-                } else {
-                    self.recording_state.is_queued = true;
-                    self.alert_text =
-                        "Recording queued. Awaiting MIDI Start message".into();
-                }
+                self.recording_state.is_queued =
+                    !self.recording_state.is_queued;
             }
             AppEvent::ReceiveMappings(mappings) => {
                 self.map_mode.update_from_vec(&mappings);
@@ -442,55 +474,8 @@ impl AppModel {
 
                 self.event_tx.alert("MIDI Sent");
             }
-            AppEvent::SetCurrentlyMapping(name) => {
-                if name.is_empty() {
-                    self.map_mode.stop();
-                    return;
-                }
-
-                self.map_mode.remove(&name);
-                self.control_hub_mut()
-                    .unwrap()
-                    .midi_controls
-                    .remove(&MapMode::proxy_name(&name));
-
-                self.map_mode.currently_mapping = Some(name.clone());
-
-                let tx_for_callback = self.event_tx.clone();
-                if let Err(connection_result) =
-                    self.map_mode.start(&name, self.hrcc, move || {
-                        tx_for_callback.emit(AppEvent::SendMappings);
-                    })
-                {
-                    error!("{}", connection_result);
-                }
-            }
-            AppEvent::SetHrcc(hrcc) => {
-                self.hrcc = hrcc;
-                if let Some(hub) = self.control_hub_mut() {
-                    hub.midi_controls.hrcc = hrcc;
-                    hub.midi_controls.restart().unwrap();
-                }
-            }
-            AppEvent::SetPaused(paused) => {
-                frame_controller::set_paused(paused);
-            }
-            AppEvent::SetPerfMode(perf_mode) => {
-                self.perf_mode = perf_mode;
-            }
-            AppEvent::SetTapTempoEnabled(enabled) => {
-                self.tap_tempo_enabled = enabled;
-                self.ctx.bpm().set(self.sketch_config.bpm);
-                self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
-            }
-            AppEvent::SetTransitionTime(transition_time) => {
-                self.transition_time = transition_time;
-                if let Some(hub) = self.control_hub_mut() {
-                    hub.set_transition_time(transition_time);
-                }
-            }
             AppEvent::SnapshotEnded => {
-                let controls = self.serializable_controls();
+                let controls = self.web_view_controls();
                 self.web_view_tx.emit(wv::Event::SnapshotEnded(controls));
             }
             AppEvent::SnapshotRecall(digit) => {
@@ -536,9 +521,9 @@ impl AppModel {
                 }
             }
             AppEvent::StopRecording => {
-                if self.recording_state.is_recording
-                    && !self.recording_state.is_encoding
-                {
+                let rs = &self.recording_state;
+
+                if rs.is_recording && !rs.is_encoding {
                     match self
                         .recording_state
                         .stop_recording(self.sketch_config, &self.session_id)
@@ -563,6 +548,17 @@ impl AppModel {
                     self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
                 }
             }
+            AppEvent::TapTempoEnabled(enabled) => {
+                self.tap_tempo_enabled = enabled;
+                self.ctx.bpm().set(self.sketch_config.bpm);
+                self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
+            }
+            AppEvent::TransitionTime(transition_time) => {
+                self.transition_time = transition_time;
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.set_transition_time(transition_time);
+                }
+            }
             AppEvent::ToggleFullScreen => {
                 let window = self.main_window(app).unwrap();
                 if let Some(monitor) = window.current_monitor() {
@@ -585,64 +581,10 @@ impl AppModel {
                 }
             }
             AppEvent::ToggleGuiFocus => {
-                self.gui_window(app).unwrap().set_visible(true);
-            }
-            AppEvent::ToggleHrcc => {
-                let value = self.hrcc;
-                if let Some(hub) = self.control_hub_mut() {
-                    hub.midi_controls.hrcc = value;
-                    hub.midi_controls.restart().unwrap();
-                }
+                warn!("ToggleGuiFocus is unimplemented");
             }
             AppEvent::ToggleMainFocus => {
                 self.main_window(app).unwrap().set_visible(true);
-            }
-            AppEvent::TogglePerfMode(perf_mode) => {
-                self.perf_mode = perf_mode;
-            }
-            AppEvent::TogglePlay => {
-                let next_is_paused = !frame_controller::is_paused();
-                frame_controller::set_paused(next_is_paused);
-                self.event_tx.alert_and_log(
-                    ternary!(next_is_paused, "Paused", "Resumed"),
-                    log::Level::Info,
-                );
-            }
-            AppEvent::ToggleTapTempo(tap_tempo_enabled) => {
-                self.tap_tempo_enabled = tap_tempo_enabled;
-                self.ctx.bpm().set(self.sketch_config.bpm);
-                self.alert_text = ternary!(
-                    tap_tempo_enabled,
-                    "Tap `Space` key to set BPM",
-                    "Tap tempo disabled. Sketch BPM has been restored."
-                )
-                .into();
-            }
-            AppEvent::ToggleViewMidi => {
-                self.view_midi = !self.view_midi;
-
-                if self.view_midi || self.control_hub().is_none() {
-                    return;
-                }
-
-                self.map_mode.currently_mapping = None;
-                let mappings = self.map_mode.mappings_as_vec();
-                let hub = self.control_hub_mut().unwrap();
-
-                for (name, (ch, cc)) in mappings {
-                    hub.midi_controls.add(
-                        &MapMode::proxy_name(&name),
-                        MidiControlConfig::new(
-                            (ch, cc),
-                            hub.ui_controls.slider_range(&name),
-                            0.0,
-                        ),
-                    );
-                }
-
-                if let Err(e) = hub.midi_controls.restart() {
-                    error!("{}", e);
-                }
             }
             AppEvent::UpdateUiControl((name, value)) => {
                 self.control_hub_mut()
@@ -703,8 +645,8 @@ impl AppModel {
 
         self.init_sketch_environment(app);
 
-        self.alert_text =
-            format!("Switched to {}", sketch_info.config.display_name);
+        self.event_tx
+            .alert(format!("Switched to {}", sketch_info.config.display_name));
     }
 
     fn init_sketch_environment(&mut self, app: &App) {
@@ -728,53 +670,29 @@ impl AppModel {
             self.ctx.window_rect().set_current(window.rect());
         }
 
-        let (gui_w, gui_h) =
-            gui::calculate_gui_dimensions(self.sketch.ui_controls());
-
-        if let Some(gui_window) = self.gui_window(app) {
-            gui_window.set_title(&format!(
-                "{} Controls",
-                self.sketch_config.display_name
-            ));
-
-            if !self.perf_mode {
-                set_window_position(
-                    app,
-                    self.gui_window_id,
-                    self.sketch_config.w * 2,
-                    0,
-                );
-            }
-
-            set_window_size(
-                gui_window.winit_window(),
-                self.sketch_config.gui_w.unwrap_or(gui_w) as i32,
-                self.sketch_config.gui_h.unwrap_or(gui_h) as i32,
-            );
-        }
-
         let paused = self.sketch_config.play_mode != PlayMode::Loop;
         frame_controller::set_paused(paused);
 
         self.load_program_state();
 
-        let tx_for_callback = self.event_tx.clone();
+        let event_tx = self.event_tx.clone();
         if let Some(hub) = self.control_hub_mut() {
             hub.register_populated_callback(move || {
-                tx_for_callback.emit(AppEvent::HubPopulated);
+                event_tx.emit(AppEvent::HubPopulated);
             });
         }
 
-        let tx_for_callback = self.event_tx.clone();
+        let event_tx = self.event_tx.clone();
         if let Some(hub) = self.control_hub_mut() {
             hub.register_snapshot_ended_callback(move || {
-                tx_for_callback.emit(AppEvent::SnapshotEnded);
+                event_tx.emit(AppEvent::SnapshotEnded);
             });
         }
 
+        // TODO: set web view position
         let event = wv::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
-            controls: self.serializable_controls(),
+            controls: self.web_view_controls(),
             display_name: self.sketch_config.display_name.to_string(),
             fps: frame_controller::fps(),
             mappings: self.map_mode.mappings_as_vec(),
@@ -872,18 +790,6 @@ fn model(app: &App) -> AppModel {
     frame_controller::set_fps(sketch_info.config.fps);
     let sketch = (sketch_info.factory)(app, &ctx);
 
-    let gui_window_id = app
-        .new_window()
-        .view(view_gui)
-        .raw_event(|_app, model: &mut AppModel, event| {
-            model.egui.get_mut().handle_raw_event(event);
-        })
-        .build()
-        .unwrap();
-
-    let egui =
-        RefCell::new(Egui::from_window(&app.window(gui_window_id).unwrap()));
-
     let (raw_event_tx, event_rx) = mpsc::channel();
     let midi_tx = raw_event_tx.clone();
 
@@ -931,10 +837,7 @@ fn model(app: &App) -> AppModel {
 
     let mut model = AppModel {
         main_window_id,
-        gui_window_id,
-        egui,
         session_id: uuid_5(),
-        alert_text: String::new(),
         clear_next_frame: Cell::new(true),
         perf_mode: false,
         tap_tempo: TapTempo::new(raw_bpm),
@@ -949,7 +852,6 @@ fn model(app: &App) -> AppModel {
         ctx,
         transition_time: 4.0,
         image_index,
-        view_midi: false,
         map_mode: MapMode::default(),
         hrcc: false,
         web_view_tx,
@@ -963,29 +865,6 @@ fn model(app: &App) -> AppModel {
 }
 
 fn update(app: &App, model: &mut AppModel, update: Update) {
-    model.egui.borrow_mut().set_elapsed_time(update.since_start);
-
-    {
-        let mut egui = model.egui.borrow_mut();
-        let ctx = egui.begin_frame();
-        let bpm = model.ctx.bpm().get();
-        gui::update(
-            model.sketch_config,
-            model.sketch.ui_controls(),
-            &mut model.alert_text,
-            &mut model.perf_mode,
-            &mut model.tap_tempo_enabled,
-            bpm,
-            model.transition_time,
-            &model.view_midi,
-            &model.map_mode,
-            &mut model.hrcc,
-            &mut model.recording_state,
-            &model.event_tx,
-            &ctx,
-        );
-    }
-
     while let Ok(event) = model.event_rx.try_recv() {
         model.on_app_event(app, event);
     }
@@ -1006,7 +885,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     }
 }
 
-/// Shared between main and gui windows
 fn event(app: &App, model: &mut AppModel, event: Event) {
     #[allow(clippy::single_match)]
     match event {
@@ -1065,7 +943,8 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 }
                 // Cmd + Shift + M
                 Key::M if logo_pressed && shift_pressed => {
-                    model.event_tx.emit(AppEvent::ToggleViewMidi);
+                    warn!("ToggleViewMidi from main window is unimplemented");
+                    // model.event_tx.emit(AppEvent::ToggleViewMidi);
                 }
                 // R
                 Key::R if has_no_modifiers => {
@@ -1112,8 +991,3 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         }
     }
 }
-
-// fn view_gui(_app: &App, model: &AppModel, frame: Frame) {
-//     model.egui.borrow().draw_to_frame(&frame).unwrap();
-// }
-fn view_gui(_app: &App, _model: &AppModel, _frame: Frame) {}

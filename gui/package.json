@@ -13,7 +13,8 @@
   "devDependencies": {
     "eslint-config-lokua": "10.0.3-beta.0",
     "eslint-plugin-react": "7.37.4",
-    "vite": "6.2.2"
+    "globals": "16.0.0",
+    "vite": "6.2.3"
   },
   "dependencies": {
     "react": "19.0.0",

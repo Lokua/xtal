@@ -158,7 +158,7 @@ pub fn launch(
 
     thread::spawn(move || {
         while let Ok(message) = receiver.recv() {
-            debug!("Received message from child: {:?}", message);
+            trace!("Received message from child: {:?}", message);
 
             match message {
                 Event::Advance => {
@@ -174,13 +174,12 @@ pub fn launch(
                     app_event_tx.emit(AppEvent::ClearNextFrame);
                 }
                 Event::CurrentlyMapping(name) => {
-                    app_event_tx
-                        .emit(AppEvent::SetCurrentlyMapping(name.clone()));
+                    app_event_tx.emit(AppEvent::CurrentlyMapping(name.clone()));
                 }
                 Event::Encoding(_) => {}
                 Event::Error(e) => error!("Received error from child: {}", e),
                 Event::Hrcc(hrcc) => {
-                    app_event_tx.emit(AppEvent::SetHrcc(hrcc));
+                    app_event_tx.emit(AppEvent::Hrcc(hrcc));
                 }
                 Event::HubPopulated(_) => {}
                 Event::Init { .. } => {}
@@ -189,10 +188,10 @@ pub fn launch(
                     app_event_tx.emit(AppEvent::ReceiveMappings(mappings));
                 }
                 Event::Paused(paused) => {
-                    app_event_tx.emit(AppEvent::SetPaused(paused));
+                    app_event_tx.emit(AppEvent::Paused(paused));
                 }
                 Event::PerfMode(perf_mode) => {
-                    app_event_tx.emit(AppEvent::SetPerfMode(perf_mode));
+                    app_event_tx.emit(AppEvent::PerfMode(perf_mode));
                 }
                 Event::QueueRecord => {
                     app_event_tx.emit(AppEvent::QueueRecord);
@@ -249,7 +248,7 @@ pub fn launch(
                     app_event_tx.emit(AppEvent::Tap);
                 }
                 Event::TapTempoEnabled(enabled) => {
-                    app_event_tx.emit(AppEvent::SetTapTempoEnabled(enabled));
+                    app_event_tx.emit(AppEvent::TapTempoEnabled(enabled));
                 }
                 Event::ToggleFullScreen => {
                     app_event_tx.emit(AppEvent::ToggleFullScreen);
@@ -261,7 +260,7 @@ pub fn launch(
                     app_event_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 Event::TransitionTime(time) => {
-                    app_event_tx.emit(AppEvent::SetTransitionTime(time));
+                    app_event_tx.emit(AppEvent::TransitionTime(time));
                 }
                 Event::UpdateControlBool { name, value } => {
                     app_event_tx.emit(AppEvent::UpdateUiControl((

@@ -57,19 +57,16 @@ fn main() -> wry::Result<()> {
             trace!("ipc_handler message: {:?};", message);
             let json_string = message.body().to_string();
 
-            let web_view_event =
-                match serde_json::from_str::<wv::Event>(&json_string) {
-                    Ok(event) => event,
-                    Err(e) => {
-                        error!(
-                            "JSON parse error: {:?}; Problematic JSON: {}",
-                            e, json_string
-                        );
-                        wv::Event::Error(format!("{}", e))
-                    }
-                };
+            let event = serde_json::from_str::<wv::Event>(&json_string)
+                .unwrap_or_else(|e| {
+                    error!(
+                        "JSON parse error: {:?}; Problematic JSON: {}",
+                        e, json_string
+                    );
+                    wv::Event::Error(format!("{}", e))
+                });
 
-            sender.send(web_view_event).unwrap();
+            sender.send(event).unwrap();
         })
         .build(&window)?;
 
@@ -137,6 +134,8 @@ fn setup_ipc_connection(
 }
 
 fn derive_gui_height(controls: Vec<SerializableControl>) -> i32 {
+    let unscientific_offset = controls.len() as i32;
+
     let controls_height: i32 = controls
         .iter()
         .map(|c| match c {
@@ -145,10 +144,9 @@ fn derive_gui_height(controls: Vec<SerializableControl>) -> i32 {
             _ => 24,
         })
         .sum();
-    let non_scientific_offset = controls.len() as i32;
 
     let h =
-        HEADER_HEIGHT + controls_height + FOOTER_HEIGHT + non_scientific_offset;
+        HEADER_HEIGHT + controls_height + FOOTER_HEIGHT + unscientific_offset;
 
     debug!("Derived GUI height: {}", h);
 
