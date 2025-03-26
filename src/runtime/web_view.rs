@@ -24,6 +24,7 @@ pub enum Event {
     Bpm(f32),
     CaptureFrame,
     ClearBuffer,
+    CommitMappings,
     CurrentlyMapping(String),
     Encoding(bool),
     Error(String),
@@ -124,7 +125,7 @@ type Bootstrap = (Sender, Receiver);
 /// main thread and control the event loop, which we can't have in a single
 /// process.
 pub fn launch(
-    app_event_tx: &AppEventSender,
+    app_tx: &AppEventSender,
     sketch_name: &str,
 ) -> Result<EventSender, Box<dyn std::error::Error>> {
     let (server, server_name) = IpcOneShotServer::<Bootstrap>::new()?;
@@ -154,7 +155,7 @@ pub fn launch(
 
     let init_sender = sender.clone();
     let sketch_name = sketch_name.to_owned();
-    let app_event_tx = app_event_tx.clone();
+    let app_tx = app_tx.clone();
 
     thread::spawn(move || {
         while let Ok(message) = receiver.recv() {
@@ -162,39 +163,42 @@ pub fn launch(
 
             match message {
                 Event::Advance => {
-                    app_event_tx.emit(AppEvent::AdvanceSingleFrame);
+                    app_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
                 Event::Alert(_) => {}
                 Event::AverageFps(_) => {}
                 Event::Bpm(_) => {}
                 Event::CaptureFrame => {
-                    app_event_tx.emit(AppEvent::CaptureFrame);
+                    app_tx.emit(AppEvent::CaptureFrame);
                 }
                 Event::ClearBuffer => {
-                    app_event_tx.emit(AppEvent::ClearNextFrame);
+                    app_tx.emit(AppEvent::ClearNextFrame);
+                }
+                Event::CommitMappings => {
+                    app_tx.emit(AppEvent::CommitMappings);
                 }
                 Event::CurrentlyMapping(name) => {
-                    app_event_tx.emit(AppEvent::CurrentlyMapping(name.clone()));
+                    app_tx.emit(AppEvent::CurrentlyMapping(name.clone()));
                 }
                 Event::Encoding(_) => {}
                 Event::Error(e) => error!("Received error from child: {}", e),
                 Event::Hrcc(hrcc) => {
-                    app_event_tx.emit(AppEvent::Hrcc(hrcc));
+                    app_tx.emit(AppEvent::Hrcc(hrcc));
                 }
                 Event::HubPopulated(_) => {}
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
                 Event::Mappings(mappings) => {
-                    app_event_tx.emit(AppEvent::ReceiveMappings(mappings));
+                    app_tx.emit(AppEvent::ReceiveMappings(mappings));
                 }
                 Event::Paused(paused) => {
-                    app_event_tx.emit(AppEvent::Paused(paused));
+                    app_tx.emit(AppEvent::Paused(paused));
                 }
                 Event::PerfMode(perf_mode) => {
-                    app_event_tx.emit(AppEvent::PerfMode(perf_mode));
+                    app_tx.emit(AppEvent::PerfMode(perf_mode));
                 }
                 Event::QueueRecord => {
-                    app_event_tx.emit(AppEvent::QueueRecord);
+                    app_tx.emit(AppEvent::QueueRecord);
                 }
                 Event::Ready => {
                     let registry = REGISTRY.read().unwrap();
@@ -213,72 +217,72 @@ pub fn launch(
                     };
 
                     init_sender.send(data).unwrap();
-                    app_event_tx.emit(AppEvent::WebViewReady);
+                    app_tx.emit(AppEvent::WebViewReady);
                 }
                 Event::StartRecording => {
-                    app_event_tx.emit(AppEvent::StartRecording);
+                    app_tx.emit(AppEvent::StartRecording);
                 }
                 Event::RemoveMapping(name) => {
-                    app_event_tx.emit(AppEvent::RemoveMapping(name));
+                    app_tx.emit(AppEvent::RemoveMapping(name));
                 }
                 Event::Reset => {
-                    app_event_tx.emit(AppEvent::Reset);
+                    app_tx.emit(AppEvent::Reset);
                 }
                 Event::Save => {
-                    app_event_tx.emit(AppEvent::SaveProgramState);
+                    app_tx.emit(AppEvent::SaveProgramState);
                 }
                 Event::SendMidi => {
-                    app_event_tx.emit(AppEvent::SendMidi);
+                    app_tx.emit(AppEvent::SendMidi);
                 }
                 Event::SnapshotEnded(_) => {}
                 Event::SnapshotRecall(id) => {
-                    app_event_tx.emit(AppEvent::SnapshotRecall(id.clone()));
+                    app_tx.emit(AppEvent::SnapshotRecall(id.clone()));
                 }
                 Event::SnapshotStore(id) => {
-                    app_event_tx.emit(AppEvent::SnapshotStore(id.clone()));
+                    app_tx.emit(AppEvent::SnapshotStore(id.clone()));
                 }
                 Event::StopRecording => {
-                    app_event_tx.emit(AppEvent::StopRecording);
+                    app_tx.emit(AppEvent::StopRecording);
                 }
                 Event::SwitchSketch(sketch_name) => {
-                    app_event_tx
-                        .emit(AppEvent::SwitchSketch(sketch_name.clone()));
+                    app_tx.emit(AppEvent::SwitchSketch(sketch_name.clone()));
                 }
                 Event::Tap => {
-                    app_event_tx.emit(AppEvent::Tap);
+                    app_tx.emit(AppEvent::Tap);
                 }
                 Event::TapTempoEnabled(enabled) => {
-                    app_event_tx.emit(AppEvent::TapTempoEnabled(enabled));
+                    app_tx.emit(AppEvent::TapTempoEnabled(enabled));
                 }
                 Event::ToggleFullScreen => {
-                    app_event_tx.emit(AppEvent::ToggleFullScreen);
+                    app_tx.emit(AppEvent::ToggleFullScreen);
                 }
                 Event::ToggleGuiFocus => {
-                    app_event_tx.emit(AppEvent::ToggleGuiFocus);
+                    app_tx.emit(AppEvent::ToggleGuiFocus);
                 }
                 Event::ToggleMainFocus => {
-                    app_event_tx.emit(AppEvent::ToggleMainFocus);
+                    app_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 Event::TransitionTime(time) => {
-                    app_event_tx.emit(AppEvent::TransitionTime(time));
+                    app_tx.emit(AppEvent::TransitionTime(time));
                 }
                 Event::UpdateControlBool { name, value } => {
-                    app_event_tx.emit(AppEvent::UpdateUiControl((
+                    app_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(value),
                     )))
                 }
                 Event::UpdateControlFloat { name, value } => {
-                    app_event_tx.emit(AppEvent::UpdateUiControl((
+                    app_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(value),
                     )))
                 }
-                Event::UpdateControlString { name, value } => app_event_tx
-                    .emit(AppEvent::UpdateUiControl((
+                Event::UpdateControlString { name, value } => {
+                    app_tx.emit(AppEvent::UpdateUiControl((
                         name.clone(),
                         ControlValue::from(value.clone()),
-                    ))),
+                    )))
+                }
             }
         }
     });
@@ -289,18 +293,13 @@ pub fn launch(
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SerializableControl {
-    Slider {
-        name: String,
-        value: f32,
-        min: f32,
-        max: f32,
-        step: f32,
-        disabled: bool,
-    },
     Checkbox {
         name: String,
         value: bool,
         disabled: bool,
+    },
+    DynamicSeparator {
+        name: String,
     },
     Select {
         name: String,
@@ -309,8 +308,13 @@ pub enum SerializableControl {
         disabled: bool,
     },
     Separator {},
-    DynamicSeparator {
+    Slider {
         name: String,
+        value: f32,
+        min: f32,
+        max: f32,
+        step: f32,
+        disabled: bool,
     },
 }
 
@@ -322,6 +326,9 @@ impl From<(&Control, &ControlHub<Timing>)> for SerializableControl {
                 value: hub.bool(name),
                 disabled: control.is_disabled(&hub.ui_controls),
             },
+            Control::DynamicSeparator { name } => {
+                SerializableControl::DynamicSeparator { name: name.clone() }
+            }
             Control::Select { name, options, .. } => {
                 SerializableControl::Select {
                     name: name.clone(),
@@ -331,9 +338,6 @@ impl From<(&Control, &ControlHub<Timing>)> for SerializableControl {
                 }
             }
             Control::Separator {} => SerializableControl::Separator {},
-            Control::DynamicSeparator { name } => {
-                SerializableControl::DynamicSeparator { name: name.clone() }
-            }
             Control::Slider {
                 name,
                 min,

@@ -58,7 +58,11 @@ export default function Midi({
           <label htmlFor="hrcc">Hi-Res</label>
         </fieldset>
         <VerticalSeparator style={{ margin: '0 8px' }} />
-        <fieldset title="Enables live overrides of UI sliders via MIDI CCs">
+        {/* unimplemented */}
+        <fieldset
+          title="Enables live overrides of UI sliders via MIDI CCs"
+          style={{ display: 'none' }}
+        >
           <input
             id="mappings-enabled"
             type="checkbox"

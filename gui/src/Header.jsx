@@ -19,8 +19,9 @@ export default function Header({
   onAdvance,
   onCaptureFrame,
   onChangePerfMode,
-  onChangeTransitionTime,
   onChangeTapTempoEnabled,
+  onChangeTransitionTime,
+  onChangeView,
   onClearBuffer,
   onQueueRecord,
   onRecord,
@@ -28,7 +29,6 @@ export default function Header({
   onSave,
   onSwitchSketch,
   onTogglePlay,
-  onViewMidi,
 }) {
   return (
     <header>
@@ -102,7 +102,7 @@ export default function Header({
         />
         <VerticalSeparator />
         <button onClick={onSave}>Save</button>
-        <button className={view === 'midi' ? 'on' : ''} onClick={onViewMidi}>
+        <button className={view === 'midi' ? 'on' : ''} onClick={onChangeView}>
           MIDI
         </button>
       </section>

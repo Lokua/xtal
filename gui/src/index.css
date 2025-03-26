@@ -194,6 +194,10 @@ input[type='range'] {
   &:active::-webkit-slider-thumb {
     background-color: var(--control-text-color);
   }
+
+  &:disabled::-webkit-slider-thumb {
+    cursor: not-allowed;
+  }
 }
 
 input[type='range']::-webkit-slider-thumb {

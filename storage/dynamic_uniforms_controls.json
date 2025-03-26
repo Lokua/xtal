@@ -15,7 +15,7 @@
     {
       "type": "Slider",
       "name": "wave_dist",
-      "value": 37.5
+      "value": 37.7622
     },
     {
       "type": "Checkbox",
@@ -35,7 +35,7 @@
     {
       "type": "Select",
       "name": "origin",
-      "value": "center"
+      "value": "bottom-right"
     },
     {
       "type": "Slider",
@@ -103,7 +103,12 @@
       "value": 3.0958
     }
   ],
-  "midi_controls": [],
+  "midi_controls": [
+    {
+      "name": "wave_dist__slider_proxy",
+      "value": 37.795277
+    }
+  ],
   "osc_controls": [],
   "snapshots": {}
 }

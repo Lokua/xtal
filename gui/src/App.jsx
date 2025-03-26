@@ -226,8 +226,16 @@ export default function App() {
     )
   }
 
-  function onChangeTransitionTime() {
-    post('TransitionTime')
+  function onChangeTransitionTime(time) {
+    post('TransitionTime', time)
+  }
+
+  function onChangeView() {
+    const v = view === 'midi' ? 'controls' : 'midi'
+    setView(v)
+    if (v === 'controls') {
+      post('CommitMappings')
+    }
   }
 
   function onClearBuffer() {
@@ -281,10 +289,6 @@ export default function App() {
     post('Paused', value)
   }
 
-  function onViewMidi() {
-    setView(view === 'midi' ? 'controls' : 'midi')
-  }
-
   return (
     <div id="app">
       <Header
@@ -304,6 +308,7 @@ export default function App() {
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}
         onChangeTransitionTime={onChangeTransitionTime}
+        onChangeView={onChangeView}
         onClearBuffer={onClearBuffer}
         onReset={onReset}
         onQueueRecord={onQueueRecord}
@@ -311,7 +316,6 @@ export default function App() {
         onSave={onSave}
         onSwitchSketch={onSwitchSketch}
         onTogglePlay={onTogglePlay}
-        onViewMidi={onViewMidi}
       />
       <main>
         {view === 'midi' ? (
