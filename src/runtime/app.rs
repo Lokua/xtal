@@ -13,7 +13,7 @@ use super::serialization::SaveableProgramState;
 use super::shared::lattice_project_root;
 use super::storage::{self, load_program_state};
 use super::tap_tempo::TapTempo;
-use super::web_view::{self as wv};
+use super::web_view::{self as ui};
 use crate::framework::{frame_controller, prelude::*};
 use crate::register_sketches;
 
@@ -187,17 +187,17 @@ struct AppModel {
     sketch: Box<dyn SketchAll>,
     sketch_config: &'static SketchConfig,
     main_maximized: Cell<bool>,
-    event_tx: AppEventSender,
-    event_rx: AppEventReceiver,
+    app_tx: AppEventSender,
+    app_rx: AppEventReceiver,
     ctx: LatticeContext,
     midi_out: Option<midi::MidiOut>,
     transition_time: f32,
     image_index: Option<storage::ImageIndex>,
     map_mode: MapMode,
     hrcc: bool,
-    web_view_tx: wv::EventSender,
-    web_view_ready: bool,
-    web_view_pending_messages: VecDeque<wv::Event>,
+    ui_tx: ui::EventSender,
+    ui_ready: bool,
+    ui_pending_messages: VecDeque<ui::Event>,
 }
 
 impl AppModel {
@@ -225,13 +225,13 @@ impl AppModel {
         }
     }
 
-    fn web_view_controls(&mut self) -> Vec<wv::SerializableControl> {
-        let controls: Vec<wv::SerializableControl> = match self.control_hub() {
+    fn web_view_controls(&mut self) -> Vec<ui::SerializableControl> {
+        let controls: Vec<ui::SerializableControl> = match self.control_hub() {
             Some(hub) => hub
                 .ui_controls
                 .configs()
                 .iter()
-                .map(|config| wv::SerializableControl::from((config, hub)))
+                .map(|config| ui::SerializableControl::from((config, hub)))
                 .collect(),
             None => vec![],
         };
@@ -245,10 +245,10 @@ impl AppModel {
                 frame_controller::advance_single_frame();
             }
             AppEvent::Alert(text) => {
-                self.web_view_tx.emit(wv::Event::Alert(text));
+                self.ui_tx.emit(ui::Event::Alert(text));
             }
             AppEvent::AlertAndLog(text, level) => {
-                self.web_view_tx.emit(wv::Event::Alert(text.clone()));
+                self.ui_tx.emit(ui::Event::Alert(text.clone()));
 
                 match level {
                     log::Level::Error => error!("{}", text),
@@ -279,7 +279,7 @@ impl AppModel {
                     }
                 }
 
-                self.event_tx.alert_and_log(
+                self.app_tx.alert_and_log(
                     format!("Image saved to {:?}", file_path),
                     log::Level::Info,
                 );
@@ -325,10 +325,10 @@ impl AppModel {
 
                 self.map_mode.currently_mapping = Some(name.clone());
 
-                let tx_for_callback = self.event_tx.clone();
+                let app_tx = self.app_tx.clone();
                 if let Err(connection_result) =
                     self.map_mode.start(&name, self.hrcc, move || {
-                        tx_for_callback.emit(AppEvent::SendMappings);
+                        app_tx.emit(AppEvent::SendMappings);
                     })
                 {
                     error!("{}", connection_result);
@@ -343,10 +343,10 @@ impl AppModel {
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
-                self.web_view_tx.emit(wv::Event::HubPopulated(controls));
+                self.ui_tx.emit(ui::Event::HubPopulated(controls));
             }
             AppEvent::EncodingComplete => {
-                self.web_view_tx.emit(wv::Event::Encoding(false));
+                self.ui_tx.emit(ui::Event::Encoding(false));
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
@@ -356,11 +356,11 @@ impl AppModel {
                 if self.recording_state.is_queued {
                     match self.recording_state.start_recording() {
                         Ok(message) => {
-                            self.event_tx.alert(message);
-                            self.web_view_tx.emit(wv::Event::StartRecording);
+                            self.app_tx.alert(message);
+                            self.ui_tx.emit(ui::Event::StartRecording);
                         }
                         Err(e) => {
-                            self.event_tx.alert_and_log(
+                            self.app_tx.alert_and_log(
                                 format!("Failed to start recording: {}", e),
                                 log::Level::Error,
                             );
@@ -369,7 +369,7 @@ impl AppModel {
                 }
             }
             AppEvent::MidiStop => {
-                self.event_tx.emit(AppEvent::StopRecording);
+                self.app_tx.emit(AppEvent::StopRecording);
             }
             AppEvent::Paused(paused) => {
                 frame_controller::set_paused(paused);
@@ -390,10 +390,10 @@ impl AppModel {
                     .toggle_recording(self.sketch_config, &self.session_id)
                 {
                     Ok(message) => {
-                        self.event_tx.alert(message.clone());
+                        self.app_tx.alert(message.clone());
                     }
                     Err(e) => {
-                        self.event_tx.alert_and_log(
+                        self.app_tx.alert_and_log(
                             format!("Recording error: {}", e),
                             log::Level::Error,
                         );
@@ -403,11 +403,11 @@ impl AppModel {
             AppEvent::RemoveMapping(name) => {
                 self.map_mode.remove(&name);
                 self.map_mode.currently_mapping = None;
-                self.event_tx.emit(AppEvent::SendMappings);
+                self.app_tx.emit(AppEvent::SendMappings);
             }
             AppEvent::Reset => {
                 frame_controller::reset_frame_count();
-                self.event_tx.alert("Reset");
+                self.app_tx.alert("Reset");
             }
             AppEvent::Resize => {
                 if let Some(window) = self.main_window(app) {
@@ -426,13 +426,13 @@ impl AppModel {
                     self.control_hub().unwrap(),
                 ) {
                     Ok(path_buf) => {
-                        self.event_tx.alert_and_log(
+                        self.app_tx.alert_and_log(
                             format!("Controls persisted at {:?}", path_buf),
                             log::Level::Info,
                         );
                     }
                     Err(e) => {
-                        self.event_tx.alert_and_log(
+                        self.app_tx.alert_and_log(
                             format!("Failed to persist controls: {}", e),
                             log::Level::Error,
                         );
@@ -441,7 +441,7 @@ impl AppModel {
             }
             AppEvent::SendMappings => {
                 let mappings = self.map_mode.mappings_as_vec();
-                self.web_view_tx.emit(wv::Event::Mappings(mappings));
+                self.ui_tx.emit(ui::Event::Mappings(mappings));
             }
             AppEvent::SendMidi => {
                 let messages = {
@@ -453,7 +453,7 @@ impl AppModel {
                 };
 
                 let Some(midi_out) = &mut self.midi_out else {
-                    self.event_tx.alert_and_log(
+                    self.app_tx.alert_and_log(
                         "Unable to send MIDI; no MIDI out connection",
                         log::Level::Warn,
                     );
@@ -462,7 +462,7 @@ impl AppModel {
 
                 for message in messages {
                     if let Err(e) = midi_out.send(&message) {
-                        self.event_tx.alert_and_log(
+                        self.app_tx.alert_and_log(
                             format!(
                                 "Error sending MIDI message: {:?}; error: {}",
                                 message, e
@@ -473,23 +473,23 @@ impl AppModel {
                     }
                 }
 
-                self.event_tx.alert("MIDI Sent");
+                self.app_tx.alert("MIDI Sent");
             }
             AppEvent::SnapshotEnded => {
                 let controls = self.web_view_controls();
-                self.web_view_tx.emit(wv::Event::SnapshotEnded(controls));
+                self.ui_tx.emit(ui::Event::SnapshotEnded(controls));
             }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(hub) = self.control_hub_mut() {
                     match hub.recall_snapshot(&digit) {
                         Ok(_) => {
-                            self.event_tx.alert_and_log(
+                            self.app_tx.alert_and_log(
                                 format!("Snapshot {:?} recalled", digit),
                                 log::Level::Info,
                             );
                         }
                         Err(e) => {
-                            self.event_tx.alert_and_log(e, log::Level::Error);
+                            self.app_tx.alert_and_log(e, log::Level::Error);
                         }
                     }
                 }
@@ -497,12 +497,12 @@ impl AppModel {
             AppEvent::SnapshotStore(digit) => {
                 if let Some(hub) = self.control_hub_mut() {
                     hub.take_snapshot(&digit);
-                    self.event_tx.alert_and_log(
+                    self.app_tx.alert_and_log(
                         format!("Snapshot {:?} saved", digit),
                         log::Level::Info,
                     );
                 } else {
-                    self.event_tx.alert_and_log(
+                    self.app_tx.alert_and_log(
                         "Unable to store snapshot (no hub)",
                         log::Level::Error,
                     );
@@ -511,10 +511,10 @@ impl AppModel {
             AppEvent::StartRecording => {
                 match self.recording_state.start_recording() {
                     Ok(message) => {
-                        self.event_tx.alert(message);
+                        self.app_tx.alert(message);
                     }
                     Err(e) => {
-                        self.event_tx.alert_and_log(
+                        self.app_tx.alert_and_log(
                             format!("Failed to start recording: {}", e),
                             log::Level::Error,
                         );
@@ -530,7 +530,7 @@ impl AppModel {
                         .stop_recording(self.sketch_config, &self.session_id)
                     {
                         Ok(_) => {
-                            self.web_view_tx.emit(wv::Event::Encoding(true));
+                            self.ui_tx.emit(ui::Event::Encoding(true));
                         }
                         Err(e) => {
                             error!("Failed to stop recording: {}", e);
@@ -546,13 +546,13 @@ impl AppModel {
             AppEvent::Tap => {
                 if self.tap_tempo_enabled {
                     self.ctx.bpm().set(self.tap_tempo.tap());
-                    self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
+                    self.ui_tx.emit(ui::Event::Bpm(self.ctx.bpm().get()));
                 }
             }
             AppEvent::TapTempoEnabled(enabled) => {
                 self.tap_tempo_enabled = enabled;
                 self.ctx.bpm().set(self.sketch_config.bpm);
-                self.web_view_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
+                self.ui_tx.emit(ui::Event::Bpm(self.ctx.bpm().get()));
             }
             AppEvent::TransitionTime(transition_time) => {
                 self.transition_time = transition_time;
@@ -593,11 +593,11 @@ impl AppModel {
                     .update_ui_value(&name, value);
             }
             AppEvent::WebViewReady => {
-                self.web_view_ready = true;
+                self.ui_ready = true;
                 // Not clearing the queue as this is great for live reload!
                 // TODO: find a better way since this can undo some state
-                for message in &self.web_view_pending_messages {
-                    self.web_view_tx.emit(message.clone());
+                for message in &self.ui_pending_messages {
+                    self.ui_tx.emit(message.clone());
                 }
             }
         }
@@ -646,7 +646,7 @@ impl AppModel {
 
         self.init_sketch_environment(app);
 
-        self.event_tx
+        self.app_tx
             .alert(format!("Switched to {}", sketch_info.config.display_name));
     }
 
@@ -676,22 +676,22 @@ impl AppModel {
 
         self.load_program_state();
 
-        let event_tx = self.event_tx.clone();
+        let app_tx = self.app_tx.clone();
         if let Some(hub) = self.control_hub_mut() {
             hub.register_populated_callback(move || {
-                event_tx.emit(AppEvent::HubPopulated);
+                app_tx.emit(AppEvent::HubPopulated);
             });
         }
 
-        let event_tx = self.event_tx.clone();
+        let app_tx = self.app_tx.clone();
         if let Some(hub) = self.control_hub_mut() {
             hub.register_snapshot_ended_callback(move || {
-                event_tx.emit(AppEvent::SnapshotEnded);
+                app_tx.emit(AppEvent::SnapshotEnded);
             });
         }
 
         // TODO: set web view position
-        let event = wv::Event::LoadSketch {
+        let event = ui::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
             controls: self.web_view_controls(),
             display_name: self.sketch_config.display_name.to_string(),
@@ -702,15 +702,15 @@ impl AppModel {
             tap_tempo_enabled: self.tap_tempo_enabled,
         };
 
-        if self.web_view_ready {
-            self.web_view_tx.emit(event);
+        if self.ui_ready {
+            self.ui_tx.emit(event);
         } else {
-            self.web_view_pending_messages.push_back(event);
+            self.ui_pending_messages.push_back(event);
         }
     }
 
     fn load_program_state(&mut self) {
-        let event_tx = self.event_tx.clone();
+        let event_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
 
         let mut current_state = match self.control_hub() {
@@ -828,12 +828,12 @@ fn model(app: &App) -> AppModel {
         .ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
-    let web_view_tx = wv::launch(&event_tx, sketch_info.config.name).unwrap();
-    let wv_tx = web_view_tx.clone();
+    let web_view_tx = ui::launch(&event_tx, sketch_info.config.name).unwrap();
+    let ui_tx = web_view_tx.clone();
 
     thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(1_000));
-        wv_tx.emit(wv::Event::AverageFps(frame_controller::average_fps()));
+        ui_tx.emit(ui::Event::AverageFps(frame_controller::average_fps()));
     });
 
     let mut model = AppModel {
@@ -847,17 +847,17 @@ fn model(app: &App) -> AppModel {
         sketch,
         sketch_config: sketch_info.config,
         main_maximized: Cell::new(false),
-        event_tx,
-        event_rx,
+        app_tx: event_tx,
+        app_rx: event_rx,
         midi_out,
         ctx,
         transition_time: 4.0,
         image_index,
         map_mode: MapMode::default(),
         hrcc: false,
-        web_view_tx,
-        web_view_ready: false,
-        web_view_pending_messages: VecDeque::new(),
+        ui_tx: web_view_tx,
+        ui_ready: false,
+        ui_pending_messages: VecDeque::new(),
     };
 
     model.init_sketch_environment(app);
@@ -866,7 +866,7 @@ fn model(app: &App) -> AppModel {
 }
 
 fn update(app: &App, model: &mut AppModel, update: Update) {
-    while let Ok(event) = model.event_rx.try_recv() {
+    while let Ok(event) = model.app_rx.try_recv() {
         model.on_app_event(app, event);
     }
 
@@ -881,7 +881,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.recording_state.on_encoding_message(
             model.sketch_config,
             &mut model.session_id,
-            &model.event_tx,
+            &model.app_tx,
         );
     }
 }
@@ -916,31 +916,31 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 
             if let Some(digit) = digit.map(|s| s.to_string()) {
                 if shift_pressed {
-                    model.event_tx.emit(AppEvent::SnapshotStore(digit));
+                    model.app_tx.emit(AppEvent::SnapshotStore(digit));
                 } else if logo_pressed {
-                    model.event_tx.emit(AppEvent::SnapshotRecall(digit));
+                    model.app_tx.emit(AppEvent::SnapshotRecall(digit));
                 }
             }
 
             match key {
                 Key::Space => {
-                    model.event_tx.emit(AppEvent::Tap);
+                    model.app_tx.emit(AppEvent::Tap);
                 }
                 // A
                 Key::A if has_no_modifiers => {
-                    model.event_tx.emit(AppEvent::AdvanceSingleFrame);
+                    model.app_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
                 // Cmd + F
                 Key::F if logo_pressed => {
-                    model.event_tx.emit(AppEvent::ToggleFullScreen);
+                    model.app_tx.emit(AppEvent::ToggleFullScreen);
                 }
                 // Cmd + G
                 Key::G if logo_pressed => {
-                    model.event_tx.emit(AppEvent::ToggleGuiFocus);
+                    model.app_tx.emit(AppEvent::ToggleGuiFocus);
                 }
                 // Cmd + M
                 Key::M if logo_pressed && !shift_pressed => {
-                    model.event_tx.emit(AppEvent::ToggleMainFocus);
+                    model.app_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 // Cmd + Shift + M
                 Key::M if logo_pressed && shift_pressed => {
@@ -949,11 +949,11 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 }
                 // R
                 Key::R if has_no_modifiers => {
-                    model.event_tx.emit(AppEvent::Reset);
+                    model.app_tx.emit(AppEvent::Reset);
                 }
                 // S
                 Key::S if has_no_modifiers => {
-                    model.event_tx.emit(AppEvent::CaptureFrame);
+                    model.app_tx.emit(AppEvent::CaptureFrame);
                 }
                 _ => {}
             }
@@ -964,7 +964,7 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
             ..
         } => {
             if id == model.main_window_id {
-                model.event_tx.emit(AppEvent::Resize);
+                model.app_tx.emit(AppEvent::Resize);
             }
         }
         _ => {}
