@@ -1,7 +1,25 @@
-import React from 'react'
-import Select from './Select.js'
-import Separator, { VerticalSeparator } from './Separator.js'
-import MapMode from './MapMode.js'
+import Select from './Select.tsx'
+import Separator, { VerticalSeparator } from './Separator.tsx'
+import MapMode from './MapMode.tsx'
+import { Mappings, noop } from './types.ts'
+
+type Props = {
+  hrcc: boolean
+  inputPort: string
+  inputPorts: string[]
+  outputPort: string
+  outputPorts: string[]
+  mappingsEnabled: boolean
+  mappings: Mappings
+  sliderNames: string[]
+  onChangeHrcc: noop
+  onChangeInputPort: (port: string) => void
+  onChangeOutputPort: (port: string) => void
+  onChangeMappingsEnabled: () => void
+  onClickSend: () => void
+  onRemoveMapping: (name: string) => void
+  onSetCurrentlyMapping: (name: string) => void
+}
 
 export default function Midi({
   hrcc,
@@ -19,7 +37,7 @@ export default function Midi({
   onClickSend,
   onRemoveMapping,
   onSetCurrentlyMapping,
-}) {
+}: Props) {
   return (
     <div className="midi">
       <section>
@@ -28,7 +46,7 @@ export default function Midi({
             id="inputPort"
             value={inputPort}
             options={inputPorts}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
               onChangeInputPort(e.target.value)
             }}
           />
@@ -40,7 +58,7 @@ export default function Midi({
             id="outputPort"
             value={outputPort}
             options={outputPorts}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
               onChangeOutputPort(e.target.value)
             }}
           />
@@ -58,7 +76,8 @@ export default function Midi({
           <label htmlFor="hrcc">Hi-Res</label>
         </fieldset>
         <VerticalSeparator style={{ margin: '0 8px' }} />
-        {/* unimplemented */}
+        {/* unimplemented. Leaving uncommented so I don't have to deal with 
+            refactoring props and unused warnings */}
         <fieldset
           title="Enables live overrides of UI sliders via MIDI CCs"
           style={{ display: 'none' }}

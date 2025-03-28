@@ -25,7 +25,7 @@
   --background-color: #1a1a1a;
   --text-color: #ddd;
   --muted-color: #444;
-  --meter-color: limegreen;
+  --meter-color: rgb(34, 222, 34);
   --control-background-color: #363636;
   --control-active-background-color: #555;
   --control-text-color: #eee;
@@ -293,7 +293,7 @@ input[type='checkbox']:checked::before {
 
 .meter-value {
   color: var(--meter-color);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .console {

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ChannelAndController, Control, Slider } from './types.ts'
+import type { Control, Mappings, Slider } from './types.ts'
 import { View } from './types.ts'
-import { match } from './util.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
 import Midi from './Midi.tsx'
@@ -34,11 +33,11 @@ type EventMap = {
     displayName: string
     fps: number
     paused: boolean
-    mappings: [string, ChannelAndController][]
+    mappings: Mappings
     sketchName: string
     tapTempoEnabled: boolean
   }
-  Mappings: [string, ChannelAndController][]
+  Mappings: Mappings
   Paused: boolean
   PerfMode: boolean
   QueueRecord: void
@@ -121,7 +120,7 @@ export default function App() {
   const [isLightTheme, setIsLightTheme] = useState(true)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [mappings, setMappings] = useState<[string, ChannelAndController][]>([])
+  const [mappings, setMappings] = useState<Mappings>([])
   const [mappingsEnabled, setMappingsEnabled] = useState(false)
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState<string[]>([])
@@ -140,17 +139,20 @@ export default function App() {
         console.debug('[app - sub event]:', event, 'data:', data)
       }
 
-      match(event, {
-        Alert() {
+      switch (event) {
+        case 'Alert': {
           setAlertText(data as EventMap['Alert'])
-        },
-        AverageFps() {
+          break
+        }
+        case 'AverageFps': {
           setFps(data as EventMap['AverageFps'])
-        },
-        Bpm() {
+          break
+        }
+        case 'Bpm': {
           setBpm(data as EventMap['Bpm'])
-        },
-        Init() {
+          break
+        }
+        case 'Init': {
           const d = data as EventMap['Init']
           setIsLightTheme(d.isLightTheme)
           setMidiInputPort(d.midiInputPort)
@@ -160,11 +162,13 @@ export default function App() {
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
           setSketchName(d.sketchName)
           setSketchNames(d.sketchNames)
-        },
-        HubPopulated() {
+          break
+        }
+        case 'HubPopulated': {
           setControls(data as EventMap['HubPopulated'])
-        },
-        LoadSketch() {
+          break
+        }
+        case 'LoadSketch': {
           const d = data as EventMap['LoadSketch']
           setBpm(d.bpm)
           setControls(d.controls)
@@ -173,25 +177,30 @@ export default function App() {
           setPaused(d.paused)
           setSketchName(d.sketchName)
           setTapTempoEnabled(d.tapTempoEnabled)
-        },
-        Mappings() {
+          break
+        }
+        case 'Mappings': {
           setMappings(data as EventMap['Mappings'])
-        },
-        StartRecording() {
+          break
+        }
+        case 'StartRecording': {
           setIsRecording(true)
           setIsQueued(false)
-        },
-        Encoding() {
+          break
+        }
+        case 'Encoding': {
           setIsEncoding(data as EventMap['Encoding'])
           if (data) {
             setIsQueued(false)
             setIsRecording(false)
           }
-        },
-        SnapshotEnded() {
+          break
+        }
+        case 'SnapshotEnded': {
           setControls(data as EventMap['SnapshotEnded'])
-        },
-      })
+          break
+        }
+      }
     })
 
     post('Ready')
@@ -216,42 +225,49 @@ export default function App() {
         }
       }
 
-      match(e.code, {
-        KeyA() {
+      switch (e.code) {
+        case 'KeyA': {
           if (paused) {
             post('Advance')
           }
-        },
-        KeyF() {
+          break
+        }
+        case 'KeyF': {
           if (e.metaKey) {
             post('ToggleFullScreen')
           }
-        },
-        KeyG() {
+          break
+        }
+        case 'KeyG': {
           if (e.metaKey) {
             post('ToggleGuiFocus')
           }
-        },
-        KeyM() {
+          break
+        }
+        case 'KeyM': {
           if (e.shiftKey && e.metaKey) {
-            setView(view === View.Controls ? View.Midi : View.Controls)
+            const newView = view === View.Controls ? View.Midi : View.Controls
+            setView(newView)
           } else if (e.metaKey) {
             post('ToggleMainFocus')
           }
-        },
-        KeyS() {
+          break
+        }
+        case 'KeyS': {
           if (e.metaKey || e.shiftKey) {
             post('Save')
           } else {
             post('CaptureFrame')
           }
-        },
-        Space() {
+          break
+        }
+        case 'Space': {
           if (tapTempoEnabled) {
             post('Tap')
           }
-        },
-      })
+          break
+        }
+      }
     }
 
     return () => {
@@ -263,6 +279,16 @@ export default function App() {
     document.body.classList.add(isLightTheme ? 'light' : 'dark')
     document.body.classList.remove(isLightTheme ? 'dark' : 'light')
   }, [isLightTheme])
+
+  function getSliderNames() {
+    return controls.reduce<string[]>((names, control) => {
+      const type = Object.keys(control)[0]
+      if (type === 'slider') {
+        names.push((control as Slider).slider.name)
+      }
+      return names
+    }, [])
+  }
 
   function onAdvance() {
     post('Advance')
@@ -440,13 +466,7 @@ export default function App() {
             outputPorts={midiOutputPorts}
             mappingsEnabled={mappingsEnabled}
             mappings={mappings}
-            sliderNames={controls.reduce<string[]>((names, control) => {
-              const type = Object.keys(control)[0]
-              if (type === 'slider') {
-                names.push((control as Slider).slider.name)
-              }
-              return names
-            }, [])}
+            sliderNames={getSliderNames()}
             onChangeHrcc={onChangeHrcc}
             onChangeInputPort={onChangeInputPort}
             onChangeOutputPort={onChangeOutputPort}

@@ -88,7 +88,7 @@ export default function Header({
         </button>
         <VerticalSeparator />
         <div className="meter">
-          FPS: <span className="meter-value">{fps}</span>
+          FPS: <span className="meter-value">{fps.toFixed(1)}</span>
         </div>
       </section>
       <Separator style={{ margin: '2px 0' }} />
@@ -96,8 +96,8 @@ export default function Header({
         <Select
           value={sketchName}
           options={sketchNames}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-            onSwitchSketch(e.target.value)
+          onChange={(e) => {
+            onSwitchSketch(e.currentTarget.value)
           }}
         />
         <fieldset>
@@ -111,7 +111,7 @@ export default function Header({
         </fieldset>
         <VerticalSeparator />
         <div className="meter">
-          BPM: <span className="meter-value">{bpm}</span>
+          BPM: <span className="meter-value">{bpm.toFixed(1)}</span>
         </div>
         <fieldset>
           <input
@@ -127,7 +127,9 @@ export default function Header({
           style={{ width: '48px' }}
           value="4"
           options={transitionTimes}
-          onChange={onChangeTransitionTime}
+          onChange={(e) => {
+            onChangeTransitionTime(parseFloat(e.currentTarget.value))
+          }}
         />
         <VerticalSeparator />
         <button onClick={onSave}>Save</button>

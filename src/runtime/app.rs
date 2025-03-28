@@ -175,6 +175,7 @@ impl AppEventSender {
 }
 
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
+
 struct AppModel {
     main_window_id: window::Id,
     session_id: String,

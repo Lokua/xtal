@@ -14,6 +14,7 @@ export enum View {
 }
 
 export type ChannelAndController = [number, number]
+export type Mappings = [string, ChannelAndController][]
 
 export type Control = Checkbox | DynamicSeparator | Select | Separator | Slider
 

@@ -1,35 +1,48 @@
 import React, { useEffect, useState } from 'react'
+import { Mappings } from './types'
+
+type MapModeProps = {
+  sliderNames: string[]
+  mappings: Mappings
+  onRemoveMapping: (name: string) => void
+  onSetCurrentlyMapping: (name: string) => void
+}
 
 export default function MapMode({
   sliderNames,
   mappings,
   onRemoveMapping,
   onSetCurrentlyMapping,
-}) {
+}: MapModeProps) {
   const [currentlyMapping, setCurrentlyMapping] = useState('')
 
   useEffect(() => {
     document.addEventListener('click', onOutsideClick)
-    document.addEventListener('keydown', onPressEnter)
+    document.addEventListener('keydown', onKeyDown)
+
     return () => {
       document.removeEventListener('click', onOutsideClick)
-      document.removeEventListener('keydown', onPressEnter)
+      document.removeEventListener('keydown', onKeyDown)
     }
+
+    function onOutsideClick(e: MouseEvent) {
+      if (
+        currentlyMapping &&
+        !(e.target as HTMLButtonElement)?.classList?.contains('map-button')
+      ) {
+        clearCurrentlyMapping()
+      }
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.code === 'Enter') {
+        clearCurrentlyMapping()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentlyMapping])
 
-  function onOutsideClick(e) {
-    if (currentlyMapping && !e.target.classList.contains('map-button')) {
-      clearCurrentlyMapping()
-    }
-  }
-
-  function onPressEnter(e) {
-    if (e.code === 'Enter') {
-      clearCurrentlyMapping()
-    }
-  }
-
-  function findMapping(name) {
+  function findMapping(name: string) {
     return mappings.find((m) => m[0] === name)
   }
 
@@ -38,7 +51,7 @@ export default function MapMode({
     onSetCurrentlyMapping('')
   }
 
-  function onClickMap(name) {
+  function onClickMap(name: string) {
     if (currentlyMapping !== name) {
       setCurrentlyMapping(name)
       onSetCurrentlyMapping(name)
@@ -48,7 +61,7 @@ export default function MapMode({
   return (
     <div className="map-mode">
       {sliderNames.map((name) => {
-        const mapping = findMapping(name)
+        const mapping = findMapping(name)!
         const isMapped = !!mapping
         const isMapping = currentlyMapping === name
         let text = ''

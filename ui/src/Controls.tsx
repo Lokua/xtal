@@ -1,6 +1,6 @@
-import NumberBox from './NumberBox.jsx'
-import Select from './Select.js'
-import Separator from './Separator.js'
+import NumberBox from './NumberBox.tsx'
+import Select from './Select.tsx'
+import Separator from './Separator.tsx'
 
 export default function Controls({ controls, onChange: parentOnChange }) {
   function onChange(type, index, value) {

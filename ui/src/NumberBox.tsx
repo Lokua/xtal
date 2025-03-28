@@ -1,6 +1,24 @@
-import React, { Component } from 'react'
+/**
+ * Adapted from https://github.com/Lokua/number-box which needs some bugfixes
+ * and a makeover.
+ */
+import { Component } from 'react'
 
-export default class NumberBox extends Component {
+type Props = {
+  value: number
+  min: number
+  max: number
+  step: number
+  decimals: number
+  onChange: (value: number) => void
+}
+
+type State = {
+  value: number
+  prevY: number
+}
+
+export default class NumberBox extends Component<Props> {
   static defaultProps = {
     value: 0,
     min: 0,
@@ -9,21 +27,21 @@ export default class NumberBox extends Component {
     decimals: 5,
   }
 
-  static clamp(n, min = 0, max = 1) {
+  static clamp(n: number, min = 0, max = 1) {
     return n < min ? min : n > max ? max : n
   }
 
-  static isNumeric(value) {
+  static isNumeric(value: number | string) {
     return value !== '' && value != null && /^-?\d+\.?\d*$/.test(String(value))
   }
 
-  static roundToDecimal(value, decimals) {
+  static roundToDecimal(value: number, decimals: number) {
     const tenTo = Math.pow(10, decimals)
 
     return Math.round(value * tenTo) / tenTo
   }
 
-  static getDerivedStateFromProps(nextProps, prevState) {
+  static getDerivedStateFromProps(nextProps: Props, prevState: State) {
     if (nextProps.value !== prevState.value) {
       return {
         value: nextProps.value,
@@ -38,12 +56,11 @@ export default class NumberBox extends Component {
     prevY: 0,
   }
 
-  setValue(x) {
-    if (this.isEnteringFloatingPoint(x)) {
+  setValue(x: number | string) {
+    if (this.isEnteringFloatingPoint(x as string)) {
       this.setState({ value: x })
     } else if (NumberBox.isNumeric(x)) {
-      const value = this.transformValue(parseFloat(x))
-
+      const value = this.transformValue(parseFloat(x as string))
       this.setState({ value }, () => {
         this.props.onChange(value)
       })
@@ -52,28 +69,23 @@ export default class NumberBox extends Component {
     }
   }
 
-  isEnteringFloatingPoint(value) {
+  isEnteringFloatingPoint(value: string) {
     return !!this.props.decimals && /^\d+\.$/.test(value)
   }
 
-  transformValue(value) {
+  transformValue(value: number) {
     return NumberBox.roundToDecimal(
       NumberBox.clamp(value, this.props.min, this.props.max),
       this.props.decimals
     )
   }
 
-  safeCall(key, ...args) {
-    typeof this.props[key] === 'function' && this.props[key](...args)
-  }
-
-  onChange = (e) => {
+  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setValue(e.currentTarget.value)
   }
 
-  onBlur = (e) => {
+  onBlur = () => {
     this.setValue(this.state.value)
-    this.safeCall('onBlur', e)
   }
 
   calculateSensitivity() {
@@ -84,61 +96,49 @@ export default class NumberBox extends Component {
     return Math.max(0.2, Math.min(20, 1 / step))
   }
 
-  onMouseDown = (e) => {
+  onMouseDown = (e: React.MouseEvent) => {
     window.addEventListener('mousemove', this.onMouseMove)
     window.addEventListener('mouseup', this.onMouseUp)
     this.setState({ prevY: e.clientY })
-    this.safeCall('onMouseDown', e)
   }
 
-  onMouseMove = (e) => {
+  onMouseMove = (e: MouseEvent) => {
     const delta = this.state.prevY - e.clientY
     const sensitivity = this.calculateSensitivity()
-    const value =
-      parseFloat(this.state.value) + delta * this.props.step * sensitivity
-
+    const value = this.state.value + delta * this.props.step * sensitivity
     this.setState({ prevY: e.clientY }, () => {
       this.setValue(value)
     })
-
-    this.safeCall('onMouseMove', e)
   }
 
-  onMouseUp = (e) => {
+  onMouseUp = () => {
     window.removeEventListener('mousemove', this.onMouseMove)
     window.removeEventListener('mouseup', this.onMouseUp)
-    this.safeCall('onMouseUp', e)
   }
 
-  onTouchStart = (e) => {
-    const [touch] = e.touches
+  onTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches.item(0)
     window.addEventListener('touchmove', this.onTouchMove)
     window.addEventListener('touchend', this.onTouchEnd)
     this.setState({ prevY: touch.clientY })
-    this.safeCall('onTouchStart', e)
   }
 
-  onTouchMove = (e) => {
+  onTouchMove = (e: TouchEvent) => {
     const [touch] = e.touches
     const delta = this.state.prevY - touch.clientY
     const sensitivity = this.calculateSensitivity()
-    const value =
-      parseFloat(this.state.value) + delta * this.props.step * sensitivity
-
+    const value = this.state.value + delta * this.props.step * sensitivity
     this.setState({ prevY: touch.clientY }, () => {
       this.setValue(value)
     })
-
-    this.safeCall('onTouchMove', e)
   }
 
-  onTouchEnd = (e) => {
+  onTouchEnd = () => {
     window.removeEventListener('touchmove', this.onTouchMove)
     window.removeEventListener('touchend', this.onTouchEnd)
-    this.safeCall('onTouchEnd', e)
   }
 
-  onKeyDown = (e) => {
+  onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowUp') {
       this.setValue(this.state.value + this.props.step)
       e.preventDefault()
@@ -148,26 +148,10 @@ export default class NumberBox extends Component {
     } else if (e.key === 'Enter') {
       this.onBlur()
     }
-
-    this.safeCall('onKeyDown', e)
   }
 
   render() {
-    const {
-      value,
-      min,
-      max,
-      step,
-      decimals,
-      onChange,
-      onBlur,
-      onMouseDown,
-      onMouseUp,
-      onTouchStart,
-      onTouchEnd,
-      onKeyDown,
-      ...rest
-    } = this.props
+    const { value, min, max, step, decimals, onChange, ...rest } = this.props
 
     return (
       <input
