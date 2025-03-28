@@ -2,6 +2,7 @@ use geom::Ellipse;
 use nannou::color::{Gradient, Mix};
 use nannou::prelude::*;
 use rayon::prelude::*;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use super::shared::displacer::*;
@@ -314,12 +315,14 @@ impl Sketch for Displacement2a {
 
                 for config in &enabled_displacer_configs {
                     if quad_restraint
-                        && QuadShape::from_str(&qr_shape).contains_point(
-                            config.displacer.position * qr_pos,
-                            vec2(w / 3.0, h / 3.0) * qr_size,
-                            *point,
-                            time,
-                        )
+                        && QuadShape::from_str(&qr_shape)
+                            .unwrap()
+                            .contains_point(
+                                config.displacer.position * qr_pos,
+                                vec2(w / 3.0, h / 3.0) * qr_size,
+                                *point,
+                                time,
+                            )
                     {
                         current_qr_kind = config.kind;
                         quad_contains = true;
@@ -704,17 +707,21 @@ pub enum QuadShape {
     Spiral,
 }
 
-impl QuadShape {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for QuadShape {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Rectangle" => QuadShape::Rectangle,
-            "Circle" => QuadShape::Circle,
-            "Ripple" => QuadShape::Ripple,
-            "Spiral" => QuadShape::Spiral,
-            _ => QuadShape::Rectangle,
+            "Rectangle" => Ok(Self::Rectangle),
+            "Circle" => Ok(Self::Circle),
+            "Ripple" => Ok(Self::Ripple),
+            "Spiral" => Ok(Self::Spiral),
+            _ => Ok(Self::Rectangle),
         }
     }
+}
 
+impl QuadShape {
     pub fn contains_point(
         &self,
         center: Vec2,
