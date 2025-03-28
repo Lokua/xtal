@@ -98,6 +98,7 @@ pub enum Event {
         name: String,
         value: String,
     },
+    UpdatedControls(Vec<SerializableControl>),
 }
 
 pub type Sender = IpcSender<Event>;
@@ -283,6 +284,7 @@ pub fn launch(
                         ControlValue::from(value.clone()),
                     )))
                 }
+                Event::UpdatedControls(_) => {}
             }
         }
     });

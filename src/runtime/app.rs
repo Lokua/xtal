@@ -503,9 +503,17 @@ impl AppModel {
                 self.main_window(app).unwrap().set_visible(true);
             }
             AppEvent::UpdateUiControl((name, value)) => {
-                self.control_hub_mut()
-                    .unwrap()
-                    .update_ui_value(&name, value);
+                let hub = self.control_hub_mut().unwrap();
+                hub.update_ui_value(&name, value.clone());
+
+                // Revaluate disabled state
+                if matches!(
+                    value,
+                    ControlValue::Bool(_) | ControlValue::String(_)
+                ) {
+                    let controls = self.web_view_controls();
+                    self.ui_tx.emit(ui::Event::UpdatedControls(controls));
+                }
             }
             AppEvent::WebViewReady => {
                 self.ui_ready = true;

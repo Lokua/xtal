@@ -84,6 +84,7 @@ fn main() {
     );
 
     registry.prepare();
+    drop(registry);
 
     runtime::app::run();
 }

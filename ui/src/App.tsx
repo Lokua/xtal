@@ -70,6 +70,7 @@ type EventMap = {
     name: string
     value: string
   }
+  UpdatedControls: Control[]
 }
 
 function subscribe<K extends keyof EventMap>(
@@ -200,12 +201,21 @@ export default function App() {
           setControls(data as EventMap['SnapshotEnded'])
           break
         }
+        case 'UpdatedControls': {
+          console.log('HELLO!?!')
+          setControls(data as EventMap['UpdatedControls'])
+          break
+        }
+        default: {
+          break
+        }
       }
     })
 
     post('Ready')
 
     return () => {
+      console.log('Unsubscribing')
       unsubscribe()
     }
   }, [])
@@ -265,6 +275,9 @@ export default function App() {
           if (tapTempoEnabled) {
             post('Tap')
           }
+          break
+        }
+        default: {
           break
         }
       }
