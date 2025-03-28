@@ -58,22 +58,6 @@ experiments.
   configurable musical length from 1/16th note up to 4bars. Great for live
   performance!
 
-### Side Quest
-
-To help myself debug I made an on-screen "virtual midi controller" app. This
-should really be its own project but since I had all of my own MIDI handling
-code along with nannou and egui at my fingertips, why not?
-
-![Virtual MIDI Controller](./assets/vmc.png)
-
-Run with
-
-```sh
-cargo run --release --bin virtual_midi_controller
-```
-
-> TODO: hi-res MIDI
-
 ## Requirements
 
 This project has been developed on MacOS. I have no idea how it would run on
@@ -94,8 +78,7 @@ just start <sketch>
 ```
 
 Where `sketch` is a file in the src/sketches folder (without the extension) and
-registered in [src/sketches/mod.rs][module] as well as
-[src/runtime/app.rs][app].
+registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main].
 
 Optionally you can pass a `timing` argument after the required `sketch` argument
 to specify what kind of timing system will be used to run animations on sketches
@@ -137,7 +120,7 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
    ```
 3. Add that filename to the [src/sketches/mod.rs][module]
 4. Add that sketch module to the `register_sketches` call in
-   [src/runtime/app.rs][app]:
+   [src/main.rs][main]:
 5. Run that sketch via command line by `cargo run --release <name>` or
    `just start <name>` where `name` is what you put in your file's
    `SKETCH_CONFIG.name` field.
@@ -315,7 +298,7 @@ comprehensive documentation.
 [template]: src/sketches/templates/template.rs
 [midi-sketch]: src/sketches/midi_test.rs
 [module]: src/sketches/mod.rs
-[main]: src/runtime/app.rs
+[main]: src/main.rs
 [control-script-test]: src/sketches/scratch/control_script_test.rs
 [osc-transport]: assets/L.OscTransport.amxd
 [osc-send]: assets/L.OscSend.amxd
