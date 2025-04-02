@@ -11,6 +11,9 @@ type EventMap = {
   AverageFps: number
   Bpm: number
   CaptureFrame: void
+  ChangeMidiClockPort: string
+  ChangeMidiControlInputPort: string
+  ChangeMidiControlOutputPort: string
   ClearBuffer: void
   CommitMappings: void
   CurrentlyMapping: string
@@ -20,6 +23,7 @@ type EventMap = {
   HubPopulated: Control[]
   Init: {
     isLightTheme: boolean
+    midiClockPort: string
     midiInputPort: string
     midiOutputPort: string
     midiInputPorts: [number, string][]
@@ -122,6 +126,7 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [mappings, setMappings] = useState<Mappings>([])
   const [mappingsEnabled, setMappingsEnabled] = useState(false)
+  const [midiClockPort, setMidiClockPort] = useState('')
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState<string[]>([])
   const [midiOutputPort, setMidiOutputPort] = useState('')
@@ -152,8 +157,21 @@ export default function App() {
           setBpm(data as EventMap['Bpm'])
           break
         }
+        case 'Encoding': {
+          setIsEncoding(data as EventMap['Encoding'])
+          if (data) {
+            setIsQueued(false)
+            setIsRecording(false)
+          }
+          break
+        }
+        case 'HubPopulated': {
+          setControls(data as EventMap['HubPopulated'])
+          break
+        }
         case 'Init': {
           const d = data as EventMap['Init']
+          setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
           const getPort = ([, port]: [number, string]) => port
@@ -161,10 +179,6 @@ export default function App() {
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
           setSketchName(d.sketchName)
           setSketchNames(d.sketchNames)
-          break
-        }
-        case 'HubPopulated': {
-          setControls(data as EventMap['HubPopulated'])
           break
         }
         case 'LoadSketch': {
@@ -182,21 +196,13 @@ export default function App() {
           setMappings(data as EventMap['Mappings'])
           break
         }
+        case 'SnapshotEnded': {
+          setControls(data as EventMap['SnapshotEnded'])
+          break
+        }
         case 'StartRecording': {
           setIsRecording(true)
           setIsQueued(false)
-          break
-        }
-        case 'Encoding': {
-          setIsEncoding(data as EventMap['Encoding'])
-          if (data) {
-            setIsQueued(false)
-            setIsRecording(false)
-          }
-          break
-        }
-        case 'SnapshotEnded': {
-          setControls(data as EventMap['SnapshotEnded'])
           break
         }
         case 'UpdatedControls': {
@@ -335,14 +341,19 @@ export default function App() {
     )
   }
 
+  function onChangeClockPort(port: string) {
+    setMidiClockPort(port)
+    post('ChangeMidiClockPort', port)
+  }
+
   function onChangeInputPort(port: string) {
     setMidiInputPort(port)
-    setAlertText('Changing ports at runtime is not yet supported')
+    post('ChangeMidiControlInputPort', port)
   }
 
   function onChangeOutputPort(port: string) {
     setMidiOutputPort(port)
-    setAlertText('Changing ports at runtime is not yet supported')
+    post('ChangeMidiControlOutputPort', port)
   }
 
   function onChangeMappingsEnabled() {
@@ -464,6 +475,7 @@ export default function App() {
       <main>
         {view === View.Midi ? (
           <Midi
+            clockPort={midiClockPort}
             hrcc={hrcc}
             inputPort={midiInputPort}
             inputPorts={midiInputPorts}
@@ -472,6 +484,7 @@ export default function App() {
             mappingsEnabled={mappingsEnabled}
             mappings={mappings}
             sliderNames={getSliderNames()}
+            onChangeClockPort={onChangeClockPort}
             onChangeHrcc={onChangeHrcc}
             onChangeInputPort={onChangeInputPort}
             onChangeOutputPort={onChangeOutputPort}

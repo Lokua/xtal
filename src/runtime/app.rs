@@ -9,9 +9,9 @@ use std::{env, str, thread};
 use super::map_mode::MapMode;
 use super::recording::{frames_dir, RecordingState};
 use super::registry::REGISTRY;
-use super::serialization::SaveableProgramState;
+use super::serialization::{GlobalSettings, SaveableProgramState};
 use super::shared::lattice_project_root;
-use super::storage::{self, load_program_state};
+use super::storage::{self, load_global_state, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::web_view::{self as ui};
 use crate::framework::{frame_controller, prelude::*};
@@ -33,6 +33,9 @@ pub enum AppEvent {
     Alert(String),
     AlertAndLog(String, log::Level),
     CaptureFrame,
+    ChangeMidiClockPort(String),
+    ChangeMidiControlInputPort(String),
+    ChangeMidiControlOutputPort(String),
     ClearNextFrame,
     CommitMappings,
     CurrentlyMapping(String),
@@ -202,6 +205,30 @@ impl AppModel {
                     log::Level::Info,
                 );
             }
+            AppEvent::ChangeMidiClockPort(port) => {
+                global::set_midi_clock_port(port);
+                AppModel::start_midi_clock_listener(self.app_tx.tx.clone());
+            }
+            AppEvent::ChangeMidiControlInputPort(port) => {
+                global::set_midi_control_in_port(port);
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|err| error!("{}", err))
+                        .ok();
+                }
+            }
+            AppEvent::ChangeMidiControlOutputPort(port) => {
+                global::set_midi_control_out_port(port.clone());
+                let mut midi = midi::MidiOut::new(&port);
+                self.midi_out = match midi.connect() {
+                    Ok(_) => Some(midi),
+                    Err(e) => {
+                        error!("{}", e);
+                        None
+                    }
+                };
+            }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
             }
@@ -340,7 +367,6 @@ impl AppModel {
             AppEvent::SaveProgramState => {
                 match storage::save_program_state(
                     self.sketch_name().as_str(),
-                    self.hrcc,
                     self.control_hub().unwrap(),
                 ) {
                     Ok(path_buf) => {
@@ -355,6 +381,19 @@ impl AppModel {
                             log::Level::Error,
                         );
                     }
+                }
+
+                if let Err(e) = storage::save_global_state(GlobalSettings {
+                    hrcc: self.hrcc,
+                    midi_clock_port: global::midi_clock_port(),
+                    midi_control_in_port: global::midi_control_in_port(),
+                    midi_control_out_port: global::midi_control_out_port(),
+                    ..Default::default()
+                }) {
+                    self.app_tx.alert_and_log(
+                        format!("Failed to persist global settings: {}", e),
+                        log::Level::Error,
+                    );
                 }
             }
             AppEvent::SendMappings => {
@@ -650,15 +689,12 @@ impl AppModel {
                 midi_controls: hub.midi_controls.clone(),
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
-                ..Default::default()
             },
             None => SaveableProgramState::default(),
         };
 
         match load_program_state(&sketch_name, &mut current_state) {
             Ok(state) => {
-                self.hrcc = state.hrcc;
-
                 let Some(hub) = self.control_hub_mut() else {
                     return;
                 };
@@ -683,9 +719,42 @@ impl AppModel {
             }
         }
     }
+
+    fn start_midi_clock_listener(midi_tx: mpsc::Sender<AppEvent>) {
+        let midi_handler_result = midi::on_message(
+            midi::ConnectionType::GlobalStartStop,
+            &global::midi_clock_port(),
+            move |_stamp, message| match message[0] {
+                START => midi_tx.send(AppEvent::MidiStart).unwrap(),
+                CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
+                STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
+                _ => {}
+            },
+        );
+        if let Err(e) = midi_handler_result {
+            warn!(
+                "Failed to initialize {:?} MIDI connection. Error: {}",
+                midi::ConnectionType::GlobalStartStop,
+                e
+            );
+        }
+    }
 }
 
 fn model(app: &App) -> AppModel {
+    let global_settings = match load_global_state() {
+        Ok(gs) => {
+            global::set_midi_clock_port(gs.midi_clock_port.clone());
+            global::set_midi_control_in_port(gs.midi_control_in_port.clone());
+            global::set_midi_control_out_port(gs.midi_control_out_port.clone());
+            gs
+        }
+        Err(e) => {
+            error!("error loading settings: {}", e);
+            GlobalSettings::default()
+        }
+    };
+
     let args: Vec<String> = env::args().collect();
     let initial_sketch = args
         .get(1)
@@ -724,28 +793,11 @@ fn model(app: &App) -> AppModel {
 
     let (raw_event_tx, event_rx) = mpsc::channel();
     let midi_tx = raw_event_tx.clone();
-
-    let midi_handler_result = midi::on_message(
-        midi::ConnectionType::GlobalStartStop,
-        crate::config::MIDI_CLOCK_PORT,
-        move |_stamp, message| match message[0] {
-            START => midi_tx.send(AppEvent::MidiStart).unwrap(),
-            CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
-            STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
-            _ => {}
-        },
-    );
-    if let Err(e) = midi_handler_result {
-        warn!(
-            "Failed to initialize {:?} MIDI connection. Error: {}",
-            midi::ConnectionType::GlobalStartStop,
-            e
-        );
-    }
+    AppModel::start_midi_clock_listener(midi_tx);
 
     let raw_bpm = bpm.get();
 
-    let mut midi = midi::MidiOut::new(crate::config::MIDI_CONTROL_OUT_PORT);
+    let mut midi = midi::MidiOut::new(&global::midi_control_out_port());
     let midi_out = match midi.connect() {
         Ok(_) => Some(midi),
         Err(e) => {
@@ -785,7 +837,7 @@ fn model(app: &App) -> AppModel {
         transition_time: 4.0,
         image_index,
         map_mode: MapMode::default(),
-        hrcc: false,
+        hrcc: global_settings.hrcc,
         ui_tx: web_view_tx,
         ui_ready: false,
         ui_pending_messages: VecDeque::new(),

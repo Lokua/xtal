@@ -4,37 +4,48 @@ use std::{fs, str};
 
 use serde::{Deserialize, Serialize};
 
-use super::serialization::{SaveableProgramState, SerializableProgramState};
-use super::shared::{lattice_config_dir, lattice_project_root};
+use super::serialization::{
+    GlobalSettings, SaveableProgramState, SerializableProgramState,
+};
+use super::shared::lattice_project_root;
 use crate::framework::prelude::*;
 
-/// When false will use the appropriate OS config dir; when true will store
-/// within the Lattice project's controls_cache folder for easy source control.
-const STORE_CONTROLS_CACHE_IN_PROJECT: bool = true;
+fn global_state_storage_path() -> PathBuf {
+    lattice_project_root()
+        .join("storage")
+        .join("global_settings.json")
+}
 
-fn controls_storage_path(sketch_name: &str) -> Option<PathBuf> {
-    if STORE_CONTROLS_CACHE_IN_PROJECT {
-        return Some(
-            lattice_project_root()
-                .join("storage")
-                .join(format!("{}_controls.json", sketch_name)),
-        );
+pub fn save_global_state(state: GlobalSettings) -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string_pretty(&state)?;
+    let path = global_state_storage_path();
+    if let Some(parent_dir) = path.parent() {
+        fs::create_dir_all(parent_dir)?;
     }
+    fs::write(&path, json)?;
+    Ok(())
+}
 
-    lattice_config_dir().map(|config_dir| {
-        config_dir
-            .join("Controls")
-            .join(format!("{}_controls.json", sketch_name))
-    })
+pub fn load_global_state() -> Result<GlobalSettings, Box<dyn Error>> {
+    let path = global_state_storage_path();
+    let bytes = fs::read(path)?;
+    let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
+    let settings = serde_json::from_str::<GlobalSettings>(&json)?;
+    Ok(settings)
+}
+
+fn controls_storage_path(sketch_name: &str) -> PathBuf {
+    lattice_project_root()
+        .join("storage")
+        .join("controls")
+        .join(format!("{}_controls.json", sketch_name))
 }
 
 pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
-    hrcc: bool,
     hub: &ControlHub<T>,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let concrete_controls = SaveableProgramState {
-        hrcc,
         ui_controls: hub.ui_controls.clone(),
         midi_controls: hub.midi_controls.clone(),
         osc_controls: hub.osc_controls.clone(),
@@ -44,8 +55,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     let serializable_controls =
         SerializableProgramState::from(&concrete_controls);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
-    let path = controls_storage_path(sketch_name)
-        .ok_or("Could not determine the configuration directory")?;
+    let path = controls_storage_path(sketch_name);
     if let Some(parent_dir) = path.parent() {
         fs::create_dir_all(parent_dir)?;
     }
@@ -61,8 +71,7 @@ pub fn load_program_state<'a>(
     sketch_name: &str,
     state: &'a mut SaveableProgramState,
 ) -> Result<&'a mut SaveableProgramState, Box<dyn Error>> {
-    let path = controls_storage_path(sketch_name)
-        .ok_or("Could not determine controls cache directory")?;
+    let path = controls_storage_path(sketch_name);
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
 
@@ -76,6 +85,8 @@ pub fn load_program_state<'a>(
 // Image Index
 // -----------------------------------------------------------------------------
 
+/// The image index is used because computers (especially Macs) are really bad
+/// at maintaining the date created field on a file and this is important to me
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ImageIndex {
     pub items: Vec<ImageIndexItem>,

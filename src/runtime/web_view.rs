@@ -16,7 +16,6 @@ use std::process::{Command, Stdio};
 use std::thread;
 
 use super::app::AppEventSender;
-use crate::config::{MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT};
 use crate::framework::midi::InputsOrOutputs::{Inputs, Outputs};
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
@@ -34,6 +33,9 @@ pub enum Event {
     /// Sent from parent after receiving Tap event
     Bpm(f32),
     CaptureFrame,
+    ChangeMidiClockPort(String),
+    ChangeMidiControlInputPort(String),
+    ChangeMidiControlOutputPort(String),
     ClearBuffer,
     CommitMappings,
     CurrentlyMapping(String),
@@ -46,6 +48,7 @@ pub enum Event {
     #[serde(rename_all = "camelCase")]
     Init {
         is_light_theme: bool,
+        midi_clock_port: String,
         midi_input_port: String,
         midi_output_port: String,
         midi_input_ports: Vec<(usize, String)>,
@@ -184,6 +187,15 @@ pub fn launch(
                 Event::CaptureFrame => {
                     app_tx.emit(AppEvent::CaptureFrame);
                 }
+                Event::ChangeMidiClockPort(port) => {
+                    app_tx.emit(AppEvent::ChangeMidiClockPort(port));
+                }
+                Event::ChangeMidiControlInputPort(port) => {
+                    app_tx.emit(AppEvent::ChangeMidiControlInputPort(port));
+                }
+                Event::ChangeMidiControlOutputPort(port) => {
+                    app_tx.emit(AppEvent::ChangeMidiControlOutputPort(port));
+                }
                 Event::ClearBuffer => {
                     app_tx.emit(AppEvent::ClearNextFrame);
                 }
@@ -223,8 +235,9 @@ pub fn launch(
                         ),
                         sketch_names: registry.names().clone(),
                         sketch_name: sketch_name.to_string(),
-                        midi_input_port: MIDI_CONTROL_IN_PORT.to_string(),
-                        midi_output_port: MIDI_CONTROL_OUT_PORT.to_string(),
+                        midi_clock_port: global::midi_clock_port(),
+                        midi_input_port: global::midi_control_in_port(),
+                        midi_output_port: global::midi_control_out_port(),
                         midi_input_ports: midi::list_ports(Inputs).unwrap(),
                         midi_output_ports: midi::list_ports(Outputs).unwrap(),
                     };

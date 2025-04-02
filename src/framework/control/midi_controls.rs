@@ -169,7 +169,7 @@ impl MidiControls {
 
         match midi::on_message(
             midi::ConnectionType::Control,
-            crate::config::MIDI_CONTROL_IN_PORT,
+            &global::midi_control_in_port(),
             move |_, message| {
                 if message.len() < 3 || !is_control_change(message[0]) {
                     return;

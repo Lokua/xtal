@@ -308,11 +308,29 @@ input[type='checkbox']:checked::before {
 }
 
 .midi {
-  > section:first-child,
-  > section:nth-child(2) {
+  > header {
     display: flex;
-    align-items: center;
-    margin: 4px 0;
+
+    > section {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+      padding-right: 12px;
+
+      &:first-child {
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: start;
+        border-right: 1px dotted var(--muted-color);
+      }
+
+      &:nth-of-type(2) {
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding-left: 12px;
+      }
+    }
   }
 }
 

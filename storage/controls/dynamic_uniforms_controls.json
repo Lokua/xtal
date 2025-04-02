@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "2",
   "hrcc": false,
   "ui_controls": [
     {
@@ -103,12 +103,7 @@
       "value": 3.0958
     }
   ],
-  "midi_controls": [
-    {
-      "name": "wave_dist__slider_proxy",
-      "value": 37.795277
-    }
-  ],
+  "midi_controls": [],
   "osc_controls": [],
   "snapshots": {}
 }

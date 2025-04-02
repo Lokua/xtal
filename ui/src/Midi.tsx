@@ -4,6 +4,7 @@ import MapMode from './MapMode.tsx'
 import { Mappings, noop } from './types.ts'
 
 type Props = {
+  clockPort: string
   hrcc: boolean
   inputPort: string
   inputPorts: string[]
@@ -12,6 +13,7 @@ type Props = {
   mappingsEnabled: boolean
   mappings: Mappings
   sliderNames: string[]
+  onChangeClockPort: (port: string) => void
   onChangeHrcc: noop
   onChangeInputPort: (port: string) => void
   onChangeOutputPort: (port: string) => void
@@ -21,7 +23,10 @@ type Props = {
   onSetCurrentlyMapping: (name: string) => void
 }
 
+const VSep = () => <VerticalSeparator style={{ margin: '0 8px' }} />
+
 export default function Midi({
+  clockPort,
   hrcc,
   inputPort,
   inputPorts,
@@ -30,6 +35,7 @@ export default function Midi({
   mappingsEnabled,
   mappings,
   sliderNames,
+  onChangeClockPort,
   onChangeHrcc,
   onChangeInputPort,
   onChangeOutputPort,
@@ -40,64 +46,74 @@ export default function Midi({
 }: Props) {
   return (
     <div className="midi">
-      <section>
-        <fieldset>
-          <Select
-            id="inputPort"
-            value={inputPort}
-            options={inputPorts}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              onChangeInputPort(e.target.value)
-            }}
-          />
-          <label htmlFor="inputPorts">Input Port</label>
-        </fieldset>
-        <VerticalSeparator style={{ margin: '0 8px' }} />
-        <fieldset>
-          <Select
-            id="outputPort"
-            value={outputPort}
-            options={outputPorts}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              onChangeOutputPort(e.target.value)
-            }}
-          />
-          <label htmlFor="outputPort">Output Port</label>
-        </fieldset>
-      </section>
-      <section>
-        <fieldset>
-          <input
-            id="hrcc"
-            type="checkbox"
-            checked={hrcc}
-            onChange={onChangeHrcc}
-          />
-          <label htmlFor="hrcc">Hi-Res</label>
-        </fieldset>
-        <VerticalSeparator style={{ margin: '0 8px' }} />
-        {/* unimplemented. Leaving uncommented so I don't have to deal with 
-            refactoring props and unused warnings */}
-        <fieldset
-          title="Enables live overrides of UI sliders via MIDI CCs"
-          style={{ display: 'none' }}
-        >
-          <input
-            id="mappings-enabled"
-            type="checkbox"
-            checked={mappingsEnabled}
-            onChange={onChangeMappingsEnabled}
-          />
-          <label htmlFor="mappings-enabled">Mappings</label>
-        </fieldset>
-        <VerticalSeparator style={{ margin: '0 8px' }} />
-        <button
-          title="Sends the state of all CCs to the MIDI output port"
-          onClick={onClickSend}
-        >
-          Send (Resync)
-        </button>
-      </section>
+      <header>
+        <section>
+          <fieldset>
+            <Select
+              id="clockPort"
+              value={clockPort}
+              options={inputPorts}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onChangeClockPort(e.currentTarget.value)
+              }}
+            />
+            <label htmlFor="clockPort">Clock Port</label>
+          </fieldset>
+          <fieldset>
+            <Select
+              id="inputPort"
+              value={inputPort}
+              options={inputPorts}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onChangeInputPort(e.currentTarget.value)
+              }}
+            />
+            <label htmlFor="inputPorts">Input Port</label>
+          </fieldset>
+          <fieldset>
+            <Select
+              id="outputPort"
+              value={outputPort}
+              options={outputPorts}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onChangeOutputPort(e.currentTarget.value)
+              }}
+            />
+            <label htmlFor="outputPort">Output Port</label>
+          </fieldset>
+        </section>
+        <section>
+          <fieldset>
+            <input
+              id="hrcc"
+              type="checkbox"
+              checked={hrcc}
+              onChange={onChangeHrcc}
+            />
+            <label htmlFor="hrcc">Hi-Res</label>
+          </fieldset>
+          {/* unimplemented for the time being */}
+          <fieldset
+            title="Enables live overrides of UI sliders via MIDI CCs"
+            style={{ display: 'none' }}
+          >
+            <input
+              id="mappings-enabled"
+              type="checkbox"
+              checked={mappingsEnabled}
+              onChange={onChangeMappingsEnabled}
+            />
+            <label htmlFor="mappings-enabled">Mappings</label>
+          </fieldset>
+          <VSep />
+          <button
+            title="Sends the state of all CCs to the MIDI output port"
+            onClick={onClickSend}
+          >
+            Send (Resync)
+          </button>
+        </section>
+      </header>
       <Separator />
       {sliderNames.length && (
         <MapMode
