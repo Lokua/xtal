@@ -12,6 +12,7 @@ wave_phase_animation:
 
 wave_phase_speed:
   type: slider
+  # bypass: 16
   range: [1, 32]
   step: 1
   default: 1

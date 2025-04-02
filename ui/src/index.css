@@ -4,38 +4,42 @@
   --control-font-size: 10px;
 }
 
-.light {
-  --background-color: #fff;
-  --text-color: #222;
-  --muted-color: #ccc;
-  --meter-color: limegreen;
-  --control-background-color: #eee;
-  --control-active-background-color: #fff;
-  --control-text-color: #333;
-  --control-text-color-muted: #666;
-  --control-track-color: #ddd;
-  --control-knob-color: #777;
-  --control-disabled-text-color: #aaa;
-  --control-on-background-color: #363636;
-  --control-on-text-color: #eee;
-  --console-background-color: #f4f4f4;
+@media (prefers-color-scheme: light) {
+  :root {
+    --background-color: #fff;
+    --text-color: #222;
+    --muted-color: #ccc;
+    --meter-color: limegreen;
+    --control-background-color: #eee;
+    --control-active-background-color: #fff;
+    --control-text-color: #333;
+    --control-text-color-muted: #666;
+    --control-track-color: #ddd;
+    --control-knob-color: #777;
+    --control-disabled-text-color: #aaa;
+    --control-on-background-color: #363636;
+    --control-on-text-color: #eee;
+    --console-background-color: #f4f4f4;
+  }
 }
 
-.dark {
-  --background-color: #1a1a1a;
-  --text-color: #ddd;
-  --muted-color: #444;
-  --meter-color: rgb(34, 222, 34);
-  --control-background-color: #363636;
-  --control-active-background-color: #555;
-  --control-text-color: #eee;
-  --control-text-color-muted: #bbb;
-  --control-track-color: #444;
-  --control-knob-color: #888;
-  --control-disabled-text-color: #777;
-  --control-on-background-color: green;
-  --control-on-text-color: var(--control-text-color);
-  --console-background-color: #111;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #1a1a1a;
+    --text-color: #ddd;
+    --muted-color: #444;
+    --meter-color: rgb(34, 222, 34);
+    --control-background-color: #363636;
+    --control-active-background-color: #555;
+    --control-text-color: #eee;
+    --control-text-color-muted: #bbb;
+    --control-track-color: #444;
+    --control-knob-color: #888;
+    --control-disabled-text-color: #777;
+    --control-on-background-color: green;
+    --control-on-text-color: var(--control-text-color);
+    --console-background-color: #111;
+  }
 }
 
 *,

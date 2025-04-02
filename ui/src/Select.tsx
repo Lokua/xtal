@@ -1,8 +1,13 @@
-type Props = {
-  value: string
-  options: string[] | number[]
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
-} & React.HTMLAttributes<HTMLSelectElement>
+import type { Override } from './types.ts'
+
+type Props = Override<
+  React.SelectHTMLAttributes<HTMLSelectElement>,
+  {
+    value: string
+    options: string[] | number[]
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  }
+>
 
 export default function Select({ value, options, onChange, ...rest }: Props) {
   return (

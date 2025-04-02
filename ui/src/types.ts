@@ -8,6 +8,8 @@ declare global {
 
 export type noop = () => void
 
+export type Override<T, U> = Omit<T, keyof U> & U
+
 export enum View {
   Controls,
   Midi,
@@ -17,6 +19,8 @@ export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
 
 export type Control = Checkbox | DynamicSeparator | Select | Separator | Slider
+export type ControlWithValue = Checkbox | Select | Slider
+export type ControlValue = boolean | number | string
 
 // The awkward structure with a single key is due to serde->bin-code
 // limitations. It does not allow tagged enums, so we're kind of stuck with this

@@ -1,3 +1,14 @@
+//! Launches and sets up communication channels with a child process responsible
+//! for rendering our frontend.
+//!
+//! # Event Flow
+//! ```md
+//! Frontend Interaction ->
+//! WebView Child Process IPC Sender (web_view::Event) ->
+//! Parent Process (main.rs) IPC Receiver (web_view::Event) ->
+//! app::AppEvent
+//! ```
+//! (and vis a versa)
 use ipc_channel::ipc::{IpcOneShotServer, IpcReceiver, IpcSender};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
@@ -11,9 +22,9 @@ use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 use crate::runtime::registry::REGISTRY;
 
-/// Used to send/receive data from our web view using ipc-channel. Most events
-/// should be assumed to be one-way from child to parent unless otherwise
-/// documented.
+/// Used to send/receive data from our app into a web view using ipc-channel.
+/// Most events should be assumed to be one-way from child to parent unless
+/// otherwise documented.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
     Advance,
@@ -51,13 +62,13 @@ pub enum Event {
         display_name: String,
         fps: f32,
         paused: bool,
-        mappings: Vec<(String, ChannelAndControl)>,
+        mappings: Vec<(String, ChannelAndController)>,
         sketch_name: String,
         tap_tempo_enabled: bool,
     },
 
     // Sent whenever the user physically moves a MIDI control when in map mode
-    Mappings(Vec<(String, ChannelAndControl)>),
+    Mappings(Vec<(String, ChannelAndController)>),
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
@@ -124,7 +135,7 @@ type Bootstrap = (Sender, Receiver);
 /// Launches the tao/wry web_view code as a child process and sets up IPC
 /// channels. This is necessary because both tao and nannou need to run on a
 /// main thread and control the event loop, which we can't have in a single
-/// process.
+/// process (at least not on all OSs)
 pub fn launch(
     app_tx: &AppEventSender,
     sketch_name: &str,

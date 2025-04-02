@@ -63,7 +63,6 @@ serde_yml = "0.0.12"
 serial_test = "3.2.0"
 tao = "0.32.8"
 termcolor = "1.4.1"
-toml = "0.8.19"
 wgpu-types = "=0.17.0"
 wry = { version = "0.50.5", features = ["devtools"] }
 # Bug: we shouldn't have to bring in serde_yaml

@@ -8,8 +8,8 @@ struct WindowRectState {
     last: Rect,
 }
 
-/// A wrapper around nannou's `Rect` that is used to provide "the" main window
-/// to sketches. Development on nannou v0.19 is frozen and its app.main_window
+/// A wrapper around nannou's `Rect` that is used to provide the main window to
+/// sketches. Development on nannou v0.19 is frozen and its app.main_window
 /// function is unreliable (it returns the currently focused window, not the
 /// main window). So instead of having to pass a window.id down to every sketch
 /// we provide this rect as a convenience, since having window dimensions and

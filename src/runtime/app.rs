@@ -24,6 +24,9 @@ pub fn run() {
         .run();
 }
 
+/// The core application event structure used to trigger [`AppModel`] updates
+/// from keyboard and MIDI clock handlers as well as sending data to a web_view
+/// (AppEvent -> WebView -> ipc_channel -> Frontend)
 #[derive(Debug)]
 pub enum AppEvent {
     AdvanceSingleFrame,
@@ -42,7 +45,7 @@ pub enum AppEvent {
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
-    ReceiveMappings(Vec<(String, ChannelAndControl)>),
+    ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
     Reset,
@@ -573,6 +576,9 @@ impl AppModel {
             .alert(format!("Switched to {}", sketch_info.config.display_name));
     }
 
+    /// A helper to DRY-up the common needs of initializing a sketch on startup
+    /// and switching sketches at runtime like window sizing, placement,
+    /// persisted state recall, and sending data to the UI
     fn init_sketch_environment(&mut self, app: &App) {
         self.recording_state = RecordingState::new(frames_dir(
             &self.session_id,
@@ -632,6 +638,8 @@ impl AppModel {
         }
     }
 
+    /// Load MIDI, OSC, and ui controls along with any snapshots (and MIDI
+    /// mappings [TODO]) the user has saved to disk
     fn load_program_state(&mut self) {
         let event_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();

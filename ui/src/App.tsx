@@ -118,7 +118,6 @@ export default function App() {
   const [fps, setFps] = useState(60)
   const [hrcc, setHrcc] = useState(false)
   const [isEncoding, setIsEncoding] = useState(false)
-  const [isLightTheme, setIsLightTheme] = useState(true)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [mappings, setMappings] = useState<Mappings>([])
@@ -155,7 +154,6 @@ export default function App() {
         }
         case 'Init': {
           const d = data as EventMap['Init']
-          setIsLightTheme(d.isLightTheme)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
           const getPort = ([, port]: [number, string]) => port
@@ -202,7 +200,6 @@ export default function App() {
           break
         }
         case 'UpdatedControls': {
-          console.log('HELLO!?!')
           setControls(data as EventMap['UpdatedControls'])
           break
         }
@@ -287,11 +284,6 @@ export default function App() {
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [paused, tapTempoEnabled, view])
-
-  useEffect(() => {
-    document.body.classList.add(isLightTheme ? 'light' : 'dark')
-    document.body.classList.remove(isLightTheme ? 'dark' : 'light')
-  }, [isLightTheme])
 
   function getSliderNames() {
     return controls.reduce<string[]>((names, control) => {
