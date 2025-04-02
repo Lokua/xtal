@@ -7,3 +7,4 @@ pub mod shared;
 pub mod storage;
 pub mod tap_tempo;
 pub mod ui;
+pub mod web_view;

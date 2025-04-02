@@ -109,6 +109,14 @@ where
     Ok(())
 }
 
+pub fn disconnect(connection_type: ConnectionType) {
+    let mut threads = THREADS.lock().unwrap();
+    if let Some(handle) = threads.remove(&connection_type) {
+        info!("[disconnect] Unparking {} thread", connection_type);
+        handle.thread().unpark();
+    }
+}
+
 #[allow(dead_code)]
 pub struct MidiOut {
     port: String,

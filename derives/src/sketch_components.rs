@@ -89,7 +89,6 @@ pub fn sketch_components_impl(input: TokenStream) -> TokenStream {
                 #clear_color_impl
             }
         }
-
     };
 
     gen.into()

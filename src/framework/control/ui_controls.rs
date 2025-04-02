@@ -4,9 +4,11 @@
 //! [`ControlHub`].
 use std::fmt::{self, Debug};
 
+use serde::{Deserialize, Serialize};
+
 use crate::framework::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum ControlValue {
     Float(f32),
     Bool(bool),
@@ -55,6 +57,27 @@ impl From<String> for ControlValue {
     }
 }
 
+/// Used by [`UiControls`] to compute if a [`Control`] should be disabled or not
+/// based on the value of other controls
+///
+/// # Example
+/// ```rust
+/// let controls = Controls::New(&[
+///     Control::Checkbox {
+///         name: "animate_phase".to_string(),
+///         value: true,
+///         disabled: None,
+///     },
+///     Control::Slider {
+///         name: "phase",
+///         value: 0.0,
+///         min: 0.0,
+///         max: 1.0,
+///         // Slider will automatically become disabled when animate_phase is true
+///         disabled: Some(Box::new(|controls| controls.bool("animate_phase"))),
+///     };
+/// ])
+/// ```
 pub type DisabledFn = Option<Box<dyn Fn(&UiControls) -> bool>>;
 
 pub enum Control {
@@ -328,9 +351,9 @@ impl fmt::Debug for Control {
 pub type ControlValues = HashMap<String, ControlValue>;
 
 /// A generic abstraction over UI controls that sketches can directly interact
-/// with without being coupled to a specific UI framework. See
-/// [`crate::runtime::ui::controls_adapter::draw_controls`] for a concrete
-/// implementation.
+/// with without being coupled to a specific UI framework. The original version
+/// of Lattice used Egui for this purpose but has since moved on to using a
+/// WebView for greater UI flexibility
 #[derive(Clone)]
 pub struct UiControls {
     /// Holds the original Control references and their default values - values

@@ -41,38 +41,37 @@ experiments.
 
 - Export images and capture mp4 videos with the press of a button
 - Declarative animation interface with times specified in musical beats, e.g.
-  `3.25` represents a duration of 3 beats and 1 16th note; `4` means 4 beats or
-  1 bar.
+  `1.0` represents 1 beat, `0.5` an eight note, `4.0` a bar, and so on.
 - Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
 - Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
   multiband mechanisms all available through a dead simple API
+- Sync sketch recording with external MIDI Start message which makes it very
+  easy to align your track with the visuals perfectly in post-production
 - Write animations in code or configure your sketch to use an external yaml file
-  that can be hot-reloaded (similar to live coding - see
+  that can be hot-reloaded at runtime (similar to live coding - see
   [Control Scripting](#control-scripting))
-- Declarative per-sketch UI control definitions with framework agnostic design
-- Automatic store/recall of per-sketch GUI controls/parameters that can be
-  source controlled
+- Declarative per-sketch UI control definitions to easily add sliders, selects,
+  and checkboxes
+- Automatic store/recall of per-sketch UI controls/parameters that can be source
+  controlled
 - Hot reloadable WGSL shaders with various templates to simplify setup
 - Store snapshots of all GUI, MIDI, and OSC controls by pressing `Shift+Number`
   to save and `Cmd+Number` to recall. Snapshots are interpolated to/from at a
   configurable musical length from 1/16th note up to 4bars. Great for live
   performance!
+- Runtime switching of sketches
+- Ability to override sketch BPM via tap tempo to sync with musicians during
+  live performance
+- Controls UI adapts to your operating system's theme preference (see
+  screenshots below)
 
-### Side Quest
+### Light Mode
 
-To help myself debug I made an on-screen "virtual midi controller" app. This
-should really be its own project but since I had all of my own MIDI handling
-code along with nannou and egui at my fingertips, why not?
+![Lattice Controls - Light Theme](assets/ui-light.png)
 
-![Virtual MIDI Controller](./assets/vmc.png)
+### Dark Mode
 
-Run with
-
-```sh
-cargo run --release --bin virtual_midi_controller
-```
-
-> TODO: hi-res MIDI
+![Lattice Controls - Dark Theme](assets/ui-dark.png)
 
 ## Requirements
 
@@ -80,12 +79,27 @@ This project has been developed on MacOS. I have no idea how it would run on
 other platforms. The project requires or optionally needs:
 
 - Rust
+- Node/NPM or Bun
 - (optional) [just][just] for running commands
 - (optional) ffmpeg available on your path for video exports
 
 ## Usage
 
-### Running a sketch
+Lattice is still a playground and meant to be cloned and run from source
+locally. I eventually might try to make it more of a library.
+
+You will need to run two separate terminal processes: one for the UI controls (A
+Typescript/React app rendered in a WebView with Tao and Wry, served with Vite)
+and another for the Rust backend.
+
+1. Launch the frontend app server
+
+```sh
+cd ./ui
+bun start # or npm start
+```
+
+In another terminal window, launch the main Lattice app:
 
 ```sh
 cargo run --release -- <sketch>
@@ -94,13 +108,13 @@ just start <sketch>
 ```
 
 Where `sketch` is a file in the src/sketches folder (without the extension) and
-registered in [src/sketches/mod.rs][module] as well as
-[src/runtime/app.rs][app].
+registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main]. The
+sketch parameter is completely optional. All sketches are selectable in the UI
+and when run without a default sketch, Lattice will load a template sketch.
 
-Optionally you can pass a `timing` argument after the required `sketch` argument
-to specify what kind of timing system will be used to run animations on sketches
-that support it (this is a new feature so not all sketches are using this
-run-time `Timing` mechanism yet). Available options include:
+Optionally you can pass a `timing` positional argument after the required
+`sketch` positional argument to specify what kind of timing system will be used
+to run animations on sketches that support it. Available options include:
 
 #### `frame`
 
@@ -129,22 +143,22 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 ### Creating a new sketch:
 
-1. Copy the [template sketch][template] into a new file in sketches folder.
-2. Rename at a minimum the `SKETCH_CONFIG.name` field at the top of the file:
+1. Copy the [template sketch][template] into a new file in the sketches folder.
+2. Rename the `SKETCH_CONFIG.name` field at the top of the file:
    ```rust
    pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
       name: "template", // <-- RENAME THIS!
    ```
 3. Add that filename to the [src/sketches/mod.rs][module]
 4. Add that sketch module to the `register_sketches` call in
-   [src/runtime/app.rs][app]:
+   [src/main.rs][main]:
 5. Run that sketch via command line by `cargo run --release <name>` or
    `just start <name>` where `name` is what you put in your file's
    `SKETCH_CONFIG.name` field.
 
 ### Audio
 
-#### Single Channel, Multiband Audio
+#### Single Channel, Multiband Audio (_experimental_)
 
 The Audio struct in Lattice is hardcoded to read audio from the first input
 (index 0) on a device named "Lattice" (this can be changed by editing the
@@ -188,9 +202,7 @@ See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
 
 ### MIDI
 
-Lattice is hardcoded to accept MIDI on a device named `IAC Driver Lattice In`.
-You can change this by editing the `MIDI_INPUT_PORT` constant in
-[src/config.rs][config].
+MIDI input and output ports are now global settings in the UI
 
 ### MIDI Loopback
 
@@ -315,7 +327,7 @@ comprehensive documentation.
 [template]: src/sketches/templates/template.rs
 [midi-sketch]: src/sketches/midi_test.rs
 [module]: src/sketches/mod.rs
-[main]: src/runtime/app.rs
+[main]: src/main.rs
 [control-script-test]: src/sketches/scratch/control_script_test.rs
 [osc-transport]: assets/L.OscTransport.amxd
 [osc-send]: assets/L.OscSend.amxd

@@ -1,16 +1,41 @@
 use serde::{Deserialize, Serialize};
 
+use crate::config::{
+    MIDI_CLOCK_PORT, MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT,
+};
 use crate::framework::control::control_hub::Snapshots;
 use crate::framework::prelude::*;
 
-pub const VERSION: &str = "1.1";
+pub const GLOBAL_SETTINGS_VERSION: &str = "1";
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub struct GlobalSettings {
+    pub version: String,
+    pub hrcc: bool,
+    pub midi_clock_port: String,
+    pub midi_control_in_port: String,
+    pub midi_control_out_port: String,
+}
+
+impl Default for GlobalSettings {
+    fn default() -> Self {
+        Self {
+            version: GLOBAL_SETTINGS_VERSION.to_string(),
+            hrcc: false,
+            midi_clock_port: MIDI_CLOCK_PORT.to_string(),
+            midi_control_in_port: MIDI_CONTROL_IN_PORT.to_string(),
+            midi_control_out_port: MIDI_CONTROL_OUT_PORT.to_string(),
+        }
+    }
+}
+
+pub const PROGRAM_STATE_VERSION: &str = "2";
 
 /// Everything needed to recall a patch
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SerializableProgramState {
     pub version: String,
-    #[serde(default)]
-    pub hrcc: bool,
 
     // Backwards compat files before "ui_controls" rename
     #[serde(rename = "ui_controls", alias = "controls")]
@@ -143,8 +168,7 @@ impl From<&SaveableProgramState> for SerializableProgramState {
             .collect();
 
         Self {
-            version: VERSION.to_string(),
-            hrcc: state.hrcc,
+            version: PROGRAM_STATE_VERSION.to_string(),
             ui_controls: controls,
             midi_controls,
             osc_controls,
@@ -198,7 +222,6 @@ fn create_serializable_snapshot(
 /// Intermediary structure used to transfer program state to and from
 /// program/serialization contexts
 pub struct SaveableProgramState {
-    pub hrcc: bool,
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
@@ -208,7 +231,6 @@ pub struct SaveableProgramState {
 impl Default for SaveableProgramState {
     fn default() -> Self {
         Self {
-            hrcc: false,
             ui_controls: UiControlBuilder::new().build(),
             midi_controls: MidiControlBuilder::new().build(),
             osc_controls: OscControlBuilder::new().build(),
@@ -220,8 +242,6 @@ impl Default for SaveableProgramState {
 impl SaveableProgramState {
     /// Merge incoming serialized data into self
     pub fn merge(&mut self, serializable_state: SerializableProgramState) {
-        self.hrcc = serializable_state.hrcc;
-
         self.ui_controls
             .values_mut()
             .iter_mut()

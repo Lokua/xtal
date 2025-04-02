@@ -4,9 +4,9 @@ use std::sync::{Arc, Mutex};
 use crate::framework::prelude::*;
 
 pub struct MapModeState {
-    mappings: HashMap<String, ChannelAndControl>,
+    mappings: HashMap<String, ChannelAndController>,
     /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
-    msb_ccs: Vec<ChannelAndControl>,
+    msb_ccs: Vec<ChannelAndController>,
 }
 
 /// Provides live MIDI mapping functionality
@@ -29,10 +29,8 @@ impl Default for MapMode {
 }
 
 impl MapMode {
-    pub fn mapped(&self, name: &str) -> bool {
-        self.state.lock().unwrap().mappings.contains_key(name)
-    }
-
+    /// Display the channel and controller for a mapping as
+    /// `{channel}/{controller}` e.g `15/127`
     pub fn formatted_mapping(&self, name: &str) -> String {
         self.state
             .lock()
@@ -43,11 +41,18 @@ impl MapMode {
             .unwrap_or_default()
     }
 
+    /// Mappings are stored as normal [`MidiControlConfig`] instances within a
+    /// [`ControlHub`]'s [`MidiControls`] instance. When a [`Slider`] is queried
+    /// via [`ControlHub::get`], we first check if there is a "MIDI proxy" for
+    /// the slider and if so return the value of the MIDI control instead. For
+    /// that reason this method _probably_ shouldn't be here as it's not really
+    /// MapMode's concern. Anyway this method just provides a single interface
+    /// to make sure every call site is using the same name suffix
     pub fn proxy_name(name: &str) -> String {
         format!("{}__slider_proxy", name)
     }
 
-    pub fn mappings_as_vec(&self) -> Vec<(String, ChannelAndControl)> {
+    pub fn mappings_as_vec(&self) -> Vec<(String, ChannelAndController)> {
         self.state
             .lock()
             .unwrap()
@@ -55,6 +60,13 @@ impl MapMode {
             .iter()
             .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
             .collect::<Vec<_>>()
+    }
+
+    pub fn update_from_vec(&mut self, ms: &[(String, ChannelAndController)]) {
+        let mut state = self.state.lock().unwrap();
+        for m in ms {
+            state.mappings.insert(m.0.clone(), m.1);
+        }
     }
 
     pub fn has(&self, name: &str) -> bool {
@@ -65,11 +77,15 @@ impl MapMode {
         self.state.lock().unwrap().mappings.remove(name);
     }
 
-    pub fn listen_for_midi(
+    pub fn start<F>(
         &self,
         name: &str,
         hrcc: bool,
-    ) -> Result<(), Box<dyn Error>> {
+        callback: F,
+    ) -> Result<(), Box<dyn Error>>
+    where
+        F: Fn() + Send + Sync + 'static,
+    {
         let state = self.state.clone();
         let name = name.to_owned();
 
@@ -90,7 +106,7 @@ impl MapMode {
                 // This is a standard 7bit message
                 if !hrcc || cc > 63 {
                     state.mappings.insert(name.clone(), (ch, cc));
-
+                    callback();
                     return;
                 }
 
@@ -116,7 +132,7 @@ impl MapMode {
                 // This is a regular 32-63 7bit message
                 if !state.msb_ccs.contains(&msb_key) {
                     state.mappings.insert(name.clone(), (ch, cc));
-
+                    callback();
                     return;
                 }
 
@@ -124,7 +140,13 @@ impl MapMode {
 
                 state.mappings.insert(name.clone(), msb_key);
                 state.msb_ccs.retain(|k| *k != msb_key);
+                callback();
             },
         )
+    }
+
+    pub fn stop(&mut self) {
+        self.currently_mapping = None;
+        midi::disconnect(midi::ConnectionType::Mapping);
     }
 }

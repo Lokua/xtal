@@ -32,13 +32,13 @@ impl MidiControlConfig {
     }
 }
 
-pub type ChannelAndControl = (u8, u8);
+pub type ChannelAndController = (u8, u8);
 type Msb = u8;
 
 #[derive(Debug, Default)]
 struct MidiState {
     values: HashMap<String, f32>,
-    last: HashMap<ChannelAndControl, Msb>,
+    last: HashMap<ChannelAndController, Msb>,
 }
 
 impl MidiState {
@@ -69,15 +69,15 @@ impl MidiState {
         self.values.clone()
     }
 
-    fn last(&self, ch_cc: ChannelAndControl) -> Option<Msb> {
+    fn last(&self, ch_cc: ChannelAndController) -> Option<Msb> {
         self.last.get(&ch_cc).copied()
     }
 
-    fn set_last(&mut self, ch_cc: ChannelAndControl, msb: Msb) {
+    fn set_last(&mut self, ch_cc: ChannelAndController, msb: Msb) {
         self.last.insert(ch_cc, msb);
     }
 
-    fn remove_last(&mut self, ch_cc: ChannelAndControl) {
+    fn remove_last(&mut self, ch_cc: ChannelAndController) {
         self.last.remove(&ch_cc);
     }
 }
@@ -151,7 +151,7 @@ impl MidiControls {
 
     fn configs_by_channel_and_cc(
         &self,
-    ) -> HashMap<ChannelAndControl, (String, MidiControlConfig)> {
+    ) -> HashMap<ChannelAndController, (String, MidiControlConfig)> {
         self.configs()
             .iter()
             .map(|(name, config)| {
@@ -169,7 +169,7 @@ impl MidiControls {
 
         match midi::on_message(
             midi::ConnectionType::Control,
-            crate::config::MIDI_CONTROL_IN_PORT,
+            &global::midi_control_in_port(),
             move |_, message| {
                 if message.len() < 3 || !is_control_change(message[0]) {
                     return;

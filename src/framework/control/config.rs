@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fmt;
 
 use indexmap::IndexMap;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
@@ -34,7 +34,7 @@ pub struct ControlConfig {
     pub config: serde_yml::Value,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ControlType {
     // UI controls
     #[serde(rename = "slider")]

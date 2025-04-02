@@ -7,13 +7,12 @@ use nannou_egui::{egui, Egui};
 use std::cell::RefCell;
 
 use lattice::framework::prelude::*;
-use lattice::runtime::ui::gui;
 use lattice::runtime::ui::theme;
 use lattice::*;
 
 fn main() {
     init_logger();
-    gui::init();
+    theme::init_light_dark();
     nannou::app(model).update(update).run();
 }
 

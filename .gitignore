@@ -1,8 +1,8 @@
 /target
+# Keeping vscode as 
 # .vscode
 .DS_Store
 out*.txt
-/control-snaps
 debug.txt
 *.log
-scripts/node_modules
+**/node_modules

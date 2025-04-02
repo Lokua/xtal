@@ -41,19 +41,19 @@ pub struct SketchConfig {
 
 #[derive(PartialEq)]
 pub enum PlayMode {
-    // normal
+    /// Continuously run a sketch at the sketch's provided frame rate
     Loop,
 
-    // Sketch starts in paused state then auto advanced when controls are changed
+    /// Sketch starts in paused state then auto advanced when controls are changed
     Advance,
 
-    // Same as advance, but only advances if the `Adv.` button
-    // in the GUI is pressed
+    /// Same as advance, but only advances if the `Adv.` button or `a` shortcut
+    /// key in the UI is pressed
     ManualAdvance,
 }
 
 /// Context passed down from the Lattice runtime. This is similar to how
-/// `nannou` provides an `app`, `ctx` will provide useful data for sketches.
+/// `nannou` provides an `app`, `ctx` provides useful data for sketches.
 #[derive(Clone, Debug)]
 pub struct LatticeContext {
     bpm: Bpm,
@@ -82,7 +82,7 @@ pub trait Sketch {
 }
 
 /// Secondary trait that all sketches must implement if they want to integrate
-/// with the main runtime. Does not have to implemented manually. Use with:
+/// with the main runtime. Does not have to be implemented manually. Use with:
 /// ```rust
 /// #[derive(SketchComponents)]
 /// pub struct MySketch {}
@@ -99,5 +99,7 @@ pub trait SketchDerived {
     }
 }
 
+/// Trait used to enable dynamically loading sketches at runtime via
+/// [`crate::runtime::registry`]
 pub trait SketchAll: Sketch + SketchDerived {}
 impl<T: Sketch + SketchDerived> SketchAll for T {}

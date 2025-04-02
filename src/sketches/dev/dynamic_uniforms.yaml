@@ -12,6 +12,7 @@ wave_phase_animation:
 
 wave_phase_speed:
   type: slider
+  # bypass: 16
   range: [1, 32]
   step: 1
   default: 1
@@ -94,6 +95,7 @@ color_phase:
   var: c3
   type: slider
   range: [0, *TAU]
+  step: 0.001
 
 r_amp:
   var: c4

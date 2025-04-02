@@ -34,6 +34,9 @@ use crate::framework::frame_controller;
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::prelude::*;
 
+/// The current Beats-Per-Minute (tempo) initialized from a
+/// [`SketchConfig::bpm`] whenever a sketch is loaded or physically tapped
+/// in live via the [`crate::runtime::TapTempo`] feature in the UI.
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
 

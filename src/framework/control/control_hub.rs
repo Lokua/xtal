@@ -53,6 +53,20 @@ struct SnapshotTransition {
 
 pub type Snapshots = HashMap<String, ControlValues>;
 
+struct Callback(Box<dyn Fn()>);
+
+impl Callback {
+    fn call(&self) {
+        (self.0)();
+    }
+}
+
+impl std::fmt::Debug for Callback {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Callback")
+    }
+}
+
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
     pub animation: Animation<T>,
@@ -75,6 +89,8 @@ pub struct ControlHub<T: TimingSource> {
     update_state: Option<UpdateState>,
     active_transition: Option<SnapshotTransition>,
     transition_time: f32,
+    snapshot_ended_callbacks: Vec<Callback>,
+    populated_callbacks: Vec<Callback>,
     #[cfg(feature = "instrumentation")]
     instrumentation: RefCell<Instrumentation>,
 }
@@ -98,6 +114,8 @@ impl<T: TimingSource> ControlHub<T> {
             snapshots: HashMap::default(),
             active_transition: None,
             transition_time: 4.0,
+            snapshot_ended_callbacks: vec![],
+            populated_callbacks: vec![],
             #[cfg(feature = "instrumentation")]
             instrumentation: RefCell::new(Instrumentation::new(
                 "ControlScript::get",
@@ -540,6 +558,14 @@ impl<T: TimingSource> ControlHub<T> {
         self.snapshots.clear()
     }
 
+    pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
+    where
+        F: Fn() + 'static,
+    {
+        self.snapshot_ended_callbacks
+            .push(Callback(Box::new(callback)));
+    }
+
     pub fn set_transition_time(&mut self, transition_time: f32) {
         self.transition_time = transition_time;
     }
@@ -593,6 +619,9 @@ impl<T: TimingSource> ControlHub<T> {
                     }
                 }
                 self.active_transition = None;
+                for callback in &self.snapshot_ended_callbacks {
+                    callback.call();
+                }
             }
         }
     }
@@ -613,6 +642,13 @@ impl<T: TimingSource> ControlHub<T> {
         for (k, v) in state.snapshots.clone() {
             self.snapshots.insert(k, v);
         }
+    }
+
+    pub fn register_populated_callback<F>(&mut self, callback: F)
+    where
+        F: Fn() + 'static,
+    {
+        self.populated_callbacks.push(Callback(Box::new(callback)));
     }
 
     pub fn add_controls(&mut self, configs: Vec<Control>) {
@@ -974,6 +1010,10 @@ impl<T: TimingSource> ControlHub<T> {
             if let Err(e) = self.midi_controls.start() {
                 warn!("Unable to start MIDI receiver. {}", e);
             }
+        }
+
+        for callback in &self.populated_callbacks {
+            callback.call();
         }
 
         self.ui_controls.mark_changed();

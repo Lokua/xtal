@@ -43,6 +43,7 @@ derives = { path = "./derives" }
 dirs = "5.0.1"
 env_logger = "0.11.5"
 indexmap = { version = "2.7.1", features = ["serde"] }
+ipc-channel = "0.19.0"
 lazy_static = "1.5.0"
 log = "0.4.22"
 midir = "0.10.1"
@@ -60,9 +61,10 @@ serde = "1.0.215"
 serde_json = "1.0.133"
 serde_yml = "0.0.12"
 serial_test = "3.2.0"
+tao = "0.32.8"
 termcolor = "1.4.1"
-toml = "0.8.19"
 wgpu-types = "=0.17.0"
+wry = { version = "0.50.5", features = ["devtools"] }
 # Bug: we shouldn't have to bring in serde_yaml
 # TODO: we might want to fork this since it's on GitLab, doesn't have the ability to submit issues, etc.
 yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [

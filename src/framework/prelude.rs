@@ -3,6 +3,7 @@ pub use crate::debug_throttled;
 pub use crate::framework::audio::*;
 pub use crate::framework::control::*;
 pub use crate::framework::distance::*;
+pub use crate::framework::global;
 pub use crate::framework::gpu;
 pub use crate::framework::logging::*;
 pub use crate::framework::midi;
