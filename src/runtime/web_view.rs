@@ -173,6 +173,7 @@ pub fn launch(
         while let Ok(message) = receiver.recv() {
             trace!("Received message from child: {:?}", message);
 
+            // Events with empty implementations are direct Parent->Child
             match message {
                 Event::Advance => {
                     app_tx.emit(AppEvent::AdvanceSingleFrame);

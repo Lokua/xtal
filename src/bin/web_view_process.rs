@@ -53,6 +53,7 @@ fn main() -> wry::Result<()> {
     let web_view = WebViewBuilder::new()
         .with_url("http://localhost:3000/")
         .with_devtools(true)
+        // Events from UI->Here->Parent
         .with_ipc_handler(move |message| {
             trace!("ipc_handler message: {:?};", message);
             let json_string = message.body().to_string();
@@ -88,8 +89,7 @@ fn main() -> wry::Result<()> {
                     error!("Failed to send data to WebView: {:?}", e);
                 }
 
-                // allowing as likely to add more matches in the future
-                #[allow(clippy::single_match)]
+                // Events from Parent->Here (not for UI)
                 match event {
                     wv::Event::LoadSketch {
                         display_name,
@@ -102,6 +102,10 @@ fn main() -> wry::Result<()> {
                             DEFAULT_WIDTH,
                             derive_gui_height(controls),
                         ));
+                    }
+                    wv::Event::ToggleGuiFocus => {
+                        debug!("Received ToggleGuiFocus");
+                        window.set_visible(true);
                     }
                     _ => {}
                 }

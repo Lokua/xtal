@@ -500,7 +500,7 @@ impl AppModel {
                 }
             }
             AppEvent::ToggleGuiFocus => {
-                warn!("ToggleGuiFocus is unimplemented");
+                self.ui_tx.emit(ui::Event::ToggleGuiFocus);
             }
             AppEvent::ToggleMainFocus => {
                 self.main_window(app).unwrap().set_visible(true);
@@ -872,11 +872,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 // Cmd + M
                 Key::M if logo_pressed && !shift_pressed => {
                     model.app_tx.emit(AppEvent::ToggleMainFocus);
-                }
-                // Cmd + Shift + M
-                Key::M if logo_pressed && shift_pressed => {
-                    warn!("ToggleViewMidi from main window is unimplemented");
-                    // model.event_tx.emit(AppEvent::ToggleViewMidi);
                 }
                 // R
                 Key::R if has_no_modifiers => {
