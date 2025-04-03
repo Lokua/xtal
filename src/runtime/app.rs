@@ -33,6 +33,7 @@ pub enum AppEvent {
     Alert(String),
     AlertAndLog(String, log::Level),
     CaptureFrame,
+    ChangeAudioDevice(String),
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
     ChangeMidiControlOutputPort(String),
@@ -205,6 +206,16 @@ impl AppModel {
                     log::Level::Info,
                 );
             }
+            AppEvent::ChangeAudioDevice(name) => {
+                debug!("Changing audio device");
+                global::set_audio_device_name(&name);
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.audio_controls
+                        .restart()
+                        .inspect_err(|e| error!("{}", e))
+                        .ok();
+                }
+            }
             AppEvent::ChangeMidiClockPort(port) => {
                 global::set_midi_clock_port(port);
                 AppModel::start_midi_clock_listener(self.app_tx.tx.clone());
@@ -214,7 +225,7 @@ impl AppModel {
                 if let Some(hub) = self.control_hub_mut() {
                     hub.midi_controls
                         .restart()
-                        .inspect_err(|err| error!("{}", err))
+                        .inspect_err(|e| error!("{}", e))
                         .ok();
                 }
             }
@@ -744,13 +755,15 @@ impl AppModel {
 fn model(app: &App) -> AppModel {
     let global_settings = match load_global_state() {
         Ok(gs) => {
+            info!("Restoring global settings: {:?}", gs);
             global::set_midi_clock_port(gs.midi_clock_port.clone());
             global::set_midi_control_in_port(gs.midi_control_in_port.clone());
             global::set_midi_control_out_port(gs.midi_control_out_port.clone());
+            global::set_audio_device_name(&gs.audio_device_name);
             gs
         }
         Err(e) => {
-            error!("error loading settings: {}", e);
+            error!("Error loading global settings: {}", e);
             GlobalSettings::default()
         }
     };
@@ -807,7 +820,7 @@ fn model(app: &App) -> AppModel {
     };
 
     let image_index = storage::load_image_index()
-        .map_err(|e| error!("{}", e))
+        .inspect_err(|e| error!("{}", e))
         .ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);

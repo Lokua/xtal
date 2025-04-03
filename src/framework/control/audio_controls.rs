@@ -5,18 +5,16 @@
 //! to interact with this module directly - see [`ControlHub`].
 //!
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
-use cpal::{traits::*, Device, StreamConfig};
+use cpal::{traits::*, Device, Stream, StreamConfig};
 use nannou::math::map_range;
 use std::{
     error::Error,
     sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
-use crate::config::{
-    MULTICHANNEL_AUDIO_DEVICE_COUNT as CHANNEL_COUNT,
-    MULTICHANNEL_AUDIO_DEVICE_NAME as DEVICE_NAME,
-    MULTICHANNEL_AUDIO_DEVICE_SAMPLE_RATE as SAMPLE_RATE,
-};
+use crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT as CHANNEL_COUNT;
 
 use crate::framework::frame_controller;
 use crate::framework::prelude::*;
@@ -62,11 +60,11 @@ impl AudioControlConfig {
     }
 }
 
-/// A function used in [`AudioControls`] to reduce a channel's audio buffer to
-/// a single value suitable for parameter control. The [`default_buffer_processor`]
-/// is specifically for audio-rate signals, while [`thru_buffer_processor`]
-/// should be used for control-rate audio signals (CV).
-/// You can also pass you own custom processor.
+/// A function used in [`AudioControls`] to reduce a channel's audio buffer to a
+/// single value suitable for parameter control. The
+/// [`default_buffer_processor`] is specifically for audio-rate signals, while
+/// [`thru_buffer_processor`] should be used for control-rate audio signals
+/// (CV). You can also pass you own custom processor.
 pub type BufferProcessor =
     fn(buffer: &[f32], config: &AudioControlConfig) -> f32;
 
@@ -100,24 +98,35 @@ struct AudioControlState {
     configs: HashMap<String, AudioControlConfig>,
     processor: MultichannelAudioProcessor,
     values: HashMap<String, f32>,
-    previous_values: [f32; CHANNEL_COUNT],
+    previous_values: Vec<f32>,
 }
 
-#[derive(Debug)]
 pub struct AudioControls {
     pub is_active: bool,
     buffer_processor: BufferProcessor,
     state: Arc<Mutex<AudioControlState>>,
+    stream: Option<Stream>,
+}
+
+impl std::fmt::Debug for AudioControls {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AudioControls")
+            .field("is_active", &self.is_active)
+            .field("buffer_processor", &"<function pointer>")
+            .field("state", &self.state)
+            .field(
+                "stream",
+                &ternary!(self.stream.is_some(), "Some(Stream)", "None"),
+            )
+            .finish()
+    }
 }
 
 impl AudioControls {
-    pub fn new(
-        fps: f32,
-        sample_rate: usize,
-        buffer_processor: BufferProcessor,
-    ) -> Self {
-        let buffer_size = (sample_rate as f32 / fps).ceil() as usize;
-        let processor = MultichannelAudioProcessor::new(buffer_size);
+    pub fn new(buffer_processor: BufferProcessor) -> Self {
+        // TODO: refactor - none of this data is needed until we call `start`
+        let buffer_size = (48_000.0 / frame_controller::fps()).ceil() as usize;
+        let processor = MultichannelAudioProcessor::new(buffer_size, 16);
         Self {
             is_active: false,
             buffer_processor,
@@ -125,8 +134,9 @@ impl AudioControls {
                 configs: HashMap::default(),
                 values: HashMap::default(),
                 processor,
-                previous_values: [0.0; CHANNEL_COUNT],
+                previous_values: vec![0.0],
             })),
+            stream: None,
         }
     }
 
@@ -182,10 +192,22 @@ impl AudioControls {
         self.buffer_processor = buffer_processor
     }
 
-    fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        let state = self.state.clone();
+    pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let buffer_processor = self.buffer_processor;
         let (device, stream_config) = Self::device_and_stream_config()?;
+
+        {
+            let mut state = self.state.lock().unwrap();
+            let buffer_size =
+                stream_config.sample_rate.0 as f32 / frame_controller::fps();
+            let buffer_size = buffer_size.ceil() as usize;
+            let channels = stream_config.channels as usize;
+            state.processor =
+                MultichannelAudioProcessor::new(buffer_size, channels);
+            state.previous_values = vec![0.0; channels];
+        }
+
+        let state = self.state.clone();
 
         let stream = device.build_input_stream(
             &stream_config,
@@ -196,7 +218,17 @@ impl AudioControls {
                 let updates: Vec<(String, f32, usize, f32)> = state
                     .configs
                     .iter()
-                    .map(|(name, config)| {
+                    .filter_map(|(name, config)| {
+                        if config.channel >= state.processor.channel_data.len()
+                        {
+                            warn_once!(
+                                "Using AudioControlConfig with channel \
+                                beyond available device channels: {:?}",
+                                config
+                            );
+                            return None;
+                        }
+
                         let channel_buffer =
                             state.processor.channel_buffer(config.channel);
 
@@ -213,7 +245,7 @@ impl AudioControls {
                             config.range.1,
                         );
 
-                        (name.clone(), mapped, config.channel, value)
+                        Some((name.clone(), mapped, config.channel, value))
                     })
                     .collect();
 
@@ -222,11 +254,12 @@ impl AudioControls {
                     state.previous_values[channel] = value;
                 }
             },
-            move |err| error!("Error in CV stream: {}", err),
+            move |err| error!("Error in audio stream: {}", err),
             None,
         )?;
 
         stream.play()?;
+        self.stream = Some(stream);
         self.is_active = true;
 
         info!(
@@ -237,13 +270,27 @@ impl AudioControls {
         Ok(())
     }
 
+    pub fn stop(&mut self) {
+        if let Some(_stream) = self.stream.take() {
+            self.is_active = false;
+            debug!("Audio stream stopped");
+        }
+    }
+
+    pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
+        self.stop();
+        thread::sleep(Duration::from_millis(10));
+        self.start()
+    }
+
     fn device_and_stream_config(
     ) -> Result<(Device, StreamConfig), Box<dyn Error>> {
         let host = cpal::default_host();
+        let device_name = global::audio_device_name();
         let device = host
             .input_devices()?
-            .find(|d| d.name().map(|n| n == DEVICE_NAME).unwrap_or(false))
-            .expect("CV device not found");
+            .find(|d| d.name().map(|n| n == device_name).unwrap_or(false))
+            .expect("Audio device not found");
 
         let stream_config = device.default_input_config()?.into();
 
@@ -258,11 +305,7 @@ pub struct AudioControlBuilder {
 impl Default for AudioControlBuilder {
     fn default() -> Self {
         Self {
-            controls: AudioControls::new(
-                frame_controller::fps(),
-                SAMPLE_RATE,
-                default_buffer_processor,
-            ),
+            controls: AudioControls::new(default_buffer_processor),
         }
     }
 }
@@ -317,15 +360,15 @@ struct MultichannelAudioProcessor {
 }
 
 impl MultichannelAudioProcessor {
-    fn new(buffer_size: usize) -> Self {
+    fn new(buffer_size: usize, channel_count: usize) -> Self {
         Self {
-            channel_data: vec![vec![0.0; buffer_size]; CHANNEL_COUNT],
+            channel_data: vec![vec![0.0; buffer_size]; channel_count],
             buffer_size,
         }
     }
 
     fn add_samples(&mut self, samples: &[f32]) {
-        for chunk in samples.chunks(CHANNEL_COUNT) {
+        for chunk in samples.chunks(self.channel_data.len()) {
             for (channel, &sample) in chunk.iter().enumerate() {
                 let ch_data = self.channel_data.get_mut(channel);
                 if let Some(buffer) = ch_data {

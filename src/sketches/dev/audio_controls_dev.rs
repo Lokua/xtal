@@ -70,7 +70,12 @@ impl Sketch for AudioControlsDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
         self.controls.update();
 
-        // debug_throttled!(500, "a: {}, b: {}", self.audio.get("bd"), self.audio.get("hh"));
+        // debug_throttled!(
+        //     500,
+        //     "a: {}, b: {}",
+        //     self.controls.get("bd"),
+        //     self.controls.get("hh")
+        // );
 
         if self.controls.changed() {
             let pre_emphasis = self.controls.float("pre_emphasis");

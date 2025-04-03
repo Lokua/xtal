@@ -16,7 +16,7 @@ type Props = {
   onChange: (
     type: string,
     name: string,
-    value: boolean | number | string,
+    value: ControlValue,
     updatedControls: Control[]
   ) => void
 }
@@ -104,8 +104,8 @@ export default function Controls({
             value={c.value}
             options={c.options}
             disabled={c.disabled}
-            onChange={(e) => {
-              onChange('select', index, e.target.value)
+            onChange={(value) => {
+              onChange('select', index, value)
             }}
           />
           <label htmlFor={c.name}>{c.name}</label>

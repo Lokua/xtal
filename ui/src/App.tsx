@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { Control, Mappings, Slider } from './types.ts'
+import type { Control, ControlValue, Mappings, Slider } from './types.ts'
 import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
-import Midi from './Midi.tsx'
+import Settings from './Settings.tsx'
 
 type EventMap = {
   Advance: void
@@ -11,6 +11,7 @@ type EventMap = {
   AverageFps: number
   Bpm: number
   CaptureFrame: void
+  ChangeAudioDevice: string
   ChangeMidiClockPort: string
   ChangeMidiControlInputPort: string
   ChangeMidiControlOutputPort: string
@@ -22,6 +23,8 @@ type EventMap = {
   Hrcc: boolean
   HubPopulated: Control[]
   Init: {
+    audioDevice: string
+    audioDevices: string[]
     isLightTheme: boolean
     midiClockPort: string
     midiInputPort: string
@@ -100,10 +103,7 @@ function subscribe<K extends keyof EventMap>(
   }
 }
 
-function post(
-  event: keyof EventMap,
-  data?: boolean | number | string | object
-) {
+function post(event: keyof EventMap, data?: ControlValue | object) {
   if (data === undefined) {
     window.ipc.postMessage(JSON.stringify(event))
   } else {
@@ -117,6 +117,8 @@ function post(
 
 export default function App() {
   const [alertText, setAlertText] = useState('')
+  const [audioDevices, setAudioDevices] = useState<string[]>([])
+  const [audioDevice, setAudioDevice] = useState('')
   const [bpm, setBpm] = useState(134)
   const [controls, setControls] = useState<Control[]>([])
   const [fps, setFps] = useState(60)
@@ -141,7 +143,10 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = subscribe((event: keyof EventMap, data) => {
       if (event !== 'AverageFps') {
-        console.debug('[app - sub event]:', event, 'data:', data)
+        console.debug('[app]', {
+          event,
+          data,
+        })
       }
 
       switch (event) {
@@ -171,6 +176,8 @@ export default function App() {
         }
         case 'Init': {
           const d = data as EventMap['Init']
+          setAudioDevice(d.audioDevice)
+          setAudioDevices(d.audioDevices)
           setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
@@ -218,7 +225,7 @@ export default function App() {
     post('Ready')
 
     return () => {
-      console.log('Unsubscribing')
+      console.log('[app] Unsubscribing')
       unsubscribe()
     }
   }, [])
@@ -239,6 +246,10 @@ export default function App() {
       }
 
       switch (e.code) {
+        case 'Comma': {
+          setView(view === View.Settings ? View.Controls : View.Settings)
+          break
+        }
         case 'KeyA': {
           if (paused) {
             post('Advance')
@@ -309,6 +320,11 @@ export default function App() {
     post('CaptureFrame')
   }
 
+  function onChangeAudioDevice(name: string) {
+    setAudioDevice(name)
+    post('ChangeAudioDevice', name)
+  }
+
   function onChangeControl(
     type: string,
     name: string,
@@ -341,17 +357,17 @@ export default function App() {
     )
   }
 
-  function onChangeClockPort(port: string) {
+  function onChangeMidiClockPort(port: string) {
     setMidiClockPort(port)
     post('ChangeMidiClockPort', port)
   }
 
-  function onChangeInputPort(port: string) {
+  function onChangeMidiInputPort(port: string) {
     setMidiInputPort(port)
     post('ChangeMidiControlInputPort', port)
   }
 
-  function onChangeOutputPort(port: string) {
+  function onChangeMidiOutputPort(port: string) {
     setMidiOutputPort(port)
     post('ChangeMidiControlOutputPort', port)
   }
@@ -386,7 +402,7 @@ export default function App() {
   }
 
   function onChangeView() {
-    const v = view === View.Controls ? View.Midi : View.Controls
+    const v = view === View.Controls ? View.Settings : View.Controls
     setView(v)
     if (v === View.Controls) {
       post('CommitMappings')
@@ -473,22 +489,25 @@ export default function App() {
         onTogglePlay={onTogglePlay}
       />
       <main>
-        {view === View.Midi ? (
-          <Midi
-            clockPort={midiClockPort}
+        {view === View.Settings ? (
+          <Settings
+            audioDevice={audioDevice}
+            audioDevices={audioDevices}
             hrcc={hrcc}
-            inputPort={midiInputPort}
-            inputPorts={midiInputPorts}
-            outputPort={midiOutputPort}
-            outputPorts={midiOutputPorts}
-            mappingsEnabled={mappingsEnabled}
             mappings={mappings}
+            mappingsEnabled={mappingsEnabled}
+            midiClockPort={midiClockPort}
+            midiInputPort={midiInputPort}
+            midiInputPorts={midiInputPorts}
+            midiOutputPort={midiOutputPort}
+            midiOutputPorts={midiOutputPorts}
             sliderNames={getSliderNames()}
-            onChangeClockPort={onChangeClockPort}
+            onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
-            onChangeInputPort={onChangeInputPort}
-            onChangeOutputPort={onChangeOutputPort}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
+            onChangeMidiClockPort={onChangeMidiClockPort}
+            onChangeMidiInputPort={onChangeMidiInputPort}
+            onChangeMidiOutputPort={onChangeMidiOutputPort}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}

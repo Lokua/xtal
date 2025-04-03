@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::config::{
-    MIDI_CLOCK_PORT, MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT,
-};
 use crate::framework::control::control_hub::Snapshots;
 use crate::framework::prelude::*;
 
@@ -16,6 +13,7 @@ pub struct GlobalSettings {
     pub midi_clock_port: String,
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
+    pub audio_device_name: String,
 }
 
 impl Default for GlobalSettings {
@@ -23,9 +21,10 @@ impl Default for GlobalSettings {
         Self {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             hrcc: false,
-            midi_clock_port: MIDI_CLOCK_PORT.to_string(),
-            midi_control_in_port: MIDI_CONTROL_IN_PORT.to_string(),
-            midi_control_out_port: MIDI_CONTROL_OUT_PORT.to_string(),
+            midi_clock_port: global::midi_clock_port(),
+            midi_control_in_port: global::midi_control_in_port(),
+            midi_control_out_port: global::midi_control_out_port(),
+            audio_device_name: global::audio_device_name(),
         }
     }
 }

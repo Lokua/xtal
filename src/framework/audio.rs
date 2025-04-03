@@ -6,6 +6,7 @@ use cpal::BuildStreamError;
 use rustfft::num_complex::Complex;
 use rustfft::{Fft, FftPlanner};
 use std::cmp::Ordering;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
@@ -373,6 +374,20 @@ impl AudioProcessor {
 
         cutoffs
     }
+}
+
+pub fn list_audio_devices() -> Result<Vec<String>, Box<dyn Error>> {
+    let audio_host = cpal::default_host();
+    let devices = audio_host.input_devices()?;
+
+    let info = devices
+        .map(|device| {
+            let name = device.name()?;
+            Ok::<String, Box<dyn Error>>(name)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(info)
 }
 
 fn init_audio(

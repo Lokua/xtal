@@ -1,6 +1,5 @@
 {
   "version": "2",
-  "hrcc": false,
   "ui_controls": [
     {
       "type": "Checkbox",

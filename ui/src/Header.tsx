@@ -96,9 +96,7 @@ export default function Header({
         <Select
           value={sketchName}
           options={sketchNames}
-          onChange={(e) => {
-            onSwitchSketch(e.currentTarget.value)
-          }}
+          onChange={onSwitchSketch}
         />
         <fieldset>
           <input
@@ -127,17 +125,17 @@ export default function Header({
           style={{ width: '48px' }}
           value="4"
           options={transitionTimes}
-          onChange={(e) => {
-            onChangeTransitionTime(parseFloat(e.currentTarget.value))
+          onChange={(value) => {
+            onChangeTransitionTime(parseFloat(value))
           }}
         />
         <VerticalSeparator />
         <button onClick={onSave}>Save</button>
         <button
-          className={view === View.Midi ? 'on' : ''}
+          className={view === View.Settings ? 'on' : ''}
           onClick={onChangeView}
         >
-          MIDI
+          Conf.
         </button>
       </section>
     </header>

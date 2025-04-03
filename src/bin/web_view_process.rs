@@ -17,6 +17,7 @@ const DEFAULT_HEIGHT: i32 = 700;
 // Eyeballed from devtools. TODO: parse the variables from the CSS file?
 const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 81 + 27;
+const MIN_SETTINGS_HEIGHT: i32 = 375;
 
 fn main() -> wry::Result<()> {
     init_logger();
@@ -40,7 +41,7 @@ fn main() -> wry::Result<()> {
                 DEFAULT_WIDTH as f64,
             ))),
             min_height: Some(PixelUnit::Logical(dpi::LogicalUnit(
-                (HEADER_HEIGHT + FOOTER_HEIGHT + 64) as f64,
+                MIN_SETTINGS_HEIGHT as f64,
             ))),
             max_width: Some(PixelUnit::Logical(dpi::LogicalUnit(
                 DEFAULT_WIDTH as f64 + 64.0,
@@ -100,7 +101,8 @@ fn main() -> wry::Result<()> {
                         window.set_title(&format!("{} Controls", display_name));
                         window.set_inner_size(LogicalSize::new(
                             DEFAULT_WIDTH,
-                            derive_gui_height(controls),
+                            derive_gui_height(controls)
+                                .max(MIN_SETTINGS_HEIGHT),
                         ));
                     }
                     wv::Event::ToggleGuiFocus => {

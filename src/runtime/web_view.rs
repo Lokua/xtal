@@ -33,6 +33,7 @@ pub enum Event {
     /// Sent from parent after receiving Tap event
     Bpm(f32),
     CaptureFrame,
+    ChangeAudioDevice(String),
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
     ChangeMidiControlOutputPort(String),
@@ -47,6 +48,8 @@ pub enum Event {
     /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
     Init {
+        audio_device: String,
+        audio_devices: Vec<String>,
         is_light_theme: bool,
         midi_clock_port: String,
         midi_input_port: String,
@@ -187,6 +190,9 @@ pub fn launch(
                 Event::CaptureFrame => {
                     app_tx.emit(AppEvent::CaptureFrame);
                 }
+                Event::ChangeAudioDevice(name) => {
+                    app_tx.emit(AppEvent::ChangeAudioDevice(name));
+                }
                 Event::ChangeMidiClockPort(port) => {
                     app_tx.emit(AppEvent::ChangeMidiClockPort(port));
                 }
@@ -229,6 +235,8 @@ pub fn launch(
                     let registry = REGISTRY.read().unwrap();
 
                     let data = Event::Init {
+                        audio_device: global::audio_device_name(),
+                        audio_devices: list_audio_devices().unwrap_or_default(),
                         is_light_theme: matches!(
                             dark_light::detect(),
                             dark_light::Mode::Light
