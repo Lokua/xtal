@@ -207,7 +207,6 @@ impl AppModel {
                 );
             }
             AppEvent::ChangeAudioDevice(name) => {
-                debug!("Changing audio device");
                 global::set_audio_device_name(&name);
                 if let Some(hub) = self.control_hub_mut() {
                     hub.audio_controls
@@ -215,10 +214,12 @@ impl AppModel {
                         .inspect_err(|e| error!("{}", e))
                         .ok();
                 }
+                self.save_global_state();
             }
             AppEvent::ChangeMidiClockPort(port) => {
                 global::set_midi_clock_port(port);
                 AppModel::start_midi_clock_listener(self.app_tx.tx.clone());
+                self.save_global_state();
             }
             AppEvent::ChangeMidiControlInputPort(port) => {
                 global::set_midi_control_in_port(port);
@@ -228,6 +229,7 @@ impl AppModel {
                         .inspect_err(|e| error!("{}", e))
                         .ok();
                 }
+                self.save_global_state();
             }
             AppEvent::ChangeMidiControlOutputPort(port) => {
                 global::set_midi_control_out_port(port.clone());
@@ -239,6 +241,7 @@ impl AppModel {
                         None
                     }
                 };
+                self.save_global_state();
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
@@ -294,8 +297,12 @@ impl AppModel {
                 self.hrcc = hrcc;
                 if let Some(hub) = self.control_hub_mut() {
                     hub.midi_controls.hrcc = hrcc;
-                    hub.midi_controls.restart().unwrap();
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|e| error!("{}", e))
+                        .ok();
                 }
+                self.save_global_state();
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
@@ -394,18 +401,7 @@ impl AppModel {
                     }
                 }
 
-                if let Err(e) = storage::save_global_state(GlobalSettings {
-                    hrcc: self.hrcc,
-                    midi_clock_port: global::midi_clock_port(),
-                    midi_control_in_port: global::midi_control_in_port(),
-                    midi_control_out_port: global::midi_control_out_port(),
-                    ..Default::default()
-                }) {
-                    self.app_tx.alert_and_log(
-                        format!("Failed to persist global settings: {}", e),
-                        log::Level::Error,
-                    );
-                }
+                self.save_global_state();
             }
             AppEvent::SendMappings => {
                 let mappings = self.map_mode.mappings_as_vec();
@@ -576,6 +572,21 @@ impl AppModel {
                     self.ui_tx.emit(message.clone());
                 }
             }
+        }
+    }
+
+    fn save_global_state(&self) {
+        if let Err(e) = storage::save_global_state(GlobalSettings {
+            hrcc: self.hrcc,
+            midi_clock_port: global::midi_clock_port(),
+            midi_control_in_port: global::midi_control_in_port(),
+            midi_control_out_port: global::midi_control_out_port(),
+            ..Default::default()
+        }) {
+            self.app_tx.alert_and_log(
+                format!("Failed to persist global settings: {}", e),
+                log::Level::Error,
+            );
         }
     }
 

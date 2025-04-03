@@ -1,8 +1,7 @@
 //! **⚠️ Experimental**
 //! Receive single-channel, multiband audio with configurable FFT bands.
 
-use cpal::traits::*;
-use cpal::BuildStreamError;
+use cpal::{traits::*, Device, Stream, StreamConfig};
 use rustfft::num_complex::Complex;
 use rustfft::{Fft, FftPlanner};
 use std::cmp::Ordering;
@@ -10,6 +9,7 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
+use crate::framework::frame_controller;
 
 /// Configuration for envelope following behavior, controlling how quickly the
 /// envelope tracks changes in the input signal.
@@ -49,21 +49,106 @@ pub struct Audio {
     slew_config: SlewConfig,
     previous_band_values: Vec<f32>,
     cutoffs: Vec<f32>,
+    stream: Option<Stream>,
+    is_active: bool,
 }
 
-impl Audio {
-    pub fn new(sample_rate: usize, frame_rate: f32) -> Self {
-        let audio_processor =
-            Arc::new(Mutex::new(AudioProcessor::new(sample_rate, frame_rate)));
-
-        init_audio(audio_processor.clone()).expect("Unable to init audio");
-
+impl Default for Audio {
+    fn default() -> Self {
         Self {
-            audio_processor,
+            audio_processor: Arc::new(Mutex::new(AudioProcessor::new())),
             slew_config: SlewConfig::default(),
             previous_band_values: vec![],
             cutoffs: vec![],
+            stream: None,
+            is_active: false,
         }
+    }
+}
+
+impl Audio {
+    pub fn new() -> Self {
+        let mut audio = Self::default();
+
+        if let Err(e) = audio.start() {
+            error!("Failed to initialize audio: {}. Using default buffer.", e);
+        }
+
+        audio
+    }
+
+    pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
+        let (device, stream_config) = Self::device_and_stream_config()?;
+
+        {
+            let mut processor = self.audio_processor.lock().unwrap();
+            processor.initialize(stream_config.sample_rate.0 as usize);
+        }
+
+        let shared_audio = self.audio_processor.clone();
+        let channels = stream_config.channels;
+
+        if channels < 1 {
+            return Err("Device must have at least one channel".into());
+        }
+
+        let stream = device.build_input_stream(
+            &stream_config,
+            move |data: &[f32], _| {
+                // Using only left channel only for simplicity
+                // Left = even indexes in interleaved audio
+                let left_channel: Vec<f32> =
+                    data.iter().step_by(channels as usize).cloned().collect();
+
+                let mut processor = shared_audio.lock().unwrap();
+                processor.add_samples(&left_channel);
+            },
+            move |err| error!("Error in audio stream: {}", err),
+            None,
+        )?;
+
+        stream.play()?;
+        self.stream = Some(stream);
+        self.is_active = true;
+
+        info!(
+            "Audio connected to device: {:?}",
+            device.name().unwrap_or_else(|_| "Unknown".to_string())
+        );
+
+        Ok(())
+    }
+
+    pub fn stop(&mut self) {
+        if let Some(_stream) = self.stream.take() {
+            self.is_active = false;
+            debug!("Audio stream stopped");
+        }
+    }
+
+    pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
+        self.stop();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        self.start()
+    }
+
+    fn device_and_stream_config(
+    ) -> Result<(Device, StreamConfig), Box<dyn Error>> {
+        let host = cpal::default_host();
+        let device_name = global::audio_device_name();
+        let device = host
+            .input_devices()?
+            .find(|d| d.name().map(|n| n == device_name).unwrap_or(false))
+            .ok_or_else(|| {
+                Box::<dyn Error>::from(format!(
+                    "Audio device '{}' not found",
+                    device_name
+                ))
+            })?;
+
+        let stream_config = device.default_input_config()?.into();
+
+        Ok((device, stream_config))
     }
 
     pub fn bands(
@@ -106,28 +191,44 @@ impl Audio {
 
         smoothed
     }
+
+    pub fn is_active(&self) -> bool {
+        self.is_active
+    }
 }
 
 struct AudioProcessor {
     sample_rate: usize,
     buffer: Vec<f32>,
     buffer_size: usize,
-    fft: Arc<dyn Fft<f32>>,
+    fft: Option<Arc<dyn Fft<f32>>>,
 }
 
 impl AudioProcessor {
-    pub fn new(sample_rate: usize, frame_rate: f32) -> Self {
-        let buffer_size = (sample_rate as f32 / frame_rate).ceil() as usize;
-        trace!("buffer_size: {}", buffer_size);
-        let mut planner: FftPlanner<f32> = FftPlanner::new();
-        let fft = planner.plan_fft_forward(buffer_size);
-
+    pub fn new() -> Self {
         Self {
-            sample_rate,
-            buffer: vec![0.0; buffer_size],
-            buffer_size,
-            fft,
+            // Default, will be overridden
+            sample_rate: 48_000,
+            buffer: Vec::new(),
+            // Default, will be calculated
+            buffer_size: 1024,
+            fft: None,
         }
+    }
+
+    pub fn initialize(&mut self, sample_rate: usize) {
+        self.sample_rate = sample_rate;
+        let frame_rate = frame_controller::fps();
+        self.buffer_size = (sample_rate as f32 / frame_rate).ceil() as usize;
+        self.buffer = vec![0.0; self.buffer_size];
+        let mut planner = FftPlanner::new();
+        self.fft = Some(planner.plan_fft_forward(self.buffer_size));
+
+        trace!(
+            "AudioProcessor initialized: sample_rate={}, buffer_size={}",
+            self.sample_rate,
+            self.buffer_size
+        );
     }
 
     pub fn add_samples(&mut self, samples: &[f32]) {
@@ -184,10 +285,18 @@ impl AudioProcessor {
         buffer: &[f32],
         cutoffs: &[f32],
     ) -> Vec<f32> {
+        let fft = match &self.fft {
+            Some(fft) => fft,
+            None => {
+                error!("FFT not initialized");
+                return vec![0.0; cutoffs.len() - 1];
+            }
+        };
+
         let mut complex_input: Vec<Complex<f32>> =
             buffer.iter().map(|&x| Complex::new(x, 0.0)).collect();
 
-        self.fft.process(&mut complex_input);
+        fft.process(&mut complex_input);
 
         let freq_resolution = (self.sample_rate / complex_input.len()) as f32;
 
@@ -273,19 +382,44 @@ impl AudioProcessor {
             .collect()
     }
 
-    /// Generates logarithmically spaced frequency cutoffs in Hz for the
-    /// specified number of bands. Lower bands have custom spacing to avoid
-    /// multiple bands mapping to the same fft bin index which results in
-    /// empties. Works OK for <= 32 bands but starts to produce gaps at
-    /// higher band counts.
-    ///
-    /// # Arguments
-    /// * `num_bands` - Number of bands to generate (4, 8, 16, 32, 128, or 256)
-    /// * `min_freq` - Minimum frequency in Hz (typically 20-100 Hz)
-    /// * `max_freq` - Maximum frequency in Hz (typically 10000-20000 Hz)
-    ///
-    /// # Returns
-    /// Vector of frequency cutoffs in Hz as usize values
+    /// Convert frequency in Hz to Mel scale
+    fn hz_to_mel(freq: f32) -> f32 {
+        2595.0 * (1.0 + freq / 700.0).log10()
+    }
+
+    /// Convert Mel scale back to frequency in Hz
+    fn mel_to_hz(mel: f32) -> f32 {
+        700.0 * (10.0f32.powf(mel / 2595.0) - 1.0)
+    }
+
+    pub fn generate_mel_cutoffs(
+        &self,
+        num_bands: usize,
+        min_freq: f32,
+        max_freq: f32,
+    ) -> Vec<f32> {
+        assert!(num_bands >= 2, "Number of bands must be at least 2");
+        assert!(min_freq < max_freq, "min_freq must be less than max_freq");
+
+        let mut cutoffs = Vec::with_capacity(num_bands + 1);
+
+        // Convert frequency range to Mel scale
+        let min_mel = Self::hz_to_mel(min_freq);
+        let max_mel = Self::hz_to_mel(max_freq);
+
+        // Create linearly spaced points in Mel scale
+        let mel_step = (max_mel - min_mel) / num_bands as f32;
+
+        // Convert back to Hz
+        for i in 0..=num_bands {
+            let mel = min_mel + mel_step * i as f32;
+            let hz = Self::mel_to_hz(mel);
+            cutoffs.push(hz);
+        }
+
+        cutoffs
+    }
+
     #[allow(dead_code)]
     pub fn generate_cutoffs(
         &self,
@@ -336,44 +470,6 @@ impl AudioProcessor {
 
         cutoffs
     }
-
-    /// Convert frequency in Hz to Mel scale
-    fn hz_to_mel(freq: f32) -> f32 {
-        2595.0 * (1.0 + freq / 700.0).log10()
-    }
-
-    /// Convert Mel scale back to frequency in Hz
-    fn mel_to_hz(mel: f32) -> f32 {
-        700.0 * (10.0f32.powf(mel / 2595.0) - 1.0)
-    }
-
-    pub fn generate_mel_cutoffs(
-        &self,
-        num_bands: usize,
-        min_freq: f32,
-        max_freq: f32,
-    ) -> Vec<f32> {
-        assert!(num_bands >= 2, "Number of bands must be at least 2");
-        assert!(min_freq < max_freq, "min_freq must be less than max_freq");
-
-        let mut cutoffs = Vec::with_capacity(num_bands + 1);
-
-        // Convert frequency range to Mel scale
-        let min_mel = Self::hz_to_mel(min_freq);
-        let max_mel = Self::hz_to_mel(max_freq);
-
-        // Create linearly spaced points in Mel scale
-        let mel_step = (max_mel - min_mel) / num_bands as f32;
-
-        // Convert back to Hz
-        for i in 0..=num_bands {
-            let mel = min_mel + mel_step * i as f32;
-            let hz = Self::mel_to_hz(mel);
-            cutoffs.push(hz);
-        }
-
-        cutoffs
-    }
 }
 
 pub fn list_audio_devices() -> Result<Vec<String>, Box<dyn Error>> {
@@ -388,69 +484,4 @@ pub fn list_audio_devices() -> Result<Vec<String>, Box<dyn Error>> {
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(info)
-}
-
-fn init_audio(
-    shared_audio: Arc<Mutex<AudioProcessor>>,
-) -> Result<(), BuildStreamError> {
-    let audio_host = cpal::default_host();
-    let devices: Vec<_> = audio_host.input_devices().unwrap().collect();
-    let audio_device_name = crate::config::AUDIO_DEVICE_NAME;
-
-    let device = devices
-        .into_iter()
-        .find(|device| {
-            let name = device.name().unwrap();
-            trace!("Enumerating devices. Device name: {}", name);
-            let found = device.name().unwrap() == audio_device_name;
-            if found {
-                trace!("Using: {}", audio_device_name);
-            }
-            found
-        })
-        .unwrap_or_else(|| {
-            panic!("No device named {} found", audio_device_name)
-        });
-
-    let input_config = match device.default_input_config() {
-        Ok(config) => {
-            trace!("Default output stream config: {:?}", config);
-            config
-        }
-        Err(err) => {
-            panic!("Failed to get default output config: {:?}", err);
-        }
-    };
-
-    let stream = match input_config.sample_format() {
-        cpal::SampleFormat::F32 => device.build_input_stream(
-            &input_config.into(),
-            move |source_data: &[f32], _| {
-                // There is no concept of "channels" for a device.
-                // All channel data is stored in a flat array:
-                //
-                //      let channel_1 = source_data.iter().step_by(16).cloned();
-                //      let channel_8 = source_data.iter().skip(7).step_by(16).cloned();
-                //      let channel_16 = source_data.iter().skip(15).step_by(16).cloned();
-                //
-                // Left = even, Right = odd;
-                // Do `data.iter().skip(1).step_by(2)` for right
-                let data: Vec<f32> =
-                    source_data.iter().step_by(2).cloned().collect();
-
-                let mut audio_processor = shared_audio.lock().unwrap();
-
-                audio_processor.add_samples(&data);
-            },
-            move |err| error!("An error occurred on steam: {}", err),
-            None,
-        )?,
-        sample_format => {
-            panic!("Unsupported sample format {}", sample_format);
-        }
-    };
-
-    let _ = stream.play();
-
-    Ok(())
 }

@@ -22,7 +22,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 const DEBUG_QUADS: bool = false;
 const GRID_SIZE: usize = 128;
-const SAMPLE_RATE: usize = 48_000;
 const N_BANDS: usize = 8;
 const CIRCLE_RESOLUTION: f32 = 6.0;
 
@@ -79,7 +78,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
     let wr = ctx.window_rect();
     let w = wr.w();
     let h = wr.h();
-    let audio = Audio::new(SAMPLE_RATE, SKETCH_CONFIG.fps);
+    let audio = Audio::new();
 
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(Bpm::new(134.0)))

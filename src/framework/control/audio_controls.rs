@@ -14,8 +14,6 @@ use std::{
     time::Duration,
 };
 
-use crate::config::MULTICHANNEL_AUDIO_DEVICE_COUNT as CHANNEL_COUNT;
-
 use crate::framework::frame_controller;
 use crate::framework::prelude::*;
 
@@ -125,8 +123,7 @@ impl std::fmt::Debug for AudioControls {
 impl AudioControls {
     pub fn new(buffer_processor: BufferProcessor) -> Self {
         // TODO: refactor - none of this data is needed until we call `start`
-        let buffer_size = (48_000.0 / frame_controller::fps()).ceil() as usize;
-        let processor = MultichannelAudioProcessor::new(buffer_size, 16);
+        let processor = MultichannelAudioProcessor::new(800, 16);
         Self {
             is_active: false,
             buffer_processor,

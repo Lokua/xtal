@@ -122,7 +122,6 @@ struct FrameController {
 
 impl FrameController {
     fn new() -> Self {
-        info!("Using atomic_impl");
         let now = Instant::now();
         Self {
             last_frame_time: now,

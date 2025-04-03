@@ -158,13 +158,33 @@ that with https://support.showsync.com/sync-tools/livemtc/introduction
 
 ### Audio
 
+#### Multichannel Audio
+
+The `AudioControls` struct treats each audio channel as an individual control
+signal with optional slew limiting, suitable for audio-rate or control-rate
+signals. You can configure the audio device that used in Lattice globally for
+all sketches in the UI via the settings tab. On my computer I'm using the [16
+channel version of Blackhole][blackhole]. See setup example below:
+
+##### Aggregate Device Setup
+
+![Mac Aggregate Device Setup](assets/aggregate-device-multichannel.png)
+
+> In the above setup I use 1-2 as the main outs and send the multichannel data
+> out to channels 3-18 in my DAW which then appear on Blackhole channels 1-16
+
+See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
+[cv_dev.rs](src/sketches/dev/cv_dev.rs) for an example that uses CV.
+
 #### Single Channel, Multiband Audio (_experimental_)
 
-The Audio struct in Lattice is hardcoded to read audio from the first input
-(index 0) on a device named "Lattice" (this can be changed by editing the
-`AUDIO_DEVICE_NAME` constant in [src/config.rs][config]). I am currently doing
-this via Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture
-output from my DAW. Here are some screenshots of the setup:
+See [audio_dev.rs](src/sketches/dev/audio_dev.rs) for an example sketch.
+
+The `Audio` struct in lattice is configured to process the first channel of
+whatever audio device you have selected in the UI. I am currently doing this via
+Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture output
+from my DAW (setup screenshots below). Note that this module is experimental and
+doesn't integrate with the rest of Lattice as nicely as `AudioControls` does.
 
 ##### Aggregate Device Setup
 
@@ -180,25 +200,6 @@ output from my DAW. Here are some screenshots of the setup:
 > Live's audio preferences)
 
 ![Ableton Live - Blackhole Track Routing](assets/live-blackhole-track-routing.png)
-
-See [audio_dev.rs](src/sketches/dev/audio_dev.rs) for an example sketch.
-
-#### Multichannel Audio
-
-Similar to the above, only treats each audio channel as an individual control
-signal with optional slew limiting, suitable for audio-rate or control-rate
-signals. Lattice is configured to use an audio device named "Lattice16". On my
-computer I'm using the [16 channel version of Blackhole][blackhole].
-
-##### Aggregate Device Setup
-
-![Mac Aggregate Device Setup](assets/aggregate-device-multichannel.png)
-
-> In the above setup I use 1-2 as the main outs and send the multichannel data
-> out to channels 2-18 which then appear on Blackhole channels 1-16
-
-See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
-[cv_dev.rs](src/sketches/dev/cv_dev.rs) for an example that uses CV.
 
 ### MIDI
 

@@ -26,8 +26,7 @@ pub struct AudioDev {
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> AudioDev {
-    let audio =
-        Audio::new(crate::config::AUDIO_DEVICE_SAMPLE_RATE, SKETCH_CONFIG.fps);
+    let audio = Audio::new();
 
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
@@ -54,6 +53,7 @@ impl Sketch for AudioDev {
             self.controls.get("rise"),
             self.controls.get("fall"),
         );
+        // debug_throttled!(1_000, "fft_bands: {:?}", self.fft_bands);
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
