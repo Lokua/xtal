@@ -116,7 +116,7 @@ h6 {
 }
 
 h2 {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 fieldset {
@@ -379,6 +379,10 @@ input[type='checkbox']:checked::before {
 
     &:first-child {
       border-right: 1px solid var(--muted-color);
+    }
+
+    &:last-child {
+      padding-left: 12px;
     }
   }
 }

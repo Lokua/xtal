@@ -3,5 +3,6 @@
   "hrcc": false,
   "midi_clock_port": "IAC Driver Bus 1",
   "midi_control_in_port": "IAC Driver Lattice In",
-  "midi_control_out_port": "IAC Driver Lattice In"
+  "midi_control_out_port": "IAC Driver Lattice In",
+  "audio_device_name": "Lattice16"
 }

@@ -1,6 +1,6 @@
 {
-  "version": "1",
-  "controls": [
+  "version": "2",
+  "ui_controls": [
     {
       "type": "Slider",
       "name": "pre_emphasis",
@@ -9,20 +9,20 @@
     {
       "type": "Slider",
       "name": "detect",
-      "value": 0
-    },
-    {
-      "type": "Slider",
-      "name": "fall",
-      "value": 0.587
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "rise",
       "value": 0.587
+    },
+    {
+      "type": "Slider",
+      "name": "fall",
+      "value": 0.587
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "audio_controls": []
+  "snapshots": {}
 }

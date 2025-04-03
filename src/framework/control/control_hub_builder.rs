@@ -1,6 +1,5 @@
 use super::ControlHub;
-use crate::config::AUDIO_DEVICE_SAMPLE_RATE;
-use crate::framework::{frame_controller, prelude::*};
+use crate::framework::prelude::*;
 
 pub struct ControlHubBuilder<T: TimingSource> {
     timing: Option<T>,
@@ -178,11 +177,8 @@ impl<T: TimingSource> ControlHubBuilder<T> {
 
     fn ensure_audio_controls(&mut self) -> &mut AudioControls {
         if self.audio_controls.is_none() {
-            self.audio_controls = Some(AudioControls::new(
-                frame_controller::fps(),
-                AUDIO_DEVICE_SAMPLE_RATE,
-                default_buffer_processor,
-            ));
+            self.audio_controls =
+                Some(AudioControls::new(default_buffer_processor));
         }
         self.audio_controls.as_mut().unwrap()
     }
@@ -224,6 +220,9 @@ impl<T: TimingSource> ControlHubBuilder<T> {
 
         if let Some(audio_controls) = self.audio_controls {
             c.audio_controls = audio_controls;
+            if let Err(e) = c.audio_controls.start() {
+                error!("Unable to start audio_controls: {}", e);
+            }
         }
 
         c

@@ -3,6 +3,8 @@ import Select from './Select'
 import { Mappings, noop } from './types'
 
 type Props = {
+  audioDevice: string
+  audioDevices: string[]
   hrcc: boolean
   mappings: Mappings
   mappingsEnabled: boolean
@@ -12,6 +14,7 @@ type Props = {
   midiOutputPort: string
   midiOutputPorts: string[]
   sliderNames: string[]
+  onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
   onChangeMappingsEnabled: () => void
   onChangeMidiClockPort: (port: string) => void
@@ -23,6 +26,8 @@ type Props = {
 }
 
 export default function Settings({
+  audioDevice,
+  audioDevices,
   hrcc,
   mappings,
   mappingsEnabled,
@@ -32,6 +37,7 @@ export default function Settings({
   midiOutputPort,
   midiOutputPorts,
   sliderNames,
+  onChangeAudioDevice,
   onChangeHrcc,
   onChangeMappingsEnabled,
   onChangeMidiClockPort,
@@ -49,40 +55,34 @@ export default function Settings({
           title="Sends the state of all CCs to the MIDI output port"
           onClick={onClickSend}
         >
-          Send (Resync)
+          Send
         </button>
         <fieldset>
           <Select
-            id="clockPort"
+            id="clock-port"
             value={midiClockPort}
             options={midiInputPorts}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              onChangeMidiClockPort(e.currentTarget.value)
-            }}
+            onChange={onChangeMidiClockPort}
           />
-          <label htmlFor="clockPort">Clock Port</label>
+          <label htmlFor="clock-port">Clock Port</label>
         </fieldset>
         <fieldset>
           <Select
-            id="inputPort"
+            id="input-port"
             value={midiInputPort}
             options={midiInputPorts}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              onChangeMidiInputPort(e.currentTarget.value)
-            }}
+            onChange={onChangeMidiInputPort}
           />
-          <label htmlFor="inputPorts">Input Port</label>
+          <label htmlFor="input-port">Input Port</label>
         </fieldset>
         <fieldset>
           <Select
-            id="outputPort"
+            id="output-port"
             value={midiOutputPort}
             options={midiOutputPorts}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              onChangeMidiOutputPort(e.currentTarget.value)
-            }}
+            onChange={onChangeMidiOutputPort}
           />
-          <label htmlFor="outputPort">Output Port</label>
+          <label htmlFor="output-port">Output Port</label>
         </fieldset>
         <fieldset title="Enable high resolution (14bit) MIDI for controls 0-31">
           <input
@@ -94,6 +94,15 @@ export default function Settings({
           <label htmlFor="hrcc">HRCC</label>
         </fieldset>
         <h2>Audio</h2>
+        <fieldset>
+          <Select
+            id="audio-device"
+            value={audioDevice}
+            options={audioDevices}
+            onChange={onChangeAudioDevice}
+          />
+          <label htmlFor="audio-device">Device</label>
+        </fieldset>
       </section>
       <section>
         {sliderNames.length && (

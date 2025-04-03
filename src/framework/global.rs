@@ -4,6 +4,7 @@ use once_cell::sync::Lazy;
 
 use crate::config::{
     MIDI_CLOCK_PORT, MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT,
+    MULTICHANNEL_AUDIO_DEVICE_NAME,
 };
 
 pub static GLOBAL: Lazy<Mutex<Global>> =
@@ -39,10 +40,21 @@ pub fn set_midi_control_out_port(port: String) {
     global.midi_control_out_port = port;
 }
 
+pub fn audio_device_name() -> String {
+    let global = GLOBAL.lock().unwrap();
+    global.audio_device_name.clone()
+}
+
+pub fn set_audio_device_name(name: &str) {
+    let mut global = GLOBAL.lock().unwrap();
+    global.audio_device_name = name.to_string();
+}
+
 pub struct Global {
     midi_clock_port: String,
     midi_control_in_port: String,
     midi_control_out_port: String,
+    audio_device_name: String,
 }
 
 impl Default for Global {
@@ -51,6 +63,7 @@ impl Default for Global {
             midi_clock_port: MIDI_CLOCK_PORT.to_string(),
             midi_control_in_port: MIDI_CONTROL_IN_PORT.to_string(),
             midi_control_out_port: MIDI_CONTROL_OUT_PORT.to_string(),
+            audio_device_name: MULTICHANNEL_AUDIO_DEVICE_NAME.to_string(),
         }
     }
 }

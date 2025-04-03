@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { Control, Mappings, Slider } from './types.ts'
+import type { Control, ControlValue, Mappings, Slider } from './types.ts'
 import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
-import Midi from './Midi.tsx'
 import Settings from './Settings.tsx'
 
 type EventMap = {
@@ -12,6 +11,7 @@ type EventMap = {
   AverageFps: number
   Bpm: number
   CaptureFrame: void
+  ChangeAudioDevice: string
   ChangeMidiClockPort: string
   ChangeMidiControlInputPort: string
   ChangeMidiControlOutputPort: string
@@ -23,6 +23,8 @@ type EventMap = {
   Hrcc: boolean
   HubPopulated: Control[]
   Init: {
+    audioDevice: string
+    audioDevices: string[]
     isLightTheme: boolean
     midiClockPort: string
     midiInputPort: string
@@ -101,10 +103,7 @@ function subscribe<K extends keyof EventMap>(
   }
 }
 
-function post(
-  event: keyof EventMap,
-  data?: boolean | number | string | object
-) {
+function post(event: keyof EventMap, data?: ControlValue | object) {
   if (data === undefined) {
     window.ipc.postMessage(JSON.stringify(event))
   } else {
@@ -118,6 +117,8 @@ function post(
 
 export default function App() {
   const [alertText, setAlertText] = useState('')
+  const [audioDevices, setAudioDevices] = useState<string[]>([])
+  const [audioDevice, setAudioDevice] = useState('')
   const [bpm, setBpm] = useState(134)
   const [controls, setControls] = useState<Control[]>([])
   const [fps, setFps] = useState(60)
@@ -142,7 +143,10 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = subscribe((event: keyof EventMap, data) => {
       if (event !== 'AverageFps') {
-        console.debug('[app - sub event]:', event, 'data:', data)
+        console.debug('[app]', {
+          event,
+          data,
+        })
       }
 
       switch (event) {
@@ -172,6 +176,8 @@ export default function App() {
         }
         case 'Init': {
           const d = data as EventMap['Init']
+          setAudioDevice(d.audioDevice)
+          setAudioDevices(d.audioDevices)
           setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
@@ -219,7 +225,7 @@ export default function App() {
     post('Ready')
 
     return () => {
-      console.log('Unsubscribing')
+      console.log('[app] Unsubscribing')
       unsubscribe()
     }
   }, [])
@@ -312,6 +318,11 @@ export default function App() {
 
   function onCaptureFrame() {
     post('CaptureFrame')
+  }
+
+  function onChangeAudioDevice(name: string) {
+    setAudioDevice(name)
+    post('ChangeAudioDevice', name)
   }
 
   function onChangeControl(
@@ -480,6 +491,8 @@ export default function App() {
       <main>
         {view === View.Settings ? (
           <Settings
+            audioDevice={audioDevice}
+            audioDevices={audioDevices}
             hrcc={hrcc}
             mappings={mappings}
             mappingsEnabled={mappingsEnabled}
@@ -489,6 +502,7 @@ export default function App() {
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
             sliderNames={getSliderNames()}
+            onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
             onChangeMidiClockPort={onChangeMidiClockPort}
