@@ -1,4 +1,5 @@
 import MapMode from './MapMode'
+import OscPortInput from './OscPortInput'
 import Select from './Select'
 import { Mappings, noop } from './types'
 
@@ -13,6 +14,7 @@ type Props = {
   midiInputPorts: string[]
   midiOutputPort: string
   midiOutputPorts: string[]
+  oscPort: number
   sliderNames: string[]
   onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
@@ -20,6 +22,7 @@ type Props = {
   onChangeMidiClockPort: (port: string) => void
   onChangeMidiInputPort: (port: string) => void
   onChangeMidiOutputPort: (port: string) => void
+  onChangeOscPort: (port: number) => void
   onClickSend: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
@@ -36,6 +39,7 @@ export default function Settings({
   midiInputPorts,
   midiOutputPort,
   midiOutputPorts,
+  oscPort,
   sliderNames,
   onChangeAudioDevice,
   onChangeHrcc,
@@ -43,6 +47,7 @@ export default function Settings({
   onChangeMidiClockPort,
   onChangeMidiInputPort,
   onChangeMidiOutputPort,
+  onChangeOscPort,
   onClickSend,
   onRemoveMapping,
   onSetCurrentlyMapping,
@@ -103,9 +108,22 @@ export default function Settings({
           />
           <label htmlFor="audio-device">Device</label>
         </fieldset>
+        <h2>OSC</h2>
+        <OscPortInput port={oscPort} onChange={onChangeOscPort} />
+        {/* <fieldset>
+          <input
+            id="osc-port"
+            type="text"
+            value={oscPort}
+            onChange={(e) => {
+              onChangeOscPort(e.target.valueAsNumber)
+            }}
+          />
+          <label htmlFor="osc-port">Port</label>
+        </fieldset> */}
       </section>
       <section>
-        {sliderNames.length && (
+        {sliderNames.length > 0 ? (
           <>
             <h2>MIDI Mappings</h2>
             <fieldset
@@ -127,6 +145,12 @@ export default function Settings({
               onSetCurrentlyMapping={onSetCurrentlyMapping}
             />
           </>
+        ) : (
+          <div className="empty-message-container">
+            <em>
+              MIDI Mappings are unavailable to sketches without Slider controls
+            </em>
+          </div>
         )}
       </section>
     </div>

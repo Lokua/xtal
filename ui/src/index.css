@@ -8,6 +8,7 @@
   :root {
     --background-color: #fff;
     --text-color: #222;
+    --text-color-muted: #666;
     --muted-color: #ccc;
     --meter-color: limegreen;
     --control-background-color: #eee;
@@ -27,6 +28,7 @@
   :root {
     --background-color: #1a1a1a;
     --text-color: #ddd;
+    --text-color-muted: #aaa;
     --muted-color: #444;
     --meter-color: rgb(34, 222, 34);
     --control-background-color: #363636;
@@ -137,10 +139,24 @@ label {
   color: var(--text-color);
 }
 
+button:focus,
+select:focus,
+input:focus {
+  outline: none;
+}
+
+button:focus,
+select:focus,
+input:focus,
+.select-wrapper:has(select:focus) > select {
+  box-shadow: 0 0 0 2px var(--meter-color);
+  border-color: var(--meter-color);
+}
+
 button,
 select,
-.number-box,
-input {
+input,
+.number-box {
   height: var(--control-height);
   margin: var(--control-margin);
   font-size: var(--control-font-size);
@@ -198,6 +214,13 @@ button {
   }
 }
 
+input[type='text'] {
+  padding-left: 6px;
+  padding-right: 6px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
@@ -253,6 +276,19 @@ input[type='checkbox']:checked::before {
   font-size: 14px;
 }
 
+.number-box {
+  max-width: 54px;
+  padding: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.number-box:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: inherit;
+}
+
 .separator {
   position: relative;
   width: 100%;
@@ -287,19 +323,6 @@ input[type='checkbox']:checked::before {
   min-height: var(--control-height);
   margin: 0 2px;
   background-color: var(--muted-color);
-}
-
-.number-box {
-  max-width: 54px;
-  padding: 6px;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.number-box:focus {
-  outline: none;
-  box-shadow: none;
-  border-color: inherit;
 }
 
 .meter {
@@ -385,4 +408,17 @@ input[type='checkbox']:checked::before {
       padding-left: 12px;
     }
   }
+
+  select {
+    width: 170px;
+  }
+}
+
+.empty-message-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--text-color-muted);
 }

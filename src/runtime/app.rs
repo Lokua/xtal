@@ -14,6 +14,7 @@ use super::shared::lattice_project_root;
 use super::storage::{self, load_global_state, load_program_state};
 use super::tap_tempo::TapTempo;
 use super::web_view::{self as ui};
+use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::{frame_controller, prelude::*};
 
 pub fn run() {
@@ -37,6 +38,7 @@ pub enum AppEvent {
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
     ChangeMidiControlOutputPort(String),
+    ChangeOscPort(u16),
     ClearNextFrame,
     CommitMappings,
     CurrentlyMapping(String),
@@ -242,6 +244,12 @@ impl AppModel {
                     }
                 };
                 self.save_global_state();
+            }
+            AppEvent::ChangeOscPort(port) => {
+                global::set_osc_port(port);
+                if let Err(e) = SHARED_OSC_RECEIVER.restart() {
+                    error!("Failed to restart OSC receiver: {}", e);
+                }
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
@@ -796,6 +804,7 @@ fn model(app: &App) -> AppModel {
     });
 
     app.set_fullscreen_on_shortcut(false);
+    app.set_exit_on_escape(false);
 
     let main_window_id = app
         .new_window()
@@ -948,6 +957,10 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 // Cmd + M
                 Key::M if logo_pressed && !shift_pressed => {
                     model.app_tx.emit(AppEvent::ToggleMainFocus);
+                }
+                // Cmd + Q
+                Key::Q if logo_pressed && !shift_pressed => {
+                    debug!("Q");
                 }
                 // R
                 Key::R if has_no_modifiers => {

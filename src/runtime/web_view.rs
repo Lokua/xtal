@@ -27,7 +27,11 @@ use crate::runtime::registry::REGISTRY;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Event {
     Advance,
+
+    /// Sent from parent to alert frontend of various success/failures
     Alert(String),
+
+    /// Sent from parent every ~1sec
     AverageFps(f32),
 
     /// Sent from parent after receiving Tap event
@@ -37,12 +41,22 @@ pub enum Event {
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
     ChangeMidiControlOutputPort(String),
+    ChangeOscPort(u16),
+
     ClearBuffer,
     CommitMappings,
     CurrentlyMapping(String),
+
+    /// Sent from parent after a recording has been stopped and video encoding
+    /// has began
     Encoding(bool),
+
+    /// TODO: are we even using this?
     Error(String),
     Hrcc(bool),
+
+    /// Sent from parent whenever a control script has changed and controls have
+    /// been reloaded
     HubPopulated(Vec<SerializableControl>),
 
     /// Sent from parent after child sends [`Event::Ready`]
@@ -56,6 +70,7 @@ pub enum Event {
         midi_output_port: String,
         midi_input_ports: Vec<(usize, String)>,
         midi_output_ports: Vec<(usize, String)>,
+        osc_port: u16,
         sketch_names: Vec<String>,
         sketch_name: String,
     },
@@ -84,6 +99,9 @@ pub enum Event {
     Reset,
     Save,
     SendMidi,
+
+    /// Sent from parent after a snapshot has completed so we can keep controls
+    /// in sync
     SnapshotEnded(Vec<SerializableControl>),
     SnapshotRecall(String),
     SnapshotStore(String),
@@ -100,7 +118,11 @@ pub enum Event {
     Tap,
     TapTempoEnabled(bool),
     ToggleFullScreen,
+
+    /// Two message depending on which window receives the key event
     ToggleGuiFocus,
+
+    /// Two message depending on which window receives the key event
     ToggleMainFocus,
     TransitionTime(f32),
     UpdateControlBool {
@@ -115,6 +137,8 @@ pub enum Event {
         name: String,
         value: String,
     },
+
+    /// Sent from parent
     UpdatedControls(Vec<SerializableControl>),
 }
 
@@ -202,6 +226,9 @@ pub fn launch(
                 Event::ChangeMidiControlOutputPort(port) => {
                     app_tx.emit(AppEvent::ChangeMidiControlOutputPort(port));
                 }
+                Event::ChangeOscPort(port) => {
+                    app_tx.emit(AppEvent::ChangeOscPort(port));
+                }
                 Event::ClearBuffer => {
                     app_tx.emit(AppEvent::ClearNextFrame);
                 }
@@ -234,6 +261,7 @@ pub fn launch(
                 Event::Ready => {
                     let registry = REGISTRY.read().unwrap();
 
+                    // TODO: for consistency this should be sent from app
                     let data = Event::Init {
                         audio_device: global::audio_device_name(),
                         audio_devices: list_audio_devices().unwrap_or_default(),
@@ -241,13 +269,14 @@ pub fn launch(
                             dark_light::detect(),
                             dark_light::Mode::Light
                         ),
-                        sketch_names: registry.names().clone(),
-                        sketch_name: sketch_name.to_string(),
                         midi_clock_port: global::midi_clock_port(),
                         midi_input_port: global::midi_control_in_port(),
                         midi_output_port: global::midi_control_out_port(),
                         midi_input_ports: midi::list_ports(Inputs).unwrap(),
                         midi_output_ports: midi::list_ports(Outputs).unwrap(),
+                        osc_port: global::osc_port(),
+                        sketch_names: registry.names().clone(),
+                        sketch_name: sketch_name.to_string(),
                     };
 
                     init_sender.send(data).unwrap();

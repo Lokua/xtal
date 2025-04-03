@@ -1,31 +1,41 @@
 use nannou_osc as osc;
+use once_cell::sync::Lazy;
+use std::error::Error;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 use super::prelude::*;
 
-lazy_static::lazy_static! {
-    pub static ref SHARED_OSC_RECEIVER: Arc<Receiver> = {
-        let receiver = Receiver::new();
-        if let Err(e) = receiver.start() {
-            warn!("Failed to start shared OSC receiver: {}", e);
-        }
-        receiver
-    };
-}
+pub static SHARED_OSC_RECEIVER: Lazy<Arc<Receiver>> = Lazy::new(|| {
+    let receiver = Receiver::new();
+    if let Err(e) = receiver.start() {
+        warn!("Failed to start shared OSC receiver: {}", e);
+    }
+    receiver
+});
 
 type OscCallback = Box<dyn Fn(&osc::Message) + Send + Sync>;
 
-#[derive(Default)]
 pub struct Receiver {
     callbacks: Arc<Mutex<HashMap<String, Vec<OscCallback>>>>,
+    thread_handle: Arc<Mutex<Option<thread::JoinHandle<()>>>>,
+    thread_running: Arc<AtomicBool>,
+}
+
+impl Default for Receiver {
+    fn default() -> Self {
+        Self {
+            callbacks: Arc::new(Mutex::new(HashMap::default())),
+            thread_handle: Arc::new(Mutex::new(None)),
+            thread_running: Arc::new(AtomicBool::new(false)),
+        }
+    }
 }
 
 impl Receiver {
     pub fn new() -> Arc<Self> {
-        Arc::new(Self {
-            callbacks: Arc::new(Mutex::new(HashMap::default())),
-        })
+        Arc::new(Self::default())
     }
 
     pub fn register_callback<F>(&self, address: &str, callback: F)
@@ -38,26 +48,63 @@ impl Receiver {
         address_callbacks.push(Box::new(callback));
     }
 
-    pub fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let receiver = osc::Receiver::bind(crate::config::OSC_PORT)?;
+    pub fn start(&self) -> Result<(), Box<dyn Error>> {
+        let receiver = osc::Receiver::bind(global::osc_port())?;
         let callbacks = self.callbacks.clone();
 
-        thread::spawn(move || {
-            for (packet, _) in receiver.iter() {
-                if let osc::Packet::Message(msg) = packet {
-                    let callbacks = callbacks.lock().unwrap();
+        self.thread_running.store(true, Ordering::SeqCst);
+        let running = self.thread_running.clone();
+        let port_at_this_time = global::osc_port();
 
-                    if let Some(handlers) = callbacks.get(&msg.addr) {
-                        for handler in handlers {
-                            handler(&msg);
+        let handle = thread::spawn(move || {
+            while running.load(Ordering::SeqCst) {
+                let mut processed = false;
+                for (packet, _) in receiver.try_iter() {
+                    processed = true;
+                    if let osc::Packet::Message(msg) = packet {
+                        let callbacks = callbacks.lock().unwrap();
+
+                        if let Some(handlers) = callbacks.get(&msg.addr) {
+                            for handler in handlers {
+                                handler(&msg);
+                            }
+                        } else if let Some(handlers) = callbacks.get("*") {
+                            for handler in handlers {
+                                handler(&msg);
+                            }
                         }
                     }
                 }
+                if !processed {
+                    thread::yield_now();
+                }
             }
+            info!(
+                "OSC receiver thread on port {} is exiting",
+                port_at_this_time
+            );
         });
 
-        info!("OSC receiver listening on port {}", crate::config::OSC_PORT);
+        let mut thread_handle = self.thread_handle.lock().unwrap();
+        *thread_handle = Some(handle);
+
+        info!("OSC receiver listening on port {}", global::osc_port());
 
         Ok(())
+    }
+
+    pub fn stop(&self) -> Result<(), Box<dyn Error>> {
+        self.thread_running.store(false, Ordering::SeqCst);
+        let mut thread_handle = self.thread_handle.lock().unwrap();
+        if let Some(handle) = thread_handle.take() {
+            handle.join().unwrap();
+        }
+        Ok(())
+    }
+
+    pub fn restart(&self) -> Result<(), Box<dyn Error>> {
+        self.stop()?;
+        info!("Restarting...");
+        self.start()
     }
 }

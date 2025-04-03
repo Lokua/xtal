@@ -15,6 +15,7 @@ type EventMap = {
   ChangeMidiClockPort: string
   ChangeMidiControlInputPort: string
   ChangeMidiControlOutputPort: string
+  ChangeOscPort: number
   ClearBuffer: void
   CommitMappings: void
   CurrentlyMapping: string
@@ -31,6 +32,7 @@ type EventMap = {
     midiOutputPort: string
     midiInputPorts: [number, string][]
     midiOutputPorts: [number, string][]
+    oscPort: number
     sketchNames: string[]
     sketchName: string
   }
@@ -133,6 +135,7 @@ export default function App() {
   const [midiInputPorts, setMidiInputPorts] = useState<string[]>([])
   const [midiOutputPort, setMidiOutputPort] = useState('')
   const [midiOutputPorts, setMidiOutputPorts] = useState<string[]>([])
+  const [oscPort, setOscPort] = useState(5000)
   const [paused, setPaused] = useState(false)
   const [perfMode, setPerfMode] = useState(false)
   const [sketchName, setSketchName] = useState('')
@@ -184,6 +187,7 @@ export default function App() {
           const getPort = ([, port]: [number, string]) => port
           setMidiInputPorts(d.midiInputPorts.map(getPort))
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
+          setOscPort(d.oscPort)
           setSketchName(d.sketchName)
           setSketchNames(d.sketchNames)
           break
@@ -376,6 +380,11 @@ export default function App() {
     setMappingsEnabled(!mappingsEnabled)
   }
 
+  function onChangeOscPort(port: number) {
+    setOscPort(port)
+    post('ChangeOscPort', port)
+  }
+
   function onChangePerfMode() {
     const value = !perfMode
     setPerfMode(value)
@@ -501,6 +510,7 @@ export default function App() {
             midiInputPorts={midiInputPorts}
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
+            oscPort={oscPort}
             sliderNames={getSliderNames()}
             onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
@@ -508,6 +518,7 @@ export default function App() {
             onChangeMidiClockPort={onChangeMidiClockPort}
             onChangeMidiInputPort={onChangeMidiInputPort}
             onChangeMidiOutputPort={onChangeMidiOutputPort}
+            onChangeOscPort={onChangeOscPort}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
