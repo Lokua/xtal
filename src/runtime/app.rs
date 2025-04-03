@@ -7,7 +7,7 @@ use std::time::Duration;
 use std::{env, str, thread};
 
 use super::map_mode::MapMode;
-use super::recording::{frames_dir, RecordingState};
+use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
 use super::serialization::{GlobalSettings, SaveableProgramState};
 use super::shared::lattice_project_root;
@@ -250,6 +250,7 @@ impl AppModel {
                 if let Err(e) = SHARED_OSC_RECEIVER.restart() {
                     error!("Failed to restart OSC receiver: {}", e);
                 }
+                self.save_global_state()
             }
             AppEvent::ClearNextFrame => {
                 self.clear_next_frame.set(true);
@@ -585,16 +586,20 @@ impl AppModel {
 
     fn save_global_state(&self) {
         if let Err(e) = storage::save_global_state(GlobalSettings {
+            audio_device_name: global::audio_device_name(),
             hrcc: self.hrcc,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
+            osc_port: global::osc_port(),
             ..Default::default()
         }) {
             self.app_tx.alert_and_log(
                 format!("Failed to persist global settings: {}", e),
                 log::Level::Error,
             );
+        } else {
+            info!("Saved global state");
         }
     }
 
@@ -775,10 +780,11 @@ fn model(app: &App) -> AppModel {
     let global_settings = match load_global_state() {
         Ok(gs) => {
             info!("Restoring global settings: {:?}", gs);
+            global::set_audio_device_name(&gs.audio_device_name);
             global::set_midi_clock_port(gs.midi_clock_port.clone());
             global::set_midi_control_in_port(gs.midi_control_in_port.clone());
             global::set_midi_control_out_port(gs.midi_control_out_port.clone());
-            global::set_audio_device_name(&gs.audio_device_name);
+            global::set_osc_port(gs.osc_port);
             gs
         }
         Err(e) => {
@@ -847,9 +853,11 @@ fn model(app: &App) -> AppModel {
     let web_view_tx = ui::launch(&event_tx, sketch_info.config.name).unwrap();
     let ui_tx = web_view_tx.clone();
 
-    thread::spawn(move || loop {
-        thread::sleep(Duration::from_millis(1_000));
-        ui_tx.emit(ui::Event::AverageFps(frame_controller::average_fps()));
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_millis(1_000));
+            ui_tx.emit(ui::Event::AverageFps(frame_controller::average_fps()));
+        }
     });
 
     let mut model = AppModel {

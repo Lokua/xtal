@@ -68,6 +68,9 @@ export default function OscPortInput({
         pattern="[0-9]*"
         value={inputValue}
         onChange={onChangeInput}
+        style={{
+          width: '64px',
+        }}
       />
       <label htmlFor="osc-port">Port</label>
     </fieldset>

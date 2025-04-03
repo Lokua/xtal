@@ -9,22 +9,24 @@ pub const GLOBAL_SETTINGS_VERSION: &str = "1";
 #[serde(default)]
 pub struct GlobalSettings {
     pub version: String,
+    pub audio_device_name: String,
     pub hrcc: bool,
     pub midi_clock_port: String,
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
-    pub audio_device_name: String,
+    pub osc_port: u16,
 }
 
 impl Default for GlobalSettings {
     fn default() -> Self {
         Self {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
+            audio_device_name: global::audio_device_name(),
             hrcc: false,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
-            audio_device_name: global::audio_device_name(),
+            osc_port: global::osc_port(),
         }
     }
 }
