@@ -4,6 +4,7 @@ import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
 import Midi from './Midi.tsx'
+import Settings from './Settings.tsx'
 
 type EventMap = {
   Advance: void
@@ -239,6 +240,10 @@ export default function App() {
       }
 
       switch (e.code) {
+        case 'Comma': {
+          setView(view === View.Settings ? View.Controls : View.Settings)
+          break
+        }
         case 'KeyA': {
           if (paused) {
             post('Advance')
@@ -341,17 +346,17 @@ export default function App() {
     )
   }
 
-  function onChangeClockPort(port: string) {
+  function onChangeMidiClockPort(port: string) {
     setMidiClockPort(port)
     post('ChangeMidiClockPort', port)
   }
 
-  function onChangeInputPort(port: string) {
+  function onChangeMidiInputPort(port: string) {
     setMidiInputPort(port)
     post('ChangeMidiControlInputPort', port)
   }
 
-  function onChangeOutputPort(port: string) {
+  function onChangeMidiOutputPort(port: string) {
     setMidiOutputPort(port)
     post('ChangeMidiControlOutputPort', port)
   }
@@ -386,7 +391,7 @@ export default function App() {
   }
 
   function onChangeView() {
-    const v = view === View.Controls ? View.Midi : View.Controls
+    const v = view === View.Controls ? View.Settings : View.Controls
     setView(v)
     if (v === View.Controls) {
       post('CommitMappings')
@@ -473,22 +478,22 @@ export default function App() {
         onTogglePlay={onTogglePlay}
       />
       <main>
-        {view === View.Midi ? (
-          <Midi
-            clockPort={midiClockPort}
+        {view === View.Settings ? (
+          <Settings
             hrcc={hrcc}
-            inputPort={midiInputPort}
-            inputPorts={midiInputPorts}
-            outputPort={midiOutputPort}
-            outputPorts={midiOutputPorts}
-            mappingsEnabled={mappingsEnabled}
             mappings={mappings}
+            mappingsEnabled={mappingsEnabled}
+            midiClockPort={midiClockPort}
+            midiInputPort={midiInputPort}
+            midiInputPorts={midiInputPorts}
+            midiOutputPort={midiOutputPort}
+            midiOutputPorts={midiOutputPorts}
             sliderNames={getSliderNames()}
-            onChangeClockPort={onChangeClockPort}
             onChangeHrcc={onChangeHrcc}
-            onChangeInputPort={onChangeInputPort}
-            onChangeOutputPort={onChangeOutputPort}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
+            onChangeMidiClockPort={onChangeMidiClockPort}
+            onChangeMidiInputPort={onChangeMidiInputPort}
+            onChangeMidiOutputPort={onChangeMidiOutputPort}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}

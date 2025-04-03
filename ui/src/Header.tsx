@@ -134,10 +134,10 @@ export default function Header({
         <VerticalSeparator />
         <button onClick={onSave}>Save</button>
         <button
-          className={view === View.Midi ? 'on' : ''}
+          className={view === View.Settings ? 'on' : ''}
           onClick={onChangeView}
         >
-          MIDI
+          Conf.
         </button>
       </section>
     </header>
