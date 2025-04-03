@@ -67,11 +67,11 @@ experiments.
 
 ### Light Mode
 
-![Lattice Controls - Light Theme](assets/ui-light.png)
+<img src="assets/ui-light.png" alt="Lattice Controls - Light Theme" width="500px"/>
 
 ### Dark Mode
 
-![Lattice Controls - Dark Theme](assets/ui-dark.png)
+<img src="assets/ui-dark.png" alt="Lattice Controls - Dark Theme" width="500px"/>
 
 ## Requirements
 
