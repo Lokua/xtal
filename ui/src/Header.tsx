@@ -17,6 +17,7 @@ type HeaderProps = {
   sketchName: string
   sketchNames: string[]
   tapTempoEnabled: boolean
+  transitionTime: TransitionTime
   view: View
   onAdvance: noop
   onCaptureFrame: noop
@@ -44,6 +45,7 @@ export default function Header({
   sketchName,
   sketchNames,
   tapTempoEnabled,
+  transitionTime,
   view,
   onAdvance,
   onCaptureFrame,
@@ -123,7 +125,7 @@ export default function Header({
         <VerticalSeparator />
         <Select
           style={{ width: '48px' }}
-          value="4"
+          value={transitionTime.toString()}
           options={transitionTimes}
           onChange={(value) => {
             onChangeTransitionTime(parseFloat(value))

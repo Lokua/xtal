@@ -1,0 +1,18 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "radius_amount",
+      "value": 200.0
+    },
+    {
+      "type": "Slider",
+      "name": "step",
+      "value": 21.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {}
+}

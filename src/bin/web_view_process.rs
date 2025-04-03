@@ -14,10 +14,10 @@ use lattice::{
 
 const DEFAULT_WIDTH: i32 = 560;
 const DEFAULT_HEIGHT: i32 = 700;
-// Eyeballed from devtools. TODO: parse the variables from the CSS file?
+// Eyeballed from devtools
 const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 81 + 27;
-const MIN_SETTINGS_HEIGHT: i32 = 425;
+const MIN_SETTINGS_HEIGHT: i32 = 436;
 
 fn main() -> wry::Result<()> {
     init_logger();
@@ -75,6 +75,7 @@ fn main() -> wry::Result<()> {
     web_view.open_devtools();
 
     trace!("Child: Starting event loop");
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
@@ -95,6 +96,8 @@ fn main() -> wry::Result<()> {
                     wv::Event::LoadSketch {
                         display_name,
                         controls,
+                        perf_mode,
+                        sketch_width,
                         ..
                     } => {
                         debug!("Received LoadSketch. Setting title and height");
@@ -104,6 +107,12 @@ fn main() -> wry::Result<()> {
                             derive_gui_height(controls)
                                 .max(MIN_SETTINGS_HEIGHT),
                         ));
+                        if !perf_mode {
+                            window.set_outer_position(LogicalPosition::new(
+                                sketch_width,
+                                0,
+                            ));
+                        }
                     }
                     wv::Event::ToggleGuiFocus => {
                         debug!("Received ToggleGuiFocus");
@@ -119,12 +128,16 @@ fn main() -> wry::Result<()> {
             }
         }
 
-        if let Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } = event
-        {
-            *control_flow = ControlFlow::Exit;
+        #[allow(clippy::single_match)]
+        match event {
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => {
+                *control_flow = ControlFlow::Exit;
+            }
+
+            _ => {}
         }
     });
 }
@@ -140,7 +153,7 @@ fn setup_ipc_connection(
 }
 
 fn derive_gui_height(controls: Vec<SerializableControl>) -> i32 {
-    let unscientific_offset = controls.len() as i32;
+    let unscientific_offset = controls.len() as i32 + 24;
 
     let controls_height: i32 = controls
         .iter()

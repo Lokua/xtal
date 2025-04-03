@@ -19,6 +19,8 @@ export enum View {
 export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
 
+export type Bypassed = Record<string, number>
+
 export type Control = Checkbox | DynamicSeparator | Select | Separator | Slider
 export type ControlWithValue = Checkbox | Select | Slider
 export type ControlValue = boolean | number | string

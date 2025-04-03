@@ -10,8 +10,8 @@ use std::{
     path::PathBuf,
     str::FromStr,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
 };
 use yaml_merge_keys::merge_keys_serde_yml;
@@ -302,8 +302,13 @@ impl<T: TimingSource> ControlHub<T> {
     ) {
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                let value = param_value
-                    .cold_or(|name| self.get_raw(&name, current_frame));
+                let value = param_value.cold_or(|name| {
+                    if let Some(Some(bypass_value)) = self.bypassed.get(&name) {
+                        *bypass_value
+                    } else {
+                        self.get_raw(&name, current_frame)
+                    }
+                });
                 effect.set_from_param(param_name, value);
             }
         }
@@ -422,8 +427,15 @@ impl<T: TimingSource> ControlHub<T> {
                 }
 
                 if let Ok(index) = path_segments[1].parse::<usize>() {
-                    let value = param_value
-                        .cold_or(|name| self.get_raw(&name, current_frame));
+                    let value = param_value.cold_or(|name| {
+                        if let Some(Some(bypass_value)) =
+                            self.bypassed.get(&name)
+                        {
+                            *bypass_value
+                        } else {
+                            self.get_raw(&name, current_frame)
+                        }
+                    });
                     breakpoints[index].set_from_param(param_name, value);
                 }
             }
@@ -445,8 +457,13 @@ impl<T: TimingSource> ControlHub<T> {
 
         if let Some(params) = self.dep_graph.node(node_name) {
             for (param_name, param_value) in params.iter() {
-                let value = param_value
-                    .cold_or(|name| self.get_raw(&name, current_frame));
+                let value = param_value.cold_or(|name| {
+                    if let Some(Some(bypass_value)) = self.bypassed.get(&name) {
+                        *bypass_value
+                    } else {
+                        self.get_raw(&name, current_frame)
+                    }
+                });
                 config.set_from_param(param_name, value);
             }
         }
@@ -464,6 +481,13 @@ impl<T: TimingSource> ControlHub<T> {
                 _ => None,
             })
             .unwrap_or_else(|| panic!("No breakpoints for name: {}", name))
+    }
+
+    pub fn bypassed(&self) -> HashMap<String, f32> {
+        self.bypassed
+            .iter()
+            .filter_map(|(k, v)| v.map(|f| (k.clone(), f)))
+            .collect()
     }
 
     pub fn take_snapshot(&mut self, id: &str) {
@@ -1128,7 +1152,7 @@ mod tests {
     use serial_test::serial;
 
     // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
-    use crate::framework::motion::animation_tests::{init, BPM};
+    use crate::framework::motion::animation_tests::{BPM, init};
 
     fn create_instance(yaml: &str) -> ControlHub<FrameTiming> {
         ControlHub::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))

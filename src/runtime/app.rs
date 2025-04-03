@@ -1,7 +1,8 @@
 use chrono::Utc;
 use nannou::prelude::*;
 use std::cell::{Cell, Ref};
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
+use std::process::Child;
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, str, thread};
@@ -51,6 +52,7 @@ pub enum AppEvent {
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
+    Quit,
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
@@ -101,27 +103,28 @@ impl AppEventSender {
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
 
 struct AppModel {
-    main_window_id: window::Id,
-    session_id: String,
+    app_rx: AppEventReceiver,
+    app_tx: AppEventSender,
     clear_next_frame: Cell<bool>,
-    tap_tempo: TapTempo,
-    tap_tempo_enabled: bool,
+    ctx: LatticeContext,
+    hrcc: bool,
+    image_index: Option<storage::ImageIndex>,
+    main_maximized: Cell<bool>,
+    main_window_id: window::Id,
+    map_mode: MapMode,
+    midi_out: Option<midi::MidiOut>,
     perf_mode: bool,
     recording_state: RecordingState,
+    session_id: String,
     sketch: Box<dyn SketchAll>,
     sketch_config: &'static SketchConfig,
-    main_maximized: Cell<bool>,
-    app_tx: AppEventSender,
-    app_rx: AppEventReceiver,
-    ctx: LatticeContext,
-    midi_out: Option<midi::MidiOut>,
+    tap_tempo: TapTempo,
+    tap_tempo_enabled: bool,
     transition_time: f32,
-    image_index: Option<storage::ImageIndex>,
-    map_mode: MapMode,
-    hrcc: bool,
-    ui_tx: ui::EventSender,
-    ui_ready: bool,
     ui_pending_messages: VecDeque<ui::Event>,
+    ui_process: Child,
+    ui_ready: bool,
+    ui_tx: ui::EventSender,
 }
 
 impl AppModel {
@@ -315,7 +318,12 @@ impl AppModel {
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
-                self.ui_tx.emit(ui::Event::HubPopulated(controls));
+                let bypassed = match self.control_hub() {
+                    Some(hub) => hub.bypassed(),
+                    None => HashMap::default(),
+                };
+                let event = ui::Event::HubPopulated((controls, bypassed));
+                self.ui_tx.emit(event);
             }
             AppEvent::EncodingComplete => {
                 self.ui_tx.emit(ui::Event::Encoding(false));
@@ -352,6 +360,16 @@ impl AppModel {
             AppEvent::QueueRecord => {
                 self.recording_state.is_queued =
                     !self.recording_state.is_queued;
+            }
+            AppEvent::Quit => {
+                debug!("Quit requested");
+                match self.ui_process.kill() {
+                    Ok(_) => debug!("Killed ui_process"),
+                    Err(e) => error!("Error killing ui_process {}", e),
+                }
+                thread::sleep(Duration::from_millis(50));
+                debug!("Exiting main process");
+                std::process::exit(0);
             }
             AppEvent::ReceiveMappings(mappings) => {
                 self.map_mode.update_from_vec(&mappings);
@@ -532,6 +550,7 @@ impl AppModel {
                 if let Some(hub) = self.control_hub_mut() {
                     hub.set_transition_time(transition_time);
                 }
+                self.save_global_state();
             }
             AppEvent::ToggleFullScreen => {
                 let window = self.main_window(app).unwrap();
@@ -575,11 +594,32 @@ impl AppModel {
             }
             AppEvent::WebViewReady => {
                 self.ui_ready = true;
+
                 // Not clearing the queue as this is great for live reload!
                 // TODO: find a better way since this can undo some state
                 for message in &self.ui_pending_messages {
                     self.ui_tx.emit(message.clone());
                 }
+
+                let registry = REGISTRY.read().unwrap();
+
+                self.ui_tx.emit(ui::Event::Init {
+                    audio_device: global::audio_device_name(),
+                    audio_devices: list_audio_devices().unwrap_or_default(),
+                    is_light_theme: matches!(
+                        dark_light::detect(),
+                        dark_light::Mode::Light
+                    ),
+                    midi_clock_port: global::midi_clock_port(),
+                    midi_input_port: global::midi_control_in_port(),
+                    midi_output_port: global::midi_control_out_port(),
+                    midi_input_ports: midi::list_input_ports().unwrap(),
+                    midi_output_ports: midi::list_output_ports().unwrap(),
+                    osc_port: global::osc_port(),
+                    sketch_names: registry.names().clone(),
+                    sketch_name: self.sketch_name(),
+                    transition_time: self.transition_time,
+                });
             }
         }
     }
@@ -592,6 +632,7 @@ impl AppModel {
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
             osc_port: global::osc_port(),
+            transition_time: self.transition_time,
             ..Default::default()
         }) {
             self.app_tx.alert_and_log(
@@ -693,15 +734,23 @@ impl AppModel {
             });
         }
 
-        // TODO: set web view position
+        let bypassed = match self.control_hub() {
+            Some(hub) => hub.bypassed(),
+            None => HashMap::default(),
+        };
+
         let event = ui::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
+            bypassed,
             controls: self.web_view_controls(),
             display_name: self.sketch_config.display_name.to_string(),
             fps: frame_controller::fps(),
             mappings: self.map_mode.mappings_as_vec(),
             paused,
+            perf_mode: self.perf_mode,
             sketch_name: self.sketch_name(),
+            sketch_width: self.sketch_config.w,
+            sketch_height: self.sketch_config.h,
             tap_tempo_enabled: self.tap_tempo_enabled,
         };
 
@@ -772,6 +821,16 @@ impl AppModel {
                 midi::ConnectionType::GlobalStartStop,
                 e
             );
+        }
+    }
+}
+
+impl Drop for AppModel {
+    fn drop(&mut self) {
+        debug!("Dropping...");
+        match self.ui_process.kill() {
+            Ok(_) => debug!("Killed ui_child_process"),
+            Err(e) => error!("Error killing ui_child_process {}", e),
         }
     }
 }
@@ -850,7 +909,7 @@ fn model(app: &App) -> AppModel {
         .ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
-    let web_view_tx = ui::launch(&event_tx, sketch_info.config.name).unwrap();
+    let (web_view_tx, ui_process) = ui::launch(&event_tx).unwrap();
     let ui_tx = web_view_tx.clone();
 
     thread::spawn(move || {
@@ -861,27 +920,28 @@ fn model(app: &App) -> AppModel {
     });
 
     let mut model = AppModel {
-        main_window_id,
-        session_id: uuid_5(),
+        app_rx: event_rx,
+        app_tx: event_tx,
         clear_next_frame: Cell::new(true),
+        ctx,
+        hrcc: global_settings.hrcc,
+        image_index,
+        main_maximized: Cell::new(false),
+        main_window_id,
+        map_mode: MapMode::default(),
+        midi_out,
         perf_mode: false,
-        tap_tempo: TapTempo::new(raw_bpm),
-        tap_tempo_enabled: false,
         recording_state: RecordingState::default(),
+        session_id: uuid_5(),
         sketch,
         sketch_config: sketch_info.config,
-        main_maximized: Cell::new(false),
-        app_tx: event_tx,
-        app_rx: event_rx,
-        midi_out,
-        ctx,
-        transition_time: 4.0,
-        image_index,
-        map_mode: MapMode::default(),
-        hrcc: global_settings.hrcc,
-        ui_tx: web_view_tx,
-        ui_ready: false,
+        tap_tempo: TapTempo::new(raw_bpm),
+        tap_tempo_enabled: false,
+        transition_time: global_settings.transition_time,
         ui_pending_messages: VecDeque::new(),
+        ui_process,
+        ui_ready: false,
+        ui_tx: web_view_tx,
     };
 
     model.init_sketch_environment(app);
@@ -911,7 +971,6 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 }
 
 fn event(app: &App, model: &mut AppModel, event: Event) {
-    #[allow(clippy::single_match)]
     match event {
         Event::WindowEvent {
             simple: Some(KeyPressed(key)),

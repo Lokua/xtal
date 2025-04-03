@@ -1,5 +1,5 @@
-use lattice::framework::prelude::init_logger;
 use lattice::framework::prelude::SketchAll;
+use lattice::framework::prelude::init_logger;
 use lattice::{register_sketches, runtime};
 
 fn main() {
@@ -34,6 +34,7 @@ fn main() {
         animation_dev,
         audio_controls_dev,
         audio_dev,
+        bug_repro,
         control_script_dev,
         cv_dev,
         dynamic_uniforms,

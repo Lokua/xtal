@@ -1,0 +1,35 @@
+radius_amount:
+  type: slider
+  range: [20, 400]
+  default: 200
+  step: 1
+
+radius:
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 20
+    - kind: ramp
+      position: 4.0
+      value: $radius_amount
+    - kind: end
+      position: 8.0
+      value: 20
+step:
+  type: slider
+  # bypass: 4
+  range: [1, 100]
+  step: 10
+
+quantizer_example:
+  type: effect
+  kind: quantizer
+  step: $step
+  range: [0.0, 500]
+
+quantize_radius:
+  type: mod
+  source: radius
+  modulators:
+    - quantizer_example

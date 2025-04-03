@@ -16,7 +16,9 @@
     --control-text-color: #333;
     --control-text-color-muted: #666;
     --control-track-color: #ddd;
+    --control-disabled-track-color: #eee;
     --control-knob-color: #777;
+    --control-disabled-knob-color: #eee;
     --control-disabled-text-color: #aaa;
     --control-on-background-color: #363636;
     --control-on-text-color: #eee;
@@ -36,7 +38,9 @@
     --control-text-color: #eee;
     --control-text-color-muted: #bbb;
     --control-track-color: #444;
+    --control-disabled-track-color: #666;
     --control-knob-color: #888;
+    --control-disabled-knob-color: #666;
     --control-disabled-text-color: #777;
     --control-on-background-color: green;
     --control-on-text-color: var(--control-text-color);
@@ -236,8 +240,13 @@ input[type='range'] {
     background-color: var(--control-text-color);
   }
 
+  &:disabled {
+    background: var(--control-disabled-track-color);
+  }
+
   &:disabled::-webkit-slider-thumb {
     cursor: not-allowed;
+    background: var(--control-disabled-knob-color);
   }
 }
 
@@ -344,33 +353,6 @@ input[type='checkbox']:checked::before {
   background-color: var(--console-background-color);
 }
 
-.midi {
-  > header {
-    display: flex;
-
-    > section {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-      padding-right: 12px;
-
-      &:first-child {
-        flex-direction: column;
-        flex-wrap: wrap;
-        align-items: start;
-        border-right: 1px dotted var(--muted-color);
-      }
-
-      &:nth-of-type(2) {
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        padding-left: 12px;
-      }
-    }
-  }
-}
-
 .map-mode {
   display: grid;
   grid-template-columns: max-content auto;
@@ -395,6 +377,10 @@ input[type='checkbox']:checked::before {
 #settings {
   display: flex;
   height: 100%;
+
+  h2:not(:nth-of-type(1)) {
+    margin-top: 12px;
+  }
 
   > section {
     flex-basis: 50%;

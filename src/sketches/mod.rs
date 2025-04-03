@@ -19,6 +19,7 @@ pub mod dev;
 pub use self::dev::animation_dev;
 pub use self::dev::audio_controls_dev;
 pub use self::dev::audio_dev;
+pub use self::dev::bug_repro;
 pub use self::dev::control_script_dev;
 pub use self::dev::cv_dev;
 pub use self::dev::dynamic_uniforms;
@@ -32,17 +33,17 @@ pub use self::dev::shader_to_texture_dev;
 pub use self::dev::wgpu_compute_dev;
 
 pub mod genuary_2025;
+pub use self::genuary_2025::g25_1_horiz_vert;
+pub use self::genuary_2025::g25_2_layers;
+pub use self::genuary_2025::g25_5_isometric;
 pub use self::genuary_2025::g25_10_11_12;
 pub use self::genuary_2025::g25_13_triangle;
 pub use self::genuary_2025::g25_14_black_and_white;
 pub use self::genuary_2025::g25_18_wind;
 pub use self::genuary_2025::g25_19_op_art;
-pub use self::genuary_2025::g25_1_horiz_vert;
 pub use self::genuary_2025::g25_20_23_brutal_arch;
 pub use self::genuary_2025::g25_22_gradients_only;
 pub use self::genuary_2025::g25_26_symmetry;
-pub use self::genuary_2025::g25_2_layers;
-pub use self::genuary_2025::g25_5_isometric;
 
 pub mod scratch;
 pub use self::scratch::bos;

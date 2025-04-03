@@ -15,6 +15,7 @@ pub struct GlobalSettings {
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
     pub osc_port: u16,
+    pub transition_time: f32,
 }
 
 impl Default for GlobalSettings {
@@ -27,6 +28,7 @@ impl Default for GlobalSettings {
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
             osc_port: global::osc_port(),
+            transition_time: 4.0,
         }
     }
 }

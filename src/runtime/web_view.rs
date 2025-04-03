@@ -12,14 +12,14 @@
 use ipc_channel::ipc::{IpcOneShotServer, IpcReceiver, IpcSender};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::thread;
 
 use super::app::AppEventSender;
-use crate::framework::midi::InputsOrOutputs::{Inputs, Outputs};
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
-use crate::runtime::registry::REGISTRY;
+
+type Bypassed = HashMap<String, f32>;
 
 /// Used to send/receive data from our app into a web view using ipc-channel.
 /// Most events should be assumed to be one-way from child to parent unless
@@ -57,7 +57,7 @@ pub enum Event {
 
     /// Sent from parent whenever a control script has changed and controls have
     /// been reloaded
-    HubPopulated(Vec<SerializableControl>),
+    HubPopulated((Vec<SerializableControl>, Bypassed)),
 
     /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
@@ -73,18 +73,23 @@ pub enum Event {
         osc_port: u16,
         sketch_names: Vec<String>,
         sketch_name: String,
+        transition_time: f32,
     },
 
     /// Sent after the child emits [`Event::SwitchSketch`]
     #[serde(rename_all = "camelCase")]
     LoadSketch {
         bpm: f32,
+        bypassed: Bypassed,
         controls: Vec<SerializableControl>,
         display_name: String,
         fps: f32,
-        paused: bool,
         mappings: Vec<(String, ChannelAndController)>,
+        paused: bool,
+        perf_mode: bool,
         sketch_name: String,
+        sketch_width: i32,
+        sketch_height: i32,
         tap_tempo_enabled: bool,
     },
 
@@ -93,11 +98,13 @@ pub enum Event {
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
+    Quit,
     Ready,
 
     RemoveMapping(String),
     Reset,
     Save,
+    ShutDown,
     SendMidi,
 
     /// Sent from parent after a snapshot has completed so we can keep controls
@@ -168,8 +175,7 @@ type Bootstrap = (Sender, Receiver);
 /// process (at least not on all OSs)
 pub fn launch(
     app_tx: &AppEventSender,
-    sketch_name: &str,
-) -> Result<EventSender, Box<dyn std::error::Error>> {
+) -> Result<(EventSender, Child), Box<dyn std::error::Error>> {
     let (server, server_name) = IpcOneShotServer::<Bootstrap>::new()?;
 
     let module = "web_view_process".to_string();
@@ -195,8 +201,6 @@ pub fn launch(
     let (_receiver, (sender, receiver)): (IpcReceiver<Bootstrap>, Bootstrap) =
         server.accept()?;
 
-    let init_sender = sender.clone();
-    let sketch_name = sketch_name.to_owned();
     let app_tx = app_tx.clone();
 
     thread::spawn(move || {
@@ -258,28 +262,10 @@ pub fn launch(
                 Event::QueueRecord => {
                     app_tx.emit(AppEvent::QueueRecord);
                 }
+                Event::Quit => {
+                    app_tx.emit(AppEvent::Quit);
+                }
                 Event::Ready => {
-                    let registry = REGISTRY.read().unwrap();
-
-                    // TODO: for consistency this should be sent from app
-                    let data = Event::Init {
-                        audio_device: global::audio_device_name(),
-                        audio_devices: list_audio_devices().unwrap_or_default(),
-                        is_light_theme: matches!(
-                            dark_light::detect(),
-                            dark_light::Mode::Light
-                        ),
-                        midi_clock_port: global::midi_clock_port(),
-                        midi_input_port: global::midi_control_in_port(),
-                        midi_output_port: global::midi_control_out_port(),
-                        midi_input_ports: midi::list_ports(Inputs).unwrap(),
-                        midi_output_ports: midi::list_ports(Outputs).unwrap(),
-                        osc_port: global::osc_port(),
-                        sketch_names: registry.names().clone(),
-                        sketch_name: sketch_name.to_string(),
-                    };
-
-                    init_sender.send(data).unwrap();
                     app_tx.emit(AppEvent::WebViewReady);
                 }
                 Event::StartRecording => {
@@ -293,6 +279,9 @@ pub fn launch(
                 }
                 Event::Save => {
                     app_tx.emit(AppEvent::SaveProgramState);
+                }
+                Event::ShutDown => {
+                    debug!("Received shutdown...");
                 }
                 Event::SendMidi => {
                     app_tx.emit(AppEvent::SendMidi);
@@ -351,7 +340,7 @@ pub fn launch(
         }
     });
 
-    Ok(EventSender::new(sender))
+    Ok((EventSender::new(sender), child))
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

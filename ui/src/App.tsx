@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { Control, ControlValue, Mappings, Slider } from './types.ts'
+import type {
+  Bypassed,
+  Control,
+  ControlValue,
+  Mappings,
+  Slider,
+} from './types.ts'
 import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
@@ -22,7 +28,7 @@ type EventMap = {
   Encoding: boolean
   Error: string
   Hrcc: boolean
-  HubPopulated: Control[]
+  HubPopulated: [Control[], Bypassed]
   Init: {
     audioDevice: string
     audioDevices: string[]
@@ -35,9 +41,11 @@ type EventMap = {
     oscPort: number
     sketchNames: string[]
     sketchName: string
+    transitionTime: number
   }
   LoadSketch: {
     bpm: number
+    bypassed: Bypassed
     controls: Control[]
     displayName: string
     fps: number
@@ -50,6 +58,7 @@ type EventMap = {
   Paused: boolean
   PerfMode: boolean
   QueueRecord: void
+  Quit: void
   Ready: void
   RemoveMapping: string
   Reset: void
@@ -85,7 +94,7 @@ type EventMap = {
 function subscribe<K extends keyof EventMap>(
   callback: (event: K, data: EventMap[K]) => void
 ) {
-  const handler = (e: MessageEvent) => {
+  function handler(e: MessageEvent) {
     if (!e.data) return
 
     if (typeof e.data === 'string') {
@@ -122,6 +131,7 @@ export default function App() {
   const [audioDevices, setAudioDevices] = useState<string[]>([])
   const [audioDevice, setAudioDevice] = useState('')
   const [bpm, setBpm] = useState(134)
+  const [bypassed, setBypassed] = useState<Bypassed>({})
   const [controls, setControls] = useState<Control[]>([])
   const [fps, setFps] = useState(60)
   const [hrcc, setHrcc] = useState(false)
@@ -141,6 +151,7 @@ export default function App() {
   const [sketchName, setSketchName] = useState('')
   const [sketchNames, setSketchNames] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
+  const [transitionTime, setTransitionTime] = useState(4)
   const [view, setView] = useState<View>(View.Controls)
 
   useEffect(() => {
@@ -174,7 +185,9 @@ export default function App() {
           break
         }
         case 'HubPopulated': {
-          setControls(data as EventMap['HubPopulated'])
+          const [controls, bypassed] = data as EventMap['HubPopulated']
+          setControls(controls)
+          setBypassed(bypassed)
           break
         }
         case 'Init': {
@@ -190,11 +203,13 @@ export default function App() {
           setOscPort(d.oscPort)
           setSketchName(d.sketchName)
           setSketchNames(d.sketchNames)
+          setTransitionTime(d.transitionTime)
           break
         }
         case 'LoadSketch': {
           const d = data as EventMap['LoadSketch']
           setBpm(d.bpm)
+          setBypassed(d.bypassed)
           setControls(d.controls)
           setFps(d.fps)
           setMappings(d.mappings)
@@ -273,11 +288,14 @@ export default function App() {
           break
         }
         case 'KeyM': {
-          if (e.shiftKey && e.metaKey) {
-            const newView = view === View.Controls ? View.Midi : View.Controls
-            setView(newView)
-          } else if (e.metaKey) {
+          if (e.metaKey && !e.shiftKey) {
             post('ToggleMainFocus')
+          }
+          break
+        }
+        case 'KeyQ': {
+          if (e.metaKey) {
+            post('Quit')
           }
           break
         }
@@ -407,6 +425,7 @@ export default function App() {
   }
 
   function onChangeTransitionTime(time: number) {
+    setTransitionTime(time)
     post('TransitionTime', time)
   }
 
@@ -482,6 +501,7 @@ export default function App() {
         sketchName={sketchName}
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
+        transitionTime={transitionTime}
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
@@ -524,7 +544,11 @@ export default function App() {
             onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
         ) : (
-          <Controls controls={controls} onChange={onChangeControl} />
+          <Controls
+            bypassed={bypassed}
+            controls={controls}
+            onChange={onChangeControl}
+          />
         )}
       </main>
       <footer>

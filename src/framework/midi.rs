@@ -1,9 +1,9 @@
-use lazy_static::lazy_static;
 use midir::Ignore;
 use midir::MidiInput;
 use midir::MidiInputConnection;
 use midir::MidiOutput;
 use midir::MidiOutputConnection;
+use once_cell::sync::Lazy;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
@@ -12,10 +12,8 @@ use std::thread;
 
 use super::prelude::*;
 
-lazy_static! {
-    static ref THREADS: Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>> =
-        Mutex::new(HashMap::default());
-}
+static THREADS: Lazy<Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>>> =
+    Lazy::new(|| Mutex::new(HashMap::default()));
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ConnectionType {
@@ -157,43 +155,33 @@ impl MidiOut {
 
 pub type PortIndexAndName = (usize, String);
 
-pub enum InputsOrOutputs {
-    Inputs,
-    Outputs,
+pub fn list_input_ports() -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
+    let mut midi_in = MidiInput::new("midir_test_input")?;
+    midi_in.ignore(Ignore::None);
+    let mut ports = vec![];
+    for (i, p) in midi_in.ports().iter().enumerate() {
+        ports.push((i, midi_in.port_name(p)?))
+    }
+    Ok(ports)
 }
 
-pub fn list_ports(
-    inputs_or_ouputs: InputsOrOutputs,
-) -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
-    match inputs_or_ouputs {
-        InputsOrOutputs::Inputs => {
-            let mut midi_in = MidiInput::new("midir_test_input")?;
-            midi_in.ignore(Ignore::None);
-            let mut ports = vec![];
-            for (i, p) in midi_in.ports().iter().enumerate() {
-                ports.push((i, midi_in.port_name(p)?))
-            }
-            Ok(ports)
-        }
-        InputsOrOutputs::Outputs => {
-            let midi_out = MidiOutput::new("midir_test_output")?;
-            let mut ports = vec![];
-            for (i, p) in midi_out.ports().iter().enumerate() {
-                ports.push((i, midi_out.port_name(p)?))
-            }
-            Ok(ports)
-        }
+pub fn list_output_ports() -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
+    let midi_out = MidiOutput::new("midir_test_output")?;
+    let mut ports = vec![];
+    for (i, p) in midi_out.ports().iter().enumerate() {
+        ports.push((i, midi_out.port_name(p)?))
     }
+    Ok(ports)
 }
 
 pub fn print_ports() -> Result<(), Box<dyn Error>> {
     println!("\nAvailable input ports:");
-    for (index, port_name) in list_ports(InputsOrOutputs::Inputs)? {
+    for (index, port_name) in list_input_ports()? {
         println!("    {}: {}", index, port_name);
     }
 
     println!("\nAvailable output ports:");
-    for (index, port_name) in list_ports(InputsOrOutputs::Outputs)? {
+    for (index, port_name) in list_output_ports()? {
         println!("    {}: {}", index, port_name);
     }
 

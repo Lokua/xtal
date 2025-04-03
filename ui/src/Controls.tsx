@@ -2,6 +2,7 @@ import NumberBox from './NumberBox.tsx'
 import Select from './Select.tsx'
 import Separator from './Separator.tsx'
 import {
+  Bypassed,
   Checkbox,
   Control,
   ControlValue,
@@ -12,6 +13,7 @@ import {
 } from './types.ts'
 
 type Props = {
+  bypassed: Bypassed
   controls: Control[]
   onChange: (
     type: string,
@@ -22,6 +24,7 @@ type Props = {
 }
 
 export default function Controls({
+  bypassed,
   controls,
   onChange: parentOnChange,
 }: Props) {
@@ -63,6 +66,7 @@ export default function Controls({
 
     if (type === 'slider') {
       const c = control[type] as Slider['slider']
+      const isBypassed = c.name in bypassed
 
       return (
         <fieldset key={c.name}>
@@ -73,7 +77,7 @@ export default function Controls({
             min={c.min}
             max={c.max}
             step={c.step}
-            disabled={c.disabled}
+            disabled={c.disabled || isBypassed}
             onChange={(e) => {
               onChange('slider', index, e.currentTarget.valueAsNumber)
             }}
@@ -84,7 +88,7 @@ export default function Controls({
             min={c.min}
             max={c.max}
             step={c.step}
-            disabled={c.disabled}
+            disabled={c.disabled || isBypassed}
             onChange={(value) => {
               onChange('slider', index, value)
             }}

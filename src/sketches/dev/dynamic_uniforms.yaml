@@ -138,5 +138,6 @@ grain_size:
 
 angle_mult:
   var: f2
+  bypass: 1
   type: slider
   range: [0, 10]
