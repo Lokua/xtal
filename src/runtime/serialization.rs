@@ -293,6 +293,11 @@ impl SaveableProgramState {
     fn setup_midi_mappings(&mut self) {
         self.mappings.iter().for_each(|(name, (ch, cc))| {
             let (min, max) = self.ui_controls.slider_range(name);
+            debug!(
+                "setting up mapping for {} ({})",
+                name,
+                MapMode::proxy_name(name)
+            );
             self.midi_controls.add(
                 &MapMode::proxy_name(name),
                 MidiControlConfig {
@@ -304,6 +309,7 @@ impl SaveableProgramState {
                 },
             );
         });
+        debug!("program_state.midi_controls: {:#?}", self.midi_controls);
     }
 
     fn merge_midi_controls(

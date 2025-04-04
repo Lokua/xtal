@@ -102,8 +102,26 @@
       "value": 3.0958
     }
   ],
-  "midi_controls": [],
+  "midi_controls": [
+    {
+      "name": "wave_dist__slider_proxy",
+      "value": 165.35434
+    },
+    {
+      "name": "wave_x_freq__slider_proxy",
+      "value": 73.22835
+    }
+  ],
   "osc_controls": [],
   "snapshots": {},
-  "mappings": {}
+  "mappings": {
+    "wave_dist": [
+      0,
+      0
+    ],
+    "wave_x_freq": [
+      0,
+      1
+    ]
+  }
 }

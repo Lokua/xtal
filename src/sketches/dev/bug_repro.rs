@@ -46,7 +46,7 @@ impl Sketch for BugRepro {
         draw.ellipse()
             .color(hsl(0.5, 0.5, 0.5))
             .radius(self.hub.get("radius"))
-            .x_y(0.0, 0.0);
+            .x_y(self.hub.get("x_pos"), 0.0);
 
         draw.to_frame(app, &frame).unwrap();
     }

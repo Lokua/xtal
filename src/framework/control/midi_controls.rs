@@ -147,6 +147,10 @@ impl MidiControls {
         f(&mut state.values);
     }
 
+    pub fn config(&self, name: &str) -> Option<&MidiControlConfig> {
+        self.configs.get(name)
+    }
+
     pub fn configs(&self) -> MidiControlConfigs {
         self.configs.clone()
     }

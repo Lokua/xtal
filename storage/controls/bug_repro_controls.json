@@ -3,16 +3,35 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "radius_amount",
-      "value": 200.0
+      "name": "radius",
+      "value": 78.0
     },
     {
       "type": "Slider",
-      "name": "step",
-      "value": 21.0
+      "name": "x_pos",
+      "value": 50.6993
     }
   ],
-  "midi_controls": [],
+  "midi_controls": [
+    {
+      "name": "x_pos__slider_proxy",
+      "value": -135.82678
+    },
+    {
+      "name": "radius__slider_proxy",
+      "value": 103.779526
+    }
+  ],
   "osc_controls": [],
-  "snapshots": {}
+  "snapshots": {},
+  "mappings": {
+    "radius": [
+      0,
+      0
+    ],
+    "x_pos": [
+      0,
+      1
+    ]
+  }
 }

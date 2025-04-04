@@ -268,8 +268,16 @@ impl AppModel {
                 let hub = self.control_hub_mut().unwrap();
 
                 for (name, (ch, cc)) in mappings {
+                    let proxy_name = &MapMode::proxy_name(&name);
+
+                    if let Some(config) = hub.midi_controls.config(proxy_name) {
+                        if config.channel == ch && config.cc == cc {
+                            continue;
+                        }
+                    }
+
                     hub.midi_controls.add(
-                        &MapMode::proxy_name(&name),
+                        proxy_name,
                         MidiControlConfig::new(
                             (ch, cc),
                             hub.ui_controls.slider_range(&name),
@@ -797,6 +805,8 @@ impl AppModel {
             None => SaveableProgramState::default(),
         };
 
+        debug!("current_state -> {:#?}", current_state);
+
         match storage::load_program_state(&sketch_name, &mut current_state) {
             Ok(state) => {
                 self.map_mode.clear();
@@ -807,6 +817,11 @@ impl AppModel {
                 };
 
                 hub.merge_program_state(state);
+
+                debug!(
+                    "load_program_state -> midi_controls: {:#?}",
+                    hub.midi_controls
+                );
 
                 if hub.snapshots.is_empty() {
                     app_tx.alert_and_log("Controls restored", log::Level::Info);

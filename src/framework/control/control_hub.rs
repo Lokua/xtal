@@ -655,6 +655,15 @@ impl<T: TimingSource> ControlHub<T> {
             self.ui_controls.update_value(k, v.clone());
         }
 
+        for (k, v) in state
+            .midi_controls
+            .configs()
+            .iter()
+            .filter(|(k, _)| MapMode::is_proxy_name(k))
+        {
+            self.midi_controls.add(k, v.clone());
+        }
+
         for (k, v) in state.midi_controls.values().iter() {
             self.midi_controls.update_value(k, *v);
         }
