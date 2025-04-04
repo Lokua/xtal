@@ -12,7 +12,7 @@ use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
 use super::serialization::{GlobalSettings, SaveableProgramState};
 use super::shared::lattice_project_root;
-use super::storage::{self, load_global_state, load_program_state};
+use super::storage;
 use super::tap_tempo::TapTempo;
 use super::web_view::{self as ui};
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
@@ -410,9 +410,12 @@ impl AppModel {
                 }
             }
             AppEvent::SaveProgramState => {
+                let mappings = self.map_mode.mappings();
+
                 match storage::save_program_state(
                     self.sketch_name().as_str(),
                     self.control_hub().unwrap(),
+                    mappings,
                 ) {
                     Ok(path_buf) => {
                         self.app_tx.alert_and_log(
@@ -739,6 +742,11 @@ impl AppModel {
             None => HashMap::default(),
         };
 
+        debug!(
+            "init_sketch_environment > map_mode: {:?}",
+            self.map_mode.mappings_as_vec()
+        );
+
         let event = ui::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
             bypassed,
@@ -761,10 +769,10 @@ impl AppModel {
         }
     }
 
-    /// Load MIDI, OSC, and ui controls along with any snapshots (and MIDI
-    /// mappings [TODO]) the user has saved to disk
+    /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings
+    /// the user has saved to disk
     fn load_program_state(&mut self) {
-        let event_tx = self.app_tx.clone();
+        let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
 
         let mut current_state = match self.control_hub() {
@@ -773,12 +781,16 @@ impl AppModel {
                 midi_controls: hub.midi_controls.clone(),
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
+                mappings: self.map_mode.mappings(),
             },
             None => SaveableProgramState::default(),
         };
 
-        match load_program_state(&sketch_name, &mut current_state) {
+        match storage::load_program_state(&sketch_name, &mut current_state) {
             Ok(state) => {
+                self.map_mode.clear();
+                self.map_mode.set_mappings(state.mappings.clone());
+
                 let Some(hub) = self.control_hub_mut() else {
                     return;
                 };
@@ -786,10 +798,9 @@ impl AppModel {
                 hub.merge_program_state(state);
 
                 if hub.snapshots.is_empty() {
-                    event_tx
-                        .alert_and_log("Controls restored", log::Level::Info);
+                    app_tx.alert_and_log("Controls restored", log::Level::Info);
                 } else {
-                    event_tx.alert_and_log(
+                    app_tx.alert_and_log(
                         format!(
                             "Controls restored. Available snapshots: {:?}",
                             hub.snapshot_keys_sorted()
@@ -829,14 +840,14 @@ impl Drop for AppModel {
     fn drop(&mut self) {
         debug!("Dropping...");
         match self.ui_process.kill() {
-            Ok(_) => debug!("Killed ui_child_process"),
-            Err(e) => error!("Error killing ui_child_process {}", e),
+            Ok(_) => debug!("Killed ui_process"),
+            Err(e) => error!("Error killing ui_process {}", e),
         }
     }
 }
 
 fn model(app: &App) -> AppModel {
-    let global_settings = match load_global_state() {
+    let global_settings = match storage::load_global_state() {
         Ok(gs) => {
             info!("Restoring global settings: {:?}", gs);
             global::set_audio_device_name(&gs.audio_device_name);

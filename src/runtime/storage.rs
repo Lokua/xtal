@@ -4,6 +4,7 @@ use std::{fs, str};
 
 use serde::{Deserialize, Serialize};
 
+use super::map_mode::Mappings;
 use super::serialization::{
     GlobalSettings, SaveableProgramState, SerializableProgramState,
 };
@@ -44,16 +45,17 @@ fn controls_storage_path(sketch_name: &str) -> PathBuf {
 pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
     hub: &ControlHub<T>,
+    mappings: Mappings,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    let concrete_controls = SaveableProgramState {
+    let state = SaveableProgramState {
         ui_controls: hub.ui_controls.clone(),
         midi_controls: hub.midi_controls.clone(),
         osc_controls: hub.osc_controls.clone(),
         snapshots: hub.snapshots.clone(),
+        mappings,
     };
 
-    let serializable_controls =
-        SerializableProgramState::from(&concrete_controls);
+    let serializable_controls = SerializableProgramState::from(&state);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
     let path = controls_storage_path(sketch_name);
     if let Some(parent_dir) = path.parent() {

@@ -105,9 +105,15 @@
   "midi_controls": [
     {
       "name": "grain_size__slider_proxy",
-      "value": 8.818897
+      "value": 0.0
     }
   ],
   "osc_controls": [],
-  "snapshots": {}
+  "snapshots": {},
+  "mappings": {
+    "grain_size": [
+      0,
+      0
+    ]
+  }
 }

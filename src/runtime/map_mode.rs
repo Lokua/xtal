@@ -3,6 +3,8 @@ use std::sync::{Arc, Mutex};
 
 use crate::framework::prelude::*;
 
+pub type Mappings = HashMap<String, ChannelAndController>;
+
 pub struct MapModeState {
     mappings: HashMap<String, ChannelAndController>,
     /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
@@ -29,17 +31,7 @@ impl Default for MapMode {
 }
 
 impl MapMode {
-    /// Display the channel and controller for a mapping as
-    /// `{channel}/{controller}` e.g `15/127`
-    pub fn formatted_mapping(&self, name: &str) -> String {
-        self.state
-            .lock()
-            .unwrap()
-            .mappings
-            .get(name)
-            .map(|(ch, cc)| format!("{}/{}", ch, cc))
-            .unwrap_or_default()
-    }
+    const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
 
     /// Mappings are stored as normal [`MidiControlConfig`] instances within a
     /// [`ControlHub`]'s [`MidiControls`] instance. When a [`Slider`] is queried
@@ -49,7 +41,21 @@ impl MapMode {
     /// MapMode's concern. Anyway this method just provides a single interface
     /// to make sure every call site is using the same name suffix
     pub fn proxy_name(name: &str) -> String {
-        format!("{}__slider_proxy", name)
+        format!("{}{}", name, Self::PROXY_NAME_SUFFIX)
+    }
+
+    /// The inverse of [`proxy_name`]
+    pub fn unproxied_name(proxy_name: &str) -> Option<&str> {
+        proxy_name.strip_suffix(Self::PROXY_NAME_SUFFIX)
+    }
+
+    pub fn is_proxy_name(name: &str) -> bool {
+        name.ends_with(Self::PROXY_NAME_SUFFIX)
+    }
+
+    pub fn mappings(&self) -> Mappings {
+        let state = self.state.lock().unwrap();
+        state.mappings.clone()
     }
 
     pub fn mappings_as_vec(&self) -> Vec<(String, ChannelAndController)> {
@@ -60,6 +66,11 @@ impl MapMode {
             .iter()
             .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
             .collect::<Vec<_>>()
+    }
+
+    pub fn set_mappings(&mut self, mappings: Mappings) {
+        let mut state = self.state.lock().unwrap();
+        state.mappings = mappings;
     }
 
     pub fn update_from_vec(&mut self, ms: &[(String, ChannelAndController)]) {
@@ -75,6 +86,10 @@ impl MapMode {
 
     pub fn remove(&mut self, name: &str) {
         self.state.lock().unwrap().mappings.remove(name);
+    }
+
+    pub fn clear(&mut self) {
+        self.state.lock().unwrap().mappings.clear();
     }
 
     pub fn start<F>(
@@ -117,7 +132,7 @@ impl MapMode {
                     if state.msb_ccs.contains(&key) {
                         warn!(
                             "Received consecutive MSB \
-                          without matching LSB"
+                            without matching LSB"
                         );
                     } else {
                         state.msb_ccs.push(key);

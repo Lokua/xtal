@@ -82,11 +82,13 @@ impl MidiState {
     }
 }
 
+pub type MidiControlConfigs = HashMap<String, MidiControlConfig>;
+
 #[derive(Clone, Debug)]
 pub struct MidiControls {
     /// "High Resolution CC" AKA 14bit MIDI control change for CCs 0-31
     pub hrcc: bool,
-    configs: HashMap<String, MidiControlConfig>,
+    configs: MidiControlConfigs,
     state: Arc<Mutex<MidiState>>,
     is_active: bool,
 }
@@ -145,7 +147,7 @@ impl MidiControls {
         f(&mut state.values);
     }
 
-    pub fn configs(&self) -> HashMap<String, MidiControlConfig> {
+    pub fn configs(&self) -> MidiControlConfigs {
         self.configs.clone()
     }
 
@@ -260,9 +262,7 @@ impl MidiControls {
 
                 trace!(
                     "Storing 14bit value. value: {}, norm: {}, mapped: {}",
-                    value_14bit,
-                    normalized_value,
-                    mapped_value
+                    value_14bit, normalized_value, mapped_value
                 );
             },
         ) {

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use super::map_mode::{MapMode, Mappings};
 use crate::framework::control::control_hub::Snapshots;
 use crate::framework::prelude::*;
 
@@ -50,6 +51,9 @@ pub struct SerializableProgramState {
     // Backwards compat files that don't have snapshots field
     #[serde(default)]
     pub snapshots: HashMap<String, SerializableSnapshot>,
+
+    #[serde(default)]
+    pub mappings: Mappings,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -170,12 +174,15 @@ impl From<&SaveableProgramState> for SerializableProgramState {
             })
             .collect();
 
+        let mappings = state.mappings.clone();
+
         Self {
             version: PROGRAM_STATE_VERSION.to_string(),
             ui_controls: controls,
             midi_controls,
             osc_controls,
             snapshots,
+            mappings,
         }
     }
 }
@@ -224,11 +231,13 @@ fn create_serializable_snapshot(
 
 /// Intermediary structure used to transfer program state to and from
 /// program/serialization contexts
+#[derive(Debug)]
 pub struct SaveableProgramState {
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
+    pub mappings: Mappings,
 }
 
 impl Default for SaveableProgramState {
@@ -238,18 +247,38 @@ impl Default for SaveableProgramState {
             midi_controls: MidiControlBuilder::new().build(),
             osc_controls: OscControlBuilder::new().build(),
             snapshots: HashMap::default(),
+            mappings: HashMap::default(),
         }
     }
 }
 
 impl SaveableProgramState {
     /// Merge incoming serialized data into self
-    pub fn merge(&mut self, serializable_state: SerializableProgramState) {
+    pub fn merge(&mut self, serialized_state: SerializableProgramState) {
+        self.merge_ui_controls(&serialized_state);
+        self.mappings = serialized_state.mappings.clone();
+
+        // Must happen before merging MIDI controls otherwise there will be no
+        // MIDI proxy configs to merge the saved MIDI proxy values into
+        self.setup_midi_mappings();
+
+        self.merge_midi_controls(&serialized_state);
+        self.merge_osc_controls(&serialized_state);
+
+        // Note: This consumes serialized_state due to snapshots ownership
+        // transfer
+        self.merge_snapshots(serialized_state);
+    }
+
+    fn merge_ui_controls(
+        &mut self,
+        serialized_state: &SerializableProgramState,
+    ) {
         self.ui_controls
             .values_mut()
             .iter_mut()
             .for_each(|(name, value)| {
-                let s = serializable_state
+                let s = serialized_state
                     .ui_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -259,10 +288,31 @@ impl SaveableProgramState {
                     *value = s;
                 }
             });
+    }
 
+    fn setup_midi_mappings(&mut self) {
+        self.mappings.iter().for_each(|(name, (ch, cc))| {
+            let (min, max) = self.ui_controls.slider_range(name);
+            self.midi_controls.add(
+                &MapMode::proxy_name(name),
+                MidiControlConfig {
+                    channel: *ch,
+                    cc: *cc,
+                    min,
+                    max,
+                    default: 0.0,
+                },
+            );
+        });
+    }
+
+    fn merge_midi_controls(
+        &mut self,
+        serialized_state: &SerializableProgramState,
+    ) {
         self.midi_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
-                let s = serializable_state
+                let s = serialized_state
                     .midi_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -273,10 +323,15 @@ impl SaveableProgramState {
                 }
             });
         });
+    }
 
+    fn merge_osc_controls(
+        &mut self,
+        serialized_state: &SerializableProgramState,
+    ) {
         self.osc_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
-                let s = serializable_state
+                let s = serialized_state
                     .osc_controls
                     .iter()
                     .find(|s| s.name == *name)
@@ -287,34 +342,33 @@ impl SaveableProgramState {
                 }
             });
         });
+    }
 
+    fn merge_snapshots(&mut self, serialized_state: SerializableProgramState) {
         self.snapshots.clear();
 
-        for (snapshot_name, serializable_snapshot) in
-            serializable_state.snapshots
-        {
-            let mut snapshot_values = HashMap::default();
+        for (name, snapshot) in serialized_state.snapshots {
+            let mut values = HashMap::default();
 
-            for control in &serializable_snapshot.ui_controls {
-                snapshot_values
-                    .insert(control.name.clone(), control.value.clone());
+            for control in &snapshot.ui_controls {
+                values.insert(control.name.clone(), control.value.clone());
             }
 
-            for midi_control in &serializable_snapshot.midi_controls {
-                snapshot_values.insert(
+            for midi_control in &snapshot.midi_controls {
+                values.insert(
                     midi_control.name.clone(),
                     ControlValue::from(midi_control.value),
                 );
             }
 
-            for osc_control in &serializable_snapshot.osc_controls {
-                snapshot_values.insert(
+            for osc_control in &snapshot.osc_controls {
+                values.insert(
                     osc_control.name.clone(),
                     ControlValue::from(osc_control.value),
                 );
             }
 
-            self.snapshots.insert(snapshot_name, snapshot_values);
+            self.snapshots.insert(name, values);
         }
     }
 }
