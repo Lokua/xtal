@@ -393,6 +393,10 @@ impl AppModel {
             AppEvent::RemoveMapping(name) => {
                 self.map_mode.remove(&name);
                 self.map_mode.currently_mapping = None;
+                self.control_hub_mut()
+                    .unwrap()
+                    .midi_controls
+                    .remove(&MapMode::proxy_name(&name));
                 self.app_tx.emit(AppEvent::SendMappings);
             }
             AppEvent::Reset => {
@@ -438,9 +442,15 @@ impl AppModel {
                 self.ui_tx.emit(ui::Event::Mappings(mappings));
             }
             AppEvent::SendMidi => {
+                let hrcc = self.hrcc;
+
                 let messages = {
                     if let Some(hub) = self.control_hub() {
-                        hub.midi_controls.messages()
+                        if hrcc {
+                            hub.midi_controls.messages_hrcc()
+                        } else {
+                            hub.midi_controls.messages()
+                        }
                     } else {
                         return;
                     }
@@ -609,6 +619,7 @@ impl AppModel {
                 self.ui_tx.emit(ui::Event::Init {
                     audio_device: global::audio_device_name(),
                     audio_devices: list_audio_devices().unwrap_or_default(),
+                    hrcc: self.hrcc,
                     is_light_theme: matches!(
                         dark_light::detect(),
                         dark_light::Mode::Light

@@ -288,6 +288,8 @@ impl MidiControls {
         self.start()
     }
 
+    /// Transforms the internal control state into a list of standard 7bit MIDI
+    /// messages. See messages_hrcc if using 14bit MIDI for channels 0-31
     pub fn messages(&self) -> Vec<[u8; 3]> {
         let values = self.values();
         let mut messages: Vec<[u8; 3]> = vec![];
@@ -300,6 +302,40 @@ impl MidiControls {
             let value = constrain::clamp(value, 0.0, 127.0);
             message[2] = value.round() as u8;
             messages.push(message);
+        }
+        messages
+    }
+
+    /// Same as [`messages`] but with support for high resolution, "14bit" MIDI
+    /// CCs for channels 0-31
+    pub fn messages_hrcc(&self) -> Vec<[u8; 3]> {
+        let values = self.values();
+        let mut messages: Vec<[u8; 3]> = vec![];
+        debug!("values: {:?}, configs: {:?}", values, self.configs());
+        for (name, value) in values.iter() {
+            let config = self.configs.get(name).unwrap();
+            let status = 0xB0 | config.channel;
+
+            // Map to 14-bit range for high-res CCs
+            if config.cc < 32 {
+                let value_14bit =
+                    map_range(*value, config.min, config.max, 0.0, 16_383.0);
+                let value_14bit =
+                    constrain::clamp(value_14bit, 0.0, 16_383.0) as u16;
+
+                let msb = ((value_14bit >> 7) & 0x7F) as u8;
+                let lsb = (value_14bit & 0x7F) as u8;
+
+                messages.push([status, config.cc, msb]);
+                messages.push([status, config.cc + 32, lsb]);
+            }
+            // For CC numbers 32 and above, use regular 7-bit resolution
+            else {
+                let value =
+                    map_range(*value, config.min, config.max, 0.0, 127.0);
+                let value = constrain::clamp(value, 0.0, 127.0) as u8;
+                messages.push([status, config.cc, value]);
+            }
         }
         messages
     }

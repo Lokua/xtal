@@ -7,6 +7,10 @@ use crate::config::{
     MULTICHANNEL_AUDIO_DEVICE_NAME, OSC_PORT,
 };
 
+/// Stores global state that is not easily shared via call chains
+pub static GLOBAL: Lazy<Mutex<Global>> =
+    Lazy::new(|| Mutex::new(Global::default()));
+
 pub fn audio_device_name() -> String {
     let global = GLOBAL.lock().unwrap();
     global.audio_device_name.clone()
@@ -16,9 +20,6 @@ pub fn set_audio_device_name(name: &str) {
     let mut global = GLOBAL.lock().unwrap();
     global.audio_device_name = name.to_string();
 }
-
-pub static GLOBAL: Lazy<Mutex<Global>> =
-    Lazy::new(|| Mutex::new(Global::default()));
 
 pub fn midi_clock_port() -> String {
     let global = GLOBAL.lock().unwrap();

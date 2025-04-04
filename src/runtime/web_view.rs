@@ -64,6 +64,7 @@ pub enum Event {
     Init {
         audio_device: String,
         audio_devices: Vec<String>,
+        hrcc: bool,
         is_light_theme: bool,
         midi_clock_port: String,
         midi_input_port: String,

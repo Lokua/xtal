@@ -32,6 +32,7 @@ type EventMap = {
   Init: {
     audioDevice: string
     audioDevices: string[]
+    hrcc: boolean
     isLightTheme: boolean
     midiClockPort: string
     midiInputPort: string
@@ -194,6 +195,7 @@ export default function App() {
           const d = data as EventMap['Init']
           setAudioDevice(d.audioDevice)
           setAudioDevices(d.audioDevices)
+          setHrcc(d.hrcc)
           setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
