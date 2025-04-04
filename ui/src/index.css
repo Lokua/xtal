@@ -40,9 +40,9 @@
     --control-text-color: #eee;
     --control-text-color-muted: #bbb;
     --control-track-color: #444;
-    --control-disabled-track-color: #666;
+    --control-disabled-track-color: #333;
     --control-knob-color: #888;
-    --control-disabled-knob-color: #666;
+    --control-disabled-knob-color: #333;
     --control-disabled-text-color: #777;
     --control-on-background-color: green;
     --control-on-text-color: var(--control-text-color);
@@ -297,9 +297,8 @@ input[type='checkbox']:checked::before {
 }
 
 .number-box:focus {
-  outline: none;
-  box-shadow: none;
-  border-color: inherit;
+  box-shadow: 0 0 0 2px var(--meter-color);
+  border-color: var(--meter-color);
 }
 
 .separator {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Override } from './types.ts'
+import { Override } from './types'
 
 type Props = Override<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -9,7 +9,7 @@ type Props = Override<
     min?: number
     max?: number
     step?: number
-    sensitivity?: number
+    pixelRange?: number
   }
 >
 
@@ -26,7 +26,7 @@ export default function NumberBox({
   min = 0,
   max = 100,
   step = 1,
-  sensitivity = 200,
+  pixelRange = 150,
   onChange,
   ...rest
 }: Props) {
@@ -34,9 +34,10 @@ export default function NumberBox({
   const internalValue = useRef(value)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const prevY = useRef(0)
-  const [shiftHeld, setShiftHeld] = useState(false)
+  const shiftHeld = useRef(false)
   const [inputValue, setInputValue] = useState(value.toFixed(precision))
   const [editing, setEditing] = useState(false)
+  const accumulatedDelta = useRef(0)
 
   useEffect(() => {
     internalValue.current = value
@@ -46,13 +47,13 @@ export default function NumberBox({
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
       if (e.key === 'Shift') {
-        setShiftHeld(true)
+        shiftHeld.current = true
       }
     }
 
     function onKeyup(e: KeyboardEvent) {
       if (e.key === 'Shift') {
-        setShiftHeld(false)
+        shiftHeld.current = false
       }
     }
 
@@ -67,32 +68,30 @@ export default function NumberBox({
 
   function applyDelta(clientY: number) {
     const delta = prevY.current - clientY
-    let newValue: number
-
-    if (shiftHeld) {
-      const direction = delta > 0 ? 1 : delta < 0 ? -1 : 0
-      newValue =
-        direction !== 0
-          ? internalValue.current + step * direction
-          : internalValue.current
-    } else {
-      const valuePerPixel = (max - min) / sensitivity
-      const rawChange = delta * valuePerPixel
-      newValue = internalValue.current + rawChange
-    }
-
-    const boundedValue = Math.min(max, Math.max(min, newValue))
-    const finalValue = shiftHeld
-      ? boundedValue
-      : Math.round((boundedValue - min) / step) * step + min
-
-    if (finalValue !== internalValue.current) {
-      internalValue.current = finalValue
-      setInputValue(finalValue.toFixed(precision))
-      onChange(finalValue)
-    }
-
     prevY.current = clientY
+    accumulatedDelta.current += delta
+
+    const totalSteps = (max - min) / step
+    const pixelsPerStep = totalSteps > 0 ? pixelRange / totalSteps : 10
+
+    let stepsMoved = accumulatedDelta.current / pixelsPerStep
+
+    if (shiftHeld.current) {
+      stepsMoved = Math.trunc(delta)
+    } else {
+      stepsMoved = Math.round(stepsMoved)
+      accumulatedDelta.current -= stepsMoved * pixelsPerStep
+    }
+
+    if (stepsMoved !== 0) {
+      const newValue = internalValue.current + stepsMoved * step
+      const boundedValue = Math.min(max, Math.max(min, newValue))
+      if (boundedValue !== internalValue.current) {
+        internalValue.current = boundedValue
+        setInputValue(boundedValue.toFixed(precision))
+        onChange(boundedValue)
+      }
+    }
   }
 
   function onMouseDown(e: React.MouseEvent) {
