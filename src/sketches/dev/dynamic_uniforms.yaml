@@ -56,6 +56,7 @@ wave_y_freq:
 origin:
   var: e3
   type: select
+  bypass: what
   default: center
   options:
     - center
@@ -138,6 +139,6 @@ grain_size:
 
 angle_mult:
   var: f2
-  bypass: 1
+  bypass: 2
   type: slider
   range: [0, 10]

@@ -59,7 +59,7 @@
     {
       "type": "Slider",
       "name": "color_phase",
-      "value": 1.098
+      "value": 0.001
     },
     {
       "type": "Slider",

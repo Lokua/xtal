@@ -8,6 +8,7 @@ import {
   ControlValue,
   ControlWithValue,
   DynamicSeparator,
+  Mappings,
   Select as SelectType,
   Slider,
 } from './types.ts'
@@ -15,6 +16,7 @@ import {
 type Props = {
   bypassed: Bypassed
   controls: Control[]
+  mappings: Mappings
   onChange: (
     type: string,
     name: string,
@@ -26,6 +28,7 @@ type Props = {
 export default function Controls({
   bypassed,
   controls,
+  mappings,
   onChange: parentOnChange,
 }: Props) {
   function onChange(type: string, index: number, value: ControlValue) {
@@ -67,9 +70,20 @@ export default function Controls({
     if (type === 'slider') {
       const c = control[type] as Slider['slider']
       const isBypassed = c.name in bypassed
+      const isMapped = !!mappings.find((m) => m[0] === c.name)
+      const disabled = c.disabled || isBypassed || isMapped
 
       return (
-        <fieldset key={c.name}>
+        <fieldset
+          key={c.name}
+          title={
+            isMapped
+              ? 'This parameter is currently overridden by a MIDI mapping'
+              : isBypassed
+              ? 'This parameter is currently bypassed in a control script'
+              : ''
+          }
+        >
           <input
             id={c.name}
             type="range"
@@ -77,7 +91,7 @@ export default function Controls({
             min={c.min}
             max={c.max}
             step={c.step}
-            disabled={c.disabled || isBypassed}
+            disabled={disabled}
             onChange={(e) => {
               onChange('slider', index, e.currentTarget.valueAsNumber)
             }}
@@ -88,12 +102,18 @@ export default function Controls({
             min={c.min}
             max={c.max}
             step={c.step}
-            disabled={c.disabled || isBypassed}
+            disabled={disabled}
             onChange={(value) => {
               onChange('slider', index, value)
             }}
           />
-          <label htmlFor={c.name}>{c.name}</label>
+          <label htmlFor={c.name}>
+            {isMapped && <span className="control-meta control-mapped-text" />}
+            {isBypassed && (
+              <span className="control-meta control-bypassed-text" />
+            )}
+            {c.name}
+          </label>
         </fieldset>
       )
     }

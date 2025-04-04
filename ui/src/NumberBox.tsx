@@ -30,15 +30,18 @@ export default function NumberBox({
   onChange,
   ...rest
 }: Props) {
+  const precision = numberOfDecimals(step)
   const internalValue = useRef(value)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const prevY = useRef(0)
   const [shiftHeld, setShiftHeld] = useState(false)
-  const precision = numberOfDecimals(step)
+  const [inputValue, setInputValue] = useState(value.toFixed(precision))
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
     internalValue.current = value
-  }, [value])
+    setInputValue(value.toFixed(precision))
+  }, [value, precision])
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -79,13 +82,13 @@ export default function NumberBox({
     }
 
     const boundedValue = Math.min(max, Math.max(min, newValue))
-
     const finalValue = shiftHeld
       ? boundedValue
       : Math.round((boundedValue - min) / step) * step + min
 
     if (finalValue !== internalValue.current) {
       internalValue.current = finalValue
+      setInputValue(finalValue.toFixed(precision))
       onChange(finalValue)
     }
 
@@ -93,9 +96,15 @@ export default function NumberBox({
   }
 
   function onMouseDown(e: React.MouseEvent) {
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    prevY.current = e.clientY
+    if (!editing) {
+      // e.preventDefault to bypass user-select which interferes with dragging.
+      // Disabling user-select or webkit-user-select at runtime via inline style
+      // doesn't seem to work (TODO: we could try toggling classes?)
+      e.preventDefault()
+      window.addEventListener('mousemove', onMouseMove)
+      window.addEventListener('mouseup', onMouseUp)
+      prevY.current = e.clientY
+    }
   }
 
   function onMouseMove(e: MouseEvent) {
@@ -108,9 +117,12 @@ export default function NumberBox({
   }
 
   function onTouchStart(e: React.TouchEvent) {
-    window.addEventListener('touchmove', onTouchMove as EventListener)
-    window.addEventListener('touchend', onTouchEnd)
-    prevY.current = e.touches[0].clientY
+    if (!editing) {
+      e.preventDefault()
+      window.addEventListener('touchmove', onTouchMove as EventListener)
+      window.addEventListener('touchend', onTouchEnd)
+      prevY.current = e.touches[0].clientY
+    }
   }
 
   function onTouchMove(e: TouchEvent) {
@@ -123,13 +135,32 @@ export default function NumberBox({
   }
 
   function onChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const newValue = parseFloat(e.target.value)
-    if (!isNaN(newValue)) {
-      const stepsFromMin = Math.round((newValue - min) / step)
+    setInputValue(e.target.value)
+  }
+
+  function onBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const parsedValue = parseFloat(e.target.value)
+    if (!isNaN(parsedValue)) {
+      const stepsFromMin = Math.round((parsedValue - min) / step)
       const steppedValue = min + stepsFromMin * step
       const boundedValue = Math.min(max, Math.max(min, steppedValue))
       internalValue.current = boundedValue
+      setInputValue(boundedValue.toFixed(precision))
       onChange(boundedValue)
+    } else {
+      setInputValue(internalValue.current.toFixed(precision))
+    }
+    setEditing(false)
+  }
+
+  function onDoubleClick() {
+    setEditing(true)
+    inputRef.current?.focus()
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (editing && e.key === 'Enter') {
+      inputRef.current?.blur()
     }
   }
 
@@ -140,10 +171,16 @@ export default function NumberBox({
       ref={(element) => {
         inputRef.current = element
       }}
-      value={internalValue.current.toFixed(precision)}
+      value={inputValue}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
       onChange={onChangeInput}
+      onBlur={onBlur}
+      onDoubleClick={onDoubleClick}
+      onKeyDown={onKeyDown}
+      style={{
+        cursor: editing ? 'text' : 'ns-resize',
+      }}
     />
   )
 }

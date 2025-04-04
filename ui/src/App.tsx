@@ -547,6 +547,7 @@ export default function App() {
           <Controls
             bypassed={bypassed}
             controls={controls}
+            mappings={mappings}
             onChange={onChangeControl}
           />
         )}
