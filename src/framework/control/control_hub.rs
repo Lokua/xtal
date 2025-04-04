@@ -662,11 +662,14 @@ impl<T: TimingSource> ControlHub<T> {
             .filter(|(k, _)| MapMode::is_proxy_name(k))
         {
             self.midi_controls.add(k, v.clone());
+            self.midi_controls
+                .update_value(k, state.midi_controls.get(k));
+            debug!("{:?}", self.midi_controls.values());
         }
 
-        for (k, v) in state.midi_controls.values().iter() {
-            self.midi_controls.update_value(k, *v);
-        }
+        // for (k, v) in state.midi_controls.values().iter() {
+        //     self.midi_controls.update_value(k, *v);
+        // }
 
         for (k, v) in state.osc_controls.values().iter() {
             self.osc_controls.update_value(k, *v);

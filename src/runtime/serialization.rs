@@ -316,19 +316,20 @@ impl SaveableProgramState {
         &mut self,
         serialized_state: &SerializableProgramState,
     ) {
-        self.midi_controls.with_values_mut(|values| {
-            values.iter_mut().for_each(|(name, value)| {
-                let s = serialized_state
+        self.midi_controls
+            .configs()
+            .iter_mut()
+            .for_each(|(name, _)| {
+                let value = serialized_state
                     .midi_controls
                     .iter()
                     .find(|s| s.name == *name)
                     .map(|s| s.value);
 
-                if let Some(s) = s {
-                    *value = s
+                if let Some(v) = value {
+                    self.midi_controls.update_value(name, v);
                 }
             });
-        });
     }
 
     fn merge_osc_controls(
