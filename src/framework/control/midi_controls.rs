@@ -289,6 +289,7 @@ impl MidiControls {
 
     pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
         self.is_active = false;
+        info!("Restarting...");
         self.start()
     }
 

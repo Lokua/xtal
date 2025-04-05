@@ -1,4 +1,4 @@
-import NumberBox from './NumberBox.tsx'
+import NumberBox from '@lokua/number-box'
 import Select from './Select.tsx'
 import Separator from './Separator.tsx'
 import {

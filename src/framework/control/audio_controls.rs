@@ -5,7 +5,7 @@
 //! to interact with this module directly - see [`ControlHub`].
 //!
 //! [device]: crate::config::MULTICHANNEL_AUDIO_DEVICE_NAME
-use cpal::{traits::*, Device, Stream, StreamConfig};
+use cpal::{Device, Stream, StreamConfig, traits::*};
 use nannou::math::map_range;
 use std::{
     error::Error,
@@ -276,12 +276,13 @@ impl AudioControls {
 
     pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
         self.stop();
+        info!("Restarting...");
         thread::sleep(Duration::from_millis(10));
         self.start()
     }
 
-    fn device_and_stream_config(
-    ) -> Result<(Device, StreamConfig), Box<dyn Error>> {
+    fn device_and_stream_config()
+    -> Result<(Device, StreamConfig), Box<dyn Error>> {
         let host = cpal::default_host();
         let device_name = global::audio_device_name();
         let device = host
