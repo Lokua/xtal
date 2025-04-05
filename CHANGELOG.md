@@ -15,6 +15,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   temporary snapshot to linearly interpolate from the current state of all
   controls to a randomized state with respect to a controls given min, max, and
   step.
+- New **Appearance** section in the settings tab with a **Use icons** toggle to
+  switch between icon buttons and text buttons. Will likely do away with this
+  options once we settle on which is a better user experience.
 
 ### Changed
 
