@@ -256,7 +256,7 @@ impl MidiControls {
                 let msb = msb as u16;
                 let lsb = value as u16;
                 let value_14bit = (msb << 7) | lsb;
-                let normalized_value = value_14bit as f32 / 16383.0;
+                let normalized_value = value_14bit as f32 / 16_383.0;
 
                 let mapped_value =
                     normalized_value * (config.max - config.min) + config.min;
@@ -272,7 +272,7 @@ impl MidiControls {
         ) {
             Ok(_) => {
                 self.is_active = true;
-                info!("MidiControls initialized successfully");
+                info!("Started");
                 Ok(())
             }
             Err(e) => {

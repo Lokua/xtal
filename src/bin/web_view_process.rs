@@ -21,7 +21,7 @@ const MIN_SETTINGS_HEIGHT: i32 = 436;
 
 fn main() -> wry::Result<()> {
     init_logger();
-    info!("web_view_poc started");
+    info!("Starting web_view_process");
 
     let server_name = std::env::args().nth(1).unwrap();
     let (sender, receiver) = setup_ipc_connection(server_name).unwrap();
@@ -30,11 +30,9 @@ fn main() -> wry::Result<()> {
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
-        .with_title("GUI")
+        .with_title("Lattice UI")
         .with_theme(Some(ternary!(is_light, Theme::Light, Theme::Dark)))
         .with_inner_size(LogicalSize::new(DEFAULT_WIDTH, DEFAULT_HEIGHT))
-        // TODO: set x offset based on actual sketch width (but not in
-        // performance mode!)
         .with_position(LogicalPosition::new(700, 0))
         .with_inner_size_constraints(WindowSizeConstraints {
             min_width: Some(PixelUnit::Logical(dpi::LogicalUnit(
@@ -72,16 +70,16 @@ fn main() -> wry::Result<()> {
         })
         .build(&window)?;
 
-    web_view.open_devtools();
+    // web_view.open_devtools();
 
-    trace!("Child: Starting event loop");
+    trace!("Starting event loop");
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
         match receiver.try_recv() {
             Ok(event) => {
-                trace!("Child: Received parent event: {:?}", event);
+                trace!("Received parent event: {:?}", event);
 
                 let script = format!(
                     "window.postMessage({}, '*');",
@@ -100,7 +98,7 @@ fn main() -> wry::Result<()> {
                         sketch_width,
                         ..
                     } => {
-                        debug!("Received LoadSketch. Setting title and height");
+                        trace!("Received LoadSketch. Setting title and height");
                         window.set_title(&format!("{} Controls", display_name));
                         window.set_inner_size(LogicalSize::new(
                             DEFAULT_WIDTH,
@@ -115,7 +113,6 @@ fn main() -> wry::Result<()> {
                         }
                     }
                     wv::Event::ToggleGuiFocus => {
-                        debug!("Received ToggleGuiFocus");
                         window.set_visible(true);
                     }
                     _ => {}
@@ -123,7 +120,7 @@ fn main() -> wry::Result<()> {
             }
             Err(e) => {
                 if !format!("{:?}", e).contains("Empty") {
-                    error!("Child: Error receiving message: {:?}", e);
+                    error!("Error receiving message: {:?}", e);
                 }
             }
         }
@@ -167,7 +164,7 @@ fn derive_gui_height(controls: Vec<SerializableControl>) -> i32 {
     let h =
         HEADER_HEIGHT + controls_height + FOOTER_HEIGHT + unscientific_offset;
 
-    debug!("Derived GUI height: {}", h);
+    trace!("Derived GUI height: {}", h);
 
     h
 }

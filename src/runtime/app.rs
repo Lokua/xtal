@@ -761,11 +761,6 @@ impl AppModel {
             None => HashMap::default(),
         };
 
-        debug!(
-            "init_sketch_environment > map_mode: {:?}",
-            self.map_mode.mappings_as_vec()
-        );
-
         let event = ui::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
             bypassed,
@@ -805,8 +800,6 @@ impl AppModel {
             None => SaveableProgramState::default(),
         };
 
-        debug!("current_state -> {:#?}", current_state);
-
         match storage::load_program_state(&sketch_name, &mut current_state) {
             Ok(state) => {
                 self.map_mode.clear();
@@ -818,10 +811,12 @@ impl AppModel {
 
                 hub.merge_program_state(state);
 
-                debug!(
-                    "load_program_state -> midi_controls: {:#?}",
-                    hub.midi_controls
-                );
+                // TODO: not ideal to automatically start the MIDI listener in
+                // hub init phase only to restart here each time
+                hub.midi_controls
+                    .restart()
+                    .inspect_err(|e| error!("{}", e))
+                    .ok();
 
                 if hub.snapshots.is_empty() {
                     app_tx.alert_and_log("Controls restored", log::Level::Info);
@@ -875,7 +870,7 @@ impl Drop for AppModel {
 fn model(app: &App) -> AppModel {
     let global_settings = match storage::load_global_state() {
         Ok(gs) => {
-            info!("Restoring global settings: {:?}", gs);
+            info!("Restoring global settings: {:#?}", gs);
             global::set_audio_device_name(&gs.audio_device_name);
             global::set_midi_clock_port(gs.midi_clock_port.clone());
             global::set_midi_control_in_port(gs.midi_control_in_port.clone());
