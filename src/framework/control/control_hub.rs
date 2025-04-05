@@ -724,7 +724,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         if let Some(transition) = &self.active_transition {
             if frame_controller::frame_count() > transition.end_frame {
-                for (name, (from, to)) in &transition.values {
+                for (name, (_from, to)) in &transition.values {
                     if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
                         self.ui_controls.update_value(name, value);

@@ -496,6 +496,7 @@ impl AppModel {
             AppEvent::SnapshotEnded => {
                 let controls = self.web_view_controls();
                 self.ui_tx.emit(ui::Event::SnapshotEnded(controls));
+                self.app_tx.emit(AppEvent::SendMidi);
             }
             AppEvent::SnapshotRecall(digit) => {
                 if let Some(hub) = self.control_hub_mut() {

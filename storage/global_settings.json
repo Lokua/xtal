@@ -6,5 +6,5 @@
   "midi_control_in_port": "IAC Driver Lattice In",
   "midi_control_out_port": "IAC Driver Lattice In",
   "osc_port": 2346,
-  "transition_time": 6.0
+  "transition_time": 1.0
 }
