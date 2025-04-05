@@ -80,6 +80,10 @@ impl OscControls {
         Self::default()
     }
 
+    pub fn config(&self, name: &str) -> Option<&OscControlConfig> {
+        self.configs.get(name)
+    }
+
     pub fn add(&mut self, address: &str, config: OscControlConfig) {
         check_address(address);
         self.state.lock().unwrap().set(address, config.default);

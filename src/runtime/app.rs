@@ -53,6 +53,7 @@ pub enum AppEvent {
     PerfMode(bool),
     QueueRecord,
     Quit,
+    Randomize,
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
@@ -378,6 +379,11 @@ impl AppModel {
                 thread::sleep(Duration::from_millis(50));
                 debug!("Exiting main process");
                 std::process::exit(0);
+            }
+            AppEvent::Randomize => {
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.randomize();
+                }
             }
             AppEvent::ReceiveMappings(mappings) => {
                 self.map_mode.update_from_vec(&mappings);

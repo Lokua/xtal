@@ -4,9 +4,10 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use geom::Ellipse;
 use nannou::color::{LinSrgb, Srgb};
+use nannou::rand::rand;
 use nannou::{
     prelude::*,
-    rand::{thread_rng, Rng},
+    rand::{Rng, thread_rng},
 };
 
 use super::prelude::*;
@@ -84,11 +85,7 @@ macro_rules! str_vec {
 #[macro_export]
 macro_rules! ternary {
     ($condition: expr, $_true: expr, $_false: expr) => {
-        if $condition {
-            $_true
-        } else {
-            $_false
-        }
+        if $condition { $_true } else { $_false }
     };
 }
 
@@ -136,11 +133,7 @@ pub fn luminance(color: &LinSrgb) -> f32 {
 }
 
 pub fn bool_to_f32(cond: bool) -> f32 {
-    if cond {
-        1.0
-    } else {
-        0.0
-    }
+    if cond { 1.0 } else { 0.0 }
 }
 
 pub fn to_absolute_path(
@@ -433,6 +426,13 @@ pub fn rotate_point(point: Vec2, center: Vec2, angle: f32) -> Vec2 {
     rotated + center
 }
 
+pub fn random_within_range_stepped(min: f32, max: f32, step: f32) -> f32 {
+    let mut rng = rand::thread_rng();
+    let random_value = min + rng.gen_range(0.0..1.0) * (max - min);
+    let quantized_value = (random_value / step).round() * step;
+    f32::max(min, f32::min(max, quantized_value))
+}
+
 pub fn random_normal(std_dev: f32) -> f32 {
     let u1: f32 = random();
     let u2: f32 = random();
@@ -440,6 +440,10 @@ pub fn random_normal(std_dev: f32) -> f32 {
     // Use the Box-Muller transform to create a normal distribution
     let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * PI * u2).cos();
     z0 * std_dev
+}
+
+pub fn random_bool() -> bool {
+    random()
 }
 
 // https://www.generativehut.com/post/how-to-make-generative-art-feel-natural

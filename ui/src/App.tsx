@@ -61,6 +61,7 @@ type EventMap = {
   PerfMode: boolean
   QueueRecord: void
   Quit: void
+  Randomize: void
   Ready: void
   RemoveMapping: string
   Reset: void
@@ -126,16 +127,6 @@ function post(event: keyof EventMap, data?: ControlValue | object) {
       })
     )
   }
-}
-
-function randomizeValueWithinRange(
-  min: number,
-  max: number,
-  step: number
-): number {
-  const randomValue = min + Math.random() * (max - min)
-  const quantizedValue = Math.round(randomValue / step) * step
-  return Math.max(min, Math.min(max, quantizedValue))
 }
 
 export default function App() {
@@ -314,7 +305,7 @@ export default function App() {
         }
         case 'KeyR': {
           if (e.metaKey) {
-            randomize()
+            post('Randomize')
           } else {
             post('Reset')
           }
@@ -343,37 +334,7 @@ export default function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused, tapTempoEnabled, view, controls])
-
-  // This is just a POC. Eventually we'll want to do this on the backend via
-  // snapshots
-  function randomize() {
-    const updatedControls = controls.map((control) => {
-      const type = Object.keys(control)[0]
-      if (type === 'slider') {
-        const c = (control as Slider).slider
-        const value = randomizeValueWithinRange(c.min, c.max, c.step)
-
-        // Yes, a gnarly side effect in the middle of a map call IDGAF
-        post('UpdateControlFloat', {
-          name: c.name,
-          value,
-        })
-
-        return {
-          slider: {
-            ...c,
-            value,
-          },
-        }
-      }
-
-      return control
-    })
-
-    setControls(updatedControls)
-  }
 
   function getSliderNames() {
     return controls.reduce<string[]>((names, control) => {
@@ -481,6 +442,10 @@ export default function App() {
     post('ClearBuffer')
   }
 
+  function onClickRandomize() {
+    post('Randomize')
+  }
+
   function onClickSendMidi() {
     post('SendMidi')
   }
@@ -550,7 +515,7 @@ export default function App() {
         onChangeTransitionTime={onChangeTransitionTime}
         onChangeView={onChangeView}
         onClearBuffer={onClearBuffer}
-        onClickRandomize={randomize}
+        onClickRandomize={onClickRandomize}
         onReset={onReset}
         onQueueRecord={onQueueRecord}
         onRecord={onRecord}

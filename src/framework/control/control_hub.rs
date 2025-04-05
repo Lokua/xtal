@@ -2,6 +2,7 @@
 //! control systems from an external yaml file that can be hot-reloaded.
 #![doc = include_str!("../../../docs/control_script_reference.md")]
 
+use nannou::rand::{Rng, thread_rng};
 use notify::{Event, RecursiveMode, Watcher};
 use std::{
     cell::RefCell,
@@ -36,7 +37,8 @@ pub const TRANSITION_TIMES: [f32; 15] = [
 
 #[derive(Debug)]
 struct UpdateState {
-    _watcher: notify::RecommendedWatcher,
+    #[allow(dead_code)]
+    watcher: notify::RecommendedWatcher,
     state: Arc<Mutex<Option<ConfigFile>>>,
 
     /// Optimization to speed up checking for changes vs having to acquire a
@@ -145,7 +147,7 @@ impl<T: TimingSource> ControlHub<T> {
         let has_changes = Arc::new(AtomicBool::new(false));
 
         script.update_state = Some(UpdateState {
-            _watcher: Self::setup_watcher(
+            watcher: Self::setup_watcher(
                 path.clone(),
                 state_clone,
                 has_changes.clone(),
@@ -168,21 +170,28 @@ impl<T: TimingSource> ControlHub<T> {
             None => name,
         };
 
+        let midi_proxy_name = MapMode::proxy_name(name);
+        if self.midi_controls.has(&midi_proxy_name) {
+            name = &midi_proxy_name;
+        }
+
         if let Some(transition) = &self.active_transition {
             if let Some((from, to)) = transition.values.get(name) {
-                return self.get_tweened(
+                let tweened = self.get_tweened(
                     current_frame,
                     *from,
                     *to,
                     transition.start_frame,
                     transition.end_frame,
                 );
+                debug_throttled!(
+                    100,
+                    "get (tweened) name: {}, value: {}",
+                    name,
+                    tweened
+                );
+                return tweened;
             }
-        }
-
-        let midi_proxy_name = MapMode::proxy_name(name);
-        if self.midi_controls.has(&midi_proxy_name) {
-            name = &midi_proxy_name;
         }
 
         if let Some(Some(bypass)) = self.bypassed.get(name) {
@@ -204,6 +213,8 @@ impl<T: TimingSource> ControlHub<T> {
 
         #[cfg(feature = "instrumentation")]
         self.instrumentation.borrow_mut().record(start);
+
+        debug_throttled!(100, "get name: {}, value: {}", name, result);
 
         result
     }
@@ -490,7 +501,8 @@ impl<T: TimingSource> ControlHub<T> {
             .collect()
     }
 
-    pub fn take_snapshot(&mut self, id: &str) {
+    /// Helper to create snapshot (values only)
+    fn create_snapshot(&mut self) -> HashMap<String, ControlValue> {
         let mut snapshot: ControlValues = ControlValues::default();
 
         snapshot.extend(
@@ -519,6 +531,12 @@ impl<T: TimingSource> ControlHub<T> {
                 .map(|(key, value)| (key.clone(), ControlValue::from(*value))),
         );
 
+        snapshot
+    }
+
+    /// Create and store a snapshot for later recall
+    pub fn take_snapshot(&mut self, id: &str) {
+        let snapshot = self.create_snapshot();
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
@@ -545,6 +563,10 @@ impl<T: TimingSource> ControlHub<T> {
                                 );
                             }
                             ControlValue::Bool(_) | ControlValue::String(_) => {
+                                // Just update immediately since we can't
+                                // interpolate over a bool and interpolating
+                                // over static select options is likely to yield
+                                // undesired results
                                 self.ui_controls
                                     .update_value(name, value.clone());
                             }
@@ -600,6 +622,89 @@ impl<T: TimingSource> ControlHub<T> {
         keys
     }
 
+    /// Uses the [`Self::active_transition`] to store a temporary snapshot of
+    /// randomized parameter values. See [this commit][commit] for the original
+    /// frontend POC (App.tsx)
+    ///
+    /// [commit]: https://github.com/Lokua/lattice/commit/bcb1328
+    pub fn randomize(&mut self) {
+        let current_frame = frame_controller::frame_count();
+        let duration =
+            self.animation.beats_to_frames(self.transition_time) as u32;
+
+        let mut transition = SnapshotTransition {
+            values: HashMap::default(),
+            start_frame: current_frame,
+            end_frame: current_frame + duration,
+        };
+
+        for (name, value) in &self.create_snapshot() {
+            if self.ui_controls.has(name) {
+                match value {
+                    ControlValue::Float(_) => {
+                        if let Control::Slider { min, max, step, .. } =
+                            self.ui_controls.config(name).unwrap()
+                        {
+                            let from = self.get_raw(name, current_frame);
+                            let to =
+                                random_within_range_stepped(*min, *max, *step);
+                            transition
+                                .values
+                                .insert(name.to_string(), (from, to));
+                        }
+                    }
+                    ControlValue::Bool(_) => {
+                        // Just update immediately since we can't interpolate
+                        // over a bool
+                        self.ui_controls.update_value(
+                            name,
+                            ControlValue::from(random_bool()),
+                        );
+                    }
+                    ControlValue::String(_) => {
+                        if let Control::Select { options, .. } =
+                            self.ui_controls.config(name).unwrap()
+                        {
+                            // Just update immediately since interpolating over
+                            // static select options is likely to yield
+                            // undesired results
+                            let index =
+                                thread_rng().gen_range(0..options.len());
+
+                            self.ui_controls.update_value(
+                                name,
+                                ControlValue::from(options[index].clone()),
+                            );
+                        }
+                    }
+                }
+            } else if self.midi_controls.has(name) {
+                let config = self.midi_controls.config(name).unwrap();
+                transition.values.insert(
+                    name.to_string(),
+                    (
+                        self.get_raw(name, current_frame),
+                        thread_rng().gen_range(config.min..=config.max),
+                    ),
+                );
+            } else if self.osc_controls.has(name) {
+                let config = self.osc_controls.config(name).unwrap();
+                transition.values.insert(
+                    name.to_string(),
+                    (
+                        self.get_raw(name, current_frame),
+                        thread_rng().gen_range(config.min..=config.max),
+                    ),
+                );
+            } else {
+                error!("Unsupported snapshot value: {} {:?}", name, value);
+            }
+        }
+
+        // Executes the transition immediately
+        self.active_transition = Some(transition);
+    }
+
     pub fn update(&mut self) {
         let new_config = {
             if let Some(update_state) = &self.update_state {
@@ -627,17 +732,19 @@ impl<T: TimingSource> ControlHub<T> {
 
         if let Some(transition) = &self.active_transition {
             if frame_controller::frame_count() > transition.end_frame {
-                for (name, (_from, to)) in &transition.values {
+                for (name, (from, to)) in &transition.values {
                     if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
                         self.ui_controls.update_value(name, value);
                         continue;
-                    }
-                    if self.midi_controls.has(name) {
+                    } else if self.midi_controls.has(name) {
+                        debug!(
+                            "ended -> name: {}, from: {}, to: {}",
+                            name, from, to
+                        );
                         self.midi_controls.update_value(name, *to);
                         continue;
-                    }
-                    if self.osc_controls.has(name) {
+                    } else if self.osc_controls.has(name) {
                         self.osc_controls.update_value(name, *to);
                         continue;
                     }

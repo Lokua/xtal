@@ -70,7 +70,7 @@ fn main() -> wry::Result<()> {
         })
         .build(&window)?;
 
-    // web_view.open_devtools();
+    web_view.open_devtools();
 
     trace!("Starting event loop");
 

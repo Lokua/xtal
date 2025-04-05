@@ -102,6 +102,7 @@ pub enum Event {
     Quit,
     Ready,
 
+    Randomize,
     RemoveMapping(String),
     Reset,
     Save,
@@ -266,17 +267,20 @@ pub fn launch(
                 Event::Quit => {
                     app_tx.emit(AppEvent::Quit);
                 }
+                Event::Randomize => {
+                    app_tx.emit(AppEvent::Randomize);
+                }
                 Event::Ready => {
                     app_tx.emit(AppEvent::WebViewReady);
-                }
-                Event::StartRecording => {
-                    app_tx.emit(AppEvent::StartRecording);
                 }
                 Event::RemoveMapping(name) => {
                     app_tx.emit(AppEvent::RemoveMapping(name));
                 }
                 Event::Reset => {
                     app_tx.emit(AppEvent::Reset);
+                }
+                Event::StartRecording => {
+                    app_tx.emit(AppEvent::StartRecording);
                 }
                 Event::Save => {
                     app_tx.emit(AppEvent::SaveProgramState);
