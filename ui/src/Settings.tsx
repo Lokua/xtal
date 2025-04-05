@@ -16,6 +16,7 @@ type Props = {
   midiOutputPorts: string[]
   oscPort: number
   sliderNames: string[]
+  useIcons: boolean
   onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
   onChangeMappingsEnabled: () => void
@@ -23,6 +24,7 @@ type Props = {
   onChangeMidiInputPort: (port: string) => void
   onChangeMidiOutputPort: (port: string) => void
   onChangeOscPort: (port: number) => void
+  onChangeUseIcons: (useIcons: boolean) => void
   onClickSend: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
@@ -40,6 +42,7 @@ export default function Settings({
   midiOutputPort,
   midiOutputPorts,
   oscPort,
+  useIcons,
   sliderNames,
   onChangeAudioDevice,
   onChangeHrcc,
@@ -48,6 +51,7 @@ export default function Settings({
   onChangeMidiInputPort,
   onChangeMidiOutputPort,
   onChangeOscPort,
+  onChangeUseIcons,
   onClickSend,
   onRemoveMapping,
   onSetCurrentlyMapping,
@@ -55,6 +59,18 @@ export default function Settings({
   return (
     <div id="settings">
       <section>
+        <h2>Appearance</h2>
+        <fieldset>
+          <input
+            id="use-icons"
+            type="checkbox"
+            checked={useIcons}
+            onChange={() => {
+              onChangeUseIcons(!useIcons)
+            }}
+          />
+          <label htmlFor="use-icons">Use icons</label>
+        </fieldset>
         <h2>MIDI</h2>
         <button
           title="Sends the state of all CCs to the MIDI output port"

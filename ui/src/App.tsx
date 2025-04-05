@@ -129,6 +129,10 @@ function post(event: keyof EventMap, data?: ControlValue | object) {
   }
 }
 
+function getStoredUseIcons() {
+  return localStorage.getItem('lattice.useIcons') === 'true'
+}
+
 export default function App() {
   const [alertText, setAlertText] = useState('')
   const [audioDevices, setAudioDevices] = useState<string[]>([])
@@ -155,6 +159,7 @@ export default function App() {
   const [sketchNames, setSketchNames] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
+  const [useIcons, setUseIcons] = useState(getStoredUseIcons())
   const [view, setView] = useState<View>(View.Controls)
 
   useEffect(() => {
@@ -430,6 +435,11 @@ export default function App() {
     post('TransitionTime', time)
   }
 
+  function onChangeUseIcons(useIcons: boolean) {
+    localStorage.setItem('lattice.useIcons', useIcons.toString())
+    setUseIcons(useIcons)
+  }
+
   function onChangeView() {
     const v = view === View.Controls ? View.Settings : View.Controls
     setView(v)
@@ -507,6 +517,7 @@ export default function App() {
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
         transitionTime={transitionTime}
+        useIcons={useIcons}
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
@@ -537,6 +548,7 @@ export default function App() {
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
+            useIcons={useIcons}
             sliderNames={getSliderNames()}
             onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
@@ -545,6 +557,7 @@ export default function App() {
             onChangeMidiInputPort={onChangeMidiInputPort}
             onChangeMidiOutputPort={onChangeMidiOutputPort}
             onChangeOscPort={onChangeOscPort}
+            onChangeUseIcons={onChangeUseIcons}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}

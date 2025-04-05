@@ -9,12 +9,12 @@
     {
       "type": "Slider",
       "name": "wave_phase_speed",
-      "value": 8.0
+      "value": 27.0
     },
     {
       "type": "Slider",
       "name": "wave_dist",
-      "value": 27.2727
+      "value": 12.273999
     },
     {
       "type": "Checkbox",
@@ -24,92 +24,92 @@
     {
       "type": "Slider",
       "name": "wave_x_freq",
-      "value": 25.1748
+      "value": 37.7791
     },
     {
       "type": "Slider",
       "name": "wave_y_freq",
-      "value": 5.564
+      "value": 5.0037
     },
     {
       "type": "Select",
       "name": "origin",
-      "value": "center"
+      "value": "bottom-right"
     },
     {
       "type": "Slider",
       "name": "origin_offset",
-      "value": 1.0
+      "value": 0.1382
     },
     {
       "type": "Checkbox",
       "name": "color_invert",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
       "name": "color_amt",
-      "value": 0.7902
+      "value": 0.045399997
     },
     {
       "type": "Slider",
       "name": "color_freq",
-      "value": 4.0559
+      "value": 15.825299
     },
     {
       "type": "Slider",
       "name": "color_phase",
-      "value": 0.571
+      "value": 2.2280002
     },
     {
       "type": "Slider",
       "name": "r_amp",
-      "value": 0.8881
+      "value": 0.2563
     },
     {
       "type": "Slider",
       "name": "g_amp",
-      "value": 0.2657
+      "value": 0.5442
     },
     {
       "type": "Slider",
       "name": "b_amp",
-      "value": 0.3147
+      "value": 0.401
     },
     {
       "type": "Slider",
       "name": "color_shift",
-      "value": 0.6371
+      "value": 3.8995998
     },
     {
       "type": "Slider",
       "name": "color_steps",
-      "value": 11.0
+      "value": 47.0
     },
     {
       "type": "Slider",
       "name": "distance_mix",
-      "value": 0.0944
+      "value": 0.6304
     },
     {
       "type": "Slider",
       "name": "grain_size",
-      "value": 8.979
+      "value": 9.653
     },
     {
       "type": "Slider",
       "name": "angle_mult",
-      "value": 3.0958
+      "value": 3.9689
     }
   ],
   "midi_controls": [
     {
       "name": "wave_dist__slider_proxy",
-      "value": 165.35434
+      "value": 77.16535
     },
     {
       "name": "wave_x_freq__slider_proxy",
-      "value": 73.22835
+      "value": 71.65354
     }
   ],
   "osc_controls": [],

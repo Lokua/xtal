@@ -1,8 +1,10 @@
 import type { noop } from './types.js'
 import { View } from './types.ts'
 import Select from './Select.js'
-import Separator, { VerticalSeparator } from './Separator.js'
+import Separator, { VerticalSeparator } from './Separator.tsx'
+import IconButton from './IconButton.tsx'
 import { Title } from './Help.tsx'
+import clsx from 'clsx'
 
 const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
 type TransitionTime = (typeof transitionTimes)[number]
@@ -19,6 +21,7 @@ type HeaderProps = {
   sketchNames: string[]
   tapTempoEnabled: boolean
   transitionTime: TransitionTime
+  useIcons: boolean
   view: View
   onAdvance: noop
   onCaptureFrame: noop
@@ -48,6 +51,7 @@ export default function Header({
   sketchNames,
   tapTempoEnabled,
   transitionTime,
+  useIcons,
   view,
   onAdvance,
   onCaptureFrame,
@@ -64,7 +68,110 @@ export default function Header({
   onSwitchSketch,
   onTogglePlay,
 }: HeaderProps) {
-  return (
+  return useIcons ? (
+    <header>
+      <section>
+        <IconButton name={paused ? 'Play' : 'Pause'} onClick={onTogglePlay} />
+        <IconButton name="Advance" disabled={!paused} onClick={onAdvance} />
+        <IconButton name="Reset" onClick={onReset} />
+
+        <VerticalSeparator />
+        <IconButton name="Clear" onClick={onClearBuffer} />
+        <VerticalSeparator />
+
+        <IconButton
+          name="Image"
+          title={Title.CaptureImage}
+          onClick={onCaptureFrame}
+        />
+        <IconButton
+          name={isQueued ? 'Queued' : 'Queue'}
+          title={Title.Queue}
+          disabled={isRecording || isEncoding}
+          on={isQueued}
+          onClick={onQueueRecord}
+        />
+        <IconButton
+          name={isRecording ? 'StopRecording' : 'Record'}
+          disabled={isEncoding}
+          className={clsx(
+            isRecording && 'is-recording',
+            isEncoding && 'is-encoding'
+          )}
+          onClick={onRecord}
+        />
+
+        <VerticalSeparator />
+
+        <div className="meter">
+          FPS: <span className="meter-value">{fps.toFixed(1)}</span>
+        </div>
+
+        <VerticalSeparator />
+
+        <IconButton name="Save" title={Title.Save} onClick={onSave} />
+        <IconButton
+          name="Settings"
+          title={Title.Settings}
+          on={view === View.Settings}
+          onClick={onChangeView}
+        />
+      </section>
+
+      <Separator style={{ margin: '2px 0' }} />
+
+      <section>
+        <Select
+          id="sketch"
+          title={Title.Sketch}
+          value={sketchName}
+          options={sketchNames}
+          onChange={onSwitchSketch}
+          style={{ width: '192px' }}
+        />
+
+        <IconButton
+          title={Title.Perf}
+          name="Perf"
+          on={perfMode}
+          onClick={onChangePerfMode}
+        />
+
+        <VerticalSeparator />
+
+        <div className="meter">
+          BPM: <span className="meter-value">{bpm.toFixed(1)}</span>
+        </div>
+        <IconButton
+          name="Tap"
+          title={Title.Tap}
+          on={tapTempoEnabled}
+          onClick={onChangeTapTempoEnabled}
+        />
+
+        <VerticalSeparator />
+
+        <IconButton
+          name="Random"
+          title={Title.Random}
+          onClick={onClickRandomize}
+        />
+
+        <fieldset>
+          <Select
+            id="transition-time"
+            title={Title.TransitionTime}
+            style={{ width: '48px' }}
+            value={transitionTime.toString()}
+            options={transitionTimes}
+            onChange={(value) => {
+              onChangeTransitionTime(parseFloat(value))
+            }}
+          />
+        </fieldset>
+      </section>
+    </header>
+  ) : (
     <header>
       <section>
         <button onClick={onCaptureFrame}>Image</button>

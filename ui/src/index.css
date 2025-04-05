@@ -45,8 +45,8 @@
     --control-knob-color: #888;
     --control-disabled-knob-color: #333;
     --control-disabled-text-color: #777;
-    --control-on-background-color: green;
-    --control-on-text-color: var(--control-text-color);
+    --control-on-background-color: #eee;
+    --control-on-text-color: #363636;
     --console-background-color: #111;
     --control-mapped-color: limegreen;
     --control-bypassed-color: cornflowerblue;
@@ -87,7 +87,10 @@ body {
   > header,
   > main,
   > footer {
-    padding: 4px 8px;
+    padding-top: 4px;
+    padding-right: 8px;
+    padding-left: 8px;
+    padding-bottom: 2px;
   }
 
   > header {
@@ -96,7 +99,7 @@ body {
     > section {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: space-around;
     }
   }
 
@@ -182,6 +185,61 @@ input,
   }
 }
 
+button {
+  padding: 0 8px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  &:active {
+    background-color: var(--control-active-background-color);
+  }
+
+  &.on {
+    background-color: var(--control-on-background-color);
+    color: var(--control-on-text-color);
+  }
+}
+
+button.icon-button {
+  position: relative;
+  width: var(--control-height);
+  height: var(--control-height);
+  background: transparent;
+  padding: 0 2px;
+
+  svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    fill: var(--text-color);
+  }
+
+  &:hover {
+    background: var(--control-background-color);
+  }
+
+  &.on,
+  &:active {
+    background: var(--control-on-background-color);
+
+    svg {
+      fill: var(--control-on-text-color);
+    }
+  }
+
+  &:disabled svg {
+    fill: var(--muted-color);
+  }
+
+  &.is-recording svg {
+    fill: red;
+  }
+}
+
 .select-wrapper {
   position: relative;
   display: inline-block;
@@ -204,23 +262,6 @@ input,
     outline: none;
     box-shadow: none;
     appearance: none;
-  }
-}
-
-button {
-  padding: 0 8px;
-
-  &:active {
-    background-color: var(--control-active-background-color);
-  }
-
-  &.on {
-    background-color: var(--control-on-background-color);
-    color: var(--control-on-text-color);
-  }
-
-  &.record-button.on {
-    background-color: red;
   }
 }
 
