@@ -184,12 +184,6 @@ impl<T: TimingSource> ControlHub<T> {
                     transition.start_frame,
                     transition.end_frame,
                 );
-                debug_throttled!(
-                    100,
-                    "get (tweened) name: {}, value: {}",
-                    name,
-                    tweened
-                );
                 return tweened;
             }
         }
@@ -213,8 +207,6 @@ impl<T: TimingSource> ControlHub<T> {
 
         #[cfg(feature = "instrumentation")]
         self.instrumentation.borrow_mut().record(start);
-
-        debug_throttled!(100, "get name: {}, value: {}", name, result);
 
         result
     }
@@ -738,10 +730,6 @@ impl<T: TimingSource> ControlHub<T> {
                         self.ui_controls.update_value(name, value);
                         continue;
                     } else if self.midi_controls.has(name) {
-                        debug!(
-                            "ended -> name: {}, from: {}, to: {}",
-                            name, from, to
-                        );
                         self.midi_controls.update_value(name, *to);
                         continue;
                     } else if self.osc_controls.has(name) {
