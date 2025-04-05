@@ -788,6 +788,8 @@ impl AppModel {
         } else {
             self.ui_pending_messages.push_back(event);
         }
+
+        self.app_tx.emit(AppEvent::SendMidi);
     }
 
     /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings

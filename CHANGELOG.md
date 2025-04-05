@@ -7,8 +7,6 @@ The format is based loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
-> NOTE: the project is
-
 ## [0.2.0] - 2025-04-05
 
 ### Added
@@ -25,6 +23,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   transition; now we 1. look up alias then 2. look up MIDI proxy name and _then_
   check the transition. This may have unintended side effects and I do not
   remember why we didn't support proxies in transitions to begin with.
+- Send MIDI out for all CCs when a snapshot, random or otherwise, ends
+- Send MIDI out for all CCs when a sketch is switched - no more having to
+  manually click `Send`
 
 ## [0.1.0] - 2025-04-05
 
