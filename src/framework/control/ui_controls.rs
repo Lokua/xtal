@@ -530,7 +530,7 @@ impl UiControls {
                 Control::Slider { min, max, .. } => Some((*min, *max)),
                 _ => None,
             })
-            .unwrap_or_else(|| loud_panic!("Unable to find range for {}", name))
+            .unwrap_or_else(|| panic!("Unable to find range for {}", name))
     }
 
     pub fn add(&mut self, control: Control) {
@@ -694,7 +694,7 @@ impl ChangeTracker {
         if self.previous_values.is_empty() {
             for name in names {
                 if !values.contains_key(*name) {
-                    loud_panic!("Control {} does not exist", name);
+                    panic!("Control {} does not exist", name);
                 }
             }
             return true;
@@ -703,7 +703,7 @@ impl ChangeTracker {
         for name in names {
             for name in names {
                 if !values.contains_key(*name) {
-                    loud_panic!("Control {} does not exist", name);
+                    panic!("Control {} does not exist", name);
                 }
             }
             if let Some(current) = values.get(*name) {

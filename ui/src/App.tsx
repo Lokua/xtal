@@ -10,6 +10,7 @@ import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
 import Settings from './Settings.tsx'
+import { Alert } from './Help.tsx'
 
 type EventMap = {
   Advance: void
@@ -125,6 +126,16 @@ function post(event: keyof EventMap, data?: ControlValue | object) {
       })
     )
   }
+}
+
+function randomizeValueWithinRange(
+  min: number,
+  max: number,
+  step: number
+): number {
+  const randomValue = min + Math.random() * (max - min)
+  const quantizedValue = Math.round(randomValue / step) * step
+  return Math.max(min, Math.min(max, quantizedValue))
 }
 
 export default function App() {
@@ -301,6 +312,14 @@ export default function App() {
           }
           break
         }
+        case 'KeyR': {
+          if (e.metaKey) {
+            randomize()
+          } else {
+            post('Reset')
+          }
+          break
+        }
         case 'KeyS': {
           if (e.metaKey || e.shiftKey) {
             post('Save')
@@ -324,7 +343,37 @@ export default function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [paused, tapTempoEnabled, view])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paused, tapTempoEnabled, view, controls])
+
+  // This is just a POC. Eventually we'll want to do this on the backend via
+  // snapshots
+  function randomize() {
+    const updatedControls = controls.map((control) => {
+      const type = Object.keys(control)[0]
+      if (type === 'slider') {
+        const c = (control as Slider).slider
+        const value = randomizeValueWithinRange(c.min, c.max, c.step)
+
+        // Yes, a gnarly side effect in the middle of a map call IDGAF
+        post('UpdateControlFloat', {
+          name: c.name,
+          value,
+        })
+
+        return {
+          slider: {
+            ...c,
+            value,
+          },
+        }
+      }
+
+      return control
+    })
+
+    setControls(updatedControls)
+  }
 
   function getSliderNames() {
     return controls.reduce<string[]>((names, control) => {
@@ -374,11 +423,7 @@ export default function App() {
     const value = !hrcc
     setHrcc(value)
     post('Hrcc', value)
-    setAlertText(
-      value
-        ? 'Expecting 14bit MIDI on channels 0-31'
-        : 'Expecting standard 7bit MIDI messages for all CCs'
-    )
+    setAlertText(value ? Alert.Midi14Bit : Alert.Midi7Bit)
   }
 
   function onChangeMidiClockPort(port: string) {
@@ -409,21 +454,14 @@ export default function App() {
     const value = !perfMode
     setPerfMode(value)
     post('PerfMode', value)
-    setAlertText(
-      value
-        ? 'When `Perf` is enabled, the sketch window will not be resized \
-        when switching sketches.'
-        : ''
-    )
+    setAlertText(value ? Alert.PerfEnabled : '')
   }
 
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
     post('TapTempoEnabled', enabled)
-    setAlertText(
-      enabled ? 'Tap `Space` key to set BPM' : 'Sketch BPM has been restored'
-    )
+    setAlertText(enabled ? Alert.TapEnabled : Alert.TapDisabled)
   }
 
   function onChangeTransitionTime(time: number) {
@@ -451,7 +489,7 @@ export default function App() {
     const value = !isQueued
     setIsQueued(value)
     post('QueueRecord')
-    setAlertText(value ? 'Recording queued. Awaiting MIDI start message.' : '')
+    setAlertText(value ? Alert.Queued : '')
   }
 
   function onRecord() {
@@ -512,6 +550,7 @@ export default function App() {
         onChangeTransitionTime={onChangeTransitionTime}
         onChangeView={onChangeView}
         onClearBuffer={onClearBuffer}
+        onClickRandomize={randomize}
         onReset={onReset}
         onQueueRecord={onQueueRecord}
         onRecord={onRecord}

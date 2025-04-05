@@ -1,8 +1,8 @@
 Files sorted from most to least recent
 
-## wgpu_learn-but2b.png
+## dynamic_uniforms-jbvs3.png
 
-<img src="images/wgpu_learn-but2b.png" alt="wgpu_learn-but2b.png">
+<img src="images/dynamic_uniforms-jbvs3.png" alt="dynamic_uniforms-jbvs3.png">
 
 ## dynamic_uniforms-88sf0.png
 

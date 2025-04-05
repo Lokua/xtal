@@ -3,7 +3,13 @@
 A hobbyist project exploring generative art while learning Rust and
 [nannou][nannou]. Stuff like this:
 
-<div>
+<img 
+  src="./images/displacement_2-627iz.png" 
+  alt="displacement_2-627iz" 
+  width="90%"
+/>
+
+<!-- <div>
    <img src="./images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9" width="30%">
    <img src="./images/sierpinski_triangle-0x9az.png" alt="sierpinski_triangle-0x9az" width="30%">
    <img src="./images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y" width="30%">
@@ -17,7 +23,7 @@ A hobbyist project exploring generative art while learning Rust and
    <img src="./images/sand_lines_wgpu-8obz5.png" alt="sand_lines_wgpu-8obz5" width="30%">
    <img src="./images/displacement_2-627iz.png" alt="displacement_2-627iz" width="30%">
    <img src="./images/sand_lines-d8i8g.png" alt="sand_lines-d8i8g.png" width="30%">
-</div>
+</div> -->
 
 You can see more screenshots here on github by looking at the auto generated
 [markdown index](index.md) or checkout audio-visual compositions on

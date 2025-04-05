@@ -76,15 +76,6 @@ macro_rules! debug_once {
    }}
 }
 
-/// Helper to make panic errors stand out more in logs
-#[macro_export]
-macro_rules! loud_panic {
-    ($($arg:tt)*) => {{
-        error!("\n\n{}\n\n", format!($($arg)*));
-        panic!("\n\n{}\n\n", format!($($arg)*));
-    }};
-}
-
 /// Logs a debug message at most once within a specified time interval.
 #[allow(unused_macros)]
 #[macro_export]

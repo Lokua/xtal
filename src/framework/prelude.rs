@@ -12,7 +12,6 @@ pub use crate::framework::noise::*;
 pub use crate::framework::sketch::*;
 pub use crate::framework::util::*;
 pub use crate::framework::window_rect::*;
-pub use crate::loud_panic;
 pub use crate::str_vec;
 pub use crate::ternary;
 pub use crate::warn_once;

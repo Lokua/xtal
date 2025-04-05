@@ -393,7 +393,9 @@ impl MidiControlBuilder {
     pub fn build(mut self) -> MidiControls {
         self.controls
             .start()
-            .expect("Unable to build start MIDI receiver");
+            .inspect_err(|e| error!("Unable to start MIDI receiver: {}", e))
+            .ok();
+
         self.controls
     }
 }

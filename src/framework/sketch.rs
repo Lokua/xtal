@@ -81,22 +81,15 @@ pub trait Sketch {
     fn event(&mut self, _app: &App, _event: &Event) {}
 }
 
-/// Secondary trait that all sketches must implement if they want to integrate
-/// with the main runtime. Does not have to be implemented manually. Use with:
+/// Secondary trait that all sketches must implement in order to integrate with
+/// the main runtime. Does not have to be implemented manually. Use with:
 /// ```rust
 /// #[derive(SketchComponents)]
 /// pub struct MySketch {}
 /// ```
 pub trait SketchDerived {
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider> {
-        None
-    }
-    fn ui_controls(&mut self) -> Option<&mut UiControls> {
-        self.controls().map(|provider| provider.ui_controls_mut())
-    }
-    fn clear_color(&self) -> Rgba {
-        Rgba::new(0.0, 0.0, 0.0, 1.0)
-    }
+    fn controls(&mut self) -> Option<&mut dyn ControlProvider>;
+    fn clear_color(&self) -> Rgba;
 }
 
 /// Trait used to enable dynamically loading sketches at runtime via

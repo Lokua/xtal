@@ -602,7 +602,7 @@ impl AppModel {
             }
             AppEvent::UpdateUiControl((name, value)) => {
                 let hub = self.control_hub_mut().unwrap();
-                hub.update_ui_value(&name, value.clone());
+                hub.ui_controls.update_value(&name, value.clone());
 
                 // Revaluate disabled state
                 if matches!(
@@ -703,8 +703,8 @@ impl AppModel {
         self.session_id = uuid_5();
         self.clear_next_frame.set(true);
 
-        if let Some(provider) = self.sketch.controls() {
-            provider.clear_snapshots();
+        if let Some(hub) = self.control_hub_mut() {
+            hub.clear_snapshots();
         }
 
         self.init_sketch_environment(app);

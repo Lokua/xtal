@@ -2,6 +2,7 @@ import type { noop } from './types.js'
 import { View } from './types.ts'
 import Select from './Select.js'
 import Separator, { VerticalSeparator } from './Separator.js'
+import { Title } from './Help.tsx'
 
 const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
 type TransitionTime = (typeof transitionTimes)[number]
@@ -26,6 +27,7 @@ type HeaderProps = {
   onChangeTransitionTime: (transitionTime: TransitionTime) => void
   onChangeView: noop
   onClearBuffer: noop
+  onClickRandomize: noop
   onQueueRecord: noop
   onRecord: noop
   onReset: noop
@@ -54,6 +56,7 @@ export default function Header({
   onChangeTransitionTime,
   onChangeView,
   onClearBuffer,
+  onClickRandomize,
   onQueueRecord,
   onRecord,
   onReset,
@@ -96,12 +99,15 @@ export default function Header({
       <Separator style={{ margin: '2px 0' }} />
       <section>
         <Select
+          title={Title.Sketch}
           value={sketchName}
           options={sketchNames}
           onChange={onSwitchSketch}
+          style={{ width: '128px' }}
         />
         <fieldset>
           <input
+            title={Title.Perf}
             id="perf"
             type="checkbox"
             checked={perfMode}
@@ -115,6 +121,7 @@ export default function Header({
         </div>
         <fieldset>
           <input
+            title={Title.Tap}
             id="tap"
             type="checkbox"
             checked={tapTempoEnabled}
@@ -124,6 +131,7 @@ export default function Header({
         </fieldset>
         <VerticalSeparator />
         <Select
+          title={Title.TransitionTime}
           style={{ width: '48px' }}
           value={transitionTime.toString()}
           options={transitionTimes}
@@ -131,9 +139,15 @@ export default function Header({
             onChangeTransitionTime(parseFloat(value))
           }}
         />
+        <button title={Title.Random} onClick={onClickRandomize}>
+          ?
+        </button>
         <VerticalSeparator />
-        <button onClick={onSave}>Save</button>
+        <button title={Title.Save} onClick={onSave}>
+          Save
+        </button>
         <button
+          title={Title.Settings}
           className={view === View.Settings ? 'on' : ''}
           onClick={onChangeView}
         >

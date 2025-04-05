@@ -25,6 +25,7 @@
     --console-background-color: #f4f4f4;
     --control-mapped-color: limegreen;
     --control-bypassed-color: blue;
+    --focus-color: var(--text-color);
   }
 }
 
@@ -49,6 +50,7 @@
     --console-background-color: #111;
     --control-mapped-color: limegreen;
     --control-bypassed-color: cornflowerblue;
+    --focus-color: var(--text-color);
   }
 }
 
@@ -116,12 +118,7 @@ ul {
   padding: 0;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h2 {
   margin: 6px 0;
 }
 
@@ -150,17 +147,20 @@ label {
 }
 
 button:focus,
+input:focus,
 select:focus,
-input:focus {
+.number-box:focus,
+.select-wrapper:has(select:focus) > select {
   outline: none;
 }
 
-button:focus,
-select:focus,
-input:focus,
-.select-wrapper:has(select:focus) > select {
-  box-shadow: 0 0 0 2px var(--meter-color);
-  border-color: var(--meter-color);
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.number-box:focus-visible,
+.select-wrapper:has(select:focus-visible) > select {
+  box-shadow: 0 0 0 2px var(--focus-color);
+  border-color: var(--focus-color);
 }
 
 button,
@@ -294,11 +294,6 @@ input[type='checkbox']:checked::before {
 .number-box {
   max-width: 54px;
   padding: 6px;
-}
-
-.number-box:focus {
-  box-shadow: 0 0 0 2px var(--meter-color);
-  border-color: var(--meter-color);
 }
 
 .separator {
