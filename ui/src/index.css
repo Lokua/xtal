@@ -66,30 +66,29 @@ html {
 }
 
 body {
-  background: black;
-  color: var(--text-color);
-  font-size: 12px;
+  overflow: hidden;
   margin: 0;
   padding: 0;
+  font-size: 12px;
+  background: black;
+  color: var(--text-color);
 }
 
 #app {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--background-color);
-  color: var(--text-color);
-  margin: 0;
-  padding: 0;
   width: 100%;
   height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--background-color);
+  color: var(--text-color);
 
   > header,
   > main,
   > footer {
-    padding-top: 4px;
-    padding-right: 8px;
-    padding-left: 8px;
+    padding: 4px 8px;
     padding-bottom: 2px;
   }
 
@@ -149,26 +148,10 @@ label {
   color: var(--text-color);
 }
 
-button:focus,
-input:focus,
-select:focus,
-.number-box:focus,
-.select-wrapper:has(select:focus) > select {
-  outline: none;
-}
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-.number-box:focus-visible,
-.select-wrapper:has(select:focus-visible) > select {
-  box-shadow: 0 0 0 2px var(--focus-color);
-  border-color: var(--focus-color);
-}
-
 button,
 select,
 input,
+.checkbox-wrapper,
 .number-box {
   height: var(--control-height);
   margin: var(--control-margin);
@@ -182,6 +165,19 @@ input,
   &:disabled {
     cursor: not-allowed;
     color: var(--control-disabled-text-color);
+  }
+
+  &:focus,
+  &.select-wrapper:has(&:focus) > &,
+  &:has(input:focus) {
+    outline: none;
+  }
+
+  &:focus-visible,
+  &.select-wrapper:has(&:focus-visible) > &,
+  &:has(input:focus-visible) {
+    box-shadow: 0 0 0 2px var(--focus-color);
+    border-color: var(--focus-color);
   }
 }
 
@@ -257,6 +253,43 @@ button.icon-button {
   }
 }
 
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  width: calc(var(--control-height) - 2px);
+  height: calc(var(--control-height) - 2px);
+  border-color: transparent;
+  border-radius: 2px;
+  background-color: var(--control-background-color);
+  cursor: pointer;
+
+  svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    fill: var(--text-color);
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+}
+
+.number-box {
+  max-width: 54px;
+  padding: 6px;
+}
+
 .select-wrapper {
   position: relative;
   display: inline-block;
@@ -322,36 +355,6 @@ input[type='range']::-webkit-slider-thumb {
   background: var(--control-knob-color);
   border-radius: 50%;
   cursor: pointer;
-}
-
-input[type='checkbox'] {
-  -webkit-appearance: none;
-  font-family: Arial, Helvetica, sans-serif !important;
-  appearance: none;
-  width: calc(var(--control-height) - 2px);
-  height: calc(var(--control-height) - 2px);
-  background-color: var(--control-background-color);
-  border-color: transparent;
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-input[type='checkbox']:checked {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-input[type='checkbox']:checked::before {
-  content: '\2715';
-  color: var(--control-text-color);
-  font-size: 14px;
-}
-
-.number-box {
-  max-width: 54px;
-  padding: 6px;
 }
 
 .separator {

@@ -1,7 +1,8 @@
+import { Mappings, noop } from './types'
+import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
 import Select from './Select'
-import { Mappings, noop } from './types'
 
 type Props = {
   audioDevice: string
@@ -69,7 +70,7 @@ export default function Settings({
       <section>
         <h2>Appearance</h2>
         <fieldset>
-          <input
+          <Checkbox
             id="use-icons"
             type="checkbox"
             checked={useIcons}
@@ -115,7 +116,7 @@ export default function Settings({
           <label htmlFor="output-port">Output Port</label>
         </fieldset>
         <fieldset title="Enable high resolution (14bit) MIDI for controls 0-31">
-          <input
+          <Checkbox
             id="hrcc"
             type="checkbox"
             checked={hrcc}
@@ -140,7 +141,7 @@ export default function Settings({
 
         <h2>Randomization</h2>
         <fieldset>
-          <input
+          <Checkbox
             id="include-checkboxes"
             type="checkbox"
             checked={randomizationIncludesCheckboxes}
@@ -149,7 +150,7 @@ export default function Settings({
           <label htmlFor="include-checkboxes">Include Checkboxes</label>
         </fieldset>
         <fieldset>
-          <input
+          <Checkbox
             id="include-selects"
             type="checkbox"
             checked={randomizationIncludesSelects}
@@ -167,7 +168,7 @@ export default function Settings({
               title="Enables live overrides of UI sliders via MIDI CCs"
               style={{ display: 'none' }}
             >
-              <input
+              <Checkbox
                 id="mappings-enabled"
                 type="checkbox"
                 checked={mappingsEnabled}

@@ -1,4 +1,5 @@
 import NumberBox from '@lokua/number-box'
+import CheckboxInput from './Checkbox.tsx'
 import Select from './Select.tsx'
 import Separator from './Separator.tsx'
 import {
@@ -52,18 +53,20 @@ export default function Controls({
       const c = control[type] as Checkbox['checkbox']
 
       return (
-        <fieldset key={c.name}>
-          <input
-            id={c.name}
-            type="checkbox"
-            checked={c.value}
-            disabled={c.disabled}
-            onChange={(e) => {
-              onChange('checkbox', index, e.target.checked)
-            }}
-          />
-          <label htmlFor={c.name}>{c.name}</label>
-        </fieldset>
+        <>
+          <fieldset key={c.name + '2'}>
+            <CheckboxInput
+              id={c.name}
+              type="checkbox"
+              checked={c.value}
+              disabled={c.disabled}
+              onChange={() => {
+                onChange('checkbox', index, !c.value)
+              }}
+            />
+            <label htmlFor={c.name}>{c.name}</label>
+          </fieldset>
+        </>
       )
     }
 

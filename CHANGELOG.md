@@ -23,6 +23,12 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   from Randomization. The side effect here is that `bypassed` will now override
   any snapshot values...need to think through this, but it's the lesser problem
   and perhaps not a problem at all.
+- Custom `Checkbox.tsx` implementation using checked icon instead of font
+  character to avoid off-by-1 pixel aliasing or whatever it's called
+
+### Fixed
+
+- `overflow: hidden` to UI body to prevent that silly bounce effect
 
 ## [0.2.0] - 2025-04-05
 
