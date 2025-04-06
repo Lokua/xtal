@@ -169,8 +169,8 @@ structs. Some notes about mappings to keep in mind:
 - All controls support an optional `var` field. This is very useful for
   pre-loading shader uniforms before you know what the actual role or name of a
   control will be. See the [Using `var` section](#using-var).
-- All numbers will be interpreted as `f32` so feel free to use integers where it
-  makes sense
+- All numbers will be interpreted as `f32` no matter what so feel free to use
+  integers where it makes sense
 
 # UI
 
@@ -231,6 +231,93 @@ slider_example:
     - foo
     - bar
     - baz
+```
+
+## Disabled Controls
+
+UI controls can be conditionally disabled based on the state of other Checkbox
+or Select controls. This is achieved using the `disabled` parameter with a
+logical expression.
+
+**Expression Syntax**
+
+```yaml
+# Boolean:
+# disable if `some_checkbox` is true
+disabled: some_checkbox
+
+# Negation:
+# disable if `some_checkbox` is not true
+disabled: not some_checkbox
+
+# Equality:
+# disable if `some_select` is currently set to "value"
+disabled: some_select is value
+
+# Inequality:
+# disable if `some_select` is anything other than "value"
+disabled: some_select is not value
+
+# Logical AND:
+# disable if both conditions are true
+disabled: some_checkbox and other_checkbox
+
+# Logical OR:
+# disable if either condition is true
+disabled: some_checkbox or other_checkbox
+
+# Complex expressions:
+disabled: foo is bar and baz is not qux and corge
+```
+
+Please note that logical operators follow a strict precedence where `and` always
+has higher precedence than `or`. For example, in `A and B or C`, the system will
+evaluate `(A and B) or C`. Parenthetical grouping is not supported, so you
+cannot override this precedence. When creating complex conditions, carefully
+consider the evaluation order to ensure your controls behave as expected.
+
+**Example**
+
+Disable the `phase` slider when the `animate_phase` checkbox is checked:
+
+```yaml
+animate_phase:
+  type: checkbox
+  default: false
+
+phase:
+  type: slider
+  disabled: not animate_phase
+```
+
+Disable the `origin_offset` control when the origin is `center`
+
+```yaml
+origin:
+  type: select
+  default: center
+  options:
+    - center
+    - top-right
+    - bottom-right
+    - bottom-left
+    - top-left
+
+origin_offset:
+  type: slider
+  disabled: origin is center
+```
+
+Note this feature only disables the controls in the UI as a UX nicety - it is
+still on you to make use of this in code. The code for the first example might
+look like this:
+
+```rust
+let phase = if hub.get("animate_phase") {
+  animation.loop_phase(4.0) * TAU;
+} else {
+  hub.get("phase");
+};
 ```
 
 # OSC

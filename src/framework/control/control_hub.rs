@@ -175,35 +175,27 @@ impl<T: TimingSource> ControlHub<T> {
             name = &midi_proxy_name;
         }
 
-        if let Some(transition) = &self.active_transition {
-            if let Some((from, to)) = transition.values.get(name) {
-                let tweened = self.get_tweened(
-                    current_frame,
-                    *from,
-                    *to,
-                    transition.start_frame,
-                    transition.end_frame,
-                );
-                return tweened;
-            }
-        }
-
         if let Some(Some(bypass)) = self.bypassed.get(name) {
             return *bypass;
+        }
+
+        if let Some(x) = self
+            .active_transition
+            .as_ref()
+            .and_then(|t| self.get_transition_value(current_frame, name, t))
+        {
+            return x;
         }
 
         self.run_dependencies(name, current_frame);
 
         let value = self.get_raw(name, current_frame);
 
-        let result = match self.modulations.get(name) {
-            None => value,
-            Some(modulators) => {
-                modulators.iter().fold(value, |v, modulator| {
-                    self.apply_modulators(v, modulator, current_frame)
-                })
-            }
-        };
+        let result = self.modulations.get(name).map_or(value, |modulators| {
+            modulators.iter().fold(value, |v, modulator| {
+                self.apply_modulators(v, modulator, current_frame)
+            })
+        });
 
         #[cfg(feature = "instrumentation")]
         self.instrumentation.borrow_mut().record(start);
@@ -211,21 +203,22 @@ impl<T: TimingSource> ControlHub<T> {
         result
     }
 
-    fn get_tweened(
+    fn get_transition_value(
         &self,
         current_frame: u32,
-        from: f32,
-        to: f32,
-        start_frame: u32,
-        end_frame: u32,
-    ) -> f32 {
-        if current_frame > end_frame || start_frame == end_frame {
-            return to;
+        name: &str,
+        transition: &SnapshotTransition,
+    ) -> Option<f32> {
+        let (from, to) = *transition.values.get(name)?;
+        if current_frame > transition.end_frame
+            || transition.start_frame == transition.end_frame
+        {
+            return Some(to);
         }
-        let duration = end_frame - start_frame;
-        let progress = current_frame - start_frame;
+        let duration = transition.end_frame - transition.start_frame;
+        let progress = current_frame - transition.start_frame;
         let t = progress as f32 / duration as f32;
-        lerp(from, to, t)
+        Some(lerp(from, to, t))
     }
 
     fn run_dependencies(&self, target_name: &str, current_frame: u32) {

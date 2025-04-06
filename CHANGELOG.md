@@ -2,10 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based loosely based on
+The format is loosely based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The project will
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
+
+## [0.3.0] - 2025-04-06
+
+### Added
+
+- Documentation for the `disabled` micro-DSL in
+  [Control Script Reference](docs/control_script_reference.md)
+
+### Changed
+
+- `ControlHub` now ensures that bypassed values are returned before transition
+  values. This is especially crucial for sketches where a slider when at its max
+  value might slaughter performance and you'd like to avoid hitting that max via
+  the Randomization feature; now you can easily bypass controls to exclude them
+  from Randomization. The side effect here is that `bypassed` will now override
+  any snapshot values...need to think through this, but it's the lesser problem
+  and perhaps not a problem at all.
 
 ## [0.2.0] - 2025-04-05
 

@@ -1,0 +1,217 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Main Parameters
+# ------------------------------------------------------------------------------
+
+passes:
+  type: slider
+  range: [1.0, 20.0]
+  default: 1.0
+  step: 1.0
+  bypass: 1
+
+n_lines:
+  type: slider
+  range: [1, 256]
+  default: 64.0
+  step: 1.0
+  bypass: 131
+
+points_per_segment:
+  type: slider
+  range: [10, 20000]
+  default: 100.0
+  step: 10.0
+  bypass: 18000
+
+point_size:
+  type: slider
+  range: [0.0005, 0.01]
+  default: 0.001
+  step: 0.0001
+  bypass: 0.0011
+
+harmonic_influence:
+  type: slider
+  range: [0.01, 10.0]
+  default: 0.2
+  step: 0.01
+  bypass: 0.85
+
+# ------------------------------------------------------------------------------
+#  Noise & Variation
+# ------------------------------------------------------------------------------
+
+noise_separator:
+  type: separator
+
+noise_scale:
+  type: slider
+  range: [0.0, 0.002]
+  default: 0.00001
+  step: 0.00001
+
+angle_variation:
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.2
+  step: 0.1
+
+# ------------------------------------------------------------------------------
+#  Grid & Wave Parameters
+# ------------------------------------------------------------------------------
+
+grid_separator:
+  type: separator
+
+col_freq:
+  type: slider
+  range: [0.01, 256.0]
+  default: 0.5
+  step: 0.01
+
+row_freq:
+  type: slider
+  range: [0.01, 256.0]
+  default: 0.5
+  step: 0.01
+
+width:
+  type: slider
+  range: [0.01, 2.00]
+  default: 1.0
+  step: 0.01
+
+distortion:
+  type: slider
+  range: [0.0, 10.0]
+  default: 0.9
+  step: 0.01
+
+wave_amp:
+  type: slider
+  range: [0.0001, 0.5]
+  default: 1.0
+  step: 0.0001
+
+# ------------------------------------------------------------------------------
+#  Center Controls
+# ------------------------------------------------------------------------------
+
+center_separator:
+  type: separator
+
+center_count:
+  type: slider
+  range: [0.0, 10.0]
+  default: 1.0
+  step: 1.0
+
+center_spread:
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.001
+
+center_falloff:
+  type: slider
+  range: [0.01, 10.0]
+  default: 1.0
+  step: 0.01
+
+circle_radius:
+  type: slider
+  range: [0.001, 2.0]
+  default: 0.5
+  step: 0.001
+
+circle_force:
+  type: slider
+  range: [0.001, 5.0]
+  default: 0.5
+  step: 0.001
+
+circle_phase:
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.1
+
+# ------------------------------------------------------------------------------
+#  Clipping
+# ------------------------------------------------------------------------------
+
+clip_separator:
+  type: separator
+
+clip_start:
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.8
+  step: 0.01
+
+clip_grade:
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.3
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Stripe
+# ------------------------------------------------------------------------------
+
+stripe_separator:
+  type: separator
+
+# Uncomment if you want to add these checkboxes back
+# animate_stripe_phase:
+#   type: checkbox
+#   default: false
+#
+# invert_animate_stripe_phase:
+#   type: checkbox
+#   default: false
+
+stripe_amp:
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.0
+  step: 0.0001
+
+stripe_freq:
+  type: slider
+  range: [0.0, 64.0]
+  default: 10.0
+  step: 1.0
+
+stripe_mix:
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+stripe_step:
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+stripe_min:
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+stripe_max:
+  type: slider
+  range: [0.0, 1.0]
+  default: 1.0
+  step: 0.01
+
+stripe_phase:
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.001
