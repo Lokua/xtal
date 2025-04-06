@@ -69,7 +69,7 @@ export default function Settings({
     <div id="settings">
       <section>
         <h2>Appearance</h2>
-        <fieldset>
+        <fieldset data-help-id="Icons">
           <Checkbox
             id="use-icons"
             type="checkbox"
@@ -82,13 +82,10 @@ export default function Settings({
         </fieldset>
 
         <h2>MIDI</h2>
-        <button
-          title="Sends the state of all CCs to the MIDI output port"
-          onClick={onClickSend}
-        >
+        <button data-help-id="Send" onClick={onClickSend}>
           Send
         </button>
-        <fieldset>
+        <fieldset data-help-id="MidiClockPort">
           <Select
             id="clock-port"
             value={midiClockPort}
@@ -97,7 +94,7 @@ export default function Settings({
           />
           <label htmlFor="clock-port">Clock Port</label>
         </fieldset>
-        <fieldset>
+        <fieldset data-help-id="MidiInputPort">
           <Select
             id="input-port"
             value={midiInputPort}
@@ -106,7 +103,7 @@ export default function Settings({
           />
           <label htmlFor="input-port">Input Port</label>
         </fieldset>
-        <fieldset>
+        <fieldset data-help-id="MidiOutputPort">
           <Select
             id="output-port"
             value={midiOutputPort}
@@ -115,7 +112,7 @@ export default function Settings({
           />
           <label htmlFor="output-port">Output Port</label>
         </fieldset>
-        <fieldset title="Enable high resolution (14bit) MIDI for controls 0-31">
+        <fieldset data-help-id="Hrcc">
           <Checkbox
             id="hrcc"
             type="checkbox"
@@ -126,7 +123,7 @@ export default function Settings({
         </fieldset>
 
         <h2>Audio</h2>
-        <fieldset>
+        <fieldset data-help-id="Audio">
           <Select
             id="audio-device"
             value={audioDevice}
@@ -137,10 +134,14 @@ export default function Settings({
         </fieldset>
 
         <h2>OSC</h2>
-        <OscPortInput port={oscPort} onChange={onChangeOscPort} />
+        <OscPortInput
+          data-help-id="OscPort"
+          port={oscPort}
+          onChange={onChangeOscPort}
+        />
 
         <h2>Randomization</h2>
-        <fieldset>
+        <fieldset data-help-id="IncludeCheckboxes">
           <Checkbox
             id="include-checkboxes"
             type="checkbox"
@@ -149,7 +150,7 @@ export default function Settings({
           />
           <label htmlFor="include-checkboxes">Include Checkboxes</label>
         </fieldset>
-        <fieldset>
+        <fieldset data-help-id="IncludeSelects">
           <Checkbox
             id="include-selects"
             type="checkbox"
@@ -160,7 +161,7 @@ export default function Settings({
         </fieldset>
       </section>
 
-      <section>
+      <section data-help-id="Mappings">
         {sliderNames.length > 0 ? (
           <>
             <h2>MIDI Mappings</h2>

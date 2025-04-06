@@ -221,6 +221,7 @@ button.icon-button {
     width: 18px;
     height: 18px;
     fill: var(--text-color);
+    pointer-events: none;
   }
 
   &:hover:not(:disabled, .toggle.on) {
@@ -398,6 +399,7 @@ input[type='range']::-webkit-slider-thumb {
   margin-left: 4px;
   text-align: right;
   font-size: 10px;
+  cursor: default;
 }
 
 .meter-value {
@@ -425,10 +427,23 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 .console {
-  height: 64px;
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  overflow: auto;
+  height: 76px;
+
   font-size: 10px;
   background-color: var(--console-background-color);
+
+  > section {
+    flex-basis: 50%;
+    padding: 8px;
+
+    &:first-child {
+      border-bottom: 1px dotted var(--muted-color);
+    }
+  }
 }
 
 .map-mode {

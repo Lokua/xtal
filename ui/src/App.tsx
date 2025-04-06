@@ -11,6 +11,7 @@ import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
 import Settings from './Settings.tsx'
+import Console from './Console.tsx'
 import { Alert } from './Help.tsx'
 
 type EventMap = {
@@ -623,7 +624,7 @@ export default function App() {
         )}
       </main>
       <footer>
-        <div className="console">{alertText}</div>
+        <Console alertText={alertText} />
       </footer>
     </div>
   )

@@ -53,20 +53,18 @@ export default function Controls({
       const c = control[type] as Checkbox['checkbox']
 
       return (
-        <>
-          <fieldset key={c.name + '2'}>
-            <CheckboxInput
-              id={c.name}
-              type="checkbox"
-              checked={c.value}
-              disabled={c.disabled}
-              onChange={() => {
-                onChange('checkbox', index, !c.value)
-              }}
-            />
-            <label htmlFor={c.name}>{c.name}</label>
-          </fieldset>
-        </>
+        <fieldset key={c.name + '2'}>
+          <CheckboxInput
+            id={c.name}
+            type="checkbox"
+            checked={c.value}
+            disabled={c.disabled}
+            onChange={() => {
+              onChange('checkbox', index, !c.value)
+            }}
+          />
+          <label htmlFor={c.name}>{c.name}</label>
+        </fieldset>
       )
     }
 

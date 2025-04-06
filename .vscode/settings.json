@@ -13,6 +13,7 @@
     "disp",
     "doctest",
     "Egui",
+    "fullsize",
     "horiz",
     "HRCC",
     "hyst",

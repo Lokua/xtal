@@ -13,6 +13,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 - Documentation for the `disabled` micro-DSL in
   [Control Script Reference](docs/control_script_reference.md)
+- Help text for all UI elements
 
 ### Changed
 
@@ -25,6 +26,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   and perhaps not a problem at all.
 - Custom `Checkbox.tsx` implementation using checked icon instead of font
   character to avoid off-by-1 pixel aliasing or whatever it's called
+- Split console into Alert and Help views. When hovering over elements, the Help
+  view will display help information for that element. This provides more
+  immediate access to help information that native titles provide.
 
 ### Fixed
 
