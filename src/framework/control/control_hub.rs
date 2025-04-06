@@ -619,7 +619,11 @@ impl<T: TimingSource> ControlHub<T> {
     /// frontend POC (App.tsx)
     ///
     /// [commit]: https://github.com/Lokua/lattice/commit/bcb1328
-    pub fn randomize(&mut self) {
+    pub fn randomize(
+        &mut self,
+        include_checkboxes: bool,
+        include_selects: bool,
+    ) {
         let current_frame = frame_controller::frame_count();
         let duration =
             self.animation.beats_to_frames(self.transition_time) as u32;
@@ -645,7 +649,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 .insert(name.to_string(), (from, to));
                         }
                     }
-                    ControlValue::Bool(_) => {
+                    ControlValue::Bool(_) if include_checkboxes => {
                         // Just update immediately since we can't interpolate
                         // over a bool
                         self.ui_controls.update_value(
@@ -653,7 +657,7 @@ impl<T: TimingSource> ControlHub<T> {
                             ControlValue::from(random_bool()),
                         );
                     }
-                    ControlValue::String(_) => {
+                    ControlValue::String(_) if include_selects => {
                         if let Control::Select { options, .. } =
                             self.ui_controls.config(name).unwrap()
                         {
@@ -669,6 +673,7 @@ impl<T: TimingSource> ControlHub<T> {
                             );
                         }
                     }
+                    _ => {}
                 }
             } else if self.midi_controls.has(name) {
                 let config = self.midi_controls.config(name).unwrap();

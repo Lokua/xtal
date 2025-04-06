@@ -16,6 +16,16 @@ export enum View {
   Midi,
 }
 
+/**
+ * Similar to GlobalSettings on the backend yet only needed on the frontend or
+ * as a transitive parameter on the backend
+ */
+export type LocalSettings = {
+  useIcons: boolean
+  randomizationIncludesCheckboxes: boolean
+  randomizationIncludesSelects: boolean
+}
+
 export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
 

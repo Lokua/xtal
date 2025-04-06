@@ -16,6 +16,8 @@ type Props = {
   midiOutputPorts: string[]
   oscPort: number
   sliderNames: string[]
+  randomizationIncludesCheckboxes: boolean
+  randomizationIncludesSelects: boolean
   useIcons: boolean
   onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
@@ -24,6 +26,8 @@ type Props = {
   onChangeMidiInputPort: (port: string) => void
   onChangeMidiOutputPort: (port: string) => void
   onChangeOscPort: (port: number) => void
+  onChangeRandomizationIncludesCheckboxes: () => void
+  onChangeRandomizationIncludesSelects: () => void
   onChangeUseIcons: (useIcons: boolean) => void
   onClickSend: () => void
   onRemoveMapping: (name: string) => void
@@ -42,8 +46,10 @@ export default function Settings({
   midiOutputPort,
   midiOutputPorts,
   oscPort,
-  useIcons,
   sliderNames,
+  randomizationIncludesCheckboxes,
+  randomizationIncludesSelects,
+  useIcons,
   onChangeAudioDevice,
   onChangeHrcc,
   onChangeMappingsEnabled,
@@ -51,6 +57,8 @@ export default function Settings({
   onChangeMidiInputPort,
   onChangeMidiOutputPort,
   onChangeOscPort,
+  onChangeRandomizationIncludesCheckboxes,
+  onChangeRandomizationIncludesSelects,
   onChangeUseIcons,
   onClickSend,
   onRemoveMapping,
@@ -69,8 +77,9 @@ export default function Settings({
               onChangeUseIcons(!useIcons)
             }}
           />
-          <label htmlFor="use-icons">Use icons</label>
+          <label htmlFor="use-icons">Use Icons</label>
         </fieldset>
+
         <h2>MIDI</h2>
         <button
           title="Sends the state of all CCs to the MIDI output port"
@@ -114,6 +123,7 @@ export default function Settings({
           />
           <label htmlFor="hrcc">HRCC</label>
         </fieldset>
+
         <h2>Audio</h2>
         <fieldset>
           <Select
@@ -124,20 +134,31 @@ export default function Settings({
           />
           <label htmlFor="audio-device">Device</label>
         </fieldset>
+
         <h2>OSC</h2>
         <OscPortInput port={oscPort} onChange={onChangeOscPort} />
-        {/* <fieldset>
+
+        <h2>Randomization</h2>
+        <fieldset>
           <input
-            id="osc-port"
-            type="text"
-            value={oscPort}
-            onChange={(e) => {
-              onChangeOscPort(e.target.valueAsNumber)
-            }}
+            id="include-checkboxes"
+            type="checkbox"
+            checked={randomizationIncludesCheckboxes}
+            onChange={onChangeRandomizationIncludesCheckboxes}
           />
-          <label htmlFor="osc-port">Port</label>
-        </fieldset> */}
+          <label htmlFor="include-checkboxes">Include Checkboxes</label>
+        </fieldset>
+        <fieldset>
+          <input
+            id="include-selects"
+            type="checkbox"
+            checked={randomizationIncludesSelects}
+            onChange={onChangeRandomizationIncludesSelects}
+          />
+          <label htmlFor="include-selects">Include Selects</label>
+        </fieldset>
       </section>
+
       <section>
         {sliderNames.length > 0 ? (
           <>

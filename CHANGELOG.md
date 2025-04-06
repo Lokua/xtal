@@ -15,6 +15,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   temporary snapshot to linearly interpolate from the current state of all
   controls to a randomized state with respect to a controls given min, max, and
   step.
+- Settings options for Randomization to in/exclude checkboxes and selects
 - New **Appearance** section in the settings tab with a **Use icons** toggle to
   switch between icon buttons and text buttons. Will likely do away with this
   options once we settle on which is a better user experience.
@@ -29,6 +30,10 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Send MIDI out for all CCs when a snapshot, random or otherwise, ends
 - Send MIDI out for all CCs when a sketch is switched - no more having to
   manually click `Send`
+
+### Fixes
+
+- `transition_time` is now properly retained when switching sketches
 
 ## [0.1.0] - 2025-04-05
 

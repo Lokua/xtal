@@ -101,8 +101,7 @@ pub enum Event {
     QueueRecord,
     Quit,
     Ready,
-
-    Randomize,
+    Randomize(bool, bool),
     RemoveMapping(String),
     Reset,
     Save,
@@ -267,8 +266,11 @@ pub fn launch(
                 Event::Quit => {
                     app_tx.emit(AppEvent::Quit);
                 }
-                Event::Randomize => {
-                    app_tx.emit(AppEvent::Randomize);
+                Event::Randomize(include_checkboxes, include_selects) => {
+                    app_tx.emit(AppEvent::Randomize(
+                        include_checkboxes,
+                        include_selects,
+                    ));
                 }
                 Event::Ready => {
                     app_tx.emit(AppEvent::WebViewReady);

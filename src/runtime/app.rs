@@ -53,7 +53,7 @@ pub enum AppEvent {
     PerfMode(bool),
     QueueRecord,
     Quit,
-    Randomize,
+    Randomize(bool, bool),
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
@@ -380,9 +380,9 @@ impl AppModel {
                 debug!("Exiting main process");
                 std::process::exit(0);
             }
-            AppEvent::Randomize => {
+            AppEvent::Randomize(include_checkboxes, include_selects) => {
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.randomize();
+                    hub.randomize(include_checkboxes, include_selects);
                 }
             }
             AppEvent::ReceiveMappings(mappings) => {
@@ -749,18 +749,17 @@ impl AppModel {
 
         self.load_program_state();
 
-        let app_tx = self.app_tx.clone();
+        let tx1 = self.app_tx.clone();
+        let tx2 = self.app_tx.clone();
+        let transition_time = self.transition_time;
         if let Some(hub) = self.control_hub_mut() {
             hub.register_populated_callback(move || {
-                app_tx.emit(AppEvent::HubPopulated);
+                tx1.emit(AppEvent::HubPopulated);
             });
-        }
-
-        let app_tx = self.app_tx.clone();
-        if let Some(hub) = self.control_hub_mut() {
             hub.register_snapshot_ended_callback(move || {
-                app_tx.emit(AppEvent::SnapshotEnded);
+                tx2.emit(AppEvent::SnapshotEnded);
             });
+            hub.set_transition_time(transition_time);
         }
 
         let bypassed = match self.control_hub() {

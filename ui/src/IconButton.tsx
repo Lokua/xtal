@@ -1,4 +1,3 @@
-import type { Override } from './types.ts'
 import Advance from '@material-symbols/svg-400/outlined/start.svg?react'
 import Camera from '@material-symbols/svg-400/outlined/camera.svg?react'
 import Clear from '@material-symbols/svg-400/outlined/ink_eraser.svg?react'
@@ -6,16 +5,19 @@ import Image from '@material-symbols/svg-400/outlined/image.svg?react'
 import Pause from '@material-symbols/svg-400/outlined/pause.svg?react'
 import Perf from '@material-symbols/svg-400/outlined/lock.svg?react'
 import Play from '@material-symbols/svg-400/outlined/play_arrow.svg?react'
-import Queue from '@material-symbols/svg-400/outlined/add_to_queue.svg?react'
-import Queued from '@material-symbols/svg-400/outlined/queue_play_next.svg?react'
+import Queue from '@material-symbols/svg-400/outlined/timer_play.svg?react'
+import Queued from '@material-symbols/svg-400/outlined/timer_play.svg?react'
 import Random from '@material-symbols/svg-400/outlined/shuffle.svg?react'
 import Reset from '@material-symbols/svg-400/outlined/undo.svg?react'
-import Record from '@material-symbols/svg-400/outlined/screen_record.svg?react'
+import Record from '@material-symbols/svg-400/outlined/fiber_manual_record.svg?react'
+import Recording from '@material-symbols/svg-400/outlined/fiber_manual_record-fill.svg?react'
 import Save from '@material-symbols/svg-400/outlined/save.svg?react'
 import Settings from '@material-symbols/svg-400/outlined/settings.svg?react'
 import StopRecording from '@material-symbols/svg-400/outlined/stop_circle.svg?react'
 import Tap from '@material-symbols/svg-400/outlined/touch_app.svg?react'
-import clsx from 'clsx'
+import clsx from 'clsx/lite'
+
+import type { Override } from './types.ts'
 
 const icons = {
   Advance,
@@ -30,6 +32,7 @@ const icons = {
   Random,
   Reset,
   Record,
+  Recording,
   Save,
   Settings,
   StopRecording,
@@ -41,6 +44,7 @@ type Props = Override<
   {
     name: keyof typeof icons
     on?: boolean
+    isToggle?: boolean
   }
 >
 
@@ -49,6 +53,7 @@ export default function IconButton({
   className,
   disabled,
   on = false,
+  isToggle = false,
   ...rest
 }: Props) {
   const Icon = icons[name]
@@ -59,7 +64,8 @@ export default function IconButton({
         'icon-button',
         on && !disabled && 'on',
         `${name}-icon`,
-        className
+        className,
+        isToggle && 'toggle'
       )}
       disabled={disabled}
       {...rest}

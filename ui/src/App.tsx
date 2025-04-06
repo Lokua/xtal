@@ -3,6 +3,7 @@ import type {
   Bypassed,
   Control,
   ControlValue,
+  LocalSettings,
   Mappings,
   Slider,
 } from './types.ts'
@@ -61,7 +62,7 @@ type EventMap = {
   PerfMode: boolean
   QueueRecord: void
   Quit: void
-  Randomize: void
+  Randomize: [boolean, boolean]
   Ready: void
   RemoveMapping: string
   Reset: void
@@ -129,9 +130,21 @@ function post(event: keyof EventMap, data?: ControlValue | object) {
   }
 }
 
-function getStoredUseIcons() {
-  return localStorage.getItem('lattice.useIcons') === 'true'
+function getLocalSettings(): LocalSettings {
+  try {
+    const settings = localStorage.getItem('lattice.localSettings')
+    return JSON.parse(settings || '')
+  } catch (error) {
+    console.warn('Unable to restore local settings:', error)
+    return {
+      useIcons: true,
+      randomizationIncludesCheckboxes: false,
+      randomizationIncludesSelects: false,
+    }
+  }
 }
+
+const initialLocalSettings = getLocalSettings()
 
 export default function App() {
   const [alertText, setAlertText] = useState('')
@@ -145,6 +158,7 @@ export default function App() {
   const [isEncoding, setIsEncoding] = useState(false)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [localSettings, setLocalSettings] = useState(initialLocalSettings)
   const [mappings, setMappings] = useState<Mappings>([])
   const [mappingsEnabled, setMappingsEnabled] = useState(false)
   const [midiClockPort, setMidiClockPort] = useState('')
@@ -159,7 +173,6 @@ export default function App() {
   const [sketchNames, setSketchNames] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
-  const [useIcons, setUseIcons] = useState(getStoredUseIcons())
   const [view, setView] = useState<View>(View.Controls)
 
   useEffect(() => {
@@ -351,6 +364,15 @@ export default function App() {
     }, [])
   }
 
+  function updateLocalSettings(settings: Partial<LocalSettings>) {
+    const updated = {
+      ...localSettings,
+      ...settings,
+    }
+    setLocalSettings(updated)
+    localStorage.setItem('lattice.localSettings', JSON.stringify(updated))
+  }
+
   function onAdvance() {
     post('Advance')
   }
@@ -392,6 +414,12 @@ export default function App() {
     setAlertText(value ? Alert.Midi14Bit : Alert.Midi7Bit)
   }
 
+  function onChangeUseIcons() {
+    updateLocalSettings({
+      useIcons: !localSettings.useIcons,
+    })
+  }
+
   function onChangeMidiClockPort(port: string) {
     setMidiClockPort(port)
     post('ChangeMidiClockPort', port)
@@ -423,6 +451,19 @@ export default function App() {
     setAlertText(value ? Alert.PerfEnabled : '')
   }
 
+  function onChangeRandomizationIncludesCheckboxes() {
+    updateLocalSettings({
+      randomizationIncludesCheckboxes:
+        !localSettings.randomizationIncludesCheckboxes,
+    })
+  }
+
+  function onChangeRandomizationIncludesSelects() {
+    updateLocalSettings({
+      randomizationIncludesSelects: !localSettings.randomizationIncludesSelects,
+    })
+  }
+
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
@@ -433,11 +474,6 @@ export default function App() {
   function onChangeTransitionTime(time: number) {
     setTransitionTime(time)
     post('TransitionTime', time)
-  }
-
-  function onChangeUseIcons(useIcons: boolean) {
-    localStorage.setItem('lattice.useIcons', useIcons.toString())
-    setUseIcons(useIcons)
   }
 
   function onChangeView() {
@@ -453,7 +489,10 @@ export default function App() {
   }
 
   function onClickRandomize() {
-    post('Randomize')
+    post('Randomize', [
+      localSettings.randomizationIncludesCheckboxes,
+      localSettings.randomizationIncludesSelects,
+    ])
   }
 
   function onClickSendMidi() {
@@ -517,7 +556,7 @@ export default function App() {
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
         transitionTime={transitionTime}
-        useIcons={useIcons}
+        useIcons={localSettings.useIcons}
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
@@ -548,8 +587,14 @@ export default function App() {
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
-            useIcons={useIcons}
+            useIcons={localSettings.useIcons}
             sliderNames={getSliderNames()}
+            randomizationIncludesCheckboxes={
+              localSettings.randomizationIncludesCheckboxes
+            }
+            randomizationIncludesSelects={
+              localSettings.randomizationIncludesSelects
+            }
             onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
@@ -557,6 +602,12 @@ export default function App() {
             onChangeMidiInputPort={onChangeMidiInputPort}
             onChangeMidiOutputPort={onChangeMidiOutputPort}
             onChangeOscPort={onChangeOscPort}
+            onChangeRandomizationIncludesCheckboxes={
+              onChangeRandomizationIncludesCheckboxes
+            }
+            onChangeRandomizationIncludesSelects={
+              onChangeRandomizationIncludesSelects
+            }
             onChangeUseIcons={onChangeUseIcons}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}

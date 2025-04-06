@@ -1,10 +1,12 @@
+import clsx from 'clsx/lite'
+
 import type { noop } from './types.js'
 import { View } from './types.ts'
+
 import Select from './Select.js'
 import Separator, { VerticalSeparator } from './Separator.tsx'
 import IconButton from './IconButton.tsx'
 import { Title } from './Help.tsx'
-import clsx from 'clsx'
 
 const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
 type TransitionTime = (typeof transitionTimes)[number]
@@ -71,7 +73,11 @@ export default function Header({
   return useIcons ? (
     <header>
       <section>
-        <IconButton name={paused ? 'Play' : 'Pause'} onClick={onTogglePlay} />
+        <IconButton
+          name={paused ? 'Play' : 'Pause'}
+          isToggle
+          onClick={onTogglePlay}
+        />
         <IconButton name="Advance" disabled={!paused} onClick={onAdvance} />
         <IconButton name="Reset" onClick={onReset} />
 
@@ -89,6 +95,7 @@ export default function Header({
           title={Title.Queue}
           disabled={isRecording || isEncoding}
           on={isQueued}
+          isToggle
           onClick={onQueueRecord}
         />
         <IconButton
@@ -96,8 +103,10 @@ export default function Header({
           disabled={isEncoding}
           className={clsx(
             isRecording && 'is-recording',
-            isEncoding && 'is-encoding'
+            isEncoding && 'is-encoding',
+            isQueued && !isRecording && 'queued'
           )}
+          isToggle
           onClick={onRecord}
         />
 
@@ -114,6 +123,7 @@ export default function Header({
           name="Settings"
           title={Title.Settings}
           on={view === View.Settings}
+          isToggle
           onClick={onChangeView}
         />
       </section>
@@ -127,13 +137,14 @@ export default function Header({
           value={sketchName}
           options={sketchNames}
           onChange={onSwitchSketch}
-          style={{ width: '192px' }}
+          style={{ maxWidth: '192px' }}
         />
 
         <IconButton
           title={Title.Perf}
           name="Perf"
           on={perfMode}
+          isToggle
           onClick={onChangePerfMode}
         />
 
@@ -146,6 +157,7 @@ export default function Header({
           name="Tap"
           title={Title.Tap}
           on={tapTempoEnabled}
+          isToggle
           onClick={onChangeTapTempoEnabled}
         />
 
