@@ -138,33 +138,25 @@ impl AppModel {
     }
 
     fn control_hub(&mut self) -> Option<&ControlHub<Timing>> {
-        if let Some(provider) = self.sketch.controls() {
+        self.sketch.controls().and_then(|provider| {
             provider.as_any().downcast_ref::<ControlHub<Timing>>()
-        } else {
-            None
-        }
+        })
     }
 
     fn control_hub_mut(&mut self) -> Option<&mut ControlHub<Timing>> {
-        if let Some(provider) = self.sketch.controls() {
+        self.sketch.controls().and_then(|provider| {
             provider.as_any_mut().downcast_mut::<ControlHub<Timing>>()
-        } else {
-            None
-        }
+        })
     }
 
     fn web_view_controls(&mut self) -> Vec<ui::SerializableControl> {
-        let controls: Vec<ui::SerializableControl> = match self.control_hub() {
-            Some(hub) => hub
-                .ui_controls
+        self.control_hub().map_or_else(Vec::new, |hub| {
+            hub.ui_controls
                 .configs()
                 .iter()
                 .map(|config| ui::SerializableControl::from((config, hub)))
-                .collect(),
-            None => vec![],
-        };
-
-        controls
+                .collect()
+        })
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -215,10 +207,7 @@ impl AppModel {
             AppEvent::ChangeAudioDevice(name) => {
                 global::set_audio_device_name(&name);
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.audio_controls
-                        .restart()
-                        .inspect_err(|e| error!("{}", e))
-                        .ok();
+                    hub.audio_controls.restart().inspect_err(log_err).ok();
                 }
                 self.save_global_state();
             }
@@ -230,10 +219,7 @@ impl AppModel {
             AppEvent::ChangeMidiControlInputPort(port) => {
                 global::set_midi_control_in_port(port);
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.midi_controls
-                        .restart()
-                        .inspect_err(|e| error!("{}", e))
-                        .ok();
+                    hub.midi_controls.restart().inspect_err(log_err).ok();
                 }
                 self.save_global_state();
             }
@@ -306,31 +292,26 @@ impl AppModel {
                 self.map_mode.currently_mapping = Some(name.clone());
 
                 let app_tx = self.app_tx.clone();
-                if let Err(connection_result) =
-                    self.map_mode.start(&name, self.hrcc, move || {
+                self.map_mode
+                    .start(&name, self.hrcc, move || {
                         app_tx.emit(AppEvent::SendMappings);
                     })
-                {
-                    error!("{}", connection_result);
-                }
+                    .inspect_err(log_err)
+                    .ok();
             }
             AppEvent::Hrcc(hrcc) => {
                 self.hrcc = hrcc;
                 if let Some(hub) = self.control_hub_mut() {
                     hub.midi_controls.hrcc = hrcc;
-                    hub.midi_controls
-                        .restart()
-                        .inspect_err(|e| error!("{}", e))
-                        .ok();
+                    hub.midi_controls.restart().inspect_err(log_err).ok();
                 }
                 self.save_global_state();
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
-                let bypassed = match self.control_hub() {
-                    Some(hub) => hub.bypassed(),
-                    None => HashMap::default(),
-                };
+                let bypassed = self
+                    .control_hub()
+                    .map_or_else(HashMap::default, |h| h.bypassed());
                 let event = ui::Event::HubPopulated((controls, bypassed));
                 self.ui_tx.emit(event);
             }
@@ -389,20 +370,16 @@ impl AppModel {
                 self.map_mode.update_from_vec(&mappings);
             }
             AppEvent::Record => {
-                match self
-                    .recording_state
+                self.recording_state
                     .toggle_recording(self.sketch_config, &self.session_id)
-                {
-                    Ok(message) => {
-                        self.app_tx.alert(message.clone());
-                    }
-                    Err(e) => {
+                    .inspect(|message| self.app_tx.alert(message.clone()))
+                    .inspect_err(|e| {
                         self.app_tx.alert_and_log(
                             format!("Recording error: {}", e),
                             log::Level::Error,
                         );
-                    }
-                }
+                    })
+                    .ok();
             }
             AppEvent::RemoveMapping(name) => {
                 self.map_mode.remove(&name);
@@ -418,13 +395,12 @@ impl AppModel {
                 self.app_tx.alert("Reset");
             }
             AppEvent::Resize => {
-                if let Some(window) = self.main_window(app) {
-                    let rect = window.rect();
-                    let wr = &mut self.ctx.window_rect();
+                let window = self.main_window(app).unwrap();
+                let rect = window.rect();
+                let wr = &mut self.ctx.window_rect();
 
-                    if rect.w() != wr.w() || rect.h() != wr.h() {
-                        wr.set_current(rect);
-                    }
+                if rect.w() != wr.w() || rect.h() != wr.h() {
+                    wr.set_current(rect);
                 }
             }
             AppEvent::SaveProgramState => {
@@ -729,20 +705,19 @@ impl AppModel {
             self.sketch_config.name,
         ));
 
-        if let Some(window) = self.main_window(app) {
-            window.set_title(self.sketch_config.display_name);
+        let window = self.main_window(app).unwrap();
+        window.set_title(self.sketch_config.display_name);
 
-            if !self.perf_mode {
-                set_window_position(app, self.main_window_id, 0, 0);
-                set_window_size(
-                    window.winit_window(),
-                    self.sketch_config.w,
-                    self.sketch_config.h,
-                );
-            }
-
-            self.ctx.window_rect().set_current(window.rect());
+        if !self.perf_mode {
+            set_window_position(app, self.main_window_id, 0, 0);
+            set_window_size(
+                window.winit_window(),
+                self.sketch_config.w,
+                self.sketch_config.h,
+            );
         }
+
+        self.ctx.window_rect().set_current(window.rect());
 
         let paused = self.sketch_config.play_mode != PlayMode::Loop;
         frame_controller::set_paused(paused);
@@ -762,10 +737,9 @@ impl AppModel {
             hub.set_transition_time(transition_time);
         }
 
-        let bypassed = match self.control_hub() {
-            Some(hub) => hub.bypassed(),
-            None => HashMap::default(),
-        };
+        let bypassed = self
+            .control_hub_mut()
+            .map_or_else(HashMap::default, |hub| hub.bypassed());
 
         let event = ui::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
@@ -796,17 +770,18 @@ impl AppModel {
     fn load_program_state(&mut self) {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
+        let mappings = self.map_mode.mappings();
 
-        let mut current_state = match self.control_hub() {
-            Some(hub) => SaveableProgramState {
+        let mut current_state = self.control_hub().map_or_else(
+            SaveableProgramState::default,
+            |hub| SaveableProgramState {
                 ui_controls: hub.ui_controls.clone(),
                 midi_controls: hub.midi_controls.clone(),
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
-                mappings: self.map_mode.mappings(),
+                mappings,
             },
-            None => SaveableProgramState::default(),
-        };
+        );
 
         match storage::load_program_state(&sketch_name, &mut current_state) {
             Ok(state) => {
@@ -821,10 +796,7 @@ impl AppModel {
 
                 // TODO: not ideal to automatically start the MIDI listener in
                 // hub init phase only to restart here each time
-                hub.midi_controls
-                    .restart()
-                    .inspect_err(|e| error!("{}", e))
-                    .ok();
+                hub.midi_controls.restart().inspect_err(log_err).ok();
 
                 if hub.snapshots.is_empty() {
                     app_tx.alert_and_log("Controls restored", log::Level::Info);
@@ -895,8 +867,7 @@ fn model(app: &App) -> AppModel {
     let args: Vec<String> = env::args().collect();
     let initial_sketch = args
         .get(1)
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| "template".to_string());
+        .map_or_else(|| "template".to_string(), |s| s.to_string());
 
     let registry = REGISTRY.read().unwrap();
 
@@ -944,9 +915,7 @@ fn model(app: &App) -> AppModel {
         }
     };
 
-    let image_index = storage::load_image_index()
-        .inspect_err(|e| error!("{}", e))
-        .ok();
+    let image_index = storage::load_image_index().inspect_err(log_err).ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
     let (web_view_tx, ui_process) = ui::launch(&event_tx).unwrap();
@@ -1064,10 +1033,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 // Cmd + M
                 Key::M if logo_pressed && !shift_pressed => {
                     model.app_tx.emit(AppEvent::ToggleMainFocus);
-                }
-                // Cmd + Q
-                Key::Q if logo_pressed && !shift_pressed => {
-                    debug!("Q");
                 }
                 // R
                 Key::R if has_no_modifiers => {
