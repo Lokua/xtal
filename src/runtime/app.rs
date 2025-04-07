@@ -53,7 +53,11 @@ pub enum AppEvent {
     PerfMode(bool),
     QueueRecord,
     Quit,
-    Randomize(bool, bool),
+    Randomize {
+        include_checkboxes: bool,
+        include_selects: bool,
+        exclusions: Vec<String>,
+    },
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
@@ -361,9 +365,17 @@ impl AppModel {
                 debug!("Exiting main process");
                 std::process::exit(0);
             }
-            AppEvent::Randomize(include_checkboxes, include_selects) => {
+            AppEvent::Randomize {
+                include_checkboxes,
+                include_selects,
+                exclusions,
+            } => {
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.randomize(include_checkboxes, include_selects);
+                    hub.randomize(
+                        include_checkboxes,
+                        include_selects,
+                        &exclusions,
+                    );
                 }
             }
             AppEvent::ReceiveMappings(mappings) => {

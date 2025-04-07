@@ -7,6 +7,16 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.4.0] - 2025-04-07
+
+### Added
+
+- Ability to exclude any specific UI control from Randomization (still TODO:
+  disk persistence)
+- Tiny icons next to a control's label to indicate if it is excluded or MIDI
+  mapped
+- Strike-through on label's that are bypassed in a Control Script
+
 ## [0.3.0] - 2025-04-06
 
 ### Added

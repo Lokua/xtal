@@ -63,7 +63,11 @@ type EventMap = {
   PerfMode: boolean
   QueueRecord: void
   Quit: void
-  Randomize: [boolean, boolean]
+  Randomize: {
+    includeCheckboxes: boolean
+    includeSelects: boolean
+    exclusions: string[]
+  }
   Ready: void
   RemoveMapping: string
   Reset: void
@@ -119,17 +123,42 @@ function subscribe<K extends keyof EventMap>(
   }
 }
 
-function post(event: keyof EventMap, data?: ControlValue | object) {
+function post<K extends keyof EventMap>(
+  event: EventMap[K] extends void ? K : never
+): void
+function post<K extends keyof EventMap>(
+  event: EventMap[K] extends void ? never : K,
+  data: EventMap[K]
+): void
+function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
   if (data === undefined) {
     window.ipc.postMessage(JSON.stringify(event))
   } else {
-    window.ipc.postMessage(
-      JSON.stringify({
-        [event]: data,
-      })
-    )
+    window.ipc.postMessage(JSON.stringify({ [event]: data }))
   }
 }
+// function post<K extends keyof EventMap>(event: K, data?: EventMap[K]) {
+//   if (data === undefined) {
+//     window.ipc.postMessage(JSON.stringify(event))
+//   } else {
+//     window.ipc.postMessage(
+//       JSON.stringify({
+//         [event]: data,
+//       })
+//     )
+//   }
+// }
+// function post(event: keyof EventMap, data?: ControlValue | object) {
+//   if (data === undefined) {
+//     window.ipc.postMessage(JSON.stringify(event))
+//   } else {
+//     window.ipc.postMessage(
+//       JSON.stringify({
+//         [event]: data,
+//       })
+//     )
+//   }
+// }
 
 function getLocalSettings(): LocalSettings {
   try {
@@ -325,7 +354,11 @@ export default function App() {
         }
         case 'KeyR': {
           if (e.metaKey) {
-            post('Randomize')
+            post('Randomize', {
+              includeCheckboxes: localSettings.randomizationIncludesCheckboxes,
+              includeSelects: localSettings.randomizationIncludesSelects,
+              exclusions,
+            })
           } else {
             post('Reset')
           }
@@ -489,10 +522,11 @@ export default function App() {
   }
 
   function onClickRandomize() {
-    post('Randomize', [
-      localSettings.randomizationIncludesCheckboxes,
-      localSettings.randomizationIncludesSelects,
-    ])
+    post('Randomize', {
+      includeCheckboxes: localSettings.randomizationIncludesCheckboxes,
+      includeSelects: localSettings.randomizationIncludesSelects,
+      exclusions,
+    })
   }
 
   function onClickSendMidi() {

@@ -101,7 +101,12 @@ pub enum Event {
     QueueRecord,
     Quit,
     Ready,
-    Randomize(bool, bool),
+    #[serde(rename_all = "camelCase")]
+    Randomize {
+        include_checkboxes: bool,
+        include_selects: bool,
+        exclusions: Vec<String>,
+    },
     RemoveMapping(String),
     Reset,
     Save,
@@ -266,11 +271,16 @@ pub fn launch(
                 Event::Quit => {
                     app_tx.emit(AppEvent::Quit);
                 }
-                Event::Randomize(include_checkboxes, include_selects) => {
-                    app_tx.emit(AppEvent::Randomize(
+                Event::Randomize {
+                    include_checkboxes,
+                    include_selects,
+                    exclusions,
+                } => {
+                    app_tx.emit(AppEvent::Randomize {
                         include_checkboxes,
                         include_selects,
-                    ));
+                        exclusions,
+                    });
                 }
                 Event::Ready => {
                     app_tx.emit(AppEvent::WebViewReady);

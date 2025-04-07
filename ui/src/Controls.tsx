@@ -1,7 +1,4 @@
 import NumberBox from '@lokua/number-box'
-import CheckboxInput from './Checkbox.tsx'
-import Select from './Select.tsx'
-import Separator, { VerticalSeparator } from './Separator.tsx'
 import {
   Bypassed,
   Checkbox,
@@ -13,26 +10,22 @@ import {
   Select as SelectType,
   Slider,
 } from './types.ts'
+import CheckboxInput from './Checkbox.tsx'
+import Select from './Select.tsx'
+import Separator, { VerticalSeparator } from './Separator.tsx'
+import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
+import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
 
 const ExcludedIndicator = () => (
-  <span
-    className="indicator excluded"
-    title="This control is currently excluded from Randomization"
-  />
+  <span className="indicator-icon">
+    <ExcludedIcon title="This control is currently excluded from Randomization" />
+  </span>
 )
 
 const MappedIndicator = () => (
-  <span
-    className="indicator mapped"
-    title="This control is currently override by a MIDI Mapping"
-  />
-)
-
-const BypassedIndicator = () => (
-  <span
-    className="indicator bypassed"
-    title="This control is currently bypassed in a Control Script"
-  />
+  <span className="indicator-icon">
+    <MappedIcon title="This control is currently override by a MIDI Mapping" />
+  </span>
 )
 
 type Props = {
@@ -119,7 +112,7 @@ export default function Controls({
             />
             <label htmlFor={c.name}>
               {excluded && <ExcludedIndicator />}
-              {c.name}
+              <span>{c.name}</span>
             </label>
           </fieldset>
         </div>
@@ -163,8 +156,25 @@ export default function Controls({
             <label htmlFor={c.name}>
               {excluded && <ExcludedIndicator />}
               {isMapped && <MappedIndicator />}
-              {isBypassed && <BypassedIndicator />}
-              {c.name}
+              <span
+                title={
+                  isBypassed
+                    ? 'This control is currently bypassed/overwritten in a Control Script'
+                    : ''
+                }
+                style={{
+                  width:
+                    (showExclusions ? -26 : 0) +
+                    (isBypassed ? -14 : 0) +
+                    (excluded ? -14 : 0) +
+                    (isMapped ? -14 : 0) +
+                    156 +
+                    'px',
+                  textDecoration: isBypassed ? 'line-through' : 'none',
+                }}
+              >
+                {c.name}
+              </span>
             </label>
           </fieldset>
         </div>
@@ -190,7 +200,7 @@ export default function Controls({
             />
             <label htmlFor={c.name}>
               {excluded && <ExcludedIndicator />}
-              {c.name}
+              <span>{c.name}</span>
             </label>
           </fieldset>
         </div>

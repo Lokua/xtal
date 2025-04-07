@@ -10,7 +10,7 @@
     --text-color: #222;
     --text-color-muted: #666;
     --muted-color: #ccc;
-    --meter-color: limegreen;
+    --meter-color: var(--text-color);
     --control-background-color: #eee;
     --control-active-background-color: #ddd;
     --control-text-color: #333;
@@ -23,9 +23,6 @@
     --control-on-background-color: #363636;
     --control-on-text-color: #eee;
     --console-background-color: #f4f4f4;
-    --indicator-mapped-color: limegreen;
-    --indicator-bypassed-color: blue;
-    --indicator-excluded-color: rgb(200, 42, 14);
     --focus-color: var(--text-color);
   }
 }
@@ -36,7 +33,7 @@
     --text-color: #ddd;
     --text-color-muted: #aaa;
     --muted-color: #444;
-    --meter-color: darkseagreen;
+    --meter-color: var(--text-color);
     --control-background-color: #363636;
     --control-active-background-color: #555;
     --control-text-color: #eee;
@@ -49,9 +46,6 @@
     --control-on-background-color: #eee;
     --control-on-text-color: #363636;
     --console-background-color: #111;
-    --indicator-mapped-color: darkseagreen;
-    --indicator-bypassed-color: cornflowerblue;
-    --indicator-excluded-color: indianred;
     --focus-color: var(--text-color);
   }
 }
@@ -287,14 +281,6 @@ button.icon-button {
     margin: 0;
     cursor: pointer;
   }
-
-  &.excluded {
-    background-color: var(--indicator-excluded-color);
-
-    svg {
-      fill: white;
-    }
-  }
 }
 
 .number-box {
@@ -428,31 +414,38 @@ input[type='range']::-webkit-slider-thumb {
   height: 24px;
 
   align-items: center;
+
   > fieldset {
     flex-grow: 1;
+
+    input[type='range'] {
+      flex-shrink: 0;
+    }
+  }
+
+  label > .text {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 
-.indicator {
+.indicator-icon {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  text-align: center;
-  margin-right: 4px;
+  flex-shrink: 0;
+  margin-right: 2px;
 
-  &.mapped {
-    background: var(--indicator-mapped-color);
+  &:has(+ span:not(.indicator-icon)) {
+    margin-right: 4px;
   }
 
-  &.bypassed {
-    background: var(--indicator-bypassed-color);
-  }
-
-  &.excluded {
-    background: var(--indicator-excluded-color);
+  svg {
+    width: 12px;
+    height: 12px;
+    fill: var(--text-color);
   }
 }
 

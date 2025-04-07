@@ -487,41 +487,41 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     /// Helper to create snapshot (values only)
-    fn create_snapshot(&mut self) -> HashMap<String, ControlValue> {
+    fn create_snapshot(
+        &mut self,
+        exclusions: &[String],
+    ) -> HashMap<String, ControlValue> {
         let mut snapshot: ControlValues = ControlValues::default();
 
-        snapshot.extend(
-            self.ui_controls
-                .values()
-                .iter()
-                .filter_map(|(name, value)| {
-                    if self.ui_controls.config(name).unwrap().is_separator() {
-                        None
-                    } else {
-                        Some((name.clone(), value.clone()))
-                    }
-                })
-                .collect::<ControlValues>(),
-        );
-        snapshot.extend(
-            self.midi_controls
-                .values()
-                .iter()
-                .map(|(key, value)| (key.clone(), ControlValue::from(*value))),
-        );
-        snapshot.extend(
-            self.osc_controls
-                .values()
-                .iter()
-                .map(|(key, value)| (key.clone(), ControlValue::from(*value))),
-        );
+        snapshot.extend(self.ui_controls.values().iter().filter_map(
+            |(name, value)| {
+                if self.ui_controls.config(name).unwrap().is_separator()
+                    || exclusions.contains(name)
+                {
+                    None
+                } else {
+                    Some((name.clone(), value.clone()))
+                }
+            },
+        ));
+
+        let filter = |(name, value): (&String, &f32)| {
+            if exclusions.contains(name) {
+                None
+            } else {
+                Some((name.clone(), ControlValue::from(*value)))
+            }
+        };
+
+        snapshot.extend(self.midi_controls.values().iter().filter_map(filter));
+        snapshot.extend(self.osc_controls.values().iter().filter_map(filter));
 
         snapshot
     }
 
     /// Create and store a snapshot for later recall
     pub fn take_snapshot(&mut self, id: &str) {
-        let snapshot = self.create_snapshot();
+        let snapshot = self.create_snapshot(&[]);
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
@@ -616,6 +616,7 @@ impl<T: TimingSource> ControlHub<T> {
         &mut self,
         include_checkboxes: bool,
         include_selects: bool,
+        exclusions: &[String],
     ) {
         let current_frame = frame_controller::frame_count();
         let duration =
@@ -627,7 +628,7 @@ impl<T: TimingSource> ControlHub<T> {
             end_frame: current_frame + duration,
         };
 
-        for (name, value) in &self.create_snapshot() {
+        for (name, value) in &self.create_snapshot(exclusions) {
             if self.ui_controls.has(name) {
                 match value {
                     ControlValue::Float(_) => {
