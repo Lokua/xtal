@@ -12,8 +12,9 @@ export type Override<T, U> = Omit<T, keyof U> & U
 
 export enum View {
   Controls,
+  Default,
+  Exclusions,
   Settings,
-  Midi,
 }
 
 /**
@@ -21,7 +22,6 @@ export enum View {
  * as a transitive parameter on the backend
  */
 export type LocalSettings = {
-  useIcons: boolean
   randomizationIncludesCheckboxes: boolean
   randomizationIncludesSelects: boolean
 }

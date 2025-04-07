@@ -5,9 +5,6 @@ _vars:
 #  Main Parameters
 # ------------------------------------------------------------------------------
 
-test:
-  type: checkbox
-
 passes:
   type: slider
   range: [1.0, 20.0]
@@ -218,3 +215,4 @@ stripe_phase:
   range: [0.0, *TAU]
   default: 0.0
   step: 0.001
+  bypass: 0.5

@@ -19,7 +19,6 @@ type Props = {
   sliderNames: string[]
   randomizationIncludesCheckboxes: boolean
   randomizationIncludesSelects: boolean
-  useIcons: boolean
   onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
   onChangeMappingsEnabled: () => void
@@ -29,7 +28,6 @@ type Props = {
   onChangeOscPort: (port: number) => void
   onChangeRandomizationIncludesCheckboxes: () => void
   onChangeRandomizationIncludesSelects: () => void
-  onChangeUseIcons: (useIcons: boolean) => void
   onClickSend: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
@@ -50,7 +48,6 @@ export default function Settings({
   sliderNames,
   randomizationIncludesCheckboxes,
   randomizationIncludesSelects,
-  useIcons,
   onChangeAudioDevice,
   onChangeHrcc,
   onChangeMappingsEnabled,
@@ -60,7 +57,6 @@ export default function Settings({
   onChangeOscPort,
   onChangeRandomizationIncludesCheckboxes,
   onChangeRandomizationIncludesSelects,
-  onChangeUseIcons,
   onClickSend,
   onRemoveMapping,
   onSetCurrentlyMapping,
@@ -68,19 +64,6 @@ export default function Settings({
   return (
     <div id="settings">
       <section>
-        <h2>Appearance</h2>
-        <fieldset data-help-id="Icons">
-          <Checkbox
-            id="use-icons"
-            type="checkbox"
-            checked={useIcons}
-            onChange={() => {
-              onChangeUseIcons(!useIcons)
-            }}
-          />
-          <label htmlFor="use-icons">Use Icons</label>
-        </fieldset>
-
         <h2>MIDI</h2>
         <button data-help-id="Send" onClick={onClickSend}>
           Send

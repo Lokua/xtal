@@ -15,6 +15,7 @@ import Save from '@material-symbols/svg-400/outlined/save.svg?react'
 import Settings from '@material-symbols/svg-400/outlined/settings.svg?react'
 import StopRecording from '@material-symbols/svg-400/outlined/stop_circle.svg?react'
 import Tap from '@material-symbols/svg-400/outlined/touch_app.svg?react'
+import Exclusions from '@material-symbols/svg-400/outlined/checklist.svg?react'
 import clsx from 'clsx/lite'
 
 import type { Override } from './types.ts'
@@ -23,6 +24,7 @@ const icons = {
   Advance,
   Camera,
   Clear,
+  Exclusions,
   Image,
   Pause,
   Perf,

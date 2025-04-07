@@ -29,6 +29,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Split console into Alert and Help views. When hovering over elements, the Help
   view will display help information for that element. This provides more
   immediate access to help information that native titles provide.
+- Removed the `useIcons` setting and text-only buttons in favor of help-view and
+  titles so we don't sacrifice a11y due to icon-only buttons
 
 ### Fixed
 
@@ -57,6 +59,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Send MIDI out for all CCs when a snapshot, random or otherwise, ends
 - Send MIDI out for all CCs when a sketch is switched - no more having to
   manually click `Send`
+- Refactored `param_mod` effect trait implementations to use a declarative macro
+  to reduce a significant amount of boilerplate
 
 ### Fixes
 

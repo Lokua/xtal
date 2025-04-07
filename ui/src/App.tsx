@@ -138,7 +138,6 @@ function getLocalSettings(): LocalSettings {
   } catch (error) {
     console.warn('Unable to restore local settings:', error)
     return {
-      useIcons: true,
       randomizationIncludesCheckboxes: false,
       randomizationIncludesSelects: false,
     }
@@ -154,6 +153,7 @@ export default function App() {
   const [bpm, setBpm] = useState(134)
   const [bypassed, setBypassed] = useState<Bypassed>({})
   const [controls, setControls] = useState<Control[]>([])
+  const [exclusions, setExclusions] = useState<string[]>([])
   const [fps, setFps] = useState(60)
   const [hrcc, setHrcc] = useState(false)
   const [isEncoding, setIsEncoding] = useState(false)
@@ -175,6 +175,7 @@ export default function App() {
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
   const [view, setView] = useState<View>(View.Controls)
+  const [viewMain, setViewMain] = useState<View>(View.Default)
 
   useEffect(() => {
     const unsubscribe = subscribe((event: keyof EventMap, data) => {
@@ -415,12 +416,6 @@ export default function App() {
     setAlertText(value ? Alert.Midi14Bit : Alert.Midi7Bit)
   }
 
-  function onChangeUseIcons() {
-    updateLocalSettings({
-      useIcons: !localSettings.useIcons,
-    })
-  }
-
   function onChangeMidiClockPort(port: string) {
     setMidiClockPort(port)
     post('ChangeMidiClockPort', port)
@@ -485,6 +480,10 @@ export default function App() {
     }
   }
 
+  function onChangeViewMain() {
+    setViewMain(viewMain === View.Default ? View.Exclusions : View.Default)
+  }
+
   function onClearBuffer() {
     post('ClearBuffer')
   }
@@ -543,6 +542,14 @@ export default function App() {
     post('Paused', value)
   }
 
+  function onToggleExclusion(name: string) {
+    setExclusions(
+      exclusions.includes(name)
+        ? exclusions.filter((n) => n !== name)
+        : exclusions.concat(name)
+    )
+  }
+
   return (
     <div id="app">
       <Header
@@ -557,14 +564,15 @@ export default function App() {
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
         transitionTime={transitionTime}
-        useIcons={localSettings.useIcons}
         view={view}
+        viewMain={viewMain}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}
         onChangeTransitionTime={onChangeTransitionTime}
         onChangeView={onChangeView}
+        onChangeViewMain={onChangeViewMain}
         onClearBuffer={onClearBuffer}
         onClickRandomize={onClickRandomize}
         onReset={onReset}
@@ -588,7 +596,6 @@ export default function App() {
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
-            useIcons={localSettings.useIcons}
             sliderNames={getSliderNames()}
             randomizationIncludesCheckboxes={
               localSettings.randomizationIncludesCheckboxes
@@ -609,7 +616,6 @@ export default function App() {
             onChangeRandomizationIncludesSelects={
               onChangeRandomizationIncludesSelects
             }
-            onChangeUseIcons={onChangeUseIcons}
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
@@ -618,8 +624,11 @@ export default function App() {
           <Controls
             bypassed={bypassed}
             controls={controls}
+            exclusions={exclusions}
             mappings={mappings}
+            showExclusions={viewMain === View.Exclusions}
             onChange={onChangeControl}
+            onToggleExclusion={onToggleExclusion}
           />
         )}
       </main>

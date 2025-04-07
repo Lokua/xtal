@@ -6,7 +6,6 @@ import { View } from './types.ts'
 import Select from './Select.js'
 import Separator, { VerticalSeparator } from './Separator.tsx'
 import IconButton from './IconButton.tsx'
-import { Help } from './Help.tsx'
 
 const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
 type TransitionTime = (typeof transitionTimes)[number]
@@ -23,14 +22,15 @@ type HeaderProps = {
   sketchNames: string[]
   tapTempoEnabled: boolean
   transitionTime: TransitionTime
-  useIcons: boolean
   view: View
+  viewMain: View
   onAdvance: noop
   onCaptureFrame: noop
   onChangePerfMode: noop
   onChangeTapTempoEnabled: noop
   onChangeTransitionTime: (transitionTime: TransitionTime) => void
   onChangeView: noop
+  onChangeViewMain: noop
   onClearBuffer: noop
   onClickRandomize: noop
   onQueueRecord: noop
@@ -53,14 +53,15 @@ export default function Header({
   sketchNames,
   tapTempoEnabled,
   transitionTime,
-  useIcons,
   view,
+  viewMain,
   onAdvance,
   onCaptureFrame,
   onChangePerfMode,
   onChangeTapTempoEnabled,
   onChangeTransitionTime,
   onChangeView,
+  onChangeViewMain,
   onClearBuffer,
   onClickRandomize,
   onQueueRecord,
@@ -70,7 +71,7 @@ export default function Header({
   onSwitchSketch,
   onTogglePlay,
 }: HeaderProps) {
-  return useIcons ? (
+  return (
     <header>
       <section>
         <IconButton
@@ -150,8 +151,8 @@ export default function Header({
         <IconButton
           data-help-id="Perf"
           name="Perf"
-          on={perfMode}
           isToggle
+          on={perfMode}
           onClick={onChangePerfMode}
         />
 
@@ -163,8 +164,8 @@ export default function Header({
         <IconButton
           data-help-id="Tap"
           name="Tap"
-          on={tapTempoEnabled}
           isToggle
+          on={tapTempoEnabled}
           onClick={onChangeTapTempoEnabled}
         />
 
@@ -174,6 +175,15 @@ export default function Header({
           data-help-id="Random"
           name="Random"
           onClick={onClickRandomize}
+        />
+
+        <IconButton
+          data-help-id="Exclusions"
+          title="Exclusions Mode"
+          name="Exclusions"
+          isToggle
+          on={viewMain === View.Exclusions}
+          onClick={onChangeViewMain}
         />
 
         <fieldset>
@@ -188,114 +198,6 @@ export default function Header({
             }}
           />
         </fieldset>
-      </section>
-    </header>
-  ) : (
-    <header>
-      <section>
-        <button data-help-id="Image" onClick={onCaptureFrame}>
-          Image
-        </button>
-        <VerticalSeparator />
-
-        <button data-help-id="Play" onClick={onTogglePlay}>
-          {paused ? 'Play' : 'Pause'}
-        </button>
-        <button data-help-id="Advance" disabled={!paused} onClick={onAdvance}>
-          Advance
-        </button>
-        <button data-help-id="Reset" onClick={onReset}>
-          Reset
-        </button>
-        <VerticalSeparator />
-
-        <button data-help-id="Clear" onClick={onClearBuffer}>
-          Clear Buf.
-        </button>
-        <VerticalSeparator />
-
-        <button
-          data-help-id="Queue"
-          className={isQueued ? 'on' : ''}
-          disabled={isRecording || isEncoding}
-          onClick={onQueueRecord}
-        >
-          {isQueued ? 'QUEUED' : 'Q Rec.'}
-        </button>
-        <button
-          data-help-id="Record"
-          className={isRecording ? 'record-button on' : 'record-button'}
-          disabled={isEncoding}
-          onClick={onRecord}
-        >
-          {isRecording ? 'STOP' : isEncoding ? 'Encoding' : 'Rec.'}
-        </button>
-        <VerticalSeparator />
-
-        <div data-help-id="Fps" className="meter">
-          FPS: <span className="meter-value">{fps.toFixed(1)}</span>
-        </div>
-      </section>
-
-      <Separator style={{ margin: '2px 0' }} />
-
-      <section>
-        <Select
-          data-help-id="Sketch"
-          value={sketchName}
-          options={sketchNames}
-          onChange={onSwitchSketch}
-          style={{ width: '128px' }}
-        />
-        <fieldset data-help-id="Perf">
-          <input
-            id="perf"
-            type="checkbox"
-            checked={perfMode}
-            onChange={onChangePerfMode}
-          />
-          <label htmlFor="perf">Perf.</label>
-        </fieldset>
-        <VerticalSeparator />
-
-        <div data-help-id="Bpm" className="meter">
-          BPM: <span className="meter-value">{bpm.toFixed(1)}</span>
-        </div>
-        <fieldset data-help-id="Tap">
-          <input
-            id="tap"
-            type="checkbox"
-            checked={tapTempoEnabled}
-            onChange={onChangeTapTempoEnabled}
-          />
-          <label htmlFor="tap">Tap</label>
-        </fieldset>
-        <VerticalSeparator />
-
-        <Select
-          data-help-id="TransitionTime"
-          style={{ width: '48px' }}
-          value={transitionTime.toString()}
-          options={transitionTimes}
-          onChange={(value) => {
-            onChangeTransitionTime(parseFloat(value))
-          }}
-        />
-        <button data-help-id="Random" onClick={onClickRandomize}>
-          ?
-        </button>
-        <VerticalSeparator />
-
-        <button data-help-id="Save" title={Help.Save} onClick={onSave}>
-          Save
-        </button>
-        <button
-          data-help-id="Settings"
-          className={view === View.Settings ? 'on' : ''}
-          onClick={onChangeView}
-        >
-          Conf.
-        </button>
       </section>
     </header>
   )

@@ -24,10 +24,7 @@
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
-use super::config::{
-    BreakpointConfig, EffectConfig, EffectKind, KindConfig, RandomConfig,
-    RandomSlewedConfig, TriangleConfig,
-};
+use super::config::*;
 use crate::framework::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -111,7 +108,8 @@ fn warn_for(thing: &str, field: &str) {
 // Effects
 //------------------------------------------------------------------------------
 
-/// Used for part 1 of an Effect's instantiation phase
+/// Used for part 1 of an Effect's instantiation phase (TODO: document more
+/// specifically how this works in the greater scheme)
 pub trait FromColdParams: Default + SetFromParam {
     /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a
     /// newly created Effect instance. Will use the Effect's default instead of
@@ -130,180 +128,53 @@ fn apply_if_cold<T: SetFromParam>(
     }
 }
 
-impl FromColdParams for Hysteresis {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
+/// Generate [`FromColdParams`] and [`SetFromParam`] implementations for an effect
+macro_rules! impl_effect_params {
+    ($type:ty, $variant:path, $($field:ident),*) => {
+        impl FromColdParams for $type {
+            fn from_cold_params(config: &EffectConfig) -> Self {
+                let mut instance = Self::default();
 
-        if let EffectKind::Hysteresis {
-            lower_threshold,
-            upper_threshold,
-            output_low,
-            output_high,
-            ..
-        } = &config.kind
-        {
-            apply_if_cold(&mut instance, lower_threshold, "lower_threshold");
-            apply_if_cold(&mut instance, upper_threshold, "upper_threshold");
-            apply_if_cold(&mut instance, output_low, "output_low");
-            apply_if_cold(&mut instance, output_high, "output_high");
+                if let $variant { $($field),*, .. } = &config.kind {
+                    $(apply_if_cold(&mut instance, $field, stringify!($field));)*
+                }
+
+                instance
+            }
         }
 
-        instance
-    }
-}
-
-impl FromColdParams for Math {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::Math { operand, .. } = &config.kind {
-            apply_if_cold(&mut instance, operand, "operand");
+        impl SetFromParam for $type {
+            fn set_from_param(&mut self, name: &str, value: f32) {
+                match name {
+                    $(stringify!($field) => self.$field = value,)*
+                    _ => warn_for(stringify!($type), name),
+                }
+            }
         }
-
-        instance
-    }
+    };
 }
 
-impl FromColdParams for Quantizer {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::Quantizer { step, .. } = &config.kind {
-            apply_if_cold(&mut instance, step, "step");
-        }
-
-        instance
-    }
-}
-
-impl FromColdParams for RingModulator {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::RingModulator { mix, .. } = &config.kind {
-            apply_if_cold(&mut instance, mix, "mix");
-        }
-
-        instance
-    }
-}
-
-impl FromColdParams for Saturator {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::Saturator { drive, .. } = &config.kind {
-            apply_if_cold(&mut instance, drive, "drive");
-        }
-
-        instance
-    }
-}
-
-impl FromColdParams for SlewLimiter {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::SlewLimiter { rise, fall, .. } = &config.kind {
-            apply_if_cold(&mut instance, rise, "rise");
-            apply_if_cold(&mut instance, fall, "fall");
-        }
-
-        instance
-    }
-}
-
-impl FromColdParams for WaveFolder {
-    fn from_cold_params(config: &EffectConfig) -> Self {
-        let mut instance = Self::default();
-
-        if let EffectKind::WaveFolder {
-            gain,
-            symmetry,
-            bias,
-            shape,
-            ..
-        } = &config.kind
-        {
-            apply_if_cold(&mut instance, gain, "gain");
-            apply_if_cold(&mut instance, symmetry, "symmetry");
-            apply_if_cold(&mut instance, bias, "bias");
-            apply_if_cold(&mut instance, shape, "shape");
-        }
-
-        instance
-    }
-}
-
-impl SetFromParam for Hysteresis {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "lower_threshold" => self.lower_threshold = value,
-            "upper_threshold" => self.upper_threshold = value,
-            "output_low" => self.output_low = value,
-            "output_high" => self.output_high = value,
-            _ => warn_for("Hysteresis", name),
-        }
-    }
-}
-
-impl SetFromParam for Math {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "operand" => self.operand = value,
-            _ => warn_for("Math", name),
-        }
-    }
-}
-
-impl SetFromParam for Quantizer {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "step" => self.step = value,
-            _ => warn_for("Quantizer", name),
-        }
-    }
-}
-
-impl SetFromParam for RingModulator {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "mix" => self.mix = value,
-            _ => warn_for("RingModulator", name),
-        }
-    }
-}
-
-impl SetFromParam for Saturator {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "drive" => self.drive = value,
-            _ => warn_for("Saturator", name),
-        }
-    }
-}
-
-impl SetFromParam for SlewLimiter {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "rise" => self.rise = value,
-            "fall" => self.fall = value,
-            _ => warn_for("SlewLimiter", name),
-        }
-    }
-}
-
-impl SetFromParam for WaveFolder {
-    fn set_from_param(&mut self, name: &str, value: f32) {
-        match name {
-            "gain" => self.gain = value,
-            "symmetry" => self.symmetry = value,
-            "bias" => self.bias = value,
-            "shape" => self.shape = value,
-            _ => warn_for("WaveFolder", name),
-        }
-    }
-}
+impl_effect_params!(
+    Hysteresis,
+    EffectKind::Hysteresis,
+    lower_threshold,
+    upper_threshold,
+    output_low,
+    output_high
+);
+impl_effect_params!(Math, EffectKind::Math, operand);
+impl_effect_params!(Quantizer, EffectKind::Quantizer, step);
+impl_effect_params!(RingModulator, EffectKind::RingModulator, mix);
+impl_effect_params!(Saturator, EffectKind::Saturator, drive);
+impl_effect_params!(SlewLimiter, EffectKind::SlewLimiter, rise, fall);
+impl_effect_params!(
+    WaveFolder,
+    EffectKind::WaveFolder,
+    gain,
+    symmetry,
+    bias,
+    shape
+);
 
 //------------------------------------------------------------------------------
 // Animation

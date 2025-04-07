@@ -4,6 +4,20 @@ radius:
   default: 200
   step: 1
 
+animate_x_pos:
+  type: checkbox
+  default: false
+
 x_pos:
   type: slider
   range: [-250, 250]
+  disabled: animate_x_pos
+  bypass: 0
+
+fruits:
+  type: select
+  default: apple
+  options:
+    - apple
+    - banana
+    - carrot

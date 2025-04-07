@@ -20,6 +20,10 @@ export const Help = {
     `Clear any alpha blending or "fade trails" from frame persistence. Requires 
     your sketch is using the clear_color attribute via sketch_components macro`
   ),
+  Exclusions: format(
+    `Toggle Exclusions Mode where you can select controls to exclude from 
+    Randomization`
+  ),
   Fps: 'The effective framerate over a 1 second running average',
   Hrcc: format(`
     Enable high resolution (14bit) MIDI for CCs 0-31 (requires support 

@@ -23,8 +23,9 @@
     --control-on-background-color: #363636;
     --control-on-text-color: #eee;
     --console-background-color: #f4f4f4;
-    --control-mapped-color: limegreen;
-    --control-bypassed-color: blue;
+    --indicator-mapped-color: limegreen;
+    --indicator-bypassed-color: blue;
+    --indicator-excluded-color: rgb(200, 42, 14);
     --focus-color: var(--text-color);
   }
 }
@@ -35,7 +36,7 @@
     --text-color: #ddd;
     --text-color-muted: #aaa;
     --muted-color: #444;
-    --meter-color: rgb(34, 222, 34);
+    --meter-color: darkseagreen;
     --control-background-color: #363636;
     --control-active-background-color: #555;
     --control-text-color: #eee;
@@ -48,8 +49,9 @@
     --control-on-background-color: #eee;
     --control-on-text-color: #363636;
     --console-background-color: #111;
-    --control-mapped-color: limegreen;
-    --control-bypassed-color: cornflowerblue;
+    --indicator-mapped-color: darkseagreen;
+    --indicator-bypassed-color: cornflowerblue;
+    --indicator-excluded-color: indianred;
     --focus-color: var(--text-color);
   }
 }
@@ -272,6 +274,7 @@ button.icon-button {
     width: 14px;
     height: 14px;
     fill: var(--text-color);
+    pointer-events: none;
   }
 
   input {
@@ -283,6 +286,14 @@ button.icon-button {
     left: 0;
     margin: 0;
     cursor: pointer;
+  }
+
+  &.excluded {
+    background-color: var(--indicator-excluded-color);
+
+    svg {
+      fill: white;
+    }
   }
 }
 
@@ -407,7 +418,22 @@ input[type='range']::-webkit-slider-thumb {
   font-size: 11px;
 }
 
-.control-meta {
+.control-row {
+  display: flex;
+  width: 100%;
+
+  /* Something is causing the computed to height to be 26px, even though none of
+  the children have a computed height of more than 24px 🤷. it's gonna be pretty
+  hard to sleep without figuring this out */
+  height: 24px;
+
+  align-items: center;
+  > fieldset {
+    flex-grow: 1;
+  }
+}
+
+.indicator {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -416,14 +442,18 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   text-align: center;
   margin-right: 4px;
-}
 
-.control-mapped-text {
-  background: var(--control-mapped-color);
-}
+  &.mapped {
+    background: var(--indicator-mapped-color);
+  }
 
-.control-bypassed-text {
-  background: var(--control-bypassed-color);
+  &.bypassed {
+    background: var(--indicator-bypassed-color);
+  }
+
+  &.excluded {
+    background: var(--indicator-excluded-color);
+  }
 }
 
 .console {
