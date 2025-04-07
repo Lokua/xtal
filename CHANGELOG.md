@@ -38,7 +38,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   character to avoid off-by-1 pixel aliasing or whatever it's called
 - Split console into Alert and Help views. When hovering over elements, the Help
   view will display help information for that element. This provides more
-  immediate access to help information that native titles provide.
+  immediate access to help information than native titles provide.
 - Removed the `useIcons` setting and text-only buttons in favor of help-view and
   titles so we don't sacrifice a11y due to icon-only buttons
 
