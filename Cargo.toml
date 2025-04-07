@@ -1,6 +1,6 @@
 [package]
 name = "lattice"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Lokua <dev@lokua.net>"]
 edition = "2024"
 default-run = "lattice"
