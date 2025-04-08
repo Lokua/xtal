@@ -163,7 +163,7 @@ export default function Controls({
                   textDecoration: isBypassed ? 'line-through' : 'none',
                 }}
               >
-                {c.name}
+                <span className="text">{c.name}</span>
               </span>
             </label>
           </fieldset>
@@ -195,7 +195,7 @@ export default function Controls({
               }}
             >
               {excluded && <ExcludedIndicator />}
-              <span>{c.name}</span>
+              <span className="text">{c.name}</span>
             </label>
           </fieldset>
         </div>

@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "radius",
-      "value": 114.0
+      "value": 189.0
     },
     {
       "type": "Checkbox",
@@ -14,12 +14,12 @@
     {
       "type": "Slider",
       "name": "x_pos",
-      "value": 100.6876
+      "value": -126.260796
     },
     {
       "type": "Select",
       "name": "fruits",
-      "value": "carrot"
+      "value": "apple"
     }
   ],
   "midi_controls": [],

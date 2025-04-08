@@ -139,22 +139,6 @@ fieldset {
 label {
   font-size: var(--control-font-size);
   color: var(--text-color);
-
-  &.clickable {
-    position: relative;
-    cursor: pointer;
-
-    &:hover {
-      font-weight: bold;
-
-      &::before {
-        content: '<-? ';
-        margin-right: 4px;
-        white-space: nowrap;
-        display: inline;
-      }
-    }
-  }
 }
 
 button,
@@ -442,6 +426,20 @@ input[type='range']::-webkit-slider-thumb {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+    }
+
+    &.clickable {
+      position: relative;
+      cursor: pointer;
+
+      &:hover {
+        font-weight: bold;
+
+        span.text::after {
+          content: '<-? ';
+          margin-left: 4px;
+        }
+      }
     }
   }
 }

@@ -7,6 +7,13 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.5.0] - 2025-04-07
+
+### Added
+
+- Reload button next to Sketch selector that reloads the current sketch
+  instantly
+
 ## [0.4.0] - 2025-04-07
 
 ### Added
