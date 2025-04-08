@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import type {
   Bypassed,
   Control,
+  ControlValue,
   Exclusions,
   Mappings,
-  Slider,
+  RawControl,
 } from './types.ts'
 import { View } from './types.ts'
 import Header from './Header.tsx'
@@ -30,7 +31,7 @@ type EventMap = {
   Encoding: boolean
   Error: string
   Hrcc: boolean
-  HubPopulated: [Control[], Bypassed]
+  HubPopulated: [RawControl[], Bypassed]
   Init: {
     audioDevice: string
     audioDevices: string[]
@@ -49,7 +50,7 @@ type EventMap = {
   LoadSketch: {
     bpm: number
     bypassed: Bypassed
-    controls: Control[]
+    controls: RawControl[]
     exclusions: Exclusions
     fps: number
     paused: boolean
@@ -68,7 +69,7 @@ type EventMap = {
   Reset: void
   Save: string[]
   SendMidi: void
-  SnapshotEnded: Control[]
+  SnapshotEnded: RawControl[]
   SnapshotRecall: string
   SnapshotStore: string
   StartRecording: void
@@ -92,7 +93,7 @@ type EventMap = {
     name: string
     value: string
   }
-  UpdatedControls: Control[]
+  UpdatedControls: RawControl[]
 }
 
 function subscribe<K extends keyof EventMap>(
@@ -131,6 +132,31 @@ function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
   } else {
     window.ipc.postMessage(JSON.stringify({ [event]: data }))
   }
+}
+
+function stringToControlValue(s: string): ControlValue {
+  if (s === 'true') {
+    return true
+  }
+
+  if (s === 'false') {
+    return false
+  }
+
+  const n = parseFloat(s)
+  if (!isNaN(n) && String(n) === s) {
+    return n
+  }
+
+  return s
+}
+
+function fromRawControls(raw_controls: RawControl[]): Control[] {
+  return raw_controls.map((control) => ({
+    ...control,
+    value: stringToControlValue(control.value),
+    isRawControl: false,
+  }))
 }
 
 export default function App() {
@@ -195,7 +221,7 @@ export default function App() {
         }
         case 'HubPopulated': {
           const [controls, bypassed] = data as EventMap['HubPopulated']
-          setControls(controls)
+          setControls(fromRawControls(controls))
           setBypassed(bypassed)
           break
         }
@@ -220,7 +246,7 @@ export default function App() {
           const d = data as EventMap['LoadSketch']
           setBpm(d.bpm)
           setBypassed(d.bypassed)
-          setControls(d.controls)
+          setControls(fromRawControls(d.controls))
           setExclusions(d.exclusions)
           setFps(d.fps)
           setMappings(d.mappings)
@@ -234,7 +260,7 @@ export default function App() {
           break
         }
         case 'SnapshotEnded': {
-          setControls(data as EventMap['SnapshotEnded'])
+          setControls(fromRawControls(data as EventMap['SnapshotEnded']))
           setAlertText('Snapshot ended')
           break
         }
@@ -244,7 +270,7 @@ export default function App() {
           break
         }
         case 'UpdatedControls': {
-          setControls(data as EventMap['UpdatedControls'])
+          setControls(fromRawControls(data as EventMap['UpdatedControls']))
           break
         }
         default: {
@@ -346,13 +372,9 @@ export default function App() {
   }, [paused, tapTempoEnabled, view, controls, exclusions])
 
   function getSliderNames() {
-    return controls.reduce<string[]>((names, control) => {
-      const type = Object.keys(control)[0]
-      if (type === 'slider') {
-        names.push((control as Slider).slider.name)
-      }
-      return names
-    }, [])
+    return controls
+      .filter((control) => control.kind === 'Slider')
+      .map((control) => control.name)
   }
 
   function onAdvance() {
@@ -368,25 +390,17 @@ export default function App() {
     post('ChangeAudioDevice', name)
   }
 
-  function onChangeControl(
-    type: string,
-    name: string,
-    value: boolean | string | number,
-    controls: Control[]
-  ) {
-    setControls(controls)
-
-    const event: keyof EventMap =
-      type === 'checkbox'
-        ? 'UpdateControlBool'
-        : type === 'slider'
-        ? 'UpdateControlFloat'
-        : 'UpdateControlString'
-
-    post(event, {
-      name,
-      value,
-    })
+  function onChangeControl(index: number, value: ControlValue) {
+    setControls(
+      controls.map((c, i) =>
+        i === index
+          ? {
+              ...c,
+              value,
+            }
+          : c
+      )
+    )
   }
 
   function onChangeHrcc() {

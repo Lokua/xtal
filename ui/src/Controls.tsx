@@ -1,15 +1,10 @@
 import NumberBox from '@lokua/number-box'
 import {
   Bypassed,
-  Checkbox,
   Control,
   ControlValue,
-  ControlWithValue,
-  DynamicSeparator,
   Exclusions,
   Mappings,
-  Select as SelectType,
-  Slider,
 } from './types.ts'
 import CheckboxInput from './Checkbox.tsx'
 import Select from './Select.tsx'
@@ -41,12 +36,7 @@ type Props = {
   exclusions: Exclusions
   mappings: Mappings
   showExclusions: boolean
-  onChange: (
-    type: string,
-    name: string,
-    value: ControlValue,
-    updatedControls: Control[]
-  ) => void
+  onChange: (index: number, value: ControlValue) => void
   onToggleExclusion: (name: string) => void
 }
 
@@ -56,25 +46,9 @@ export default function Controls({
   exclusions,
   mappings,
   showExclusions,
-  onChange: parentOnChange,
+  onChange,
   onToggleExclusion,
 }: Props) {
-  // TODO: ETL on controls so we don't have to deal with this awkward bincode
-  // structure
-  function onChange(type: string, index: number, value: ControlValue) {
-    const updatedControls = [...controls] as ControlWithValue[]
-    const kind = Object.keys(
-      updatedControls[index]
-    )[0] as keyof ControlWithValue
-    const control = updatedControls[index][kind] as {
-      value: ControlValue
-      name: string
-    }
-    control.value = value
-    const name = control.name
-    parentOnChange(type, name, value, updatedControls)
-  }
-
   function excludedAndNode(name: string): [boolean, React.ReactNode] {
     const excluded = exclusions.includes(name)
 
@@ -97,11 +71,8 @@ export default function Controls({
     ]
   }
 
-  return controls.map((control, index) => {
-    const type = Object.keys(control)[0] as keyof Control
-
-    if (type === 'checkbox') {
-      const c = control[type] as Checkbox['checkbox']
+  return controls.map((c, index) => {
+    if (c.kind === 'Checkbox') {
       const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
       return (
@@ -111,10 +82,10 @@ export default function Controls({
             <CheckboxInput
               id={c.name}
               type="checkbox"
-              checked={c.value}
+              checked={c.value as boolean}
               disabled={c.disabled}
               onChange={() => {
-                onChange('checkbox', index, !c.value)
+                onChange(index, !c.value)
               }}
             />
             <label htmlFor={c.name}>
@@ -126,8 +97,7 @@ export default function Controls({
       )
     }
 
-    if (type === 'slider') {
-      const c = control[type] as Slider['slider']
+    if (c.kind === 'Slider') {
       const isBypassed = c.name in bypassed
       const isMapped = !!mappings.find((m) => m[0] === c.name)
       const disabled = c.disabled || isBypassed || isMapped
@@ -140,24 +110,24 @@ export default function Controls({
             <input
               id={c.name}
               type="range"
-              value={c.value}
+              value={c.value as number}
               min={c.min}
               max={c.max}
               step={c.step}
               disabled={disabled}
               onChange={(e) => {
-                onChange('slider', index, e.currentTarget.valueAsNumber)
+                onChange(index, e.currentTarget.valueAsNumber)
               }}
             />
             <NumberBox
               className="number-box"
-              value={c.value}
+              value={c.value as number}
               min={c.min}
               max={c.max}
               step={c.step}
               disabled={disabled}
               onChange={(value) => {
-                onChange('slider', index, value)
+                onChange(index, value)
               }}
             />
             <label htmlFor={c.name}>
@@ -188,8 +158,7 @@ export default function Controls({
       )
     }
 
-    if (type === 'select') {
-      const c = control[type] as SelectType['select']
+    if (c.kind === 'Select') {
       const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
       return (
@@ -198,11 +167,11 @@ export default function Controls({
           <fieldset key={c.name}>
             <Select
               id={c.name}
-              value={c.value}
+              value={c.value as string}
               options={c.options}
               disabled={c.disabled}
               onChange={(value) => {
-                onChange('select', index, value)
+                onChange(index, value)
               }}
             />
             <label htmlFor={c.name}>
@@ -214,9 +183,8 @@ export default function Controls({
       )
     }
 
-    if (type === 'dynamicSeparator') {
-      const c = control[type] as DynamicSeparator['dynamicSeparator']
-      return <Separator key={c.name} />
+    if (c.kind === 'DynamicSeparator' || c.kind === 'Separator') {
+      return <Separator key={c.name || index} />
     }
 
     return null

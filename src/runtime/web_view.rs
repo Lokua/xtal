@@ -16,6 +16,7 @@ use std::process::{Child, Command, Stdio};
 use std::thread;
 
 use super::app::AppEventSender;
+use crate::framework::control::ui_controls;
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
 
@@ -57,7 +58,7 @@ pub enum Event {
 
     /// Sent from parent whenever a control script has changed and controls have
     /// been reloaded
-    HubPopulated((Vec<SerializableControl>, Bypassed)),
+    HubPopulated((Vec<Control>, Bypassed)),
 
     /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
@@ -82,7 +83,7 @@ pub enum Event {
     LoadSketch {
         bpm: f32,
         bypassed: Bypassed,
-        controls: Vec<SerializableControl>,
+        controls: Vec<Control>,
         display_name: String,
         fps: f32,
         mappings: Vec<(String, ChannelAndController)>,
@@ -112,7 +113,7 @@ pub enum Event {
 
     /// Sent from parent after a snapshot has completed so we can keep controls
     /// in sync
-    SnapshotEnded(Vec<SerializableControl>),
+    SnapshotEnded(Vec<Control>),
     SnapshotRecall(String),
     SnapshotStore(String),
 
@@ -149,7 +150,7 @@ pub enum Event {
     },
 
     /// Sent from parent
-    UpdatedControls(Vec<SerializableControl>),
+    UpdatedControls(Vec<Control>),
 }
 
 pub type Sender = IpcSender<Event>;
@@ -350,67 +351,118 @@ pub fn launch(
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum SerializableControl {
-    Checkbox {
-        name: String,
-        value: bool,
-        disabled: bool,
-    },
-    DynamicSeparator {
-        name: String,
-    },
-    Select {
-        name: String,
-        value: String,
-        options: Vec<String>,
-        disabled: bool,
-    },
-    Separator {},
-    Slider {
-        name: String,
-        value: f32,
-        min: f32,
-        max: f32,
-        step: f32,
-        disabled: bool,
-    },
+pub enum ControlKind {
+    Checkbox,
+    DynamicSeparator,
+    Select,
+    Separator,
+    Slider,
 }
 
-impl From<(&Control, &ControlHub<Timing>)> for SerializableControl {
-    fn from((control, hub): (&Control, &ControlHub<Timing>)) -> Self {
-        match control {
-            Control::Checkbox { name, .. } => SerializableControl::Checkbox {
-                name: name.clone(),
-                value: hub.bool(name),
-                disabled: control.is_disabled(&hub.ui_controls),
-            },
-            Control::DynamicSeparator { name } => {
-                SerializableControl::DynamicSeparator { name: name.clone() }
+/// Provides a uniform type for all [`ui_controls::Control`] variants. This is a
+/// work around for sending data over [`ipc_channel`] which uses [`bincode`] for
+/// serialization and can't support serde;s untagged enum types which leads to
+/// really gnarly code on the frontend, for example a list of these:
+///
+/// ```rust
+/// #[derive(Clone, Debug, Deserialize, Serialize)]
+/// #[serde(rename_all = "camelCase")]
+/// pub enum SerializableControl {
+///     Checkbox {
+///         name: String,
+///         value: bool,
+///         disabled: bool,
+///     },
+///     // other control impls
+/// ```
+///
+/// Results in:
+///
+/// ```tsx
+/// [{ checkbox: {...} }, { slider: {...} }]
+/// ```
+///
+/// Which doesn't seem all that bad until you want to start typing with
+/// Typescript, filtering, mapping - every regular single thing becomes twice as
+/// complicated due to that single key:
+///
+/// ```tsx
+/// import type { Control, Checkbox} from './types.ts'
+///
+/// const type = Object.keys(control)[0] as keyof Control
+/// const control = control[type] as Checkbox['checkbox']
+/// ```
+///
+/// Which just looks stupid and gets worse when you have to do anything real in
+/// a generic way, so here we are picking the lesser of two not-so-great
+/// solutions by just over-packing the data type
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Control {
+    pub kind: ControlKind,
+    pub name: String,
+    pub value: String,
+    pub disabled: bool,
+    pub options: Vec<String>,
+    pub min: f32,
+    pub max: f32,
+    pub step: f32,
+}
+
+impl Default for Control {
+    fn default() -> Self {
+        Self {
+            kind: ControlKind::Separator,
+            name: "<default_name>".to_string(),
+            value: "".to_string(),
+            disabled: false,
+            options: vec![],
+            min: 0.0,
+            max: 1.0,
+            step: 0.001,
+        }
+    }
+}
+
+impl From<(&ui_controls::Control, &ControlHub<Timing>)> for Control {
+    #[allow(clippy::field_reassign_with_default)]
+    fn from(
+        (ui_control, hub): (&ui_controls::Control, &ControlHub<Timing>),
+    ) -> Self {
+        let mut result = Control::default();
+        result.disabled = ui_control.is_disabled(&hub.ui_controls);
+        result.name = ui_control.name().to_string();
+
+        match ui_control {
+            ui_controls::Control::Checkbox { name, .. } => {
+                result.kind = ControlKind::Checkbox;
+                result.value = hub.bool(name).to_string();
             }
-            Control::Select { name, options, .. } => {
-                SerializableControl::Select {
-                    name: name.clone(),
-                    value: hub.string(name),
-                    options: options.clone(),
-                    disabled: control.is_disabled(&hub.ui_controls),
-                }
+            ui_controls::Control::DynamicSeparator { .. } => {
+                result.kind = ControlKind::DynamicSeparator;
             }
-            Control::Separator {} => SerializableControl::Separator {},
-            Control::Slider {
+            ui_controls::Control::Select { name, options, .. } => {
+                result.kind = ControlKind::Select;
+                result.value = hub.string(name);
+                result.options = options.clone();
+            }
+            ui_controls::Control::Separator {} => {
+                result.kind = ControlKind::Separator;
+            }
+            ui_controls::Control::Slider {
                 name,
                 min,
                 max,
                 step,
                 ..
-            } => SerializableControl::Slider {
-                name: name.clone(),
-                value: hub.get(name),
-                min: *min,
-                max: *max,
-                step: *step,
-                disabled: control.is_disabled(&hub.ui_controls),
-            },
+            } => {
+                result.kind = ControlKind::Slider;
+                result.value = hub.get(name).to_string();
+                result.min = *min;
+                result.max = *max;
+                result.step = *step;
+            }
         }
+
+        result
     }
 }

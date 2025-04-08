@@ -21,6 +21,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 - Remove the **Include Checkboxes** and **Include Selects** options from
   settings since Exclusions offers more flexibility
+- Completely overhauled the web_view::Control structure to avoid the awkwardness
+  of untagged enums due to [bincode](https://github.com/bincode-org/bincode).
+  The frontend control code is much, much cleaner now.
 
 ## [0.3.0] - 2025-04-06
 

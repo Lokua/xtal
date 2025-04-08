@@ -9,7 +9,7 @@ use wry::WebViewBuilder;
 
 use lattice::{
     framework::prelude::*,
-    runtime::web_view::{self as wv, SerializableControl},
+    runtime::web_view::{self as wv},
 };
 
 const DEFAULT_WIDTH: i32 = 560;
@@ -149,14 +149,13 @@ fn setup_ipc_connection(
     Ok((to_parent, from_parent))
 }
 
-fn derive_gui_height(controls: Vec<SerializableControl>) -> i32 {
+fn derive_gui_height(controls: Vec<wv::Control>) -> i32 {
     let unscientific_offset = controls.len() as i32 + 24;
 
     let controls_height: i32 = controls
         .iter()
-        .map(|c| match c {
-            SerializableControl::DynamicSeparator { .. }
-            | SerializableControl::Separator {} => 9,
+        .map(|c| match c.kind {
+            wv::ControlKind::DynamicSeparator | wv::ControlKind::Separator => 9,
             _ => 24,
         })
         .sum();

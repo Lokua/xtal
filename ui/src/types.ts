@@ -23,48 +23,23 @@ export type Exclusions = string[]
 
 export type Bypassed = Record<string, number>
 
-export type Control = Checkbox | DynamicSeparator | Select | Separator | Slider
-export type ControlWithValue = Checkbox | Select | Slider
 export type ControlValue = boolean | number | string
 
-// The awkward structure with a single key is due to serde->bin-code
-// limitations. It does not allow tagged enums, so we're kind of stuck with this
-// shitty structure unless we want to add yet another layer of ETL
-export type Checkbox = {
-  checkbox: {
-    name: string
-    value: boolean
-    disabled: boolean
-  }
+export type RawControl = {
+  kind: 'Checkbox' | 'DynamicSeparator' | 'Select' | 'Separator' | 'Slider'
+  name: string
+  value: string
+  disabled: boolean
+  options: string[]
+  min: number
+  max: number
+  step: number
 }
 
-export type DynamicSeparator = {
-  dynamicSeparator: {
-    name: string
-  }
-}
-
-export type Select = {
-  select: {
-    name: string
-    value: string
-    options: string[]
-    disabled: boolean
-  }
-}
-
-export type Separator = {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  separator: {}
-}
-
-export type Slider = {
-  slider: {
-    name: string
-    value: number
-    min: number
-    max: number
-    step: number
-    disabled: boolean
-  }
+export type Control = Omit<RawControl, 'value'> & {
+  value: ControlValue
+  // hack to force typescript to see RawControl and Control as different types,
+  // otherwise we'd be free to pass RawControl around as if it was a Control -
+  // not good
+  isRawControl: false
 }
