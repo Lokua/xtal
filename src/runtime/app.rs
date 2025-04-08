@@ -363,7 +363,12 @@ impl AppModel {
                 std::process::exit(0);
             }
             AppEvent::Randomize(exclusions) => {
+                let app_tx = self.app_tx.clone();
                 if let Some(hub) = self.control_hub_mut() {
+                    app_tx.alert_and_log(
+                        "Randomization transition started",
+                        log::Level::Info,
+                    );
                     hub.randomize(exclusions);
                 }
             }
@@ -447,6 +452,10 @@ impl AppModel {
                         return;
                     }
                 };
+
+                if messages.is_empty() {
+                    return;
+                }
 
                 let Some(midi_out) = &mut self.midi_out else {
                     self.app_tx.alert_and_log(
@@ -536,9 +545,7 @@ impl AppModel {
                 }
             }
             AppEvent::SwitchSketch(name) => {
-                if self.sketch_name() != name {
-                    self.switch_sketch(app, &name);
-                }
+                self.switch_sketch(app, &name);
             }
             AppEvent::Tap => {
                 if self.tap_tempo_enabled {

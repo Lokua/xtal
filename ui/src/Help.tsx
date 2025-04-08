@@ -64,6 +64,7 @@ export const Help = {
   ),
   Queue: 'Queue recording to start upon receiving a MIDI Start message',
   Random: 'Randomize all UI controls (Shortcut: [Meta + R])',
+  Reload: 'Reload the current sketch back to its last saved state',
   Record: 'Start/Stop recording',
   Reset: format(`
     Reset the frame counter and all animations (Shortcut: [R])

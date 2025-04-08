@@ -9,6 +9,7 @@ import Play from '@material-symbols/svg-400/outlined/play_arrow.svg?react'
 import Queue from '@material-symbols/svg-400/outlined/timer_play.svg?react'
 import Queued from '@material-symbols/svg-400/outlined/timer_play.svg?react'
 import Random from '@material-symbols/svg-400/outlined/shuffle.svg?react'
+import Reload from '@material-symbols/svg-400/outlined/refresh.svg?react'
 import Reset from '@material-symbols/svg-400/outlined/undo.svg?react'
 import Record from '@material-symbols/svg-400/outlined/fiber_manual_record.svg?react'
 import Recording from '@material-symbols/svg-400/outlined/fiber_manual_record-fill.svg?react'
@@ -34,6 +35,7 @@ const icons = {
   Queue,
   Queued,
   Random,
+  Reload,
   Reset,
   Record,
   Recording,

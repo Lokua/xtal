@@ -339,7 +339,9 @@ export default function App() {
           break
         }
         case 'KeyR': {
-          if (e.metaKey) {
+          if (e.metaKey && e.shiftKey) {
+            post('SwitchSketch', sketchName)
+          } else if (e.metaKey) {
             post('Randomize', exclusions)
           } else {
             post('Reset')
@@ -369,7 +371,7 @@ export default function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [paused, tapTempoEnabled, view, controls, exclusions])
+  }, [paused, tapTempoEnabled, view, controls, exclusions, sketchName])
 
   function getSliderNames() {
     return controls
@@ -506,6 +508,10 @@ export default function App() {
     }
   }
 
+  function onReload() {
+    post('SwitchSketch', sketchName)
+  }
+
   function onRemoveMapping(name: string) {
     post('RemoveMapping', name)
   }
@@ -573,8 +579,9 @@ export default function App() {
         onChangeViewMain={onChangeViewMain}
         onClearBuffer={onClearBuffer}
         onClickRandomize={onClickRandomize}
-        onReset={onReset}
         onQueueRecord={onQueueRecord}
+        onReload={onReload}
+        onReset={onReset}
         onRecord={onRecord}
         onSave={onSave}
         onSwitchSketch={onSwitchSketch}

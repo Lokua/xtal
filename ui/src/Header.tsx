@@ -35,6 +35,7 @@ type HeaderProps = {
   onClickRandomize: noop
   onQueueRecord: noop
   onRecord: noop
+  onReload: noop
   onReset: noop
   onSave: noop
   onSwitchSketch: (sketchName: string) => void
@@ -66,6 +67,7 @@ export default function Header({
   onClickRandomize,
   onQueueRecord,
   onRecord,
+  onReload,
   onReset,
   onSave,
   onSwitchSketch,
@@ -141,12 +143,13 @@ export default function Header({
       <section>
         <Select
           data-help-id="Sketch"
-          id="sketch"
           value={sketchName}
           options={sketchNames}
           onChange={onSwitchSketch}
           style={{ maxWidth: '192px' }}
         />
+
+        <IconButton data-help-id="Reload" name="Reload" onClick={onReload} />
 
         <IconButton
           data-help-id="Perf"

@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "radius",
-      "value": 78.0
+      "value": 114.0
     },
     {
       "type": "Checkbox",
@@ -14,22 +14,19 @@
     {
       "type": "Slider",
       "name": "x_pos",
-      "value": 50.6993
+      "value": 100.6876
     },
     {
       "type": "Select",
       "name": "fruits",
-      "value": "apple"
+      "value": "carrot"
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {},
-  "mappings": {
-    "radius": [
-      0,
-      0
-    ]
-  },
-  "exclusions": []
+  "mappings": {},
+  "exclusions": [
+    "animate_x_pos"
+  ]
 }

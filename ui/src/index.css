@@ -233,12 +233,12 @@ button.icon-button {
     pointer-events: none;
   }
 
-  &:hover:not(:disabled, .toggle.on) {
-    background: var(--control-background-color);
-  }
-
   &:disabled svg {
     fill: var(--muted-color);
+  }
+
+  &:hover:not(:disabled, .toggle.on):not(:active) {
+    background: var(--control-background-color);
   }
 
   &:active:not(.toggle) {
