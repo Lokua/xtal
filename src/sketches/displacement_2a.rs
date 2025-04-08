@@ -615,8 +615,8 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             vec2(x, y)
         })),
         Some(Arc::new(move |_displacer, ax, _controls| {
-            let w = SKETCH_CONFIG.w as f32;
-            let h = SKETCH_CONFIG.h as f32;
+            let w = rect.w();
+            let h = rect.h();
             let xp = w / 4.0;
             let yp = -h / 4.0;
             let x = ax.automate(
@@ -642,8 +642,8 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             vec2(x, y)
         })),
         Some(Arc::new(move |_displacer, ax, _controls| {
-            let w = SKETCH_CONFIG.w as f32;
-            let h = SKETCH_CONFIG.h as f32;
+            let w = rect.w();
+            let h = rect.h();
             let xp = -w / 4.0;
             let yp = -h / 4.0;
             let x = ax.automate(
@@ -669,8 +669,8 @@ fn animations_counter_clockwise(rect: Rect) -> Vec<AnimationFn<Vec2>> {
             vec2(x, y)
         })),
         Some(Arc::new(move |_displacer, ax, _controls| {
-            let w = SKETCH_CONFIG.w as f32;
-            let h = SKETCH_CONFIG.h as f32;
+            let w = rect.w();
+            let h = rect.h();
             let xp = -w / 4.0;
             let yp = h / 4.0;
             let x = ax.automate(

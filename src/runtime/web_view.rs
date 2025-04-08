@@ -92,6 +92,7 @@ pub enum Event {
         sketch_width: i32,
         sketch_height: i32,
         tap_tempo_enabled: bool,
+        exclusions: Exclusions,
     },
 
     // Sent whenever the user physically moves a MIDI control when in map mode
@@ -102,14 +103,10 @@ pub enum Event {
     Quit,
     Ready,
     #[serde(rename_all = "camelCase")]
-    Randomize {
-        include_checkboxes: bool,
-        include_selects: bool,
-        exclusions: Vec<String>,
-    },
+    Randomize(Exclusions),
     RemoveMapping(String),
     Reset,
-    Save,
+    Save(Vec<String>),
     ShutDown,
     SendMidi,
 
@@ -271,16 +268,8 @@ pub fn launch(
                 Event::Quit => {
                     app_tx.emit(AppEvent::Quit);
                 }
-                Event::Randomize {
-                    include_checkboxes,
-                    include_selects,
-                    exclusions,
-                } => {
-                    app_tx.emit(AppEvent::Randomize {
-                        include_checkboxes,
-                        include_selects,
-                        exclusions,
-                    });
+                Event::Randomize(exclusions) => {
+                    app_tx.emit(AppEvent::Randomize(exclusions));
                 }
                 Event::Ready => {
                     app_tx.emit(AppEvent::WebViewReady);
@@ -294,8 +283,8 @@ pub fn launch(
                 Event::StartRecording => {
                     app_tx.emit(AppEvent::StartRecording);
                 }
-                Event::Save => {
-                    app_tx.emit(AppEvent::SaveProgramState);
+                Event::Save(exclusions) => {
+                    app_tx.emit(AppEvent::SaveProgramState(exclusions));
                 }
                 Event::ShutDown => {
                     debug!("Received shutdown...");

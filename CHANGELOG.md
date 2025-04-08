@@ -11,11 +11,16 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ### Added
 
-- Ability to exclude any specific UI control from Randomization (still TODO:
-  disk persistence)
+- Ability to exclude any specific UI control from Randomization + persistence of
+  exclusions along with sketch's program state
 - Tiny icons next to a control's label to indicate if it is excluded or MIDI
   mapped
-- Strike-through on label's that are bypassed in a Control Script
+- Strike-through on labels that are bypassed in a Control Script
+
+## Changed
+
+- Remove the **Include Checkboxes** and **Include Selects** options from
+  settings since Exclusions offers more flexibility
 
 ## [0.3.0] - 2025-04-06
 
@@ -24,6 +29,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Documentation for the `disabled` micro-DSL in
   [Control Script Reference](docs/control_script_reference.md)
 - Help text for all UI elements
+- [Fira Code](https://github.com/tonsky/FiraCode) as our font
 
 ### Changed
 

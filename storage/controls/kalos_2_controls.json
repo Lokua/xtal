@@ -1,83 +1,91 @@
 {
-  "version": "1",
-  "controls": [
+  "version": "2",
+  "ui_controls": [
     {
       "type": "Slider",
       "name": "offset",
-      "value": 0.2
-    },
-    {
-      "type": "Slider",
-      "name": "scaling_power",
-      "value": 1.1999999
-    },
-    {
-      "type": "Slider",
-      "name": "g",
-      "value": 0.33499998
-    },
-    {
-      "type": "Slider",
-      "name": "threshold",
-      "value": 0.117
-    },
-    {
-      "type": "Slider",
-      "name": "ring_strength",
-      "value": 11.2
-    },
-    {
-      "type": "Slider",
-      "name": "ring_harm_amt",
-      "value": 1
-    },
-    {
-      "type": "Slider",
-      "name": "lerp",
-      "value": 0.382
-    },
-    {
-      "type": "Slider",
-      "name": "angular_variation",
-      "value": 35
-    },
-    {
-      "type": "Slider",
-      "name": "strength",
-      "value": 0.5
+      "value": 0.046
     },
     {
       "type": "Slider",
       "name": "radius",
-      "value": 0.5
+      "value": 6.0699997
     },
     {
       "type": "Slider",
-      "name": "ring_harmonics",
-      "value": 1
+      "name": "strength",
+      "value": 4.6670003
     },
     {
       "type": "Slider",
-      "name": "mix",
-      "value": 0.78999996
-    },
-    {
-      "type": "Slider",
-      "name": "frequency",
-      "value": 10
+      "name": "scaling_power",
+      "value": 0.56
     },
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.5
+      "value": 0.4068
+    },
+    {
+      "type": "Slider",
+      "name": "g",
+      "value": 0.6145
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 1
+      "value": 0.93659997
+    },
+    {
+      "type": "Slider",
+      "name": "ring_strength",
+      "value": 7.58
+    },
+    {
+      "type": "Slider",
+      "name": "ring_harmonics",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "ring_harm_amt",
+      "value": 79.0
+    },
+    {
+      "type": "Slider",
+      "name": "angular_variation",
+      "value": 31.0
+    },
+    {
+      "type": "Slider",
+      "name": "frequency",
+      "value": 662.0
+    },
+    {
+      "type": "Slider",
+      "name": "lerp",
+      "value": 0.1697
+    },
+    {
+      "type": "Slider",
+      "name": "threshold",
+      "value": 0.5524
+    },
+    {
+      "type": "Slider",
+      "name": "mix",
+      "value": 0.9196
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "audio_controls": []
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": [
+    "ring_strength",
+    "ring_harm_amt",
+    "ring_harmonics",
+    "threshold",
+    "mix"
+  ]
 }

@@ -6,6 +6,7 @@ import {
   ControlValue,
   ControlWithValue,
   DynamicSeparator,
+  Exclusions,
   Mappings,
   Select as SelectType,
   Slider,
@@ -17,21 +18,27 @@ import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
 import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
 
 const ExcludedIndicator = () => (
-  <span className="indicator-icon">
-    <ExcludedIcon title="This control is currently excluded from Randomization" />
+  <span
+    className="indicator-icon"
+    title="This control is currently excluded from Randomization"
+  >
+    <ExcludedIcon />
   </span>
 )
 
 const MappedIndicator = () => (
-  <span className="indicator-icon">
-    <MappedIcon title="This control is currently override by a MIDI Mapping" />
+  <span
+    className="indicator-icon"
+    title="This control is currently overridden by a MIDI Mapping"
+  >
+    <MappedIcon />
   </span>
 )
 
 type Props = {
   bypassed: Bypassed
   controls: Control[]
-  exclusions: string[]
+  exclusions: Exclusions
   mappings: Mappings
   showExclusions: boolean
   onChange: (
@@ -159,7 +166,7 @@ export default function Controls({
               <span
                 title={
                   isBypassed
-                    ? 'This control is currently bypassed/overwritten in a Control Script'
+                    ? 'This control is currently bypassed and overwritten in a Control Script'
                     : ''
                 }
                 style={{

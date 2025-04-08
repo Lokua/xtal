@@ -17,8 +17,6 @@ type Props = {
   midiOutputPorts: string[]
   oscPort: number
   sliderNames: string[]
-  randomizationIncludesCheckboxes: boolean
-  randomizationIncludesSelects: boolean
   onChangeAudioDevice: (name: string) => void
   onChangeHrcc: noop
   onChangeMappingsEnabled: () => void
@@ -26,8 +24,6 @@ type Props = {
   onChangeMidiInputPort: (port: string) => void
   onChangeMidiOutputPort: (port: string) => void
   onChangeOscPort: (port: number) => void
-  onChangeRandomizationIncludesCheckboxes: () => void
-  onChangeRandomizationIncludesSelects: () => void
   onClickSend: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
@@ -46,8 +42,6 @@ export default function Settings({
   midiOutputPorts,
   oscPort,
   sliderNames,
-  randomizationIncludesCheckboxes,
-  randomizationIncludesSelects,
   onChangeAudioDevice,
   onChangeHrcc,
   onChangeMappingsEnabled,
@@ -55,8 +49,6 @@ export default function Settings({
   onChangeMidiInputPort,
   onChangeMidiOutputPort,
   onChangeOscPort,
-  onChangeRandomizationIncludesCheckboxes,
-  onChangeRandomizationIncludesSelects,
   onClickSend,
   onRemoveMapping,
   onSetCurrentlyMapping,
@@ -122,26 +114,6 @@ export default function Settings({
           port={oscPort}
           onChange={onChangeOscPort}
         />
-
-        <h2>Randomization</h2>
-        <fieldset data-help-id="IncludeCheckboxes">
-          <Checkbox
-            id="include-checkboxes"
-            type="checkbox"
-            checked={randomizationIncludesCheckboxes}
-            onChange={onChangeRandomizationIncludesCheckboxes}
-          />
-          <label htmlFor="include-checkboxes">Include Checkboxes</label>
-        </fieldset>
-        <fieldset data-help-id="IncludeSelects">
-          <Checkbox
-            id="include-selects"
-            type="checkbox"
-            checked={randomizationIncludesSelects}
-            onChange={onChangeRandomizationIncludesSelects}
-          />
-          <label htmlFor="include-selects">Include Selects</label>
-        </fieldset>
       </section>
 
       <section data-help-id="Mappings">

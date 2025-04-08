@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import type {
   Bypassed,
   Control,
-  ControlValue,
-  LocalSettings,
+  Exclusions,
   Mappings,
   Slider,
 } from './types.ts'
@@ -51,7 +50,7 @@ type EventMap = {
     bpm: number
     bypassed: Bypassed
     controls: Control[]
-    displayName: string
+    exclusions: Exclusions
     fps: number
     paused: boolean
     mappings: Mappings
@@ -63,15 +62,11 @@ type EventMap = {
   PerfMode: boolean
   QueueRecord: void
   Quit: void
-  Randomize: {
-    includeCheckboxes: boolean
-    includeSelects: boolean
-    exclusions: string[]
-  }
+  Randomize: Exclusions
   Ready: void
   RemoveMapping: string
   Reset: void
-  Save: void
+  Save: string[]
   SendMidi: void
   SnapshotEnded: Control[]
   SnapshotRecall: string
@@ -137,43 +132,6 @@ function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
     window.ipc.postMessage(JSON.stringify({ [event]: data }))
   }
 }
-// function post<K extends keyof EventMap>(event: K, data?: EventMap[K]) {
-//   if (data === undefined) {
-//     window.ipc.postMessage(JSON.stringify(event))
-//   } else {
-//     window.ipc.postMessage(
-//       JSON.stringify({
-//         [event]: data,
-//       })
-//     )
-//   }
-// }
-// function post(event: keyof EventMap, data?: ControlValue | object) {
-//   if (data === undefined) {
-//     window.ipc.postMessage(JSON.stringify(event))
-//   } else {
-//     window.ipc.postMessage(
-//       JSON.stringify({
-//         [event]: data,
-//       })
-//     )
-//   }
-// }
-
-function getLocalSettings(): LocalSettings {
-  try {
-    const settings = localStorage.getItem('lattice.localSettings')
-    return JSON.parse(settings || '')
-  } catch (error) {
-    console.warn('Unable to restore local settings:', error)
-    return {
-      randomizationIncludesCheckboxes: false,
-      randomizationIncludesSelects: false,
-    }
-  }
-}
-
-const initialLocalSettings = getLocalSettings()
 
 export default function App() {
   const [alertText, setAlertText] = useState('')
@@ -188,7 +146,6 @@ export default function App() {
   const [isEncoding, setIsEncoding] = useState(false)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [localSettings, setLocalSettings] = useState(initialLocalSettings)
   const [mappings, setMappings] = useState<Mappings>([])
   const [mappingsEnabled, setMappingsEnabled] = useState(false)
   const [midiClockPort, setMidiClockPort] = useState('')
@@ -264,6 +221,7 @@ export default function App() {
           setBpm(d.bpm)
           setBypassed(d.bypassed)
           setControls(d.controls)
+          setExclusions(d.exclusions)
           setFps(d.fps)
           setMappings(d.mappings)
           setPaused(d.paused)
@@ -277,6 +235,7 @@ export default function App() {
         }
         case 'SnapshotEnded': {
           setControls(data as EventMap['SnapshotEnded'])
+          setAlertText('Snapshot ended')
           break
         }
         case 'StartRecording': {
@@ -311,6 +270,7 @@ export default function App() {
       if (e.code.startsWith('Digit')) {
         if (e.metaKey) {
           post('SnapshotRecall', e.key)
+          setAlertText(`Snapshot ${e.key} saved`)
         } else if (e.shiftKey) {
           const actualKey = e.code.slice('Digit'.length)
           post('SnapshotStore', actualKey)
@@ -354,11 +314,7 @@ export default function App() {
         }
         case 'KeyR': {
           if (e.metaKey) {
-            post('Randomize', {
-              includeCheckboxes: localSettings.randomizationIncludesCheckboxes,
-              includeSelects: localSettings.randomizationIncludesSelects,
-              exclusions,
-            })
+            post('Randomize', exclusions)
           } else {
             post('Reset')
           }
@@ -366,7 +322,7 @@ export default function App() {
         }
         case 'KeyS': {
           if (e.metaKey || e.shiftKey) {
-            post('Save')
+            post('Save', exclusions)
           } else {
             post('CaptureFrame')
           }
@@ -387,7 +343,7 @@ export default function App() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [paused, tapTempoEnabled, view, controls])
+  }, [paused, tapTempoEnabled, view, controls, exclusions])
 
   function getSliderNames() {
     return controls.reduce<string[]>((names, control) => {
@@ -397,15 +353,6 @@ export default function App() {
       }
       return names
     }, [])
-  }
-
-  function updateLocalSettings(settings: Partial<LocalSettings>) {
-    const updated = {
-      ...localSettings,
-      ...settings,
-    }
-    setLocalSettings(updated)
-    localStorage.setItem('lattice.localSettings', JSON.stringify(updated))
   }
 
   function onAdvance() {
@@ -480,19 +427,6 @@ export default function App() {
     setAlertText(value ? Alert.PerfEnabled : '')
   }
 
-  function onChangeRandomizationIncludesCheckboxes() {
-    updateLocalSettings({
-      randomizationIncludesCheckboxes:
-        !localSettings.randomizationIncludesCheckboxes,
-    })
-  }
-
-  function onChangeRandomizationIncludesSelects() {
-    updateLocalSettings({
-      randomizationIncludesSelects: !localSettings.randomizationIncludesSelects,
-    })
-  }
-
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
@@ -522,11 +456,7 @@ export default function App() {
   }
 
   function onClickRandomize() {
-    post('Randomize', {
-      includeCheckboxes: localSettings.randomizationIncludesCheckboxes,
-      includeSelects: localSettings.randomizationIncludesSelects,
-      exclusions,
-    })
+    post('Randomize', exclusions)
   }
 
   function onClickSendMidi() {
@@ -559,7 +489,7 @@ export default function App() {
   }
 
   function onSave() {
-    post('Save')
+    post('Save', exclusions)
   }
 
   function onSetCurrentlyMapping(name: string) {
@@ -631,12 +561,6 @@ export default function App() {
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
             sliderNames={getSliderNames()}
-            randomizationIncludesCheckboxes={
-              localSettings.randomizationIncludesCheckboxes
-            }
-            randomizationIncludesSelects={
-              localSettings.randomizationIncludesSelects
-            }
             onChangeAudioDevice={onChangeAudioDevice}
             onChangeHrcc={onChangeHrcc}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
@@ -644,12 +568,6 @@ export default function App() {
             onChangeMidiInputPort={onChangeMidiInputPort}
             onChangeMidiOutputPort={onChangeMidiOutputPort}
             onChangeOscPort={onChangeOscPort}
-            onChangeRandomizationIncludesCheckboxes={
-              onChangeRandomizationIncludesCheckboxes
-            }
-            onChangeRandomizationIncludesSelects={
-              onChangeRandomizationIncludesSelects
-            }
             onClickSend={onClickSendMidi}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}

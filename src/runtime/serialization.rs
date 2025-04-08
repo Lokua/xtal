@@ -54,6 +54,9 @@ pub struct SerializableProgramState {
 
     #[serde(default)]
     pub mappings: Mappings,
+
+    #[serde(default)]
+    pub exclusions: Exclusions,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -175,6 +178,7 @@ impl From<&SaveableProgramState> for SerializableProgramState {
             .collect();
 
         let mappings = state.mappings.clone();
+        let exclusions = state.exclusions.clone();
 
         Self {
             version: PROGRAM_STATE_VERSION.to_string(),
@@ -183,6 +187,7 @@ impl From<&SaveableProgramState> for SerializableProgramState {
             osc_controls,
             snapshots,
             mappings,
+            exclusions,
         }
     }
 }
@@ -238,6 +243,7 @@ pub struct SaveableProgramState {
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
     pub mappings: Mappings,
+    pub exclusions: Exclusions,
 }
 
 impl Default for SaveableProgramState {
@@ -248,6 +254,7 @@ impl Default for SaveableProgramState {
             osc_controls: OscControlBuilder::new().build(),
             snapshots: HashMap::default(),
             mappings: HashMap::default(),
+            exclusions: Vec::new(),
         }
     }
 }
@@ -257,6 +264,7 @@ impl SaveableProgramState {
     pub fn merge(&mut self, serialized_state: SerializableProgramState) {
         self.merge_ui_controls(&serialized_state);
         self.mappings = serialized_state.mappings.clone();
+        self.exclusions = serialized_state.exclusions.clone();
 
         // Must happen before merging MIDI controls otherwise there will be no
         // MIDI proxy configs to merge the saved MIDI proxy values into

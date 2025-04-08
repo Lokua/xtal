@@ -55,6 +55,8 @@ struct SnapshotTransition {
 
 pub type Snapshots = HashMap<String, ControlValues>;
 
+pub type Exclusions = Vec<String>;
+
 struct Callback(Box<dyn Fn()>);
 
 impl Callback {
@@ -489,7 +491,7 @@ impl<T: TimingSource> ControlHub<T> {
     /// Helper to create snapshot (values only)
     fn create_snapshot(
         &mut self,
-        exclusions: &[String],
+        exclusions: Exclusions,
     ) -> HashMap<String, ControlValue> {
         let mut snapshot: ControlValues = ControlValues::default();
 
@@ -521,7 +523,7 @@ impl<T: TimingSource> ControlHub<T> {
 
     /// Create and store a snapshot for later recall
     pub fn take_snapshot(&mut self, id: &str) {
-        let snapshot = self.create_snapshot(&[]);
+        let snapshot = self.create_snapshot(Vec::new());
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
@@ -612,12 +614,7 @@ impl<T: TimingSource> ControlHub<T> {
     /// frontend POC (App.tsx)
     ///
     /// [commit]: https://github.com/Lokua/lattice/commit/bcb1328
-    pub fn randomize(
-        &mut self,
-        include_checkboxes: bool,
-        include_selects: bool,
-        exclusions: &[String],
-    ) {
+    pub fn randomize(&mut self, exclusions: Exclusions) {
         let current_frame = frame_controller::frame_count();
         let duration =
             self.animation.beats_to_frames(self.transition_time) as u32;
@@ -643,7 +640,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 .insert(name.to_string(), (from, to));
                         }
                     }
-                    ControlValue::Bool(_) if include_checkboxes => {
+                    ControlValue::Bool(_) => {
                         // Just update immediately since we can't interpolate
                         // over a bool
                         self.ui_controls.update_value(
@@ -651,7 +648,7 @@ impl<T: TimingSource> ControlHub<T> {
                             ControlValue::from(random_bool()),
                         );
                     }
-                    ControlValue::String(_) if include_selects => {
+                    ControlValue::String(_) => {
                         if let Control::Select { options, .. } =
                             self.ui_controls.config(name).unwrap()
                         {
@@ -667,7 +664,6 @@ impl<T: TimingSource> ControlHub<T> {
                             );
                         }
                     }
-                    _ => {}
                 }
             } else if self.midi_controls.has(name) {
                 let config = self.midi_controls.config(name).unwrap();

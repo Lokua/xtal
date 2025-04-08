@@ -46,6 +46,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
     hub: &ControlHub<T>,
     mappings: Mappings,
+    exclusions: Vec<String>,
 ) -> Result<PathBuf, Box<dyn Error>> {
     let state = SaveableProgramState {
         ui_controls: hub.ui_controls.clone(),
@@ -53,6 +54,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
         osc_controls: hub.osc_controls.clone(),
         snapshots: hub.snapshots.clone(),
         mappings,
+        exclusions,
     };
 
     let serializable_controls = SerializableProgramState::from(&state);

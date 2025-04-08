@@ -17,17 +17,9 @@ export enum View {
   Settings,
 }
 
-/**
- * Similar to GlobalSettings on the backend yet only needed on the frontend or
- * as a transitive parameter on the backend
- */
-export type LocalSettings = {
-  randomizationIncludesCheckboxes: boolean
-  randomizationIncludesSelects: boolean
-}
-
 export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
+export type Exclusions = string[]
 
 export type Bypassed = Record<string, number>
 

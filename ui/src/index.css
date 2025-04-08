@@ -54,7 +54,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  font-family: monospace;
+  font-family: 'Fira Code', monospace;
 }
 
 html {
@@ -423,11 +423,13 @@ input[type='range']::-webkit-slider-thumb {
     }
   }
 
-  label > .text {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  label {
+    > span {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 }
 

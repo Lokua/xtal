@@ -29,7 +29,7 @@ wave_phase:
       position: $wave_phase_speed
       value: *TAU
 
-wave_dist:
+wave_dist_very_long_name_too_long:
   var: b2
   type: slider
   range: [0, 200]

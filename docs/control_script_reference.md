@@ -7,6 +7,7 @@
   - [slider](#slider)
   - [checkbox](#checkbox)
   - [select](#select)
+  - [Disabled Controls](#disabled-controls)
 - [MIDI](#midi)
 - [OSC](#osc)
 - [Audio](#audio)

@@ -2,6 +2,7 @@ use chrono::Utc;
 use nannou::prelude::*;
 use std::cell::{Cell, Ref};
 use std::collections::{HashMap, VecDeque};
+use std::error::Error;
 use std::process::Child;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -53,17 +54,13 @@ pub enum AppEvent {
     PerfMode(bool),
     QueueRecord,
     Quit,
-    Randomize {
-        include_checkboxes: bool,
-        include_selects: bool,
-        exclusions: Vec<String>,
-    },
+    Randomize(Exclusions),
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
     Reset,
     Resize,
-    SaveProgramState,
+    SaveProgramState(Exclusions),
     SendMidi,
     SendMappings,
     SnapshotRecall(String),
@@ -365,17 +362,9 @@ impl AppModel {
                 debug!("Exiting main process");
                 std::process::exit(0);
             }
-            AppEvent::Randomize {
-                include_checkboxes,
-                include_selects,
-                exclusions,
-            } => {
+            AppEvent::Randomize(exclusions) => {
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.randomize(
-                        include_checkboxes,
-                        include_selects,
-                        &exclusions,
-                    );
+                    hub.randomize(exclusions);
                 }
             }
             AppEvent::ReceiveMappings(mappings) => {
@@ -415,13 +404,14 @@ impl AppModel {
                     wr.set_current(rect);
                 }
             }
-            AppEvent::SaveProgramState => {
+            AppEvent::SaveProgramState(exclusions) => {
                 let mappings = self.map_mode.mappings();
 
                 match storage::save_program_state(
                     self.sketch_name().as_str(),
                     self.control_hub().unwrap(),
                     mappings,
+                    exclusions,
                 ) {
                     Ok(path_buf) => {
                         self.app_tx.alert_and_log(
@@ -734,7 +724,7 @@ impl AppModel {
         let paused = self.sketch_config.play_mode != PlayMode::Loop;
         frame_controller::set_paused(paused);
 
-        self.load_program_state();
+        let exclusions = self.load_program_state().unwrap_or_default();
 
         let tx1 = self.app_tx.clone();
         let tx2 = self.app_tx.clone();
@@ -766,6 +756,7 @@ impl AppModel {
             sketch_width: self.sketch_config.w,
             sketch_height: self.sketch_config.h,
             tap_tempo_enabled: self.tap_tempo_enabled,
+            exclusions,
         };
 
         if self.ui_ready {
@@ -779,7 +770,7 @@ impl AppModel {
 
     /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings
     /// the user has saved to disk
-    fn load_program_state(&mut self) {
+    fn load_program_state(&mut self) -> Result<Exclusions, Box<dyn Error>> {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
         let mappings = self.map_mode.mappings();
@@ -792,6 +783,7 @@ impl AppModel {
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
                 mappings,
+                exclusions: Vec::new(),
             },
         );
 
@@ -801,7 +793,7 @@ impl AppModel {
                 self.map_mode.set_mappings(state.mappings.clone());
 
                 let Some(hub) = self.control_hub_mut() else {
-                    return;
+                    return Ok(Vec::new());
                 };
 
                 hub.merge_program_state(state);
@@ -821,9 +813,12 @@ impl AppModel {
                         log::Level::Info,
                     );
                 }
+
+                Ok(state.exclusions.clone())
             }
             Err(e) => {
-                warn!("Unable to restore controls: {}", e)
+                warn!("Unable to restore controls: {}", e);
+                Err(e)
             }
         }
     }

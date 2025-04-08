@@ -31,8 +31,8 @@ export default function Console({ alertText }: Props) {
 
   return (
     <div className="console">
-      <section>{helpText}</section>
       <section>{alertText}</section>
+      <section>{helpText}</section>
     </div>
   )
 }

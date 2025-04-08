@@ -53,7 +53,7 @@ export const Help = {
   OscPort: 'The OSC port Lattice will use for OSC controls',
   Play: format(`
     Play/Pause Toggle. When Pause is engaged, use the [Advance] button 
-    or [Meta+A] to manually advance frames.
+    or [Meta + A] to manually advance frames.
   `),
   Perf: format(
     `Enable/disable Performance Mode. When enabled, prevents Lattice from 
@@ -63,9 +63,12 @@ export const Help = {
     switching sketches`
   ),
   Queue: 'Queue recording to start upon receiving a MIDI Start message',
-  Random: 'Randomize all UI controls',
+  Random: 'Randomize all UI controls (Shortcut: [Meta + R])',
   Record: 'Start/Stop recording',
-  Reset: 'Reset the frame counter and all animations to their starting points',
+  Reset: format(`
+    Reset the frame counter and all animations (Shortcut: [R])
+    TIP! [Shift +Meta + R] to reset the entire sketch to last saved state
+  `),
   Tap: `
     Enabled/disable tap tempo. When enabled, use the [Space] key to tap. 
     Note that keeping enabled will preserve the currently tapped in tempo when 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Mappings } from './types'
+import IconButton from './IconButton'
 
 type MapModeProps = {
   sliderNames: string[]
@@ -77,7 +78,7 @@ export default function MapMode({
         return (
           <React.Fragment key={name}>
             <label>{isMapped ? <b>{name}</b> : name}</label>
-            <span>
+            <span style={{ display: 'inline-flex' }}>
               <button
                 className={
                   isMapping
@@ -93,14 +94,13 @@ export default function MapMode({
                 {text}
               </button>
               {isMapped && (
-                <button
+                <IconButton
+                  name="Close"
                   onClick={() => {
                     onRemoveMapping(name)
                     clearCurrentlyMapping()
                   }}
-                >
-                  &times;
-                </button>
+                />
               )}
             </span>
           </React.Fragment>
