@@ -1,5 +1,4 @@
 import NumberBox from '@lokua/number-box'
-
 import {
   Bypassed,
   Control,
@@ -7,13 +6,12 @@ import {
   Exclusions,
   Mappings,
 } from './types.ts'
-
 import CheckboxInput from './Checkbox.tsx'
 import Select from './Select.tsx'
 import Separator, { VerticalSeparator } from './Separator.tsx'
 import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
 import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
-import clsx from 'clsx'
+import clsx from 'clsx/lite'
 
 const ExcludedIndicator = () => (
   <span

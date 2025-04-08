@@ -27,6 +27,7 @@
     "minkowski",
     "msaa",
     "msbs",
+    "multisampled",
     "nocapture",
     "onchange",
     "pmod",

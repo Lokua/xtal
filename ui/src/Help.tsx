@@ -64,12 +64,12 @@ export const Help = {
   ),
   Queue: 'Queue recording to start upon receiving a MIDI Start message',
   Random: 'Randomize all UI controls (Shortcut: [Meta + R])',
-  Reload: 'Reload the current sketch back to its last saved state',
+  Reload: format(
+    `Reload the current sketch back to its last saved state 
+    (Shortcut: [Shift + Meta + R])`
+  ),
   Record: 'Start/Stop recording',
-  Reset: format(`
-    Reset the frame counter and all animations (Shortcut: [R])
-    TIP! [Shift +Meta + R] to reset the entire sketch to last saved state
-  `),
+  Reset: 'Reset the frame counter and all animations (Shortcut: [R])',
   Tap: `
     Enabled/disable tap tempo. When enabled, use the [Space] key to tap. 
     Note that keeping enabled will preserve the currently tapped in tempo when 
@@ -79,6 +79,11 @@ export const Help = {
   Send: 'Sends the state of all CCs to the MIDI output port',
   Settings: 'Global settings and MIDI mappings',
   Sketch: 'Sketch chooser',
+  Snapshots: format(`
+    Snapshot Editor: store and recall up to 10 snapshots.
+    Note that you can save snapshots via [Shift + NumberKey] and recall them
+    via [Meta + NumberKey] without entering the editor.
+  `),
   Save: format(`
     Save UI control states and MIDI mappings for this sketch as well as all 
     global settings like ports (global and sketch settings are separate)

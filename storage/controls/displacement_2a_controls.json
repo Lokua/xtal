@@ -166,5 +166,21 @@
   "osc_controls": [],
   "snapshots": {},
   "mappings": {},
-  "exclusions": []
+  "exclusions": [
+    "audio_enabled",
+    "pattern",
+    "clamp_circle_radii",
+    "animate_frequency",
+    "quad_restraint",
+    "quad_1",
+    "quad_2",
+    "quad_3",
+    "quad_4",
+    "quad_influence_or_attract",
+    "qr_shape",
+    "position_animation",
+    "center_influence_or_attract",
+    "palette",
+    "color_influence_or_attract"
+  ]
 }

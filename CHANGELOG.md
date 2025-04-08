@@ -7,6 +7,26 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.6.0] - 2025-04-08
+
+### Added
+
+- UI for Snapshots
+
+### Changed
+
+- remove `docs/parameter_handling.md` due to being outdated and not very helpful
+
+### Fixed
+
+- Crash when switching to a sketch with a WGPU Depth Texture and window size
+  that differed from the previous sketch. We were correctly updating the winit
+  window in the app and texture size in `GpuState`, but Nannou's frame seems to
+  be a single frame behind window updates (presumably because it doesn't get
+  updated until the next update cycle as opposed to "this" update cycle) which
+  led to the depth texture size mismatch with the Nannou frame. When this is the
+  case we log a warning and exit the `GpuState::render` early for that frame.
+
 ## [0.5.0] - 2025-04-07
 
 ### Added

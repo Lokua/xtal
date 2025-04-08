@@ -15,6 +15,7 @@ export enum View {
   Default,
   Exclusions,
   Settings,
+  Snapshots,
 }
 
 export type ChannelAndController = [number, number]

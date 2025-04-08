@@ -10,6 +10,7 @@ import type {
 import { View } from './types.ts'
 import Header from './Header.tsx'
 import Controls from './Controls.tsx'
+import Snapshots from './Snapshots.tsx'
 import Settings from './Settings.tsx'
 import Console from './Console.tsx'
 import { Alert } from './Help.tsx'
@@ -56,6 +57,7 @@ type EventMap = {
     paused: boolean
     mappings: Mappings
     sketchName: string
+    snapshotSlots: string[]
     tapTempoEnabled: boolean
   }
   Mappings: Mappings
@@ -70,6 +72,7 @@ type EventMap = {
   Save: string[]
   SendMidi: void
   SnapshotEnded: RawControl[]
+  SnapshotDelete: string
   SnapshotRecall: string
   SnapshotStore: string
   StartRecording: void
@@ -165,6 +168,7 @@ export default function App() {
   const [audioDevice, setAudioDevice] = useState('')
   const [bpm, setBpm] = useState(134)
   const [bypassed, setBypassed] = useState<Bypassed>({})
+  const [childView, setChildView] = useState<View>(View.Default)
   const [controls, setControls] = useState<Control[]>([])
   const [exclusions, setExclusions] = useState<string[]>([])
   const [fps, setFps] = useState(60)
@@ -184,10 +188,10 @@ export default function App() {
   const [perfMode, setPerfMode] = useState(false)
   const [sketchName, setSketchName] = useState('')
   const [sketchNames, setSketchNames] = useState<string[]>([])
+  const [snapshots, setSnapshots] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
   const [view, setView] = useState<View>(View.Controls)
-  const [viewMain, setViewMain] = useState<View>(View.Default)
 
   useEffect(() => {
     const unsubscribe = subscribe((event: keyof EventMap, data) => {
@@ -252,6 +256,7 @@ export default function App() {
           setMappings(d.mappings)
           setPaused(d.paused)
           setSketchName(d.sketchName)
+          setSnapshots(d.snapshotSlots)
           setTapTempoEnabled(d.tapTempoEnabled)
           break
         }
@@ -475,8 +480,12 @@ export default function App() {
     }
   }
 
-  function onChangeViewMain() {
-    setViewMain(viewMain === View.Default ? View.Exclusions : View.Default)
+  function onChangeViewMain(initiator: View) {
+    if (childView === View.Default || childView !== initiator) {
+      setChildView(initiator)
+    } else if (childView === initiator) {
+      setChildView(View.Default)
+    }
   }
 
   function onClearBuffer() {
@@ -551,7 +560,6 @@ export default function App() {
       'Randomize',
       controls.filter((c) => c.name !== name).map((c) => c.name)
     )
-    setAlertText(`Randomized transition for ${name} started`)
   }
 
   return (
@@ -559,6 +567,7 @@ export default function App() {
       <Header
         fps={fps}
         bpm={bpm}
+        childView={childView}
         isEncoding={isEncoding}
         isQueued={isQueued}
         isRecording={isRecording}
@@ -569,14 +578,13 @@ export default function App() {
         tapTempoEnabled={tapTempoEnabled}
         transitionTime={transitionTime}
         view={view}
-        viewMain={viewMain}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
+        onChangeChildView={onChangeViewMain}
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}
         onChangeTransitionTime={onChangeTransitionTime}
         onChangeView={onChangeView}
-        onChangeViewMain={onChangeViewMain}
         onClearBuffer={onClearBuffer}
         onClickRandomize={onClickRandomize}
         onQueueRecord={onQueueRecord}
@@ -613,13 +621,28 @@ export default function App() {
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
+        ) : childView === View.Snapshots ? (
+          <Snapshots
+            snapshots={snapshots}
+            onDelete={(slot) => {
+              setSnapshots(snapshots.filter((s) => s !== slot))
+              post('SnapshotDelete', slot)
+            }}
+            onLoad={(slot) => {
+              post('SnapshotRecall', slot)
+            }}
+            onSave={(slot) => {
+              setSnapshots(snapshots.concat(slot).slice().sort())
+              post('SnapshotStore', slot)
+            }}
+          />
         ) : (
           <Controls
             bypassed={bypassed}
             controls={controls}
             exclusions={exclusions}
             mappings={mappings}
-            showExclusions={viewMain === View.Exclusions}
+            showExclusions={childView == View.Exclusions}
             onChange={onChangeControl}
             onClickRandomize={onClickRandomizeSingleControl}
             onToggleExclusion={onToggleExclusion}

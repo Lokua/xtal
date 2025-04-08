@@ -63,6 +63,7 @@ pub enum AppEvent {
     SaveProgramState(Exclusions),
     SendMidi,
     SendMappings,
+    SnapshotDelete(String),
     SnapshotRecall(String),
     SnapshotStore(String),
     SnapshotEnded,
@@ -365,10 +366,8 @@ impl AppModel {
             AppEvent::Randomize(exclusions) => {
                 let app_tx = self.app_tx.clone();
                 if let Some(hub) = self.control_hub_mut() {
-                    app_tx.alert_and_log(
-                        "Randomization transition started",
-                        log::Level::Info,
-                    );
+                    app_tx
+                        .alert_and_log("Transition started", log::Level::Info);
                     hub.randomize(exclusions);
                 }
             }
@@ -483,14 +482,27 @@ impl AppModel {
             AppEvent::SnapshotEnded => {
                 let controls = self.web_view_controls();
                 self.wv_tx.emit(wv::Event::SnapshotEnded(controls));
+                self.app_tx.alert_and_log(
+                    "Snapshot/Transition ended",
+                    log::Level::Info,
+                );
                 self.app_tx.emit(AppEvent::SendMidi);
             }
-            AppEvent::SnapshotRecall(digit) => {
+            AppEvent::SnapshotDelete(id) => {
                 if let Some(hub) = self.control_hub_mut() {
-                    match hub.recall_snapshot(&digit) {
+                    hub.delete_snapshot(&id);
+                    self.app_tx.alert_and_log(
+                        format!("Snapshot {:?} deleted", id),
+                        log::Level::Info,
+                    );
+                }
+            }
+            AppEvent::SnapshotRecall(id) => {
+                if let Some(hub) = self.control_hub_mut() {
+                    match hub.recall_snapshot(&id) {
                         Ok(_) => {
                             self.app_tx.alert_and_log(
-                                format!("Snapshot {:?} recalled", digit),
+                                format!("Snapshot {:?} recalled", id),
                                 log::Level::Info,
                             );
                         }
@@ -688,12 +700,12 @@ impl AppModel {
         });
 
         frame_controller::set_fps(sketch_info.config.fps);
-        let sketch = (sketch_info.factory)(app, &self.ctx);
-
-        self.sketch = sketch;
         self.sketch_config = sketch_info.config;
         self.session_id = uuid_5();
         self.clear_next_frame.set(true);
+
+        let sketch = (sketch_info.factory)(app, &self.ctx);
+        self.sketch = sketch;
 
         if let Some(hub) = self.control_hub_mut() {
             hub.clear_snapshots();
@@ -750,6 +762,10 @@ impl AppModel {
             .control_hub_mut()
             .map_or_else(HashMap::default, |hub| hub.bypassed());
 
+        let snapshot_slots = self
+            .control_hub()
+            .map_or_else(Vec::new, |hub| hub.snapshot_keys_sorted());
+
         let event = wv::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
             bypassed,
@@ -762,6 +778,7 @@ impl AppModel {
             sketch_name: self.sketch_name(),
             sketch_width: self.sketch_config.w,
             sketch_height: self.sketch_config.h,
+            snapshot_slots,
             tap_tempo_enabled: self.tap_tempo_enabled,
             exclusions,
         };

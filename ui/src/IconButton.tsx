@@ -15,6 +15,7 @@ import Record from '@material-symbols/svg-400/outlined/fiber_manual_record.svg?r
 import Recording from '@material-symbols/svg-400/outlined/fiber_manual_record-fill.svg?react'
 import Save from '@material-symbols/svg-400/outlined/save.svg?react'
 import Settings from '@material-symbols/svg-400/outlined/settings.svg?react'
+import Snapshots from '@material-symbols/svg-400/outlined/auto_awesome_motion.svg?react'
 import StopRecording from '@material-symbols/svg-400/outlined/stop_circle.svg?react'
 import Tap from '@material-symbols/svg-400/outlined/touch_app.svg?react'
 import Exclusions from '@material-symbols/svg-400/outlined/checklist.svg?react'
@@ -41,6 +42,7 @@ const icons = {
   Recording,
   Save,
   Settings,
+  Snapshots,
   StopRecording,
   Tap,
 }

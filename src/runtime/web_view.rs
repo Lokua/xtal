@@ -92,6 +92,7 @@ pub enum Event {
         sketch_name: String,
         sketch_width: i32,
         sketch_height: i32,
+        snapshot_slots: Vec<String>,
         tap_tempo_enabled: bool,
         exclusions: Exclusions,
     },
@@ -114,6 +115,7 @@ pub enum Event {
     /// Sent from parent after a snapshot has completed so we can keep controls
     /// in sync
     SnapshotEnded(Vec<Control>),
+    SnapshotDelete(String),
     SnapshotRecall(String),
     SnapshotStore(String),
 
@@ -296,6 +298,9 @@ pub fn launch(
                 Event::SnapshotEnded(_) => {}
                 Event::SnapshotRecall(id) => {
                     app_tx.emit(AppEvent::SnapshotRecall(id.clone()));
+                }
+                Event::SnapshotDelete(id) => {
+                    app_tx.emit(AppEvent::SnapshotDelete(id.clone()));
                 }
                 Event::SnapshotStore(id) => {
                     app_tx.emit(AppEvent::SnapshotStore(id.clone()));

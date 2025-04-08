@@ -12,6 +12,7 @@ type TransitionTime = (typeof transitionTimes)[number]
 
 type HeaderProps = {
   bpm: number
+  childView: View
   fps: number
   isEncoding: boolean
   isQueued: boolean
@@ -23,14 +24,13 @@ type HeaderProps = {
   tapTempoEnabled: boolean
   transitionTime: TransitionTime
   view: View
-  viewMain: View
   onAdvance: noop
   onCaptureFrame: noop
+  onChangeChildView: (view: View) => void
   onChangePerfMode: noop
   onChangeTapTempoEnabled: noop
   onChangeTransitionTime: (transitionTime: TransitionTime) => void
   onChangeView: noop
-  onChangeViewMain: noop
   onClearBuffer: noop
   onClickRandomize: noop
   onQueueRecord: noop
@@ -44,6 +44,7 @@ type HeaderProps = {
 
 export default function Header({
   bpm,
+  childView,
   fps,
   isEncoding,
   isQueued,
@@ -55,14 +56,13 @@ export default function Header({
   tapTempoEnabled,
   transitionTime,
   view,
-  viewMain,
   onAdvance,
   onCaptureFrame,
+  onChangeChildView,
   onChangePerfMode,
   onChangeTapTempoEnabled,
   onChangeTransitionTime,
   onChangeView,
-  onChangeViewMain,
   onClearBuffer,
   onClickRandomize,
   onQueueRecord,
@@ -179,14 +179,26 @@ export default function Header({
           title="Exclusions Mode"
           name="Exclusions"
           isToggle
-          on={viewMain === View.Exclusions}
-          onClick={onChangeViewMain}
+          on={childView === View.Exclusions}
+          onClick={() => {
+            onChangeChildView(View.Exclusions)
+          }}
         />
 
         <IconButton
           data-help-id="Random"
           name="Random"
           onClick={onClickRandomize}
+        />
+
+        <IconButton
+          data-help-id="Snapshots"
+          name="Snapshots"
+          isToggle
+          on={childView === View.Snapshots}
+          onClick={() => {
+            onChangeChildView(View.Snapshots)
+          }}
         />
 
         <fieldset>

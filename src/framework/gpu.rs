@@ -557,6 +557,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             .primary_monitor()
             .expect("Unable to get primary monitor")
             .scale_factor();
+
         let window_size_physical = [
             (window_size[0] as f64 * scale_factor).round() as u32,
             (window_size[1] as f64 * scale_factor).round() as u32,
@@ -586,6 +587,15 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             });
 
         if let Some(ref depth_texture) = self.depth_texture {
+            // Can happen when switching sketches at runtime. We are correctly
+            // updating the winit window in the app and texture size here in
+            // `update` via `check_and_handle_resize` but Nannou's frame seems
+            // to be a single frame behind window updates
+            if depth_texture.size() != frame.texture().size() {
+                warn!("Depth texture size mismatch. Skipping this frame.");
+                return;
+            }
+
             render_pass_builder = render_pass_builder
                 .depth_stencil_attachment(depth_texture, |depth| depth);
         }
