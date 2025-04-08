@@ -178,20 +178,26 @@ impl Sketch for SandLines {
 
             let noise_map_mode = self.controls.string("noise_map_mode");
             let noise_scale = self.controls.get("noise_scale");
-            let (ns_min, _ns_max) =
-                self.controls.ui_controls.slider_range("noise_scale");
+            let (ns_min, _ns_max) = self
+                .controls
+                .ui_controls
+                .slider_range("noise_scale")
+                .unwrap();
             let noise_octaves = self.controls.get("noise_octaves");
             let noise_persistence = self.controls.get("noise_persistence");
 
             let angle_map_mode = self.controls.string("angle_map_mode");
-            let (angle_min, _angle_max) =
-                self.controls.ui_controls.slider_range("angle_variation");
+            let (angle_min, _angle_max) = self
+                .controls
+                .ui_controls
+                .slider_range("angle_variation")
+                .unwrap();
             let angle_variation = self.controls.get("angle_variation");
             let points_per_segment = self.controls.get("points_per_segment");
             let passes = self.controls.get("passes");
             let curve_map_mode = self.controls.string("curve_map_mode");
             let (curve_min, _curve_max) =
-                self.controls.ui_controls.slider_range("curvature");
+                self.controls.ui_controls.slider_range("curvature").unwrap();
             let curvature = self.controls.get("curvature");
             let curve_mult = self.controls.get("curve_mult");
             let curve_wtf = self.controls.bool("curve_wtf");
@@ -239,11 +245,7 @@ impl Sketch for SandLines {
                             "square" => {
                                 let angle =
                                     (t * TWO_PI * wave_freq) + wave_phase;
-                                if (angle % TWO_PI) < PI {
-                                    1.0
-                                } else {
-                                    0.0
-                                }
+                                if (angle % TWO_PI) < PI { 1.0 } else { 0.0 }
                             }
                             "saw" => (t * wave_freq + wave_phase) % 1.0,
                             _ => 0.5,

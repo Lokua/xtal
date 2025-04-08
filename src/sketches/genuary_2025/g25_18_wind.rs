@@ -197,8 +197,11 @@ impl Sketch for G25_18Wind {
         };
 
         let randomize_point_size = self.controls.bool("randomize_point_size");
-        let (size_min, _) =
-            self.controls.ui_controls.slider_range("agent_size");
+        let (size_min, _) = self
+            .controls
+            .ui_controls
+            .slider_range("agent_size")
+            .unwrap();
         let size_range = safe_range(size_min - 0.000_1, agent_size);
 
         let mut vertices =

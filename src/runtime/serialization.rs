@@ -300,17 +300,28 @@ impl SaveableProgramState {
 
     fn setup_midi_mappings(&mut self) {
         self.mappings.iter().for_each(|(name, (ch, cc))| {
-            let (min, max) = self.ui_controls.slider_range(name);
-            self.midi_controls.add(
-                &MapMode::proxy_name(name),
-                MidiControlConfig {
-                    channel: *ch,
-                    cc: *cc,
-                    min,
-                    max,
-                    default: 0.0,
-                },
-            );
+            if let Some((min, max)) = self.ui_controls.slider_range(name) {
+                self.midi_controls.add(
+                    &MapMode::proxy_name(name),
+                    MidiControlConfig {
+                        channel: *ch,
+                        cc: *cc,
+                        min,
+                        max,
+                        default: 0.0,
+                    },
+                );
+            } else {
+                error!(
+                    "Unable to find a ui_control::Control definition for Slider \
+                    {}. Bypassing this MIDI mapping as we cannot reliably \
+                    map its range. This can happen when you change a control's \
+                    name after saving program state to disk. Either change the \
+                    control back to the original name, delete the saved file, \
+                    or remap and resave.",
+                    name
+                );
+            }
         });
     }
 

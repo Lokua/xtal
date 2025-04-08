@@ -1,4 +1,4 @@
-radius:
+radius_renamed:
   type: slider
   range: [20, 400]
   default: 200

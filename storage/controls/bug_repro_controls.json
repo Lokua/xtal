@@ -7,31 +7,29 @@
       "value": 78.0
     },
     {
+      "type": "Checkbox",
+      "name": "animate_x_pos",
+      "value": false
+    },
+    {
       "type": "Slider",
       "name": "x_pos",
       "value": 50.6993
-    }
-  ],
-  "midi_controls": [
-    {
-      "name": "x_pos__slider_proxy",
-      "value": -135.82678
     },
     {
-      "name": "radius__slider_proxy",
-      "value": 103.779526
+      "type": "Select",
+      "name": "fruits",
+      "value": "apple"
     }
   ],
+  "midi_controls": [],
   "osc_controls": [],
   "snapshots": {},
   "mappings": {
     "radius": [
       0,
       0
-    ],
-    "x_pos": [
-      0,
-      1
     ]
-  }
+  },
+  "exclusions": []
 }

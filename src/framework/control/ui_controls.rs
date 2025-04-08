@@ -520,13 +520,17 @@ impl UiControls {
         self.config(name).map(|c| c.is_disabled(self))
     }
 
-    pub fn slider_range(&self, name: &str) -> (f32, f32) {
-        self.config(name)
-            .and_then(|control| match control {
-                Control::Slider { min, max, .. } => Some((*min, *max)),
-                _ => None,
-            })
-            .unwrap_or_else(|| panic!("Unable to find range for {}", name))
+    pub fn slider_range(&self, name: &str) -> Option<(f32, f32)> {
+        self.config(name).and_then(|control| match control {
+            Control::Slider { min, max, .. } => Some((*min, *max)),
+            _ => {
+                error!(
+                    "Unable to find a Control definition for Slider `{}`",
+                    name
+                );
+                None
+            }
+        })
     }
 
     pub fn add(&mut self, control: Control) {

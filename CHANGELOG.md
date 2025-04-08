@@ -12,18 +12,29 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 ### Added
 
 - Ability to exclude any specific UI control from Randomization + persistence of
-  exclusions along with sketch's program state
+  exclusions along with a sketch's program state
 - Tiny icons next to a control's label to indicate if it is excluded or MIDI
   mapped
 - Strike-through on labels that are bypassed in a Control Script
 
 ## Changed
 
-- Remove the **Include Checkboxes** and **Include Selects** options from
-  settings since Exclusions offers more flexibility
-- Completely overhauled the web_view::Control structure to avoid the awkwardness
-  of untagged enums due to [bincode](https://github.com/bincode-org/bincode).
-  The frontend control code is much, much cleaner now.
+- Removed the **Include Checkboxes** and **Include Selects** options from
+  settings since the new Exclusions feature offers more flexibility
+- Completely overhauled the `web_view::Control` structure to avoid the
+  awkwardness of untagged enums due to
+  [bincode](https://github.com/bincode-org/bincode). The frontend control code
+  is much, much cleaner now.
+
+## Fixed
+
+- Bug where loading a sketch that has saved program state with MIDI proxies and
+  no corresponding Slider range would cause a panic. This could only happen when
+  a user saved state, then changed the slider name in their source code, then
+  tried to reload the program. `UiControls::slider_range` now returns an option
+  instead of panicking and `SaveableProgramState::setup_midi_mappings` will now
+  bypass those invalid mappings and log an error to the console with remediation
+  steps.
 
 ## [0.3.0] - 2025-04-06
 

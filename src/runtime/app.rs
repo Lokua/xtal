@@ -268,7 +268,7 @@ impl AppModel {
                         proxy_name,
                         MidiControlConfig::new(
                             (ch, cc),
-                            hub.ui_controls.slider_range(&name),
+                            hub.ui_controls.slider_range(&name).unwrap(),
                             0.0,
                         ),
                     );
