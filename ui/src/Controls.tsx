@@ -1,4 +1,5 @@
 import NumberBox from '@lokua/number-box'
+
 import {
   Bypassed,
   Control,
@@ -6,11 +7,13 @@ import {
   Exclusions,
   Mappings,
 } from './types.ts'
+
 import CheckboxInput from './Checkbox.tsx'
 import Select from './Select.tsx'
 import Separator, { VerticalSeparator } from './Separator.tsx'
 import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
 import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
+import clsx from 'clsx'
 
 const ExcludedIndicator = () => (
   <span
@@ -36,7 +39,8 @@ type Props = {
   exclusions: Exclusions
   mappings: Mappings
   showExclusions: boolean
-  onChange: (index: number, value: ControlValue) => void
+  onChange: (control: Control, value: ControlValue) => void
+  onClickRandomize: (name: string) => void
   onToggleExclusion: (name: string) => void
 }
 
@@ -47,6 +51,7 @@ export default function Controls({
   mappings,
   showExclusions,
   onChange,
+  onClickRandomize,
   onToggleExclusion,
 }: Props) {
   function excludedAndNode(name: string): [boolean, React.ReactNode] {
@@ -85,7 +90,7 @@ export default function Controls({
               checked={c.value as boolean}
               disabled={c.disabled}
               onChange={() => {
-                onChange(index, !c.value)
+                onChange(c, !c.value)
               }}
             />
             <label htmlFor={c.name}>
@@ -116,7 +121,7 @@ export default function Controls({
               step={c.step}
               disabled={disabled}
               onChange={(e) => {
-                onChange(index, e.currentTarget.valueAsNumber)
+                onChange(c, e.currentTarget.valueAsNumber)
               }}
             />
             <NumberBox
@@ -127,10 +132,18 @@ export default function Controls({
               step={c.step}
               disabled={disabled}
               onChange={(value) => {
-                onChange(index, value)
+                onChange(c, value)
               }}
             />
-            <label htmlFor={c.name}>
+            <label
+              htmlFor={c.name}
+              className={clsx(
+                !c.disabled && !isBypassed && !excluded && 'clickable'
+              )}
+              onClick={() => {
+                onClickRandomize(c.name)
+              }}
+            >
               {excluded && <ExcludedIndicator />}
               {isMapped && <MappedIndicator />}
               <span
@@ -171,10 +184,16 @@ export default function Controls({
               options={c.options}
               disabled={c.disabled}
               onChange={(value) => {
-                onChange(index, value)
+                onChange(c, value)
               }}
             />
-            <label htmlFor={c.name}>
+            <label
+              htmlFor={c.name}
+              className={clsx(!c.disabled && !excluded && 'clickable')}
+              onClick={() => {
+                onClickRandomize(c.name)
+              }}
+            >
               {excluded && <ExcludedIndicator />}
               <span>{c.name}</span>
             </label>

@@ -45,8 +45,10 @@ impl MapMode {
     }
 
     /// The inverse of [`proxy_name`]
-    pub fn unproxied_name(proxy_name: &str) -> Option<&str> {
-        proxy_name.strip_suffix(Self::PROXY_NAME_SUFFIX)
+    pub fn unproxied_name(proxy_name: &str) -> Option<String> {
+        proxy_name
+            .strip_suffix(Self::PROXY_NAME_SUFFIX)
+            .map(|s| s.to_string())
     }
 
     pub fn is_proxy_name(name: &str) -> bool {

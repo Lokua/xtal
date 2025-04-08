@@ -507,16 +507,29 @@ impl<T: TimingSource> ControlHub<T> {
             },
         ));
 
-        let filter = |(name, value): (&String, &f32)| {
-            if exclusions.contains(name) {
-                None
-            } else {
-                Some((name.clone(), ControlValue::from(*value)))
-            }
-        };
+        snapshot.extend(self.midi_controls.values().iter().filter_map(
+            |(name, value)| {
+                if exclusions.contains(name)
+                    || exclusions.contains(
+                        &MapMode::unproxied_name(name).unwrap_or_default(),
+                    )
+                {
+                    None
+                } else {
+                    Some((name.clone(), ControlValue::from(*value)))
+                }
+            },
+        ));
 
-        snapshot.extend(self.midi_controls.values().iter().filter_map(filter));
-        snapshot.extend(self.osc_controls.values().iter().filter_map(filter));
+        snapshot.extend(self.osc_controls.values().iter().filter_map(
+            |(name, value)| {
+                if exclusions.contains(name) {
+                    None
+                } else {
+                    Some((name.clone(), ControlValue::from(*value)))
+                }
+            },
+        ));
 
         snapshot
     }

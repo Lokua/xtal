@@ -172,18 +172,18 @@ export default function Header({
         <VerticalSeparator />
 
         <IconButton
-          data-help-id="Random"
-          name="Random"
-          onClick={onClickRandomize}
-        />
-
-        <IconButton
           data-help-id="Exclusions"
           title="Exclusions Mode"
           name="Exclusions"
           isToggle
           on={viewMain === View.Exclusions}
           onClick={onChangeViewMain}
+        />
+
+        <IconButton
+          data-help-id="Random"
+          name="Random"
+          onClick={onClickRandomize}
         />
 
         <fieldset>

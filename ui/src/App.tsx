@@ -390,10 +390,10 @@ export default function App() {
     post('ChangeAudioDevice', name)
   }
 
-  function onChangeControl(index: number, value: ControlValue) {
+  function onChangeControl(control: Control, value: ControlValue) {
     setControls(
-      controls.map((c, i) =>
-        i === index
+      controls.map((c) =>
+        c.name === control.name
           ? {
               ...c,
               value,
@@ -401,6 +401,18 @@ export default function App() {
           : c
       )
     )
+
+    const event: keyof EventMap =
+      control.kind === 'Checkbox'
+        ? 'UpdateControlBool'
+        : control.kind === 'Slider'
+        ? 'UpdateControlFloat'
+        : 'UpdateControlString'
+
+    post(event, {
+      name: control.name,
+      value,
+    })
   }
 
   function onChangeHrcc() {
@@ -528,6 +540,14 @@ export default function App() {
     )
   }
 
+  function onClickRandomizeSingleControl(name: string) {
+    post(
+      'Randomize',
+      controls.filter((c) => c.name !== name).map((c) => c.name)
+    )
+    setAlertText(`Randomized transition for ${name} started`)
+  }
+
   return (
     <div id="app">
       <Header
@@ -594,6 +614,7 @@ export default function App() {
             mappings={mappings}
             showExclusions={viewMain === View.Exclusions}
             onChange={onChangeControl}
+            onClickRandomize={onClickRandomizeSingleControl}
             onToggleExclusion={onToggleExclusion}
           />
         )}

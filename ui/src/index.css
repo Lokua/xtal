@@ -118,9 +118,6 @@ ul {
 
 h2 {
   margin: 6px 0;
-}
-
-h2 {
   font-size: 14px;
 }
 
@@ -142,6 +139,22 @@ fieldset {
 label {
   font-size: var(--control-font-size);
   color: var(--text-color);
+
+  &.clickable {
+    position: relative;
+    cursor: pointer;
+
+    &:hover {
+      font-weight: bold;
+
+      &::before {
+        content: '<-? ';
+        margin-right: 4px;
+        white-space: nowrap;
+        display: inline;
+      }
+    }
+  }
 }
 
 button,
