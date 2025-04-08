@@ -30,6 +30,7 @@
     "nocapture",
     "onchange",
     "pmod",
+    "randomizable",
     "randomsmooth",
     "Ripl",
     "rustc",

@@ -16,6 +16,10 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Tiny icons next to a control's label to indicate if it is excluded or MIDI
   mapped
 - Strike-through on labels that are bypassed in a Control Script
+- Ability to randomize a _single_ control by clicking its label. Hovering over a
+  randomizable control (those that aren't bypassed or disabled) will show a
+  highlighted background and prepend `<-?` characters to hopefully make it
+  obvious what this does?
 
 ## Changed
 
