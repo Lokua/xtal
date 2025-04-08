@@ -516,16 +516,12 @@ impl UiControls {
         }
     }
 
-    pub fn get_original_config(&self, name: &str) -> Option<&Control> {
-        self.configs.iter().find(|control| control.name() == name)
-    }
-
     pub fn disabled(&self, name: &str) -> Option<bool> {
-        self.get_original_config(name).map(|c| c.is_disabled(self))
+        self.config(name).map(|c| c.is_disabled(self))
     }
 
     pub fn slider_range(&self, name: &str) -> (f32, f32) {
-        self.get_original_config(name)
+        self.config(name)
             .and_then(|control| match control {
                 Control::Slider { min, max, .. } => Some((*min, *max)),
                 _ => None,
