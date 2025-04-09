@@ -38,6 +38,7 @@ type EventMap = {
     audioDevices: string[]
     hrcc: boolean
     isLightTheme: boolean
+    mappingsEnabled: boolean
     midiClockPort: string
     midiInputPort: string
     midiOutputPort: string
@@ -61,6 +62,7 @@ type EventMap = {
     tapTempoEnabled: boolean
   }
   Mappings: Mappings
+  MappingsEnabled: boolean
   Paused: boolean
   PerfMode: boolean
   QueueRecord: void
@@ -177,7 +179,7 @@ export default function App() {
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [mappings, setMappings] = useState<Mappings>([])
-  const [mappingsEnabled, setMappingsEnabled] = useState(false)
+  const [mappingsEnabled, setMappingsEnabled] = useState(true)
   const [midiClockPort, setMidiClockPort] = useState('')
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState<string[]>([])
@@ -234,6 +236,7 @@ export default function App() {
           setAudioDevice(d.audioDevice)
           setAudioDevices(d.audioDevices)
           setHrcc(d.hrcc)
+          setMappingsEnabled(d.mappingsEnabled)
           setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
           setMidiOutputPort(d.midiOutputPort)
@@ -445,7 +448,9 @@ export default function App() {
   }
 
   function onChangeMappingsEnabled() {
-    setMappingsEnabled(!mappingsEnabled)
+    const enabled = !mappingsEnabled
+    setMappingsEnabled(enabled)
+    post('MappingsEnabled', enabled)
   }
 
   function onChangeOscPort(port: number) {
@@ -508,6 +513,10 @@ export default function App() {
   }
 
   function onDeleteMappings() {
+    // TODO: make a clear all
+    mappings.forEach((mapping) => {
+      post('RemoveMapping', mapping[0])
+    })
     setMappings([])
   }
 

@@ -67,6 +67,7 @@ pub enum Event {
         audio_devices: Vec<String>,
         hrcc: bool,
         is_light_theme: bool,
+        mappings_enabled: bool,
         midi_clock_port: String,
         midi_input_port: String,
         midi_output_port: String,
@@ -99,6 +100,7 @@ pub enum Event {
 
     // Sent whenever the user physically moves a MIDI control when in map mode
     Mappings(Vec<(String, ChannelAndController)>),
+    MappingsEnabled(bool),
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
@@ -258,6 +260,9 @@ pub fn launch(
                 Event::LoadSketch { .. } => {}
                 Event::Mappings(mappings) => {
                     app_tx.emit(AppEvent::ReceiveMappings(mappings));
+                }
+                Event::MappingsEnabled(enabled) => {
+                    app_tx.emit(AppEvent::MappingsEnabled(enabled));
                 }
                 Event::Paused(paused) => {
                     app_tx.emit(AppEvent::Paused(paused));

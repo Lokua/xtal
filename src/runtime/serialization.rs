@@ -12,6 +12,7 @@ pub struct GlobalSettings {
     pub version: String,
     pub audio_device_name: String,
     pub hrcc: bool,
+    pub mappings_enabled: bool,
     pub midi_clock_port: String,
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
@@ -25,6 +26,7 @@ impl Default for GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: global::audio_device_name(),
             hrcc: false,
+            mappings_enabled: true,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
@@ -40,6 +42,8 @@ pub const PROGRAM_STATE_VERSION: &str = "2";
 #[derive(Deserialize, Serialize)]
 pub struct SerializableProgramState {
     pub version: String,
+    #[serde(default)]
+    pub mappings_enabled: bool,
 
     // Backwards compat files before "ui_controls" rename
     #[serde(rename = "ui_controls", alias = "controls")]
@@ -187,6 +191,7 @@ impl From<&SaveableProgramState> for SerializableProgramState {
             osc_controls,
             snapshots,
             mappings,
+            mappings_enabled: state.mappings_enabled,
             exclusions,
         }
     }
@@ -243,6 +248,7 @@ pub struct SaveableProgramState {
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
     pub mappings: Mappings,
+    pub mappings_enabled: bool,
     pub exclusions: Exclusions,
 }
 
@@ -254,6 +260,7 @@ impl Default for SaveableProgramState {
             osc_controls: OscControlBuilder::new().build(),
             snapshots: HashMap::default(),
             mappings: HashMap::default(),
+            mappings_enabled: true,
             exclusions: Vec::new(),
         }
     }

@@ -11,7 +11,9 @@ use std::{env, str, thread};
 use super::map_mode::MapMode;
 use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
-use super::serialization::{GlobalSettings, SaveableProgramState};
+use super::serialization::{
+    GLOBAL_SETTINGS_VERSION, GlobalSettings, SaveableProgramState,
+};
 use super::shared::lattice_project_root;
 use super::storage;
 use super::tap_tempo::TapTempo;
@@ -47,6 +49,7 @@ pub enum AppEvent {
     HubPopulated,
     Hrcc(bool),
     EncodingComplete,
+    MappingsEnabled(bool),
     MidiContinue,
     MidiStart,
     MidiStop,
@@ -320,6 +323,9 @@ impl AppModel {
             AppEvent::EncodingComplete => {
                 self.wv_tx.emit(wv::Event::Encoding(false));
             }
+            AppEvent::MappingsEnabled(enabled) => {
+                self.map_mode.set_enabled(enabled);
+            }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
 
@@ -410,11 +416,13 @@ impl AppModel {
             }
             AppEvent::SaveProgramState(exclusions) => {
                 let mappings = self.map_mode.mappings();
+                let mappings_enabled = self.map_mode.enabled();
 
                 match storage::save_program_state(
                     self.sketch_name().as_str(),
                     self.control_hub().unwrap(),
                     mappings,
+                    mappings_enabled,
                     exclusions,
                 ) {
                     Ok(path_buf) => {
@@ -636,6 +644,7 @@ impl AppModel {
                         dark_light::detect(),
                         dark_light::Mode::Light
                     ),
+                    mappings_enabled: self.map_mode.enabled(),
                     midi_clock_port: global::midi_clock_port(),
                     midi_input_port: global::midi_control_in_port(),
                     midi_output_port: global::midi_control_out_port(),
@@ -647,26 +656,6 @@ impl AppModel {
                     transition_time: self.transition_time,
                 });
             }
-        }
-    }
-
-    fn save_global_state(&self) {
-        if let Err(e) = storage::save_global_state(GlobalSettings {
-            audio_device_name: global::audio_device_name(),
-            hrcc: self.hrcc,
-            midi_clock_port: global::midi_clock_port(),
-            midi_control_in_port: global::midi_control_in_port(),
-            midi_control_out_port: global::midi_control_out_port(),
-            osc_port: global::osc_port(),
-            transition_time: self.transition_time,
-            ..Default::default()
-        }) {
-            self.app_tx.alert_and_log(
-                format!("Failed to persist global settings: {}", e),
-                log::Level::Error,
-            );
-        } else {
-            info!("Saved global state");
         }
     }
 
@@ -792,12 +781,34 @@ impl AppModel {
         self.app_tx.emit(AppEvent::SendMidi);
     }
 
+    fn save_global_state(&self) {
+        if let Err(e) = storage::save_global_state(GlobalSettings {
+            version: GLOBAL_SETTINGS_VERSION.to_string(),
+            audio_device_name: global::audio_device_name(),
+            hrcc: self.hrcc,
+            mappings_enabled: self.map_mode.enabled(),
+            midi_clock_port: global::midi_clock_port(),
+            midi_control_in_port: global::midi_control_in_port(),
+            midi_control_out_port: global::midi_control_out_port(),
+            osc_port: global::osc_port(),
+            transition_time: self.transition_time,
+        }) {
+            self.app_tx.alert_and_log(
+                format!("Failed to persist global settings: {}", e),
+                log::Level::Error,
+            );
+        } else {
+            info!("Saved global state");
+        }
+    }
+
     /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings
     /// the user has saved to disk
     fn load_program_state(&mut self) -> Result<Exclusions, Box<dyn Error>> {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
         let mappings = self.map_mode.mappings();
+        let mappings_enabled = self.map_mode.enabled();
 
         let mut current_state = self.control_hub().map_or_else(
             SaveableProgramState::default,
@@ -807,6 +818,7 @@ impl AppModel {
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
                 mappings,
+                mappings_enabled,
                 exclusions: Vec::new(),
             },
         );
@@ -926,6 +938,7 @@ fn model(app: &App) -> AppModel {
 
     let bpm = Bpm::new(sketch_info.config.bpm);
     let bpm_clone = bpm.clone();
+    let raw_bpm = bpm.get();
     let ctx = LatticeContext::new(bpm_clone, WindowRect::new(rect));
 
     frame_controller::set_fps(sketch_info.config.fps);
@@ -934,8 +947,6 @@ fn model(app: &App) -> AppModel {
     let (raw_event_tx, event_rx) = mpsc::channel();
     let midi_tx = raw_event_tx.clone();
     AppModel::start_midi_clock_listener(midi_tx);
-
-    let raw_bpm = bpm.get();
 
     let mut midi = midi::MidiOut::new(&global::midi_control_out_port());
     let midi_out = match midi.connect() {
@@ -946,6 +957,7 @@ fn model(app: &App) -> AppModel {
         }
     };
 
+    let map_mode = MapMode::with_enabled(global_settings.mappings_enabled);
     let image_index = storage::load_image_index().inspect_err(log_err).ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
@@ -968,7 +980,7 @@ fn model(app: &App) -> AppModel {
         image_index,
         main_maximized: Cell::new(false),
         main_window_id,
-        map_mode: MapMode::default(),
+        map_mode,
         midi_out,
         perf_mode: false,
         recording_state: RecordingState::default(),

@@ -16,12 +16,14 @@ pub struct MapMode {
     /// The name of the current slider that has been selected for live mapping
     pub currently_mapping: Option<String>,
     pub state: Arc<Mutex<MapModeState>>,
+    enabled: bool,
 }
 
 impl Default for MapMode {
     fn default() -> Self {
         Self {
             currently_mapping: None,
+            enabled: true,
             state: Arc::new(Mutex::new(MapModeState {
                 mappings: HashMap::default(),
                 msb_ccs: vec![],
@@ -31,6 +33,13 @@ impl Default for MapMode {
 }
 
 impl MapMode {
+    pub fn with_enabled(enabled: bool) -> Self {
+        Self {
+            enabled,
+            ..Default::default()
+        }
+    }
+
     const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
 
     /// Mappings are stored as normal [`MidiControlConfig`] instances within a
@@ -92,6 +101,14 @@ impl MapMode {
 
     pub fn clear(&mut self) {
         self.state.lock().unwrap().mappings.clear();
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
     }
 
     pub fn start<F>(
