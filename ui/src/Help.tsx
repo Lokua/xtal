@@ -20,6 +20,8 @@ export const Help = {
     `Clear any alpha blending or "fade trails" from frame persistence. Requires 
     your sketch is using the clear_color attribute via sketch_components macro`
   ),
+  DeleteMappings: 'Delete all MIDI Mappings',
+  DisableMappings: 'Disable/Enable MIDI Mappings',
   Exclusions: format(
     `Toggle Exclusions Mode where you can select controls to exclude from 
     Randomization`

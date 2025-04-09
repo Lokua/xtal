@@ -25,6 +25,7 @@ type Props = {
   onChangeMidiOutputPort: (port: string) => void
   onChangeOscPort: (port: number) => void
   onClickSend: () => void
+  onDeleteMappings: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
 }
@@ -50,6 +51,7 @@ export default function Settings({
   onChangeMidiOutputPort,
   onChangeOscPort,
   onClickSend,
+  onDeleteMappings,
   onRemoveMapping,
   onSetCurrentlyMapping,
 }: Props) {
@@ -119,22 +121,12 @@ export default function Settings({
       <section data-help-id="Mappings">
         {sliderNames.length > 0 ? (
           <>
-            <h2>MIDI Mappings</h2>
-            <fieldset
-              title="Enables live overrides of UI sliders via MIDI CCs"
-              style={{ display: 'none' }}
-            >
-              <Checkbox
-                id="mappings-enabled"
-                type="checkbox"
-                checked={mappingsEnabled}
-                onChange={onChangeMappingsEnabled}
-              />
-              <label htmlFor="mappings-enabled">Mappings</label>
-            </fieldset>
             <MapMode
               mappings={mappings}
+              mappingsEnabled={mappingsEnabled}
               sliderNames={sliderNames}
+              onDeleteMappings={onDeleteMappings}
+              onChangeMappingsEnabled={onChangeMappingsEnabled}
               onRemoveMapping={onRemoveMapping}
               onSetCurrentlyMapping={onSetCurrentlyMapping}
             />

@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { Mappings } from './types'
 import IconButton from './IconButton'
 
-type MapModeProps = {
+type Props = {
   sliderNames: string[]
   mappings: Mappings
+  mappingsEnabled: boolean
+  onChangeMappingsEnabled: () => void
+  onDeleteMappings: () => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
 }
@@ -12,9 +15,12 @@ type MapModeProps = {
 export default function MapMode({
   sliderNames,
   mappings,
+  mappingsEnabled,
+  onChangeMappingsEnabled,
+  onDeleteMappings,
   onRemoveMapping,
   onSetCurrentlyMapping,
-}: MapModeProps) {
+}: Props) {
   const [currentlyMapping, setCurrentlyMapping] = useState('')
 
   useEffect(() => {
@@ -61,51 +67,77 @@ export default function MapMode({
 
   return (
     <div className="map-mode">
-      {sliderNames.map((name) => {
-        const mapping = findMapping(name)!
-        const isMapped = !!mapping
-        const isMapping = currentlyMapping === name
-        let text = ''
+      <header>
+        <h2 data-help-id="Mappings">MIDI Mappings</h2>
+        <section>
+          <IconButton
+            name="DisableMappings"
+            data-help-id="DisableMappings"
+            isToggle
+            on={!mappingsEnabled}
+            onClick={onChangeMappingsEnabled}
+          />
+          <IconButton
+            name="DeleteMappings"
+            data-help-id="DeleteMappings"
+            onClick={onDeleteMappings}
+          />
+        </section>
+      </header>
+      <main>
+        {sliderNames.map((name) => {
+          const mapping = findMapping(name)!
+          const isMapped = !!mapping
+          const isMapping = currentlyMapping === name
+          let text = ''
 
-        if (!isMapping && !isMapped) {
-          text = 'MAP'
-        } else if (isMapping && !isMapped) {
-          text = '...'
-        } else {
-          text = mapping[1].join('/')
-        }
+          if (!isMapping && !isMapped) {
+            text = 'MAP'
+          } else if (isMapping && !isMapped) {
+            text = '...'
+          } else {
+            text = mapping[1].join('/')
+          }
 
-        return (
-          <React.Fragment key={name}>
-            <label>{isMapped ? <b>{name}</b> : name}</label>
-            <span style={{ display: 'inline-flex' }}>
-              <button
-                className={
-                  isMapping
-                    ? 'map-button mapping'
-                    : isMapped
-                    ? 'map-button'
-                    : 'map-button inactive'
-                }
-                onClick={() => {
-                  onClickMap(name)
+          return (
+            <React.Fragment key={name}>
+              <label
+                style={{
+                  textDecoration: mappingsEnabled ? 'none' : 'line-through',
                 }}
               >
-                {text}
-              </button>
-              {isMapped && (
-                <IconButton
-                  name="Close"
+                {isMapped ? <b>{name}</b> : name}
+              </label>
+              <span style={{ display: 'inline-flex' }}>
+                <button
+                  className={
+                    isMapping
+                      ? 'map-button mapping'
+                      : isMapped
+                      ? 'map-button'
+                      : 'map-button inactive'
+                  }
+                  disabled={!mappingsEnabled}
                   onClick={() => {
-                    onRemoveMapping(name)
-                    clearCurrentlyMapping()
+                    onClickMap(name)
                   }}
-                />
-              )}
-            </span>
-          </React.Fragment>
-        )
-      })}
+                >
+                  {text}
+                </button>
+                {isMapped && (
+                  <IconButton
+                    name="Close"
+                    onClick={() => {
+                      onRemoveMapping(name)
+                      clearCurrentlyMapping()
+                    }}
+                  />
+                )}
+              </span>
+            </React.Fragment>
+          )
+        })}
+      </main>
     </div>
   )
 }

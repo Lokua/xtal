@@ -496,8 +496,19 @@ export default function App() {
     post('Randomize', exclusions)
   }
 
+  function onClickRandomizeSingleControl(name: string) {
+    post(
+      'Randomize',
+      controls.filter((c) => c.name !== name).map((c) => c.name)
+    )
+  }
+
   function onClickSendMidi() {
     post('SendMidi')
+  }
+
+  function onDeleteMappings() {
+    setMappings([])
   }
 
   function onQueueRecord() {
@@ -537,6 +548,20 @@ export default function App() {
     post('CurrentlyMapping', name)
   }
 
+  function onSnapshotDelete(slot: string) {
+    setSnapshots(snapshots.filter((s) => s !== slot))
+    post('SnapshotDelete', slot)
+  }
+
+  function onSnapshotLoad(slot: string) {
+    post('SnapshotRecall', slot)
+  }
+
+  function onSnapshotSave(slot: string) {
+    setSnapshots(snapshots.concat(slot).slice().sort())
+    post('SnapshotStore', slot)
+  }
+
   function onSwitchSketch(sketchName: string) {
     post('SwitchSketch', sketchName)
   }
@@ -552,13 +577,6 @@ export default function App() {
       exclusions.includes(name)
         ? exclusions.filter((n) => n !== name)
         : exclusions.concat(name)
-    )
-  }
-
-  function onClickRandomizeSingleControl(name: string) {
-    post(
-      'Randomize',
-      controls.filter((c) => c.name !== name).map((c) => c.name)
     )
   }
 
@@ -618,23 +636,16 @@ export default function App() {
             onChangeMidiOutputPort={onChangeMidiOutputPort}
             onChangeOscPort={onChangeOscPort}
             onClickSend={onClickSendMidi}
+            onDeleteMappings={onDeleteMappings}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
         ) : childView === View.Snapshots ? (
           <Snapshots
             snapshots={snapshots}
-            onDelete={(slot) => {
-              setSnapshots(snapshots.filter((s) => s !== slot))
-              post('SnapshotDelete', slot)
-            }}
-            onLoad={(slot) => {
-              post('SnapshotRecall', slot)
-            }}
-            onSave={(slot) => {
-              setSnapshots(snapshots.concat(slot).slice().sort())
-              post('SnapshotStore', slot)
-            }}
+            onDelete={onSnapshotDelete}
+            onLoad={onSnapshotLoad}
+            onSave={onSnapshotSave}
           />
         ) : (
           <Controls

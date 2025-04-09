@@ -2,6 +2,8 @@ import Advance from '@material-symbols/svg-400/outlined/skip_next.svg?react'
 import Camera from '@material-symbols/svg-400/outlined/camera.svg?react'
 import Clear from '@material-symbols/svg-400/outlined/remove_from_queue.svg?react'
 import Close from '@material-symbols/svg-400/outlined/close.svg?react'
+import DeleteMappings from '@material-symbols/svg-400/outlined/delete.svg?react'
+import DisableMappings from '@material-symbols/svg-400/outlined/block.svg?react'
 import Image from '@material-symbols/svg-400/outlined/image.svg?react'
 import Pause from '@material-symbols/svg-400/outlined/pause.svg?react'
 import Perf from '@material-symbols/svg-400/outlined/lock.svg?react'
@@ -28,6 +30,8 @@ const icons = {
   Camera,
   Clear,
   Close,
+  DeleteMappings,
+  DisableMappings,
   Exclusions,
   Image,
   Pause,

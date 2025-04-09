@@ -487,13 +487,21 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 .map-mode {
-  display: grid;
-  grid-template-columns: max-content auto;
-  align-items: center;
-  gap: 0 6px;
+  > header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-  > span > button:first-child {
-    width: 48px;
+  > main {
+    display: grid;
+    grid-template-columns: max-content auto;
+    align-items: center;
+    gap: 0 6px;
+
+    > span > button:first-child {
+      width: 48px;
+    }
   }
 }
 
@@ -504,6 +512,11 @@ input[type='range']::-webkit-slider-thumb {
 
   &.inactive {
     color: var(--control-text-color-muted);
+  }
+
+  &:disabled {
+    color: #555;
+    background-color: #222;
   }
 }
 
