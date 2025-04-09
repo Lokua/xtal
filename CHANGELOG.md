@@ -12,10 +12,13 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 ### Added
 
 - UI for Snapshots
+- **Disable Mappings** and **Delete Mappings** buttons to the MIDI Mapping
+  panel. Disabled state is saved along with Global Settings.
 
 ### Changed
 
-- remove `docs/parameter_handling.md` due to being outdated and not very helpful
+- Removed `docs/parameter_handling.md` due to being outdated and not very
+  helpful
 
 ### Fixed
 

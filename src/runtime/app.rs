@@ -115,6 +115,7 @@ struct AppModel {
     ctx: LatticeContext,
     hrcc: bool,
     image_index: Option<storage::ImageIndex>,
+    mappings_enabled: bool,
     main_maximized: Cell<bool>,
     main_window_id: window::Id,
     map_mode: MapMode,
@@ -162,10 +163,6 @@ impl AppModel {
                 .map(|config| wv::Control::from((config, hub)))
                 .collect()
         })
-    }
-
-    fn mappings_enabled(&mut self) -> bool {
-        self.control_hub().is_none_or(|h| h.midi_proxies_enabled)
     }
 
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
@@ -328,10 +325,11 @@ impl AppModel {
                 self.wv_tx.emit(wv::Event::Encoding(false));
             }
             AppEvent::MappingsEnabled(enabled) => {
+                self.mappings_enabled = enabled;
                 if let Some(hub) = self.control_hub_mut() {
                     hub.midi_proxies_enabled = enabled;
-                    self.save_global_state();
                 }
+                self.save_global_state();
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
@@ -640,7 +638,6 @@ impl AppModel {
                 }
 
                 let registry = REGISTRY.read().unwrap();
-                let mappings_enabled = self.mappings_enabled();
 
                 self.wv_tx.emit(wv::Event::Init {
                     audio_device: global::audio_device_name(),
@@ -650,7 +647,7 @@ impl AppModel {
                         dark_light::detect(),
                         dark_light::Mode::Light
                     ),
-                    mappings_enabled,
+                    mappings_enabled: self.mappings_enabled,
                     midi_clock_port: global::midi_clock_port(),
                     midi_input_port: global::midi_control_in_port(),
                     midi_output_port: global::midi_control_out_port(),
@@ -702,9 +699,16 @@ impl AppModel {
         let sketch = (sketch_info.factory)(app, &self.ctx);
         self.sketch = sketch;
 
+        let mappings_enabled = self.mappings_enabled;
         if let Some(hub) = self.control_hub_mut() {
+            hub.midi_proxies_enabled = mappings_enabled;
             hub.clear_snapshots();
         }
+
+        debug!(
+            "switch_sketch -> hub.midi_proxies_enabled: {}",
+            self.control_hub_mut().unwrap().midi_proxies_enabled
+        );
 
         self.init_sketch_environment(app);
 
@@ -740,9 +744,10 @@ impl AppModel {
 
         let exclusions = self.load_program_state().unwrap_or_default();
 
+        let mappings_enabled = self.mappings_enabled;
+        let transition_time = self.transition_time;
         let tx1 = self.app_tx.clone();
         let tx2 = self.app_tx.clone();
-        let transition_time = self.transition_time;
         if let Some(hub) = self.control_hub_mut() {
             hub.register_populated_callback(move || {
                 tx1.emit(AppEvent::HubPopulated);
@@ -751,6 +756,7 @@ impl AppModel {
                 tx2.emit(AppEvent::SnapshotEnded);
             });
             hub.set_transition_time(transition_time);
+            hub.midi_proxies_enabled = mappings_enabled;
         }
 
         let bypassed = self
@@ -788,13 +794,11 @@ impl AppModel {
     }
 
     fn save_global_state(&mut self) {
-        let mappings_enabled = self.mappings_enabled();
-
         if let Err(e) = storage::save_global_state(GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: global::audio_device_name(),
             hrcc: self.hrcc,
-            mappings_enabled,
+            mappings_enabled: self.mappings_enabled,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
@@ -976,6 +980,11 @@ fn model(app: &App) -> AppModel {
         }
     });
 
+    debug!(
+        "global_settings.mappings_enabled: {}",
+        global_settings.mappings_enabled
+    );
+
     let mut model = AppModel {
         app_rx: event_rx,
         app_tx: event_tx,
@@ -983,6 +992,7 @@ fn model(app: &App) -> AppModel {
         ctx,
         hrcc: global_settings.hrcc,
         image_index,
+        mappings_enabled: global_settings.mappings_enabled,
         main_maximized: Cell::new(false),
         main_window_id,
         map_mode: MapMode::default(),
