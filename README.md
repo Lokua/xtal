@@ -91,12 +91,14 @@ other platforms. The project requires or optionally needs:
 
 ## Usage
 
-Lattice is still a playground and meant to be cloned and run from source
-locally. I eventually might try to make it more of a library.
+Lattice is still a playground and meant to be cloned and run from source. I do
+plan on making it into a proper app or library eventually. Also my apologies if
+you plan on cloning you should know the repo contains a few hundred image files
+(using Git LFS) - they are safe to delete. Anyway...
 
 You will need to run two separate terminal processes: one for the UI controls (A
-Typescript/React app rendered in a WebView with Tao and Wry, served with Vite)
-and another for the Rust backend.
+Typescript/React app rendered in a [WebView][webview] with [Tao][tao] and
+[Wry][wry], served with [Vite][vite]) and another for the Rust backend.
 
 1. Launch the frontend app server
 
@@ -338,3 +340,7 @@ comprehensive documentation.
 [control-script-test]: src/sketches/scratch/control_script_test.rs
 [osc-transport]: assets/L.OscTransport.amxd
 [osc-send]: assets/L.OscSend.amxd
+[webview]: https://en.wikipedia.org/wiki/WebView
+[tao]: https://github.com/tauri-apps/tao
+[wry]: https://github.com/tauri-apps/wry
+[vite]: https://vite.dev/

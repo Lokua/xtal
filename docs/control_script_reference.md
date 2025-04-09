@@ -48,13 +48,13 @@ Lattice provides various interfaces for controlling parameters including
 `Animation` module that can tween or generate random values and ramp to/from
 them at musical intervals. While these parameters are simple to setup, it's a
 bit of pain to have to restart the rust sketch every time you want to change an
-animation or control configuration. For this reason Lattice provides a
-`ControlScript` mechanism that uses yaml for configuration and adds these
-controls dynamically and _self-updates at runtime when the yaml file is
+animation or control configuration. For this reason Lattice provides a scripting
+mechanism via the `ControlHub` struct that uses yaml for configuration and adds
+these controls dynamically and _self-updates at runtime when the yaml file is
 changed_, quite similar to live coding. You still have to take care to setup the
-routings in your sketch (e.g. `let radius = model.controls.get("radius")`), but
-once these routings are in place you are free to edit their ranges, values,
-timing, etc. Here's an example that covers the overall capabilities:
+routings in your sketch (e.g. `let radius = model.hub.get("radius")`), but once
+these routings are in place you are free to edit their ranges, values, timing,
+etc. Here's an example that covers the overall capabilities:
 
 ```yaml
 radius:
@@ -132,19 +132,25 @@ use crate::framework::prelude::*;
 
 #[derive(SketchComponents)]
 pub struct Model {
-    controls: ControlScript<Timing>,
+    // must be called "hub" or "controls"
+    hub: ControlHub<Timing>,
 }
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> Model {
-    let controls = ControlScript::from_path(
+    let hub = ControlHub::from_path(
         to_absolute_path(file!(), "controls.yaml"),
         Timing::new(ctx.bpm()),
     );
 
-    Model { controls }
+    Model { hub }
 }
 
 impl Sketch for Model {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+        // Required!
+        self.hub.update();
+    }
+
     fn view(app: &App, m: &Model, frame: Frame, ctx: &LatticeContext) {
         let draw = app.draw();
 
@@ -978,7 +984,7 @@ struct ShaderParams {
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> Model {
-    let controls = ControlScript::from_path(
+    let hub = ControlHub::from_path(
         to_absolute_path(file!(), "example.yaml"),
         Timing::new(ctx.bpm()),
     );
@@ -1003,17 +1009,18 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
         true,
     );
 
-    Model { controls, wr, gpu }
+    Model { hub, wr, gpu }
 }
 
 impl Sketch for Model {
   fn update(&mut self, app: &App, _update: Update, _ctx. &LatticeContext) {
       // Update ensures any file changes have propagated
-      self.controls.update();
+      self.hub.update();
 
       let params = ShaderParams {
           a: [
-              // Allows us to use `var: a1` in our control_script
+              // Allows us to use `var: a1` in our script
+              // while still showing a friendly name in the UI
               m.controls.get("a1"),
               m.controls.get("a2"),
               m.controls.get("a3"),
@@ -1059,3 +1066,6 @@ fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
 The above is admittedly a decent amount of boilerplate, but with this setup you
 are now free to live code in your script and shaders for hours uninterrupted
 without having to stop, recompile, wait... it's worth it.
+
+> NEW! Lattice now comes with a `uniforms` procedural macro to make all of the
+> above unnecessary. See ./src/sketches/dev/dynamic_uniforms.rs for an example.
