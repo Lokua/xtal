@@ -1,3 +1,4 @@
+//! Provides runtime mapping of MIDI CCs to UI sliders, AKA "MIDI learn"
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
@@ -16,14 +17,12 @@ pub struct MapMode {
     /// The name of the current slider that has been selected for live mapping
     pub currently_mapping: Option<String>,
     pub state: Arc<Mutex<MapModeState>>,
-    enabled: bool,
 }
 
 impl Default for MapMode {
     fn default() -> Self {
         Self {
             currently_mapping: None,
-            enabled: true,
             state: Arc::new(Mutex::new(MapModeState {
                 mappings: HashMap::default(),
                 msb_ccs: vec![],
@@ -33,22 +32,14 @@ impl Default for MapMode {
 }
 
 impl MapMode {
-    pub fn with_enabled(enabled: bool) -> Self {
-        Self {
-            enabled,
-            ..Default::default()
-        }
-    }
-
     const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
 
     /// Mappings are stored as normal [`MidiControlConfig`] instances within a
-    /// [`ControlHub`]'s [`MidiControls`] instance. When a [`Slider`] is queried
+    /// [`ControlHub`]'s [`MidiControls`] field. When a [`Slider`] is queried
     /// via [`ControlHub::get`], we first check if there is a "MIDI proxy" for
-    /// the slider and if so return the value of the MIDI control instead. For
-    /// that reason this method _probably_ shouldn't be here as it's not really
-    /// MapMode's concern. Anyway this method just provides a single interface
-    /// to make sure every call site is using the same name suffix
+    /// the slider and if so return the value of the MIDI control instead.
+    ///
+    /// TODO: these proxy methods should probably be moved to ControlHub
     pub fn proxy_name(name: &str) -> String {
         format!("{}{}", name, Self::PROXY_NAME_SUFFIX)
     }
@@ -101,14 +92,6 @@ impl MapMode {
 
     pub fn clear(&mut self) {
         self.state.lock().unwrap().mappings.clear();
-    }
-
-    pub fn enabled(&self) -> bool {
-        self.enabled
-    }
-
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
     }
 
     pub fn start<F>(

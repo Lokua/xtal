@@ -513,7 +513,6 @@ export default function App() {
   }
 
   function onDeleteMappings() {
-    // TODO: make a clear all
     mappings.forEach((mapping) => {
       post('RemoveMapping', mapping[0])
     })

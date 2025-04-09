@@ -164,6 +164,10 @@ impl AppModel {
         })
     }
 
+    fn mappings_enabled(&mut self) -> bool {
+        self.control_hub().is_none_or(|h| h.midi_proxies_enabled)
+    }
+
     fn on_app_event(&mut self, app: &App, event: AppEvent) {
         match event {
             AppEvent::AdvanceSingleFrame => {
@@ -324,7 +328,10 @@ impl AppModel {
                 self.wv_tx.emit(wv::Event::Encoding(false));
             }
             AppEvent::MappingsEnabled(enabled) => {
-                self.map_mode.set_enabled(enabled);
+                if let Some(hub) = self.control_hub_mut() {
+                    hub.midi_proxies_enabled = enabled;
+                    self.save_global_state();
+                }
             }
             AppEvent::MidiStart | AppEvent::MidiContinue => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
@@ -372,8 +379,8 @@ impl AppModel {
             AppEvent::Randomize(exclusions) => {
                 let app_tx = self.app_tx.clone();
                 if let Some(hub) = self.control_hub_mut() {
-                    app_tx
-                        .alert_and_log("Transition started", log::Level::Info);
+                    let msg = "Transition started";
+                    app_tx.alert_and_log(msg, log::Level::Info);
                     hub.randomize(exclusions);
                 }
             }
@@ -416,13 +423,11 @@ impl AppModel {
             }
             AppEvent::SaveProgramState(exclusions) => {
                 let mappings = self.map_mode.mappings();
-                let mappings_enabled = self.map_mode.enabled();
 
                 match storage::save_program_state(
                     self.sketch_name().as_str(),
                     self.control_hub().unwrap(),
                     mappings,
-                    mappings_enabled,
                     exclusions,
                 ) {
                     Ok(path_buf) => {
@@ -635,6 +640,7 @@ impl AppModel {
                 }
 
                 let registry = REGISTRY.read().unwrap();
+                let mappings_enabled = self.mappings_enabled();
 
                 self.wv_tx.emit(wv::Event::Init {
                     audio_device: global::audio_device_name(),
@@ -644,7 +650,7 @@ impl AppModel {
                         dark_light::detect(),
                         dark_light::Mode::Light
                     ),
-                    mappings_enabled: self.map_mode.enabled(),
+                    mappings_enabled,
                     midi_clock_port: global::midi_clock_port(),
                     midi_input_port: global::midi_control_in_port(),
                     midi_output_port: global::midi_control_out_port(),
@@ -702,8 +708,8 @@ impl AppModel {
 
         self.init_sketch_environment(app);
 
-        self.app_tx
-            .alert(format!("Switched to {}", sketch_info.config.display_name));
+        let display_name = sketch_info.config.display_name;
+        self.app_tx.alert(format!("Switched to {}", display_name));
     }
 
     /// A helper to DRY-up the common needs of initializing a sketch on startup
@@ -781,12 +787,14 @@ impl AppModel {
         self.app_tx.emit(AppEvent::SendMidi);
     }
 
-    fn save_global_state(&self) {
+    fn save_global_state(&mut self) {
+        let mappings_enabled = self.mappings_enabled();
+
         if let Err(e) = storage::save_global_state(GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: global::audio_device_name(),
             hrcc: self.hrcc,
-            mappings_enabled: self.map_mode.enabled(),
+            mappings_enabled,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
@@ -808,7 +816,6 @@ impl AppModel {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
         let mappings = self.map_mode.mappings();
-        let mappings_enabled = self.map_mode.enabled();
 
         let mut current_state = self.control_hub().map_or_else(
             SaveableProgramState::default,
@@ -818,7 +825,6 @@ impl AppModel {
                 osc_controls: hub.osc_controls.clone(),
                 snapshots: hub.snapshots.clone(),
                 mappings,
-                mappings_enabled,
                 exclusions: Vec::new(),
             },
         );
@@ -957,7 +963,6 @@ fn model(app: &App) -> AppModel {
         }
     };
 
-    let map_mode = MapMode::with_enabled(global_settings.mappings_enabled);
     let image_index = storage::load_image_index().inspect_err(log_err).ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
@@ -980,7 +985,7 @@ fn model(app: &App) -> AppModel {
         image_index,
         main_maximized: Cell::new(false),
         main_window_id,
-        map_mode,
+        map_mode: MapMode::default(),
         midi_out,
         perf_mode: false,
         recording_state: RecordingState::default(),

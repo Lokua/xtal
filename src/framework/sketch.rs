@@ -88,6 +88,7 @@ pub trait Sketch {
 /// pub struct MySketch {}
 /// ```
 pub trait SketchDerived {
+    // TODO: we need a non-mutable version of this
     fn controls(&mut self) -> Option<&mut dyn ControlProvider>;
     fn clear_color(&self) -> Rgba;
 }

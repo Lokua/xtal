@@ -79,6 +79,7 @@ pub struct ControlHub<T: TimingSource> {
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
     pub snapshots: Snapshots,
+    pub midi_proxies_enabled: bool,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
@@ -100,6 +101,8 @@ pub struct ControlHub<T: TimingSource> {
 }
 
 impl<T: TimingSource> ControlHub<T> {
+    const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
+
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             ui_controls: UiControls::with_previous(vec![]),
@@ -120,6 +123,7 @@ impl<T: TimingSource> ControlHub<T> {
             transition_time: 4.0,
             snapshot_ended_callbacks: vec![],
             populated_callbacks: vec![],
+            midi_proxies_enabled: true,
             #[cfg(feature = "instrumentation")]
             instrumentation: RefCell::new(Instrumentation::new(
                 "ControlScript::get",
@@ -173,7 +177,8 @@ impl<T: TimingSource> ControlHub<T> {
         };
 
         let midi_proxy_name = MapMode::proxy_name(name);
-        if self.midi_controls.has(&midi_proxy_name) {
+        if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
+        {
             name = &midi_proxy_name;
         }
 
@@ -203,6 +208,17 @@ impl<T: TimingSource> ControlHub<T> {
         self.instrumentation.borrow_mut().record(start);
 
         result
+    }
+
+    /// The inverse of [`proxy_name`] used to find the source [`Slider`]
+    pub fn unproxied_name(proxy_name: &str) -> Option<String> {
+        proxy_name
+            .strip_suffix(Self::PROXY_NAME_SUFFIX)
+            .map(|s| s.to_string())
+    }
+
+    pub fn is_proxy_name(name: &str) -> bool {
+        name.ends_with(Self::PROXY_NAME_SUFFIX)
     }
 
     fn get_transition_value(
@@ -511,7 +527,7 @@ impl<T: TimingSource> ControlHub<T> {
             |(name, value)| {
                 if exclusions.contains(name)
                     || exclusions.contains(
-                        &MapMode::unproxied_name(name).unwrap_or_default(),
+                        &Self::unproxied_name(name).unwrap_or_default(),
                     )
                 {
                     None
@@ -762,7 +778,7 @@ impl<T: TimingSource> ControlHub<T> {
             .midi_controls
             .configs()
             .iter()
-            .filter(|(k, _)| MapMode::is_proxy_name(k))
+            .filter(|(k, _)| Self::is_proxy_name(k))
         {
             // order of operations is important here as `add` sets value to the
             // config's default
