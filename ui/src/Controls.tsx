@@ -1,17 +1,12 @@
 import NumberBox from '@lokua/number-box'
-import {
-  Bypassed,
-  Control,
-  ControlValue,
-  Exclusions,
-  Mappings,
-} from './types.ts'
-import CheckboxInput from './Checkbox.tsx'
-import Select from './Select.tsx'
-import Separator, { VerticalSeparator } from './Separator.tsx'
 import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
 import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
 import clsx from 'clsx/lite'
+import { Bypassed, Control, ControlValue, Exclusions, Mappings } from './types'
+import CheckboxInput from './Checkbox'
+import Select from './Select'
+import Separator, { VerticalSeparator } from './Separator'
+import useLocalSettings from './useLocalSettings'
 
 const ExcludedIndicator = () => (
   <span
@@ -52,6 +47,8 @@ export default function Controls({
   onClickRandomize,
   onToggleExclusion,
 }: Props) {
+  const { localSettings } = useLocalSettings()
+
   function excludedAndNode(name: string): [boolean, React.ReactNode] {
     const excluded = exclusions.includes(name)
 
@@ -64,7 +61,6 @@ export default function Controls({
       <>
         <CheckboxInput
           checked={excluded}
-          kind={excluded && 'excluded'}
           onChange={() => {
             onToggleExclusion(name)
           }}
@@ -152,12 +148,11 @@ export default function Controls({
                 }
                 style={{
                   width:
-                    (showExclusions ? -26 : 0) +
-                    (isBypassed ? -14 : 0) +
-                    (excluded ? -14 : 0) +
-                    (isMapped ? -14 : 0) +
-                    156 +
-                    'px',
+                    (showExclusions ? -1.625 : 0) +
+                    (excluded ? -0.875 : 0) +
+                    (isMapped ? -0.875 : 0) +
+                    { 16: 9.75, 17: 8.5, 18: 6.5 }[localSettings.fontSize] +
+                    'rem',
                   textDecoration: isBypassed ? 'line-through' : 'none',
                 }}
               >

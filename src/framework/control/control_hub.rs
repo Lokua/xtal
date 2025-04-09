@@ -101,8 +101,6 @@ pub struct ControlHub<T: TimingSource> {
 }
 
 impl<T: TimingSource> ControlHub<T> {
-    const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
-
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             ui_controls: UiControls::with_previous(vec![]),
@@ -200,7 +198,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         let result = self.modulations.get(name).map_or(value, |modulators| {
             modulators.iter().fold(value, |v, modulator| {
-                self.apply_modulators(v, modulator, current_frame)
+                self.apply_modulator(v, modulator, current_frame)
             })
         });
 
@@ -208,17 +206,6 @@ impl<T: TimingSource> ControlHub<T> {
         self.instrumentation.borrow_mut().record(start);
 
         result
-    }
-
-    /// The inverse of [`proxy_name`] used to find the source [`Slider`]
-    pub fn unproxied_name(proxy_name: &str) -> Option<String> {
-        proxy_name
-            .strip_suffix(Self::PROXY_NAME_SUFFIX)
-            .map(|s| s.to_string())
-    }
-
-    pub fn is_proxy_name(name: &str) -> bool {
-        name.ends_with(Self::PROXY_NAME_SUFFIX)
     }
 
     fn get_transition_value(
@@ -255,7 +242,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
-    fn apply_modulators(
+    fn apply_modulator(
         &self,
         value: f32,
         modulator: &str,
@@ -527,7 +514,7 @@ impl<T: TimingSource> ControlHub<T> {
             |(name, value)| {
                 if exclusions.contains(name)
                     || exclusions.contains(
-                        &Self::unproxied_name(name).unwrap_or_default(),
+                        &MapMode::unproxied_name(name).unwrap_or_default(),
                     )
                 {
                     None
@@ -778,7 +765,7 @@ impl<T: TimingSource> ControlHub<T> {
             .midi_controls
             .configs()
             .iter()
-            .filter(|(k, _)| Self::is_proxy_name(k))
+            .filter(|(k, _)| MapMode::is_proxy_name(k))
         {
             // order of operations is important here as `add` sets value to the
             // config's default

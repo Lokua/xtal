@@ -66,7 +66,7 @@ export default function MapMode({
   }
 
   return (
-    <div className="map-mode">
+    <div id="map-mode">
       <header>
         <h2 data-help-id="Mappings">MIDI Mappings</h2>
         <section>
@@ -92,7 +92,7 @@ export default function MapMode({
           let text = ''
 
           if (!isMapping && !isMapped) {
-            text = 'MAP'
+            text = '—'
           } else if (isMapping && !isMapped) {
             text = '...'
           } else {

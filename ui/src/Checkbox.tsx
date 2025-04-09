@@ -1,23 +1,16 @@
 import Check from '@material-symbols/svg-400/outlined/check.svg?react'
-import type { Override } from './types.ts'
-import clsx from 'clsx/lite'
+import type { Override } from './types'
 
 type Props = Override<
   React.InputHTMLAttributes<HTMLInputElement>,
   {
-    kind?: false | 'excluded'
     onChange: (value: boolean) => void
   }
 >
 
-export default function Checkbox({
-  checked,
-  kind = false,
-  onChange,
-  ...rest
-}: Props) {
+export default function Checkbox({ checked, onChange, ...rest }: Props) {
   return (
-    <span className={clsx('checkbox-wrapper', kind)}>
+    <span className="checkbox-wrapper">
       <input
         type="checkbox"
         {...rest}

@@ -441,8 +441,6 @@ impl AppModel {
                         );
                     }
                 }
-
-                self.save_global_state();
             }
             AppEvent::SendMappings => {
                 let mappings = self.map_mode.mappings_as_vec();
@@ -475,6 +473,7 @@ impl AppModel {
                     return;
                 };
 
+                let mut any_sent = false;
                 for message in messages {
                     if let Err(e) = midi_out.send(&message) {
                         self.app_tx.alert_and_log(
@@ -485,10 +484,14 @@ impl AppModel {
                             log::Level::Error,
                         );
                         return;
+                    } else {
+                        any_sent = true;
                     }
                 }
 
-                self.app_tx.alert("MIDI Sent");
+                if any_sent {
+                    self.app_tx.alert_and_log("MIDI Sent", log::Level::Info);
+                }
             }
             AppEvent::SnapshotEnded => {
                 let controls = self.web_view_controls();
@@ -705,11 +708,6 @@ impl AppModel {
             hub.clear_snapshots();
         }
 
-        debug!(
-            "switch_sketch -> hub.midi_proxies_enabled: {}",
-            self.control_hub_mut().unwrap().midi_proxies_enabled
-        );
-
         self.init_sketch_environment(app);
 
         let display_name = sketch_info.config.display_name;
@@ -742,7 +740,7 @@ impl AppModel {
         let paused = self.sketch_config.play_mode != PlayMode::Loop;
         frame_controller::set_paused(paused);
 
-        let exclusions = self.load_program_state().unwrap_or_default();
+        let exclusions = self.load_sketch_state().unwrap_or_default();
 
         let mappings_enabled = self.mappings_enabled;
         let transition_time = self.transition_time;
@@ -816,7 +814,7 @@ impl AppModel {
 
     /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings
     /// the user has saved to disk
-    fn load_program_state(&mut self) -> Result<Exclusions, Box<dyn Error>> {
+    fn load_sketch_state(&mut self) -> Result<Exclusions, Box<dyn Error>> {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();
         let mappings = self.map_mode.mappings();
@@ -833,7 +831,7 @@ impl AppModel {
             },
         );
 
-        match storage::load_program_state(&sketch_name, &mut current_state) {
+        match storage::load_sketch_state(&sketch_name, &mut current_state) {
             Ok(state) => {
                 self.map_mode.clear();
                 self.map_mode.set_mappings(state.mappings.clone());

@@ -6,14 +6,14 @@ import type {
   Exclusions,
   Mappings,
   RawControl,
-} from './types.ts'
-import { View } from './types.ts'
-import Header from './Header.tsx'
-import Controls from './Controls.tsx'
-import Snapshots from './Snapshots.tsx'
-import Settings from './Settings.tsx'
-import Console from './Console.tsx'
-import { Alert } from './Help.tsx'
+} from './types'
+import { View } from './types'
+import Header from './Header'
+import Controls from './Controls'
+import Snapshots from './Snapshots'
+import Settings from './Settings'
+import Console from './Console'
+import { Alert } from './Help'
 
 type EventMap = {
   Advance: void
@@ -556,6 +556,13 @@ export default function App() {
     post('CurrentlyMapping', name)
   }
 
+  function onSnapshotDeleteAll() {
+    snapshots.forEach((slot) => {
+      post('SnapshotDelete', slot)
+    })
+    setSnapshots([])
+  }
+
   function onSnapshotDelete(slot: string) {
     setSnapshots(snapshots.filter((s) => s !== slot))
     post('SnapshotDelete', slot)
@@ -652,6 +659,7 @@ export default function App() {
           <Snapshots
             snapshots={snapshots}
             onDelete={onSnapshotDelete}
+            onDeleteAll={onSnapshotDeleteAll}
             onLoad={onSnapshotLoad}
             onSave={onSnapshotSave}
           />

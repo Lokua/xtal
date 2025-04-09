@@ -111,7 +111,6 @@ pub enum Event {
     RemoveMapping(String),
     Reset,
     Save(Vec<String>),
-    ShutDown,
     SendMidi,
 
     /// Sent from parent after a snapshot has completed so we can keep controls
@@ -293,9 +292,6 @@ pub fn launch(
                 }
                 Event::Save(exclusions) => {
                     app_tx.emit(AppEvent::SaveProgramState(exclusions));
-                }
-                Event::ShutDown => {
-                    debug!("Received shutdown...");
                 }
                 Event::SendMidi => {
                     app_tx.emit(AppEvent::SendMidi);

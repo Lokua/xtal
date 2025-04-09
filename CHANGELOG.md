@@ -51,7 +51,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   highlighted background and prepend `<-?` characters to hopefully make it
   obvious what this does?
 
-## Changed
+### Changed
 
 - Removed the **Include Checkboxes** and **Include Selects** options from
   settings since the new Exclusions feature offers more flexibility
@@ -60,7 +60,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   [bincode](https://github.com/bincode-org/bincode). The frontend control code
   is much, much cleaner now.
 
-## Fixed
+### Fixed
 
 - Bug where loading a sketch that has saved program state with MIDI proxies and
   no corresponding Slider range would cause a panic. This could only happen when
@@ -106,7 +106,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 - New **Randomize** feature via button `[?]` or `Cmd+R` that utilizes a
   temporary snapshot to linearly interpolate from the current state of all
-  controls to a randomized state with respect to a controls given min, max, and
+  controls to a randomized state with respect to a control's given min, max, and
   step.
 - Settings options for Randomization to in/exclude checkboxes and selects
 - New **Appearance** section in the settings tab with a **Use icons** toggle to

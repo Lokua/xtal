@@ -41,7 +41,7 @@ export const Help = {
       values
   `),
   Mappings: format(`
-      Mappings: allows run-time mapping of external MIDI CCs to UI sliders, aka
+      Mappings: allows mapping of external MIDI CCs to UI sliders, aka
       "MIDI Learn". Mappings are saved with the sketch when you click [Save]. 
   `),
   MidiClockPort:

@@ -1,11 +1,11 @@
 import clsx from 'clsx/lite'
 
-import type { noop } from './types.js'
-import { View } from './types.ts'
+import type { noop } from './types'
+import { View } from './types'
 
-import Select from './Select.js'
-import Separator, { VerticalSeparator } from './Separator.tsx'
-import IconButton from './IconButton.tsx'
+import Select from './Select'
+import Separator, { VerticalSeparator } from './Separator'
+import IconButton from './IconButton'
 
 const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
 type TransitionTime = (typeof transitionTimes)[number]

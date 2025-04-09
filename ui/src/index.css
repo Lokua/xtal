@@ -1,7 +1,7 @@
 :root {
-  --control-margin: 4px;
-  --control-height: 20px;
-  --control-font-size: 10px;
+  --control-margin: 0.25rem;
+  --control-height: 1.25rem;
+  --control-font-size: 0.625em;
 }
 
 @media (prefers-color-scheme: light) {
@@ -58,14 +58,14 @@
 }
 
 html {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 body {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  font-size: 12px;
+  font-size: 1em;
   background: black;
   color: var(--text-color);
 }
@@ -84,17 +84,23 @@ body {
   > header,
   > main,
   > footer {
-    padding: 4px 8px;
-    padding-bottom: 2px;
+    padding: 0.25rem 0.5rem;
+    padding-bottom: 0.125rem;
   }
 
   > header {
-    border-bottom: 1px solid var(--muted-color);
+    border-bottom: 0.0625rem solid var(--muted-color);
 
     > section {
       display: flex;
       align-items: center;
       justify-content: space-between;
+    }
+
+    &.settings {
+      #settings-button {
+        margin-left: auto;
+      }
     }
   }
 
@@ -104,9 +110,9 @@ body {
   }
 
   > footer {
-    padding: 8px;
+    padding: 0.5rem;
     margin-top: auto;
-    border-top: 1px solid var(--muted-color);
+    border-top: 0.0625rem solid var(--muted-color);
   }
 }
 
@@ -117,14 +123,14 @@ ul {
 }
 
 h2 {
-  margin: 6px 0;
-  font-size: 14px;
+  margin: 0.375rem 0;
+  font-size: 0.875em;
 }
 
 fieldset {
   display: flex;
   align-items: center;
-  height: calc(var(--control-height) + 4px);
+  height: calc(var(--control-height) + 0.25rem);
   margin: 0;
   padding: 0;
   border: none;
@@ -132,7 +138,8 @@ fieldset {
   > label {
     display: inline-flex;
     align-items: center;
-    margin-left: 2px;
+    max-width: 100%;
+    margin-left: 0.125rem;
   }
 }
 
@@ -150,7 +157,7 @@ input,
   margin: var(--control-margin);
   font-size: var(--control-font-size);
   border: none;
-  border-radius: 2px;
+  border-radius: 0.125rem;
   cursor: pointer;
   background-color: var(--control-background-color);
   color: var(--control-text-color);
@@ -169,13 +176,13 @@ input,
   &:focus-visible,
   &.select-wrapper:has(&:focus-visible) > &,
   &:has(input:focus-visible) {
-    box-shadow: 0 0 0 2px var(--focus-color);
+    box-shadow: 0 0 0 0.125rem var(--focus-color);
     border-color: var(--focus-color);
   }
 }
 
 button {
-  padding: 0 8px;
+  padding: 0 0.5rem;
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -208,15 +215,15 @@ button.icon-button {
   width: var(--control-height);
   height: var(--control-height);
   background: transparent;
-  padding: 0 2px;
+  padding: 0 0.125rem;
 
   svg {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     fill: var(--text-color);
     pointer-events: none;
   }
@@ -254,10 +261,10 @@ button.icon-button {
 .checkbox-wrapper {
   position: relative;
   display: inline-block;
-  width: calc(var(--control-height) - 2px);
-  height: calc(var(--control-height) - 2px);
+  width: calc(var(--control-height) - 0.125rem);
+  height: calc(var(--control-height) - 0.125rem);
   border-color: transparent;
-  border-radius: 2px;
+  border-radius: 0.125rem;
   background-color: var(--control-background-color);
   cursor: pointer;
 
@@ -266,8 +273,8 @@ button.icon-button {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
     fill: var(--text-color);
     pointer-events: none;
   }
@@ -285,8 +292,8 @@ button.icon-button {
 }
 
 .number-box {
-  max-width: 54px;
-  padding: 6px;
+  max-width: 3.375rem;
+  padding: 0.375rem;
 }
 
 .select-wrapper {
@@ -296,18 +303,18 @@ button.icon-button {
   &::after {
     content: '▼';
     position: absolute;
-    right: 12px;
+    right: 0.75rem;
     top: 50%;
     transform: translateY(-50%) scaleX(1.5);
     color: var(--control-text-color);
     pointer-events: none;
-    font-size: 8px;
+    font-size: 0.5em;
   }
 
   select {
     appearance: none;
-    padding-right: 20px;
-    padding-left: 6px;
+    padding-right: 1.25rem;
+    padding-left: 0.375rem;
     outline: none;
     box-shadow: none;
     appearance: none;
@@ -315,8 +322,8 @@ button.icon-button {
 }
 
 input[type='text'] {
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
   user-select: text;
   -webkit-user-select: text;
 }
@@ -325,11 +332,11 @@ input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  min-width: 64px;
-  max-width: 300px;
-  height: 4px;
+  min-width: 4rem;
+  max-width: 18.75rem;
+  height: 0.25rem;
   background: var(--control-track-color);
-  border-radius: 0px;
+  border-radius: 0;
   outline: none;
 
   &:active::-webkit-slider-thumb {
@@ -349,8 +356,8 @@ input[type='range'] {
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   background: var(--control-knob-color);
   border-radius: 50%;
   cursor: pointer;
@@ -359,9 +366,9 @@ input[type='range']::-webkit-slider-thumb {
 .separator {
   position: relative;
   width: 100%;
-  height: 1px;
-  margin: 8px 0;
-  padding: 0 64px;
+  height: 0.0625rem;
+  margin: 0.5rem 0;
+  padding: 0 4rem;
 
   &::after {
     content: '';
@@ -369,13 +376,13 @@ input[type='range']::-webkit-slider-thumb {
     left: 50%;
     top: 0;
     width: 95%;
-    height: 1px;
+    height: 0.0625rem;
     background-image: linear-gradient(
       to right,
       var(--muted-color) 50%,
       transparent 50%
     );
-    background-size: 4px 1px;
+    background-size: 0.25rem 0.0625rem;
     background-repeat: repeat-x;
     transform: translateX(-50%);
   }
@@ -385,35 +392,30 @@ input[type='range']::-webkit-slider-thumb {
   position: relative;
   display: inline-block;
   vertical-align: middle;
-  width: 1px;
+  width: 0.0625rem;
   height: 100%;
   min-height: var(--control-height);
-  margin: 0 2px;
+  margin: 0 0.125rem;
   background-color: var(--muted-color);
 }
 
 .meter {
   display: inline-block;
-  margin-left: 4px;
+  margin-left: 0.25rem;
   text-align: right;
-  font-size: 10px;
+  font-size: 0.625em;
   cursor: default;
 }
 
 .meter-value {
   color: var(--meter-color);
-  font-size: 11px;
+  font-size: 1.2em;
 }
 
 .control-row {
   display: flex;
   width: 100%;
-
-  /* Something is causing the computed to height to be 26px, even though none of
-  the children have a computed height of more than 24px 🤷. it's gonna be pretty
-  hard to sleep without figuring this out */
-  height: 24px;
-
+  height: 1.5rem;
   align-items: center;
 
   > fieldset {
@@ -441,7 +443,7 @@ input[type='range']::-webkit-slider-thumb {
 
         span.text::after {
           content: '<-? ';
-          margin-left: 4px;
+          margin-left: 0.25rem;
         }
       }
     }
@@ -453,15 +455,15 @@ input[type='range']::-webkit-slider-thumb {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  margin-right: 2px;
+  margin-right: 0.125rem;
 
   &:has(+ span:not(.indicator-icon)) {
-    margin-right: 4px;
+    margin-right: 0.25rem;
   }
 
   svg {
-    width: 12px;
-    height: 12px;
+    width: 0.75rem;
+    height: 0.75rem;
     fill: var(--text-color);
   }
 }
@@ -471,22 +473,33 @@ input[type='range']::-webkit-slider-thumb {
   flex-direction: column;
   justify-content: space-around;
   overflow: auto;
-  height: 76px;
-
-  font-size: 10px;
+  height: 4.75rem;
+  font-size: 0.625em;
   background-color: var(--console-background-color);
 
   > section {
     flex-basis: 50%;
-    padding: 8px;
+    padding: 0.5rem;
 
     &:first-child {
-      border-bottom: 1px dotted var(--muted-color);
+      border-bottom: 0.0625rem dotted var(--muted-color);
     }
   }
 }
 
-.map-mode {
+.console-single-panel {
+  overflow: auto;
+  height: 4.75rem;
+  padding: 0.5rem;
+  font-size: 0.625em;
+  background-color: var(--console-background-color);
+}
+
+#mappings-section {
+  max-width: 50%;
+}
+
+#map-mode {
   > header {
     display: flex;
     justify-content: space-between;
@@ -495,28 +508,25 @@ input[type='range']::-webkit-slider-thumb {
 
   > main {
     display: grid;
-    grid-template-columns: max-content auto;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    gap: 0 6px;
+    gap: 0 0.375rem;
 
     > span > button:first-child {
-      width: 48px;
+      width: 3rem;
+    }
+
+    label {
+      max-width: 60%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
 
 .map-button {
   &.mapping {
-    border: 2px solid var(--meter-color);
-  }
-
-  &.inactive {
-    color: var(--control-text-color-muted);
-  }
-
-  &:disabled {
-    color: #555;
-    background-color: #222;
+    border: 0.125rem solid var(--meter-color);
   }
 }
 
@@ -525,24 +535,24 @@ input[type='range']::-webkit-slider-thumb {
   height: 100%;
 
   h2:not(:nth-of-type(1)) {
-    margin-top: 12px;
+    margin-top: 0.75rem;
   }
 
   > section {
     flex-basis: 50%;
-    padding-left: 6px;
+    padding-left: 0.375rem;
 
     &:first-child {
-      border-right: 1px dotted var(--muted-color);
+      border-right: 0.0625rem dotted var(--muted-color);
     }
 
     &:last-child {
-      padding-left: 12px;
+      padding-left: 0.75rem;
     }
   }
 
   select {
-    width: 170px;
+    width: 10.625rem;
   }
 }
 
@@ -568,11 +578,11 @@ input[type='range']::-webkit-slider-thumb {
 
   button:first-child {
     display: inline-block;
-    width: 128px;
+    width: 8rem;
   }
 
   > div > :nth-of-type(2) {
     position: absolute;
-    margin-left: 4px;
+    margin-left: 0.25rem;
   }
 }

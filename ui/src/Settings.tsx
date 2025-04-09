@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { Mappings, noop } from './types'
 import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
 import Select from './Select'
+import useLocalSettings from './useLocalSettings'
 
 type Props = {
   audioDevice: string
@@ -30,6 +32,24 @@ type Props = {
   onSetCurrentlyMapping: (name: string) => void
 }
 
+type SizePreset = 'Default' | 'Large' | 'Largest'
+
+function toSizePreset(fontSize: number) {
+  return {
+    16: 'Default',
+    17: 'Large',
+    18: 'Largest',
+  }[fontSize]
+}
+
+function fromSizePreset(size: SizePreset) {
+  return {
+    Default: 16,
+    Large: 17,
+    Largest: 18,
+  }[size]
+}
+
 export default function Settings({
   audioDevice,
   audioDevices,
@@ -55,9 +75,29 @@ export default function Settings({
   onRemoveMapping,
   onSetCurrentlyMapping,
 }: Props) {
+  const { localSettings, updateLocalSettings } = useLocalSettings()
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${localSettings.fontSize}px`
+  }, [localSettings.fontSize])
+
   return (
     <div id="settings">
       <section>
+        <h2>Appearance</h2>
+        <fieldset>
+          <Select
+            id="size"
+            value={String(toSizePreset(localSettings.fontSize))}
+            options={['Default', 'Large', 'Largest']}
+            onChange={(size) =>
+              updateLocalSettings({
+                fontSize: fromSizePreset(size as SizePreset),
+              })
+            }
+          />
+          <label htmlFor="size">Size</label>
+        </fieldset>
         <h2>MIDI</h2>
         <button data-help-id="Send" onClick={onClickSend}>
           Send
@@ -118,7 +158,7 @@ export default function Settings({
         />
       </section>
 
-      <section data-help-id="Mappings">
+      <section id="mappings-section" data-help-id="Mappings">
         {sliderNames.length > 0 ? (
           <>
             <MapMode

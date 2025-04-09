@@ -1,4 +1,4 @@
-import type { Override } from './types.ts'
+import type { Override } from './types'
 
 type Props = Override<
   React.SelectHTMLAttributes<HTMLSelectElement>,

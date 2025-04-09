@@ -71,7 +71,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
 /// This ensures that the external state can be the source of truth for ui,
 /// midi, and osc keys rather than possibly loading invalid or outdated data
 /// from file.
-pub fn load_program_state<'a>(
+pub fn load_sketch_state<'a>(
     sketch_name: &str,
     state: &'a mut SaveableProgramState,
 ) -> Result<&'a mut SaveableProgramState, Box<dyn Error>> {
