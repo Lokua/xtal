@@ -7,6 +7,30 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.7.0] - 2025-04-10
+
+### Added
+
+- Zoom! Re-added a **Settings > Appearance** section to a add new **Font Size**
+  option that will scale most UI elements from default to large and largest for
+  a11y's sake (unfortunately webviews or at least Apple's does not support +/-
+  zoom like most browsers do)
+
+### Changed
+
+- Converted all sizing units in CSS to rem/em to support the new "zoom" feature
+
+### Fixed
+
+- Previously added a **Disable Mappings** feature but forgot to add the
+  corresponding logic in Controls.tsx to actually enable slider control when
+  needed - works as expected now
+- Mo' Proxies Mo' Problems. Similar to the issue in [0.4.0](#040---2025-04-07),
+  we were prematurely unwrapping the result of a `UiControls::slider_range` call
+  for a slider that didn't exist (again, for a leftover MIDI proxy as the
+  resulting of renaming/debugging). TODO: cleanup data before loading/saving to
+  disk to avoid this entirely
+
 ## [0.6.0] - 2025-04-08
 
 ### Added
