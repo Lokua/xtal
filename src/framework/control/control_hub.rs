@@ -87,7 +87,7 @@ pub struct ControlHub<T: TimingSource> {
     /// Used to allow `get` to be called with the name used in a YAML `var`
     /// field. See ./docs/control_script_reference.md **Using `var`** section
     /// for more info.
-    aliases: HashMap<String, String>,
+    vars: HashMap<String, String>,
     bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
     eval_cache: EvalCache,
@@ -111,7 +111,7 @@ impl<T: TimingSource> ControlHub<T> {
             animations: HashMap::default(),
             modulations: HashMap::default(),
             effects: RefCell::new(HashMap::default()),
-            aliases: HashMap::default(),
+            vars: HashMap::default(),
             bypassed: HashMap::default(),
             eval_cache: EvalCache::new(),
             dep_graph: DepGraph::new(),
@@ -169,12 +169,13 @@ impl<T: TimingSource> ControlHub<T> {
 
         let current_frame = frame_controller::frame_count();
 
-        let mut name = match self.aliases.get(name) {
+        let mut name = match self.vars.get(name) {
             Some(alias) => alias,
             None => name,
         };
 
         let midi_proxy_name = MapMode::proxy_name(name);
+
         if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
         {
             name = &midi_proxy_name;
@@ -853,7 +854,7 @@ impl<T: TimingSource> ControlHub<T> {
         self.ui_controls = UiControls::with_previous(vec![]);
         self.animations.clear();
         self.modulations.clear();
-        self.aliases.clear();
+        self.vars.clear();
         self.bypassed.clear();
         self.dep_graph.clear();
         self.eval_cache.clear();
@@ -870,7 +871,7 @@ impl<T: TimingSource> ControlHub<T> {
             }
 
             if let Some(v) = config.config.get("var").and_then(|v| v.as_str()) {
-                self.aliases.insert(v.to_string(), id.to_string());
+                self.vars.insert(v.to_string(), id.to_string());
             }
 
             let bypass = config

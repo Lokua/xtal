@@ -12,7 +12,13 @@ slew:
 #  Wave
 # ------------------------------------------------------------------------------
 
+animate_wave_mix:
+  type: checkbox
+  default: false
 wave_mix:
+  type: slider
+  disabled: animate_wave_mix
+wave_mix_animation:
   type: triangle
   beats: 32
 
@@ -22,8 +28,15 @@ wave_freq:
 wave_scale:
   type: slider
 
+animate_wave_x:
+  type: checkbox
+  default: false
 wave_x:
+  type: slider
+  disabled: animate_wave_x
+wave_x_animation:
   type: automate
+  bypass: 0
   breakpoints:
     - kind: random
       position: 0
@@ -58,8 +71,14 @@ distortion_section:
 distort_mix:
   type: slider
 
+animate_distort_freq:
+  type: checkbox
+  default: false
 distort_freq:
-  bypass: _
+  type: slider
+  disabled: animate_distort_freq
+  range: [0, 4]
+distort_freq_animation:
   type: automate
   breakpoints:
     - kind: random
@@ -69,21 +88,25 @@ distort_freq:
     - kind: end
       position: 4
       value: 0.5
-
 distort_freq_add:
   type: effect
   kind: math
   operator: mult
   operand: 4
-
 distort_freq_effects:
   type: mod
-  source: distort_freq
+  source: distort_freq_animation
   modulators:
     - slew
     - distort_freq_add
 
+animate_distort_angle_offset:
+  type: checkbox
 distort_angle_offset:
+  type: slider
+  range: [-1, 1]
+  disabled: animate_distort_angle_offset
+distort_angle_offset_animation:
   distort_angle_offset_defaults: &distort_angle_offset_defaults
     value: 0.5
     amplitude: 2
@@ -101,16 +124,20 @@ distort_angle_offset:
     - kind: end
       position: 6
       value: 0.0
-
 distort_add:
   type: effect
   kind: math
   operator: mult
   operand: 10
-
 distort_angle_offset_mod:
   type: mod
   source: distort_angle_offset
+  modulators:
+    - slew
+    - distort_add
+distort_angle_offset_animation_mod:
+  type: mod
+  source: distort_angle_offset_animation
   modulators:
     - slew
     - distort_add
@@ -163,20 +190,35 @@ mask_section:
 mask_falloff:
   type: slider
 
+animate_mask_radius:
+  type: checkbox
 mask_radius:
-  bypass: 0
+  type: slider
+  range: [-2, 2]
+  disabled: animate_mask_radius
+mask_radius_animation:
   type: triangle
   beats: 2
   range: [-2, 2]
 
+animate_mask_x:
+  type: checkbox
 mask_x:
-  bypass: 0
+  type: slider
+  range: [-1, 1]
+  disabled: animate_mask_x
+mask_x_animation:
   type: triangle
   beats: 2
   range: [-1, 1]
 
+animate_mask_y:
+  type: checkbox
 mask_y:
-  bypass: 0
+  type: slider
+  range: [-1, 1]
+  disabled: animate_mask_y
+mask_y_animation:
   type: triangle
   beats: 8
   range: [-1, 1]

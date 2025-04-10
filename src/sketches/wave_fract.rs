@@ -74,18 +74,18 @@ impl Sketch for WaveFract {
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                if self.controls.bool("animate_wave_phase") {
-                    self.controls.get("wave_phase_animation")
-                } else {
+                ternary!(
+                    self.controls.bool("animate_wave_phase"),
+                    self.controls.get("wave_phase_animation"),
                     self.controls.get("wave_phase")
-                },
+                ),
                 self.controls.get("wave_radial_freq"),
                 self.controls.get("wave_horiz_freq"),
-                if self.controls.bool("link_axes") {
-                    self.controls.get("wave_horiz_freq")
-                } else {
+                ternary!(
+                    self.controls.bool("link_axes"),
+                    self.controls.get("wave_horiz_freq"),
                     self.controls.get("wave_vert_freq")
-                },
+                ),
             ],
             b: [
                 self.controls.get("bg_freq"),

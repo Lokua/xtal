@@ -15,10 +15,23 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   option that will scale most UI elements from default to large and largest for
   a11y's sake (unfortunately webviews or at least Apple's does not support +/-
   zoom like most browsers do)
+- In addition to already being able to click a control's label to randomize it,
+  you can now `<PlatformModifier> + Click` to revert it back to its last saved
+  value.
+- Exclusions column can now be toggled via `E` key
 
 ### Changed
 
 - Converted all sizing units in CSS to rem/em to support the new "zoom" feature
+- NumberBox in Controls now properly blurs when pressing Enter and supports
+  `Super+A` to select all text
+- Keyboard shortcuts are not platform aware, using `meta` aka `logo` on Mac and
+  `ctrl` on Linux/Windows (untested)
+- Singe Parameter Randomization is no longer connected to the sketch-level
+  Exclusions - in other words you can still click to randomize a single
+  parameter even if it's in the exclusions list.
+- Remove dark-light library in favor of Tao's automatic theme awareness which is
+  pretty damn awesome
 
 ### Fixed
 
@@ -27,9 +40,13 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   needed - works as expected now
 - Mo' Proxies Mo' Problems. Similar to the issue in [0.4.0](#040---2025-04-07),
   we were prematurely unwrapping the result of a `UiControls::slider_range` call
-  for a slider that didn't exist (again, for a leftover MIDI proxy as the
-  resulting of renaming/debugging). TODO: cleanup data before loading/saving to
-  disk to avoid this entirely
+  for a slider that didn't exist (again, for a leftover MIDI proxy as the result
+  of renaming/debugging). TODO: cleanup data before loading/saving to disk to
+  avoid this entirely
+- Converting backend string value representations to numbers on the frontend now
+  uses `Number` and an `isFinite` check to work around limitations in
+  `parseFloat` which cannot parse numbers that have higher precision than f32
+  can hold, resulting in some sliders having an `undefined` value.
 
 ## [0.6.0] - 2025-04-08
 

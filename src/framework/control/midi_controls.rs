@@ -199,7 +199,8 @@ impl MidiControls {
 
                         state.lock().unwrap().set(name, mapped_value);
 
-                        trace!("Storing regular 7bit (!hrcc ** > 63 block)");
+                        trace!("Storing regular 7bit (!hrcc || cc > 63 block)");
+                        debug!("name: {}", name);
                     }
 
                     return;

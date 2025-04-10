@@ -320,7 +320,7 @@ still on you to make use of this in code. The code for the first example might
 look like this:
 
 ```rust
-let phase = if hub.get("animate_phase") {
+let phase = if hub.bool("animate_phase") {
   animation.loop_phase(4.0) * TAU;
 } else {
   hub.get("phase");

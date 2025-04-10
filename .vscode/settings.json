@@ -41,6 +41,7 @@
     "smin",
     "stddev",
     "termcolor",
+    "themechanged",
     "thresholded",
     "titlebar",
     "trunc",

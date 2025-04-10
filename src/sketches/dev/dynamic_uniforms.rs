@@ -1,3 +1,5 @@
+//! This sketch is used to test an experimental [`uniforms`] proc macro. There
+//! are definitely some issues with it
 use nannou::prelude::*;
 
 use crate::framework::prelude::*;
@@ -26,7 +28,7 @@ struct ShaderParams {}
 pub fn init(app: &App, ctx: &LatticeContext) -> DynamicUniformsDev {
     let wr = ctx.window_rect();
     let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "./dynamic_uniforms.yaml"),
+        to_absolute_path(file!(), "dynamic_uniforms.yaml"),
         Timing::new(ctx.bpm()),
     );
 
@@ -35,7 +37,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> DynamicUniformsDev {
     let gpu = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "./dynamic_uniforms.wgsl"),
+        to_absolute_path(file!(), "dynamic_uniforms.wgsl"),
         &params,
         true,
     );

@@ -5,16 +5,10 @@ type Props = {
   alertText: string
 }
 
-const USE_SINGLE_PANEL = true
-
 export default function Console({ alertText }: Props) {
   const [helpText, setHelpText] = useState('')
 
   useEffect(() => {
-    if (USE_SINGLE_PANEL && alertText) {
-      setHelpText(alertText)
-    }
-
     function onMouseOver(e: MouseEvent) {
       if (e.target) {
         const element = e.target as HTMLElement
@@ -35,12 +29,5 @@ export default function Console({ alertText }: Props) {
     }
   }, [alertText])
 
-  return USE_SINGLE_PANEL ? (
-    <div className="console-single-panel">{helpText || alertText}</div>
-  ) : (
-    <div className="console">
-      <section>{alertText}</section>
-      <section>{helpText}</section>
-    </div>
-  )
+  return <div className="console">{helpText || alertText}</div>
 }

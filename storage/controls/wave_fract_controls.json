@@ -9,17 +9,17 @@
     {
       "type": "Slider",
       "name": "wave_phase",
-      "value": 3.3680003
+      "value": 0.88600004
     },
     {
       "type": "Slider",
       "name": "wave_phase_anim_speed",
-      "value": 0.5
+      "value": 4.0
     },
     {
       "type": "Slider",
       "name": "wave_radial_freq",
-      "value": 35.0
+      "value": 13.0
     },
     {
       "type": "Checkbox",
@@ -29,27 +29,27 @@
     {
       "type": "Slider",
       "name": "wave_horiz_freq",
-      "value": 9.0
+      "value": 5.0
     },
     {
       "type": "Slider",
       "name": "wave_vert_freq",
-      "value": 23.0
+      "value": 18.0
     },
     {
       "type": "Slider",
       "name": "wave_power",
-      "value": 4.42
+      "value": 1.26
     },
     {
       "type": "Slider",
       "name": "wave_bands",
-      "value": 6.0
+      "value": 3.0
     },
     {
       "type": "Slider",
       "name": "wave_threshold",
-      "value": 0.88000005
+      "value": 0.804
     },
     {
       "type": "Checkbox",
@@ -59,44 +59,320 @@
     {
       "type": "Slider",
       "name": "bg_freq",
-      "value": 73.0
+      "value": 67.0
     },
     {
       "type": "Slider",
       "name": "bg_radius",
-      "value": 0.771
+      "value": 0.986
     },
     {
       "type": "Slider",
       "name": "bg_gradient_strength",
-      "value": 0.50200003
+      "value": 0.965
     },
     {
       "type": "Slider",
       "name": "reduce_mix",
-      "value": 0.976
+      "value": 0.255
     },
     {
       "type": "Select",
       "name": "mix_mode",
-      "value": "min_max"
+      "value": "mix"
     },
     {
       "type": "Slider",
       "name": "map_mix",
-      "value": 0.937
+      "value": 0.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "wave_vert_freq",
+          "value": 18.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "bg_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "reduce_mix",
+          "value": 0.86300004
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_radial_freq",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "map_mix",
+          "value": 0.38000003
+        },
+        {
+          "type": "Slider",
+          "name": "bg_gradient_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_freq",
+          "value": 76.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_radius",
+          "value": 0.208
+        },
+        {
+          "type": "Slider",
+          "name": "wave_threshold",
+          "value": 0.105
+        },
+        {
+          "type": "Slider",
+          "name": "wave_power",
+          "value": 1.92
+        },
+        {
+          "type": "Slider",
+          "name": "wave_bands",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.88600004
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase_anim_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Select",
+          "name": "mix_mode",
+          "value": "mix"
+        },
+        {
+          "type": "Slider",
+          "name": "wave_horiz_freq",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 2.237
+        },
+        {
+          "type": "Slider",
+          "name": "wave_bands",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_gradient_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "bg_radius",
+          "value": 0.208
+        },
+        {
+          "type": "Slider",
+          "name": "wave_power",
+          "value": 4.06
+        },
+        {
+          "type": "Select",
+          "name": "mix_mode",
+          "value": "mix"
+        },
+        {
+          "type": "Slider",
+          "name": "bg_freq",
+          "value": 71.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_vert_freq",
+          "value": 65.0
+        },
+        {
+          "type": "Slider",
+          "name": "map_mix",
+          "value": 0.016
+        },
+        {
+          "type": "Slider",
+          "name": "reduce_mix",
+          "value": 0.289
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_horiz_freq",
+          "value": 31.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_radial_freq",
+          "value": 44.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_threshold",
+          "value": -0.651
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase_anim_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "bg_invert",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "bg_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "map_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_bands",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_power",
+          "value": 0.56
+        },
+        {
+          "type": "Slider",
+          "name": "wave_vert_freq",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.88600004
+        },
+        {
+          "type": "Slider",
+          "name": "wave_threshold",
+          "value": 0.692
+        },
+        {
+          "type": "Slider",
+          "name": "wave_horiz_freq",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_radius",
+          "value": 0.208
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase_anim_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "reduce_mix",
+          "value": 0.766
+        },
+        {
+          "type": "Slider",
+          "name": "bg_gradient_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "mix_mode",
+          "value": "mix"
+        },
+        {
+          "type": "Slider",
+          "name": "wave_radial_freq",
+          "value": 17.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_freq",
+          "value": 76.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": [
     "animate_wave_phase",
     "link_axes",
     "bg_invert",
     "mix_mode",
-    "reduce_mix",
-    "map_mix"
+    "wave_phase_anim_speed",
+    "bg_freq",
+    "bg_radius",
+    "bg_gradient_strength"
   ]
 }

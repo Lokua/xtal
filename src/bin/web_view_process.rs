@@ -3,7 +3,7 @@ use tao::{
     dpi::{self, LogicalPosition, LogicalSize, PixelUnit},
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{Theme, WindowBuilder, WindowSizeConstraints},
+    window::{WindowBuilder, WindowSizeConstraints},
 };
 use wry::WebViewBuilder;
 
@@ -25,13 +25,11 @@ fn main() -> wry::Result<()> {
 
     let server_name = std::env::args().nth(1).unwrap();
     let (sender, receiver) = setup_ipc_connection(server_name).unwrap();
-    let is_light = matches!(dark_light::detect(), dark_light::Mode::Light);
 
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
         .with_title("Lattice UI")
-        .with_theme(Some(ternary!(is_light, Theme::Light, Theme::Dark)))
         .with_inner_size(LogicalSize::new(DEFAULT_WIDTH, DEFAULT_HEIGHT))
         .with_position(LogicalPosition::new(700, 0))
         .with_inner_size_constraints(WindowSizeConstraints {
@@ -50,7 +48,7 @@ fn main() -> wry::Result<()> {
         .unwrap();
 
     let web_view = WebViewBuilder::new()
-        .with_url("http://localhost:3000/")
+        .with_url("http://localhost:3000")
         .with_devtools(true)
         // Events from UI->Here->Parent
         .with_ipc_handler(move |message| {
@@ -133,7 +131,6 @@ fn main() -> wry::Result<()> {
             } => {
                 *control_flow = ControlFlow::Exit;
             }
-
             _ => {}
         }
     });

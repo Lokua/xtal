@@ -13,6 +13,7 @@ pub mod sand_lines;
 pub mod sierpinski_triangle;
 pub mod spiral;
 pub mod spiral_lines;
+pub mod symmetry;
 pub mod wave_fract;
 
 pub mod dev;
@@ -43,7 +44,6 @@ pub use self::genuary_2025::g25_18_wind;
 pub use self::genuary_2025::g25_19_op_art;
 pub use self::genuary_2025::g25_20_23_brutal_arch;
 pub use self::genuary_2025::g25_22_gradients_only;
-pub use self::genuary_2025::g25_26_symmetry;
 
 pub mod scratch;
 pub use self::scratch::bos;

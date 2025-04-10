@@ -9,6 +9,7 @@ wave_phase:
   type: slider
   range: [0.0, *TAU]
   step: 0.001
+  disabled: animate_wave_phase
 
 wave_phase_anim_speed:
   type: slider
@@ -47,6 +48,7 @@ wave_vert_freq:
   range: [0.0, 100.0]
   default: 20.0
   step: 1.0
+  disabled: link_axes
 
 wave_power:
   type: slider

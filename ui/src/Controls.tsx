@@ -1,12 +1,16 @@
+import { ReactNode, useEffect, useState } from 'react'
 import NumberBox from '@lokua/number-box'
 import ExcludedIcon from '@material-symbols/svg-400/outlined/keep.svg?react'
 import MappedIcon from '@material-symbols/svg-400/outlined/app_badging.svg?react'
 import clsx from 'clsx/lite'
+
 import { Bypassed, Control, ControlValue, Exclusions, Mappings } from './types'
+
 import CheckboxInput from './Checkbox'
 import Select from './Select'
 import Separator, { VerticalSeparator } from './Separator'
 import { useLocalSettings } from './LocalSettings'
+import { isMac } from './util'
 
 const ExcludedIndicator = () => (
   <span
@@ -35,6 +39,7 @@ type Props = {
   showExclusions: boolean
   onChange: (control: Control, value: ControlValue) => void
   onClickRandomize: (name: string) => void
+  onClickRevert: (control: Control) => void
   onToggleExclusion: (name: string) => void
 }
 
@@ -47,11 +52,27 @@ export default function Controls({
   showExclusions,
   onChange,
   onClickRandomize,
+  onClickRevert,
   onToggleExclusion,
 }: Props) {
+  const [platformModPressed, setPlatformModPressed] = useState(false)
   const { localSettings } = useLocalSettings()
 
-  function excludedAndNode(name: string): [boolean, React.ReactNode] {
+  useEffect(() => {
+    function keyHandler(e: KeyboardEvent) {
+      setPlatformModPressed(isMac ? e.metaKey : e.ctrlKey)
+    }
+
+    document.addEventListener('keydown', keyHandler)
+    document.addEventListener('keyup', keyHandler)
+
+    return () => {
+      document.removeEventListener('keydown', keyHandler)
+      document.removeEventListener('keyup', keyHandler)
+    }
+  }, [])
+
+  function excludedAndNode(name: string): [boolean, ReactNode] {
     const excluded = exclusions.includes(name)
 
     if (!showExclusions) {
@@ -131,14 +152,27 @@ export default function Controls({
               onChange={(value) => {
                 onChange(c, value)
               }}
+              // TODO: add this to @lokua/number-box
+              onKeyDown={(e) => {
+                const input = e.currentTarget
+
+                if (e.code === 'KeyA' && platformModPressed) {
+                  input.focus()
+                  input.setSelectionRange(0, input.value.length)
+                } else if (e.code === 'Enter') {
+                  input.blur()
+                }
+              }}
             />
             <label
               htmlFor={c.name}
-              className={clsx(
-                !c.disabled && !isBypassed && !excluded && 'clickable'
-              )}
+              className={clsx(!c.disabled && !isBypassed && 'clickable')}
               onClick={() => {
-                onClickRandomize(c.name)
+                if (platformModPressed) {
+                  onClickRevert(c)
+                } else {
+                  onClickRandomize(c.name)
+                }
               }}
             >
               {excluded && <ExcludedIndicator />}
@@ -159,7 +193,9 @@ export default function Controls({
                   textDecoration: isBypassed ? 'line-through' : 'none',
                 }}
               >
-                <span className="text">{c.name}</span>
+                <span className={clsx('text', platformModPressed && 'revert')}>
+                  {c.name}
+                </span>
               </span>
             </label>
           </fieldset>

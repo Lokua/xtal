@@ -6,6 +6,5 @@ pub mod g25_19_op_art;
 pub mod g25_1_horiz_vert;
 pub mod g25_20_23_brutal_arch;
 pub mod g25_22_gradients_only;
-pub mod g25_26_symmetry;
 pub mod g25_2_layers;
 pub mod g25_5_isometric;

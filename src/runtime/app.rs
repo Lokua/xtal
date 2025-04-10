@@ -336,6 +336,7 @@ impl AppModel {
                     .map_or_else(HashMap::default, |h| h.bypassed());
                 let event = wv::Event::HubPopulated((controls, bypassed));
                 self.wv_tx.emit(event);
+                self.app_tx.alert("Hub repopulated");
             }
             AppEvent::EncodingComplete => {
                 self.wv_tx.emit(wv::Event::Encoding(false));
@@ -1059,10 +1060,14 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
         } => {
             let logo_pressed = app.keys.mods.logo();
             let shift_pressed = app.keys.mods.shift();
+            let ctrl_pressed = app.keys.mods.ctrl();
             let has_no_modifiers = !app.keys.mods.alt()
-                && !app.keys.mods.ctrl()
+                && !ctrl_pressed
                 && !shift_pressed
                 && !logo_pressed;
+
+            let platform_mod_pressed =
+                ternary!(cfg!(target_os = "macos"), logo_pressed, ctrl_pressed);
 
             let digit = match key {
                 Key::Key0 => Some("0"),
@@ -1095,15 +1100,15 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                     model.app_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
                 // Cmd + F
-                Key::F if logo_pressed => {
+                Key::F if platform_mod_pressed => {
                     model.app_tx.emit(AppEvent::ToggleFullScreen);
                 }
                 // Cmd + G
-                Key::G if logo_pressed => {
+                Key::G if platform_mod_pressed => {
                     model.app_tx.emit(AppEvent::ToggleGuiFocus);
                 }
                 // Cmd + M
-                Key::M if logo_pressed && !shift_pressed => {
+                Key::M if platform_mod_pressed && !shift_pressed => {
                     model.app_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 // R

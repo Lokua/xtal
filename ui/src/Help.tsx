@@ -1,3 +1,7 @@
+import { isMac } from './util'
+
+const mod = isMac ? 'Cmd' : 'Ctrl'
+
 export const Alert = {
   Midi14Bit: 'Expecting 14bit MIDI on channels 0-31',
   Midi7Bit: 'Expecting standard 7bit MIDI messages for all CCs',
@@ -13,7 +17,7 @@ export const Alert = {
 export const Help = {
   Advance: format(
     `When the [Play/Pause] toggle is set to [Pause], allows manually advancing 
-    frames (Shortcut: [Meta+A])`
+    frames (Shortcut: [${mod} A])`
   ),
   Audio: 'The Audio input device used for audio controls',
   Clear: format(
@@ -23,23 +27,14 @@ export const Help = {
   DeleteMappings: 'Delete all MIDI Mappings',
   DisableMappings: 'Disable/Enable MIDI Mappings',
   Exclusions: format(
-    `Toggle Exclusions Mode where you can select controls to exclude from 
-    Randomization`
+    `Exclusions: select controls to exclude from Randomization (Shortcut: E)`
   ),
   Fps: 'The effective framerate over a 1 second running average',
   Hrcc: format(`
     Enable high resolution (14bit) MIDI for CCs 0-31 (requires support 
     from your MIDI device)
   `),
-  Image: 'Capture image to disk (Shortcut: [Meta+S])',
-  IncludeCheckboxes: format(`
-      When enabled, the [Randomization] feature will also randomize checkbox 
-      controls
-  `),
-  IncludeSelects: format(`
-      When enabled, the [Randomization] feature will also randomize select 
-      values
-  `),
+  Image: `Capture image to disk (Shortcut: [${mod} S])`,
   Mappings: format(`
       Mappings: allows mapping of external MIDI CCs to UI sliders, aka
       "MIDI Learn". Mappings are saved with the sketch when you click [Save]. 
@@ -55,7 +50,7 @@ export const Help = {
   OscPort: 'The OSC port Lattice will use for OSC controls',
   Play: format(`
     Play/Pause Toggle. When Pause is engaged, use the [Advance] button 
-    or [Meta + A] to manually advance frames.
+    or [${mod} A] to manually advance frames.
   `),
   Perf: format(
     `Enable/disable Performance Mode. When enabled, prevents Lattice from 
@@ -65,10 +60,10 @@ export const Help = {
     switching sketches`
   ),
   Queue: 'Queue recording to start upon receiving a MIDI Start message',
-  Random: 'Randomize all UI controls (Shortcut: [Meta + R])',
+  Random: `Randomize all UI controls (Shortcut: [${mod} R])`,
   Reload: format(
     `Reload the current sketch back to its last saved state 
-    (Shortcut: [Shift + Meta + R])`
+    (Shortcut: [Shift ${mod} R])`
   ),
   Record: 'Start/Stop recording',
   Reset: 'Reset the frame counter and all animations (Shortcut: [R])',
@@ -83,8 +78,8 @@ export const Help = {
   Sketch: 'Sketch chooser',
   Snapshots: format(`
     Snapshot Editor: store and recall up to 10 snapshots.
-    Note that you can save snapshots via [Shift + NumberKey] and recall them
-    via [Meta + NumberKey] without entering the editor.
+    You can also save snapshots via [Shift Digit] and recall them
+    via [${mod} Digit] without entering the editor.
   `),
   Save: format(`
     Save UI control states and MIDI mappings for this sketch as well as all 
