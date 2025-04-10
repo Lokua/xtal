@@ -6,7 +6,7 @@ import { Bypassed, Control, ControlValue, Exclusions, Mappings } from './types'
 import CheckboxInput from './Checkbox'
 import Select from './Select'
 import Separator, { VerticalSeparator } from './Separator'
-import useLocalSettings from './useLocalSettings'
+import { useLocalSettings } from './LocalSettings'
 
 const ExcludedIndicator = () => (
   <span
@@ -143,7 +143,7 @@ export default function Controls({
               <span
                 title={
                   isBypassed
-                    ? 'This control is currently bypassed and overwritten in a Control Script'
+                    ? 'This control is currently bypassed/overwritten in a Control Script'
                     : ''
                 }
                 style={{

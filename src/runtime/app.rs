@@ -258,6 +258,7 @@ impl AppModel {
 
                 self.map_mode.currently_mapping = None;
                 let mappings = self.map_mode.mappings_as_vec();
+                let app_tx = self.app_tx.clone();
                 let hub = self.control_hub_mut().unwrap();
 
                 for (name, (ch, cc)) in mappings {
@@ -269,13 +270,28 @@ impl AppModel {
                         }
                     }
 
+                    let slider_range = match hub.ui_controls.slider_range(&name)
+                    {
+                        Some(s) => s,
+                        // Can happen when mappings have been setup for a
+                        // slider, say `foo`, that is then is renamed. At this
+                        // point we'll have a left over `foo__slider_proxy` but
+                        // no `foo` slider to get a range from. This is a
+                        // temporary solution until we find the best place to
+                        // perform some validation and cleanup either when
+                        // reading or writing saved state
+                        None => {
+                            app_tx.alert_and_log(
+                                format!("No slider range for {}", name),
+                                log::Level::Error,
+                            );
+                            continue;
+                        }
+                    };
+
                     hub.midi_controls.add(
                         proxy_name,
-                        MidiControlConfig::new(
-                            (ch, cc),
-                            hub.ui_controls.slider_range(&name).unwrap(),
-                            0.0,
-                        ),
+                        MidiControlConfig::new((ch, cc), slider_range, 0.0),
                     );
                 }
 

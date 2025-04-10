@@ -1,10 +1,9 @@
-import { useEffect } from 'react'
 import { Mappings, noop } from './types'
 import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
 import Select from './Select'
-import useLocalSettings from './useLocalSettings'
+import { FontSizeChoice, useLocalSettings } from './LocalSettings'
 
 type Props = {
   audioDevice: string
@@ -34,12 +33,12 @@ type Props = {
 
 type SizePreset = 'Default' | 'Large' | 'Largest'
 
-function toSizePreset(fontSize: number) {
+function toSizePreset(fontSize: FontSizeChoice) {
   return {
     16: 'Default',
     17: 'Large',
     18: 'Largest',
-  }[fontSize]
+  }[fontSize] as SizePreset
 }
 
 function fromSizePreset(size: SizePreset) {
@@ -47,7 +46,7 @@ function fromSizePreset(size: SizePreset) {
     Default: 16,
     Large: 17,
     Largest: 18,
-  }[size]
+  }[size] as FontSizeChoice
 }
 
 export default function Settings({
@@ -77,10 +76,6 @@ export default function Settings({
 }: Props) {
   const { localSettings, updateLocalSettings } = useLocalSettings()
 
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${localSettings.fontSize}px`
-  }, [localSettings.fontSize])
-
   return (
     <div id="settings">
       <section>
@@ -98,6 +93,7 @@ export default function Settings({
           />
           <label htmlFor="size">Size</label>
         </fieldset>
+
         <h2>MIDI</h2>
         <button data-help-id="Send" onClick={onClickSend}>
           Send

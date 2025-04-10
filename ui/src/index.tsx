@@ -5,9 +5,12 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { Provider } from './LocalSettings'
 
 createRoot(document.getElementById('root')!).render(
-  <App />
+  <Provider>
+    <App />
+  </Provider>
   // <StrictMode>
   //   <App />
   // </StrictMode>
