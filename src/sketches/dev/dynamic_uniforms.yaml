@@ -10,7 +10,7 @@ wave_phase_animation:
   type: checkbox
   default: true
 
-Wave_phase_speed_long_name_even_longer:
+wave_phase_speed:
   type: slider
   range: [1, 32]
   step: 1

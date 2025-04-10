@@ -31,6 +31,7 @@ type Props = {
   controls: Control[]
   exclusions: Exclusions
   mappings: Mappings
+  mappingsEnabled: boolean
   showExclusions: boolean
   onChange: (control: Control, value: ControlValue) => void
   onClickRandomize: (name: string) => void
@@ -42,6 +43,7 @@ export default function Controls({
   controls,
   exclusions,
   mappings,
+  mappingsEnabled,
   showExclusions,
   onChange,
   onClickRandomize,
@@ -98,7 +100,8 @@ export default function Controls({
 
     if (c.kind === 'Slider') {
       const isBypassed = c.name in bypassed
-      const isMapped = !!mappings.find((m) => m[0] === c.name)
+      const isMapped =
+        mappingsEnabled && !!mappings.find((m) => m[0] === c.name)
       const disabled = c.disabled || isBypassed || isMapped
       const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 

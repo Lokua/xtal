@@ -669,6 +669,7 @@ export default function App() {
             controls={controls}
             exclusions={exclusions}
             mappings={mappings}
+            mappingsEnabled={mappingsEnabled}
             showExclusions={childView == View.Exclusions}
             onChange={onChangeControl}
             onClickRandomize={onClickRandomizeSingleControl}

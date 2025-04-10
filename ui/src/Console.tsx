@@ -36,7 +36,7 @@ export default function Console({ alertText }: Props) {
   }, [alertText])
 
   return USE_SINGLE_PANEL ? (
-    <div className="console-single-panel">{helpText}</div>
+    <div className="console-single-panel">{helpText || alertText}</div>
   ) : (
     <div className="console">
       <section>{alertText}</section>
