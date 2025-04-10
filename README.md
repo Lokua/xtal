@@ -61,15 +61,22 @@ experiments.
 - Automatic store/recall of per-sketch UI controls/parameters that can be source
   controlled
 - Hot reloadable WGSL shaders with various templates to simplify setup
-- Store snapshots of all GUI, MIDI, and OSC controls by pressing `Shift+Number`
-  to save and `Cmd+Number` to recall. Snapshots are interpolated to/from at a
-  configurable musical length from 1/16th note up to 4bars. Great for live
+- **Snapshots** - store and recall all GUI, MIDI, and OSC controls in the UI's
+  Snapshot Editor or by pressing `Shift + Number` to save and
+  `<PlatformModifier> + Number` to recall. Snapshots are interpolated to/from at
+  a configurable musical length from 1/16th note up to 4bars. Great for live
   performance!
+- **Randomization** - randomize all controls with configurable transition time.
+  Clicking on a slider's label will randomize just that single control, and
+  `<PlatformModifier> + Click` on a label will revert it to its last saved
+  state.
+- **Exclusions** - a column of checkboxes that pops up to the left of each
+  control allowing you to exclude it from **Randomization**, saved with the
+  sketch.
 - Runtime switching of sketches
 - Ability to override sketch BPM via tap tempo to sync with musicians during
   live performance
-- Controls UI adapts to your operating system's theme preference (see
-  screenshots below)
+- UI adapts to your operating system's theme preference (see screenshots below)
 
 ### Light Mode
 
