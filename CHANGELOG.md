@@ -11,7 +11,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ### Added
 
-- Zoom! Re-added a **Settings > Appearance** section to a add new **Font Size**
+- Zoom! Re-added the **Settings > Appearance** section and a new **Font Size**
   option that will scale most UI elements from default to large and largest for
   a11y's sake (unfortunately webviews or at least Apple's does not support +/-
   zoom like most browsers do)
@@ -24,7 +24,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 - Converted all sizing units in CSS to rem/em to support the new "zoom" feature
 - NumberBox in Controls now properly blurs when pressing Enter and supports
-  `Super+A` to select all text
+  `<PlatformModifier> + A` to select all text
 - Keyboard shortcuts are not platform aware, using `meta` aka `logo` on Mac and
   `ctrl` on Linux/Windows (untested)
 - Singe Parameter Randomization is no longer connected to the sketch-level
@@ -46,7 +46,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Converting backend string value representations to numbers on the frontend now
   uses `Number` and an `isFinite` check to work around limitations in
   `parseFloat` which cannot parse numbers that have higher precision than f32
-  can hold, resulting in some sliders having an `undefined` value.
+  can hold, which resulted in some sliders having an `undefined` value.
 
 ## [0.6.0] - 2025-04-08
 
