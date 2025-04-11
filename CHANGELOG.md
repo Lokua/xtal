@@ -28,8 +28,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 ### Fixed
 
 - MIDI mapping a slider that only functioned as a modulation source did not
-  result in the destination parameter being modulated because the proxy is not
-  known as a dependency.
+  result in the destination parameter being modulated because the proxy was not
+  known as a dependency. See
+  [Issue #22](https://github.com/Lokua/lattice/issues/22)
 
 ## [0.7.0] - 2025-04-10
 
