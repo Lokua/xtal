@@ -230,6 +230,16 @@ impl<T: TimingSource> ControlHub<T> {
     fn run_dependencies(&self, target_name: &str, current_frame: u32) {
         if let Some(order) = &self.dep_graph.order() {
             for name in order.iter() {
+                let midi_proxy_name = MapMode::proxy_name(name);
+
+                let name = if self.midi_proxies_enabled
+                    && self.midi_controls.has(&midi_proxy_name)
+                {
+                    &midi_proxy_name
+                } else {
+                    name
+                };
+
                 if name == target_name {
                     break;
                 }
@@ -317,7 +327,14 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     fn get_raw(&self, name: &str, current_frame: u32) -> f32 {
-        let is_dep = self.dep_graph.is_dependency(name);
+        let is_proxy = MapMode::is_proxy_name(name);
+        let unproxied_name = &MapMode::unproxied_name(name).unwrap_or_default();
+
+        let is_dep = self.dep_graph.is_dependency(if is_proxy {
+            unproxied_name
+        } else {
+            name
+        });
 
         if is_dep {
             if let Some(value) = self.eval_cache.get(name, current_frame) {
@@ -400,6 +417,7 @@ impl<T: TimingSource> ControlHub<T> {
         match value {
             Some(value) => {
                 if is_dep {
+                    let name = ternary!(is_proxy, unproxied_name, name);
                     self.eval_cache.store(name, current_frame, value);
                 }
                 value
@@ -1462,6 +1480,7 @@ c:
 
     #[test]
     #[serial]
+    // #[ignore]
     fn test_disabled() {
         let hub = create_instance(
             r#"
@@ -1481,5 +1500,37 @@ baz:
         );
 
         assert_eq!(hub.ui_controls.disabled("foo"), Some(true));
+    }
+
+    #[test]
+    #[serial]
+    fn test_proxied_pmod_bug() {
+        let mut hub = create_instance(
+            r#"
+foo: 
+  type: slider 
+
+foo_animation:
+  type: automate 
+  breakpoints:
+    - position: 0
+      value: $foo
+      kind: step 
+            "#,
+        );
+
+        hub.midi_controls.add(
+            &MapMode::proxy_name("foo"),
+            MidiControlConfig {
+                channel: 0,
+                cc: 0,
+                min: 0.0,
+                max: 100.0,
+                default: 99.0,
+            },
+        );
+
+        init(1);
+        assert_eq!(hub.get("foo_animation"), 99.0);
     }
 }
