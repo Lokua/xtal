@@ -328,6 +328,15 @@ impl AppModel {
                     hub.midi_controls.restart().inspect_err(log_err).ok();
                 }
                 self.save_global_state();
+
+                self.app_tx.alert_and_log(
+                    ternary!(
+                        hrcc,
+                        "Expecting 14bit MIDI CCs for channels 0-31",
+                        "Expecting standard 7bit MIDI messages for all CCs"
+                    ),
+                    log::Level::Info,
+                );
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
@@ -380,9 +389,16 @@ impl AppModel {
             AppEvent::QueueRecord => {
                 self.recording_state.is_queued =
                     !self.recording_state.is_queued;
+
+                if self.recording_state.is_queued {
+                    self.app_tx.alert_and_log(
+                        "Recording queued. Awaiting MIDI start message.",
+                        log::Level::Info,
+                    );
+                }
             }
             AppEvent::Quit => {
-                debug!("Quit requested");
+                debug!("AppEvent::Quit requested");
                 match self.wv_process.kill() {
                     Ok(_) => debug!("Killed ui_process"),
                     Err(e) => error!("Error killing ui_process {}", e),
@@ -447,13 +463,13 @@ impl AppModel {
                 ) {
                     Ok(path_buf) => {
                         self.app_tx.alert_and_log(
-                            format!("Controls persisted at {:?}", path_buf),
+                            format!("Controls saved to {:?}", path_buf),
                             log::Level::Info,
                         );
                     }
                     Err(e) => {
                         self.app_tx.alert_and_log(
-                            format!("Failed to persist controls: {}", e),
+                            format!("Failed to save controls: {}", e),
                             log::Level::Error,
                         );
                     }
@@ -600,6 +616,14 @@ impl AppModel {
                 self.tap_tempo_enabled = enabled;
                 self.ctx.bpm().set(self.sketch_config.bpm);
                 self.wv_tx.emit(wv::Event::Bpm(self.ctx.bpm().get()));
+                self.app_tx.alert_and_log(
+                    ternary!(
+                        enabled,
+                        "Tap `Space` key to set BPM",
+                        "Sketch BPM has been restored"
+                    ),
+                    log::Level::Info,
+                );
             }
             AppEvent::TransitionTime(transition_time) => {
                 self.transition_time = transition_time;

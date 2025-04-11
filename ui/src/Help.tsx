@@ -2,18 +2,6 @@ import { isMac } from './util'
 
 const mod = isMac ? 'Cmd' : 'Ctrl'
 
-export const Alert = {
-  Midi14Bit: 'Expecting 14bit MIDI on channels 0-31',
-  Midi7Bit: 'Expecting standard 7bit MIDI messages for all CCs',
-  PerfEnabled: format(`
-    When \`Perf\` is enabled, the sketch window will not be resized or 
-    repositioned when switching sketches.
-  `),
-  Queued: 'Recording queued. Awaiting MIDI start message.',
-  TapEnabled: 'Tap `Space` key to set BPM',
-  TapDisabled: 'Sketch BPM has been restored',
-}
-
 export const Help = {
   Advance: format(
     `When the [Play/Pause] toggle is set to [Pause], allows manually advancing 
@@ -34,10 +22,10 @@ export const Help = {
     Enable high resolution (14bit) MIDI for CCs 0-31 (requires support 
     from your MIDI device)
   `),
-  Image: `Capture image to disk (Shortcut: [${mod} S])`,
+  Image: `Capture PNG to disk (Shortcut: [${mod} I])`,
   Mappings: format(`
-      Mappings: allows mapping of external MIDI CCs to UI sliders, aka
-      "MIDI Learn". Mappings are saved with the sketch when you click [Save]. 
+    Mappings: allows mapping of external MIDI CCs to UI sliders, aka
+    "MIDI Learn". Mappings are saved with the sketch when you click [Save]. 
   `),
   MidiClockPort:
     "The MIDI port used to sync all Lattice's frame counter and animations",
@@ -49,8 +37,8 @@ export const Help = {
   `),
   OscPort: 'The OSC port Lattice will use for OSC controls',
   Play: format(`
-    Play/Pause Toggle. When Pause is engaged, use the [Advance] button 
-    or [${mod} A] to manually advance frames.
+    Play/Pause Toggle (Shortcut: [P]). When Pause is engaged, use the [Advance]
+    button or [${mod} A] to manually advance frames.
   `),
   Perf: format(
     `Enable/disable Performance Mode. When enabled, prevents Lattice from 
@@ -69,7 +57,7 @@ export const Help = {
   Reset: 'Reset the frame counter and all animations (Shortcut: [R])',
   Tap: `
     Enabled/disable tap tempo. When enabled, use the [Space] key to tap. 
-    Note that keeping enabled will preserve the currently tapped in tempo when 
+    Note that keeping enabled will preserve the currently tapped-in tempo when 
     switching sketches; disabling will always revert to a sketch's configured BPM.
   `,
   TransitionTime: 'Snapshot and Randomization transition time (in beats)',
@@ -77,13 +65,13 @@ export const Help = {
   Settings: 'Global settings and MIDI mappings',
   Sketch: 'Sketch chooser',
   Snapshots: format(`
-    Snapshot Editor: store and recall up to 10 snapshots.
+    Snapshot Editor: store and recall up to 10 snapshots (Shortcut: [S]).
     You can also save snapshots via [Shift Digit] and recall them
     via [${mod} Digit] without entering the editor.
   `),
   Save: format(`
-    Save UI control states and MIDI mappings for this sketch as well as all 
-    global settings like ports (global and sketch settings are separate)
+    Save UI control states and MIDI mappings for this sketch to disk 
+    (Shortcut: [${mod} S])
   `),
 }
 

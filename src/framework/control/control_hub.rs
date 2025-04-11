@@ -819,6 +819,55 @@ impl<T: TimingSource> ControlHub<T> {
         self.midi_controls.hrcc = hrcc;
     }
 
+    /// Abstracts around a common pattern where you have a checkbox, slider, and
+    /// animation that are all connected as follows:
+    ///
+    /// ```yaml,ignore
+    /// animate_radius:
+    ///   type: checkbox
+    ///
+    /// radius:
+    ///   type: slider
+    ///   disabled: animate_radius
+    ///
+    /// radius_animation:
+    ///   type: triangle
+    /// ```
+    ///
+    /// When `animate_radius` is true, the above only results in the `radius`
+    /// slider appearing disabled in the UI, but you still need to implement
+    /// that on the Rust side:
+    ///
+    /// ```rust
+    /// let radius = if self.hub.bool("animate_radius") {
+    ///     self.hub.get("radius_animation")
+    /// } else {
+    ///     self.hub.get("radius")
+    /// }
+    /// ```
+    ///
+    /// This method just eases that boilerplate slightly:
+    ///
+    /// ```rust
+    /// let radius = self.hub.select(
+    ///     "animate_radius",
+    ///     "radius_animation",
+    ///     "radius"
+    /// );
+    /// ```
+    pub fn select(
+        &self,
+        predicate: &str,
+        name_if_true: &str,
+        name_if_false: &str,
+    ) -> f32 {
+        ternary!(
+            self.bool(predicate),
+            self.get(name_if_true),
+            self.get(name_if_false)
+        )
+    }
+
     fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {
         let raw_config = serde_yml::from_str(yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;

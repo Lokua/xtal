@@ -25,6 +25,9 @@ struct Params {
 
     // bg_invert, unused, mix_mode, unused
     d: vec4f,
+
+    // r, g, b, unused
+    e: vec4f,
 }
 
 @group(0) @binding(0)
@@ -54,8 +57,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         mapped = mix(wave_map(reduced), fractal_map(reduced), map_mix);
     } else if mix_mode == 1.0 {
         mapped = mix(
-            mix_min(wave_map(reduced), fractal_map(reduced)), 
-            mix_max(wave_map(reduced), fractal_map(reduced)), 
+            min(wave_map(reduced), fractal_map(reduced)), 
+            max(wave_map(reduced), fractal_map(reduced)), 
             map_mix
         );
     }
@@ -101,8 +104,14 @@ fn wave_map(wave: f32) -> vec4f {
     
     let normalized = (value + 1.0) * 0.5 * thresholded;
     let result = floor(normalized * n_bands) / (n_bands - 1.0);
+
+    let color = vec3f(
+        mix(1.0, result, params.e.r),
+        mix(1.0, result, params.e.g),
+        mix(1.0, result, params.e.b),
+    );
     
-    return vec4f(vec3f(result), 1.0);
+    return vec4f(vec3f(color), 1.0);
 }
 
 fn fractal_reduce(pos: vec2f) -> f32 {
@@ -125,18 +134,17 @@ fn fractal_reduce(pos: vec2f) -> f32 {
 
 fn fractal_map(color_value: f32) -> vec4f {
     let invert = params.d.x;
+    let color = vec3f(
+        mix(color_value, 1.0, params.e.r),
+        mix(color_value, 1.0, params.e.g),
+        mix(color_value, 1.0, params.e.b),
+    );
+
     if invert == 1.0 {
-        return vec4f(vec3f(1.0 - color_value), 1.0);
+        return vec4f(1.0 - color, 1.0);
     }
-    return vec4f(vec3f(color_value), 1.0);
-}
-
-fn mix_min(c1: vec4f, c2: vec4f) -> vec4f {
-    return min(c1, c2);
-}
-
-fn mix_max(c1: vec4f, c2: vec4f) -> vec4f {
-    return max(c1, c2);
+    
+    return vec4f(color, 1.0);
 }
 
 fn powf(x: f32, y: f32) -> f32 {

@@ -44,7 +44,6 @@ export type Props = {
   onClickRandomize: (name: string) => void
   onClickRevert: (control: Control) => void
   onDeleteSnapshot: (snapshot: string) => void
-  onDeleteAllSnapshots: () => void
   onLoadSnapshot: (snapshot: string) => void
   onToggleExclusion: (name: string) => void
   onSaveSnapshot: (snapshot: string) => void
@@ -63,7 +62,6 @@ export default function Controls({
   onClickRandomize,
   onClickRevert,
   onDeleteSnapshot,
-  onDeleteAllSnapshots,
   onLoadSnapshot,
   onToggleExclusion,
   onSaveSnapshot,
@@ -84,18 +82,6 @@ export default function Controls({
       document.removeEventListener('keyup', keyHandler)
     }
   }, [])
-
-  if (showSnapshots) {
-    return (
-      <Snapshots
-        snapshots={snapshots}
-        onDelete={onDeleteSnapshot}
-        onDeleteAll={onDeleteAllSnapshots}
-        onLoad={onLoadSnapshot}
-        onSave={onSaveSnapshot}
-      />
-    )
-  }
 
   function excludedAndNode(name: string): [boolean, ReactNode] {
     const excluded = exclusions.includes(name)
@@ -118,151 +104,171 @@ export default function Controls({
     ]
   }
 
-  return controls.map((c, index) => {
-    if (c.kind === 'Checkbox') {
-      const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
+  return (
+    <div id="main-view">
+      {showSnapshots && (
+        <header>
+          <Snapshots
+            snapshots={snapshots}
+            onDelete={onDeleteSnapshot}
+            onLoad={onLoadSnapshot}
+            onSave={onSaveSnapshot}
+          />
+        </header>
+      )}
+      <main>
+        {controls.map((c, index) => {
+          if (c.kind === 'Checkbox') {
+            const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
-      return (
-        <div key={c.name} className="control-row">
-          {nodeWithCheckbox}
-          <fieldset>
-            <CheckboxInput
-              id={c.name}
-              type="checkbox"
-              checked={c.value as boolean}
-              disabled={c.disabled}
-              onChange={() => {
-                onChange(c, !c.value)
-              }}
-            />
-            <label htmlFor={c.name}>
-              {excluded && <ExcludedIndicator />}
-              <span>{c.name}</span>
-            </label>
-          </fieldset>
-        </div>
-      )
-    }
+            return (
+              <div key={c.name} className="control-row">
+                {nodeWithCheckbox}
+                <fieldset>
+                  <CheckboxInput
+                    id={c.name}
+                    type="checkbox"
+                    checked={c.value as boolean}
+                    disabled={c.disabled}
+                    onChange={() => {
+                      onChange(c, !c.value)
+                    }}
+                  />
+                  <label htmlFor={c.name}>
+                    {excluded && <ExcludedIndicator />}
+                    <span>{c.name}</span>
+                  </label>
+                </fieldset>
+              </div>
+            )
+          }
 
-    if (c.kind === 'Slider') {
-      const isBypassed = c.name in bypassed
-      const isMapped =
-        mappingsEnabled && !!mappings.find((m) => m[0] === c.name)
-      const disabled = c.disabled || isBypassed || isMapped
-      const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
+          if (c.kind === 'Slider') {
+            const isBypassed = c.name in bypassed
+            const isMapped =
+              mappingsEnabled && !!mappings.find((m) => m[0] === c.name)
+            const disabled = c.disabled || isBypassed || isMapped
+            const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
-      return (
-        <div key={c.name} className="control-row">
-          {nodeWithCheckbox}
-          <fieldset key={c.name}>
-            <input
-              id={c.name}
-              type="range"
-              value={c.value as number}
-              min={c.min}
-              max={c.max}
-              step={c.step}
-              disabled={disabled}
-              onChange={(e) => {
-                onChange(c, e.currentTarget.valueAsNumber)
-              }}
-            />
-            <NumberBox
-              className="number-box"
-              value={c.value as number}
-              min={c.min}
-              max={c.max}
-              step={c.step}
-              disabled={disabled}
-              onChange={(value) => {
-                onChange(c, value)
-              }}
-              // TODO: add this to @lokua/number-box
-              onKeyDown={(e) => {
-                const input = e.currentTarget
+            return (
+              <div key={c.name} className="control-row">
+                {nodeWithCheckbox}
+                <fieldset key={c.name}>
+                  <input
+                    id={c.name}
+                    type="range"
+                    value={c.value as number}
+                    min={c.min}
+                    max={c.max}
+                    step={c.step}
+                    disabled={disabled}
+                    onChange={(e) => {
+                      onChange(c, e.currentTarget.valueAsNumber)
+                    }}
+                  />
+                  <NumberBox
+                    className="number-box"
+                    value={c.value as number}
+                    min={c.min}
+                    max={c.max}
+                    step={c.step}
+                    disabled={disabled}
+                    onChange={(value) => {
+                      onChange(c, value)
+                    }}
+                    // TODO: add this to @lokua/number-box
+                    onKeyDown={(e) => {
+                      const input = e.currentTarget
 
-                if (e.code === 'KeyA' && platformModPressed) {
-                  input.focus()
-                  input.setSelectionRange(0, input.value.length)
-                } else if (e.code === 'Enter') {
-                  input.blur()
-                }
-              }}
-            />
-            <label
-              htmlFor={c.name}
-              className={clsx(!c.disabled && !isBypassed && 'clickable')}
-              onClick={() => {
-                if (platformModPressed) {
-                  onClickRevert(c)
-                } else {
-                  onClickRandomize(c.name)
-                }
-              }}
-            >
-              {excluded && <ExcludedIndicator />}
-              {isMapped && <MappedIndicator />}
-              <span
-                title={
-                  isBypassed
-                    ? 'This control is currently bypassed/overwritten in a Control Script'
-                    : ''
-                }
-                style={{
-                  width:
-                    (showExclusions ? -1.625 : 0) +
-                    (excluded ? -0.875 : 0) +
-                    (isMapped ? -0.875 : 0) +
-                    { 16: 9.75, 17: 8.5, 18: 6.5 }[localSettings.fontSize] +
-                    'rem',
-                  textDecoration: isBypassed ? 'line-through' : 'none',
-                }}
-              >
-                <span className={clsx('text', platformModPressed && 'revert')}>
-                  {c.name}
-                </span>
-              </span>
-            </label>
-          </fieldset>
-        </div>
-      )
-    }
+                      if (e.code === 'KeyA' && platformModPressed) {
+                        input.focus()
+                        input.setSelectionRange(0, input.value.length)
+                      } else if (e.code === 'Enter') {
+                        input.blur()
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={c.name}
+                    className={clsx(!c.disabled && !isBypassed && 'clickable')}
+                    onClick={() => {
+                      if (platformModPressed) {
+                        onClickRevert(c)
+                      } else {
+                        onClickRandomize(c.name)
+                      }
+                    }}
+                  >
+                    {excluded && <ExcludedIndicator />}
+                    {isMapped && <MappedIndicator />}
+                    <span
+                      title={
+                        isBypassed
+                          ? 'This control is currently bypassed/overwritten in a Control Script'
+                          : ''
+                      }
+                      style={{
+                        width:
+                          (showExclusions ? -1.625 : 0) +
+                          (excluded ? -0.875 : 0) +
+                          (isMapped ? -0.875 : 0) +
+                          { 16: 9.75, 17: 8.5, 18: 6.5 }[
+                            localSettings.fontSize
+                          ] +
+                          'rem',
+                        textDecoration: isBypassed ? 'line-through' : 'none',
+                      }}
+                    >
+                      <span
+                        className={clsx('text', platformModPressed && 'revert')}
+                      >
+                        {c.name}
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+              </div>
+            )
+          }
 
-    if (c.kind === 'Select') {
-      const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
+          if (c.kind === 'Select') {
+            const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
-      return (
-        <div key={c.name} className="control-row">
-          {nodeWithCheckbox}
-          <fieldset key={c.name}>
-            <Select
-              id={c.name}
-              value={c.value as string}
-              options={c.options}
-              disabled={c.disabled}
-              onChange={(value) => {
-                onChange(c, value)
-              }}
-            />
-            <label
-              htmlFor={c.name}
-              className={clsx(!c.disabled && !excluded && 'clickable')}
-              onClick={() => {
-                onClickRandomize(c.name)
-              }}
-            >
-              {excluded && <ExcludedIndicator />}
-              <span className="text">{c.name}</span>
-            </label>
-          </fieldset>
-        </div>
-      )
-    }
+            return (
+              <div key={c.name} className="control-row">
+                {nodeWithCheckbox}
+                <fieldset key={c.name}>
+                  <Select
+                    id={c.name}
+                    value={c.value as string}
+                    options={c.options}
+                    disabled={c.disabled}
+                    onChange={(value) => {
+                      onChange(c, value)
+                    }}
+                  />
+                  <label
+                    htmlFor={c.name}
+                    className={clsx(!c.disabled && !excluded && 'clickable')}
+                    onClick={() => {
+                      onClickRandomize(c.name)
+                    }}
+                  >
+                    {excluded && <ExcludedIndicator />}
+                    <span className="text">{c.name}</span>
+                  </label>
+                </fieldset>
+              </div>
+            )
+          }
 
-    if (c.kind === 'DynamicSeparator' || c.kind === 'Separator') {
-      return <Separator key={c.name || index} />
-    }
+          if (c.kind === 'DynamicSeparator' || c.kind === 'Separator') {
+            return <Separator key={c.name || index} />
+          }
 
-    return null
-  })
+          return null
+        })}
+      </main>
+    </div>
+  )
 }

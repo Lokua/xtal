@@ -424,9 +424,10 @@ impl UiControls {
         self.values.contains_key(name)
     }
 
-    /// Same as `float`, only will try to coerce a possibly existing bool to 0.0
-    /// or 1.0 or a select into its matching option index (useful in shader
-    /// context)
+    /// Same as `float`, only will try to coerce a possibly existing Checkbox's
+    /// bool to 0.0 or 1.0 or a Select's string into its matching option index
+    /// (useful in shader context where you are only passing in banks of
+    /// vec4<f32> to uniforms)
     pub fn get(&self, name: &str) -> f32 {
         self.values
             .get(name)

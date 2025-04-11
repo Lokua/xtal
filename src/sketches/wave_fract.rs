@@ -16,7 +16,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct WaveFract {
-    controls: ControlHub<Timing>,
+    hub: ControlHub<Timing>,
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
@@ -37,12 +37,15 @@ struct ShaderParams {
 
     // bg_invert, unused, mix_mode, unused
     d: [f32; 4],
+
+    // r, g, b, unused
+    e: [f32; 4],
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
     let window_rect = ctx.window_rect().clone();
 
-    let controls = ControlHub::from_path(
+    let hub = ControlHub::from_path(
         to_absolute_path(file!(), "wave_fract.yaml"),
         Timing::new(ctx.bpm()),
     );
@@ -53,6 +56,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
         b: [0.0; 4],
         c: [0.0; 4],
         d: [0.0; 4],
+        e: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_fullscreen(
@@ -63,52 +67,49 @@ pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
         true,
     );
 
-    WaveFract { controls, gpu }
+    WaveFract { hub, gpu }
 }
 
 impl Sketch for WaveFract {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
+        self.hub.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],
             a: [
-                ternary!(
-                    self.controls.bool("animate_wave_phase"),
-                    self.controls.get("wave_phase_animation"),
-                    self.controls.get("wave_phase")
+                self.hub.select(
+                    "animate_wave_phase",
+                    "wave_phase_animation",
+                    "wave_phase",
                 ),
-                self.controls.get("wave_radial_freq"),
-                self.controls.get("wave_horiz_freq"),
-                ternary!(
-                    self.controls.bool("link_axes"),
-                    self.controls.get("wave_horiz_freq"),
-                    self.controls.get("wave_vert_freq")
+                self.hub.get("wave_radial_freq"),
+                self.hub.get("wave_horiz_freq"),
+                self.hub.select(
+                    "link_axes",
+                    "wave_horiz_freq",
+                    "wave_vert_freq",
                 ),
             ],
             b: [
-                self.controls.get("bg_freq"),
-                self.controls.get("bg_radius"),
-                self.controls.get("bg_gradient_strength"),
-                self.controls.get("wave_power"),
+                self.hub.get("bg_freq"),
+                self.hub.get("bg_radius"),
+                self.hub.get("bg_gradient_strength"),
+                self.hub.get("wave_power"),
             ],
             c: [
-                self.controls.get("reduce_mix"),
-                self.controls.get("map_mix"),
-                self.controls.get("wave_bands"),
-                self.controls.get("wave_threshold"),
+                self.hub.get("reduce_mix"),
+                self.hub.get("map_mix"),
+                self.hub.get("wave_bands"),
+                self.hub.get("wave_threshold"),
             ],
             d: [
-                bool_to_f32(self.controls.bool("bg_invert")),
+                self.hub.get("bg_invert"),
                 0.0,
-                match self.controls.string("mix_mode").as_str() {
-                    "mix" => 0.0,
-                    "min_max" => 1.0,
-                    _ => unreachable!(),
-                },
+                self.hub.get("mix_mode"),
                 0.0,
             ],
+            e: [self.hub.get("r"), self.hub.get("g"), self.hub.get("b"), 0.0],
         };
 
         self.gpu.update_params(

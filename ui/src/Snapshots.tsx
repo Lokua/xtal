@@ -8,7 +8,6 @@ const availableSlots = Array(10)
 type Props = {
   snapshots: string[]
   onDelete: (snapshot: string) => void
-  onDeleteAll: () => void
   onLoad: (snapshot: string) => void
   onSave: (snapshot: string) => void
 }
@@ -16,7 +15,6 @@ type Props = {
 export default function Snapshots({
   snapshots,
   onDelete,
-  onDeleteAll,
   onLoad,
   onSave,
 }: Props) {
@@ -27,7 +25,7 @@ export default function Snapshots({
         return (
           <div key={slot}>
             <button
-              className={clsx(hasSnapshot && 'on')}
+              className={clsx('slot', hasSnapshot && 'on')}
               onClick={() => {
                 if (hasSnapshot) {
                   onLoad(slot)
@@ -36,7 +34,7 @@ export default function Snapshots({
                 }
               }}
             >
-              [{slot}] {hasSnapshot ? 'Load' : 'Save'}
+              [{slot}]
             </button>
             {hasSnapshot && (
               <IconButton
@@ -49,11 +47,6 @@ export default function Snapshots({
           </div>
         )
       })}
-      <footer style={{ marginTop: '48px', textAlign: 'center' }}>
-        <button onClick={onDeleteAll} disabled={snapshots.length === 0}>
-          Delete All
-        </button>
-      </footer>
     </div>
   )
 }

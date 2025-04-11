@@ -27,7 +27,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> MidiDev {
         .hrcc(true)
         .midi_n("a", (0, 0))
         .midi_n("b", (0, 32))
-        .midi_n("c", (0, 2))
+        .midi_n("c", (0, 1))
         .midi_n("d", (0, 127))
         .build();
 

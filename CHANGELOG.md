@@ -7,6 +7,24 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.8.0] - 2025-04-11
+
+### Added
+
+- `ControlHub::select` which makes choosing between a manual slider or animation
+  for a single destination slightly less noisy
+
+### Changed
+
+- **Snapshots** UI now appears as a header on top of the controls area instead
+  of covering it so we can see the final "snap" of values after the transition.
+  I'm still not 100% happy with the design but it's good enough for now and a
+  definite improvement over the previous iteration.
+- Keyboard shortcuts: **Capture Image** is now `I` instead of `S`; `S` now
+  toggles the **Snapshots** panel.
+- Removed frontend alerts. From now on the concept of "alert" pertains only to
+  messages from the backend.
+
 ## [0.7.0] - 2025-04-10
 
 ### Added

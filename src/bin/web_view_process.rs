@@ -14,6 +14,7 @@ use lattice::{
 
 const DEFAULT_WIDTH: i32 = 560;
 const DEFAULT_HEIGHT: i32 = 700;
+
 // Eyeballed from devtools
 const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 96 + 27;
@@ -68,7 +69,7 @@ fn main() -> wry::Result<()> {
         })
         .build(&window)?;
 
-    web_view.open_devtools();
+    // web_view.open_devtools();
 
     trace!("Starting event loop");
 
@@ -147,7 +148,7 @@ fn setup_ipc_connection(
 }
 
 fn derive_gui_height(controls: Vec<wv::Control>) -> i32 {
-    let unscientific_offset = controls.len() as i32 + 24;
+    let unscientific_offset = controls.len() as i32 - 12;
 
     let controls_height: i32 = controls
         .iter()

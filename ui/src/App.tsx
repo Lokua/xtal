@@ -14,7 +14,6 @@ import Header from './Header'
 import Controls from './Controls'
 import Settings from './Settings'
 import Console from './Console'
-import { Alert } from './Help'
 import { isMac } from './util'
 
 type EventMap = {
@@ -343,10 +342,20 @@ export default function App() {
           }
           break
         }
+        case 'KeyI': {
+          post('CaptureFrame')
+          break
+        }
         case 'KeyM': {
           if (platformModPressed && !e.shiftKey) {
             post('ToggleMainFocus')
           }
+          break
+        }
+        case 'KeyP': {
+          const value = !paused
+          setPaused(value)
+          post('Paused', value)
           break
         }
         case 'KeyQ': {
@@ -369,7 +378,7 @@ export default function App() {
           if (platformModPressed || e.shiftKey) {
             post('Save', exclusions)
           } else {
-            post('CaptureFrame')
+            setShowSnapshots(!showSnapshots)
           }
           break
         }
@@ -391,13 +400,14 @@ export default function App() {
       document.removeEventListener('keyup', keyHandler)
     }
   }, [
-    paused,
-    tapTempoEnabled,
-    view,
     controls,
     exclusions,
+    paused,
     showExclusions,
+    showSnapshots,
     sketchName,
+    tapTempoEnabled,
+    view,
   ])
 
   function getSliderNames() {
@@ -449,7 +459,6 @@ export default function App() {
     const value = !hrcc
     setHrcc(value)
     post('Hrcc', value)
-    setAlertText(value ? Alert.Midi14Bit : Alert.Midi7Bit)
   }
 
   function onChangeMidiClockPort(port: string) {
@@ -482,14 +491,12 @@ export default function App() {
     const value = !perfMode
     setPerfMode(value)
     post('PerfMode', value)
-    setAlertText(value ? Alert.PerfEnabled : '')
   }
 
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
     post('TapTempoEnabled', enabled)
-    setAlertText(enabled ? Alert.TapEnabled : Alert.TapDisabled)
   }
 
   function onChangeTransitionTime(time: number) {
@@ -560,7 +567,6 @@ export default function App() {
     const value = !isQueued
     setIsQueued(value)
     post('QueueRecord')
-    setAlertText(value ? Alert.Queued : '')
   }
 
   function onRecord() {
@@ -592,13 +598,6 @@ export default function App() {
 
   function onSetCurrentlyMapping(name: string) {
     post('CurrentlyMapping', name)
-  }
-
-  function onDeleteAllSnapshots() {
-    snapshots.forEach((slot) => {
-      post('SnapshotDelete', slot)
-    })
-    setSnapshots([])
   }
 
   function onDeleteSnapshots(slot: string) {
@@ -714,7 +713,6 @@ export default function App() {
             onToggleExclusion={onToggleExclusion}
             snapshots={snapshots}
             onDeleteSnapshot={onDeleteSnapshots}
-            onDeleteAllSnapshots={onDeleteAllSnapshots}
             onLoadSnapshot={onLoadSnapshot}
             onSaveSnapshot={onSaveSnapshot}
           />
