@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react'
 import Context, {
-  getStoredSettings,
-  LOCAL_STORAGE_KEY,
   LocalSettings,
   ContextProps,
+  defaultSettings,
 } from './Context'
+
+const LOCAL_STORAGE_KEY = 'lattice.localSettings'
+
+function getStoredSettings(): LocalSettings {
+  try {
+    const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY)
+
+    if (storedSettings) {
+      return {
+        ...defaultSettings,
+        ...JSON.parse(storedSettings),
+      }
+    }
+  } catch (error) {
+    console.error('Error loading local settings:', error)
+  }
+
+  return {
+    ...defaultSettings,
+  }
+}
 
 export default function Provider({ children }: { children: React.ReactNode }) {
   const [localSettings, setLocalSettings] = useState<LocalSettings>(
