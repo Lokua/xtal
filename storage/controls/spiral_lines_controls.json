@@ -9,136 +9,566 @@
     {
       "type": "Slider",
       "name": "n_lines",
-      "value": 94.0
+      "value": 64.0
     },
     {
       "type": "Slider",
       "name": "points_per_segment",
-      "value": 12420.0
+      "value": 14200.0
     },
     {
       "type": "Slider",
       "name": "point_size",
-      "value": 0.0030999999
+      "value": 0.0018
     },
     {
       "type": "Slider",
       "name": "harmonic_influence",
-      "value": 5.25
+      "value": 0.01
     },
     {
       "type": "Slider",
       "name": "noise_scale",
-      "value": 0.0004
+      "value": 0.00174
     },
     {
       "type": "Slider",
       "name": "angle_variation",
-      "value": 1.2
+      "value": 3.2
     },
     {
       "type": "Slider",
       "name": "col_freq",
-      "value": 174.03
+      "value": 171.84999
     },
     {
       "type": "Slider",
       "name": "row_freq",
-      "value": 217.65
+      "value": 219.65
     },
     {
       "type": "Slider",
       "name": "width",
-      "value": 0.74
+      "value": 1.8499999
     },
     {
       "type": "Slider",
       "name": "distortion",
-      "value": 2.35
+      "value": 2.8799999
     },
     {
       "type": "Slider",
       "name": "wave_amp",
-      "value": 0.008599999
+      "value": 0.046
     },
     {
       "type": "Slider",
       "name": "center_count",
-      "value": 1.0
+      "value": 8.0
     },
     {
       "type": "Slider",
       "name": "center_spread",
-      "value": 1.8690001
+      "value": 1.769
     },
     {
       "type": "Slider",
       "name": "center_falloff",
-      "value": 5.72
+      "value": 2.55
     },
     {
       "type": "Slider",
       "name": "circle_radius",
-      "value": 1.7900001
+      "value": 0.785
     },
     {
       "type": "Slider",
       "name": "circle_force",
-      "value": 0.60200006
+      "value": 1.71
     },
     {
       "type": "Slider",
       "name": "circle_phase",
-      "value": 1.6
+      "value": 1.2
     },
     {
       "type": "Slider",
       "name": "clip_start",
-      "value": 0.22
+      "value": 0.19
     },
     {
       "type": "Slider",
       "name": "clip_grade",
-      "value": 1.0
+      "value": 0.75
     },
     {
       "type": "Slider",
       "name": "stripe_amp",
-      "value": 0.1916
+      "value": 0.14549999
     },
     {
       "type": "Slider",
       "name": "stripe_freq",
-      "value": 32.0
+      "value": 34.0
     },
     {
       "type": "Slider",
       "name": "stripe_mix",
-      "value": 0.45
+      "value": 0.14
     },
     {
       "type": "Slider",
       "name": "stripe_step",
-      "value": 0.38
+      "value": 0.31
     },
     {
       "type": "Slider",
       "name": "stripe_min",
-      "value": 0.049999997
+      "value": 0.7
     },
     {
       "type": "Slider",
       "name": "stripe_max",
-      "value": 0.59
+      "value": 0.21
     },
     {
       "type": "Slider",
       "name": "stripe_phase",
-      "value": 4.072
+      "value": 4.834
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
-  "mappings": {}
+  "snapshots": {
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 3.308
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 0.343
+        },
+        {
+          "type": "Slider",
+          "name": "clip_grade",
+          "value": 0.90999997
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.1384
+        },
+        {
+          "type": "Slider",
+          "name": "center_falloff",
+          "value": 4.8
+        },
+        {
+          "type": "Slider",
+          "name": "width",
+          "value": 0.81
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_max",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 14200.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_count",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 33.0
+        },
+        {
+          "type": "Slider",
+          "name": "distortion",
+          "value": 1.04
+        },
+        {
+          "type": "Slider",
+          "name": "clip_start",
+          "value": 0.59
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 3.7
+        },
+        {
+          "type": "Slider",
+          "name": "col_freq",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_min",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.00040999998
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_step",
+          "value": 0.74
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_mix",
+          "value": 0.26999998
+        },
+        {
+          "type": "Slider",
+          "name": "circle_phase",
+          "value": 1.9
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0018
+        },
+        {
+          "type": "Slider",
+          "name": "center_spread",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "row_freq",
+          "value": 17.91
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_force",
+          "value": 1.172
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.086899996
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_mix",
+          "value": 0.48
+        },
+        {
+          "type": "Slider",
+          "name": "clip_grade",
+          "value": 0.85999995
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_step",
+          "value": 0.45999998
+        },
+        {
+          "type": "Slider",
+          "name": "col_freq",
+          "value": 0.19999999
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 3.8
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "distortion",
+          "value": 5.18
+        },
+        {
+          "type": "Slider",
+          "name": "circle_phase",
+          "value": 5.1
+        },
+        {
+          "type": "Slider",
+          "name": "center_spread",
+          "value": 0.71900004
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 1.424
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0018
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 14200.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_force",
+          "value": 3.8390002
+        },
+        {
+          "type": "Slider",
+          "name": "row_freq",
+          "value": 142.27
+        },
+        {
+          "type": "Slider",
+          "name": "center_count",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_falloff",
+          "value": 7.77
+        },
+        {
+          "type": "Slider",
+          "name": "width",
+          "value": 1.9
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_min",
+          "value": 0.66999996
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.21689999
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.00045
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_max",
+          "value": 0.12
+        },
+        {
+          "type": "Slider",
+          "name": "clip_start",
+          "value": 0.03
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 1.238
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 14200.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_min",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 4.53
+        },
+        {
+          "type": "Slider",
+          "name": "circle_phase",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0018
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.00018999999
+        },
+        {
+          "type": "Slider",
+          "name": "circle_force",
+          "value": 2.904
+        },
+        {
+          "type": "Slider",
+          "name": "distortion",
+          "value": 2.74
+        },
+        {
+          "type": "Slider",
+          "name": "clip_grade",
+          "value": 0.63
+        },
+        {
+          "type": "Slider",
+          "name": "center_falloff",
+          "value": 6.66
+        },
+        {
+          "type": "Slider",
+          "name": "row_freq",
+          "value": 233.40999
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 0.075
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 59.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_step",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "center_count",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 2.2
+        },
+        {
+          "type": "Slider",
+          "name": "col_freq",
+          "value": 185.97
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_mix",
+          "value": 0.26
+        },
+        {
+          "type": "Slider",
+          "name": "clip_start",
+          "value": 0.72999996
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.2252
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_max",
+          "value": 0.07
+        },
+        {
+          "type": "Slider",
+          "name": "center_spread",
+          "value": 1.8640001
+        },
+        {
+          "type": "Slider",
+          "name": "width",
+          "value": 1.0699999
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.42249998
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "harmonic_influence",
+    "point_size",
+    "points_per_segment",
+    "n_lines"
+  ]
 }

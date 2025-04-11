@@ -22,8 +22,8 @@ export default function Snapshots({
 }: Props) {
   return (
     <div id="snapshots">
-      {availableSlots.map((slot, i) => {
-        const hasSnapshot = snapshots[i] === slot
+      {availableSlots.map((slot) => {
+        const hasSnapshot = !!snapshots.find((id) => id === slot)
         return (
           <div key={slot}>
             <button

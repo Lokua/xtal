@@ -14,12 +14,12 @@
     {
       "type": "Slider",
       "name": "wave_freq",
-      "value": 0.3392
+      "value": 0.7363
     },
     {
       "type": "Slider",
       "name": "wave_scale",
-      "value": 0.5105
+      "value": 0.65819997
     },
     {
       "type": "Checkbox",
@@ -39,17 +39,17 @@
     {
       "type": "Slider",
       "name": "distort_mix",
-      "value": 0.8252
+      "value": 0.7208
     },
     {
       "type": "Checkbox",
       "name": "animate_distort_freq",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
       "name": "distort_freq",
-      "value": 3.1748
+      "value": 3.3116999
     },
     {
       "type": "Checkbox",
@@ -59,27 +59,27 @@
     {
       "type": "Slider",
       "name": "distort_angle_offset",
-      "value": -0.7483
+      "value": -0.83449996
     },
     {
       "type": "Slider",
       "name": "fractal_mix",
-      "value": 0.3217
+      "value": 0.0909
     },
     {
       "type": "Slider",
       "name": "fractal_count",
-      "value": 0.4965
+      "value": 0.2483
     },
     {
       "type": "Slider",
       "name": "fractal_scale",
-      "value": 0.0105
+      "value": 0.8916
     },
     {
       "type": "Slider",
       "name": "fractal_color_scale",
-      "value": 0.1329
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -89,17 +89,17 @@
     {
       "type": "Slider",
       "name": "fractal_grid_scale",
-      "value": 0.0804
+      "value": 0.028
     },
     {
       "type": "Slider",
       "name": "signal_mix",
-      "value": 1.0
+      "value": 0.81479996
     },
     {
       "type": "Slider",
       "name": "signal_steps",
-      "value": 0.049
+      "value": 0.0941
     },
     {
       "type": "Slider",
@@ -114,7 +114,7 @@
     {
       "type": "Slider",
       "name": "mask_radius",
-      "value": -1.5245
+      "value": 0.426
     },
     {
       "type": "Checkbox",
@@ -154,53 +154,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "mask_x",
+          "name": "mask_y",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_scale",
-          "value": 0.8916
-        },
-        {
-          "type": "Slider",
-          "name": "signal_mix",
-          "value": 0.81479996
-        },
-        {
-          "type": "Slider",
-          "name": "mask_radius",
-          "value": 0.426
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_mask_radius",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "e4",
-          "value": 0.853
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_wave_x",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_distort_angle_offset",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "distort_angle_offset",
-          "value": -0.83449996
-        },
-        {
-          "type": "Slider",
-          "name": "wave_freq",
-          "value": 0.7363
         },
         {
           "type": "Checkbox",
@@ -208,49 +163,14 @@
           "value": false
         },
         {
-          "type": "Slider",
-          "name": "e3",
-          "value": 0.8107
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y",
-          "value": 0.88159996
-        },
-        {
-          "type": "Slider",
-          "name": "signal_steps",
-          "value": 0.0941
-        },
-        {
           "type": "Checkbox",
-          "name": "animate_mask_x",
-          "value": false
+          "name": "animate_wave_x",
+          "value": true
         },
         {
           "type": "Slider",
           "name": "wave_x",
           "value": 0.8161
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_wave_mix",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "mask_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_grid_scale",
-          "value": 0.028
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_color_scale",
-          "value": 1.0
         },
         {
           "type": "Slider",
@@ -259,18 +179,13 @@
         },
         {
           "type": "Slider",
+          "name": "wave_freq",
+          "value": 0.7363
+        },
+        {
+          "type": "Slider",
           "name": "fractal_grid_mix",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_scale",
-          "value": 0.65819997
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_count",
-          "value": 0.2483
         },
         {
           "type": "Slider",
@@ -279,8 +194,8 @@
         },
         {
           "type": "Slider",
-          "name": "fractal_mix",
-          "value": 0.0909
+          "name": "fractal_count",
+          "value": 0.2483
         },
         {
           "type": "Slider",
@@ -288,75 +203,9 @@
           "value": 0.7208
         },
         {
-          "type": "Checkbox",
-          "name": "animate_mask_y",
-          "value": false
-        },
-        {
           "type": "Slider",
-          "name": "mask_falloff",
-          "value": 0.9852
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "e3",
-          "value": 0.8107
-        },
-        {
-          "type": "Slider",
-          "name": "mask_radius",
-          "value": -1.5245
-        },
-        {
-          "type": "Slider",
-          "name": "mask_falloff",
-          "value": 0.9852
-        },
-        {
-          "type": "Slider",
-          "name": "mask_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_color_scale",
-          "value": 0.1329
-        },
-        {
-          "type": "Slider",
-          "name": "wave_scale",
-          "value": 0.5105
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_distort_angle_offset",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_distort_freq",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "signal_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_grid_scale",
-          "value": 0.0804
-        },
-        {
-          "type": "Slider",
-          "name": "e4",
-          "value": 0.853
+          "name": "fractal_scale",
+          "value": 0.8916
         },
         {
           "type": "Checkbox",
@@ -365,23 +214,28 @@
         },
         {
           "type": "Slider",
-          "name": "wave_x",
-          "value": 0.8161
-        },
-        {
-          "type": "Slider",
-          "name": "fractal_mix",
-          "value": 0.3217
-        },
-        {
-          "type": "Slider",
-          "name": "wave_mix",
-          "value": 0.7208
-        },
-        {
-          "type": "Slider",
           "name": "signal_steps",
-          "value": 0.049
+          "value": 0.0941
+        },
+        {
+          "type": "Slider",
+          "name": "wave_scale",
+          "value": 0.65819997
+        },
+        {
+          "type": "Slider",
+          "name": "mask_radius",
+          "value": 0.426
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_grid_scale",
+          "value": 0.028
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_distort_angle_offset",
+          "value": false
         },
         {
           "type": "Slider",
@@ -390,38 +244,18 @@
         },
         {
           "type": "Slider",
-          "name": "wave_freq",
-          "value": 0.3392
+          "name": "signal_mix",
+          "value": 0.81479996
         },
         {
           "type": "Slider",
-          "name": "distort_angle_offset",
-          "value": -0.7483
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_mask_x",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_wave_x",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_mask_y",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "mask_y",
+          "name": "mask_x",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "fractal_count",
-          "value": 0.4965
+          "name": "e4",
+          "value": 0.853
         },
         {
           "type": "Checkbox",
@@ -430,8 +264,134 @@
         },
         {
           "type": "Slider",
-          "name": "fractal_scale",
-          "value": 0.0105
+          "name": "distort_angle_offset",
+          "value": -0.83449996
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_mask_y",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_color_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_mix",
+          "value": 0.0909
+        },
+        {
+          "type": "Slider",
+          "name": "mask_falloff",
+          "value": 0.9852
+        },
+        {
+          "type": "Slider",
+          "name": "e3",
+          "value": 0.8107
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_mask_x",
+          "value": false
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "animate_mask_y",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "distort_angle_offset",
+          "value": 0.0475
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_distort_angle_offset",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "e3",
+          "value": 0.875
+        },
+        {
+          "type": "Slider",
+          "name": "e4",
+          "value": 0.6268
+        },
+        {
+          "type": "Slider",
+          "name": "distort_mix",
+          "value": 0.0633
+        },
+        {
+          "type": "Slider",
+          "name": "signal_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_distort_freq",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_mix",
+          "value": 0.2629
+        },
+        {
+          "type": "Slider",
+          "name": "mask_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_mask_x",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_grid_scale",
+          "value": 0.0804
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 0.2591
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_count",
+          "value": 0.4965
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_mix",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y",
+          "value": 0.99729997
+        },
+        {
+          "type": "Slider",
+          "name": "mask_radius",
+          "value": 1.0378
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_color_scale",
+          "value": 0.1329
         },
         {
           "type": "Slider",
@@ -440,13 +400,53 @@
         },
         {
           "type": "Slider",
-          "name": "distort_freq",
-          "value": 3.1748
+          "name": "signal_steps",
+          "value": 0.6238
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_mask_radius",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "distort_mix",
-          "value": 0.8252
+          "name": "wave_x",
+          "value": 0.5674
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_x",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_scale",
+          "value": 0.0426
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_mix",
+          "value": 0.3217
+        },
+        {
+          "type": "Slider",
+          "name": "mask_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "fractal_scale",
+          "value": 0.0105
+        },
+        {
+          "type": "Slider",
+          "name": "distort_freq",
+          "value": 0.20719999
+        },
+        {
+          "type": "Slider",
+          "name": "mask_falloff",
+          "value": 0.055999998
         }
       ],
       "midi_controls": [],
