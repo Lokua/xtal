@@ -12,7 +12,6 @@ import type {
 import { View } from './types'
 import Header from './Header'
 import Controls from './Controls'
-import Snapshots from './Snapshots'
 import Settings from './Settings'
 import Console from './Console'
 import { Alert } from './Help'
@@ -104,12 +103,6 @@ type EventMap = {
   UpdatedControls: RawControl[]
 }
 
-const params = new URLSearchParams(window.location.search)
-console.log(
-  params.get('foo'),
-  window.matchMedia('(prefers-color-scheme: light)').matches
-)
-
 function subscribe<K extends keyof EventMap>(
   callback: (event: K, data: EventMap[K]) => void
 ) {
@@ -136,10 +129,12 @@ function subscribe<K extends keyof EventMap>(
 function post<K extends keyof EventMap>(
   event: EventMap[K] extends void ? K : never
 ): void
+
 function post<K extends keyof EventMap>(
   event: EventMap[K] extends void ? never : K,
   data: EventMap[K]
 ): void
+
 function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
   if (data === undefined) {
     window.ipc.postMessage(JSON.stringify(event))
@@ -179,7 +174,6 @@ export default function App() {
   const [audioDevice, setAudioDevice] = useState('')
   const [bpm, setBpm] = useState(134)
   const [bypassed, setBypassed] = useState<Bypassed>({})
-  const [childView, setChildView] = useState<View>(View.Default)
   const [controls, setControls] = useState<Control[]>([])
   const [controlsLastSaved, setControlsLastSaved] = useState<Control[]>([])
   const [exclusions, setExclusions] = useState<string[]>([])
@@ -200,6 +194,8 @@ export default function App() {
   const [perfMode, setPerfMode] = useState(false)
   const [sketchName, setSketchName] = useState('')
   const [sketchNames, setSketchNames] = useState<string[]>([])
+  const [showExclusions, setShowExclusions] = useState(false)
+  const [showSnapshots, setShowSnapshots] = useState(false)
   const [snapshots, setSnapshots] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
@@ -332,7 +328,7 @@ export default function App() {
           break
         }
         case 'KeyE': {
-          onChangeChildView(View.Exclusions)
+          setShowExclusions(!showExclusions)
           break
         }
         case 'KeyF': {
@@ -394,22 +390,13 @@ export default function App() {
     return () => {
       document.removeEventListener('keyup', keyHandler)
     }
-    // Disabling exhaustive-deps because it needlessly forces us to include
-    // functions that are defined on every render which defeats the purpose, or
-    // forces us to wrap every function in useCallback which at this point with
-    // ~35 functions will likely add more overhead than it's worth (sure,
-    // children will rerender, but all this component does is manage state,
-    // events, and render children anyway). Just make sure any function using
-    // state has that state included below and everything will be fine.
-    //
-    //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     paused,
     tapTempoEnabled,
     view,
-    childView,
     controls,
     exclusions,
+    showExclusions,
     sketchName,
   ])
 
@@ -417,6 +404,14 @@ export default function App() {
     return controls
       .filter((control) => control.kind === 'Slider')
       .map((control) => control.name)
+  }
+
+  function updateEventForControl(control: Control): keyof EventMap {
+    return control.kind === 'Checkbox'
+      ? 'UpdateControlBool'
+      : control.kind === 'Slider'
+      ? 'UpdateControlFloat'
+      : 'UpdateControlString'
   }
 
   function onAdvance() {
@@ -444,14 +439,7 @@ export default function App() {
       )
     )
 
-    const event: keyof EventMap =
-      control.kind === 'Checkbox'
-        ? 'UpdateControlBool'
-        : control.kind === 'Slider'
-        ? 'UpdateControlFloat'
-        : 'UpdateControlString'
-
-    post(event, {
+    post(updateEventForControl(control), {
       name: control.name,
       value,
     })
@@ -517,14 +505,6 @@ export default function App() {
     }
   }
 
-  function onChangeChildView(initiator: View) {
-    if (childView === View.Default || childView !== initiator) {
-      setChildView(initiator)
-    } else if (childView === initiator) {
-      setChildView(View.Default)
-    }
-  }
-
   function onClearBuffer() {
     post('ClearBuffer')
   }
@@ -559,14 +539,7 @@ export default function App() {
       })
     )
 
-    const event: keyof EventMap =
-      control.kind === 'Checkbox'
-        ? 'UpdateControlBool'
-        : control.kind === 'Slider'
-        ? 'UpdateControlFloat'
-        : 'UpdateControlString'
-
-    post(event, {
+    post(updateEventForControl(control), {
       name: updatedControl.name,
       value: updatedControl.value,
     })
@@ -621,23 +594,23 @@ export default function App() {
     post('CurrentlyMapping', name)
   }
 
-  function onSnapshotDeleteAll() {
+  function onDeleteAllSnapshots() {
     snapshots.forEach((slot) => {
       post('SnapshotDelete', slot)
     })
     setSnapshots([])
   }
 
-  function onSnapshotDelete(slot: string) {
+  function onDeleteSnapshots(slot: string) {
     setSnapshots(snapshots.filter((s) => s !== slot))
     post('SnapshotDelete', slot)
   }
 
-  function onSnapshotLoad(slot: string) {
+  function onLoadSnapshot(slot: string) {
     post('SnapshotRecall', slot)
   }
 
-  function onSnapshotSave(slot: string) {
+  function onSaveSnapshot(slot: string) {
     setSnapshots(snapshots.concat(slot).slice().sort())
     post('SnapshotStore', slot)
   }
@@ -665,12 +638,13 @@ export default function App() {
       <Header
         fps={fps}
         bpm={bpm}
-        childView={childView}
         isEncoding={isEncoding}
         isQueued={isQueued}
         isRecording={isRecording}
         paused={paused}
         perfMode={perfMode}
+        showExclusions={showExclusions}
+        showSnapshots={showSnapshots}
         sketchName={sketchName}
         sketchNames={sketchNames}
         tapTempoEnabled={tapTempoEnabled}
@@ -678,7 +652,6 @@ export default function App() {
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
-        onChangeChildView={onChangeChildView}
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}
         onChangeTransitionTime={onChangeTransitionTime}
@@ -691,7 +664,13 @@ export default function App() {
         onRecord={onRecord}
         onSave={onSave}
         onSwitchSketch={onSwitchSketch}
+        onToggleExclusions={() => {
+          setShowExclusions(!showExclusions)
+        }}
         onTogglePlay={onTogglePlay}
+        onToggleSnapshots={() => {
+          setShowSnapshots(!showSnapshots)
+        }}
       />
       <main>
         {view === View.Settings ? (
@@ -720,14 +699,6 @@ export default function App() {
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
-        ) : childView === View.Snapshots ? (
-          <Snapshots
-            snapshots={snapshots}
-            onDelete={onSnapshotDelete}
-            onDeleteAll={onSnapshotDeleteAll}
-            onLoad={onSnapshotLoad}
-            onSave={onSnapshotSave}
-          />
         ) : (
           <Controls
             bypassed={bypassed}
@@ -735,11 +706,17 @@ export default function App() {
             exclusions={exclusions}
             mappings={mappings}
             mappingsEnabled={mappingsEnabled}
-            showExclusions={childView == View.Exclusions}
+            showExclusions={showExclusions}
+            showSnapshots={showSnapshots}
             onChange={onChangeControl}
             onClickRandomize={onClickRandomizeSingleControl}
             onClickRevert={onClickRevert}
             onToggleExclusion={onToggleExclusion}
+            snapshots={snapshots}
+            onDeleteSnapshot={onDeleteSnapshots}
+            onDeleteAllSnapshots={onDeleteAllSnapshots}
+            onLoadSnapshot={onLoadSnapshot}
+            onSaveSnapshot={onSaveSnapshot}
           />
         )}
       </main>

@@ -12,13 +12,14 @@ type TransitionTime = (typeof transitionTimes)[number]
 
 type HeaderProps = {
   bpm: number
-  childView: View
   fps: number
   isEncoding: boolean
   isQueued: boolean
   isRecording: boolean
   paused: boolean
   perfMode: boolean
+  showExclusions: boolean
+  showSnapshots: boolean
   sketchName: string
   sketchNames: string[]
   tapTempoEnabled: boolean
@@ -26,7 +27,6 @@ type HeaderProps = {
   view: View
   onAdvance: noop
   onCaptureFrame: noop
-  onChangeChildView: (view: View) => void
   onChangePerfMode: noop
   onChangeTapTempoEnabled: noop
   onChangeTransitionTime: (transitionTime: TransitionTime) => void
@@ -39,18 +39,21 @@ type HeaderProps = {
   onReset: noop
   onSave: noop
   onSwitchSketch: (sketchName: string) => void
+  onToggleExclusions: noop
   onTogglePlay: noop
+  onToggleSnapshots: noop
 }
 
 export default function Header({
   bpm,
-  childView,
   fps,
   isEncoding,
   isQueued,
   isRecording,
   paused,
   perfMode,
+  showExclusions,
+  showSnapshots,
   sketchName,
   sketchNames,
   tapTempoEnabled,
@@ -58,7 +61,6 @@ export default function Header({
   view,
   onAdvance,
   onCaptureFrame,
-  onChangeChildView,
   onChangePerfMode,
   onChangeTapTempoEnabled,
   onChangeTransitionTime,
@@ -71,7 +73,9 @@ export default function Header({
   onReset,
   onSave,
   onSwitchSketch,
+  onToggleExclusions,
   onTogglePlay,
+  onToggleSnapshots,
 }: HeaderProps) {
   return (
     <header>
@@ -179,10 +183,8 @@ export default function Header({
           title="Exclusions Mode"
           name="Exclusions"
           isToggle
-          on={childView === View.Exclusions}
-          onClick={() => {
-            onChangeChildView(View.Exclusions)
-          }}
+          on={showExclusions}
+          onClick={onToggleExclusions}
         />
 
         <IconButton
@@ -195,10 +197,8 @@ export default function Header({
           data-help-id="Snapshots"
           name="Snapshots"
           isToggle
-          on={childView === View.Snapshots}
-          onClick={() => {
-            onChangeChildView(View.Snapshots)
-          }}
+          on={showSnapshots}
+          onClick={onToggleSnapshots}
         />
 
         <fieldset>

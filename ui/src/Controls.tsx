@@ -10,6 +10,7 @@ import CheckboxInput from './Checkbox'
 import Select from './Select'
 import Separator, { VerticalSeparator } from './Separator'
 import { useLocalSettings } from './LocalSettings'
+import Snapshots from './Snapshots'
 import { isMac } from './util'
 
 const ExcludedIndicator = () => (
@@ -30,17 +31,23 @@ const MappedIndicator = () => (
   </span>
 )
 
-type Props = {
+export type Props = {
   bypassed: Bypassed
   controls: Control[]
   exclusions: Exclusions
   mappings: Mappings
   mappingsEnabled: boolean
   showExclusions: boolean
+  showSnapshots: boolean
+  snapshots: string[]
   onChange: (control: Control, value: ControlValue) => void
   onClickRandomize: (name: string) => void
   onClickRevert: (control: Control) => void
+  onDeleteSnapshot: (snapshot: string) => void
+  onDeleteAllSnapshots: () => void
+  onLoadSnapshot: (snapshot: string) => void
   onToggleExclusion: (name: string) => void
+  onSaveSnapshot: (snapshot: string) => void
 }
 
 export default function Controls({
@@ -50,10 +57,16 @@ export default function Controls({
   mappings,
   mappingsEnabled,
   showExclusions,
+  showSnapshots,
+  snapshots,
   onChange,
   onClickRandomize,
   onClickRevert,
+  onDeleteSnapshot,
+  onDeleteAllSnapshots,
+  onLoadSnapshot,
   onToggleExclusion,
+  onSaveSnapshot,
 }: Props) {
   const [platformModPressed, setPlatformModPressed] = useState(false)
   const { localSettings } = useLocalSettings()
@@ -71,6 +84,18 @@ export default function Controls({
       document.removeEventListener('keyup', keyHandler)
     }
   }, [])
+
+  if (showSnapshots) {
+    return (
+      <Snapshots
+        snapshots={snapshots}
+        onDelete={onDeleteSnapshot}
+        onDeleteAll={onDeleteAllSnapshots}
+        onLoad={onLoadSnapshot}
+        onSave={onSaveSnapshot}
+      />
+    )
+  }
 
   function excludedAndNode(name: string): [boolean, ReactNode] {
     const excluded = exclusions.includes(name)
