@@ -8,7 +8,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, str, thread};
 
-use super::map_mode::{MapMode, MappingError};
+use super::map_mode::MapMode;
 use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
 use super::serialization::{

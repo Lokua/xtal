@@ -728,23 +728,14 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     pub fn update(&mut self) {
-        let new_config = {
-            if let Some(update_state) = &self.update_state {
-                if update_state.has_changes.load(Ordering::Acquire) {
-                    update_state.has_changes.store(false, Ordering::Release);
-
-                    if let Ok(mut guard) = update_state.state.lock() {
-                        guard.take()
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            } else {
-                None
+        let new_config = self.update_state.as_ref().and_then(|update_state| {
+            if !update_state.has_changes.load(Ordering::Acquire) {
+                return None;
             }
-        };
+            update_state.has_changes.store(false, Ordering::Release);
+            let state = update_state.state.lock();
+            state.ok().and_then(|mut guard| guard.take())
+        });
 
         if let Some(config) = new_config {
             if let Err(e) = self.populate_controls(&config) {
