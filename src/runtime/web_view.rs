@@ -29,6 +29,12 @@ pub enum UserDir {
     Videos,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum OsDir {
+    Cache,
+    Config,
+}
+
 /// Used to send/receive data from our app into a web view using ipc-channel.
 /// Most events should be assumed to be one-way from child to parent unless
 /// otherwise documented.
@@ -115,6 +121,7 @@ pub enum Event {
     /// Sent whenever the user physically moves a MIDI control when in map mode
     Mappings(Vec<(String, ChannelAndController)>),
     MappingsEnabled(bool),
+    OpenOsDir(OsDir),
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
@@ -284,6 +291,9 @@ pub fn launch(
                 }
                 Event::MappingsEnabled(enabled) => {
                     app_tx.emit(AppEvent::MappingsEnabled(enabled));
+                }
+                Event::OpenOsDir(os_dir) => {
+                    app_tx.emit(AppEvent::OpenOsDir(os_dir));
                 }
                 Event::Paused(paused) => {
                     app_tx.emit(AppEvent::Paused(paused));

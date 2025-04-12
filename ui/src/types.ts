@@ -24,6 +24,11 @@ export enum UserDir {
   Videos = 'Videos',
 }
 
+export enum OsDir {
+  Cache = 'Cache',
+  Config = 'Config',
+}
+
 export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
 export type Exclusions = string[]

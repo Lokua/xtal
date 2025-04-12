@@ -7,12 +7,23 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
-## 2025-04-12
+## [0.9.0] 2025-04-12
 
 ### Added
 
 - Control labels will now subtly flash while their control is in transition to
   indicate progress
+- **Data**, **Images**, and **Videos** directory options in settings to give the
+  user control. These will be the conventional directories on the host OS if
+  possible, otherwise will default to `$HOME/[Images|Videos|Documents]/Lattice`
+
+### Changed
+
+- Now using the OS cache dir for video frames instead of the config dir
+- Now using the OS config dir instead of this repo's ./storage folder for
+  GlobalSettings.
+- `image_index.json` has been changed to `image_metadata.json` and is now stored
+  in the user's chosen **Data** dir.
 
 ## [0.8.0] - 2025-04-11
 

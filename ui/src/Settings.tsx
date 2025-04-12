@@ -1,4 +1,4 @@
-import { Mappings, noop, UserDir } from './types'
+import { Mappings, noop, OsDir, UserDir } from './types'
 import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
@@ -50,6 +50,7 @@ type Props = {
   onChangeOscPort: (port: number) => void
   onClickSend: () => void
   onDeleteMappings: () => void
+  onOpenOsDir: (osDir: OsDir) => void
   onRemoveMapping: (name: string) => void
   onSetCurrentlyMapping: (name: string) => void
 }
@@ -80,6 +81,7 @@ export default function Settings({
   onChangeOscPort,
   onClickSend,
   onDeleteMappings,
+  onOpenOsDir,
   onRemoveMapping,
   onSetCurrentlyMapping,
 }: Props) {
@@ -143,6 +145,22 @@ export default function Settings({
             <span>{videosDir}</span>
           </div>
         </fieldset>
+        <aside>
+          <button
+            onClick={() => {
+              onOpenOsDir(OsDir.Cache)
+            }}
+          >
+            Open cache dir
+          </button>
+          <button
+            onClick={() => {
+              onOpenOsDir(OsDir.Config)
+            }}
+          >
+            Open config dir
+          </button>
+        </aside>
 
         <h2>MIDI</h2>
         <button data-help-id="Send" onClick={onClickSend}>

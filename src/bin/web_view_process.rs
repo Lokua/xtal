@@ -15,7 +15,7 @@ const DEFAULT_HEIGHT: i32 = 700;
 // Eyeballed from devtools
 const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 96 + 27;
-const MIN_SETTINGS_HEIGHT: i32 = 660;
+const MIN_SETTINGS_HEIGHT: i32 = 700;
 
 fn main() -> wry::Result<()> {
     init_logger();

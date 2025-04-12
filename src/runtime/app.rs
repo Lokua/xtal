@@ -53,6 +53,7 @@ pub enum AppEvent {
     MidiContinue,
     MidiStart,
     MidiStop,
+    OpenOsDir(wv::OsDir),
     Paused(bool),
     PerfMode(bool),
     QueueRecord,
@@ -407,6 +408,23 @@ impl AppModel {
                             );
                         }
                     }
+                }
+            }
+            AppEvent::OpenOsDir(os_dir) => {
+                let result = match os_dir {
+                    wv::OsDir::Cache => {
+                        open::that(storage::cache_dir().unwrap_or_default())
+                    }
+                    wv::OsDir::Config => {
+                        open::that(storage::config_dir().unwrap_or_default())
+                    }
+                };
+
+                if let Err(e) = result {
+                    self.app_tx.alert_and_log(
+                        format!("Error in OpenOsDir: {}", e),
+                        log::Level::Error,
+                    );
                 }
             }
             AppEvent::MidiStop => {

@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 
-import type {
+import {
   Bypassed,
   Control,
   ControlValue,
   Exclusions,
   Mappings,
+  OsDir,
   RawControl,
+  UserDir,
+  View,
 } from './types'
 
-import { View, UserDir } from './types'
 import Header from './Header'
 import Controls from './Controls'
 import Settings from './Settings'
@@ -68,6 +70,7 @@ type EventMap = {
   }
   Mappings: Mappings
   MappingsEnabled: boolean
+  OpenOsDir: OsDir
   Paused: boolean
   PerfMode: boolean
   QueueRecord: void
@@ -641,6 +644,10 @@ export default function App() {
     post('SnapshotRecall', slot)
   }
 
+  function onOpenOsDir(osDir: OsDir) {
+    post('OpenOsDir', osDir)
+  }
+
   function onSaveSnapshot(slot: string) {
     setSnapshots(snapshots.concat(slot).slice().sort())
     post('SnapshotStore', slot)
@@ -731,6 +738,7 @@ export default function App() {
             onChangeOscPort={onChangeOscPort}
             onClickSend={onClickSendMidi}
             onDeleteMappings={onDeleteMappings}
+            onOpenOsDir={onOpenOsDir}
             onRemoveMapping={onRemoveMapping}
             onSetCurrentlyMapping={onSetCurrentlyMapping}
           />
