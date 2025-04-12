@@ -27,7 +27,7 @@ use super::{
 use crate::framework::instrumentation::Instrumentation;
 use crate::{
     framework::{frame_controller, prelude::*},
-    runtime::{map_mode::MapMode, serialization::SaveableProgramState},
+    runtime::{map_mode::MapMode, serialization::TransitorySketchState},
 };
 
 pub const TRANSITION_TIMES: [f32; 15] = [
@@ -766,7 +766,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
-    pub fn merge_program_state(&mut self, state: &SaveableProgramState) {
+    pub fn merge_program_state(&mut self, state: &TransitorySketchState) {
         for (k, v) in state.ui_controls.values().iter() {
             self.ui_controls.update_value(k, v.clone());
         }

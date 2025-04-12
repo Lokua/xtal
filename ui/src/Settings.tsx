@@ -1,35 +1,10 @@
-import { Mappings, noop } from './types'
+import { Mappings, noop, UserDir } from './types'
 import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
 import Select from './Select'
+import IconButton from './IconButton'
 import { FontSizeChoice, useLocalSettings } from './LocalSettings'
-
-type Props = {
-  audioDevice: string
-  audioDevices: string[]
-  hrcc: boolean
-  mappings: Mappings
-  mappingsEnabled: boolean
-  midiClockPort: string
-  midiInputPort: string
-  midiInputPorts: string[]
-  midiOutputPort: string
-  midiOutputPorts: string[]
-  oscPort: number
-  sliderNames: string[]
-  onChangeAudioDevice: (name: string) => void
-  onChangeHrcc: noop
-  onChangeMappingsEnabled: () => void
-  onChangeMidiClockPort: (port: string) => void
-  onChangeMidiInputPort: (port: string) => void
-  onChangeMidiOutputPort: (port: string) => void
-  onChangeOscPort: (port: number) => void
-  onClickSend: () => void
-  onDeleteMappings: () => void
-  onRemoveMapping: (name: string) => void
-  onSetCurrentlyMapping: (name: string) => void
-}
 
 type SizePreset = 'Default' | 'Large' | 'Largest'
 
@@ -49,10 +24,41 @@ function fromSizePreset(size: SizePreset) {
   }[size] as FontSizeChoice
 }
 
+type Props = {
+  audioDevice: string
+  audioDevices: string[]
+  hrcc: boolean
+  imagesDir: string
+  mappings: Mappings
+  mappingsEnabled: boolean
+  midiClockPort: string
+  midiInputPort: string
+  midiInputPorts: string[]
+  midiOutputPort: string
+  midiOutputPorts: string[]
+  oscPort: number
+  sliderNames: string[]
+  userDataDir: string
+  videosDir: string
+  onChangeAudioDevice: (name: string) => void
+  onChangeFolder: (kind: UserDir) => void
+  onChangeHrcc: noop
+  onChangeMappingsEnabled: () => void
+  onChangeMidiClockPort: (port: string) => void
+  onChangeMidiInputPort: (port: string) => void
+  onChangeMidiOutputPort: (port: string) => void
+  onChangeOscPort: (port: number) => void
+  onClickSend: () => void
+  onDeleteMappings: () => void
+  onRemoveMapping: (name: string) => void
+  onSetCurrentlyMapping: (name: string) => void
+}
+
 export default function Settings({
   audioDevice,
   audioDevices,
   hrcc,
+  imagesDir,
   mappings,
   mappingsEnabled,
   midiClockPort,
@@ -62,7 +68,10 @@ export default function Settings({
   midiOutputPorts,
   oscPort,
   sliderNames,
+  userDataDir,
+  videosDir,
   onChangeAudioDevice,
+  onChangeFolder,
   onChangeHrcc,
   onChangeMappingsEnabled,
   onChangeMidiClockPort,
@@ -92,6 +101,47 @@ export default function Settings({
             }
           />
           <label htmlFor="size">Size</label>
+        </fieldset>
+
+        <h2>Storage</h2>
+        <fieldset
+          data-help-id="UserDataDir"
+          className="folder-option"
+          onClick={() => {
+            onChangeFolder(UserDir.UserData)
+          }}
+        >
+          <label id="sketch-data-folder">Data</label>
+          <div aria-labelledby="user-data-folder">
+            <IconButton name="Folder" />
+            <span>{userDataDir}</span>
+          </div>
+        </fieldset>
+        <fieldset
+          data-help-id="ImagesDir"
+          className="folder-option"
+          onClick={() => {
+            onChangeFolder(UserDir.Images)
+          }}
+        >
+          <label id="images-folder">Images</label>
+          <div aria-labelledby="images-folder-folder">
+            <IconButton id="images-folder" name="Folder" />
+            <span>{imagesDir}</span>
+          </div>
+        </fieldset>
+        <fieldset
+          data-help-id="VideosDir"
+          className="folder-option"
+          onClick={() => {
+            onChangeFolder(UserDir.Videos)
+          }}
+        >
+          <label id="videos-folder">Videos</label>
+          <div aria-labelledby="videos-folder">
+            <IconButton id="videos-folder" name="Folder" />
+            <span>{videosDir}</span>
+          </div>
         </fieldset>
 
         <h2>MIDI</h2>

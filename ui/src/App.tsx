@@ -9,7 +9,7 @@ import type {
   RawControl,
 } from './types'
 
-import { View } from './types'
+import { View, UserDir } from './types'
 import Header from './Header'
 import Controls from './Controls'
 import Settings from './Settings'
@@ -23,6 +23,7 @@ type EventMap = {
   Bpm: number
   CaptureFrame: void
   ChangeAudioDevice: string
+  ChangeDir: UserDir
   ChangeMidiClockPort: string
   ChangeMidiControlInputPort: string
   ChangeMidiControlOutputPort: string
@@ -38,6 +39,7 @@ type EventMap = {
     audioDevice: string
     audioDevices: string[]
     hrcc: boolean
+    imagesDir: string
     isLightTheme: boolean
     mappingsEnabled: boolean
     midiClockPort: string
@@ -49,6 +51,8 @@ type EventMap = {
     sketchNames: string[]
     sketchName: string
     transitionTime: number
+    userDataDir: string
+    videosDir: string
   }
   LoadSketch: {
     bpm: number
@@ -70,6 +74,7 @@ type EventMap = {
   Quit: void
   Randomize: Exclusions
   Ready: void
+  ReceiveDir: [UserDir, string]
   RemoveMapping: string
   Reset: void
   Save: string[]
@@ -178,6 +183,7 @@ export default function App() {
   const [exclusions, setExclusions] = useState<string[]>([])
   const [fps, setFps] = useState(60)
   const [hrcc, setHrcc] = useState(false)
+  const [imagesDir, setImagesDir] = useState('')
   const [isEncoding, setIsEncoding] = useState(false)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -201,6 +207,8 @@ export default function App() {
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
   const [transitionInProgress, setTransitionInProgress] = useState(false)
+  const [videosDir, setVideosDir] = useState('')
+  const [userDataDir, setUserDataDir] = useState('')
   const [view, setView] = useState<View>(View.Controls)
 
   useEffect(() => {
@@ -241,6 +249,7 @@ export default function App() {
           setAudioDevice(d.audioDevice)
           setAudioDevices(d.audioDevices)
           setHrcc(d.hrcc)
+          setImagesDir(d.imagesDir)
           setMappingsEnabled(d.mappingsEnabled)
           setMidiClockPort(d.midiClockPort)
           setMidiInputPort(d.midiInputPort)
@@ -249,9 +258,11 @@ export default function App() {
           setMidiInputPorts(d.midiInputPorts.map(getPort))
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
           setOscPort(d.oscPort)
+          setUserDataDir(d.userDataDir)
           setSketchName(d.sketchName)
           setSketchNames(d.sketchNames)
           setTransitionTime(d.transitionTime)
+          setVideosDir(d.videosDir)
           break
         }
         case 'LoadSketch': {
@@ -272,6 +283,17 @@ export default function App() {
         }
         case 'Mappings': {
           setMappings(data as EventMap['Mappings'])
+          break
+        }
+        case 'ReceiveDir': {
+          const [kind, dir] = data as EventMap['ReceiveDir']
+          if (kind === UserDir.Images) {
+            setImagesDir(dir)
+          } else if (kind === UserDir.UserData) {
+            setUserDataDir(dir)
+          } else {
+            setImagesDir(dir)
+          }
           break
         }
         case 'SnapshotEnded': {
@@ -457,6 +479,10 @@ export default function App() {
       name: control.name,
       value,
     })
+  }
+
+  function onChangeFolder(kind: UserDir) {
+    post('ChangeDir', kind)
   }
 
   function onChangeHrcc() {
@@ -683,6 +709,7 @@ export default function App() {
             audioDevice={audioDevice}
             audioDevices={audioDevices}
             hrcc={hrcc}
+            imagesDir={imagesDir}
             mappings={mappings}
             mappingsEnabled={mappingsEnabled}
             midiClockPort={midiClockPort}
@@ -692,7 +719,10 @@ export default function App() {
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
             sliderNames={getSliderNames()}
+            userDataDir={userDataDir}
+            videosDir={videosDir}
             onChangeAudioDevice={onChangeAudioDevice}
+            onChangeFolder={onChangeFolder}
             onChangeHrcc={onChangeHrcc}
             onChangeMappingsEnabled={onChangeMappingsEnabled}
             onChangeMidiClockPort={onChangeMidiClockPort}

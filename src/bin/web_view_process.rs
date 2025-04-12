@@ -1,16 +1,13 @@
 use ipc_channel::ipc::{self, IpcSender};
-use tao::{
-    dpi::{self, LogicalPosition, LogicalSize, PixelUnit},
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder, WindowSizeConstraints},
-};
+use rfd::FileDialog;
+use tao::dpi::{self, LogicalPosition, LogicalSize, PixelUnit};
+use tao::event::{Event, WindowEvent};
+use tao::event_loop::{ControlFlow, EventLoop};
+use tao::window::{WindowBuilder, WindowSizeConstraints};
 use wry::WebViewBuilder;
 
-use lattice::{
-    framework::prelude::*,
-    runtime::web_view::{self as wv},
-};
+use lattice::framework::prelude::*;
+use lattice::runtime::web_view::{self as wv};
 
 const DEFAULT_WIDTH: i32 = 560;
 const DEFAULT_HEIGHT: i32 = 700;
@@ -18,7 +15,7 @@ const DEFAULT_HEIGHT: i32 = 700;
 // Eyeballed from devtools
 const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 96 + 27;
-const MIN_SETTINGS_HEIGHT: i32 = 580;
+const MIN_SETTINGS_HEIGHT: i32 = 660;
 
 fn main() -> wry::Result<()> {
     init_logger();
@@ -51,7 +48,7 @@ fn main() -> wry::Result<()> {
     let web_view = WebViewBuilder::new()
         .with_url("http://localhost:3000")
         .with_devtools(true)
-        // Events from UI->Here->Parent
+        // Events from UI -> Here -> Parent
         .with_ipc_handler(move |message| {
             trace!("ipc_handler message: {:?};", message);
             let json_string = message.body().to_string();
@@ -65,11 +62,28 @@ fn main() -> wry::Result<()> {
                     wv::Event::Error(format!("{}", e))
                 });
 
-            sender.send(event).unwrap();
+            match event {
+                wv::Event::ChangeDir(kind) => {
+                    match FileDialog::new().pick_folder() {
+                        Some(dir) => {
+                            sender
+                                .send(wv::Event::ReceiveDir(
+                                    kind,
+                                    dir.to_string_lossy().into_owned(),
+                                ))
+                                .unwrap();
+                        }
+                        None => {
+                            info!("{:?} dir selection cancelled", kind);
+                        }
+                    }
+                }
+                _ => sender.send(event).unwrap(),
+            }
         })
         .build(&window)?;
 
-    // web_view.open_devtools();
+    web_view.open_devtools();
 
     trace!("Starting event loop");
 

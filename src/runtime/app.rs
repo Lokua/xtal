@@ -3,6 +3,7 @@ use nannou::prelude::*;
 use std::cell::{Cell, Ref};
 use std::collections::{HashMap, VecDeque};
 use std::error::Error;
+use std::path::PathBuf;
 use std::process::Child;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -12,9 +13,8 @@ use super::map_mode::MapMode;
 use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
 use super::serialization::{
-    GLOBAL_SETTINGS_VERSION, GlobalSettings, SaveableProgramState,
+    GLOBAL_SETTINGS_VERSION, GlobalSettings, TransitorySketchState,
 };
-use super::shared::lattice_project_root;
 use super::storage;
 use super::tap_tempo::TapTempo;
 use super::web_view::{self as wv};
@@ -58,12 +58,13 @@ pub enum AppEvent {
     QueueRecord,
     Quit,
     Randomize(Exclusions),
+    ReceiveDir(wv::UserDir, String),
     ReceiveMappings(Vec<(String, ChannelAndController)>),
     Record,
     RemoveMapping(String),
     Reset,
     Resize,
-    SaveProgramState(Exclusions),
+    Save(Exclusions),
     SendMidi,
     SendMappings,
     SnapshotDelete(String),
@@ -189,7 +190,7 @@ impl AppModel {
                     format!("{}-{}.png", self.sketch_name(), uuid_5());
 
                 let file_path =
-                    lattice_project_root().join("images").join(&filename);
+                    &PathBuf::from(global::images_dir()).join(&filename);
 
                 self.main_window(app)
                     .unwrap()
@@ -213,7 +214,12 @@ impl AppModel {
             AppEvent::ChangeAudioDevice(name) => {
                 global::set_audio_device_name(&name);
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.audio_controls.restart().inspect_err(log_err).ok();
+                    hub.audio_controls
+                        .restart()
+                        .inspect_err(|e| {
+                            error!("Error in ChangeAudioDevice: {}", e)
+                        })
+                        .ok();
                 }
                 self.save_global_state();
             }
@@ -225,7 +231,12 @@ impl AppModel {
             AppEvent::ChangeMidiControlInputPort(port) => {
                 global::set_midi_control_in_port(port);
                 if let Some(hub) = self.control_hub_mut() {
-                    hub.midi_controls.restart().inspect_err(log_err).ok();
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|e| {
+                            error!("Error in ChangeMidiControlInputPort: {}", e)
+                        })
+                        .ok();
                 }
                 self.save_global_state();
             }
@@ -336,14 +347,17 @@ impl AppModel {
                         }
                         app_tx.emit(AppEvent::SendMappings);
                     })
-                    .inspect_err(log_err)
+                    .inspect_err(|e| error!("Error in CurrentlyMapping: {}", e))
                     .ok();
             }
             AppEvent::Hrcc(hrcc) => {
                 self.hrcc = hrcc;
                 if let Some(hub) = self.control_hub_mut() {
                     hub.midi_controls.hrcc = hrcc;
-                    hub.midi_controls.restart().inspect_err(log_err).ok();
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|e| error!("Error in Hrcc: {}", e))
+                        .ok();
                 }
                 self.save_global_state();
 
@@ -433,6 +447,36 @@ impl AppModel {
                     hub.randomize(exclusions);
                 }
             }
+            AppEvent::ReceiveDir(user_dir, dir) => {
+                if dir.is_empty() {
+                    return error!(
+                        "Received invalid user_dir: {:?}, dir: {}",
+                        user_dir, dir
+                    );
+                }
+                match user_dir {
+                    wv::UserDir::Images => global::set_images_dir(dir),
+                    wv::UserDir::UserData => {
+                        global::set_user_data_dir(dir);
+                        if let Some(image_index) = &self.image_index {
+                            if !storage::image_metadata_exists()
+                                && !image_index.items.is_empty()
+                            {
+                                storage::save_image_index(image_index)
+                                    .inspect_err(|e| {
+                                        error!(
+                                            "Error saving image index: {}",
+                                            e
+                                        )
+                                    })
+                                    .ok();
+                            }
+                        }
+                    }
+                    wv::UserDir::Videos => global::set_videos_dir(dir),
+                }
+                self.save_global_state();
+            }
             AppEvent::ReceiveMappings(mappings) => {
                 self.map_mode.update_from_vec(&mappings);
             }
@@ -470,7 +514,7 @@ impl AppModel {
                     wr.set_current(rect);
                 }
             }
-            AppEvent::SaveProgramState(exclusions) => {
+            AppEvent::Save(exclusions) => {
                 let mappings = self.map_mode.mappings();
 
                 match storage::save_program_state(
@@ -705,6 +749,7 @@ impl AppModel {
                     audio_device: global::audio_device_name(),
                     audio_devices: list_audio_devices().unwrap_or_default(),
                     hrcc: self.hrcc,
+                    images_dir: global::images_dir(),
                     is_light_theme: matches!(
                         dark_light::detect(),
                         dark_light::Mode::Light
@@ -719,6 +764,8 @@ impl AppModel {
                     sketch_names: registry.names().clone(),
                     sketch_name: self.sketch_name(),
                     transition_time: self.transition_time,
+                    user_data_dir: global::user_data_dir(),
+                    videos_dir: global::videos_dir(),
                 });
             }
         }
@@ -853,6 +900,7 @@ impl AppModel {
     fn save_global_state(&mut self) {
         if let Err(e) = storage::save_global_state(GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
+            images_dir: global::images_dir(),
             audio_device_name: global::audio_device_name(),
             hrcc: self.hrcc,
             mappings_enabled: self.mappings_enabled,
@@ -861,6 +909,8 @@ impl AppModel {
             midi_control_out_port: global::midi_control_out_port(),
             osc_port: global::osc_port(),
             transition_time: self.transition_time,
+            user_data_dir: global::user_data_dir(),
+            videos_dir: global::videos_dir(),
         }) {
             self.app_tx.alert_and_log(
                 format!("Failed to persist global settings: {}", e),
@@ -879,8 +929,8 @@ impl AppModel {
         let mappings = self.map_mode.mappings();
 
         let mut current_state = self.control_hub().map_or_else(
-            SaveableProgramState::default,
-            |hub| SaveableProgramState {
+            TransitorySketchState::default,
+            |hub| TransitorySketchState {
                 ui_controls: hub.ui_controls.clone(),
                 midi_controls: hub.midi_controls.clone(),
                 osc_controls: hub.osc_controls.clone(),
@@ -903,7 +953,12 @@ impl AppModel {
 
                 // TODO: not ideal to automatically start the MIDI listener in
                 // hub init phase only to restart here each time
-                hub.midi_controls.restart().inspect_err(log_err).ok();
+                hub.midi_controls
+                    .restart()
+                    .inspect_err(|e| {
+                        error!("Error in load_sketch_state: {}", e)
+                    })
+                    .ok();
 
                 if hub.snapshots.is_empty() {
                     app_tx.alert_and_log("Controls restored", log::Level::Info);
@@ -960,12 +1015,15 @@ impl Drop for AppModel {
 fn model(app: &App) -> AppModel {
     let global_settings = match storage::load_global_state() {
         Ok(gs) => {
-            info!("Restoring global settings: {:#?}", gs);
+            info!("Restoring global settings: {:?}", gs);
             global::set_audio_device_name(&gs.audio_device_name);
+            global::set_images_dir(gs.images_dir.clone());
             global::set_midi_clock_port(gs.midi_clock_port.clone());
             global::set_midi_control_in_port(gs.midi_control_in_port.clone());
             global::set_midi_control_out_port(gs.midi_control_out_port.clone());
             global::set_osc_port(gs.osc_port);
+            global::set_user_data_dir(gs.user_data_dir.clone());
+            global::set_videos_dir(gs.videos_dir.clone());
             gs
         }
         Err(e) => {
@@ -1024,7 +1082,9 @@ fn model(app: &App) -> AppModel {
         }
     };
 
-    let image_index = storage::load_image_index().inspect_err(log_err).ok();
+    let image_index = storage::load_image_index()
+        .inspect_err(|e| error!("Error in model: {}", e))
+        .ok();
 
     let event_tx = AppEventSender::new(raw_event_tx);
     let (web_view_tx, ui_process) = wv::launch(&event_tx).unwrap();
@@ -1036,11 +1096,6 @@ fn model(app: &App) -> AppModel {
             ui_tx.emit(wv::Event::AverageFps(frame_controller::average_fps()));
         }
     });
-
-    debug!(
-        "global_settings.mappings_enabled: {}",
-        global_settings.mappings_enabled
-    );
 
     let mut model = AppModel {
         app_rx: event_rx,

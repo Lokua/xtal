@@ -23,6 +23,7 @@ export const Help = {
     from your MIDI device)
   `),
   Image: `Capture PNG to disk (Shortcut: [${mod} I])`,
+  ImagesDir: `The directory where image captures will be saved`,
   Mappings: format(`
     Mappings: allows mapping of external MIDI CCs to UI sliders, aka
     "MIDI Learn". Mappings are saved with the sketch when you click [Save]. 
@@ -64,6 +65,11 @@ export const Help = {
   Send: 'Sends the state of all CCs to the MIDI output port',
   Settings: 'Global settings and MIDI mappings',
   Sketch: 'Sketch chooser',
+  SketchDataDir: format(`
+    The directory where sketch data including control values, MIDI mappings, 
+    and Snapshots will be saved to. It is recommended to choose a location that
+     is source controlled.
+  `),
   Snapshots: format(`
     Snapshot Editor: store and recall up to 10 snapshots (Shortcut: [S]).
     You can also save snapshots via [Shift Digit] and recall them
@@ -73,6 +79,7 @@ export const Help = {
     Save UI control states and MIDI mappings for this sketch to disk 
     (Shortcut: [${mod} S])
   `),
+  VideosDir: `The directory where encoded videos will be saved`,
 }
 
 function format(s: string): string {

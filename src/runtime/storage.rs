@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 
 use super::map_mode::Mappings;
 use super::serialization::{
-    GlobalSettings, SaveableProgramState, SerializableProgramState,
+    GlobalSettings, SerializableSketchState, TransitorySketchState,
 };
-use super::shared::lattice_project_root;
+use super::shared::lattice_config_dir;
 use crate::framework::prelude::*;
 
 fn global_state_storage_path() -> PathBuf {
-    lattice_project_root()
-        .join("storage")
+    lattice_config_dir()
+        .unwrap_or_default()
         .join("global_settings.json")
 }
 
@@ -36,8 +36,7 @@ pub fn load_global_state() -> Result<GlobalSettings, Box<dyn Error>> {
 }
 
 fn controls_storage_path(sketch_name: &str) -> PathBuf {
-    lattice_project_root()
-        .join("storage")
+    PathBuf::from(global::user_data_dir())
         .join("controls")
         .join(format!("{}_controls.json", sketch_name))
 }
@@ -48,7 +47,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     mappings: Mappings,
     exclusions: Vec<String>,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    let state = SaveableProgramState {
+    let state = TransitorySketchState {
         ui_controls: hub.ui_controls.clone(),
         midi_controls: hub.midi_controls.clone(),
         osc_controls: hub.osc_controls.clone(),
@@ -57,7 +56,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
         exclusions,
     };
 
-    let serializable_controls = SerializableProgramState::from(&state);
+    let serializable_controls = SerializableSketchState::from(&state);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
     let path = controls_storage_path(sketch_name);
     if let Some(parent_dir) = path.parent() {
@@ -73,13 +72,13 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
 /// from file.
 pub fn load_sketch_state<'a>(
     sketch_name: &str,
-    state: &'a mut SaveableProgramState,
-) -> Result<&'a mut SaveableProgramState, Box<dyn Error>> {
+    state: &'a mut TransitorySketchState,
+) -> Result<&'a mut TransitorySketchState, Box<dyn Error>> {
     let path = controls_storage_path(sketch_name);
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
 
-    let serialized = serde_json::from_str::<SerializableProgramState>(&json)?;
+    let serialized = serde_json::from_str::<SerializableSketchState>(&json)?;
     state.merge(serialized);
 
     Ok(state)
@@ -89,8 +88,8 @@ pub fn load_sketch_state<'a>(
 // Image Index
 // -----------------------------------------------------------------------------
 
-/// The image index is used because computers (especially Macs) are really bad
-/// at maintaining the date created field on a file and this is important to me
+/// The image index is used because OSs and online services are really bad at
+/// maintaining the date_created field and this is important to me
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ImageIndex {
     pub items: Vec<ImageIndexItem>,
@@ -103,7 +102,11 @@ pub struct ImageIndexItem {
 }
 
 fn image_index_path() -> PathBuf {
-    lattice_project_root().join("images").join("_index.json")
+    PathBuf::from(global::user_data_dir()).join("images_metadata.json")
+}
+
+pub fn image_metadata_exists() -> bool {
+    image_index_path().try_exists().unwrap_or(false)
 }
 
 pub fn load_image_index() -> Result<ImageIndex, Box<dyn Error>> {

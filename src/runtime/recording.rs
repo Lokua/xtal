@@ -1,22 +1,20 @@
-use std::{
-    cell::Cell,
-    error::Error,
-    io::{BufRead, BufReader},
-    path::PathBuf,
-    process::{Command, Stdio},
-    str,
-    sync::mpsc,
-    thread,
-    time::Instant,
-};
+use std::cell::Cell;
+use std::error::Error;
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
+use std::str;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Instant;
 
-use super::{app, shared::lattice_config_dir};
-use crate::{
-    framework::prelude::*,
-    runtime::{app::AppEvent, shared::generate_session_id},
-};
+use super::app;
+use super::shared::lattice_config_dir;
+use crate::framework::prelude::*;
+use crate::runtime::app::AppEvent;
+use crate::runtime::shared::generate_session_id;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct RecordingState {
     pub is_recording: bool,
     pub is_encoding: bool,
@@ -28,11 +26,25 @@ pub struct RecordingState {
     pub encoding_start: Option<Instant>,
 }
 
+impl Default for RecordingState {
+    fn default() -> Self {
+        Self {
+            is_recording: false,
+            is_encoding: false,
+            is_queued: false,
+            recorded_frames: Cell::new(0),
+            recording_dir: Some(PathBuf::from(global::videos_dir())),
+            encoding_thread: None,
+            encoding_progress_rx: None,
+            encoding_start: None,
+        }
+    }
+}
+
 impl RecordingState {
     pub fn new(recording_dir: Option<PathBuf>) -> Self {
         Self {
             recording_dir,
-            recorded_frames: Cell::new(0),
             ..Default::default()
         }
     }
@@ -186,11 +198,11 @@ pub fn video_output_path(
     session_id: &str,
     sketch_name: &str,
 ) -> Option<PathBuf> {
-    dirs::video_dir().map(|video_dir| {
-        video_dir
+    Some(
+        PathBuf::from(global::videos_dir())
             .join(format!("{}-{}", sketch_name, session_id))
-            .with_extension("mp4")
-    })
+            .with_extension("mp4"),
+    )
 }
 
 pub enum EncodingMessage {

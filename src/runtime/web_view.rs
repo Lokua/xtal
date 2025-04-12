@@ -22,6 +22,13 @@ use crate::runtime::app::AppEvent;
 
 type Bypassed = HashMap<String, f32>;
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum UserDir {
+    Images,
+    UserData,
+    Videos,
+}
+
 /// Used to send/receive data from our app into a web view using ipc-channel.
 /// Most events should be assumed to be one-way from child to parent unless
 /// otherwise documented.
@@ -39,6 +46,10 @@ pub enum Event {
     Bpm(f32),
     CaptureFrame,
     ChangeAudioDevice(String),
+
+    /// Event intercepted from frontend -> web_view_process to open a File
+    /// Dialog. See [`Event::ReceiveString`] for making use of the new dir
+    ChangeDir(UserDir),
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
     ChangeMidiControlOutputPort(String),
@@ -66,6 +77,7 @@ pub enum Event {
         audio_device: String,
         audio_devices: Vec<String>,
         hrcc: bool,
+        images_dir: String,
         is_light_theme: bool,
         mappings_enabled: bool,
         midi_clock_port: String,
@@ -77,6 +89,8 @@ pub enum Event {
         sketch_names: Vec<String>,
         sketch_name: String,
         transition_time: f32,
+        user_data_dir: String,
+        videos_dir: String,
     },
 
     /// Sent after the child emits [`Event::SwitchSketch`]
@@ -98,7 +112,7 @@ pub enum Event {
         exclusions: Exclusions,
     },
 
-    // Sent whenever the user physically moves a MIDI control when in map mode
+    /// Sent whenever the user physically moves a MIDI control when in map mode
     Mappings(Vec<(String, ChannelAndController)>),
     MappingsEnabled(bool),
     Paused(bool),
@@ -106,6 +120,12 @@ pub enum Event {
     QueueRecord,
     Quit,
     Ready,
+
+    /// A two-way message:
+    /// 1. Sent from web_view_process to here after user has chosen dir
+    /// 2. Sent to main app to save dir to global state
+    /// 3. Sent from here back to frontend to show the updated dir
+    ReceiveDir(UserDir, String),
     #[serde(rename_all = "camelCase")]
     Randomize(Exclusions),
     RemoveMapping(String),
@@ -209,6 +229,7 @@ pub fn launch(
         server.accept()?;
 
     let app_tx = app_tx.clone();
+    let wv_tx = sender.clone();
 
     thread::spawn(move || {
         while let Ok(message) = receiver.recv() {
@@ -228,6 +249,7 @@ pub fn launch(
                 Event::ChangeAudioDevice(name) => {
                     app_tx.emit(AppEvent::ChangeAudioDevice(name));
                 }
+                Event::ChangeDir(_) => {}
                 Event::ChangeMidiClockPort(port) => {
                     app_tx.emit(AppEvent::ChangeMidiClockPort(port));
                 }
@@ -281,6 +303,11 @@ pub fn launch(
                 Event::Ready => {
                     app_tx.emit(AppEvent::WebViewReady);
                 }
+                Event::ReceiveDir(kind, dir) => {
+                    app_tx
+                        .emit(AppEvent::ReceiveDir(kind.clone(), dir.clone()));
+                    wv_tx.send(Event::ReceiveDir(kind, dir)).unwrap();
+                }
                 Event::RemoveMapping(name) => {
                     app_tx.emit(AppEvent::RemoveMapping(name));
                 }
@@ -291,7 +318,7 @@ pub fn launch(
                     app_tx.emit(AppEvent::StartRecording);
                 }
                 Event::Save(exclusions) => {
-                    app_tx.emit(AppEvent::SaveProgramState(exclusions));
+                    app_tx.emit(AppEvent::Save(exclusions));
                 }
                 Event::SendMidi => {
                     app_tx.emit(AppEvent::SendMidi);

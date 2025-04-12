@@ -7,7 +7,8 @@ pub fn generate_session_id() -> String {
 }
 
 pub fn lattice_config_dir() -> Option<PathBuf> {
-    dirs::config_dir().map(|config_dir| config_dir.join("Lattice"))
+    directories_next::BaseDirs::new()
+        .map(|base| base.config_dir().join("Lattice"))
 }
 
 pub fn lattice_project_root() -> PathBuf {

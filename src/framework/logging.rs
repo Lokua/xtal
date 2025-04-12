@@ -38,11 +38,6 @@ pub fn init_logger() {
         .init();
 }
 
-/// Helper that can be passed point-free to an `inspect_err` closure
-pub fn log_err<E: std::fmt::Debug>(e: &E) {
-    error!("{:?}", e);
-}
-
 #[macro_export]
 macro_rules! warn_once {
    ($($arg:tt)+) => {{

@@ -18,6 +18,12 @@ export enum View {
   Snapshots,
 }
 
+export enum UserDir {
+  Images = 'Images',
+  UserData = 'UserData',
+  Videos = 'Videos',
+}
+
 export type ChannelAndController = [number, number]
 export type Mappings = [string, ChannelAndController][]
 export type Exclusions = string[]

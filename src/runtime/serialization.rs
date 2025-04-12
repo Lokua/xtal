@@ -12,12 +12,15 @@ pub struct GlobalSettings {
     pub version: String,
     pub audio_device_name: String,
     pub hrcc: bool,
+    pub images_dir: String,
     pub mappings_enabled: bool,
     pub midi_clock_port: String,
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
     pub osc_port: u16,
     pub transition_time: f32,
+    pub user_data_dir: String,
+    pub videos_dir: String,
 }
 
 impl Default for GlobalSettings {
@@ -26,12 +29,15 @@ impl Default for GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: global::audio_device_name(),
             hrcc: false,
+            images_dir: global::images_dir(),
             mappings_enabled: true,
             midi_clock_port: global::midi_clock_port(),
             midi_control_in_port: global::midi_control_in_port(),
             midi_control_out_port: global::midi_control_out_port(),
             osc_port: global::osc_port(),
             transition_time: 4.0,
+            user_data_dir: global::user_data_dir(),
+            videos_dir: global::videos_dir(),
         }
     }
 }
@@ -40,7 +46,7 @@ pub const PROGRAM_STATE_VERSION: &str = "2";
 
 /// Everything needed to recall a patch
 #[derive(Deserialize, Serialize)]
-pub struct SerializableProgramState {
+pub struct SerializableSketchState {
     pub version: String,
 
     // Backwards compat files before "ui_controls" rename
@@ -131,8 +137,8 @@ mod control_value_format {
     }
 }
 
-impl From<&SaveableProgramState> for SerializableProgramState {
-    fn from(state: &SaveableProgramState) -> Self {
+impl From<&TransitorySketchState> for SerializableSketchState {
+    fn from(state: &TransitorySketchState) -> Self {
         let controls = state
             .ui_controls
             .configs()
@@ -195,7 +201,7 @@ impl From<&SaveableProgramState> for SerializableProgramState {
 }
 
 fn create_serializable_snapshot(
-    state: &SaveableProgramState,
+    state: &TransitorySketchState,
     snapshot: &HashMap<String, ControlValue>,
 ) -> SerializableSnapshot {
     let mut controls = Vec::new();
@@ -239,7 +245,7 @@ fn create_serializable_snapshot(
 /// Intermediary structure used to transfer program state to and from
 /// program/serialization contexts
 #[derive(Debug)]
-pub struct SaveableProgramState {
+pub struct TransitorySketchState {
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
     pub osc_controls: OscControls,
@@ -248,7 +254,7 @@ pub struct SaveableProgramState {
     pub exclusions: Exclusions,
 }
 
-impl Default for SaveableProgramState {
+impl Default for TransitorySketchState {
     fn default() -> Self {
         Self {
             ui_controls: UiControlBuilder::new().build(),
@@ -261,9 +267,9 @@ impl Default for SaveableProgramState {
     }
 }
 
-impl SaveableProgramState {
+impl TransitorySketchState {
     /// Merge incoming serialized data into self
-    pub fn merge(&mut self, serialized_state: SerializableProgramState) {
+    pub fn merge(&mut self, serialized_state: SerializableSketchState) {
         self.merge_ui_controls(&serialized_state);
         self.mappings = serialized_state.mappings.clone();
         self.exclusions = serialized_state.exclusions.clone();
@@ -282,7 +288,7 @@ impl SaveableProgramState {
 
     fn merge_ui_controls(
         &mut self,
-        serialized_state: &SerializableProgramState,
+        serialized_state: &SerializableSketchState,
     ) {
         self.ui_controls
             .values_mut()
@@ -329,7 +335,7 @@ impl SaveableProgramState {
 
     fn merge_midi_controls(
         &mut self,
-        serialized_state: &SerializableProgramState,
+        serialized_state: &SerializableSketchState,
     ) {
         self.midi_controls
             .configs()
@@ -349,7 +355,7 @@ impl SaveableProgramState {
 
     fn merge_osc_controls(
         &mut self,
-        serialized_state: &SerializableProgramState,
+        serialized_state: &SerializableSketchState,
     ) {
         self.osc_controls.with_values_mut(|values| {
             values.iter_mut().for_each(|(name, value)| {
@@ -366,7 +372,7 @@ impl SaveableProgramState {
         });
     }
 
-    fn merge_snapshots(&mut self, serialized_state: SerializableProgramState) {
+    fn merge_snapshots(&mut self, serialized_state: SerializableSketchState) {
         self.snapshots.clear();
 
         for (name, snapshot) in serialized_state.snapshots {
