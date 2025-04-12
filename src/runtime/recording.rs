@@ -9,10 +9,9 @@ use std::thread;
 use std::time::Instant;
 
 use super::app;
-use super::shared::lattice_config_dir;
+use super::storage::cache_dir;
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
-use crate::runtime::shared::generate_session_id;
 
 #[derive(Debug)]
 pub struct RecordingState {
@@ -185,8 +184,15 @@ impl RecordingState {
     }
 }
 
+/// Used to differentiate multiple recordings for the same base sketch name
+pub fn generate_session_id() -> String {
+    uuid_5()
+}
+
+/// Location of individual, temporary frame captures that will later be stitched
+/// into a single video
 pub fn frames_dir(session_id: &str, sketch_name: &str) -> Option<PathBuf> {
-    lattice_config_dir().map(|config_dir| {
+    cache_dir().map(|config_dir| {
         config_dir
             .join("Captures")
             .join(sketch_name)
@@ -194,6 +200,7 @@ pub fn frames_dir(session_id: &str, sketch_name: &str) -> Option<PathBuf> {
     })
 }
 
+/// Path to the final encoded mp4 video
 pub fn video_output_path(
     session_id: &str,
     sketch_name: &str,
@@ -206,7 +213,7 @@ pub fn video_output_path(
 }
 
 pub enum EncodingMessage {
-    /// Progress updates as a percentage (0.0 to 1.0)
+    /// Progress updates as a percentage [0.0, 1.0]
     Progress(f32),
     Complete,
     Error(String),

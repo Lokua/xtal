@@ -10,7 +10,7 @@ use std::time::Duration;
 use std::{env, str, thread};
 
 use super::map_mode::MapMode;
-use super::recording::{RecordingState, frames_dir};
+use super::recording::{self, RecordingState};
 use super::registry::REGISTRY;
 use super::serialization::{
     GLOBAL_SETTINGS_VERSION, GlobalSettings, TransitorySketchState,
@@ -802,7 +802,7 @@ impl AppModel {
 
         frame_controller::set_fps(sketch_info.config.fps);
         self.sketch_config = sketch_info.config;
-        self.session_id = uuid_5();
+        self.session_id = recording::generate_session_id();
         self.clear_next_frame.set(true);
 
         let sketch = (sketch_info.factory)(app, &self.ctx);
@@ -824,10 +824,9 @@ impl AppModel {
     /// and switching sketches at runtime like window sizing, placement,
     /// persisted state recall, and sending data to the UI
     fn init_sketch_environment(&mut self, app: &App) {
-        self.recording_state = RecordingState::new(frames_dir(
-            &self.session_id,
-            self.sketch_config.name,
-        ));
+        self.recording_state = recording::RecordingState::new(
+            recording::frames_dir(&self.session_id, self.sketch_config.name),
+        );
 
         let window = self.main_window(app).unwrap();
         window.set_title(self.sketch_config.display_name);

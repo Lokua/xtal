@@ -8,11 +8,24 @@ use super::map_mode::Mappings;
 use super::serialization::{
     GlobalSettings, SerializableSketchState, TransitorySketchState,
 };
-use super::shared::lattice_config_dir;
 use crate::framework::prelude::*;
 
+/// The appropriate OS config dir, currently used to store serialized
+/// [`GlobalSettings`]
+pub fn config_dir() -> Option<PathBuf> {
+    directories_next::BaseDirs::new()
+        .map(|base| base.config_dir().join("Lattice"))
+}
+
+/// The appropriate OS cache dir, currently used to store individual frame
+/// captures during video recording
+pub fn cache_dir() -> Option<PathBuf> {
+    directories_next::BaseDirs::new()
+        .map(|base| base.cache_dir().join("Lattice"))
+}
+
 fn global_state_storage_path() -> PathBuf {
-    lattice_config_dir()
+    config_dir()
         .unwrap_or_default()
         .join("global_settings.json")
 }
@@ -37,7 +50,7 @@ pub fn load_global_state() -> Result<GlobalSettings, Box<dyn Error>> {
 
 fn controls_storage_path(sketch_name: &str) -> PathBuf {
     PathBuf::from(global::user_data_dir())
-        .join("controls")
+        .join("Controls")
         .join(format!("{}_controls.json", sketch_name))
 }
 
