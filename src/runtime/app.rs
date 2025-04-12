@@ -261,6 +261,17 @@ impl AppModel {
                 let app_tx = self.app_tx.clone();
                 let hub = self.control_hub_mut().unwrap();
 
+                for (name, _) in hub.midi_controls.configs() {
+                    if MapMode::is_proxy_name(&name)
+                        && !hub
+                            .ui_controls
+                            .has(&MapMode::unproxied_name(&name).unwrap())
+                    {
+                        debug!("Removing orphaned proxy: {}", name);
+                        hub.midi_controls.remove(&name);
+                    }
+                }
+
                 for (name, (ch, cc)) in mappings {
                     let proxy_name = &MapMode::proxy_name(&name);
 
@@ -315,7 +326,19 @@ impl AppModel {
 
                 let app_tx = self.app_tx.clone();
                 self.map_mode
-                    .start(&name, self.hrcc, move || {
+                    .start(&name, self.hrcc, move |removed_mappings| {
+                        if !removed_mappings.is_empty() {
+                            app_tx.alert_and_log(
+                                format!(
+                                    "Mapping the same MIDI controller to \
+                                    multiple destinations is not supported. \
+                                    Removed: {:?}",
+                                    removed_mappings
+                                ),
+                                log::Level::Info,
+                            );
+                        }
+
                         app_tx.emit(AppEvent::SendMappings);
                     })
                     .inspect_err(log_err)

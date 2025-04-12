@@ -7,7 +7,7 @@ use crate::framework::prelude::*;
 pub type Mappings = HashMap<String, ChannelAndController>;
 
 pub struct MapModeState {
-    mappings: HashMap<String, ChannelAndController>,
+    mappings: Mappings,
     /// Used to store the MSB of an MSB/LSB pair used in 14bit MIDI (CCs 0-31)
     msb_ccs: Vec<ChannelAndController>,
 }
@@ -93,6 +93,10 @@ impl MapMode {
         self.state.lock().unwrap().mappings.clear();
     }
 
+    /// Start listening for Control Change messages. When a message is deemed
+    /// complete,`callback` will be called with any removed mappings that shared
+    /// the same channel and CC as the one it just received since we don't
+    /// support mapping the same controller to multiple destinations
     pub fn start<F>(
         &self,
         name: &str,
@@ -100,7 +104,7 @@ impl MapMode {
         callback: F,
     ) -> Result<(), Box<dyn Error>>
     where
-        F: Fn() + Send + Sync + 'static,
+        F: Fn(Vec<String>) + Send + Sync + 'static,
     {
         let state = self.state.clone();
         let name = name.to_owned();
@@ -109,7 +113,7 @@ impl MapMode {
             midi::ConnectionType::Mapping,
             crate::config::MIDI_CONTROL_IN_PORT,
             move |_, msg| {
-                if msg.len() < 3 || !midi::is_control_change(msg[0]) {
+                if !midi::is_control_change(msg[0]) {
                     return;
                 }
 
@@ -121,8 +125,13 @@ impl MapMode {
 
                 // This is a standard 7bit message
                 if !hrcc || cc > 63 {
+                    let removed_mappings = Self::remove_conflicts(
+                        &mut state.mappings,
+                        &name,
+                        (ch, cc),
+                    );
                     state.mappings.insert(name.clone(), (ch, cc));
-                    callback();
+                    callback(removed_mappings);
                     return;
                 }
 
@@ -147,16 +156,27 @@ impl MapMode {
 
                 // This is a regular 32-63 7bit message
                 if !state.msb_ccs.contains(&msb_key) {
+                    let removed_mappings = Self::remove_conflicts(
+                        &mut state.mappings,
+                        &name,
+                        (ch, cc),
+                    );
                     state.mappings.insert(name.clone(), (ch, cc));
-                    callback();
+                    callback(removed_mappings);
                     return;
                 }
 
                 // This is the LSB of an MSB/LSB pair
 
+                let removed_mappings = Self::remove_conflicts(
+                    &mut state.mappings,
+                    &name,
+                    (ch, cc),
+                );
                 state.mappings.insert(name.clone(), msb_key);
                 state.msb_ccs.retain(|k| *k != msb_key);
-                callback();
+
+                callback(removed_mappings);
             },
         )
     }
@@ -164,5 +184,27 @@ impl MapMode {
     pub fn stop(&mut self) {
         self.currently_mapping = None;
         midi::disconnect(midi::ConnectionType::Mapping);
+    }
+
+    /// Helper used to prevent mapping the same (ch, cc) pair to more than one
+    /// control which we don't and likely will never support - last one wins
+    fn remove_conflicts(
+        mappings: &mut Mappings,
+        name: &str,
+        ch_cc: ChannelAndController,
+    ) -> Vec<String> {
+        let keys_to_remove: Vec<String> = mappings
+            .iter()
+            .filter(|(n, (ch, cc))| {
+                *n != name && *ch == ch_cc.0 && *cc == ch_cc.1
+            })
+            .map(|(key, _)| key.clone())
+            .collect();
+
+        for key in &keys_to_remove {
+            mappings.remove(key);
+        }
+
+        keys_to_remove
     }
 }

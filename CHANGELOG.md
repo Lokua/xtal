@@ -24,6 +24,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   toggles the **Snapshots** panel.
 - Removed frontend alerts. From now on the concept of "alert" pertains only to
   messages from the backend.
+- Prevent allowing a user map the same MIDI channel/cc pair to multiple
+  destinations which wasn't and likely never will be supported since you can
+  just a single slider for as many things as you want in code
 
 ### Fixed
 
@@ -31,6 +34,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   result in the destination parameter being modulated because the proxy was not
   known as a dependency. See
   [Issue #22](https://github.com/Lokua/lattice/issues/22)
+- Renaming a control in a Hub would cause orphaned proxies. See
+  [Issue #23](https://github.com/Lokua/lattice/issues/23)
 
 ## [0.7.0] - 2025-04-10
 
