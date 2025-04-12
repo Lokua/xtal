@@ -214,15 +214,6 @@ button {
   }
 }
 
-@keyframes fadeFill {
-  from {
-    fill: transparent;
-  }
-  to {
-    fill: red;
-  }
-}
-
 button.icon-button {
   position: relative;
   width: var(--control-height);
@@ -268,6 +259,15 @@ button.icon-button {
   &.queued svg {
     fill: red;
     animation: fadeFill 0.62s linear infinite alternate;
+  }
+}
+
+@keyframes fadeFill {
+  from {
+    fill: transparent;
+  }
+  to {
+    fill: red;
   }
 }
 
@@ -469,7 +469,58 @@ input[type='range']::-webkit-slider-thumb {
       }
     }
   }
+
+  &.in-transition {
+    label {
+      animation: labelTransition 0.62s linear infinite alternate;
+    }
+
+    /* .checkbox-wrapper {
+      animation: checkboxTransition 0.62s linear infinite alternate;
+    }
+
+    input[type='range']::-webkit-slider-thumb {
+      animation: sliderTransition 0.62s linear infinite alternate;
+    }
+
+    .select-wrapper::after {
+      animation: selectTransition 0.62s linear infinite alternate;
+    } */
+  }
 }
+
+@keyframes labelTransition {
+  from {
+    color: transparent;
+  }
+  to {
+    color: var(--text-color);
+  }
+}
+/* @keyframes checkboxTransition {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: var(--control-background-color);
+  }
+}
+@keyframes sliderTransition {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: var(--control-knob-color);
+  }
+}
+@keyframes selectTransition {
+  from {
+    color: transparent;
+  }
+  to {
+    color: var(--control-text-color);
+  }
+} */
 
 .indicator-icon {
   display: inline-flex;

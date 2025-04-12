@@ -7,6 +7,13 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## 2025-04-12
+
+### Added
+
+- Control labels will now subtly flash while their control is in transition to
+  indicate progress
+
 ## [0.8.0] - 2025-04-11
 
 ### Added

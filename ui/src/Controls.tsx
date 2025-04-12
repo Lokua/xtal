@@ -39,7 +39,9 @@ export type Props = {
   mappingsEnabled: boolean
   showExclusions: boolean
   showSnapshots: boolean
+  singleTransitionControlName: string
   snapshots: string[]
+  transitionInProgress: boolean
   onChange: (control: Control, value: ControlValue) => void
   onClickRandomize: (name: string) => void
   onClickRevert: (control: Control) => void
@@ -57,7 +59,9 @@ export default function Controls({
   mappingsEnabled,
   showExclusions,
   showSnapshots,
+  singleTransitionControlName,
   snapshots,
+  transitionInProgress,
   onChange,
   onClickRandomize,
   onClickRevert,
@@ -104,6 +108,14 @@ export default function Controls({
     ]
   }
 
+  const controlClass = (name: string, excluded: boolean) =>
+    clsx(
+      'control-row',
+      !excluded &&
+        (transitionInProgress || singleTransitionControlName === name) &&
+        'in-transition'
+    )
+
   return (
     <div id="main-view">
       {showSnapshots && (
@@ -122,7 +134,7 @@ export default function Controls({
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className="control-row">
+              <div key={c.name} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
                 <fieldset>
                   <CheckboxInput
@@ -151,7 +163,7 @@ export default function Controls({
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className="control-row">
+              <div key={c.name} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
                 <fieldset key={c.name}>
                   <input
@@ -235,7 +247,7 @@ export default function Controls({
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className="control-row">
+              <div key={c.name} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
                 <fieldset key={c.name}>
                   <Select

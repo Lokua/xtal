@@ -191,13 +191,16 @@ export default function App() {
   const [oscPort, setOscPort] = useState(5000)
   const [paused, setPaused] = useState(false)
   const [perfMode, setPerfMode] = useState(false)
-  const [sketchName, setSketchName] = useState('')
-  const [sketchNames, setSketchNames] = useState<string[]>([])
   const [showExclusions, setShowExclusions] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
+  const [singleTransitionControlName, setSingleTransitionControlName] =
+    useState('')
+  const [sketchName, setSketchName] = useState('')
+  const [sketchNames, setSketchNames] = useState<string[]>([])
   const [snapshots, setSnapshots] = useState<string[]>([])
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
+  const [transitionInProgress, setTransitionInProgress] = useState(false)
   const [view, setView] = useState<View>(View.Controls)
 
   useEffect(() => {
@@ -273,7 +276,8 @@ export default function App() {
         }
         case 'SnapshotEnded': {
           setControls(fromRawControls(data as EventMap['SnapshotEnded']))
-          setAlertText('Snapshot ended')
+          setTransitionInProgress(false)
+          setSingleTransitionControlName('')
           break
         }
         case 'StartRecording': {
@@ -518,6 +522,7 @@ export default function App() {
 
   function onClickRandomize() {
     post('Randomize', exclusions)
+    setTransitionInProgress(true)
   }
 
   function onClickRandomizeSingleControl(name: string) {
@@ -525,6 +530,7 @@ export default function App() {
       'Randomize',
       controls.filter((c) => c.name !== name).map((c) => c.name)
     )
+    setSingleTransitionControlName(name)
   }
 
   function onClickRevert(control: Control) {
@@ -707,6 +713,8 @@ export default function App() {
             mappingsEnabled={mappingsEnabled}
             showExclusions={showExclusions}
             showSnapshots={showSnapshots}
+            singleTransitionControlName={singleTransitionControlName}
+            transitionInProgress={transitionInProgress}
             onChange={onChangeControl}
             onClickRandomize={onClickRandomizeSingleControl}
             onClickRevert={onClickRevert}
