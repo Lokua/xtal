@@ -1,5 +1,6 @@
 //! Provides runtime mapping of MIDI CCs to UI sliders, AKA "MIDI learn"
 use std::error::Error;
+use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use crate::framework::prelude::*;
@@ -104,7 +105,7 @@ impl MapMode {
         callback: F,
     ) -> Result<(), Box<dyn Error>>
     where
-        F: Fn(Vec<String>) + Send + Sync + 'static,
+        F: Fn(Result<(), MappingError>) + Send + Sync + 'static,
     {
         let state = self.state.clone();
         let name = name.to_owned();
@@ -131,7 +132,13 @@ impl MapMode {
                         (ch, cc),
                     );
                     state.mappings.insert(name.clone(), (ch, cc));
-                    callback(removed_mappings);
+                    if removed_mappings.is_empty() {
+                        callback(Ok(()));
+                    } else {
+                        callback(Err(MappingError::DuplicateMappings(
+                            removed_mappings,
+                        )));
+                    }
                     return;
                 }
 
@@ -140,12 +147,10 @@ impl MapMode {
                     let key = (ch, cc);
 
                     if state.msb_ccs.contains(&key) {
-                        warn!(
-                            "Received consecutive MSB \
-                            without matching LSB"
-                        );
+                        callback(Err(MappingError::ConsecutiveHrccMsb));
                     } else {
                         state.msb_ccs.push(key);
+                        callback(Ok(()));
                     }
 
                     return;
@@ -162,21 +167,31 @@ impl MapMode {
                         (ch, cc),
                     );
                     state.mappings.insert(name.clone(), (ch, cc));
-                    callback(removed_mappings);
+                    if removed_mappings.is_empty() {
+                        callback(Ok(()));
+                    } else {
+                        callback(Err(MappingError::DuplicateMappings(
+                            removed_mappings,
+                        )));
+                    }
                     return;
                 }
 
                 // This is the LSB of an MSB/LSB pair
 
-                let removed_mappings = Self::remove_conflicts(
-                    &mut state.mappings,
-                    &name,
-                    (ch, cc),
-                );
+                let removed_mappings =
+                    Self::remove_conflicts(&mut state.mappings, &name, msb_key);
+
                 state.mappings.insert(name.clone(), msb_key);
                 state.msb_ccs.retain(|k| *k != msb_key);
 
-                callback(removed_mappings);
+                if removed_mappings.is_empty() {
+                    callback(Ok(()));
+                } else {
+                    callback(Err(MappingError::DuplicateMappings(
+                        removed_mappings,
+                    )));
+                }
             },
         )
     }
@@ -208,3 +223,29 @@ impl MapMode {
         keys_to_remove
     }
 }
+
+#[derive(Debug)]
+pub enum MappingError {
+    DuplicateMappings(Vec<String>),
+    ConsecutiveHrccMsb,
+}
+
+impl fmt::Display for MappingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DuplicateMappings(removed_mappings) => {
+                write!(
+                    f,
+                    "Mapping the same MIDI controller to multiple destinations \
+                    is not supported. Removed: {:?}",
+                    removed_mappings
+                )
+            }
+            Self::ConsecutiveHrccMsb => {
+                write!(f, "Received consecutive MSB without matching LSB")
+            }
+        }
+    }
+}
+
+impl std::error::Error for MappingError {}

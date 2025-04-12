@@ -8,7 +8,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, str, thread};
 
-use super::map_mode::MapMode;
+use super::map_mode::{MapMode, MappingError};
 use super::recording::{RecordingState, frames_dir};
 use super::registry::REGISTRY;
 use super::serialization::{
@@ -275,6 +275,7 @@ impl AppModel {
                 for (name, (ch, cc)) in mappings {
                     let proxy_name = &MapMode::proxy_name(&name);
 
+                    // Prevent blowing unchanged mappings away
                     if let Some(config) = hub.midi_controls.config(proxy_name) {
                         if config.channel == ch && config.cc == cc {
                             continue;
@@ -326,19 +327,13 @@ impl AppModel {
 
                 let app_tx = self.app_tx.clone();
                 self.map_mode
-                    .start(&name, self.hrcc, move |removed_mappings| {
-                        if !removed_mappings.is_empty() {
+                    .start(&name, self.hrcc, move |result| {
+                        if let Err(e) = result {
                             app_tx.alert_and_log(
-                                format!(
-                                    "Mapping the same MIDI controller to \
-                                    multiple destinations is not supported. \
-                                    Removed: {:?}",
-                                    removed_mappings
-                                ),
-                                log::Level::Info,
+                                format!("Error: {}", e),
+                                log::Level::Error,
                             );
                         }
-
                         app_tx.emit(AppEvent::SendMappings);
                     })
                     .inspect_err(log_err)
