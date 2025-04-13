@@ -3061,7 +3061,6 @@ dependencies = [
  "env_logger",
  "indexmap 2.7.1",
  "ipc-channel",
- "lazy_static",
  "log",
  "midir",
  "naga",
