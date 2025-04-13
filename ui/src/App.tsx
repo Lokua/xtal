@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import {
   Bypassed,
   Control,
+  ControlKind,
   ControlValue,
   Exclusions,
   Mappings,
@@ -149,18 +150,19 @@ function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
   }
 }
 
-function stringToControlValue(s: string): ControlValue {
-  if (s === 'true') {
-    return true
+function toControlValue(kind: ControlKind, s: string): ControlValue {
+  if (kind === 'Checkbox') {
+    if (s === 'true') {
+      return true
+    }
+
+    if (s === 'false') {
+      return false
+    }
   }
 
-  if (s === 'false') {
-    return false
-  }
-
-  const n = Number(s)
-  if (!isNaN(n) && isFinite(n)) {
-    return n
+  if (kind === 'Slider') {
+    return Number(s)
   }
 
   return s
@@ -169,7 +171,7 @@ function stringToControlValue(s: string): ControlValue {
 function fromRawControls(raw_controls: RawControl[]): Control[] {
   return raw_controls.map((control) => ({
     ...control,
-    value: stringToControlValue(control.value),
+    value: toControlValue(control.kind, control.value),
     isRawControl: false,
   }))
 }
@@ -361,9 +363,7 @@ export default function App() {
           break
         }
         case 'KeyF': {
-          if (platformModPressed) {
-            post('ToggleFullScreen')
-          }
+          post('ToggleFullScreen')
           break
         }
         case 'KeyI': {

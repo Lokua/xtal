@@ -37,8 +37,15 @@ export type Bypassed = Record<string, number>
 
 export type ControlValue = boolean | number | string
 
+export type ControlKind =
+  | 'Checkbox'
+  | 'DynamicSeparator'
+  | 'Select'
+  | 'Separator'
+  | 'Slider'
+
 export type RawControl = {
-  kind: 'Checkbox' | 'DynamicSeparator' | 'Select' | 'Separator' | 'Slider'
+  kind: ControlKind
   name: string
   value: string
   disabled: boolean

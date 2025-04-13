@@ -4,32 +4,67 @@
     {
       "type": "Slider",
       "name": "circle_count",
-      "value": 19.0
+      "value": 30.0
     },
     {
       "type": "Slider",
       "name": "resolution",
-      "value": 128.0
+      "value": 512.0
     },
     {
       "type": "Slider",
       "name": "radius",
-      "value": 18.0
+      "value": 10.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_tine_count",
+      "value": false
     },
     {
       "type": "Slider",
       "name": "tine_count",
-      "value": 3.0
+      "value": 5.0
     },
     {
       "type": "Slider",
       "name": "displacement",
-      "value": 102.1
+      "value": 44.8
     },
     {
       "type": "Slider",
       "name": "falloff",
-      "value": 1.75
+      "value": 10.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_dir_x",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "dir_x",
+      "value": 0.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_dir_y",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "dir_y",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 0.9
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_weight",
+      "value": 1.0
     }
   ],
   "midi_controls": [],

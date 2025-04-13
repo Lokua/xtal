@@ -18,6 +18,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 };
 
 #[derive(SketchComponents)]
+#[sketch(clear_color = "hsla(0.0, 0.0, 0.02, 1.0)")]
 pub struct DropTines {
     hub: ControlHub<Timing>,
     drops: Vec<(Drop, Srgb<u8>)>,
@@ -26,29 +27,31 @@ pub struct DropTines {
 const COLORS: &[Srgb<u8>] = &[BLACK, MISTYROSE, AZURE];
 
 pub fn init(_app: &App, ctx: &LatticeContext) -> DropTines {
-    let hub = ControlHubBuilder::new()
-        .timing(Timing::new(ctx.bpm()))
-        .slider("circle_count", 10.0, (1.0, 30.0), 1.0, None)
-        .slider("resolution", 8.0, (3.0, 128.0), 1.0, None)
-        .slider("radius", 20.0, (3.0, 100.0), 1.0, None)
-        .separator()
-        .slider("tine_count", 10.0, (1.0, 30.0), 1.0, None)
-        .slider("displacement", 10.0, (0.0, 200.0), 0.1, None)
-        .slider("falloff", 2.0, (0.0, 10.0), 0.01, None)
-        .build();
+    let hub = ControlHub::from_path(
+        to_absolute_path(file!(), "drop_tines.yaml"),
+        Timing::new(ctx.bpm()),
+    );
 
     DropTines { hub, drops: vec![] }
 }
 
 impl Sketch for DropTines {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        let (w, _) = ctx.window_rect().wh();
+        let wr = ctx.window_rect();
         let circle_count = self.hub.get("circle_count") as usize;
         let resolution = self.hub.get("resolution") as usize;
         let radius = self.hub.get("radius");
-        let tine_count = self.hub.get("tine_count") as usize;
+        let tine_count = self.hub.select(
+            "animate_tine_count",
+            "tine_count_animation",
+            "tine_count",
+        ) as usize;
         let displacement = self.hub.get("displacement");
         let falloff = self.hub.get("falloff");
+        let dir_x =
+            self.hub.select("animate_dir_x", "dir_x_animation", "dir_x");
+        let dir_y =
+            self.hub.select("animate_dir_y", "dir_y_animation", "dir_y");
 
         if self.hub.any_changed_in(&["circle_count"]) {
             self.drops.clear();
@@ -73,22 +76,16 @@ impl Sketch for DropTines {
                 resolution,
             );
             for j in 0..tine_count {
-                let x = j as f32 * (w / tine_count as f32);
-                drop.tine(
-                    vec2(x, 0.0),
-                    vec2(
-                        self.hub.animation.triangle(5.0, (-1.0, 1.0), 0.0),
-                        self.hub.animation.triangle(12.0, (1.0, 1.0), 0.0),
-                    ),
-                    displacement,
-                    falloff,
+                let x = map_range(
+                    j as f32,
+                    0.0,
+                    tine_count as f32 - 1.0,
+                    -wr.hw(),
+                    wr.hw(),
                 );
                 drop.tine(
                     vec2(x, 0.0),
-                    vec2(
-                        self.hub.animation.triangle(7.0, (-1.0, 1.0), 0.0),
-                        self.hub.animation.triangle(8.0, (-1.0, 1.0), 0.0),
-                    ),
+                    vec2(dir_x, dir_y),
                     displacement,
                     falloff,
                 );
@@ -100,17 +97,27 @@ impl Sketch for DropTines {
         let wr = ctx.window_rect();
         let draw = app.draw();
 
-        draw.rect()
-            .x_y(0.0, 0.0)
-            .w_h(wr.w(), wr.h())
-            .hsla(0.0, 0.0, 0.02, 0.9);
+        draw.rect().x_y(0.0, 0.0).w_h(wr.w(), wr.h()).hsla(
+            0.0,
+            0.0,
+            0.02,
+            self.hub.get("bg_alpha"),
+        );
 
-        for (drop, color) in self.drops.iter() {
-            draw.polygon()
-                .stroke(*color)
-                .stroke_weight(1.0)
-                .no_fill()
-                .points(drop.vertices().iter().cloned());
+        let draws = &[
+            draw.translate(vec3(0.0, 0.0, 0.0)),
+            // draw.translate(vec3(-wr.h() / 4.0, 0.0, 0.0)),
+            // draw.translate(vec3(wr.h() / 4.0, 0.0, 0.0)),
+        ];
+
+        for draw in draws {
+            for (drop, color) in self.drops.iter() {
+                draw.polygon()
+                    .stroke(*color)
+                    .stroke_weight(self.hub.get("stroke_weight"))
+                    .no_fill()
+                    .points(drop.vertices().iter().cloned());
+            }
         }
 
         draw.to_frame(app, &frame).unwrap();

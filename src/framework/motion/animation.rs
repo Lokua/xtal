@@ -83,6 +83,7 @@ use crate::framework::prelude::*;
 
 /// Data structure used in conjunction with
 /// [`Animation::create_trigger`] and [`Animation::should_trigger`]
+#[derive(Debug)]
 pub struct Trigger {
     every: f32,
     delay: f32,

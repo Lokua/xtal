@@ -223,9 +223,8 @@ checkbox_example:
 **Params**
 
 - `type` - `select`
-- `range` - defaults to `[0.0, 1.0]`
-- `default` - defaults to `0.5`
-- `step` - defaults to `1.0`
+- `default` - required
+- `options` - required
 
 **Example**
 

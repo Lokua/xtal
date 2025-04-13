@@ -7,6 +7,19 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.10.0] 2025-04-13
+
+### Changed
+
+- Toggling fullscreen from GUI or Main window now uses F instead of requiring a
+  modifier since we aren't using F for anything else
+
+### Fixed
+
+- Converting string values from the backend now uses the control's kind for
+  branching instead of deriving from what the control's value looks like since
+  Selects can have values that appear to be numeric
+
 ## [0.9.0] 2025-04-12
 
 ### Added

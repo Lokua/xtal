@@ -420,8 +420,30 @@ impl UiControls {
         &mut self.values
     }
 
+    pub fn add(&mut self, control: Control) {
+        let name = control.name().to_string();
+        let value = control.value();
+
+        if let Some(index) = self.configs.iter().position(|c| c.name() == name)
+        {
+            self.configs[index] = control;
+        } else {
+            self.configs.push(control);
+        }
+
+        self.values.insert(name, value);
+        self.change_tracker.mark_changed();
+    }
+
     pub fn has(&self, name: &str) -> bool {
         self.values.contains_key(name)
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Control) -> bool,
+    {
+        self.configs.retain(f);
     }
 
     /// Same as `float`, only will try to coerce a possibly existing Checkbox's
@@ -541,28 +563,6 @@ impl UiControls {
                 None
             }
         })
-    }
-
-    pub fn add(&mut self, control: Control) {
-        let name = control.name().to_string();
-        let value = control.value();
-
-        if let Some(index) = self.configs.iter().position(|c| c.name() == name)
-        {
-            self.configs[index] = control;
-        } else {
-            self.configs.push(control);
-        }
-
-        self.values.insert(name, value);
-        self.change_tracker.mark_changed();
-    }
-
-    pub fn retain<F>(&mut self, f: F)
-    where
-        F: FnMut(&Control) -> bool,
-    {
-        self.configs.retain(f);
     }
 }
 

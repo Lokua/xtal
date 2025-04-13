@@ -1,0 +1,94 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+  NEG_TAU: &NEG_TAU -6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Circles
+# ------------------------------------------------------------------------------
+
+circle_count:
+  type: slider
+  default: 10
+  range: [1, 30]
+  step: 1
+
+resolution:
+  type: slider
+  default: 64
+  range: [0, 512]
+  step: 1
+
+radius:
+  type: slider
+  default: 20
+  range: [3, 100]
+  step: 1
+
+# ------------------------------------------------------------------------------
+#  Tines
+# ------------------------------------------------------------------------------
+
+tines_separator:
+  type: separator
+
+animate_tine_count:
+  type: checkbox
+tine_count:
+  type: slider
+  default: 10
+  range: [3, 24]
+  step: 1
+  disabled: animate_tine_count
+tine_count_animation:
+  type: triangle
+  beats: 4
+  range: [3, 24]
+
+displacement:
+  type: slider
+  default: 10
+  range: [0, 200]
+  step: 0.1
+
+falloff:
+  type: slider
+  default: 2
+  range: [0, 10]
+  step: 0.01
+
+animate_dir_x:
+  type: checkbox
+dir_x:
+  type: slider
+  range: [-2, 2]
+dir_x_animation:
+  type: triangle
+  beats: 17
+  range: [-2, 2]
+
+animate_dir_y:
+  type: checkbox
+dir_y:
+  type: slider
+  range: [-2, 2]
+dir_y_animation:
+  type: triangle
+  beats: 16
+  range: [-2, 2]
+
+# ------------------------------------------------------------------------------
+#  Appearance
+# ------------------------------------------------------------------------------
+
+color_separator:
+  type: separator
+
+bg_alpha:
+  default: 0.9
+  type: slider
+
+stroke_weight:
+  type: slider
+  default: 1
+  range: [0.01, 10]
+  bypass: 1
