@@ -3,6 +3,7 @@ pub mod breakpoints_2;
 pub mod brutalism;
 pub mod displacement_2a;
 pub mod drop;
+pub mod drop_tines;
 pub mod drop_walk;
 pub mod flow_field_basic;
 pub mod heat_mask;

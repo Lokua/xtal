@@ -17,6 +17,7 @@ fn main() {
         brutalism,
         displacement_2a,
         drop,
+        drop_tines,
         drop_walk,
         flow_field_basic,
         heat_mask,

@@ -1,0 +1,40 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "circle_count",
+      "value": 19.0
+    },
+    {
+      "type": "Slider",
+      "name": "resolution",
+      "value": 128.0
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 18.0
+    },
+    {
+      "type": "Slider",
+      "name": "tine_count",
+      "value": 3.0
+    },
+    {
+      "type": "Slider",
+      "name": "displacement",
+      "value": 102.1
+    },
+    {
+      "type": "Slider",
+      "name": "falloff",
+      "value": 1.75
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

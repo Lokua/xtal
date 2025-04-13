@@ -150,8 +150,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 
 impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
-
         let offset = self.controls.animation.automate(
             &[
                 Breakpoint::ramp(0.0, 1.0, Easing::Linear),
