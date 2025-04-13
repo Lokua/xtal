@@ -4,12 +4,17 @@
     {
       "type": "Slider",
       "name": "max_drops",
-      "value": 2450.0
+      "value": 2800.0
     },
     {
       "type": "Slider",
       "name": "spread_div",
       "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "offset_multiplier",
+      "value": 1.0
     },
     {
       "type": "Select",
@@ -24,7 +29,7 @@
     {
       "type": "Slider",
       "name": "center_max_radius",
-      "value": 51.0
+      "value": 26.0
     },
     {
       "type": "Slider",
@@ -34,7 +39,7 @@
     {
       "type": "Slider",
       "name": "trbl_max_radius",
-      "value": 35.0
+      "value": 31.0
     },
     {
       "type": "Slider",
@@ -44,52 +49,87 @@
     {
       "type": "Slider",
       "name": "corner_max_radius",
-      "value": 38.0
+      "value": 53.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "bg_invert",
+      "value": false
     },
     {
       "type": "Slider",
       "name": "center_bw_ratio",
-      "value": 0.031
+      "value": 0.227
     },
     {
       "type": "Slider",
       "name": "trbl_bw_ratio",
-      "value": 0.056
+      "value": 0.112
     },
     {
       "type": "Slider",
       "name": "corner_bw_ratio",
-      "value": 0.937
+      "value": 0.93
+    },
+    {
+      "type": "Checkbox",
+      "name": "colorize",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "randomize_h",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "randomize_s",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "randomize_l",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "h",
+      "value": 0.3636
+    },
+    {
+      "type": "Slider",
+      "name": "s",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "l",
+      "value": 0.535
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "1": {
+    "2": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "trbl_bw_ratio",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
           "name": "corner_max_radius",
-          "value": 50.0
-        },
-        {
-          "type": "Slider",
-          "name": "max_drops",
-          "value": 5000.0
-        },
-        {
-          "type": "Slider",
-          "name": "center_max_radius",
-          "value": 49.0
+          "value": 53.0
         },
         {
           "type": "Slider",
           "name": "center_min_radius",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "colorize",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "trbl_min_radius",
           "value": 1.0
         },
         {
@@ -99,13 +139,139 @@
         },
         {
           "type": "Slider",
-          "name": "corner_bw_ratio",
-          "value": 0.5
+          "name": "center_bw_ratio",
+          "value": 0.227
         },
         {
           "type": "Slider",
-          "name": "center_bw_ratio",
-          "value": 0.5
+          "name": "trbl_bw_ratio",
+          "value": 0.112
+        },
+        {
+          "type": "Slider",
+          "name": "offset_multiplier",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "trbl_max_radius",
+          "value": 31.0
+        },
+        {
+          "type": "Slider",
+          "name": "spread_div",
+          "value": 8.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_h",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_l",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "l",
+          "value": 0.535
+        },
+        {
+          "type": "Slider",
+          "name": "center_max_radius",
+          "value": 26.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_s",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "s",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "h",
+          "value": 0.3636
+        },
+        {
+          "type": "Slider",
+          "name": "max_drops",
+          "value": 2800.0
+        },
+        {
+          "type": "Select",
+          "name": "duration",
+          "value": "1.0"
+        },
+        {
+          "type": "Checkbox",
+          "name": "bg_invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "corner_bw_ratio",
+          "value": 0.93
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "corner_max_radius",
+          "value": 53.0
+        },
+        {
+          "type": "Slider",
+          "name": "spread_div",
+          "value": 8.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_h",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "corner_bw_ratio",
+          "value": 0.93
+        },
+        {
+          "type": "Checkbox",
+          "name": "bg_invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "offset_multiplier",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "trbl_bw_ratio",
+          "value": 0.112
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_s",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "corner_min_radius",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "colorize",
+          "value": false
         },
         {
           "type": "Slider",
@@ -114,8 +280,53 @@
         },
         {
           "type": "Slider",
+          "name": "s",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
           "name": "trbl_max_radius",
-          "value": 50.0
+          "value": 31.0
+        },
+        {
+          "type": "Slider",
+          "name": "max_drops",
+          "value": 2800.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_bw_ratio",
+          "value": 0.227
+        },
+        {
+          "type": "Slider",
+          "name": "center_min_radius",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "l",
+          "value": 0.535
+        },
+        {
+          "type": "Checkbox",
+          "name": "randomize_l",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "h",
+          "value": 0.3636
+        },
+        {
+          "type": "Select",
+          "name": "duration",
+          "value": "1.0"
+        },
+        {
+          "type": "Slider",
+          "name": "center_max_radius",
+          "value": 26.0
         }
       ],
       "midi_controls": [],
@@ -123,5 +334,12 @@
     }
   },
   "mappings": {},
-  "exclusions": []
+  "exclusions": [
+    "duration",
+    "bg_invert",
+    "colorize",
+    "randomize_h",
+    "randomize_s",
+    "randomize_l"
+  ]
 }

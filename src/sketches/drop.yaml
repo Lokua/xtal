@@ -1,7 +1,7 @@
 _vars:
   MIN_RAD: &MIN_RAD 1
   MAX_RAD: &MAX_RAD 250
-  RAD: &RAD [1, 250]
+  RAD: &RAD [1, 100]
 
 # ------------------------------------------------------------------------------
 #  Global
@@ -18,6 +18,37 @@ spread_div:
   default: 4
   range: [1, 16]
   step: 1
+
+offset:
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 1.0
+    - kind: ramp
+      position: 2.0
+      value: 2.0
+    - kind: ramp
+      position: 4.0
+      value: 3.0
+    - kind: end
+      position: 6.0
+      value: 0.0
+offset_multiplier:
+  type: slider
+  default: 1
+  range: [0.25, 4.0]
+  step: 0.25
+offset_mult:
+  type: effect
+  kind: math
+  operator: mult
+  operand: $offset_multiplier
+offset_mod:
+  type: mod
+  source: offset
+  modulators:
+    - offset_mult
 
 duration:
   type: select
@@ -83,6 +114,9 @@ corner_max_radius:
 color_separator:
   type: separator
 
+bg_invert:
+  type: checkbox
+
 center_bw_ratio:
   type: slider
   default: 0.5
@@ -100,3 +134,26 @@ corner_bw_ratio:
   default: 0.5
   range: [0.0, 1.0]
   step: 0.001
+
+colorize:
+  type: checkbox
+
+randomize_h:
+  type: checkbox
+  disabled: not colorize
+randomize_s:
+  type: checkbox
+  disabled: not colorize
+randomize_l:
+  type: checkbox
+  disabled: not colorize
+
+h:
+  type: slider
+  disabled: not colorize or colorize and randomize_h
+s:
+  type: slider
+  disabled: not colorize or colorize and randomize_s
+l:
+  type: slider
+  disabled: not colorize or colorize and randomize_l

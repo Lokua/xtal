@@ -40,8 +40,10 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 
 impl Sketch for Drops {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        let max_drops = self.hub.get("max_drops");
         let duration: f32 = self.hub.string("duration").parse().unwrap();
         let spread_div = self.hub.get("spread_div");
+        let offset = self.hub.get("offset");
 
         if ctx.window_rect().changed()
             || self.hub.any_changed_in(&["duration", "spread_div"])
@@ -53,18 +55,6 @@ impl Sketch for Drops {
             ctx.window_rect().mark_unchanged();
             self.hub.mark_unchanged();
         }
-
-        let offset = self.hub.animation.automate(
-            &[
-                Breakpoint::ramp(0.0, 1.0, Easing::Linear),
-                Breakpoint::ramp(2.0, 2.0, Easing::Linear),
-                Breakpoint::ramp(4.0, 3.0, Easing::Linear),
-                Breakpoint::end(6.0, 0.0),
-            ],
-            Mode::Loop,
-        );
-
-        let max_drops = self.hub.get("max_drops");
 
         self.droppers.iter_mut().for_each(|dropper| {
             if self.hub.animation.should_trigger(&mut dropper.trigger) {
@@ -89,7 +79,7 @@ impl Sketch for Drops {
                         dropper.zone.center * offset,
                         &mut self.drops,
                         max_drops as usize,
-                        (dropper.color_fn)(&self.hub.ui_controls),
+                        (dropper.color_fn)(&self.hub),
                     );
                 }
             }
@@ -99,7 +89,8 @@ impl Sketch for Drops {
     fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
         let draw = app.draw();
 
-        draw.background().color(hsl(0.0, 0.0, 1.0));
+        draw.background()
+            .color(hsl(0.0, 0.0, 1.0 - self.hub.get("bg_invert")));
 
         for (drop, color) in self.drops.iter() {
             draw.polygon()
@@ -209,7 +200,7 @@ fn create_droppers(
 }
 
 type DropFn = fn(&Dropper, Vec2, &mut Vec<(Drop, Hsl)>, usize, Hsl);
-type ColorFn = fn(&UiControls) -> Hsl;
+type ColorFn = fn(&ControlHub<Timing>) -> Hsl;
 
 enum DropperKind {
     Center,
@@ -235,11 +226,8 @@ fn drop_it(
     color: Hsl,
 ) {
     let point = nearby_point(point, 50.0);
-    let drop = Drop::new(
-        point,
-        random_range(dropper.min_radius, dropper.max_radius),
-        64,
-    );
+    let (min, max) = safe_range(dropper.min_radius, dropper.max_radius);
+    let drop = Drop::new(point, random_range(min, max), 64);
 
     for (other, _color) in drops.iter_mut() {
         drop.marble(other);
@@ -252,26 +240,29 @@ fn drop_it(
     }
 }
 
-fn center_color(controls: &UiControls) -> Hsl {
-    if random_f32() > controls.get("center_bw_ratio") {
-        hsl(0.0, 0.0, 0.0)
+fn get_color(hub: &ControlHub<Timing>, ratio: &str) -> Hsl {
+    let invert_l = random_f32() <= hub.get(ratio);
+
+    if hub.bool("colorize") {
+        let h = ternary!(hub.bool("randomize_h"), random(), hub.get("h"));
+        let s = ternary!(hub.bool("randomize_s"), random(), hub.get("s"));
+        let l = ternary!(hub.bool("randomize_l"), random(), hub.get("l"));
+        let l = ternary!(invert_l, 1.0 - l, l);
+        hsl(h, s, l)
     } else {
-        hsl(0.0, 0.0, 1.0)
+        let l = ternary!(invert_l, 1.0, 0.0);
+        hsl(0.0, 0.0, l)
     }
 }
 
-fn trbl_color(controls: &UiControls) -> Hsl {
-    if random_f32() > controls.get("trbl_bw_ratio") {
-        hsl(0.0, 0.0, 0.0)
-    } else {
-        hsl(0.0, 0.0, 1.0)
-    }
+fn center_color(hub: &ControlHub<Timing>) -> Hsl {
+    get_color(hub, "center_bw_ratio")
 }
 
-fn corner_color(controls: &UiControls) -> Hsl {
-    if random_f32() > controls.get("corner_bw_ratio") {
-        hsl(0.0, 0.0, 0.0)
-    } else {
-        hsl(0.0, 0.0, 1.0)
-    }
+fn trbl_color(hub: &ControlHub<Timing>) -> Hsl {
+    get_color(hub, "trbl_bw_ratio")
+}
+
+fn corner_color(hub: &ControlHub<Timing>) -> Hsl {
+    get_color(hub, "corner_bw_ratio")
 }
