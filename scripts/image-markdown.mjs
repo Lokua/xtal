@@ -9,7 +9,7 @@ function main() {
   try {
     const root = latticeRoot()
     const imagesDir = path.join(root, '/images')
-    const indexFile = path.join(imagesDir, '_index.json')
+    const indexFile = path.join(root, '/storage/images_metadata.json')
     const outputFile = path.join(root, 'index.md')
 
     const imageFiles = fs.readdirSync(imagesDir).filter(isSupportedImage)

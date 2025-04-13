@@ -10,15 +10,21 @@ export default function Console({ alertText }: Props) {
 
   useEffect(() => {
     function onMouseOver(e: MouseEvent) {
-      if (e.target) {
-        const element = e.target as HTMLElement
-        const helpId = element.dataset.helpId
-        if (helpId !== undefined && helpId in Help) {
-          const text = Help[helpId as keyof typeof Help]
-          setHelpText(text)
-        } else {
-          setHelpText('')
+      let currentTarget = e.target as HTMLElement | null
+      let helpId = null
+
+      while (currentTarget && !helpId) {
+        helpId = currentTarget.dataset.helpId
+        if (!helpId) {
+          currentTarget = currentTarget.parentElement
         }
+      }
+
+      if (helpId && helpId in Help) {
+        const text = Help[helpId as keyof typeof Help]
+        setHelpText(text)
+      } else {
+        setHelpText('')
       }
     }
 

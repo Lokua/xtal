@@ -552,6 +552,7 @@ input[type='range']::-webkit-slider-thumb {
   display: flex;
   overflow: auto;
   height: 100%;
+  padding-top: 0.25rem;
 
   h2:not(:nth-of-type(1)) {
     margin-top: 0.75rem;

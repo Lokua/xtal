@@ -16,6 +16,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - **Data**, **Images**, and **Videos** directory options in settings to give the
   user control. These will be the conventional directories on the host OS if
   possible, otherwise will default to `$HOME/[Images|Videos|Documents]/Lattice`
+- Add **Open cache dir** and **Open config dir** buttons to settings
 
 ### Changed
 
@@ -24,6 +25,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   GlobalSettings.
 - `image_index.json` has been changed to `image_metadata.json` and is now stored
   in the user's chosen **Data** dir.
+
+![UI Settings](assets/ui-settings-0.9.0.png)
 
 ## [0.8.0] - 2025-04-11
 

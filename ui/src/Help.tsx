@@ -65,11 +65,6 @@ export const Help = {
   Send: 'Sends the state of all CCs to the MIDI output port',
   Settings: 'Global settings and MIDI mappings',
   Sketch: 'Sketch chooser',
-  SketchDataDir: format(`
-    The directory where sketch data including control values, MIDI mappings, 
-    and Snapshots will be saved to. It is recommended to choose a location that
-     is source controlled.
-  `),
   Snapshots: format(`
     Snapshot Editor: store and recall up to 10 snapshots (Shortcut: [S]).
     You can also save snapshots via [Shift Digit] and recall them
@@ -78,6 +73,11 @@ export const Help = {
   Save: format(`
     Save UI control states and MIDI mappings for this sketch to disk 
     (Shortcut: [${mod} S])
+  `),
+  UserDataDir: format(`
+    The directory where sketch data including control values, MIDI mappings, 
+    and Snapshots will be saved to. It is recommended to choose a location that
+    is source controlled.
   `),
   VideosDir: `The directory where encoded videos will be saved`,
 }
