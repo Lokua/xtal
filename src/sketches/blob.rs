@@ -77,7 +77,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Blob {
 impl Sketch for Blob {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
-        self.hub.update();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],

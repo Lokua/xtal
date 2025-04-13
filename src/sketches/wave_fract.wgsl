@@ -23,10 +23,10 @@ struct Params {
     // reduce_mix, map_mix, wave_bands, wave_threshold
     c: vec4f,
 
-    // bg_invert, unused, mix_mode, unused
+    // bg_invert, unused, mix_mode, x_off
     d: vec4f,
 
-    // r, g, b, unused
+    // r, g, b, y_off
     e: vec4f,
 }
 
@@ -46,8 +46,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let reduce_mix = params.c.x;
     let map_mix = params.c.y;
     let mix_mode = params.d.z;
+    let x_off = params.d.w;
+    let y_off = params.e.w;
 
-    let p = correct_aspect(position);
+    var p = correct_aspect(position);
+    p.x += x_off;
+    p.y += y_off;
 
     let reduced = mix(wave_reduce(p), fractal_reduce(p), reduce_mix);
 

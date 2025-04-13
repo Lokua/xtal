@@ -36,7 +36,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> MidiDev {
 
 impl Sketch for MidiDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.hub.update();
         // debug!("{}", self.midi.get("a"));
     }
 

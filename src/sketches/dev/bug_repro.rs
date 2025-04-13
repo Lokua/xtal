@@ -30,9 +30,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> BugRepro {
 }
 
 impl Sketch for BugRepro {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.hub.update();
-    }
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
 
     fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
         let wr = ctx.window_rect();

@@ -32,7 +32,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.hub.update();
         self.hue = self.hub.animation.tri(12.0)
     }
 

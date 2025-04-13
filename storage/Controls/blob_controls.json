@@ -1,62 +1,189 @@
 {
-  "version": "1",
-  "controls": [
+  "version": "2",
+  "ui_controls": [
     {
       "type": "Slider",
       "name": "outer_size",
-      "value": 0.445
+      "value": 0.4064
     },
     {
       "type": "Slider",
       "name": "outer_pos_t_mix",
-      "value": 0.5
-    },
-    {
-      "type": "DynamicSeparator",
-      "name": "0ln66",
-      "value": false
+      "value": 0.4628
     },
     {
       "type": "Slider",
       "name": "center_size",
-      "value": 0.96
-    },
-    {
-      "type": "DynamicSeparator",
-      "name": "znqxo",
-      "value": false
+      "value": 2.2461998
     },
     {
       "type": "Slider",
       "name": "invert",
-      "value": 0.0
+      "value": 0.023799999
     },
     {
       "type": "Slider",
       "name": "smoothness",
-      "value": 0.49699998
+      "value": 0.91819996
     },
     {
       "type": "Slider",
       "name": "blur",
-      "value": 20.0
+      "value": 16.2574
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 1.0
-    },
-    {
-      "type": "DynamicSeparator",
-      "name": "l1c22",
-      "value": false
+      "value": 0.6784
     },
     {
       "type": "Slider",
       "name": "clamp_min",
-      "value": -0.225
+      "value": -0.8576
     }
   ],
   "midi_controls": [],
-  "osc_controls": []
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.445
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.49699998
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "outer_pos_t_mix",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.96
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.225
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "outer_pos_t_mix",
+          "value": 0.096
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 10.691199
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.058599997
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.46339998
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.0252
+        },
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.2884
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.67719996
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": 0.1338
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.4064
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.023799999
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 2.2461998
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.8576
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.91819996
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.6784
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 16.2574
+        },
+        {
+          "type": "Slider",
+          "name": "outer_pos_t_mix",
+          "value": 0.4628
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
 }

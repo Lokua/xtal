@@ -25,11 +25,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   GlobalSettings.
 - `image_index.json` has been changed to `image_metadata.json` and is now stored
   in the user's chosen **Data** dir.
-
-### Fixed
-
-- Flashing labels UI hint for single control randomization wasn't working if the
-  control was also excluded from overall randomization
+- Removed the need for need for sketches to have to manually call
+  `ControlHub::update`
 
 ### Settings
 

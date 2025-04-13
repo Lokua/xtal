@@ -147,8 +147,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Model {
 
 impl Sketch for Model {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        // Required!
-        self.hub.update();
+        // ...
     }
 
     fn view(app: &App, m: &Model, frame: Frame, ctx: &LatticeContext) {
@@ -1014,9 +1013,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
 
 impl Sketch for Model {
   fn update(&mut self, app: &App, _update: Update, _ctx. &LatticeContext) {
-      // Update ensures any file changes have propagated
-      self.hub.update();
-
       let params = ShaderParams {
           a: [
               // Allows us to use `var: a1` in our script

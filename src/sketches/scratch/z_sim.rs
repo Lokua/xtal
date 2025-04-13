@@ -45,6 +45,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
 
 impl Sketch for ZSim {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+        self.controls.update();
         let mut wr = ctx.window_rect();
 
         if wr.changed() {

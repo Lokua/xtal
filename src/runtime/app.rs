@@ -1149,6 +1149,11 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.on_app_event(app, event);
     }
 
+    // Should this come before or after?
+    if let Some(hub) = model.control_hub_mut() {
+        hub.update();
+    }
+
     frame_controller::wrapped_update(
         app,
         &mut model.sketch,

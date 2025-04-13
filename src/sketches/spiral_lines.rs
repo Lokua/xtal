@@ -83,7 +83,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> SpiralLines {
 
 impl Sketch for SpiralLines {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.hub.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

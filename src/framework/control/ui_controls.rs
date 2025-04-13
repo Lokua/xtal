@@ -429,26 +429,29 @@ impl UiControls {
     /// (useful in shader context where you are only passing in banks of
     /// vec4<f32> to uniforms)
     pub fn get(&self, name: &str) -> f32 {
-        self.values
-            .get(name)
-            .and_then(ControlValue::as_float)
-            .unwrap_or_else(|| match self.config(name) {
-                Some(Control::Checkbox { .. }) => self.bool_as_f32(name),
-                Some(Control::Select { .. }) => self.string_as_f32(name),
-                _ => {
-                    warn_once!(
-                        "`get` does not support `{}`. Returning 0.0",
-                        name
-                    );
-                    0.0
-                }
-            })
+        self.get_optional(name).unwrap_or_else(|| {
+            warn_once!(
+                "`get` could not retrieve a value for `{}`. Returning 0.0",
+                name
+            );
+            0.0
+        })
     }
 
     /// The same as [`UiControls::get`] yet doesn't return a fallback value of
     /// 0.0 in the case of invalids. This is for internal use.
     pub fn get_optional(&self, name: &str) -> Option<f32> {
-        self.values.get(name).and_then(ControlValue::as_float)
+        if let Some(value) =
+            self.values.get(name).and_then(ControlValue::as_float)
+        {
+            return Some(value);
+        }
+
+        match self.config(name) {
+            Some(Control::Checkbox { .. }) => Some(self.bool_as_f32(name)),
+            Some(Control::Select { .. }) => Some(self.string_as_f32(name)),
+            _ => None,
+        }
     }
 
     pub fn float(&self, name: &str) -> f32 {

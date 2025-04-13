@@ -1,21 +1,6 @@
 {
-  "version": "1",
-  "controls": [
-    {
-      "type": "Slider",
-      "name": "noise_scale",
-      "value": 1.9
-    },
-    {
-      "type": "Slider",
-      "name": "rect_width",
-      "value": 5
-    },
-    {
-      "type": "Slider",
-      "name": "circle_radius",
-      "value": 295
-    },
+  "version": "2",
+  "ui_controls": [
     {
       "type": "Checkbox",
       "name": "rotate",
@@ -23,26 +8,139 @@
     },
     {
       "type": "Slider",
-      "name": "time_x",
-      "value": 1.5
-    },
-    {
-      "type": "Slider",
-      "name": "angle_resolution",
-      "value": 102
-    },
-    {
-      "type": "Slider",
-      "name": "seed",
-      "value": 23298
+      "name": "circle_radius",
+      "value": 213.0
     },
     {
       "type": "Slider",
       "name": "max_rect_length",
-      "value": 148
+      "value": 86.0
+    },
+    {
+      "type": "Slider",
+      "name": "rect_width",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 8.7
+    },
+    {
+      "type": "Slider",
+      "name": "seed",
+      "value": 3.0
+    },
+    {
+      "type": "Slider",
+      "name": "angle_resolution",
+      "value": 81.0
+    },
+    {
+      "type": "Slider",
+      "name": "time_x",
+      "value": 2.99
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "audio_controls": []
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 213.0
+        },
+        {
+          "type": "Slider",
+          "name": "seed",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "rect_width",
+          "value": 4.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "angle_resolution",
+          "value": 81.0
+        },
+        {
+          "type": "Slider",
+          "name": "time_x",
+          "value": 2.99
+        },
+        {
+          "type": "Slider",
+          "name": "max_rect_length",
+          "value": 86.0
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 8.7
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "max_rect_length",
+          "value": 124.0
+        },
+        {
+          "type": "Slider",
+          "name": "seed",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "rect_width",
+          "value": 4.75
+        },
+        {
+          "type": "Slider",
+          "name": "time_x",
+          "value": 7.41
+        },
+        {
+          "type": "Slider",
+          "name": "angle_resolution",
+          "value": 34.0
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 217.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "rotate",
+    "seed"
+  ]
 }

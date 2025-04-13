@@ -47,7 +47,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> DynamicUniformsDev {
 
 impl Sketch for DynamicUniformsDev {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.hub.update();
         let wr = ctx.window_rect();
         let params = ShaderParams::from((&wr, &self.hub));
         self.gpu.update_params(app, wr.resolution_u32(), &params);

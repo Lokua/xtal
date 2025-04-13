@@ -35,11 +35,14 @@ struct ShaderParams {
     // reduce_mix, map_mix, wave_bands, wave_threshold
     c: [f32; 4],
 
-    // bg_invert, unused, mix_mode, unused
+    // bg_invert, unused, mix_mode, x_off
     d: [f32; 4],
 
-    // r, g, b, unused
+    // r, g, b, y_off
     e: [f32; 4],
+
+    // unused
+    f: [f32; 4],
 }
 
 pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
@@ -57,6 +60,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
         c: [0.0; 4],
         d: [0.0; 4],
         e: [0.0; 4],
+        f: [0.0; 4],
     };
 
     let gpu = gpu::GpuState::new_fullscreen(
@@ -72,7 +76,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
 
 impl Sketch for WaveFract {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.hub.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -107,9 +110,20 @@ impl Sketch for WaveFract {
                 self.hub.get("bg_invert"),
                 0.0,
                 self.hub.get("mix_mode"),
-                0.0,
+                self.hub.get("x_off"),
             ],
-            e: [self.hub.get("r"), self.hub.get("g"), self.hub.get("b"), 0.0],
+            e: [
+                self.hub.get("r"),
+                self.hub.get("g"),
+                self.hub.get("b"),
+                self.hub.get("y_off"),
+            ],
+            f: [
+                self.hub.get("f1"),
+                self.hub.get("f2"),
+                self.hub.get("f3"),
+                self.hub.get("f4"),
+            ],
         };
 
         self.gpu.update_params(
