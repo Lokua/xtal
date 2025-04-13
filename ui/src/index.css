@@ -2,6 +2,12 @@
   --control-margin: 0.25rem;
   --control-height: 1.25rem;
   --control-font-size: 0.625em;
+  /* 
+    A 1/4 note at 120bpm is 500ms, but since we use alternate we need 1/8.
+    This property is updated at runtime via whenever the BPM changes. 
+    See `setCssBeat` in ./util.ts
+  */
+  --beat: 250ms;
 }
 
 @media (prefers-color-scheme: light) {
@@ -258,16 +264,16 @@ button.icon-button {
 
   &.queued svg {
     fill: red;
-    animation: fadeFill 0.62s linear infinite alternate;
+    animation: fadeFill var(--beat) linear infinite alternate;
   }
 }
 
 @keyframes fadeFill {
   from {
-    fill: transparent;
+    fill: red;
   }
   to {
-    fill: red;
+    fill: transparent;
   }
 }
 
@@ -472,29 +478,29 @@ input[type='range']::-webkit-slider-thumb {
 
   &.in-transition {
     label {
-      animation: labelTransition 0.62s linear infinite alternate;
+      animation: labelTransition var(--beat) ease-in-out infinite alternate;
     }
 
     /* .checkbox-wrapper {
-      animation: checkboxTransition 0.62s linear infinite alternate;
+      animation: checkboxTransition var(--beat) linear infinite alternate;
     }
 
     input[type='range']::-webkit-slider-thumb {
-      animation: sliderTransition 0.62s linear infinite alternate;
+      animation: sliderTransition var(--beat) linear infinite alternate;
     }
 
     .select-wrapper::after {
-      animation: selectTransition 0.62s linear infinite alternate;
+      animation: selectTransition var(--beat) linear infinite alternate;
     } */
   }
 }
 
 @keyframes labelTransition {
   from {
-    color: transparent;
+    color: var(--text-color);
   }
   to {
-    color: var(--text-color);
+    color: transparent;
   }
 }
 /* @keyframes checkboxTransition {

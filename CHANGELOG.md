@@ -11,8 +11,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ### Added
 
-- Control labels will now subtly flash while their control is in transition to
-  indicate progress
+- Control labels will now subtly flash in and out (in sync with the BPM!) while
+  their control is in transition to indicate progress
 - **Data**, **Images**, and **Videos** directory options in settings to give the
   user control. These will be the conventional directories on the host OS if
   possible, otherwise will default to `$HOME/[Images|Videos|Documents]/Lattice`
@@ -27,6 +27,10 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   in the user's chosen **Data** dir.
 - Removed the need for need for sketches to have to manually call
   `ControlHub::update`
+
+### Fixed
+
+- ToggleGuiFocus (F) and ToggleMainFocus (M) now work as expected
 
 ### Settings
 

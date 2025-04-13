@@ -101,7 +101,7 @@ fn main() -> wry::Result<()> {
                     error!("Failed to send data to WebView: {:?}", e);
                 }
 
-                // Events from Parent->Here (not for UI)
+                // Events from Parent -> Here (not for UI)
                 match event {
                     wv::Event::LoadSketch {
                         display_name,
@@ -126,6 +126,7 @@ fn main() -> wry::Result<()> {
                     }
                     wv::Event::ToggleGuiFocus => {
                         window.set_visible(true);
+                        window.set_focus();
                     }
                     _ => {}
                 }

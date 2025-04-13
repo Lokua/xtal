@@ -16,7 +16,7 @@ import Header from './Header'
 import Controls from './Controls'
 import Settings from './Settings'
 import Console from './Console'
-import { isMac } from './util'
+import { isMac, setCssBeat } from './util'
 
 type EventMap = {
   Advance: void
@@ -92,7 +92,6 @@ type EventMap = {
   Tap: void
   TapTempoEnabled: boolean
   ToggleFullScreen: void
-  ToggleGuiFocus: void
   ToggleMainFocus: void
   TransitionTime: number
   UpdateControlBool: {
@@ -230,7 +229,8 @@ export default function App() {
           break
         }
         case 'Bpm': {
-          setBpm(data as EventMap['Bpm'])
+          const bpm = data as EventMap['Bpm']
+          setBpm(bpm)
           break
         }
         case 'Encoding': {
@@ -281,6 +281,7 @@ export default function App() {
           setPaused(d.paused)
           setSketchName(d.sketchName)
           setSnapshots(d.snapshotSlots)
+          // TODO: why are we sending this with the sketch?
           setTapTempoEnabled(d.tapTempoEnabled)
           break
         }
@@ -365,18 +366,13 @@ export default function App() {
           }
           break
         }
-        case 'KeyG': {
-          if (platformModPressed) {
-            post('ToggleGuiFocus')
-          }
-          break
-        }
         case 'KeyI': {
           post('CaptureFrame')
           break
         }
         case 'KeyM': {
-          if (platformModPressed && !e.shiftKey) {
+          // Don't interfere with native minimization on macOS
+          if (!platformModPressed) {
             post('ToggleMainFocus')
           }
           break
@@ -438,6 +434,10 @@ export default function App() {
     tapTempoEnabled,
     view,
   ])
+
+  useEffect(() => {
+    setCssBeat(bpm)
+  }, [bpm])
 
   function getSliderNames() {
     return controls

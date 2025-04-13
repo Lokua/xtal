@@ -29,6 +29,7 @@ pub fn run() {
         .run();
 }
 
+#[allow(rustdoc::private_intra_doc_links)]
 /// The core application event structure used to trigger [`AppModel`] updates
 /// from keyboard and MIDI clock handlers as well as sending data to a web_view
 /// (AppEvent -> WebView -> ipc_channel -> Frontend)
@@ -736,7 +737,9 @@ impl AppModel {
                 self.wv_tx.emit(wv::Event::ToggleGuiFocus);
             }
             AppEvent::ToggleMainFocus => {
-                self.main_window(app).unwrap().set_visible(true);
+                let window = self.main_window(app).unwrap();
+                window.set_visible(true);
+                window.winit_window().focus_window();
             }
             AppEvent::UpdateUiControl((name, value)) => {
                 let hub = self.control_hub_mut().unwrap();
@@ -1149,7 +1152,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.on_app_event(app, event);
     }
 
-    // Should this come before or after?
+    // Should this come _after_ `wrapped_update`?
     if let Some(hub) = model.control_hub_mut() {
         hub.update();
     }
@@ -1204,7 +1207,7 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
             if let Some(digit) = digit.map(|s| s.to_string()) {
                 if shift_pressed {
                     model.app_tx.emit(AppEvent::SnapshotStore(digit));
-                } else if logo_pressed {
+                } else if platform_mod_pressed {
                     model.app_tx.emit(AppEvent::SnapshotRecall(digit));
                 }
             }
@@ -1217,16 +1220,17 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
                 Key::A if has_no_modifiers => {
                     model.app_tx.emit(AppEvent::AdvanceSingleFrame);
                 }
-                // Cmd + F
-                Key::F if platform_mod_pressed => {
+                // F (any)
+                Key::F => {
                     model.app_tx.emit(AppEvent::ToggleFullScreen);
                 }
-                // Cmd + G
-                Key::G if platform_mod_pressed => {
+                // G
+                Key::G if has_no_modifiers => {
                     model.app_tx.emit(AppEvent::ToggleGuiFocus);
                 }
-                // Cmd + M
-                Key::M if platform_mod_pressed && !shift_pressed => {
+                // M or Shift M
+                // Don't interfere with native minimization on macOS
+                Key::M if !platform_mod_pressed => {
                     model.app_tx.emit(AppEvent::ToggleMainFocus);
                 }
                 // R

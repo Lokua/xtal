@@ -320,8 +320,8 @@ impl MidiControls {
         messages
     }
 
-    /// Same as [`messages`] but with support for high resolution, "14bit" MIDI
-    /// CCs for channels 0-31
+    /// Same as [`Self::messages`] but with support for high resolution, "14bit"
+    /// MIDI CCs for channels 0-31
     pub fn messages_hrcc(&self) -> Vec<[u8; 3]> {
         let values = self.values();
         let mut messages: Vec<[u8; 3]> = vec![];

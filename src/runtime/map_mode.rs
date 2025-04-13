@@ -36,7 +36,7 @@ impl MapMode {
     const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
 
     /// Mappings are stored as normal [`MidiControlConfig`] instances within a
-    /// [`ControlHub`]'s [`ControlHub::midi_controls`] field. When a [`Slider`]
+    /// [`ControlHub`]'s [`ControlHub::midi_controls`] field. When a Slider
     /// is queried via [`ControlHub::get`], we first check if there is a "MIDI
     /// proxy" for the slider within the midi_controls and if so return the
     /// value of the MIDI control instead. This name is how we determine that.
@@ -44,7 +44,7 @@ impl MapMode {
         format!("{}{}", name, Self::PROXY_NAME_SUFFIX)
     }
 
-    /// The inverse of [`proxy_name`]
+    /// The inverse of [`Self::proxy_name`]
     pub fn unproxied_name(proxy_name: &str) -> Option<String> {
         proxy_name
             .strip_suffix(Self::PROXY_NAME_SUFFIX)

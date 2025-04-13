@@ -25,8 +25,8 @@ use std::{
     env,
     error::Error,
     sync::{
-        atomic::{AtomicBool, AtomicU32, Ordering},
         Arc,
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
 
@@ -36,7 +36,7 @@ use crate::framework::prelude::*;
 
 /// The current Beats-Per-Minute (tempo) initialized from a
 /// [`SketchConfig::bpm`] whenever a sketch is loaded or physically tapped
-/// in live via the [`crate::runtime::TapTempo`] feature in the UI.
+/// in live via the [`crate::runtime::tap_tempo::TapTempo`] feature in the UI.
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
 
@@ -248,7 +248,10 @@ impl MidiSongTiming {
                 info!("MidiSongTiming initialized successfully");
             }
             Err(e) => {
-                warn!("Failed to initialize MidiSongTiming: {}. Using default values.", e);
+                warn!(
+                    "Failed to initialize MidiSongTiming: {}. Using default values.",
+                    e
+                );
             }
         }
     }
@@ -434,10 +437,7 @@ impl HybridTiming {
 
                             debug!(
                                 "Beat difference ({}) exceeds threshold. mtc_beats: {}, midi_beats: {}, resetting clock to: {}:",
-                                beat_difference,
-                                mtc_beats,
-                                midi_beats,
-                                clock
+                                beat_difference, mtc_beats, midi_beats, clock
                             );
 
                             trace!("Synced MIDI position to {} ticks", ticks);

@@ -33,7 +33,7 @@ bench *ARGS:
   cargo bench {{ARGS}}
 
 docs:
-  cargo doc --open --release --document-private-items --no-deps -p lattice
+  cargo doc --package lattice --document-private-items --open
 
 stats:
   sccache --show-stats

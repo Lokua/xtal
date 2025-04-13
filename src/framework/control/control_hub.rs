@@ -648,6 +648,7 @@ impl<T: TimingSource> ControlHub<T> {
         keys
     }
 
+    #[allow(rustdoc::private_intra_doc_links)]
     /// Uses the [`Self::active_transition`] to store a temporary snapshot of
     /// randomized parameter values. See [this commit][commit] for the original
     /// frontend POC (App.tsx)

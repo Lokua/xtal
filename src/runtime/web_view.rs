@@ -54,7 +54,7 @@ pub enum Event {
     ChangeAudioDevice(String),
 
     /// Event intercepted from frontend -> web_view_process to open a File
-    /// Dialog. See [`Event::ReceiveString`] for making use of the new dir
+    /// Dialog. See [`Event::ReceiveDir`] for making use of the new dir
     ChangeDir(UserDir),
     ChangeMidiClockPort(String),
     ChangeMidiControlInputPort(String),
@@ -358,9 +358,7 @@ pub fn launch(
                 Event::ToggleFullScreen => {
                     app_tx.emit(AppEvent::ToggleFullScreen);
                 }
-                Event::ToggleGuiFocus => {
-                    app_tx.emit(AppEvent::ToggleGuiFocus);
-                }
+                Event::ToggleGuiFocus => {}
                 Event::ToggleMainFocus => {
                     app_tx.emit(AppEvent::ToggleMainFocus);
                 }
@@ -403,11 +401,11 @@ pub enum ControlKind {
 }
 
 /// Provides a uniform type for all [`ui_controls::Control`] variants. This is a
-/// work around for sending data over [`ipc_channel`] which uses [`bincode`] for
-/// serialization and can't support serde;s untagged enum types which leads to
+/// work around for sending data over [`ipc_channel`] which uses `bincode` for
+/// serialization and can't support serde's untagged enum types which leads to
 /// really gnarly code on the frontend, for example a list of these:
 ///
-/// ```rust
+/// ```rust,ignore
 /// #[derive(Clone, Debug, Deserialize, Serialize)]
 /// #[serde(rename_all = "camelCase")]
 /// pub enum SerializableControl {
@@ -417,6 +415,7 @@ pub enum ControlKind {
 ///         disabled: bool,
 ///     },
 ///     // other control impls
+/// }
 /// ```
 ///
 /// Results in:
