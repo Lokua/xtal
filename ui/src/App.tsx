@@ -642,6 +642,7 @@ export default function App() {
 
   function onLoadSnapshot(slot: string) {
     post('SnapshotRecall', slot)
+    setTransitionInProgress(true)
   }
 
   function onOpenOsDir(osDir: OsDir) {

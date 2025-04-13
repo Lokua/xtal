@@ -26,6 +26,13 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - `image_index.json` has been changed to `image_metadata.json` and is now stored
   in the user's chosen **Data** dir.
 
+### Fixed
+
+- Flashing labels UI hint for single control randomization wasn't working if the
+  control was also excluded from overall randomization
+
+### Settings
+
 ![UI Settings](assets/ui-settings-0.9.0.png)
 
 ## [0.8.0] - 2025-04-11

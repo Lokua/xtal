@@ -111,8 +111,8 @@ export default function Controls({
   const controlClass = (name: string, excluded: boolean) =>
     clsx(
       'control-row',
-      !excluded &&
-        (transitionInProgress || singleTransitionControlName === name) &&
+      ((!excluded && transitionInProgress) ||
+        singleTransitionControlName === name) &&
         'in-transition'
     )
 
