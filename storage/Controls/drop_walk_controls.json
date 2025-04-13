@@ -1,53 +1,55 @@
 {
-  "version": "1",
-  "controls": [
-    {
-      "type": "Slider",
-      "name": "step_size",
-      "value": 82
-    },
-    {
-      "type": "Slider",
-      "name": "lightness_max",
-      "value": 1
-    },
-    {
-      "type": "Slider",
-      "name": "splatter_radius",
-      "value": 30
-    },
-    {
-      "type": "Slider",
-      "name": "lightness_min",
-      "value": 0
-    },
-    {
-      "type": "Select",
-      "name": "palette",
-      "value": "gen_x"
-    },
-    {
-      "type": "Slider",
-      "name": "color_ratio",
-      "value": 0.19999999
-    },
-    {
-      "type": "Slider",
-      "name": "drop_max_radius",
-      "value": 48
-    },
-    {
-      "type": "Slider",
-      "name": "n_drops",
-      "value": 6
-    },
+  "version": "2",
+  "ui_controls": [
     {
       "type": "Checkbox",
       "name": "debug_walker",
       "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "n_drops",
+      "value": 6.0
+    },
+    {
+      "type": "Slider",
+      "name": "step_size",
+      "value": 170.0
+    },
+    {
+      "type": "Slider",
+      "name": "splatter_radius",
+      "value": 200.0
+    },
+    {
+      "type": "Slider",
+      "name": "drop_max_radius",
+      "value": 50.0
+    },
+    {
+      "type": "Select",
+      "name": "palette",
+      "value": "millennial"
+    },
+    {
+      "type": "Slider",
+      "name": "color_ratio",
+      "value": 0.3252
+    },
+    {
+      "type": "Slider",
+      "name": "lightness_min",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "lightness_max",
+      "value": 0.1993
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "audio_controls": []
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
 }

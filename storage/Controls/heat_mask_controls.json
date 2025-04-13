@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "2",
   "ui_controls": [
     {
       "type": "Checkbox",
@@ -179,5 +179,189 @@
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {}
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "flip",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_trbl",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 35.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_trbl",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_corner",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 10.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "trbl_use_grain",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_corner",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "mag_mult",
+          "value": 12.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "corner_use_grain",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "size_max",
+          "value": 4.9
+        },
+        {
+          "type": "Slider",
+          "name": "background_alpha",
+          "value": 0.96500003
+        },
+        {
+          "type": "Slider",
+          "name": "distance_strength",
+          "value": 0.032
+        },
+        {
+          "type": "Select",
+          "name": "center_mode",
+          "value": "attract"
+        },
+        {
+          "type": "Slider",
+          "name": "t_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "trbl_radius",
+          "value": 83.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 41.0
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_spread",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 106.0
+        },
+        {
+          "type": "Slider",
+          "name": "alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_colors",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "trbl_strength",
+          "value": 75.0
+        },
+        {
+          "type": "Slider",
+          "name": "angle_frequency",
+          "value": 25.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "stroke",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_center",
+          "value": true
+        },
+        {
+          "type": "Select",
+          "name": "corner_mode",
+          "value": "influence"
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_weight",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "scale",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "trbl_mode",
+          "value": "attract"
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_center",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "scaling_power",
+          "value": 2.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "center_use_grain",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 96.0
+        },
+        {
+          "type": "Select",
+          "name": "sort",
+          "value": "radius"
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
 }
