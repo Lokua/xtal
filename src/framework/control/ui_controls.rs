@@ -445,6 +445,12 @@ impl UiControls {
             })
     }
 
+    /// The same as [`UiControls::get`] yet doesn't return a fallback value of
+    /// 0.0 in the case of invalids. This is for internal use.
+    pub fn get_optional(&self, name: &str) -> Option<f32> {
+        self.values.get(name).and_then(ControlValue::as_float)
+    }
+
     pub fn float(&self, name: &str) -> f32 {
         self.values
             .get(name)

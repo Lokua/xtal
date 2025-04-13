@@ -53,6 +53,10 @@ impl MidiState {
         *self.values.get(name).unwrap_or(&0.0)
     }
 
+    fn get_optional(&self, address: &str) -> Option<&f32> {
+        self.values.get(address)
+    }
+
     fn set(&mut self, name: &str, value: f32) {
         self.values.insert(name.to_string(), value);
     }
@@ -116,6 +120,11 @@ impl MidiControls {
 
     pub fn get(&self, name: &str) -> f32 {
         self.state.lock().unwrap().get(name)
+    }
+
+    pub fn get_optional(&self, name: &str) -> Option<f32> {
+        let state = self.state.lock().unwrap();
+        state.get_optional(name).copied()
     }
 
     pub fn set(&self, name: &str, value: f32) {

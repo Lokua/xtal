@@ -148,13 +148,11 @@ impl AudioControls {
     /// mapped to the range set in [`AudioControlConfig`]. Returns 0.0 if name
     /// isn't found.
     pub fn get(&self, name: &str) -> f32 {
-        self.state
-            .lock()
-            .unwrap()
-            .values
-            .get(name)
-            .copied()
-            .unwrap_or(0.0)
+        self.get_optional(name).unwrap_or(0.0)
+    }
+
+    pub fn get_optional(&self, name: &str) -> Option<f32> {
+        self.state.lock().unwrap().values.get(name).copied()
     }
 
     pub fn has(&self, name: &str) -> bool {

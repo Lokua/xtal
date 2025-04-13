@@ -562,17 +562,16 @@ impl AppModel {
             AppEvent::SendMidi => {
                 let hrcc = self.hrcc;
 
-                let messages = {
-                    if let Some(hub) = self.control_hub() {
+                let messages = self
+                    .control_hub()
+                    .map(|hub| {
                         if hrcc {
                             hub.midi_controls.messages_hrcc()
                         } else {
                             hub.midi_controls.messages()
                         }
-                    } else {
-                        return;
-                    }
-                };
+                    })
+                    .unwrap_or_default();
 
                 if messages.is_empty() {
                     return;

@@ -342,77 +342,81 @@ impl<T: TimingSource> ControlHub<T> {
             }
         }
 
-        let value = if self.ui_controls.has(name) {
-            Some(self.ui_controls.get(name))
-        } else if self.osc_controls.has(name) {
-            Some(self.osc_controls.get(name))
-        } else if self.midi_controls.has(name) {
-            Some(self.midi_controls.get(name))
-        } else if self.audio_controls.has(name) {
-            Some(self.audio_controls.get(name))
-        } else if let Some((config, sequence)) = self.animations.get(name) {
-            Some(match (config, sequence) {
-                (AnimationConfig::Triangle(conf), KeyframeSequence::None) => {
-                    let conf = self.resolve_animation_config_params(
-                        conf,
-                        name,
-                        current_frame,
-                    );
-                    self.animation.triangle(
-                        conf.beats.as_float(),
-                        (conf.range[0], conf.range[1]),
-                        conf.phase.as_float(),
-                    )
-                }
-                (AnimationConfig::Random(conf), KeyframeSequence::None) => {
-                    let conf = self.resolve_animation_config_params(
-                        conf,
-                        name,
-                        current_frame,
-                    );
-                    self.animation.random(
-                        conf.beats.as_float(),
-                        (conf.range[0], conf.range[1]),
-                        conf.delay.as_float(),
-                        conf.stem,
-                    )
-                }
-                (
-                    AnimationConfig::RandomSlewed(conf),
-                    KeyframeSequence::None,
-                ) => {
-                    let conf = self.resolve_animation_config_params(
-                        conf,
-                        name,
-                        current_frame,
-                    );
-                    self.animation.random_slewed(
-                        conf.beats.as_float(),
-                        (conf.range[0], conf.range[1]),
-                        conf.slew.as_float(),
-                        conf.delay.as_float(),
-                        conf.stem,
-                    )
-                }
-                (
-                    AnimationConfig::Automate(conf),
-                    KeyframeSequence::Breakpoints(breakpoints),
-                ) => {
-                    let breakpoints = self.resolve_breakpoint_params(
-                        name,
-                        breakpoints,
-                        current_frame,
-                    );
-                    self.animation.automate(
-                        &breakpoints,
-                        Mode::from_str(&conf.mode).unwrap(),
-                    )
-                }
-                _ => unimplemented!(),
-            })
-        } else {
-            None
-        };
+        let value = self
+            .ui_controls
+            .get_optional(name)
+            .or_else(|| self.midi_controls.get_optional(name))
+            .or_else(|| self.audio_controls.get_optional(name))
+            .or_else(|| self.osc_controls.get_optional(name))
+            .or_else(|| {
+                self.animations.get(name).map(|(config, sequence)| {
+                    match (config, sequence) {
+                        (
+                            AnimationConfig::Triangle(conf),
+                            KeyframeSequence::None,
+                        ) => {
+                            let conf = self.resolve_animation_config_params(
+                                conf,
+                                name,
+                                current_frame,
+                            );
+                            self.animation.triangle(
+                                conf.beats.as_float(),
+                                (conf.range[0], conf.range[1]),
+                                conf.phase.as_float(),
+                            )
+                        }
+                        (
+                            AnimationConfig::Random(conf),
+                            KeyframeSequence::None,
+                        ) => {
+                            let conf = self.resolve_animation_config_params(
+                                conf,
+                                name,
+                                current_frame,
+                            );
+                            self.animation.random(
+                                conf.beats.as_float(),
+                                (conf.range[0], conf.range[1]),
+                                conf.delay.as_float(),
+                                conf.stem,
+                            )
+                        }
+                        (
+                            AnimationConfig::RandomSlewed(conf),
+                            KeyframeSequence::None,
+                        ) => {
+                            let conf = self.resolve_animation_config_params(
+                                conf,
+                                name,
+                                current_frame,
+                            );
+                            self.animation.random_slewed(
+                                conf.beats.as_float(),
+                                (conf.range[0], conf.range[1]),
+                                conf.slew.as_float(),
+                                conf.delay.as_float(),
+                                conf.stem,
+                            )
+                        }
+                        (
+                            AnimationConfig::Automate(conf),
+                            KeyframeSequence::Breakpoints(breakpoints),
+                        ) => {
+                            let breakpoints = self.resolve_breakpoint_params(
+                                name,
+                                breakpoints,
+                                current_frame,
+                            );
+                            self.animation.automate(
+                                &breakpoints,
+                                Mode::from_str(&conf.mode).unwrap(),
+                            )
+                        }
+                        _ => unimplemented!(),
+                    }
+                })
+            });
 
         match value {
             Some(value) => {

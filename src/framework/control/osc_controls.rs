@@ -49,6 +49,10 @@ impl OscState {
         *self.values.get(address).unwrap_or(&0.0)
     }
 
+    fn get_optional(&self, address: &str) -> Option<&f32> {
+        self.values.get(address)
+    }
+
     fn has(&self, address: &str) -> bool {
         self.values.contains_key(address)
     }
@@ -98,6 +102,12 @@ impl OscControls {
     pub fn get(&self, address: &str) -> f32 {
         check_address(address);
         self.state.lock().unwrap().get(address)
+    }
+
+    pub fn get_optional(&self, address: &str) -> Option<f32> {
+        check_address(address);
+        let state = self.state.lock().unwrap();
+        state.get_optional(address).copied()
     }
 
     pub fn set(&self, address: &str, value: f32) {
