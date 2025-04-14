@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Mappings } from './types'
 import IconButton from './IconButton'
+import clsx from 'clsx/lite'
 
 type Props = {
   sliderNames: string[]
@@ -49,10 +50,6 @@ export default function MapMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentlyMapping])
 
-  function findMapping(name: string) {
-    return mappings.find((m) => m[0] === name)
-  }
-
   function clearCurrentlyMapping() {
     setCurrentlyMapping('')
     onSetCurrentlyMapping('')
@@ -86,18 +83,15 @@ export default function MapMode({
       </header>
       <main>
         {sliderNames.map((name) => {
-          const mapping = findMapping(name)!
+          const mapping = mappings[name]
           const isMapped = !!mapping
           const isMapping = currentlyMapping === name
-          let text = ''
-
-          if (!isMapping && !isMapped) {
-            text = '—'
-          } else if (isMapping && !isMapped) {
-            text = '...'
-          } else {
-            text = mapping[1].join('/')
-          }
+          const text =
+            !isMapping && !isMapped
+              ? '—'
+              : isMapping && !isMapped
+              ? '...'
+              : mapping.join('/')
 
           return (
             <React.Fragment key={name}>
@@ -110,13 +104,11 @@ export default function MapMode({
               </label>
               <span style={{ display: 'inline-flex' }}>
                 <button
-                  className={
-                    isMapping
-                      ? 'map-button mapping'
-                      : isMapped
-                      ? 'map-button'
-                      : 'map-button inactive'
-                  }
+                  className={clsx(
+                    'map-button',
+                    isMapping && 'mapping',
+                    !isMapping && !isMapped && 'inactive'
+                  )}
                   disabled={!mappingsEnabled}
                   onClick={() => {
                     onClickMap(name)

@@ -64,8 +64,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement1 {
 
 impl Sketch for Displacement1 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
-
         let circle_radius_min = self.controls.get("circle_radius_min");
         let circle_radius_max = self.controls.get("circle_radius_max");
         let radius = self.controls.get("displacer_radius");

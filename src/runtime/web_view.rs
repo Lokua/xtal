@@ -16,6 +16,7 @@ use std::process::{Child, Command, Stdio};
 use std::thread;
 
 use super::app::AppEventSender;
+use super::map_mode::Mappings;
 use crate::framework::control::ui_controls;
 use crate::framework::prelude::*;
 use crate::runtime::app::AppEvent;
@@ -107,7 +108,7 @@ pub enum Event {
         controls: Vec<Control>,
         display_name: String,
         fps: f32,
-        mappings: Vec<(String, ChannelAndController)>,
+        mappings: Mappings,
         paused: bool,
         perf_mode: bool,
         sketch_name: String,
@@ -119,7 +120,7 @@ pub enum Event {
     },
 
     /// Sent whenever the user physically moves a MIDI control when in map mode
-    Mappings(Vec<(String, ChannelAndController)>),
+    Mappings(Mappings),
     MappingsEnabled(bool),
     OpenOsDir(OsDir),
     Paused(bool),

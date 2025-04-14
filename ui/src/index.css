@@ -3,8 +3,8 @@
   --control-height: 1.25rem;
   --control-font-size: 0.625em;
   /* 
-    A 1/4 note at 120bpm is 500ms, but since we use alternate we need 1/8.
-    This property is updated at runtime via whenever the BPM changes. 
+    A 1/4 note at 120bpm is 500ms, but since we use `alternate` we need 1/8.
+    This property is updated at runtime whenever the BPM changes. 
     See `setCssBeat` in ./util.ts
   */
   --beat: 250ms;
@@ -69,12 +69,12 @@ html {
   font-size: 16px;
 }
 
-html.force-light {
+/* html.force-light {
   color-scheme: light;
 }
 html.force-dark {
   color-scheme: dark;
-}
+} */
 
 body {
   overflow: hidden;

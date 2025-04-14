@@ -74,8 +74,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> BlackAndWhite {
 
 impl Sketch for BlackAndWhite {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
-
         let wr = ctx.window_rect();
         let phase_mod = self.controls.get("phase_mod");
 

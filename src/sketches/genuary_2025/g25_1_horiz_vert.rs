@@ -45,7 +45,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HorizVert {
 
 impl Sketch for HorizVert {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         self.lines.clear();
 
         let window_rect = ctx.window_rect();

@@ -195,7 +195,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
 
 impl Sketch for Displacement2a {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
         let (w, h) = wr.wh();
         let audio_enabled = self.controls.bool("audio_enabled");

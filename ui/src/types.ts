@@ -30,7 +30,9 @@ export enum OsDir {
 }
 
 export type ChannelAndController = [number, number]
-export type Mappings = [string, ChannelAndController][]
+export type Mappings = {
+  [key: string]: ChannelAndController
+}
 export type Exclusions = string[]
 
 export type Bypassed = Record<string, number>

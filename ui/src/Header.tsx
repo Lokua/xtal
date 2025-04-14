@@ -150,7 +150,7 @@ export default function Header({
           value={sketchName}
           options={sketchNames}
           onChange={onSwitchSketch}
-          style={{ maxWidth: '192px' }}
+          style={{ maxWidth: '164px' }}
         />
 
         <IconButton data-help-id="Reload" name="Reload" onClick={onReload} />

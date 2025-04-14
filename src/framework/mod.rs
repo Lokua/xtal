@@ -2,7 +2,6 @@ pub mod audio;
 pub mod control;
 pub mod distance;
 pub mod frame_controller;
-pub mod global;
 pub mod gpu;
 pub mod instrumentation;
 pub mod logging;

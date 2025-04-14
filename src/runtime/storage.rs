@@ -9,6 +9,7 @@ use super::serialization::{
     GlobalSettings, SerializableSketchState, TransitorySketchState,
 };
 use crate::framework::prelude::*;
+use crate::global;
 
 /// The appropriate OS config dir, currently used to store serialized
 /// [`GlobalSettings`]
@@ -48,13 +49,13 @@ pub fn load_global_state() -> Result<GlobalSettings, Box<dyn Error>> {
     Ok(settings)
 }
 
-fn controls_storage_path(sketch_name: &str) -> PathBuf {
+fn sketch_state_storage_path(sketch_name: &str) -> PathBuf {
     PathBuf::from(global::user_data_dir())
         .join("Controls")
         .join(format!("{}_controls.json", sketch_name))
 }
 
-pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
+pub fn save_sketch_state<T: TimingSource + std::fmt::Debug + 'static>(
     sketch_name: &str,
     hub: &ControlHub<T>,
     mappings: Mappings,
@@ -71,7 +72,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
 
     let serializable_controls = SerializableSketchState::from(&state);
     let json = serde_json::to_string_pretty(&serializable_controls)?;
-    let path = controls_storage_path(sketch_name);
+    let path = sketch_state_storage_path(sketch_name);
     if let Some(parent_dir) = path.parent() {
         fs::create_dir_all(parent_dir)?;
     }
@@ -79,7 +80,7 @@ pub fn save_program_state<T: TimingSource + std::fmt::Debug + 'static>(
     Ok(path)
 }
 
-/// Takes in an external program state and merges it with a deserialized one.
+/// Takes in external sketch state and merges with deserialized state.
 /// This ensures that the external state can be the source of truth for ui,
 /// midi, and osc keys rather than possibly loading invalid or outdated data
 /// from file.
@@ -87,7 +88,7 @@ pub fn load_sketch_state<'a>(
     sketch_name: &str,
     state: &'a mut TransitorySketchState,
 ) -> Result<&'a mut TransitorySketchState, Box<dyn Error>> {
-    let path = controls_storage_path(sketch_name);
+    let path = sketch_state_storage_path(sketch_name);
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
 

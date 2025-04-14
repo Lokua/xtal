@@ -95,7 +95,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
 
 impl Sketch for ShaderToTextureDev {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let first_pass_params = ShaderParams {

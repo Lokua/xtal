@@ -151,7 +151,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
 
 impl Sketch for Spiral {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

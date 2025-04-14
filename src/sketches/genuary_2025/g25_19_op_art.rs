@@ -92,7 +92,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

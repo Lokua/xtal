@@ -1,4 +1,4 @@
-import { isMac } from './util'
+import { format, isMac } from './util'
 
 const mod = isMac ? 'Cmd' : 'Ctrl'
 
@@ -11,6 +11,10 @@ export const Help = {
   Clear: format(
     `Clear any alpha blending or "fade trails" from frame persistence. Requires 
     your sketch is using the clear_color attribute via sketch_components macro`
+  ),
+  ControlLabel: format(
+    `Clicking this label will randomize this parameter. [${mod} Click] will
+    revert to it it's last saved value.`
   ),
   DeleteMappings: 'Delete all MIDI Mappings',
   DisableMappings: 'Disable/Enable MIDI Mappings',
@@ -35,6 +39,11 @@ export const Help = {
   MidiOutputPort: format(`
     The MIDI port Lattice will send internally stored MIDI values 
     to (use for resyncing controllers after changing sketches)
+  `),
+  NumberBox: format(`
+      Drag up/down to change the value (coarse adjustments). [Shift Drag] will 
+      enable fine adjustments. Double clicking will enable manual keyboard 
+      entry.
   `),
   OscPort: 'The OSC port Lattice will use for OSC controls',
   Play: format(`
@@ -80,12 +89,4 @@ export const Help = {
     is source controlled.
   `),
   VideosDir: `The directory where encoded videos will be saved`,
-}
-
-function format(s: string): string {
-  return s
-    .split('\n')
-    .filter((s) => s)
-    .map((line) => line.trim())
-    .join(' ')
 }

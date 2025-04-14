@@ -9,7 +9,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, str, thread};
 
-use super::map_mode::MapMode;
+use super::map_mode::{MapMode, Mappings};
 use super::recording::{self, RecordingState};
 use super::registry::REGISTRY;
 use super::serialization::{
@@ -20,6 +20,7 @@ use super::tap_tempo::TapTempo;
 use super::web_view::{self as wv};
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::{frame_controller, prelude::*};
+use crate::global;
 
 pub fn run() {
     nannou::app(model)
@@ -61,7 +62,7 @@ pub enum AppEvent {
     Quit,
     Randomize(Exclusions),
     ReceiveDir(wv::UserDir, String),
-    ReceiveMappings(Vec<(String, ChannelAndController)>),
+    ReceiveMappings(Mappings),
     Record,
     RemoveMapping(String),
     Reset,
@@ -270,7 +271,7 @@ impl AppModel {
                 }
 
                 self.map_mode.currently_mapping = None;
-                let mappings = self.map_mode.mappings_as_vec();
+                let mappings = self.map_mode.mappings();
                 let app_tx = self.app_tx.clone();
                 let hub = self.control_hub_mut().unwrap();
 
@@ -497,7 +498,7 @@ impl AppModel {
                 self.save_global_state();
             }
             AppEvent::ReceiveMappings(mappings) => {
-                self.map_mode.update_from_vec(&mappings);
+                self.map_mode.set_mappings(mappings);
             }
             AppEvent::Record => {
                 self.recording_state
@@ -536,7 +537,7 @@ impl AppModel {
             AppEvent::Save(exclusions) => {
                 let mappings = self.map_mode.mappings();
 
-                match storage::save_program_state(
+                match storage::save_sketch_state(
                     self.sketch_name().as_str(),
                     self.control_hub().unwrap(),
                     mappings,
@@ -557,7 +558,7 @@ impl AppModel {
                 }
             }
             AppEvent::SendMappings => {
-                let mappings = self.map_mode.mappings_as_vec();
+                let mappings = self.map_mode.mappings();
                 self.wv_tx.emit(wv::Event::Mappings(mappings));
             }
             AppEvent::SendMidi => {
@@ -896,7 +897,7 @@ impl AppModel {
             controls: self.web_view_controls(),
             display_name: self.sketch_config.display_name.to_string(),
             fps: frame_controller::fps(),
-            mappings: self.map_mode.mappings_as_vec(),
+            mappings: self.map_mode.mappings(),
             paused,
             perf_mode: self.perf_mode,
             sketch_name: self.sketch_name(),

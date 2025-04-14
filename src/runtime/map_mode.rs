@@ -60,16 +60,6 @@ impl MapMode {
         state.mappings.clone()
     }
 
-    pub fn mappings_as_vec(&self) -> Vec<(String, ChannelAndController)> {
-        self.state
-            .lock()
-            .unwrap()
-            .mappings
-            .iter()
-            .map(|(k, (ch, cc))| (k.clone(), (*ch, *cc)))
-            .collect::<Vec<_>>()
-    }
-
     pub fn set_mappings(&mut self, mappings: Mappings) {
         let mut state = self.state.lock().unwrap();
         state.mappings = mappings;

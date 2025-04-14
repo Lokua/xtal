@@ -73,7 +73,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
 
 impl Sketch for G25_13Triangle {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

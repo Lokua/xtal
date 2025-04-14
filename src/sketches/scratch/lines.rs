@@ -55,8 +55,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Lines {
 
 impl Sketch for Lines {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
-
         if self.controls.changed() {
             let deviation = self.controls.get("deviation");
             let n_points = self.controls.get("n_points") as usize;

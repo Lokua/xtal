@@ -60,7 +60,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Bos {
 
 impl Sketch for Bos {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

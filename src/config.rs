@@ -1,5 +1,5 @@
-//! Configuration for the default ports used in Lattice. All ports can be
-//! overridden in the UI so this file is mostly obsolete
+//! Configuration for the default MIDI, OSC, and audio ports used in Lattice.
+//! All ports can be overridden in the UI so there is no need to edit this file.
 
 pub const OSC_PORT: u16 = 2346;
 

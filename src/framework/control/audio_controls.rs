@@ -14,8 +14,8 @@ use std::{
     time::Duration,
 };
 
-use crate::framework::frame_controller;
 use crate::framework::prelude::*;
+use crate::{framework::frame_controller, global};
 
 #[derive(Clone, Debug)]
 pub struct AudioControlConfig {

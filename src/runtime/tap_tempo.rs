@@ -22,7 +22,7 @@ impl TapTempo {
         self.tap_with_instant(Instant::now())
     }
 
-    pub fn tap_with_instant(&mut self, now: Instant) -> f32 {
+    fn tap_with_instant(&mut self, now: Instant) -> f32 {
         let difference = now.duration_since(self.previous_timestamp);
 
         if difference <= self.timeout {

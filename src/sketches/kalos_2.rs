@@ -119,7 +119,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
 
 impl Sketch for Kalos2 {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
         let a = &self.controls.animation;
 

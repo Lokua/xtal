@@ -9,8 +9,7 @@ use crate::framework::{gpu::BasicPositionVertex, prelude::*};
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_20_23_brutal_arch",
-    display_name:
-        "Genuary 20, 23 | Generative Architecture, Inspired by Brutalism",
+    display_name: "Genuary 20, 23 | Generative Architecture, Inspired by Brutalism",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -139,8 +138,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
-
         // Modulate the modulator
         let corner_offset_meta = self.controls.get("corner_offset_meta");
         let corner_t_meta = self.controls.get("corner_t_meta");

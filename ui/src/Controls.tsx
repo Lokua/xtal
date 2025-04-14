@@ -157,8 +157,7 @@ export default function Controls({
 
           if (c.kind === 'Slider') {
             const isBypassed = c.name in bypassed
-            const isMapped =
-              mappingsEnabled && !!mappings.find((m) => m[0] === c.name)
+            const isMapped = mappingsEnabled && c.name in mappings
             const disabled = c.disabled || isBypassed || isMapped
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
@@ -179,6 +178,7 @@ export default function Controls({
                     }}
                   />
                   <NumberBox
+                    data-help-id="NumberBox"
                     className="number-box"
                     value={c.value as number}
                     min={c.min}
@@ -206,6 +206,7 @@ export default function Controls({
                     // }}
                   />
                   <label
+                    data-help-id="ControlLabel"
                     htmlFor={c.name}
                     className={clsx(!c.disabled && !isBypassed && 'clickable')}
                     onClick={() => {
@@ -265,6 +266,7 @@ export default function Controls({
                     }}
                   />
                   <label
+                    data-help-id="ControlLabel"
                     htmlFor={c.name}
                     className={clsx(!c.disabled && !excluded && 'clickable')}
                     onClick={() => {

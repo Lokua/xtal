@@ -136,7 +136,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos {
 
 impl Sketch for Kalos {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
         let strength = self.controls.get("strength");
         let strength_range =

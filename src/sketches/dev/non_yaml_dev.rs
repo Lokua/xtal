@@ -44,7 +44,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> NonYamlDev {
 
 impl Sketch for NonYamlDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
         for i in 0..COUNT {
             self.controls.get(&format!("{}", i));
             // self.controls.animation.tri(i as f32);

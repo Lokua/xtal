@@ -40,7 +40,7 @@ export default function Console({ alertText }: Props) {
   return (
     <div className="console">
       <IconButton
-        name="Info"
+        name="Help"
         title="When on, hover over elements to view help information.
           When off, the console will show system alerts."
         on={showHelp}

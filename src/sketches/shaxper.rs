@@ -64,7 +64,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> ShaderExperiments {
 impl Sketch for ShaderExperiments {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
         let wr = ctx.window_rect();
-        self.controls.update();
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],

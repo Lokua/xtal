@@ -99,23 +99,13 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "dist_echo_y",
-          "value": 50.0
-        },
-        {
-          "type": "Slider",
-          "name": "fract_noise_fract",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "fract_noise_scale",
-          "value": 1.7063
-        },
-        {
-          "type": "Slider",
           "name": "wave_reduce_mix",
           "value": 0.7133
+        },
+        {
+          "type": "Slider",
+          "name": "f4",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -124,43 +114,8 @@
         },
         {
           "type": "Slider",
-          "name": "p_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 0.4108
-        },
-        {
-          "type": "Slider",
-          "name": "dist_echo_x",
-          "value": 50.0
-        },
-        {
-          "type": "Slider",
           "name": "fract_noise_shape",
           "value": 0.6993
-        },
-        {
-          "type": "Slider",
-          "name": "dist_echo_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_3_alg_mix",
-          "value": 0.0629
-        },
-        {
-          "type": "Slider",
-          "name": "dist_alg_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "f4",
-          "value": 0.0
         },
         {
           "type": "Slider",
@@ -171,17 +126,16 @@
           "type": "Slider",
           "name": "fract_noise_mix",
           "value": 0.1538
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
+        },
+        {
+          "type": "Slider",
+          "name": "p_mult",
+          "value": 1.0
+        },
         {
           "type": "Slider",
           "name": "fract_noise_scale",
-          "value": 1.0769
+          "value": 1.7063
         },
         {
           "type": "Slider",
@@ -190,58 +144,33 @@
         },
         {
           "type": "Slider",
-          "name": "fract_noise_shape",
-          "value": 0.2577
-        },
-        {
-          "type": "Slider",
           "name": "fract_noise_fract",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "dist_alg_mix",
-          "value": 0.1434
+          "value": 3.0
         },
         {
           "type": "Slider",
           "name": "wave_dist",
-          "value": 0.1014
-        },
-        {
-          "type": "Slider",
-          "name": "fract_contrast",
-          "value": 294.4126
-        },
-        {
-          "type": "Slider",
-          "name": "fract_noise_mix",
-          "value": 0.0665
-        },
-        {
-          "type": "Slider",
-          "name": "wave_reduce_mix",
-          "value": 0.4825
-        },
-        {
-          "type": "Slider",
-          "name": "dist_echo_mix",
-          "value": 0.0213
+          "value": 0.4108
         },
         {
           "type": "Slider",
           "name": "wave_3_alg_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "dist_alg_y_mult",
-          "value": 0.98
+          "value": 0.0629
         },
         {
           "type": "Slider",
           "name": "dist_echo_y",
           "value": 50.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_alg_mix",
+          "value": 1.0
         }
       ],
       "midi_controls": [],
@@ -251,8 +180,58 @@
       "ui_controls": [
         {
           "type": "Slider",
+          "name": "fract_noise_shape",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
           "name": "fract_noise_fract",
           "value": 50.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_x",
+          "value": 50.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_mix",
+          "value": 0.0769
+        },
+        {
+          "type": "Slider",
+          "name": "wave_reduce_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_y",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_3_alg_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "dist_alg_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fract_contrast",
+          "value": 1000.0
         },
         {
           "type": "Slider",
@@ -263,56 +242,77 @@
           "type": "Slider",
           "name": "dist_alg_y_mult",
           "value": 0.0
-        },
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
         {
           "type": "Slider",
-          "name": "dist_echo_y",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "dist_echo_mix",
-          "value": 0.0769
-        },
-        {
-          "type": "Slider",
-          "name": "fract_contrast",
-          "value": 1000.0
+          "name": "dist_alg_y_mult",
+          "value": 0.98
         },
         {
           "type": "Slider",
           "name": "dist_alg_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_reduce_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_3_alg_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "fract_noise_shape",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "fract_noise_mix",
-          "value": 1.0
+          "value": 0.1434
         },
         {
           "type": "Slider",
           "name": "dist_echo_x",
           "value": 50.0
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_fract",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_mix",
+          "value": 0.0213
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 0.1014
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_mix",
+          "value": 0.0665
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_scale",
+          "value": 1.0769
+        },
+        {
+          "type": "Slider",
+          "name": "wave_3_alg_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "fract_contrast",
+          "value": 294.4126
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_y",
+          "value": 50.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_reduce_mix",
+          "value": 0.4825
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_shape",
+          "value": 0.2577
         }
       ],
       "midi_controls": [],
@@ -322,8 +322,18 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "fract_noise_scale",
-          "value": 1.0769
+          "name": "f4",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_reduce_mix",
+          "value": 0.1434
+        },
+        {
+          "type": "Slider",
+          "name": "fract_noise_mix",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -332,28 +342,13 @@
         },
         {
           "type": "Slider",
-          "name": "wave_3_alg_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "f4",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "p_mult",
-          "value": 1.0
+          "name": "dist_echo_y",
+          "value": 50.0
         },
         {
           "type": "Slider",
           "name": "fract_contrast",
           "value": 381.7378
-        },
-        {
-          "type": "Slider",
-          "name": "dist_echo_mix",
-          "value": 0.0213
         },
         {
           "type": "Slider",
@@ -367,11 +362,6 @@
         },
         {
           "type": "Slider",
-          "name": "wave_reduce_mix",
-          "value": 0.1434
-        },
-        {
-          "type": "Slider",
           "name": "dist_alg_y_mult",
           "value": 0.65
         },
@@ -382,18 +372,28 @@
         },
         {
           "type": "Slider",
+          "name": "wave_3_alg_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "dist_echo_mix",
+          "value": 0.0213
+        },
+        {
+          "type": "Slider",
           "name": "fract_noise_shape",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "dist_echo_y",
-          "value": 50.0
+          "name": "p_mult",
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "fract_noise_mix",
-          "value": 1.0
+          "name": "fract_noise_scale",
+          "value": 1.0769
         }
       ],
       "midi_controls": [],

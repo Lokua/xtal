@@ -149,8 +149,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
 
 impl Sketch for Displacement2 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
-
         if self.cached_trig_fns.is_none()
             || (self.cached_pattern != self.controls.string("pattern"))
         {

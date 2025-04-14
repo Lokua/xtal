@@ -5,6 +5,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use crate::global;
+
 use super::prelude::*;
 
 pub static SHARED_OSC_RECEIVER: Lazy<Arc<Receiver>> = Lazy::new(|| {

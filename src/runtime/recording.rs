@@ -11,6 +11,7 @@ use std::time::Instant;
 use super::app;
 use super::storage::cache_dir;
 use crate::framework::prelude::*;
+use crate::global;
 use crate::runtime::app::AppEvent;
 
 #[derive(Debug)]

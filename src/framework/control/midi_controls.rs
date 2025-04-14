@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::framework::midi::is_control_change;
 use crate::framework::prelude::*;
+use crate::global;
 
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {

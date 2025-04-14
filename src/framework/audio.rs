@@ -1,7 +1,7 @@
 //! **⚠️ Experimental**
 //! Receive single-channel, multiband audio with configurable FFT bands.
 
-use cpal::{traits::*, Device, Stream, StreamConfig};
+use cpal::{Device, Stream, StreamConfig, traits::*};
 use rustfft::num_complex::Complex;
 use rustfft::{Fft, FftPlanner};
 use std::cmp::Ordering;
@@ -10,6 +10,7 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 use crate::framework::frame_controller;
+use crate::global;
 
 /// Configuration for envelope following behavior, controlling how quickly the
 /// envelope tracks changes in the input signal.
@@ -132,8 +133,8 @@ impl Audio {
         self.start()
     }
 
-    fn device_and_stream_config(
-    ) -> Result<(Device, StreamConfig), Box<dyn Error>> {
+    fn device_and_stream_config()
+    -> Result<(Device, StreamConfig), Box<dyn Error>> {
         let host = cpal::default_host();
         let device_name = global::audio_device_name();
         let device = host
@@ -226,8 +227,7 @@ impl AudioProcessor {
 
         trace!(
             "AudioProcessor initialized: sample_rate={}, buffer_size={}",
-            self.sample_rate,
-            self.buffer_size
+            self.sample_rate, self.buffer_size
         );
     }
 

@@ -139,7 +139,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Brutalism {
 
 impl Sketch for Brutalism {
     fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let wr = ctx.window_rect();
 
         let params = ShaderParams {

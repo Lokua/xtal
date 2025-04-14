@@ -68,8 +68,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> AudioControlsDev {
 
 impl Sketch for AudioControlsDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
-
         // debug_throttled!(
         //     500,
         //     "a: {}, b: {}",

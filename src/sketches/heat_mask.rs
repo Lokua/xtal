@@ -196,7 +196,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> HeatMask {
 
 impl Sketch for HeatMask {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
         let mut wr = ctx.window_rect();
 
         let show_center = self.controls.bool("show_center");

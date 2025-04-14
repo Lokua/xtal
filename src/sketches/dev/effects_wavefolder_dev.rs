@@ -45,7 +45,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> EffectsWavefolderDev {
 
 impl Sketch for EffectsWavefolderDev {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
         self.wave_folder.gain = self.controls.get("gain");
         self.wave_folder.iterations = self.controls.get("iterations") as usize;
         self.wave_folder.symmetry = self.controls.get("symmetry");

@@ -226,7 +226,6 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
 
 impl Sketch for Model {
     fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
         let segments = self.controls.get("ref_segments") as usize;
         let deviation = self.controls.get("ref_deviation");
         let points_per_segment = self.controls.get("points_per_segment") as u32;

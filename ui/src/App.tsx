@@ -191,7 +191,7 @@ export default function App() {
   const [isEncoding, setIsEncoding] = useState(false)
   const [isQueued, setIsQueued] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [mappings, setMappings] = useState<Mappings>([])
+  const [mappings, setMappings] = useState<Mappings>({})
   const [mappingsEnabled, setMappingsEnabled] = useState(true)
   const [midiClockPort, setMidiClockPort] = useState('')
   const [midiInputPort, setMidiInputPort] = useState('')
@@ -592,10 +592,10 @@ export default function App() {
   }
 
   function onDeleteMappings() {
-    mappings.forEach((mapping) => {
-      post('RemoveMapping', mapping[0])
+    Object.keys(mappings).forEach((key) => {
+      post('RemoveMapping', key)
     })
-    setMappings([])
+    setMappings({})
   }
 
   function onQueueRecord() {
@@ -635,7 +635,7 @@ export default function App() {
     post('CurrentlyMapping', name)
   }
 
-  function onDeleteSnapshots(slot: string) {
+  function onDeleteSnapshot(slot: string) {
     setSnapshots(snapshots.filter((s) => s !== slot))
     post('SnapshotDelete', slot)
   }
@@ -759,7 +759,7 @@ export default function App() {
             onClickRevert={onClickRevert}
             onToggleExclusion={onToggleExclusion}
             snapshots={snapshots}
-            onDeleteSnapshot={onDeleteSnapshots}
+            onDeleteSnapshot={onDeleteSnapshot}
             onLoadSnapshot={onLoadSnapshot}
             onSaveSnapshot={onSaveSnapshot}
           />

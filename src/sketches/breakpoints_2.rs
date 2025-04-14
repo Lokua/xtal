@@ -58,8 +58,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Breakpoints2 {
 
 impl Sketch for Breakpoints2 {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
-        self.controls.update();
-
         if self.controls.changed() {
             let slew = self.controls.bool("slew");
             let rise = self.controls.get("rise");

@@ -57,8 +57,6 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> FlowFieldBasic {
 
 impl Sketch for FlowFieldBasic {
     fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
-        self.controls.update();
-
         if self.controls.any_changed_in(&["agent_count"]) {
             let agent_count = self.controls.get("agent_count") as usize;
             let wr = ctx.window_rect();
