@@ -25,7 +25,7 @@ pub struct Drops {
     droppers: Vec<Dropper>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
+pub fn init(_app: &App, ctx: &Ctx) -> Drops {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "drop.yaml"),
         Timing::new(ctx.bpm()),
@@ -39,7 +39,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 }
 
 impl Sketch for Drops {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         let max_drops = self.hub.get("max_drops");
         let duration: f32 = self.hub.string("duration").parse().unwrap();
         let spread_div = self.hub.get("spread_div");
@@ -86,7 +86,7 @@ impl Sketch for Drops {
         });
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
         let draw = app.draw();
 
         draw.background()

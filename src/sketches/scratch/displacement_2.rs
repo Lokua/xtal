@@ -69,7 +69,7 @@ impl Displacement2 {
     }
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
+pub fn init(_app: &App, ctx: &Ctx) -> Displacement2 {
     let wr = ctx.window_rect();
 
     let controls = ControlHubBuilder::new()
@@ -148,7 +148,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2 {
 }
 
 impl Sketch for Displacement2 {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         if self.cached_trig_fns.is_none()
             || (self.cached_pattern != self.controls.string("pattern"))
         {
@@ -247,7 +247,7 @@ impl Sketch for Displacement2 {
             .collect();
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
         let draw = app.draw();
 
         frame.clear(BLACK);

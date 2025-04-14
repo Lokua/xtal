@@ -53,7 +53,7 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
+pub fn init(app: &App, ctx: &Ctx) -> Kalos2 {
     let resolution = ctx.window_rect().resolution_u32();
 
     fn make_disable() -> DisabledFn {
@@ -118,7 +118,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Kalos2 {
 }
 
 impl Sketch for Kalos2 {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let a = &self.controls.animation;
 
@@ -175,7 +175,7 @@ impl Sketch for Kalos2 {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

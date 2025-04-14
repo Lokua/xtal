@@ -51,7 +51,7 @@ pub struct Spiral {
     gpu: gpu::GpuState<()>,
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
+pub fn init(app: &App, ctx: &Ctx) -> Spiral {
     let wr = ctx.window_rect();
 
     let controls = ControlHubBuilder::new()
@@ -150,7 +150,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Spiral {
 }
 
 impl Sketch for Spiral {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -211,7 +211,7 @@ impl Sketch for Spiral {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(WHITE);
 
         let points_per_line = self.controls.get("points_per_segment") as u32;

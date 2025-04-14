@@ -45,7 +45,7 @@ struct PostProcessParams {
     a: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
+pub fn init(app: &App, ctx: &Ctx) -> ShaderToTextureDev {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("a1", 0.0)
@@ -94,7 +94,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> ShaderToTextureDev {
 }
 
 impl Sketch for ShaderToTextureDev {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let first_pass_params = ShaderParams {
@@ -134,7 +134,7 @@ impl Sketch for ShaderToTextureDev {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.second_pass.render(&frame);
     }

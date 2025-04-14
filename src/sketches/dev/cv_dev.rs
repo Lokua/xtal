@@ -21,7 +21,7 @@ pub struct CvTest {
     audio: AudioControls,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> CvTest {
+pub fn init(_app: &App, _ctx: &Ctx) -> CvTest {
     let audio = AudioControlBuilder::new()
         .with_buffer_processor(thru_buffer_processor)
         .control_from_config(
@@ -52,7 +52,7 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> CvTest {
 }
 
 impl Sketch for CvTest {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         debug_throttled!(
             1_000,
             "a: {}, b: {}",
@@ -61,7 +61,7 @@ impl Sketch for CvTest {
         );
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

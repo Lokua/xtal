@@ -22,7 +22,7 @@ pub struct ControlScriptDev {
     controls: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> ControlScriptDev {
+pub fn init(_app: &App, ctx: &Ctx) -> ControlScriptDev {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
         Timing::new(ctx.bpm()),
@@ -32,9 +32,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> ControlScriptDev {
 }
 
 impl Sketch for ControlScriptDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {}
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

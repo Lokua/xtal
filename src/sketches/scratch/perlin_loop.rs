@@ -28,7 +28,7 @@ pub struct PerlinLoop {
     last_seed: u32,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
+pub fn init(_app: &App, ctx: &Ctx) -> PerlinLoop {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("rotate", false, None)
@@ -52,7 +52,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> PerlinLoop {
 }
 
 impl Sketch for PerlinLoop {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         let seed = self.controls.get("seed") as u32;
         if seed != self.last_seed {
             self.noise = self.noise.set_seed(seed);
@@ -60,7 +60,7 @@ impl Sketch for PerlinLoop {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
         let draw = app.draw();
         draw.background().hsl(0.0, 0.0, 0.03);
 

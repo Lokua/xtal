@@ -83,7 +83,7 @@ struct PostShaderParams {
     y: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+pub fn init(app: &App, ctx: &Ctx) -> Template {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "g25_20_23_brutal_arch.yaml"),
         OscTransportTiming::new(ctx.bpm()),
@@ -137,7 +137,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         // Modulate the modulator
         let corner_offset_meta = self.controls.get("corner_offset_meta");
         let corner_t_meta = self.controls.get("corner_t_meta");
@@ -241,7 +241,7 @@ impl Sketch for Template {
             .update_params(app, window_size, &post_params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(WHITE);
         self.post_shader.render(&frame);
     }

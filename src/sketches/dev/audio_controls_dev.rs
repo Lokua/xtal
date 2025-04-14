@@ -21,7 +21,7 @@ pub struct AudioControlsDev {
     controls: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> AudioControlsDev {
+pub fn init(_app: &App, ctx: &Ctx) -> AudioControlsDev {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("pre_emphasis", 0.0)
@@ -67,7 +67,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> AudioControlsDev {
 }
 
 impl Sketch for AudioControlsDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         // debug_throttled!(
         //     500,
         //     "a: {}, b: {}",
@@ -91,7 +91,7 @@ impl Sketch for AudioControlsDev {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

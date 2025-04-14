@@ -24,7 +24,7 @@ pub struct ZSim {
     cell_size: f32,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
+pub fn init(_app: &App, ctx: &Ctx) -> ZSim {
     let wr = ctx.window_rect();
 
     let (grid, cell_size) = create_grid(wr.w(), wr.h(), GRID_SIZE, vec2);
@@ -44,7 +44,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> ZSim {
 }
 
 impl Sketch for ZSim {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         let mut wr = ctx.window_rect();
 
         if wr.changed() {
@@ -55,7 +55,7 @@ impl Sketch for ZSim {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let draw = app.draw();
         let wr = ctx.window_rect();
 

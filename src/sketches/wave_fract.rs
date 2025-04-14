@@ -45,7 +45,7 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
+pub fn init(app: &App, ctx: &Ctx) -> WaveFract {
     let window_rect = ctx.window_rect().clone();
 
     let hub = ControlHub::from_path(
@@ -75,7 +75,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> WaveFract {
 }
 
 impl Sketch for WaveFract {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -133,7 +133,7 @@ impl Sketch for WaveFract {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

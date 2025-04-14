@@ -28,7 +28,7 @@ pub struct Noise {
     last_seed: u32,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Noise {
+pub fn init(_app: &App, ctx: &Ctx) -> Noise {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("rotate", false, None)
@@ -51,7 +51,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Noise {
 }
 
 impl Sketch for Noise {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         let seed = self.controls.get("seed") as u32;
         if seed != self.last_seed {
             self.noise = self.noise.set_seed(seed);
@@ -59,7 +59,7 @@ impl Sketch for Noise {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let window_rect = ctx.window_rect();
         let draw = app.draw();
 

@@ -21,7 +21,7 @@ pub struct ResponsiveDev {
     cell_size: f32,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> ResponsiveDev {
+pub fn init(_app: &App, ctx: &Ctx) -> ResponsiveDev {
     let wr = ctx.window_rect();
     let (grid, cell_size) = create_grid(wr.w(), wr.h(), 64, vec2);
 
@@ -29,7 +29,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> ResponsiveDev {
 }
 
 impl Sketch for ResponsiveDev {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         let mut wr = ctx.window_rect();
 
         if wr.changed() {
@@ -39,7 +39,7 @@ impl Sketch for ResponsiveDev {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

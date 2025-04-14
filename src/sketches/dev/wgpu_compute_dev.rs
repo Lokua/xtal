@@ -60,7 +60,7 @@ pub struct Model {
     computed_points: Arc<Mutex<Vec<OutputPoint>>>,
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Model {
+pub fn init(app: &App, ctx: &Ctx) -> Model {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("show_ref_line", false, None)
@@ -225,7 +225,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
 }
 
 impl Sketch for Model {
-    fn update(&mut self, app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, _ctx: &Ctx) {
         let segments = self.controls.get("ref_segments") as usize;
         let deviation = self.controls.get("ref_deviation");
         let points_per_segment = self.controls.get("points_per_segment") as u32;
@@ -366,7 +366,7 @@ impl Sketch for Model {
         read_buffer.unmap();
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

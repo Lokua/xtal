@@ -46,7 +46,7 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> BlackAndWhite {
+pub fn init(app: &App, ctx: &Ctx) -> BlackAndWhite {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "./g25_14_black_and_white.yaml"),
         OscTransportTiming::new(ctx.bpm()),
@@ -73,7 +73,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> BlackAndWhite {
 }
 
 impl Sketch for BlackAndWhite {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let phase_mod = self.controls.get("phase_mod");
 
@@ -126,7 +126,7 @@ impl Sketch for BlackAndWhite {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

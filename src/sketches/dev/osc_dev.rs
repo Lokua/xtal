@@ -19,7 +19,7 @@ pub struct OscDev {
     osc: OscControls,
 }
 
-pub fn init(_app: &App, _ctx: &LatticeContext) -> OscDev {
+pub fn init(_app: &App, _ctx: &Ctx) -> OscDev {
     let osc = OscControlBuilder::new()
         .control("a", (0.0, 400.0), 0.5)
         .control("b", (0.0, 400.0), 0.5)
@@ -29,7 +29,7 @@ pub fn init(_app: &App, _ctx: &LatticeContext) -> OscDev {
 }
 
 impl Sketch for OscDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
         debug_throttled!(
             1_000,
             "a: {}, /b: {}",
@@ -38,7 +38,7 @@ impl Sketch for OscDev {
         );
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

@@ -45,7 +45,7 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Template {
+pub fn init(app: &App, ctx: &Ctx) -> Template {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "symmetry.yaml"),
         Timing::new(ctx.bpm()),
@@ -72,7 +72,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let params = ShaderParams {
             resolution: [
                 ctx.window_rect().w(),
@@ -147,7 +147,7 @@ impl Sketch for Template {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

@@ -74,7 +74,7 @@ impl Displacement2a {
     }
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
+pub fn init(_app: &App, ctx: &Ctx) -> Displacement2a {
     let wr = ctx.window_rect();
     let w = wr.w();
     let h = wr.h();
@@ -194,7 +194,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Displacement2a {
 }
 
 impl Sketch for Displacement2a {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let (w, h) = wr.wh();
         let audio_enabled = self.controls.bool("audio_enabled");
@@ -414,7 +414,7 @@ impl Sketch for Displacement2a {
             .collect();
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
         let draw = app.draw();
 
         frame.clear(BLACK);

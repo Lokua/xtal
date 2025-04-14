@@ -36,7 +36,7 @@ struct ShaderParams {
     b: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
+pub fn init(app: &App, ctx: &Ctx) -> G25_13Triangle {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("scale", 1.0, (0.0001, 2.0), 0.0001, None)
@@ -72,7 +72,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> G25_13Triangle {
 }
 
 impl Sketch for G25_13Triangle {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -98,7 +98,7 @@ impl Sketch for G25_13Triangle {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

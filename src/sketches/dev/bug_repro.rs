@@ -20,7 +20,7 @@ pub struct BugRepro {
     hub: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> BugRepro {
+pub fn init(_app: &App, ctx: &Ctx) -> BugRepro {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "./bug_repro.yaml"),
         Timing::new(ctx.bpm()),
@@ -30,9 +30,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> BugRepro {
 }
 
 impl Sketch for BugRepro {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {}
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

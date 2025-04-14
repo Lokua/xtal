@@ -31,7 +31,7 @@ pub struct Drops {
     palettes: Vec<(ColorFn, ColorFn, ColorFn)>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
+pub fn init(_app: &App, ctx: &Ctx) -> Drops {
     let w = ctx.window_rect().w();
     let h = ctx.window_rect().h();
 
@@ -115,7 +115,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Drops {
 }
 
 impl Sketch for Drops {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         let step_size = self.controls.get("step_size");
         let drop_max_radius = self.controls.get("drop_max_radius");
         let splatter_radius = self.controls.get("splatter_radius");
@@ -162,7 +162,7 @@ impl Sketch for Drops {
             });
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
         let draw = app.draw();
 
         draw.background().color(hsl(0.0, 0.0, 1.0));

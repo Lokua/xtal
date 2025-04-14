@@ -25,7 +25,7 @@ pub struct SandLineSketch {
     sand_line: Vec<Vec2>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> SandLineSketch {
+pub fn init(_app: &App, ctx: &Ctx) -> SandLineSketch {
     let trig_fns = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
@@ -100,7 +100,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> SandLineSketch {
 }
 
 impl Sketch for SandLineSketch {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         if self.controls.changed() {
             let noise_strategy = self.controls.string("noise_strategy");
             let distribution_strategy =
@@ -172,7 +172,7 @@ impl Sketch for SandLineSketch {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let draw = app.draw();
         let wr = ctx.window_rect();
 

@@ -22,7 +22,7 @@ pub struct Vertical2 {
     noise: SimplexNoise,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical2 {
+pub fn init(_app: &App, ctx: &Ctx) -> Vertical2 {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("alpha", 0.25, (0.001, 1.0), 0.001, None)
@@ -36,9 +36,9 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical2 {
 }
 
 impl Sketch for Vertical2 {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {}
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

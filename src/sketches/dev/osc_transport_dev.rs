@@ -19,16 +19,16 @@ pub struct OscTransportDev {
     animation: Animation<OscTransportTiming>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> OscTransportDev {
+pub fn init(_app: &App, ctx: &Ctx) -> OscTransportDev {
     let animation = Animation::new(OscTransportTiming::new(ctx.bpm()));
 
     OscTransportDev { animation }
 }
 
 impl Sketch for OscTransportDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {}
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {}
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

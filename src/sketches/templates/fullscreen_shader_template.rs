@@ -30,7 +30,7 @@ struct ShaderParams {
     a: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
+pub fn init(app: &App, ctx: &Ctx) -> FullscreenShader {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select("mode", "smooth", &["smooth", "step"], None)
@@ -56,7 +56,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> FullscreenShader {
 }
 
 impl Sketch for FullscreenShader {
-    fn update(&mut self, app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -76,7 +76,7 @@ impl Sketch for FullscreenShader {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &LatticeContext) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

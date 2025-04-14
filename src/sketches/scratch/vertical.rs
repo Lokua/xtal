@@ -22,7 +22,7 @@ pub struct Vertical {
     patterns: Vec<XModFn>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
+pub fn init(_app: &App, ctx: &Ctx) -> Vertical {
     let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
 
     fn disabled_unless_modes(modes: Vec<String>) -> DisabledFn {
@@ -113,7 +113,7 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Vertical {
 }
 
 impl Sketch for Vertical {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
         let wr = ctx.window_rect();
 
         let n_lines = self.controls.get("n_lines") as usize;
@@ -175,7 +175,7 @@ impl Sketch for Vertical {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &LatticeContext) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
         let window_rect = ctx.window_rect();
         let draw = app.draw();
 
