@@ -100,8 +100,7 @@ pub enum Control {
         options: Vec<String>,
         disabled: DisabledFn,
     },
-    Separator {},
-    DynamicSeparator {
+    Separator {
         name: String,
     },
 }
@@ -112,8 +111,7 @@ impl Control {
             Control::Slider { name, .. } => name,
             Control::Checkbox { name, .. } => name,
             Control::Select { name, .. } => name,
-            Control::Separator {} => "",
-            Control::DynamicSeparator { name } => name,
+            Control::Separator { name } => name,
         }
     }
 
@@ -125,7 +123,6 @@ impl Control {
                 ControlValue::String(value.clone())
             }
             Control::Separator { .. } => ControlValue::Bool(false),
-            Control::DynamicSeparator { .. } => ControlValue::Bool(false),
         }
     }
 
@@ -145,12 +142,6 @@ impl Control {
             name: name.to_string(),
             value,
             disabled: Some(Box::new(disabled)),
-        }
-    }
-
-    pub fn dynamic_separator() -> Control {
-        Control::DynamicSeparator {
-            name: format!("__dynamic_slider__{}", uuid(11)),
         }
     }
 
@@ -246,37 +237,21 @@ impl Control {
     pub fn variant_string(&self) -> String {
         (match self {
             Self::Checkbox { .. } => "Checkbox",
-            Self::DynamicSeparator { .. } => "DynamicSeparator",
             Self::Select { .. } => "Select",
-            Self::Separator {} => "Separator",
+            Self::Separator { .. } => "Separator",
             Self::Slider { .. } => "Slider",
         })
         .to_string()
     }
 
     pub fn is_separator(&self) -> bool {
-        matches!(self, Self::Separator { .. } | Self::DynamicSeparator { .. })
+        matches!(self, Self::Separator { .. })
     }
 }
 
 impl Clone for Control {
     fn clone(&self) -> Self {
         match self {
-            Control::Slider {
-                name,
-                value,
-                min,
-                max,
-                step,
-                disabled: _,
-            } => Control::Slider {
-                name: name.clone(),
-                value: *value,
-                min: *min,
-                max: *max,
-                step: *step,
-                disabled: None,
-            },
             Control::Checkbox {
                 name,
                 value,
@@ -297,10 +272,24 @@ impl Clone for Control {
                 options: options.clone(),
                 disabled: None,
             },
-            Control::Separator {} => Control::Separator {},
-            Control::DynamicSeparator { name } => {
-                Control::DynamicSeparator { name: name.clone() }
+            Control::Separator { name } => {
+                Control::Separator { name: name.clone() }
             }
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                disabled: _,
+            } => Control::Slider {
+                name: name.clone(),
+                value: *value,
+                min: *min,
+                max: *max,
+                step: *step,
+                disabled: None,
+            },
         }
     }
 }
@@ -308,21 +297,6 @@ impl Clone for Control {
 impl fmt::Debug for Control {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Control::Slider {
-                name,
-                value,
-                min,
-                max,
-                step,
-                ..
-            } => f
-                .debug_struct("Slider")
-                .field("name", name)
-                .field("value", value)
-                .field("min", min)
-                .field("max", max)
-                .field("step", step)
-                .finish(),
             Control::Checkbox { name, value, .. } => f
                 .debug_struct("Checkbox")
                 .field("name", name)
@@ -339,10 +313,23 @@ impl fmt::Debug for Control {
                 .field("value", value)
                 .field("options", options)
                 .finish(),
-            Control::Separator {} => f.debug_struct("Separator").finish(),
-            Control::DynamicSeparator { name, .. } => f
-                .debug_struct("DynamicSeparator")
+            Control::Separator { name } => {
+                f.debug_struct("Separator").field("name", name).finish()
+            }
+            Control::Slider {
+                name,
+                value,
+                min,
+                max,
+                step,
+                ..
+            } => f
+                .debug_struct("Slider")
                 .field("name", name)
+                .field("value", value)
+                .field("min", min)
+                .field("max", max)
+                .field("step", step)
                 .finish(),
         }
     }
@@ -627,14 +614,14 @@ impl UiControlBuilder {
         })
     }
 
-    pub fn separator(self) -> Self {
-        self.control(Control::Separator {})
-    }
-
-    pub fn dynamic_separator(self, name: &str) -> Self {
-        self.control(Control::DynamicSeparator {
+    pub fn separator_internal(self, name: &str) -> Self {
+        self.control(Control::Separator {
             name: name.to_string(),
         })
+    }
+
+    pub fn separator(self) -> Self {
+        self.separator_internal(&uuid_5())
     }
 
     pub fn slider(

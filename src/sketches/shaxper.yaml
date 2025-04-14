@@ -216,6 +216,7 @@ f1:
 f2:
   var: f2
   type: slider
+
 f3:
   var: f3
   type: slider

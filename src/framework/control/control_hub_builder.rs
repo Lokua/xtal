@@ -102,12 +102,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     }
 
     pub fn separator(self) -> Self {
-        // The old separator doesn't work in control_hub context since it
-        // doesn't have a unique ID (name)
-        // ---
-        // self.ui(Control::Separator {})
-
-        self.ui(Control::DynamicSeparator { name: uuid_5() })
+        self.ui(Control::Separator { name: uuid_5() })
     }
 
     pub fn midi_controls(mut self, midi_controls: MidiControls) -> Self {

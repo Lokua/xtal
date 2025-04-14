@@ -480,15 +480,12 @@ impl From<(&ui_controls::Control, &ControlHub<Timing>)> for Control {
                 result.kind = ControlKind::Checkbox;
                 result.value = hub.bool(name).to_string();
             }
-            ui_controls::Control::DynamicSeparator { .. } => {
-                result.kind = ControlKind::DynamicSeparator;
-            }
             ui_controls::Control::Select { name, options, .. } => {
                 result.kind = ControlKind::Select;
                 result.value = hub.string(name);
                 result.options = options.clone();
             }
-            ui_controls::Control::Separator {} => {
+            ui_controls::Control::Separator { .. } => {
                 result.kind = ControlKind::Separator;
             }
             ui_controls::Control::Slider {

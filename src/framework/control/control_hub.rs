@@ -1009,7 +1009,7 @@ impl<T: TimingSource> ControlHub<T> {
                     self.ui_controls.add(select);
                 }
                 ControlType::Separator => {
-                    self.ui_controls.add(Control::dynamic_separator());
+                    self.ui_controls.add(Control::Separator { name: uuid_5() });
                 }
                 ControlType::Osc => {
                     let conf: OscConfig =
