@@ -205,7 +205,7 @@ export default function Header({
           <Select
             data-help-id="TransitionTime"
             id="transition-time"
-            style={{ width: '48px' }}
+            style={{ width: '52px' }}
             value={transitionTime.toString()}
             options={transitionTimes}
             onChange={(value) => {

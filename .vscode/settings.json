@@ -42,6 +42,7 @@
     "rwlock",
     "sccache",
     "serde",
+    "shaxper",
     "smin",
     "stddev",
     "termcolor",

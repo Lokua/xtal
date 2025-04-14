@@ -199,6 +199,11 @@ export default function Controls({
                         input.blur()
                       }
                     }}
+                    // TODO: add this to @lokua/number-box
+                    // onDoubleClick={(e) => {
+                    //   const input = e.currentTarget
+                    //   input.setSelectionRange(0, input.value.length)
+                    // }}
                   />
                   <label
                     htmlFor={c.name}

@@ -1302,10 +1302,7 @@ impl<T: TimingSource> ControlHub<T> {
             match Self::parse_from_path(&path) {
                 Ok(new_config) => {
                     if let Ok(mut guard) = state.lock() {
-                        info!(
-                            "Loaded new configuration. \
-                            DON'T FORGET TO CALL UPDATE!"
-                        );
+                        info!("Loaded new configuration");
                         has_changes.store(true, Ordering::Release);
                         *guard = Some(new_config);
                     }

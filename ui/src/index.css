@@ -18,6 +18,7 @@
     --muted-color: #ccc;
     --meter-color: var(--text-color);
     --control-background-color: #eee;
+    --control-disabled-background-color: #f5f5f5;
     --control-active-background-color: #ddd;
     --control-text-color: #333;
     --control-text-color-muted: #666;
@@ -41,6 +42,7 @@
     --muted-color: #444;
     --meter-color: var(--text-color);
     --control-background-color: #363636;
+    --control-disabled-background-color: #222;
     --control-active-background-color: #555;
     --control-text-color: #eee;
     --control-text-color-muted: #bbb;
@@ -180,9 +182,10 @@ input,
   background-color: var(--control-background-color);
   color: var(--control-text-color);
 
-  &:disabled {
+  &:disabled:not(.icon-button) {
     cursor: not-allowed;
     color: var(--control-disabled-text-color);
+    background: var(--control-disabled-background-color);
   }
 
   &:focus,
@@ -308,6 +311,14 @@ button.icon-button {
     margin: 0;
     cursor: pointer;
   }
+
+  &:has(input:disabled) {
+    background-color: var(--control-disabled-background-color);
+
+    svg {
+      fill: var(--control-disabled-text-color);
+    }
+  }
 }
 
 .number-box {
@@ -328,6 +339,10 @@ button.icon-button {
     color: var(--control-text-color);
     pointer-events: none;
     font-size: 0.5em;
+  }
+
+  &:has(select:disabled)::after {
+    color: var(--control-disabled-text-color);
   }
 
   select {
@@ -480,18 +495,6 @@ input[type='range']::-webkit-slider-thumb {
     label {
       animation: labelTransition var(--beat) ease-in-out infinite alternate;
     }
-
-    /* .checkbox-wrapper {
-      animation: checkboxTransition var(--beat) linear infinite alternate;
-    }
-
-    input[type='range']::-webkit-slider-thumb {
-      animation: sliderTransition var(--beat) linear infinite alternate;
-    }
-
-    .select-wrapper::after {
-      animation: selectTransition var(--beat) linear infinite alternate;
-    } */
   }
 }
 
@@ -503,30 +506,6 @@ input[type='range']::-webkit-slider-thumb {
     color: transparent;
   }
 }
-/* @keyframes checkboxTransition {
-  from {
-    background-color: transparent;
-  }
-  to {
-    background-color: var(--control-background-color);
-  }
-}
-@keyframes sliderTransition {
-  from {
-    background-color: transparent;
-  }
-  to {
-    background-color: var(--control-knob-color);
-  }
-}
-@keyframes selectTransition {
-  from {
-    color: transparent;
-  }
-  to {
-    color: var(--control-text-color);
-  }
-} */
 
 .indicator-icon {
   display: inline-flex;
@@ -548,10 +527,35 @@ input[type='range']::-webkit-slider-thumb {
 
 .console {
   overflow: auto;
+  position: relative;
   height: 4.75rem;
   padding: 0.5rem;
+  padding-right: 1.25rem;
   font-size: 0.625em;
   background-color: var(--console-background-color);
+
+  .icon-button {
+    position: absolute;
+    top: 0;
+    left: calc(100% - var(--control-height) - 0.5rem);
+
+    svg {
+      fill: var(--muted-color);
+    }
+
+    /* &:hover {
+      svg {
+        fill: var(--control-text-color);
+      }
+    } */
+
+    &.on {
+      background-color: unset;
+      svg {
+        fill: var(--control-text-color);
+      }
+    }
+  }
 }
 
 #settings {

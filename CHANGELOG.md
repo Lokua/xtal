@@ -9,10 +9,18 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ## [0.10.0] 2025-04-13
 
+### Added
+
+- A small info icon to the top right of the console that will toggle between
+  showing help and system alerts as having them both show depending on timing
+  could be disjointed (when hovering over a help-ready element, alerts were not
+  seen until mouse-out)
+
 ### Changed
 
 - Toggling fullscreen from GUI or Main window now uses F instead of requiring a
   modifier since we aren't using F for anything else
+- Improved the appearance of disabled controls
 
 ### Fixed
 

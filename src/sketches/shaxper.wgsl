@@ -12,10 +12,18 @@ struct VertexOutput {
 
 struct Params {
     resolution: vec4f,
+    // dist_freq, dist_echo_x, dist_echo_y, dist_echo_mix
     a: vec4f,
+    // fract_noise_mix, fract_noise_scale, fract_noise_fract, fract_noise_shape
     b: vec4f,
+    // wave_phase, wave_dist, wave_x_freq, wave_y_freq 
     c: vec4f,
+    // fract_count, fract_zoom, fract_contrast, wave_reduce_mix, 
     d: vec4f,
+    // dist_alg_mix, dist_alg_y_mult, wave_3_alg_mix, p_mult
+    e: vec4f,
+    // ....
+    f: vec4f,
 }
 
 @group(0) @binding(0)
@@ -31,7 +39,10 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let p = correct_aspect(position);
+    let color_mix = params.e.z;
+    let p_mult = params.e.w;
+
+    var p = correct_aspect(position) * p_mult;
 
     let fract_dist_reduce_mix = 0.5;
     let fract_dist_map_mix = 0.5;
@@ -55,7 +66,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         fract_dist_map_mix
     );
 
-    return mapped;
+    return vec4f(mapped, 1.0);
 }
 
 fn wave_reduce(p: vec2f) -> f32 {
@@ -63,16 +74,23 @@ fn wave_reduce(p: vec2f) -> f32 {
     let wave_dist = params.c.y * 10.0;
     let wave_x_freq = params.c.z * 10.0;
     let wave_y_freq = params.c.w * 10.0;
+    let wave_3_alg_mix = params.e.z;
+
     let d = length(p);
     let wave1 = tanh(d * wave_dist - wave_phase * PI);
     let wave2 = cos(p.x * wave_x_freq);
-    let wave3 = cosh(p.y * wave_y_freq);
+    let wave3 = mix(
+        cosh(p.y * wave_y_freq),
+        tan(p.y * wave_y_freq),
+        wave_3_alg_mix
+    );
+
     return wave1 + wave2 + wave3;
 }
 
-fn wave_map(wave: f32) -> vec4f {
+fn wave_map(wave: f32) -> vec3f {
     let color = vec3(0.5 + (cos(wave) * 0.5));
-    return vec4f(color, 1.0);
+    return color;
 }
 
 fn distort_reduce(pos: vec2f) -> f32 {
@@ -80,8 +98,22 @@ fn distort_reduce(pos: vec2f) -> f32 {
     let dist_echo_mix = params.a.w;
     let dist_echo_x = params.a.y;
     let dist_echo_y = params.a.z;
-    var p = vec2f(pos);
-    p *= tan(p * dist_freq);
+    let dist_alg_mix = params.e.x;
+    let dist_alg_y_mult = params.e.y;
+
+    var p = vec2f(pos.y, pos.x);
+
+    let a = vec2f(
+        sin(p.x * dist_echo_x) * cos(p.y * dist_echo_y),
+        cos(p.x * dist_echo_x) * sin(p.y * dist_echo_y) * dist_alg_y_mult
+    );
+
+    let b = vec2f(
+        tan(p.x * dist_echo_x), 
+        tan(p.y * dist_echo_y * dist_alg_y_mult)
+    );
+
+    p = mix(a, b, dist_alg_mix);
 
     let echo_x = fract(p.x * dist_echo_x);
     let echo_y = fract(p.y * dist_echo_y);
@@ -90,8 +122,8 @@ fn distort_reduce(pos: vec2f) -> f32 {
     return mix(length(p), echo, dist_echo_mix);
 }
 
-fn distort_map(d: f32) -> vec4f {
-    return vec4f(vec3(smoothstep(0.0, 1.0, d * 0.3)), 1.0);
+fn distort_map(d: f32) -> vec3f {
+    return vec3(smoothstep(0.0, 1.0, d * 0.5));
 }
 
 fn fractal_reduce(pos: vec2f) -> f32 {
@@ -101,72 +133,37 @@ fn fractal_reduce(pos: vec2f) -> f32 {
     let fract_noise_fract = params.b.z;
     let fract_noise_shape = params.b.w;
     let fract_zoom = params.d.y;
-    
-    // Zoom
-    let center_x = 0.0;
-    let center_y = 0.0;
-    
-    var zoomed_pos = 
-        (pos - vec2f(center_x, center_y)) / 
-        fract_zoom + vec2f(center_x, center_y);
 
-    var noise_x = fract(zoomed_pos.y * fract_noise_fract) * fract_noise_fract * -1.0;
-    var noise_y = fract(zoomed_pos.x * fract_noise_fract) * fract_noise_fract;
+    var noise_x = fract(pos.y * fract_noise_fract) * 
+        fract_noise_fract * -1.0;
+    var noise_y = fract(pos.x * fract_noise_fract) * 
+        fract_noise_fract;
     noise_x = mix(noise_x, cos(noise_x), fract_noise_shape);
     noise_y = mix(noise_y, sin(noise_y), fract_noise_shape);
 
     let pn = noise(vec2f((noise_x), (noise_y))) * fract_noise_scale;
 
-    var p = mix(zoomed_pos, vec2f(pn), fract_noise_mix);
+    var p = mix(pos, vec2f(pn), fract_noise_mix);
     
     var color = 0.0;
-    let MAX_ITERATIONS = 100;
+    let MAX_ITERATIONS = 1000;
     for (var i = 0; i < MAX_ITERATIONS; i++) {
         let weight = 1.0 - smoothstep(fract_count - 1.0, fract_count, f32(i));
         if (weight <= 0.0) { break; }
         p = abs(p) * 2.0 - 1.0;
-        let len = max(length(p), 0.001);
+        let len = max(length(p), 0.1);
         color += (1.0 / len) * weight;
     }
     
     return color / fract_count;
 }
-// fn fractal_reduce(pos: vec2f) -> f32 {
-//     let fract_count = params.d.x; 
-//     let fract_noise_mix = params.b.x;
-//     let fract_noise_scale = params.b.y;
-//     let fract_noise_fract = params.b.z;
-//     let fract_noise_shape = params.b.w;
 
-//     var noise_x = fract(pos.y * fract_noise_fract) * fract_noise_fract * -1.0;
-//     var noise_y = fract(pos.x * fract_noise_fract) * fract_noise_fract;
-//     noise_x = mix(noise_x, cos(noise_x), fract_noise_shape);
-//     noise_y = mix(noise_y, sin(noise_y), fract_noise_shape);
-
-//     let pn = noise(vec2f((noise_x), (noise_y))) * fract_noise_scale;
-
-//     var p = mix(pos, vec2f(pn), fract_noise_mix);
-    
-//     var color = 0.0;
-//     let MAX_ITERATIONS = 100;
-//     for (var i = 0; i < MAX_ITERATIONS; i++) {
-//         let weight = 1.0 - smoothstep(fract_count - 1.0, fract_count, f32(i));
-//         if (weight <= 0.0) { break; }
-//         p = abs(p) * 2.0 - 1.0;
-//         let len = max(length(p), 0.001);
-//         color += (1.0 / len) * weight;
-//     }
-    
-//     return color / fract_count;
-// }
-
-
-fn fractal_map(color_value: f32) -> vec4f {
+fn fractal_map(color_value: f32) -> vec3f {
+    let fract_contrast = params.d.z;
     let fract_steps = 1.0;
-    let contrast = 300.0;
-    let contrasted = pow(color_value, contrast);
+    let contrasted = pow(color_value, fract_contrast);
     let stepped = floor(contrasted * fract_steps) / fract_steps;
-    return vec4f(vec3f(stepped), 1.0);
+    return vec3f(stepped);
 }
 
 fn noise(p: vec2f) -> f32 {

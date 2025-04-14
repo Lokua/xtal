@@ -1,6 +1,19 @@
 # ------------------------------------------------------------------------------
+#  Position Transformations
+# ------------------------------------------------------------------------------
+
+p_mult:
+  var: e4
+  type: slider
+  range: [1, 100]
+  default: 1
+
+# ------------------------------------------------------------------------------
 #  Wave
 # ------------------------------------------------------------------------------
+
+wave_section:
+  type: separator
 
 wave_phase:
   var: c1
@@ -11,11 +24,11 @@ wave_phase:
       value: 0.5
       amplitude: 0.5
     - kind: random
-      position: 2
+      position: 8
       value: 0.5
       amplitude: 0.5
     - kind: end
-      position: 4
+      position: 16
       value: 0
 
 wave_phase_mult:
@@ -27,8 +40,8 @@ wave_phase_mult:
 wave_phase_slew:
   type: effect
   kind: slew_limiter
-  rise: 0.65
-  fall: 0.65
+  rise: 0.75
+  fall: 0.75
 
 wave_phase_mod:
   type: mod
@@ -60,6 +73,9 @@ wave_reduce_mix:
   var: d4
   type: slider
 
+wave_3_alg_mix:
+  var: e3
+  type: slider
 # ------------------------------------------------------------------------------
 #  Distortion
 # ------------------------------------------------------------------------------
@@ -80,14 +96,25 @@ dist_echo_mix:
 dist_echo_x:
   var: a2
   type: slider
-  range: [1, 10]
+  range: [1, 50]
   step: 1
 
 dist_echo_y:
   var: a3
   type: slider
-  range: [1, 10]
+  range: [1, 50]
   step: 1
+
+dist_alg_mix:
+  var: e1
+  type: slider
+
+dist_alg_y_mult:
+  var: e2
+  type: slider
+  range: [0, 5]
+  default: 1
+  step: 0.01
 
 # ------------------------------------------------------------------------------
 #  Fractal
@@ -105,7 +132,7 @@ fract_count:
       value: 5
       amplitude: 5
     - kind: end
-      position: 1
+      position: 8
       value: 5
 
 fract_count_slew:
@@ -148,7 +175,7 @@ fract_zoom:
       value: 2
       amplitude: 1
     - kind: end
-      position: 2
+      position: 12
       value: 0
 
 fract_zoom_slew:
@@ -164,12 +191,34 @@ fract_zoom_mod:
     - fract_zoom_slew
 
 # ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+fract_contrast:
+  var: d3
+  type: slider
+  range: [1, 1000]
+  default: 200
+
+# ------------------------------------------------------------------------------
 #  Unused
 # ------------------------------------------------------------------------------
 
 unused_section:
   type: separator
 
-d3:
-  var: d3
+f1:
+  var: f1
+  type: slider
+f2:
+  var: f2
+  type: slider
+f3:
+  var: f3
+  type: slider
+f4:
+  var: f4
   type: slider

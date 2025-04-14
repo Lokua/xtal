@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Help } from './Help'
+import IconButton from './IconButton'
 
 type Props = {
   alertText: string
@@ -7,6 +8,7 @@ type Props = {
 
 export default function Console({ alertText }: Props) {
   const [helpText, setHelpText] = useState('')
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     function onMouseOver(e: MouseEvent) {
@@ -35,5 +37,18 @@ export default function Console({ alertText }: Props) {
     }
   }, [alertText])
 
-  return <div className="console">{helpText || alertText}</div>
+  return (
+    <div className="console">
+      <IconButton
+        name="Info"
+        title="When on, hover over elements to view help information.
+          When off, the console will show system alerts."
+        on={showHelp}
+        onClick={() => {
+          setShowHelp(!showHelp)
+        }}
+      />
+      {showHelp ? helpText : alertText}
+    </div>
+  )
 }

@@ -5,7 +5,9 @@ import Close from '@material-symbols/svg-400/outlined/close.svg?react'
 import DeleteMappings from '@material-symbols/svg-400/outlined/delete.svg?react'
 import DisableMappings from '@material-symbols/svg-400/outlined/block.svg?react'
 import Folder from '@material-symbols/svg-400/outlined/folder.svg?react'
+import Help from '@material-symbols/svg-400/outlined/help.svg?react'
 import Image from '@material-symbols/svg-400/outlined/image.svg?react'
+import Info from '@material-symbols/svg-400/outlined/info.svg?react'
 import Pause from '@material-symbols/svg-400/outlined/pause.svg?react'
 import Perf from '@material-symbols/svg-400/outlined/lock.svg?react'
 import Play from '@material-symbols/svg-400/outlined/play_arrow.svg?react'
@@ -35,7 +37,9 @@ const icons = {
   DisableMappings,
   Exclusions,
   Folder,
+  Help,
   Image,
+  Info,
   Pause,
   Perf,
   Play,
