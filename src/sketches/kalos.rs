@@ -51,7 +51,7 @@ struct ShaderParams {
     time: f32,
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Kalos {
+pub fn init(app: &App, ctx: &Context) -> Kalos {
     let wr = ctx.window_rect();
 
     let controls = ControlHubBuilder::new()
@@ -135,7 +135,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Kalos {
 }
 
 impl Sketch for Kalos {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
         let strength = self.controls.get("strength");
         let strength_range =
@@ -195,7 +195,7 @@ impl Sketch for Kalos {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         self.gpu.render(&frame);
     }
 }

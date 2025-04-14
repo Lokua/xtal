@@ -24,7 +24,9 @@ macro_rules! register_sketches {
 }
 
 type DynamicSketchFn = Box<
-    dyn for<'a> Fn(&'a App, &Ctx) -> Box<dyn SketchAll + 'static> + Send + Sync,
+    dyn for<'a> Fn(&'a App, &Context) -> Box<dyn SketchAll + 'static>
+        + Send
+        + Sync,
 >;
 
 pub struct SketchInfo {
@@ -50,7 +52,7 @@ impl SketchRegistry {
 
     pub fn register<F>(&mut self, config: &'static SketchConfig, factory: F)
     where
-        F: Fn(&App, &Ctx) -> Box<dyn SketchAll> + Send + Sync + 'static,
+        F: Fn(&App, &Context) -> Box<dyn SketchAll> + Send + Sync + 'static,
     {
         self.sketches.insert(
             config.name.to_string(),

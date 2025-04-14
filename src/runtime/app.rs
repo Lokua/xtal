@@ -116,7 +116,7 @@ struct AppModel {
     app_rx: AppEventReceiver,
     app_tx: AppEventSender,
     clear_next_frame: Cell<bool>,
-    ctx: Ctx,
+    ctx: Context,
     hrcc: bool,
     image_index: Option<storage::ImageIndex>,
     mappings_enabled: bool,
@@ -1084,7 +1084,7 @@ fn model(app: &App) -> AppModel {
     let bpm = Bpm::new(sketch_info.config.bpm);
     let bpm_clone = bpm.clone();
     let raw_bpm = bpm.get();
-    let ctx = Ctx::new(bpm_clone, WindowRect::new(rect));
+    let ctx = Context::new(bpm_clone, WindowRect::new(rect));
 
     frame_controller::set_fps(sketch_info.config.fps);
     let sketch = (sketch_info.factory)(app, &ctx);

@@ -46,7 +46,7 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Blob {
+pub fn init(app: &App, ctx: &Context) -> Blob {
     let window_rect = ctx.window_rect();
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "blob.yaml"),
@@ -75,7 +75,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Blob {
 }
 
 impl Sketch for Blob {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -121,7 +121,7 @@ impl Sketch for Blob {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

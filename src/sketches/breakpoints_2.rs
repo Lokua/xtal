@@ -28,7 +28,7 @@ pub struct Breakpoints2 {
     ring_modulator: RingModulator,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> Breakpoints2 {
+pub fn init(_app: &App, ctx: &Context) -> Breakpoints2 {
     let timing = ManualTiming::new(ctx.bpm());
     let animation = Animation::new(timing.clone());
     let controls = ControlHub::from_path(
@@ -57,7 +57,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> Breakpoints2 {
 }
 
 impl Sketch for Breakpoints2 {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         if self.controls.changed() {
             let slew = self.controls.bool("slew");
             let rise = self.controls.get("rise");
@@ -143,7 +143,7 @@ impl Sketch for Breakpoints2 {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

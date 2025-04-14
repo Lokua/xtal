@@ -21,7 +21,7 @@ pub struct MidiDev {
     hub: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> MidiDev {
+pub fn init(_app: &App, ctx: &Context) -> MidiDev {
     let hub = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .hrcc(true)
@@ -35,11 +35,11 @@ pub fn init(_app: &App, ctx: &Ctx) -> MidiDev {
 }
 
 impl Sketch for MidiDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         // debug!("{}", self.midi.get("a"));
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

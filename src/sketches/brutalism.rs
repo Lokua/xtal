@@ -83,7 +83,7 @@ struct PostShaderParams {
     y: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Brutalism {
+pub fn init(app: &App, ctx: &Context) -> Brutalism {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "brutalism.yaml"),
         Timing::new(ctx.bpm()),
@@ -138,7 +138,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Brutalism {
 }
 
 impl Sketch for Brutalism {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -227,7 +227,7 @@ impl Sketch for Brutalism {
             .update_params(app, window_size, &post_params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(WHITE);
         self.post_shader.render(&frame);
     }

@@ -30,7 +30,7 @@ pub struct Lines {
     pad: f32,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> Lines {
+pub fn init(_app: &App, ctx: &Context) -> Lines {
     let wr = ctx.window_rect();
 
     let controls = ControlHubBuilder::new()
@@ -54,7 +54,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> Lines {
 }
 
 impl Sketch for Lines {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         if self.controls.changed() {
             let deviation = self.controls.get("deviation");
             let n_points = self.controls.get("n_points") as usize;
@@ -79,7 +79,7 @@ impl Sketch for Lines {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let draw = app.draw();
         let wr = &ctx.window_rect();
 

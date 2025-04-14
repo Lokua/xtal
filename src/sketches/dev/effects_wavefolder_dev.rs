@@ -24,7 +24,7 @@ pub struct EffectsWavefolderDev {
     controls: ControlHub<ManualTiming>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> EffectsWavefolderDev {
+pub fn init(_app: &App, ctx: &Context) -> EffectsWavefolderDev {
     let wave_folder = WaveFolder::default();
 
     let controls = ControlHubBuilder::new()
@@ -44,7 +44,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> EffectsWavefolderDev {
 }
 
 impl Sketch for EffectsWavefolderDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         self.wave_folder.gain = self.controls.get("gain");
         self.wave_folder.iterations = self.controls.get("iterations") as usize;
         self.wave_folder.symmetry = self.controls.get("symmetry");
@@ -67,7 +67,7 @@ impl Sketch for EffectsWavefolderDev {
         )];
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

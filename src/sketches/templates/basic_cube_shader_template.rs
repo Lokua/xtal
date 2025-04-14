@@ -41,7 +41,7 @@ struct ShaderParams {
     a: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> BasicCubeShader {
+pub fn init(app: &App, ctx: &Context) -> BasicCubeShader {
     let controls = ControlHub::from_path(
         to_absolute_path(file!(), "basic_cube_shader_template.yaml"),
         Timing::new(ctx.bpm()),
@@ -70,7 +70,7 @@ pub fn init(app: &App, ctx: &Ctx) -> BasicCubeShader {
 }
 
 impl Sketch for BasicCubeShader {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -89,7 +89,7 @@ impl Sketch for BasicCubeShader {
             .update(app, wr.resolution_u32(), &params, &vertices);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

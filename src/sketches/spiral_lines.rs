@@ -51,7 +51,7 @@ pub struct SpiralLines {
     gpu: gpu::GpuState<()>,
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> SpiralLines {
+pub fn init(app: &App, ctx: &Context) -> SpiralLines {
     let wr = ctx.window_rect();
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "spiral_lines.yaml"),
@@ -82,7 +82,7 @@ pub fn init(app: &App, ctx: &Ctx) -> SpiralLines {
 }
 
 impl Sketch for SpiralLines {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -135,7 +135,7 @@ impl Sketch for SpiralLines {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(WHITE);
 
         let points_per_line = self.hub.get("points_per_segment") as u32;

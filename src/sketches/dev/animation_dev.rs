@@ -22,16 +22,16 @@ pub struct AnimationDev {
     animation: Animation<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> AnimationDev {
+pub fn init(_app: &App, ctx: &Context) -> AnimationDev {
     let animation = Animation::new(Timing::new(ctx.bpm()));
 
     AnimationDev { animation }
 }
 
 impl Sketch for AnimationDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {}
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {}
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let draw = app.draw();

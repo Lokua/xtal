@@ -45,7 +45,7 @@ struct ShaderParams {
     e: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Template {
+pub fn init(app: &App, ctx: &Context) -> Template {
     let controls = ControlHubBuilder::new()
         .timing(OscTransportTiming::new(ctx.bpm()))
         .slider("wave_power", 5.0, (0.0, 10.0), 0.01, None)
@@ -91,7 +91,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -139,7 +139,7 @@ impl Sketch for Template {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

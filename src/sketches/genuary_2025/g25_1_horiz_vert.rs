@@ -27,7 +27,7 @@ pub struct HorizVert {
     lines: Vec<Vec2>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> HorizVert {
+pub fn init(_app: &App, ctx: &Context) -> HorizVert {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .checkbox("invert", false, None)
@@ -44,7 +44,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> HorizVert {
 }
 
 impl Sketch for HorizVert {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         self.lines.clear();
 
         let window_rect = ctx.window_rect();
@@ -79,7 +79,7 @@ impl Sketch for HorizVert {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
         let window_rect = ctx.window_rect();

@@ -22,7 +22,7 @@ pub struct NonYamlDev {
     controls: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> NonYamlDev {
+pub fn init(_app: &App, ctx: &Context) -> NonYamlDev {
     let mut ui_controls: Vec<Control> = vec![];
 
     for i in 0..COUNT {
@@ -43,14 +43,14 @@ pub fn init(_app: &App, ctx: &Ctx) -> NonYamlDev {
 }
 
 impl Sketch for NonYamlDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         for i in 0..COUNT {
             self.controls.get(&format!("{}", i));
             // self.controls.animation.tri(i as f32);
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

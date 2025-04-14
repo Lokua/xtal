@@ -54,7 +54,7 @@ pub struct Template {
     midi: MidiControls,
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Template {
+pub fn init(app: &App, ctx: &Context) -> Template {
     fn make_disabled() -> DisabledFn {
         Some(Box::new(|_| true))
     }
@@ -170,7 +170,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -228,7 +228,7 @@ impl Sketch for Template {
         self.controls.mark_unchanged();
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(WHITE);
 
         let points_per_line = self.midi.get("points_per_segment") as u32;

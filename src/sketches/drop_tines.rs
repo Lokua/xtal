@@ -26,7 +26,7 @@ pub struct DropTines {
 
 const COLORS: &[Srgb<u8>] = &[BLACK, MISTYROSE, AZURE];
 
-pub fn init(_app: &App, ctx: &Ctx) -> DropTines {
+pub fn init(_app: &App, ctx: &Context) -> DropTines {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "drop_tines.yaml"),
         Timing::new(ctx.bpm()),
@@ -36,7 +36,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> DropTines {
 }
 
 impl Sketch for DropTines {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
         let circle_count = self.hub.get("circle_count") as usize;
         let resolution = self.hub.get("resolution") as usize;
@@ -93,7 +93,7 @@ impl Sketch for DropTines {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

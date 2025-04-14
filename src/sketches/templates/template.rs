@@ -21,7 +21,7 @@ pub struct Template {
     hue: f32,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> Template {
+pub fn init(_app: &App, ctx: &Context) -> Template {
     let hub = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("radius", 100.0, (10.0, 300.0), 1.0, None)
@@ -31,11 +31,11 @@ pub fn init(_app: &App, ctx: &Ctx) -> Template {
 }
 
 impl Sketch for Template {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         self.hue = self.hub.animation.tri(12.0)
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

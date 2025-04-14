@@ -31,7 +31,7 @@ pub struct SandLines {
     sand_lines: Vec<Line>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> SandLines {
+pub fn init(_app: &App, ctx: &Context) -> SandLines {
     let trig_fns = [
         "cos", "sin", "tan", "tanh", "sec", "csc", "cot", "sech", "csch",
         "coth",
@@ -162,7 +162,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> SandLines {
 }
 
 impl Sketch for SandLines {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         if self.controls.changed() {
             let noise_strategy = self.controls.string("noise_strategy");
             let distribution_strategy =
@@ -460,7 +460,7 @@ impl Sketch for SandLines {
         }
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let draw = app.draw();
 
         draw.rect()

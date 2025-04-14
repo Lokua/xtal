@@ -30,7 +30,7 @@ pub struct HeatMask {
     objects: Vec<(Vec2, f32, f32, LinSrgb)>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> HeatMask {
+pub fn init(_app: &App, ctx: &Context) -> HeatMask {
     let wr = ctx.window_rect();
     let grid_w = wr.w() - 80.0;
     let grid_h = wr.h() - 80.0;
@@ -195,7 +195,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> HeatMask {
 }
 
 impl Sketch for HeatMask {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         let mut wr = ctx.window_rect();
 
         let show_center = self.controls.bool("show_center");
@@ -447,7 +447,7 @@ impl Sketch for HeatMask {
         );
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let draw = app.draw();
         let wr = ctx.window_rect();
 

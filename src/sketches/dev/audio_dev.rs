@@ -25,7 +25,7 @@ pub struct AudioDev {
     fft_bands: Vec<f32>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> AudioDev {
+pub fn init(_app: &App, ctx: &Context) -> AudioDev {
     let audio = Audio::new();
 
     let controls = ControlHubBuilder::new()
@@ -43,7 +43,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> AudioDev {
 }
 
 impl Sketch for AudioDev {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         self.fft_bands = self.audio.bands(
             N_BANDS,
             30.0,
@@ -55,7 +55,7 @@ impl Sketch for AudioDev {
         // debug_throttled!(1_000, "fft_bands: {:?}", self.fft_bands);
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let wr = ctx.window_rect();
         let draw = app.draw();
 

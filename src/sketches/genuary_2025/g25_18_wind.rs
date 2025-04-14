@@ -47,7 +47,7 @@ pub struct G25_18Wind {
     gpu: gpu::GpuState<Vertex>,
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> G25_18Wind {
+pub fn init(app: &App, ctx: &Context) -> G25_18Wind {
     fn make_agent_count_disabler() -> DisabledFn {
         Some(Box::new(|_controls: &UiControls| true))
     }
@@ -129,7 +129,7 @@ pub fn init(app: &App, ctx: &Ctx) -> G25_18Wind {
 }
 
 impl Sketch for G25_18Wind {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         if self.controls.any_changed_in(&["agent_count"]) {
@@ -228,7 +228,7 @@ impl Sketch for G25_18Wind {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         self.gpu.render(&frame);
     }
 }

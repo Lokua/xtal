@@ -31,7 +31,7 @@ struct ShaderParams {
     b: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> SierpinskiTriangle {
+pub fn init(app: &App, ctx: &Context) -> SierpinskiTriangle {
     let wr = ctx.window_rect();
 
     let controls = ControlHubBuilder::new()
@@ -62,7 +62,7 @@ pub fn init(app: &App, ctx: &Ctx) -> SierpinskiTriangle {
 }
 
 impl Sketch for SierpinskiTriangle {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -88,7 +88,7 @@ impl Sketch for SierpinskiTriangle {
         );
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

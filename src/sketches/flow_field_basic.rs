@@ -23,7 +23,7 @@ pub struct FlowFieldBasic {
     noise: PerlinNoise,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> FlowFieldBasic {
+pub fn init(_app: &App, ctx: &Context) -> FlowFieldBasic {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .select(
@@ -56,7 +56,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> FlowFieldBasic {
 }
 
 impl Sketch for FlowFieldBasic {
-    fn update(&mut self, _app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
         if self.controls.any_changed_in(&["agent_count"]) {
             let agent_count = self.controls.get("agent_count") as usize;
             let wr = ctx.window_rect();
@@ -96,7 +96,7 @@ impl Sketch for FlowFieldBasic {
         });
     }
 
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         // let start = Instant::now();
 
         let draw = app.draw();

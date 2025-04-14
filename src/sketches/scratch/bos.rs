@@ -32,7 +32,7 @@ struct ShaderParams {
     _pad: f32,
 }
 
-pub fn init(app: &App, ctx: &Ctx) -> Bos {
+pub fn init(app: &App, ctx: &Context) -> Bos {
     let controls = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider_n("a", 0.5)
@@ -59,7 +59,7 @@ pub fn init(app: &App, ctx: &Ctx) -> Bos {
 }
 
 impl Sketch for Bos {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
@@ -73,7 +73,7 @@ impl Sketch for Bos {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

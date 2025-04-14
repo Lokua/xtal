@@ -55,12 +55,12 @@ pub enum PlayMode {
 /// Context passed down from the Lattice runtime. This is similar to how
 /// `nannou` provides an `app`, `ctx` provides useful data for sketches.
 #[derive(Clone, Debug)]
-pub struct Ctx {
+pub struct Context {
     bpm: Bpm,
     window_rect: WindowRect,
 }
 
-impl Ctx {
+impl Context {
     pub fn new(bpm: Bpm, window_rect: WindowRect) -> Self {
         Self { bpm, window_rect }
     }
@@ -76,8 +76,8 @@ impl Ctx {
 
 /// Core trait for type erasure - all sketches must implement this
 pub trait Sketch {
-    fn update(&mut self, app: &App, update: Update, ctx: &Ctx);
-    fn view(&self, app: &App, frame: Frame, ctx: &Ctx);
+    fn update(&mut self, app: &App, update: Update, ctx: &Context);
+    fn view(&self, app: &App, frame: Frame, ctx: &Context);
     fn event(&mut self, _app: &App, _event: &Event) {}
 }
 

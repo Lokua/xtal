@@ -25,7 +25,7 @@ pub struct DynamicUniformsDev {
 #[uniforms(banks = 8)]
 struct ShaderParams {}
 
-pub fn init(app: &App, ctx: &Ctx) -> DynamicUniformsDev {
+pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
     let wr = ctx.window_rect();
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "dynamic_uniforms.yaml"),
@@ -46,13 +46,13 @@ pub fn init(app: &App, ctx: &Ctx) -> DynamicUniformsDev {
 }
 
 impl Sketch for DynamicUniformsDev {
-    fn update(&mut self, app: &App, _update: Update, ctx: &Ctx) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
         let params = ShaderParams::from((&wr, &self.hub));
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(BLACK);
         self.gpu.render(&frame);
     }

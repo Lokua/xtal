@@ -29,7 +29,7 @@ pub struct Displacement1a {
     ellipses: Vec<(Vec2, f32, LinSrgb)>,
 }
 
-pub fn init(_app: &App, ctx: &Ctx) -> Displacement1a {
+pub fn init(_app: &App, ctx: &Context) -> Displacement1a {
     let wr = ctx.window_rect();
 
     let grid_w = wr.w() - 80.0;
@@ -64,7 +64,7 @@ pub fn init(_app: &App, ctx: &Ctx) -> Displacement1a {
 }
 
 impl Sketch for Displacement1a {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Ctx) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         let circle_radius_min = self.controls.get("circle_radius_min");
         let circle_radius_max = self.controls.get("circle_radius_max");
         let radius = self.controls.get("displacer_radius");
@@ -114,7 +114,7 @@ impl Sketch for Displacement1a {
             .collect();
     }
 
-    fn view(&self, app: &App, frame: Frame, _ctx: &Ctx) {
+    fn view(&self, app: &App, frame: Frame, _ctx: &Context) {
         let draw = app.draw();
 
         draw.background().color(hsl(0.0, 0.0, 0.02));
