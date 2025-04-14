@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@lokua/number-box": "^3.0.0",
+    "@lokua/number-box": "^4.0.0",
     "@material-symbols/svg-400": "^0.29.2",
     "clsx": "^2.1.1",
     "react": "^19.0.0",

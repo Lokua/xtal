@@ -188,22 +188,6 @@ export default function Controls({
                     onChange={(value) => {
                       onChange(c, value)
                     }}
-                    // TODO: add this to @lokua/number-box
-                    onKeyDown={(e) => {
-                      const input = e.currentTarget
-
-                      if (e.code === 'KeyA' && platformModPressed) {
-                        input.focus()
-                        input.setSelectionRange(0, input.value.length)
-                      } else if (e.code === 'Enter') {
-                        input.blur()
-                      }
-                    }}
-                    // TODO: add this to @lokua/number-box
-                    // onDoubleClick={(e) => {
-                    //   const input = e.currentTarget
-                    //   input.setSelectionRange(0, input.value.length)
-                    // }}
                   />
                   <label
                     data-help-id="ControlLabel"

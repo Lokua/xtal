@@ -4,7 +4,7 @@
     "": {
       "name": "ui",
       "dependencies": {
-        "@lokua/number-box": "^3.0.0",
+        "@lokua/number-box": "^4.0.0",
         "@material-symbols/svg-400": "^0.29.2",
         "clsx": "^2.1.1",
         "react": "^19.0.0",
@@ -145,7 +145,7 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.25", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ=="],
 
-    "@lokua/number-box": ["@lokua/number-box@3.0.0", "", { "peerDependencies": { "react": ">=17.0.0", "react-dom": ">=17.0.0" } }, "sha512-GJa+MF48TFiGGp7dHsFn4rF6R6CKyKmLtJZKJBNuwfcYNMxHN0YdYpazM941acRcdlIpnswDTd6pakNZVDexdA=="],
+    "@lokua/number-box": ["@lokua/number-box@4.0.0", "", { "peerDependencies": { "react": ">=17.0.0", "react-dom": ">=17.0.0" } }, "sha512-8dgyPvBti7noLyvOcWm8r1uT3KwhImIMekZ0Eq3tJQ9TOYT569n2eFvNCduHXvZNN+aWKYe6BFbRk0Zjm3yxbg=="],
 
     "@material-symbols/svg-400": ["@material-symbols/svg-400@0.29.2", "", {}, "sha512-5rizc4rmIplEZm3tBbzSlTeUOWabB5ziTYaKY6mkq3RnP5LDK0yTGsFNydrlzui+b9s+WOACuHTS4pddROd8Zg=="],
 
