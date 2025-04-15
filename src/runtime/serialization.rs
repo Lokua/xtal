@@ -144,14 +144,15 @@ impl From<&TransitorySketchState> for SerializableSketchState {
             .ui_controls
             .configs()
             .iter()
-            .filter_map(|c| {
+            .filter_map(|(k, c)| {
                 if c.is_separator() {
                     None
                 } else {
-                    let value = state.ui_controls.values().get(c.name());
+                    let values = state.ui_controls.values();
+                    let value = values.get(k);
                     Some(ControlConfig {
                         kind: c.variant_string(),
-                        name: c.name().to_string(),
+                        name: k.to_string(),
                         value: value.unwrap_or(&c.value()).clone(),
                     })
                 }
@@ -278,33 +279,13 @@ impl TransitorySketchState {
         // Must happen before merging MIDI controls otherwise there will be no
         // MIDI proxy configs to merge the saved MIDI proxy values into
         self.setup_midi_mappings();
-
         self.merge_midi_controls(&serialized_state);
+
         self.merge_osc_controls(&serialized_state);
 
         // Note: this consumes serialized_state due to snapshots ownership
         // transfer
         self.merge_snapshots(serialized_state);
-    }
-
-    fn merge_ui_controls(
-        &mut self,
-        serialized_state: &SerializableSketchState,
-    ) {
-        self.ui_controls
-            .values_mut()
-            .iter_mut()
-            .for_each(|(name, value)| {
-                let s = serialized_state
-                    .ui_controls
-                    .iter()
-                    .find(|s| s.name == *name)
-                    .map(|s| s.value.clone());
-
-                if let Some(s) = s {
-                    *value = s;
-                }
-            });
     }
 
     fn setup_midi_mappings(&mut self) {
@@ -334,43 +315,64 @@ impl TransitorySketchState {
         });
     }
 
+    fn merge_controls<C, VWrapper, V, S>(
+        &self,
+        controls: &impl ControlCollection<C, VWrapper, V>,
+        serialized_controls: &[S],
+        get_name: impl Fn(&S) -> &str,
+        get_value: impl Fn(&S) -> Option<VWrapper>,
+    ) where
+        C: control_traits::ControlConfig<VWrapper, V>,
+        V: Default,
+    {
+        controls.with_values_mut(|values| {
+            for (name, value) in values.iter_mut() {
+                for s in serialized_controls {
+                    if get_name(s) == *name {
+                        if let Some(new_value) = get_value(s) {
+                            *value = new_value;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    fn merge_ui_controls(
+        &mut self,
+        serialized_state: &SerializableSketchState,
+    ) {
+        self.merge_controls(
+            &self.ui_controls,
+            &serialized_state.ui_controls,
+            |s| &s.name,
+            |s| Some(s.value.clone()),
+        );
+    }
+
     fn merge_midi_controls(
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        self.midi_controls
-            .configs()
-            .iter_mut()
-            .for_each(|(name, _)| {
-                let value = serialized_state
-                    .midi_controls
-                    .iter()
-                    .find(|s| s.name == *name)
-                    .map(|s| s.value);
-
-                if let Some(v) = value {
-                    self.midi_controls.set(name, v);
-                }
-            });
+        self.merge_controls(
+            &self.midi_controls,
+            &serialized_state.midi_controls,
+            |s| &s.name,
+            |s| Some(s.value),
+        );
     }
 
     fn merge_osc_controls(
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        self.osc_controls.with_values_mut(|values| {
-            values.iter_mut().for_each(|(name, value)| {
-                let s = serialized_state
-                    .osc_controls
-                    .iter()
-                    .find(|s| s.name == *name)
-                    .map(|s| s.value);
-
-                if let Some(s) = s {
-                    *value = s
-                }
-            });
-        });
+        self.merge_controls(
+            &self.osc_controls,
+            &serialized_state.osc_controls,
+            |s| &s.name,
+            |s| Some(s.value),
+        );
     }
 
     fn merge_snapshots(&mut self, serialized_state: SerializableSketchState) {

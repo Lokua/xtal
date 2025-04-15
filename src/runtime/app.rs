@@ -166,7 +166,7 @@ impl AppModel {
             hub.ui_controls
                 .configs()
                 .iter()
-                .map(|config| wv::Control::from((config, hub)))
+                .map(|(_, config)| wv::Control::from((config, hub)))
                 .collect()
         })
     }
@@ -745,7 +745,7 @@ impl AppModel {
             }
             AppEvent::UpdateUiControl((name, value)) => {
                 let hub = self.hub_mut().unwrap();
-                hub.ui_controls.update_value(&name, value.clone());
+                hub.ui_controls.set(&name, value.clone());
 
                 // Revaluate disabled state
                 if matches!(

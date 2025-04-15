@@ -35,7 +35,7 @@ impl MidiControlConfig {
     }
 }
 
-impl ControlConfig<f32> for MidiControlConfig {}
+impl ControlConfig<f32, f32> for MidiControlConfig {}
 
 pub type ChannelAndController = (u8, u8);
 type Msb = u8;
@@ -116,17 +116,6 @@ impl Default for MidiControls {
 impl MidiControls {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    fn configs_by_channel_and_cc(
-        &self,
-    ) -> HashMap<ChannelAndController, (String, MidiControlConfig)> {
-        self.configs()
-            .iter()
-            .map(|(name, config)| {
-                ((config.channel, config.cc), (name.clone(), config.clone()))
-            })
-            .collect()
     }
 
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
@@ -311,9 +300,20 @@ impl MidiControls {
     pub fn is_active(&self) -> bool {
         self.is_active
     }
+
+    fn configs_by_channel_and_cc(
+        &self,
+    ) -> HashMap<ChannelAndController, (String, MidiControlConfig)> {
+        self.configs
+            .iter()
+            .map(|(name, config)| {
+                ((config.channel, config.cc), (name.clone(), config.clone()))
+            })
+            .collect()
+    }
 }
 
-impl ControlCollection<MidiControlConfig, f32> for MidiControls {
+impl ControlCollection<MidiControlConfig, f32, f32> for MidiControls {
     fn add(&mut self, name: &str, config: MidiControlConfig) {
         self.state.lock().unwrap().set(name, config.default);
         self.configs.insert(name.to_string(), config);

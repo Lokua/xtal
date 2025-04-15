@@ -38,13 +38,15 @@ impl<T: TimingSource> ControlHubBuilder<T> {
 
     fn ensure_ui_controls(&mut self) -> &mut UiControls {
         if self.ui_controls.is_none() {
-            self.ui_controls = Some(UiControls::with_previous(vec![]));
+            self.ui_controls = Some(UiControls::default());
         }
         self.ui_controls.as_mut().unwrap()
     }
 
     pub fn ui(mut self, control: UiControl) -> Self {
-        self.ensure_ui_controls().add(control);
+        let clone = control.clone();
+        let name = clone.name();
+        self.ensure_ui_controls().add(name, control);
         self
     }
 
@@ -232,7 +234,7 @@ mod tests {
     fn test_control_script_builder() {
         let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
-            .ui_controls(UiControls::new(vec![UiControl::slider_n("foo", 0.5)]))
+            .ui_controls(UiControlBuilder::new().slider_n("foo", 0.5).build())
             .osc_controls(
                 OscControlBuilder::new().control_n("bar", 22.0).build(),
             )

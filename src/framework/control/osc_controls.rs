@@ -29,7 +29,7 @@ impl OscControlConfig {
     }
 }
 
-impl ControlConfig<f32> for OscControlConfig {}
+impl ControlConfig<f32, f32> for OscControlConfig {}
 
 #[derive(Debug, Default)]
 struct OscState {
@@ -120,7 +120,7 @@ impl OscControls {
     }
 }
 
-impl ControlCollection<OscControlConfig, f32> for OscControls {
+impl ControlCollection<OscControlConfig, f32, f32> for OscControls {
     fn add(&mut self, address: &str, config: OscControlConfig) {
         check_address(address);
         self.state.lock().unwrap().set(address, config.default);
@@ -160,6 +160,7 @@ impl ControlCollection<OscControlConfig, f32> for OscControls {
         check_address(address);
         self.state.lock().unwrap().set(address, value);
     }
+
     fn values(&self) -> HashMap<String, f32> {
         return self.state.lock().unwrap().values();
     }

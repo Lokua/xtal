@@ -257,7 +257,7 @@ impl UiControl {
     }
 }
 
-impl ControlConfig<ControlValue> for UiControl {}
+impl ControlConfig<ControlValue, f32> for UiControl {}
 
 impl Clone for UiControl {
     fn clone(&self) -> Self {
@@ -355,34 +355,25 @@ pub type ControlValues = HashMap<String, ControlValue>;
 pub struct UiControls {
     /// Holds the original Control references and their default values - runtime
     /// values are not included here!
-    // configs: Vec<UiControl>,
     configs: HashMap<String, UiControl>,
-    values: ControlValues,
+    values: HashMap<String, ControlValue>,
     change_tracker: ChangeTracker,
 }
 
 impl UiControls {
-    pub fn new(controls: HashMap<String, UiControl>) -> Self {
-        let values: ControlValues = controls
-            .values()
+    pub fn new(controls: &[UiControl]) -> Self {
+        let configs: HashMap<String, UiControl> = controls
+            .iter()
+            .map(|control| (control.name().to_string(), control.clone()))
+            .collect();
+
+        let values: HashMap<String, ControlValue> = controls
+            .iter()
             .map(|control| (control.name().to_string(), control.value()))
             .collect();
 
         Self {
-            configs: controls,
-            values,
-            change_tracker: ChangeTracker::new(false),
-        }
-    }
-
-    pub fn with_previous(controls: HashMap<String, UiControl>) -> Self {
-        let values: ControlValues = controls
-            .values()
-            .map(|control| (control.name().to_string(), control.value()))
-            .collect();
-
-        Self {
-            configs: controls,
+            configs,
             values,
             change_tracker: ChangeTracker::new(true),
         }
@@ -396,47 +387,6 @@ impl UiControls {
 
         self.values.extend(values);
         self.configs.extend(controls);
-    }
-
-    pub fn values_mut(&mut self) -> &mut ControlValues {
-        &mut self.values
-    }
-
-    // pub fn retain<F>(&mut self, f: F)
-    // where
-    //     F: FnMut(&UiControl) -> bool,
-    // {
-    //     self.configs.retain(|k, v| f(v));
-    // }
-
-    /// Same as `float`, only will try to coerce a possibly existing Checkbox's
-    /// bool to 0.0 or 1.0 or a Select's string into its matching option index
-    /// (useful in shader context where you are only passing in banks of
-    /// `vec4<f32>` to uniforms)
-    pub fn get(&self, name: &str) -> f32 {
-        self.get_optional(name).unwrap_or_else(|| {
-            warn_once!(
-                "`get` could not retrieve a value for `{}`. Returning 0.0",
-                name
-            );
-            0.0
-        })
-    }
-
-    /// The same as [`UiControls::get`] yet doesn't return a fallback value of
-    /// 0.0 in the case of invalids. This is for internal use.
-    pub fn get_optional(&self, name: &str) -> Option<f32> {
-        if let Some(value) =
-            self.values.get(name).and_then(ControlValue::as_float)
-        {
-            return Some(value);
-        }
-
-        match self.config(name) {
-            Some(UiControl::Checkbox { .. }) => Some(self.bool_as_f32(name)),
-            Some(UiControl::Select { .. }) => Some(self.string_as_f32(name)),
-            _ => None,
-        }
     }
 
     pub fn float(&self, name: &str) -> f32 {
@@ -520,7 +470,7 @@ impl UiControls {
     }
 }
 
-impl ControlCollection<UiControl, ControlValue> for UiControls {
+impl ControlCollection<UiControl, ControlValue, f32> for UiControls {
     fn add(&mut self, name: &str, control: UiControl) {
         let value = control.value();
         self.configs.insert(name.to_string(), control);
@@ -533,15 +483,37 @@ impl ControlCollection<UiControl, ControlValue> for UiControls {
     }
 
     fn configs(&self) -> HashMap<String, UiControl> {
-        panic!()
+        self.configs.clone()
     }
 
-    fn get(&self, _name: &str) -> ControlValue {
-        panic!()
+    /// Same as `float`, only will try to coerce a possibly existing Checkbox's
+    /// bool to 0.0 or 1.0 or a Select's string into its matching option index
+    /// (useful in shader context where you are only passing in banks of
+    /// `vec4<f32>` to uniforms)
+    fn get(&self, name: &str) -> f32 {
+        self.get_optional(name).unwrap_or_else(|| {
+            warn_once!(
+                "`get` could not retrieve a value for `{}`. Returning 0.0",
+                name
+            );
+            0.0
+        })
     }
 
-    fn get_optional(&self, _name: &str) -> Option<ControlValue> {
-        panic!()
+    /// The same as [`UiControls::get`] yet doesn't return a fallback value of
+    /// 0.0 in the case of invalids. This is for internal use.
+    fn get_optional(&self, name: &str) -> Option<f32> {
+        if let Some(value) =
+            self.values.get(name).and_then(ControlValue::as_float)
+        {
+            return Some(value);
+        }
+
+        match self.config(name) {
+            Some(UiControl::Checkbox { .. }) => Some(self.bool_as_f32(name)),
+            Some(UiControl::Select { .. }) => Some(self.string_as_f32(name)),
+            _ => None,
+        }
     }
 
     fn has(&self, name: &str) -> bool {
@@ -549,7 +521,8 @@ impl ControlCollection<UiControl, ControlValue> for UiControls {
     }
 
     fn remove(&mut self, name: &str) {
-        self.retain(|c| c.name() != name)
+        self.configs.remove(name);
+        self.values.remove(name);
     }
 
     fn set(&mut self, name: &str, value: ControlValue) {
@@ -575,7 +548,7 @@ impl ControlCollection<UiControl, ControlValue> for UiControls {
 
 impl Default for UiControls {
     fn default() -> Self {
-        UiControls::new(HashMap::default())
+        UiControls::new(&[])
     }
 }
 
@@ -662,7 +635,7 @@ impl UiControlBuilder {
         })
     }
 
-    pub fn slider_normalized(self, name: &str, value: f32) -> Self {
+    pub fn slider_n(self, name: &str, value: f32) -> Self {
         self.control(UiControl::Slider {
             name: name.to_string(),
             value,
@@ -674,7 +647,7 @@ impl UiControlBuilder {
     }
 
     pub fn build(self) -> UiControls {
-        UiControls::with_previous(self.controls)
+        UiControls::new(&self.controls)
     }
 }
 
@@ -762,8 +735,7 @@ mod tests {
 
     #[test]
     fn test_controls_changed() {
-        let mut controls =
-            UiControls::with_previous(vec![UiControl::slider_n("foo", 0.5)]);
+        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
         assert!(controls.changed());
         controls.mark_unchanged();
         assert!(!controls.changed());
@@ -771,8 +743,7 @@ mod tests {
 
     #[test]
     fn test_any_changed_in() {
-        let mut controls =
-            UiControls::with_previous(vec![UiControl::slider_n("foo", 0.5)]);
+        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
 
         assert!(controls.any_changed_in(&["foo"]));
         controls.mark_unchanged();
@@ -784,8 +755,7 @@ mod tests {
 
     #[test]
     fn test_mark_unchanged() {
-        let mut controls =
-            UiControls::with_previous(vec![UiControl::slider_n("foo", 0.5)]);
+        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
 
         controls.set("foo", ControlValue::Float(0.7));
         assert!(controls.changed());

@@ -98,7 +98,7 @@ pub struct ControlHub<T: TimingSource> {
 impl<T: TimingSource> ControlHub<T> {
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
-            ui_controls: UiControls::with_previous(vec![]),
+            ui_controls: UiControls::default(),
             midi_controls: MidiControls::new(),
             osc_controls: OscControls::new(),
             audio_controls: AudioControlBuilder::new().build(),
@@ -588,8 +588,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 // interpolate over a bool and interpolating
                                 // over static select options is likely to yield
                                 // undesired results
-                                self.ui_controls
-                                    .update_value(name, value.clone());
+                                self.ui_controls.set(name, value.clone());
                             }
                         }
                         continue;
@@ -678,10 +677,8 @@ impl<T: TimingSource> ControlHub<T> {
                     ControlValue::Bool(_) => {
                         // Just update immediately since we can't interpolate
                         // over a bool
-                        self.ui_controls.update_value(
-                            name,
-                            ControlValue::from(random_bool()),
-                        );
+                        self.ui_controls
+                            .set(name, ControlValue::from(random_bool()));
                     }
                     ControlValue::String(_) => {
                         if let UiControl::Select { options, .. } =
@@ -693,7 +690,7 @@ impl<T: TimingSource> ControlHub<T> {
                             let index =
                                 thread_rng().gen_range(0..options.len());
 
-                            self.ui_controls.update_value(
+                            self.ui_controls.set(
                                 name,
                                 ControlValue::from(options[index].clone()),
                             );
@@ -748,7 +745,7 @@ impl<T: TimingSource> ControlHub<T> {
                 for (name, (_from, to)) in &transition.values {
                     if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
-                        self.ui_controls.update_value(name, value);
+                        self.ui_controls.set(name, value);
                         continue;
                     } else if self.midi_controls.has(name) {
                         self.midi_controls.set(name, *to);
@@ -768,7 +765,7 @@ impl<T: TimingSource> ControlHub<T> {
 
     pub fn merge_program_state(&mut self, state: &TransitorySketchState) {
         for (k, v) in state.ui_controls.values().iter() {
-            self.ui_controls.update_value(k, v.clone());
+            self.ui_controls.set(k, v.clone());
         }
 
         for (k, v) in state
@@ -800,9 +797,6 @@ impl<T: TimingSource> ControlHub<T> {
         self.populated_callbacks.push(Callback(Box::new(callback)));
     }
 
-    pub fn add_controls(&mut self, configs: Vec<UiControl>) {
-        self.ui_controls.extend(configs);
-    }
     pub fn float(&self, name: &str) -> f32 {
         self.get(name)
     }
@@ -909,7 +903,7 @@ impl<T: TimingSource> ControlHub<T> {
             .map(|(k, v)| (k.clone(), *v))
             .collect();
 
-        self.ui_controls = UiControls::with_previous(vec![]);
+        self.ui_controls = UiControls::default();
         self.animations.clear();
         self.modulations.clear();
         self.vars.clear();
@@ -963,7 +957,7 @@ impl<T: TimingSource> ControlHub<T> {
                         disabled,
                     };
 
-                    self.ui_controls.add(slider);
+                    self.ui_controls.add(id, slider);
                 }
                 ControlType::Checkbox => {
                     let mut conf: CheckboxConfig =
@@ -981,7 +975,7 @@ impl<T: TimingSource> ControlHub<T> {
                         value,
                         disabled,
                     };
-                    self.ui_controls.add(checkbox);
+                    self.ui_controls.add(id, checkbox);
                 }
                 ControlType::Select => {
                     let mut conf: SelectConfig =
@@ -1001,11 +995,12 @@ impl<T: TimingSource> ControlHub<T> {
                         disabled,
                     };
 
-                    self.ui_controls.add(select);
+                    self.ui_controls.add(id, select);
                 }
                 ControlType::Separator => {
+                    let name = uuid_5();
                     self.ui_controls
-                        .add(UiControl::Separator { name: uuid_5() });
+                        .add(&name.clone(), UiControl::Separator { name });
                 }
                 ControlType::Osc => {
                     let conf: OscConfig =
@@ -1445,9 +1440,7 @@ c:
         controls.set_transition_time(0.0);
         controls.take_snapshot("foo");
 
-        controls
-            .ui_controls
-            .update_value("a", ControlValue::Float(100.0));
+        controls.ui_controls.set("a", ControlValue::Float(100.0));
         controls.midi_controls.set("b", 200.0);
         controls.osc_controls.set("c", 300.0);
         controls.take_snapshot("bar");

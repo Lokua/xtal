@@ -34,7 +34,7 @@ pub fn init(_app: &App, ctx: &Context) -> NonYamlDev {
 
     let controls: ControlHub<Timing> = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
-        .ui_controls(UiControls::new(ui_controls))
+        .ui_controls(UiControls::new(&ui_controls))
         .build();
 
     NonYamlDev { controls }
