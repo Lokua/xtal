@@ -43,7 +43,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         self.ui_controls.as_mut().unwrap()
     }
 
-    pub fn ui(mut self, control: Control) -> Self {
+    pub fn ui(mut self, control: UiControl) -> Self {
         self.ensure_ui_controls().add(control);
         self
     }
@@ -54,7 +54,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         value: bool,
         disabled: DisabledFn,
     ) -> Self {
-        self.ui(Control::Checkbox {
+        self.ui(UiControl::Checkbox {
             name: name.to_string(),
             value,
             disabled,
@@ -71,7 +71,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     where
         S: AsRef<str>,
     {
-        self.ui(Control::Select {
+        self.ui(UiControl::Select {
             name: name.into(),
             value: value.into(),
             options: options.iter().map(|s| s.as_ref().to_string()).collect(),
@@ -87,7 +87,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         step: f32,
         disabled: DisabledFn,
     ) -> Self {
-        self.ui(Control::Slider {
+        self.ui(UiControl::Slider {
             name: name.to_string(),
             value,
             min: range.0,
@@ -102,7 +102,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     }
 
     pub fn separator(self) -> Self {
-        self.ui(Control::Separator { name: uuid_5() })
+        self.ui(UiControl::Separator { name: uuid_5() })
     }
 
     pub fn midi_controls(mut self, midi_controls: MidiControls) -> Self {
@@ -232,7 +232,7 @@ mod tests {
     fn test_control_script_builder() {
         let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
-            .ui_controls(UiControls::new(vec![Control::slider_n("foo", 0.5)]))
+            .ui_controls(UiControls::new(vec![UiControl::slider_n("foo", 0.5)]))
             .osc_controls(
                 OscControlBuilder::new().control_n("bar", 22.0).build(),
             )

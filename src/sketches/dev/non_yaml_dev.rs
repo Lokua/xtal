@@ -21,10 +21,10 @@ pub struct NonYamlDev {
 }
 
 pub fn init(_app: &App, ctx: &Context) -> NonYamlDev {
-    let mut ui_controls: Vec<Control> = vec![];
+    let mut ui_controls: Vec<UiControl> = vec![];
 
     for i in 0..COUNT {
-        ui_controls.push(Control::slider(
+        ui_controls.push(UiControl::slider(
             &format!("{}", i),
             100.0,
             (10.0, 500.0),

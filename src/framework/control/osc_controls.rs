@@ -29,6 +29,8 @@ impl OscControlConfig {
     }
 }
 
+impl ControlConfig<f32> for OscControlConfig {}
+
 #[derive(Debug, Default)]
 struct OscState {
     values: HashMap<String, f32>,
@@ -41,10 +43,6 @@ impl OscState {
         }
     }
 
-    fn set(&mut self, address: &str, value: f32) {
-        self.values.insert(address.to_string(), value);
-    }
-
     fn get(&self, address: &str) -> f32 {
         *self.values.get(address).unwrap_or(&0.0)
     }
@@ -55,6 +53,14 @@ impl OscState {
 
     fn has(&self, address: &str) -> bool {
         self.values.contains_key(address)
+    }
+
+    fn remove(&mut self, name: &str) {
+        self.values.remove(name);
+    }
+
+    fn set(&mut self, address: &str, value: f32) {
+        self.values.insert(address.to_string(), value);
     }
 
     fn values(&self) -> HashMap<String, f32> {
@@ -84,54 +90,6 @@ impl OscControls {
         Self::default()
     }
 
-    pub fn config(&self, name: &str) -> Option<&OscControlConfig> {
-        self.configs.get(name)
-    }
-
-    pub fn add(&mut self, address: &str, config: OscControlConfig) {
-        check_address(address);
-        self.state.lock().unwrap().set(address, config.default);
-        self.configs.insert(address.to_string(), config);
-    }
-
-    pub fn has(&self, address: &str) -> bool {
-        check_address(address);
-        self.state.lock().unwrap().has(address)
-    }
-
-    pub fn get(&self, address: &str) -> f32 {
-        check_address(address);
-        self.state.lock().unwrap().get(address)
-    }
-
-    pub fn get_optional(&self, address: &str) -> Option<f32> {
-        check_address(address);
-        let state = self.state.lock().unwrap();
-        state.get_optional(address).copied()
-    }
-
-    pub fn set(&self, address: &str, value: f32) {
-        check_address(address);
-        self.state.lock().unwrap().set(address, value);
-    }
-
-    pub fn values(&self) -> HashMap<String, f32> {
-        return self.state.lock().unwrap().values();
-    }
-
-    pub fn with_values_mut<F>(&self, f: F)
-    where
-        F: FnOnce(&mut HashMap<String, f32>),
-    {
-        let mut state = self.state.lock().unwrap();
-        f(&mut state.values);
-    }
-
-    pub fn update_value(&mut self, address: &str, value: f32) {
-        check_address(address);
-        self.state.lock().unwrap().set(address, value);
-    }
-
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
@@ -159,6 +117,59 @@ impl OscControls {
         self.is_active = true;
 
         Ok(())
+    }
+}
+
+impl ControlCollection<OscControlConfig, f32> for OscControls {
+    fn add(&mut self, address: &str, config: OscControlConfig) {
+        check_address(address);
+        self.state.lock().unwrap().set(address, config.default);
+        self.configs.insert(address.to_string(), config);
+    }
+
+    fn config(&self, name: &str) -> Option<&OscControlConfig> {
+        self.configs.get(name)
+    }
+
+    fn configs(&self) -> HashMap<String, OscControlConfig> {
+        self.configs.clone()
+    }
+
+    fn get(&self, address: &str) -> f32 {
+        check_address(address);
+        self.state.lock().unwrap().get(address)
+    }
+
+    fn get_optional(&self, address: &str) -> Option<f32> {
+        check_address(address);
+        let state = self.state.lock().unwrap();
+        state.get_optional(address).copied()
+    }
+
+    fn has(&self, address: &str) -> bool {
+        check_address(address);
+        self.state.lock().unwrap().has(address)
+    }
+
+    fn remove(&mut self, address: &str) {
+        self.state.lock().unwrap().remove(address);
+        self.configs.remove(address);
+    }
+
+    fn set(&mut self, address: &str, value: f32) {
+        check_address(address);
+        self.state.lock().unwrap().set(address, value);
+    }
+    fn values(&self) -> HashMap<String, f32> {
+        return self.state.lock().unwrap().values();
+    }
+
+    fn with_values_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut state = self.state.lock().unwrap();
+        f(&mut state.values);
     }
 }
 

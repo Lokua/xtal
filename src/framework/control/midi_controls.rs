@@ -10,6 +10,8 @@ use crate::framework::midi::is_control_change;
 use crate::framework::prelude::*;
 use crate::global;
 
+use super::control_traits::{ControlCollection, ControlConfig};
+
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {
     pub channel: u8,
@@ -33,16 +35,18 @@ impl MidiControlConfig {
     }
 }
 
+impl ControlConfig<f32> for MidiControlConfig {}
+
 pub type ChannelAndController = (u8, u8);
 type Msb = u8;
 
 #[derive(Debug, Default)]
-struct MidiState {
+struct State {
     values: HashMap<String, f32>,
     last: HashMap<ChannelAndController, Msb>,
 }
 
-impl MidiState {
+impl State {
     fn new() -> Self {
         Self {
             values: HashMap::default(),
@@ -58,16 +62,16 @@ impl MidiState {
         self.values.get(address)
     }
 
-    fn set(&mut self, name: &str, value: f32) {
-        self.values.insert(name.to_string(), value);
-    }
-
     fn has(&self, name: &str) -> bool {
         self.values.contains_key(name)
     }
 
     fn remove(&mut self, name: &str) {
         self.values.remove(name);
+    }
+
+    fn set(&mut self, name: &str, value: f32) {
+        self.values.insert(name.to_string(), value);
     }
 
     fn values(&self) -> HashMap<String, f32> {
@@ -94,7 +98,7 @@ pub struct MidiControls {
     /// "High Resolution CC" AKA 14bit MIDI control change for CCs 0-31
     pub hrcc: bool,
     configs: MidiControlConfigs,
-    state: Arc<Mutex<MidiState>>,
+    state: Arc<Mutex<State>>,
     is_active: bool,
 }
 
@@ -102,7 +106,7 @@ impl Default for MidiControls {
     fn default() -> Self {
         Self {
             configs: HashMap::default(),
-            state: Arc::new(Mutex::new(MidiState::new())),
+            state: Arc::new(Mutex::new(State::new())),
             is_active: false,
             hrcc: false,
         }
@@ -112,57 +116,6 @@ impl Default for MidiControls {
 impl MidiControls {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn add(&mut self, name: &str, config: MidiControlConfig) {
-        self.state.lock().unwrap().set(name, config.default);
-        self.configs.insert(name.to_string(), config);
-    }
-
-    pub fn get(&self, name: &str) -> f32 {
-        self.state.lock().unwrap().get(name)
-    }
-
-    pub fn get_optional(&self, name: &str) -> Option<f32> {
-        let state = self.state.lock().unwrap();
-        state.get_optional(name).copied()
-    }
-
-    pub fn set(&self, name: &str, value: f32) {
-        self.state.lock().unwrap().set(name, value)
-    }
-
-    pub fn has(&self, name: &str) -> bool {
-        self.state.lock().unwrap().has(name)
-    }
-
-    pub fn remove(&mut self, name: &str) {
-        self.state.lock().unwrap().remove(name);
-        self.configs.remove(name);
-    }
-
-    pub fn update_value(&mut self, name: &str, value: f32) {
-        self.state.lock().unwrap().set(name, value);
-    }
-
-    pub fn values(&self) -> HashMap<String, f32> {
-        return self.state.lock().unwrap().values();
-    }
-
-    pub fn with_values_mut<F>(&self, f: F)
-    where
-        F: FnOnce(&mut HashMap<String, f32>),
-    {
-        let mut state = self.state.lock().unwrap();
-        f(&mut state.values);
-    }
-
-    pub fn config(&self, name: &str) -> Option<&MidiControlConfig> {
-        self.configs.get(name)
-    }
-
-    pub fn configs(&self) -> MidiControlConfigs {
-        self.configs.clone()
     }
 
     fn configs_by_channel_and_cc(
@@ -357,6 +310,55 @@ impl MidiControls {
 
     pub fn is_active(&self) -> bool {
         self.is_active
+    }
+}
+
+impl ControlCollection<MidiControlConfig, f32> for MidiControls {
+    fn add(&mut self, name: &str, config: MidiControlConfig) {
+        self.state.lock().unwrap().set(name, config.default);
+        self.configs.insert(name.to_string(), config);
+    }
+
+    fn config(&self, name: &str) -> Option<&MidiControlConfig> {
+        self.configs.get(name)
+    }
+
+    fn configs(&self) -> MidiControlConfigs {
+        self.configs.clone()
+    }
+
+    fn get(&self, name: &str) -> f32 {
+        self.state.lock().unwrap().get(name)
+    }
+
+    fn get_optional(&self, name: &str) -> Option<f32> {
+        let state = self.state.lock().unwrap();
+        state.get_optional(name).copied()
+    }
+
+    fn has(&self, name: &str) -> bool {
+        self.state.lock().unwrap().has(name)
+    }
+
+    fn remove(&mut self, name: &str) {
+        self.state.lock().unwrap().remove(name);
+        self.configs.remove(name);
+    }
+
+    fn set(&mut self, name: &str, value: f32) {
+        self.state.lock().unwrap().set(name, value)
+    }
+
+    fn values(&self) -> HashMap<String, f32> {
+        return self.state.lock().unwrap().values();
+    }
+
+    fn with_values_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut state = self.state.lock().unwrap();
+        f(&mut state.values);
     }
 }
 

@@ -349,7 +349,7 @@ impl TransitorySketchState {
                     .map(|s| s.value);
 
                 if let Some(v) = value {
-                    self.midi_controls.update_value(name, v);
+                    self.midi_controls.set(name, v);
                 }
             });
     }

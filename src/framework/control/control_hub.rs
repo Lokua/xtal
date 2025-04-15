@@ -4,31 +4,26 @@
 
 use nannou::rand::{Rng, thread_rng};
 use notify::{Event, RecursiveMode, Watcher};
-use std::{
-    cell::RefCell,
-    error::Error,
-    fs,
-    path::PathBuf,
-    str::FromStr,
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
-    },
-};
+use std::cell::RefCell;
+use std::error::Error;
+use std::fs;
+use std::path::PathBuf;
+use std::str::FromStr;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use yaml_merge_keys::merge_keys_serde_yml;
 
-use super::{
-    config::*,
-    dep_graph::{DepGraph, Node},
-    eval_cache::EvalCache,
-    param_mod::{FromColdParams, ParamValue, SetFromParam},
-};
+use super::config::*;
+use super::dep_graph::{DepGraph, Node};
+use super::eval_cache::EvalCache;
+use super::param_mod::{FromColdParams, ParamValue, SetFromParam};
+
 #[cfg(feature = "instrumentation")]
 use crate::framework::instrumentation::Instrumentation;
-use crate::{
-    framework::{frame_controller, prelude::*},
-    runtime::{map_mode::MapMode, serialization::TransitorySketchState},
-};
+
+use crate::framework::{frame_controller, prelude::*};
+use crate::runtime::map_mode::MapMode;
+use crate::runtime::serialization::TransitorySketchState;
 
 pub const TRANSITION_TIMES: [f32; 15] = [
     32.0, 24.0, 16.0, 12.0, 16.0, 8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5,
@@ -669,7 +664,7 @@ impl<T: TimingSource> ControlHub<T> {
             if self.ui_controls.has(name) {
                 match value {
                     ControlValue::Float(_) => {
-                        if let Control::Slider { min, max, step, .. } =
+                        if let UiControl::Slider { min, max, step, .. } =
                             self.ui_controls.config(name).unwrap()
                         {
                             let from = self.get_raw(name, current_frame);
@@ -689,7 +684,7 @@ impl<T: TimingSource> ControlHub<T> {
                         );
                     }
                     ControlValue::String(_) => {
-                        if let Control::Select { options, .. } =
+                        if let UiControl::Select { options, .. } =
                             self.ui_controls.config(name).unwrap()
                         {
                             // Just update immediately since interpolating over
@@ -756,10 +751,10 @@ impl<T: TimingSource> ControlHub<T> {
                         self.ui_controls.update_value(name, value);
                         continue;
                     } else if self.midi_controls.has(name) {
-                        self.midi_controls.update_value(name, *to);
+                        self.midi_controls.set(name, *to);
                         continue;
                     } else if self.osc_controls.has(name) {
-                        self.osc_controls.update_value(name, *to);
+                        self.osc_controls.set(name, *to);
                         continue;
                     }
                 }
@@ -786,11 +781,11 @@ impl<T: TimingSource> ControlHub<T> {
             // config's default
             let value = state.midi_controls.get(k);
             self.midi_controls.add(k, v.clone());
-            self.midi_controls.update_value(k, value);
+            self.midi_controls.set(k, value);
         }
 
         for (k, v) in state.osc_controls.values().iter() {
-            self.osc_controls.update_value(k, *v);
+            self.osc_controls.set(k, *v);
         }
 
         for (k, v) in state.snapshots.clone() {
@@ -805,7 +800,7 @@ impl<T: TimingSource> ControlHub<T> {
         self.populated_callbacks.push(Callback(Box::new(callback)));
     }
 
-    pub fn add_controls(&mut self, configs: Vec<Control>) {
+    pub fn add_controls(&mut self, configs: Vec<UiControl>) {
         self.ui_controls.extend(configs);
     }
     pub fn float(&self, name: &str) -> f32 {
@@ -959,7 +954,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let slider = Control::Slider {
+                    let slider = UiControl::Slider {
                         name: id.to_string(),
                         value,
                         min: conf.range[0],
@@ -981,7 +976,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let checkbox = Control::Checkbox {
+                    let checkbox = UiControl::Checkbox {
                         name: id.to_string(),
                         value,
                         disabled,
@@ -999,7 +994,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let select = Control::Select {
+                    let select = UiControl::Select {
                         name: id.to_string(),
                         value: value.to_string(),
                         options: conf.options,
@@ -1009,7 +1004,8 @@ impl<T: TimingSource> ControlHub<T> {
                     self.ui_controls.add(select);
                 }
                 ControlType::Separator => {
-                    self.ui_controls.add(Control::Separator { name: uuid_5() });
+                    self.ui_controls
+                        .add(UiControl::Separator { name: uuid_5() });
                 }
                 ControlType::Osc => {
                     let conf: OscConfig =
@@ -1452,8 +1448,8 @@ c:
         controls
             .ui_controls
             .update_value("a", ControlValue::Float(100.0));
-        controls.midi_controls.update_value("b", 200.0);
-        controls.osc_controls.update_value("c", 300.0);
+        controls.midi_controls.set("b", 200.0);
+        controls.osc_controls.set("c", 300.0);
         controls.take_snapshot("bar");
 
         init(0);
