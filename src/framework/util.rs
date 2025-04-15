@@ -4,11 +4,10 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use geom::Ellipse;
 use nannou::color::{LinSrgb, Srgb};
+use nannou::prelude::*;
+use nannou::rand::Rng;
 use nannou::rand::rand;
-use nannou::{
-    prelude::*,
-    rand::{Rng, thread_rng},
-};
+use nannou::rand::thread_rng;
 
 use super::prelude::*;
 
@@ -116,11 +115,6 @@ impl IntoLinSrgba for Srgb<u8> {
             alpha,
         )
     }
-}
-
-// Because it's annoying having to qualify the above traits against the Nannou ones
-pub fn srgb_u8_to_lin_srgba(color: Srgb<u8>, alpha: f32) -> LinSrgba {
-    color.into_lin_srgba(alpha)
 }
 
 pub fn lin_srgb_to_lin_srgba(color: LinSrgb, alpha: f32) -> LinSrgba {

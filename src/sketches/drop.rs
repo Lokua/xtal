@@ -45,6 +45,10 @@ impl Sketch for Drops {
         let spread_div = self.hub.get("spread_div");
         let offset = self.hub.get("offset");
 
+        if ctx.should_clear() {
+            self.drops.clear();
+        }
+
         if ctx.window_rect().changed()
             || self.hub.any_changed_in(&["duration", "spread_div"])
         {

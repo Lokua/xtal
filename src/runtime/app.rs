@@ -5,6 +5,7 @@ use std::collections::{HashMap, VecDeque};
 use std::error::Error;
 use std::path::PathBuf;
 use std::process::Child;
+use std::rc::Rc;
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{env, str, thread};
@@ -111,11 +112,12 @@ impl AppEventSender {
 }
 
 pub type AppEventReceiver = mpsc::Receiver<AppEvent>;
+pub type ClearFlag = Rc<Cell<bool>>;
 
 struct AppModel {
     app_rx: AppEventReceiver,
     app_tx: AppEventSender,
-    clear_next_frame: Cell<bool>,
+    clear_next_frame: ClearFlag,
     ctx: Context,
     hrcc: bool,
     image_index: Option<storage::ImageIndex>,
@@ -139,7 +141,7 @@ struct AppModel {
 }
 
 impl AppModel {
-    fn main_window<'a>(&self, app: &'a App) -> Option<Ref<'a, Window>> {
+    fn main_window<'b>(&self, app: &'b App) -> Option<Ref<'b, Window>> {
         app.window(self.main_window_id)
     }
 
@@ -1084,7 +1086,13 @@ fn model(app: &App) -> AppModel {
     let bpm = Bpm::new(sketch_info.config.bpm);
     let bpm_clone = bpm.clone();
     let raw_bpm = bpm.get();
-    let ctx = Context::new(bpm_clone, WindowRect::new(rect));
+
+    let clear_next_frame = Rc::new(Cell::new(true));
+    let ctx = Context::new(
+        bpm_clone,
+        clear_next_frame.clone(),
+        WindowRect::new(rect),
+    );
 
     frame_controller::set_fps(sketch_info.config.fps);
     let sketch = (sketch_info.factory)(app, &ctx);
@@ -1120,7 +1128,7 @@ fn model(app: &App) -> AppModel {
     let mut model = AppModel {
         app_rx: event_rx,
         app_tx: event_tx,
-        clear_next_frame: Cell::new(true),
+        clear_next_frame,
         ctx,
         hrcc: global_settings.hrcc,
         image_index,
@@ -1153,7 +1161,8 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
         model.on_app_event(app, event);
     }
 
-    // Should this come _after_ `wrapped_update`?
+    // Should this come _after_ `wrapped_update` and possibly behind a
+    // `did_update` returned from frame_controller?
     if let Some(hub) = model.control_hub_mut() {
         hub.update();
     }
@@ -1259,11 +1268,6 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 }
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
-    if model.clear_next_frame.get() {
-        frame.clear(model.sketch.clear_color());
-        model.clear_next_frame.set(false);
-    }
-
     let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
@@ -1273,6 +1277,10 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
 
     if did_render {
         frame_controller::clear_force_render();
+
+        if model.clear_next_frame.get() {
+            model.clear_next_frame.set(false);
+        }
 
         if model.recording_state.is_recording {
             model.capture_recording_frame(app);

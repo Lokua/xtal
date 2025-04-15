@@ -38,12 +38,10 @@ impl Sketch for ControlScriptDev {
         let wr = ctx.window_rect();
         let draw = app.draw();
 
-        // background
-        draw.rect().x_y(0.0, 0.0).w_h(wr.w(), wr.h()).hsla(
-            0.0,
-            0.0,
-            0.02,
-            self.controls.get("bg_alpha"),
+        ctx.background(
+            &frame,
+            &draw,
+            hsla(0.0, 0.0, 0.02, self.controls.get("bg_alpha")),
         );
 
         if self.controls.bool("show_center_circle") {

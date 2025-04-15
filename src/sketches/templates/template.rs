@@ -32,7 +32,7 @@ pub fn init(_app: &App, ctx: &Context) -> Template {
 
 impl Sketch for Template {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
-        self.hue = self.hub.animation.tri(12.0)
+        self.hue = self.hub.animation.tri(12.0);
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &Context) {
