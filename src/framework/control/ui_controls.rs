@@ -355,15 +355,16 @@ pub type ControlValues = HashMap<String, ControlValue>;
 pub struct UiControls {
     /// Holds the original Control references and their default values - runtime
     /// values are not included here!
-    configs: Vec<UiControl>,
+    // configs: Vec<UiControl>,
+    configs: HashMap<String, UiControl>,
     values: ControlValues,
     change_tracker: ChangeTracker,
 }
 
 impl UiControls {
-    pub fn new(controls: Vec<UiControl>) -> Self {
+    pub fn new(controls: HashMap<String, UiControl>) -> Self {
         let values: ControlValues = controls
-            .iter()
+            .values()
             .map(|control| (control.name().to_string(), control.value()))
             .collect();
 
@@ -374,9 +375,9 @@ impl UiControls {
         }
     }
 
-    pub fn with_previous(controls: Vec<UiControl>) -> Self {
+    pub fn with_previous(controls: HashMap<String, UiControl>) -> Self {
         let values: ControlValues = controls
-            .iter()
+            .values()
             .map(|control| (control.name().to_string(), control.value()))
             .collect();
 
@@ -387,9 +388,9 @@ impl UiControls {
         }
     }
 
-    pub fn extend(&mut self, controls: Vec<UiControl>) {
+    pub fn extend(&mut self, controls: HashMap<String, UiControl>) {
         let values: ControlValues = controls
-            .iter()
+            .values()
             .map(|control| (control.name().to_string(), control.value()))
             .collect();
 
@@ -397,24 +398,16 @@ impl UiControls {
         self.configs.extend(controls);
     }
 
-    pub fn configs(&self) -> &Vec<UiControl> {
-        &self.configs
-    }
-
-    pub fn configs_mut(&mut self) -> &mut Vec<UiControl> {
-        &mut self.configs
-    }
-
     pub fn values_mut(&mut self) -> &mut ControlValues {
         &mut self.values
     }
 
-    pub fn retain<F>(&mut self, f: F)
-    where
-        F: FnMut(&UiControl) -> bool,
-    {
-        self.configs.retain(f);
-    }
+    // pub fn retain<F>(&mut self, f: F)
+    // where
+    //     F: FnMut(&UiControl) -> bool,
+    // {
+    //     self.configs.retain(|k, v| f(v));
+    // }
 
     /// Same as `float`, only will try to coerce a possibly existing Checkbox's
     /// bool to 0.0 or 1.0 or a Select's string into its matching option index
@@ -528,23 +521,15 @@ impl UiControls {
 }
 
 impl ControlCollection<UiControl, ControlValue> for UiControls {
-    fn add(&mut self, _name: &str, control: UiControl) {
-        let name = control.name().to_string();
+    fn add(&mut self, name: &str, control: UiControl) {
         let value = control.value();
-
-        if let Some(index) = self.configs.iter().position(|c| c.name() == name)
-        {
-            self.configs[index] = control;
-        } else {
-            self.configs.push(control);
-        }
-
-        self.values.insert(name, value);
+        self.configs.insert(name.to_string(), control);
+        self.values.insert(name.to_string(), value);
         self.change_tracker.mark_changed();
     }
 
     fn config(&self, name: &str) -> Option<&UiControl> {
-        self.configs.iter().find(|c| c.name() == name)
+        self.configs.get(name)
     }
 
     fn configs(&self) -> HashMap<String, UiControl> {
@@ -590,7 +575,7 @@ impl ControlCollection<UiControl, ControlValue> for UiControls {
 
 impl Default for UiControls {
     fn default() -> Self {
-        UiControls::new(vec![])
+        UiControls::new(HashMap::default())
     }
 }
 
