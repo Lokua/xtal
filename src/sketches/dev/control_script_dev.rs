@@ -118,6 +118,22 @@ impl Sketch for ControlScriptDev {
                 .x_y(wr.qw(), 0.0);
         }
 
+        if self.controls.bool("show_rm") {
+            draw.rect()
+                .color(LIMEGREEN)
+                .x_y(
+                    0.0,
+                    map_range(
+                        self.controls.get("rm"),
+                        0.0,
+                        1.0,
+                        -wr.hh(),
+                        wr.hh(),
+                    ),
+                )
+                .w_h(wr.w() - 100.0, 30.0);
+        }
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

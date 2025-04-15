@@ -121,7 +121,14 @@ impl OscControls {
     }
 }
 
-impl ControlCollection<OscControlConfig, f32, f32> for OscControls {
+impl
+    ControlCollection<
+        OscControlConfig,
+        f32,
+        f32,
+        HashMap<String, OscControlConfig>,
+    > for OscControls
+{
     fn add(&mut self, address: &str, config: OscControlConfig) {
         check_address(address);
         self.state.lock().unwrap().set(address, config.value);
@@ -166,7 +173,7 @@ impl ControlCollection<OscControlConfig, f32, f32> for OscControls {
         return self.state.lock().unwrap().values();
     }
 
-    fn with_values_mut<F>(&self, f: F)
+    fn with_values_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut HashMap<String, f32>),
     {

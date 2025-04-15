@@ -291,3 +291,33 @@ random_size_slewed:
   # slew: $test_slew_pmod
   slew: 0.7
   stem: 999
+
+# ------------------------------------------------------------------------------
+#  RM (LIMEGREEN line)
+# ------------------------------------------------------------------------------
+
+rm_section:
+  type: separator
+
+show_rm:
+  type: checkbox
+
+rm_a:
+  type: triangle
+  beats: 4
+
+rm_b:
+  type: triangle
+  beats: 3
+
+ring_modulator_example:
+  type: effect
+  kind: ring_modulator
+  mix: 0.0
+  modulator: rm_b
+
+rm:
+  type: mod
+  source: rm_a
+  modulators:
+    - ring_modulator_example

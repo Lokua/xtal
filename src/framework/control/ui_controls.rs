@@ -4,6 +4,7 @@
 //! [`ControlHub`].
 use std::fmt::{self, Debug};
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 use crate::framework::prelude::*;
@@ -313,14 +314,14 @@ pub type ControlValues = HashMap<String, ControlValue>;
 pub struct UiControls {
     /// Holds the original [`UiControlConfig`] references and their default
     /// values – runtime values are not included here!
-    configs: HashMap<String, UiControlConfig>,
+    configs: IndexMap<String, UiControlConfig>,
     values: HashMap<String, ControlValue>,
     change_tracker: ChangeTracker,
 }
 
 impl UiControls {
     pub fn new(controls: &[UiControlConfig]) -> Self {
-        let configs: HashMap<String, UiControlConfig> = controls
+        let configs: IndexMap<String, UiControlConfig> = controls
             .iter()
             .map(|control| (control.name().to_string(), control.clone()))
             .collect();
@@ -335,16 +336,6 @@ impl UiControls {
             values,
             change_tracker: ChangeTracker::new(true),
         }
-    }
-
-    pub fn extend(&mut self, controls: HashMap<String, UiControlConfig>) {
-        let values: ControlValues = controls
-            .values()
-            .map(|control| (control.name().to_string(), control.value()))
-            .collect();
-
-        self.values.extend(values);
-        self.configs.extend(controls);
     }
 
     pub fn float(&self, name: &str) -> f32 {
@@ -429,7 +420,14 @@ impl UiControls {
     }
 }
 
-impl ControlCollection<UiControlConfig, ControlValue, f32> for UiControls {
+impl
+    ControlCollection<
+        UiControlConfig,
+        ControlValue,
+        f32,
+        IndexMap<String, UiControlConfig>,
+    > for UiControls
+{
     fn add(&mut self, name: &str, control: UiControlConfig) {
         let value = control.value();
         self.configs.insert(name.to_string(), control);
@@ -441,7 +439,7 @@ impl ControlCollection<UiControlConfig, ControlValue, f32> for UiControls {
         self.configs.get(name).cloned()
     }
 
-    fn configs(&self) -> HashMap<String, UiControlConfig> {
+    fn configs(&self) -> IndexMap<String, UiControlConfig> {
         self.configs.clone()
     }
 
@@ -484,7 +482,7 @@ impl ControlCollection<UiControlConfig, ControlValue, f32> for UiControls {
     }
 
     fn remove(&mut self, name: &str) {
-        self.configs.remove(name);
+        self.configs.shift_remove(name);
         self.values.remove(name);
     }
 
@@ -501,11 +499,11 @@ impl ControlCollection<UiControlConfig, ControlValue, f32> for UiControls {
         self.values.clone()
     }
 
-    fn with_values_mut<F>(&self, _f: F)
+    fn with_values_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut HashMap<String, ControlValue>),
     {
-        todo!()
+        f(&mut self.values)
     }
 }
 

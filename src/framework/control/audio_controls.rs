@@ -263,7 +263,14 @@ impl AudioControls {
     }
 }
 
-impl ControlCollection<AudioControlConfig, f32, f32> for AudioControls {
+impl
+    ControlCollection<
+        AudioControlConfig,
+        f32,
+        f32,
+        HashMap<String, AudioControlConfig>,
+    > for AudioControls
+{
     /// Add a new control. Overwrites any previous control of the same name
     fn add(&mut self, name: &str, config: AudioControlConfig) {
         let mut state = self.state.lock().unwrap();
@@ -305,7 +312,7 @@ impl ControlCollection<AudioControlConfig, f32, f32> for AudioControls {
         self.state.lock().unwrap().values.clone()
     }
 
-    fn with_values_mut<F>(&self, f: F)
+    fn with_values_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut HashMap<String, f32>),
     {

@@ -11,11 +11,16 @@ pub trait ControlConfig<VWrapper, V> {}
 /// enum over variants (like for UIControls or possibly in the future for OSC if
 /// we want to support strings and booleans – we'll be able to without breaking
 /// changes)
-pub trait ControlCollection<C: ControlConfig<VWrapper, V>, VWrapper, V: Default>
+pub trait ControlCollection<
+    C: ControlConfig<VWrapper, V>,
+    VWrapper,
+    V: Default,
+    Map: IntoIterator<Item = (String, C)>,
+>
 {
     fn add(&mut self, name: &str, config: C);
     fn config(&self, name: &str) -> Option<C>;
-    fn configs(&self) -> HashMap<String, C>;
+    fn configs(&self) -> Map;
     fn get(&self, name: &str) -> V;
     fn get_optional(&self, name: &str) -> Option<V>;
     fn has(&self, name: &str) -> bool {
@@ -24,5 +29,7 @@ pub trait ControlCollection<C: ControlConfig<VWrapper, V>, VWrapper, V: Default>
     fn remove(&mut self, name: &str);
     fn set(&mut self, name: &str, value: VWrapper);
     fn values(&self) -> HashMap<String, VWrapper>;
-    fn with_values_mut<F: FnOnce(&mut HashMap<String, VWrapper>)>(&self, f: F);
+    fn with_values_mut<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, VWrapper>);
 }

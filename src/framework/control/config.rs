@@ -392,6 +392,7 @@ pub enum EffectKind {
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
+
     Hysteresis {
         #[serde(default = "default_param_value_0_3")]
         lower_threshold: ParamValue,

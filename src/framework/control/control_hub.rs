@@ -79,9 +79,9 @@ pub struct ControlHub<T: TimingSource> {
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
 
-    /// Used to allow `get` to be called with the name used in a YAML `var`
-    /// field. See ./docs/control_script_reference.md **Using `var`** section
-    /// for more info.
+    /// Map of `var => name` Used to allow `get` to be called with the name used
+    /// in a YAML `var` field. See ./docs/control_script_reference.md **Using
+    /// `var`** section for more info.
     vars: HashMap<String, String>,
     bypassed: HashMap<String, Option<f32>>,
     dep_graph: DepGraph,
@@ -170,7 +170,6 @@ impl<T: TimingSource> ControlHub<T> {
         };
 
         let midi_proxy_name = MapMode::proxy_name(name);
-
         if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
         {
             name = &midi_proxy_name;
@@ -267,6 +266,7 @@ impl<T: TimingSource> ControlHub<T> {
             Effect::RingModulator(m),
         ) = (&config.kind, &mut *effect)
         {
+            // self.update_effect_params(m, modulator, current_frame);
             m.apply(value, self.get_raw(modulator, current_frame))
         } else {
             match effect {

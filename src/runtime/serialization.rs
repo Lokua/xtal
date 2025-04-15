@@ -279,7 +279,7 @@ impl TransitorySketchState {
         self.merge_osc_controls(&serialized_state);
 
         // Note: this consumes serialized_state due to snapshots ownership
-        // transfer
+        // transfer so it must come last
         self.merge_snapshots(serialized_state);
     }
 
@@ -310,15 +310,15 @@ impl TransitorySketchState {
         });
     }
 
-    fn merge_controls<C, VWrapper, V, S>(
-        &self,
-        controls: &impl ControlCollection<C, VWrapper, V>,
+    fn merge_controls<C, VWrapper, V, Map, S>(
+        controls: &mut impl ControlCollection<C, VWrapper, V, Map>,
         serialized_controls: &[S],
         get_name: impl Fn(&S) -> &str,
         get_value: impl Fn(&S) -> Option<VWrapper>,
     ) where
         C: control_traits::ControlConfig<VWrapper, V>,
         V: Default,
+        Map: IntoIterator<Item = (String, C)>,
     {
         controls.with_values_mut(|values| {
             for (name, value) in values.iter_mut() {
@@ -338,8 +338,8 @@ impl TransitorySketchState {
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        self.merge_controls(
-            &self.ui_controls,
+        Self::merge_controls(
+            &mut self.ui_controls,
             &serialized_state.ui_controls,
             |s| &s.name,
             |s| Some(s.value.clone()),
@@ -350,8 +350,8 @@ impl TransitorySketchState {
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        self.merge_controls(
-            &self.midi_controls,
+        Self::merge_controls(
+            &mut self.midi_controls,
             &serialized_state.midi_controls,
             |s| &s.name,
             |s| Some(s.value),
@@ -362,8 +362,8 @@ impl TransitorySketchState {
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        self.merge_controls(
-            &self.osc_controls,
+        Self::merge_controls(
+            &mut self.osc_controls,
             &serialized_state.osc_controls,
             |s| &s.name,
             |s| Some(s.value),

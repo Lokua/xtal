@@ -311,7 +311,14 @@ impl MidiControls {
     }
 }
 
-impl ControlCollection<MidiControlConfig, f32, f32> for MidiControls {
+impl
+    ControlCollection<
+        MidiControlConfig,
+        f32,
+        f32,
+        HashMap<String, MidiControlConfig>,
+    > for MidiControls
+{
     fn add(&mut self, name: &str, config: MidiControlConfig) {
         self.state.lock().unwrap().set(name, config.value);
         self.configs.insert(name.to_string(), config);
@@ -351,7 +358,7 @@ impl ControlCollection<MidiControlConfig, f32, f32> for MidiControls {
         return self.state.lock().unwrap().values();
     }
 
-    fn with_values_mut<F>(&self, f: F)
+    fn with_values_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut HashMap<String, f32>),
     {

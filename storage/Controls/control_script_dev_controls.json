@@ -2,6 +2,16 @@
   "version": "2",
   "ui_controls": [
     {
+      "type": "Checkbox",
+      "name": "show_breakpoints",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_midi_circle",
+      "value": false
+    },
+    {
       "type": "Slider",
       "name": "bg_alpha",
       "value": 0.0105
@@ -12,9 +22,9 @@
       "value": false
     },
     {
-      "type": "Slider",
-      "name": "center_radius",
-      "value": 265.0
+      "type": "Checkbox",
+      "name": "show_random_section",
+      "value": false
     },
     {
       "type": "Slider",
@@ -22,8 +32,18 @@
       "value": 0.3
     },
     {
+      "type": "Slider",
+      "name": "center_radius",
+      "value": 265.0
+    },
+    {
       "type": "Checkbox",
       "name": "show_white_circle",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_rm",
       "value": true
     },
     {
@@ -33,28 +53,13 @@
     },
     {
       "type": "Checkbox",
-      "name": "show_audio",
-      "value": true
-    },
-    {
-      "type": "Checkbox",
-      "name": "show_breakpoints",
-      "value": true
-    },
-    {
-      "type": "Checkbox",
       "name": "show_red_circle",
       "value": false
     },
     {
       "type": "Checkbox",
-      "name": "show_midi_circle",
-      "value": true
-    },
-    {
-      "type": "Checkbox",
-      "name": "show_random_section",
-      "value": true
+      "name": "show_audio",
+      "value": false
     }
   ],
   "midi_controls": [
@@ -70,22 +75,17 @@
     }
   ],
   "snapshots": {
-    "2": {
+    "1": {
       "ui_controls": [
-        {
-          "type": "Checkbox",
-          "name": "show_random_section",
-          "value": false
-        },
         {
           "type": "Slider",
           "name": "center_hue",
           "value": 0.3
         },
         {
-          "type": "Checkbox",
-          "name": "show_breakpoints",
-          "value": true
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 265.0
         },
         {
           "type": "Checkbox",
@@ -99,8 +99,8 @@
         },
         {
           "type": "Slider",
-          "name": "white_radius_amt",
-          "value": 0.0
+          "name": "bg_alpha",
+          "value": 0.935
         },
         {
           "type": "Checkbox",
@@ -109,22 +109,27 @@
         },
         {
           "type": "Checkbox",
-          "name": "show_white_circle",
+          "name": "show_red_circle",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_breakpoints",
           "value": true
         },
         {
           "type": "Slider",
-          "name": "bg_alpha",
-          "value": 0.935
-        },
-        {
-          "type": "Slider",
-          "name": "center_radius",
-          "value": 265.0
+          "name": "white_radius_amt",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
-          "name": "show_red_circle",
+          "name": "show_random_section",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_white_circle",
           "value": true
         }
       ],
@@ -141,47 +146,17 @@
         }
       ]
     },
-    "1": {
+    "2": {
       "ui_controls": [
-        {
-          "type": "Checkbox",
-          "name": "show_red_circle",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_audio",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_breakpoints",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "white_radius_amt",
-          "value": 0.0
-        },
         {
           "type": "Slider",
           "name": "center_radius",
           "value": 265.0
         },
         {
-          "type": "Checkbox",
-          "name": "show_center_circle",
-          "value": true
-        },
-        {
           "type": "Slider",
-          "name": "bg_alpha",
-          "value": 0.935
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_midi_circle",
-          "value": false
+          "name": "white_radius_amt",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
@@ -190,13 +165,43 @@
         },
         {
           "type": "Checkbox",
-          "name": "show_white_circle",
+          "name": "show_red_circle",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_center_circle",
           "value": true
         },
         {
           "type": "Slider",
           "name": "center_hue",
           "value": 0.3
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_midi_circle",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 0.935
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_audio",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_white_circle",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_breakpoints",
+          "value": true
         }
       ],
       "midi_controls": [
