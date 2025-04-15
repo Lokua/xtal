@@ -8,12 +8,12 @@ use crate::framework::prelude::*;
 /// It serves as the interface layer between the type-parameterized
 /// `ControlHub<T>` and the object-safe `SketchAll` trait used in the
 /// registry.
-pub trait ControlProvider {
+pub trait ControlHubProvider {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-impl<T: TimingSource + 'static> ControlProvider for ControlHub<T> {
+impl<T: TimingSource + 'static> ControlHubProvider for ControlHub<T> {
     fn as_any(&self) -> &dyn Any {
         self
     }

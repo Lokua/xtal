@@ -9,13 +9,11 @@ use crate::sketches::shared::displacer::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_1a",
     display_name: "Displacement 1a",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 1000,
     h: 1000,
-    gui_w: None,
-    gui_h: Some(240),
-    play_mode: PlayMode::Loop,
 };
 
 const GRID_SIZE: usize = 128;

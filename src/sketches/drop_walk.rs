@@ -11,13 +11,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "drop_walk",
     display_name: "Drop Walk",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
     h: 700,
-    gui_w: None,
-    gui_h: Some(340),
-    play_mode: PlayMode::Loop,
 };
 
 const MAX_DROPS: usize = 5000;

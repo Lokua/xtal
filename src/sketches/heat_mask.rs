@@ -9,13 +9,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "heat_mask",
     display_name: "Heat Mask",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 1000,
     h: 1000,
-    gui_w: None,
-    gui_h: Some(940),
-    play_mode: PlayMode::Loop,
 };
 
 const GRID_SIZE: usize = 128;

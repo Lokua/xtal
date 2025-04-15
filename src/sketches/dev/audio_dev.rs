@@ -7,13 +7,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "audio_dev",
     display_name: "Audio Test",
+    play_mode: PlayMode::Loop,
     fps: 30.0,
     bpm: 134.0,
     w: 700,
     h: 700,
-    gui_w: None,
-    gui_h: Some(300),
-    play_mode: PlayMode::Loop,
 };
 
 const N_BANDS: usize = 8;

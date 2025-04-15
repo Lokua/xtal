@@ -149,20 +149,20 @@ impl AppModel {
         self.sketch_config.name.to_string()
     }
 
-    fn control_hub(&mut self) -> Option<&ControlHub<Timing>> {
-        self.sketch.controls().and_then(|provider| {
+    fn hub(&mut self) -> Option<&ControlHub<Timing>> {
+        self.sketch.hub().and_then(|provider| {
             provider.as_any().downcast_ref::<ControlHub<Timing>>()
         })
     }
 
-    fn control_hub_mut(&mut self) -> Option<&mut ControlHub<Timing>> {
-        self.sketch.controls().and_then(|provider| {
+    fn hub_mut(&mut self) -> Option<&mut ControlHub<Timing>> {
+        self.sketch.hub().and_then(|provider| {
             provider.as_any_mut().downcast_mut::<ControlHub<Timing>>()
         })
     }
 
     fn web_view_controls(&mut self) -> Vec<wv::Control> {
-        self.control_hub().map_or_else(Vec::new, |hub| {
+        self.hub().map_or_else(Vec::new, |hub| {
             hub.ui_controls
                 .configs()
                 .iter()
@@ -218,7 +218,7 @@ impl AppModel {
             }
             AppEvent::ChangeAudioDevice(name) => {
                 global::set_audio_device_name(&name);
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.audio_controls
                         .restart()
                         .inspect_err(|e| {
@@ -235,7 +235,7 @@ impl AppModel {
             }
             AppEvent::ChangeMidiControlInputPort(port) => {
                 global::set_midi_control_in_port(port);
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.midi_controls
                         .restart()
                         .inspect_err(|e| {
@@ -268,14 +268,14 @@ impl AppModel {
                 self.clear_next_frame.set(true);
             }
             AppEvent::CommitMappings => {
-                if self.control_hub().is_none() {
+                if self.hub().is_none() {
                     return;
                 }
 
                 self.map_mode.currently_mapping = None;
                 let mappings = self.map_mode.mappings();
                 let app_tx = self.app_tx.clone();
-                let hub = self.control_hub_mut().unwrap();
+                let hub = self.hub_mut().unwrap();
 
                 for (name, _) in hub.midi_controls.configs() {
                     if MapMode::is_proxy_name(&name)
@@ -334,7 +334,7 @@ impl AppModel {
                 }
 
                 self.map_mode.remove(&name);
-                self.control_hub_mut()
+                self.hub_mut()
                     .unwrap()
                     .midi_controls
                     .remove(&MapMode::proxy_name(&name));
@@ -357,7 +357,7 @@ impl AppModel {
             }
             AppEvent::Hrcc(hrcc) => {
                 self.hrcc = hrcc;
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.midi_controls.hrcc = hrcc;
                     hub.midi_controls
                         .restart()
@@ -377,9 +377,8 @@ impl AppModel {
             }
             AppEvent::HubPopulated => {
                 let controls = self.web_view_controls();
-                let bypassed = self
-                    .control_hub()
-                    .map_or_else(HashMap::default, |h| h.bypassed());
+                let bypassed =
+                    self.hub().map_or_else(HashMap::default, |h| h.bypassed());
                 let event = wv::Event::HubPopulated((controls, bypassed));
                 self.wv_tx.emit(event);
                 self.app_tx.alert("Hub repopulated");
@@ -389,7 +388,7 @@ impl AppModel {
             }
             AppEvent::MappingsEnabled(enabled) => {
                 self.mappings_enabled = enabled;
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.midi_proxies_enabled = enabled;
                 }
                 self.save_global_state();
@@ -463,7 +462,7 @@ impl AppModel {
             }
             AppEvent::Randomize(exclusions) => {
                 let app_tx = self.app_tx.clone();
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     let msg = "Transition started";
                     app_tx.alert_and_log(msg, log::Level::Info);
                     hub.randomize(exclusions);
@@ -517,7 +516,7 @@ impl AppModel {
             AppEvent::RemoveMapping(name) => {
                 self.map_mode.remove(&name);
                 self.map_mode.currently_mapping = None;
-                self.control_hub_mut()
+                self.hub_mut()
                     .unwrap()
                     .midi_controls
                     .remove(&MapMode::proxy_name(&name));
@@ -541,7 +540,7 @@ impl AppModel {
 
                 match storage::save_sketch_state(
                     self.sketch_name().as_str(),
-                    self.control_hub().unwrap(),
+                    self.hub().unwrap(),
                     mappings,
                     exclusions,
                 ) {
@@ -567,7 +566,7 @@ impl AppModel {
                 let hrcc = self.hrcc;
 
                 let messages = self
-                    .control_hub()
+                    .hub()
                     .map(|hub| {
                         if hrcc {
                             hub.midi_controls.messages_hrcc()
@@ -619,7 +618,7 @@ impl AppModel {
                 self.app_tx.emit(AppEvent::SendMidi);
             }
             AppEvent::SnapshotDelete(id) => {
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.delete_snapshot(&id);
                     self.app_tx.alert_and_log(
                         format!("Snapshot {:?} deleted", id),
@@ -628,7 +627,7 @@ impl AppModel {
                 }
             }
             AppEvent::SnapshotRecall(id) => {
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     match hub.recall_snapshot(&id) {
                         Ok(_) => {
                             self.app_tx.alert_and_log(
@@ -643,7 +642,7 @@ impl AppModel {
                 }
             }
             AppEvent::SnapshotStore(digit) => {
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.take_snapshot(&digit);
                     self.app_tx.alert_and_log(
                         format!("Snapshot {:?} saved", digit),
@@ -710,7 +709,7 @@ impl AppModel {
             }
             AppEvent::TransitionTime(transition_time) => {
                 self.transition_time = transition_time;
-                if let Some(hub) = self.control_hub_mut() {
+                if let Some(hub) = self.hub_mut() {
                     hub.set_transition_time(transition_time);
                 }
                 self.save_global_state();
@@ -745,7 +744,7 @@ impl AppModel {
                 window.winit_window().focus_window();
             }
             AppEvent::UpdateUiControl((name, value)) => {
-                let hub = self.control_hub_mut().unwrap();
+                let hub = self.hub_mut().unwrap();
                 hub.ui_controls.update_value(&name, value.clone());
 
                 // Revaluate disabled state
@@ -832,7 +831,7 @@ impl AppModel {
         self.sketch = sketch;
 
         let mappings_enabled = self.mappings_enabled;
-        if let Some(hub) = self.control_hub_mut() {
+        if let Some(hub) = self.hub_mut() {
             hub.midi_proxies_enabled = mappings_enabled;
             hub.clear_snapshots();
         }
@@ -874,7 +873,7 @@ impl AppModel {
         let transition_time = self.transition_time;
         let tx1 = self.app_tx.clone();
         let tx2 = self.app_tx.clone();
-        if let Some(hub) = self.control_hub_mut() {
+        if let Some(hub) = self.hub_mut() {
             hub.register_populated_callback(move || {
                 tx1.emit(AppEvent::HubPopulated);
             });
@@ -886,11 +885,11 @@ impl AppModel {
         }
 
         let bypassed = self
-            .control_hub_mut()
+            .hub_mut()
             .map_or_else(HashMap::default, |hub| hub.bypassed());
 
         let snapshot_slots = self
-            .control_hub()
+            .hub()
             .map_or_else(Vec::new, |hub| hub.snapshot_keys_sorted());
 
         let event = wv::Event::LoadSketch {
@@ -950,24 +949,25 @@ impl AppModel {
         let sketch_name = self.sketch_name();
         let mappings = self.map_mode.mappings();
 
-        let mut current_state = self.control_hub().map_or_else(
-            TransitorySketchState::default,
-            |hub| TransitorySketchState {
-                ui_controls: hub.ui_controls.clone(),
-                midi_controls: hub.midi_controls.clone(),
-                osc_controls: hub.osc_controls.clone(),
-                snapshots: hub.snapshots.clone(),
-                mappings,
-                exclusions: Vec::new(),
-            },
-        );
+        let mut current_state =
+            self.hub()
+                .map_or_else(TransitorySketchState::default, |hub| {
+                    TransitorySketchState {
+                        ui_controls: hub.ui_controls.clone(),
+                        midi_controls: hub.midi_controls.clone(),
+                        osc_controls: hub.osc_controls.clone(),
+                        snapshots: hub.snapshots.clone(),
+                        mappings,
+                        exclusions: Vec::new(),
+                    }
+                });
 
         match storage::load_sketch_state(&sketch_name, &mut current_state) {
             Ok(state) => {
                 self.map_mode.clear();
                 self.map_mode.set_mappings(state.mappings.clone());
 
-                let Some(hub) = self.control_hub_mut() else {
+                let Some(hub) = self.hub_mut() else {
                     return Ok(Vec::new());
                 };
 
@@ -1163,7 +1163,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 
     // Should this come _after_ `wrapped_update` and possibly behind a
     // `did_update` returned from frame_controller?
-    if let Some(hub) = model.control_hub_mut() {
+    if let Some(hub) = model.hub_mut() {
         hub.update();
     }
 

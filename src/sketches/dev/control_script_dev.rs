@@ -13,8 +13,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: 134.0,
     w: 500,
     h: 500,
-    gui_w: None,
-    gui_h: Some(500),
 };
 
 #[derive(SketchComponents)]

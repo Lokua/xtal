@@ -11,8 +11,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: 134.0,
     w: 500,
     h: 500,
-    gui_w: None,
-    gui_h: Some(300),
 };
 
 const N_POINTS: usize = 2048;

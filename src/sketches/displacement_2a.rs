@@ -11,13 +11,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_2a",
     display_name: "Displacement 2a",
+    play_mode: PlayMode::Loop,
     fps: 30.0,
     bpm: 135.0,
     w: 1000,
     h: 1000,
-    gui_w: None,
-    gui_h: Some(900),
-    play_mode: PlayMode::Loop,
 };
 
 const DEBUG_QUADS: bool = false;

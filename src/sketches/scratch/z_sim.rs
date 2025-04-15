@@ -6,13 +6,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "z_sim",
     display_name: "Z Axis Simulation",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
     h: 700,
-    gui_w: None,
-    gui_h: Some(200),
-    play_mode: PlayMode::Loop,
 };
 
 const GRID_SIZE: usize = 32;

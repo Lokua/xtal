@@ -9,13 +9,11 @@ use crate::sketches::shared::sand_line::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "sand_line",
     display_name: "Sand Line",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
     h: 700,
-    gui_w: None,
-    gui_h: Some(520),
-    play_mode: PlayMode::Loop,
 };
 
 #[derive(SketchComponents)]

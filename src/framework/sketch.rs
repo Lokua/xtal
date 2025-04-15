@@ -11,8 +11,11 @@ pub struct SketchConfig {
     /// Must be unique among all sketches
     pub name: &'static str,
 
-    /// The name that will show up in the title bar of the window
+    /// The name that will be displayed in the window titles and sketch selector
     pub display_name: &'static str,
+
+    /// See [`PlayMode`]
+    pub play_mode: PlayMode,
 
     /// The frame rate that will be provided to the global frame-count provider
     /// to keep everything including animations in sync
@@ -21,25 +24,11 @@ pub struct SketchConfig {
     /// The musical tempo at which animations will sync to
     pub bpm: f32,
 
-    /// The default width the window should open at
+    /// The default width the main window should open at
     pub w: i32,
 
-    /// The default height the window should open at
+    /// The default height the main window should open at
     pub h: i32,
-
-    /// Lattice provides a sensible default for control window's width,
-    /// but you can override this in the case you have really long
-    /// parameter names
-    pub gui_w: Option<u32>,
-
-    /// The height of the control window. I've been unable to derive this
-    /// from the number of controls - there is some weird quirk in the version
-    /// of egui that ships with nannou, so until we get around that this must be
-    /// provided and increased manually as your count of controls grows
-    pub gui_h: Option<u32>,
-
-    /// See [`PlayMode`]
-    pub play_mode: PlayMode,
 }
 
 #[derive(PartialEq)]
@@ -50,13 +39,12 @@ pub enum PlayMode {
     /// Sketch starts in paused state then auto advanced when controls are changed
     Advance,
 
-    /// Same as advance, but only advances if the `Adv.` button or `a` shortcut
-    /// key in the UI is pressed
+    /// Same as advance, but only advances if the `Advance` button or `A` key is
+    /// pressed
     ManualAdvance,
 }
 
-/// Context passed down from the Lattice runtime. Similar to how `nannou`
-/// provides an `app`, Lattice provides `ctx`.
+/// Context passed down from the Lattice runtime
 #[derive(Clone, Debug)]
 pub struct Context {
     bpm: Bpm,
@@ -82,20 +70,21 @@ impl Context {
         self.bpm.clone()
     }
 
-    /// Accessor for main_window's Rect instance, wrapped in our own WindowRect
-    /// which provides change detection
+    /// Accessor for the main window's `Rect` instance, wrapped in our own
+    /// [`WindowRect`] which provides a change detection mechanism and other
+    /// useful helpers
     pub fn window_rect(&self) -> WindowRect {
         self.window_rect.clone()
     }
 
-    /// True for a single frame after pressing `Clear`
+    /// True for a single frame after pressing **Clear**
     pub fn should_clear(&self) -> bool {
         self.clear_flag.get()
     }
 
-    /// A background color helper with support for clearing the nannou frame via
-    /// the Clear button in the UI as well as previous frame "trails" when
-    /// background alpha is low
+    /// A background color helper with support for clearing the Nannou
+    /// [`nannou::frame::Frame`] via the **Clear** button in the UI as well as
+    /// previous frame "trails" when background alpha is low
     pub fn background<C>(&self, frame: &Frame, draw: &Draw, color: C)
     where
         C: IntoLinSrgba<ColorScalar> + Clone,
@@ -111,23 +100,21 @@ impl Context {
     }
 }
 
-/// Core trait for type erasure - all sketches must implement this
+/// Core trait for type erasure — all sketches must implement this
 pub trait Sketch {
-    fn update(&mut self, app: &App, update: Update, ctx: &Context);
-    fn view(&self, app: &App, frame: Frame, ctx: &Context);
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {}
     fn event(&mut self, _app: &App, _event: &Event) {}
+    fn view(&self, app: &App, frame: Frame, ctx: &Context);
 }
 
 /// Secondary trait that all sketches must implement in order to integrate with
-/// the main runtime. Does not have to be implemented manually. Use with:
+/// the Lattice runtime. Does not have to be implemented manually. Use with:
 /// ```rust
 /// #[derive(SketchComponents)]
 /// pub struct MySketch {}
 /// ```
 pub trait SketchDerived {
-    // TODO: we need a non-mutable version of this
-    fn controls(&mut self) -> Option<&mut dyn ControlProvider>;
-    fn clear_color(&self) -> Rgba;
+    fn hub(&mut self) -> Option<&mut dyn ControlHubProvider>;
 }
 
 /// Trait used to enable dynamically loading sketches at runtime via

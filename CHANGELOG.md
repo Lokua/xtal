@@ -7,6 +7,21 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## 2025-04-14
+
+### Added
+
+- `Context::should_clear` to give a sketches a way to perform reset routines
+  when the **Clear** button is pressed.
+- `Context::background` helper that enables the classic "trails" effect while
+  also extracting the base color with fill opacity to use as the clear color
+  when pressing **Clear** button.
+
+### Changed
+
+- Marked `SketchDerived::clear_color` as deprecated in favor of the new
+  background helper.
+
 ## [0.10.0] 2025-04-13
 
 ### Added

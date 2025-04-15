@@ -16,8 +16,6 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: 134.0,
     w: 1000,
     h: 1000,
-    gui_w: None,
-    gui_h: Some(790),
 };
 
 const N_LINES: usize = 64;

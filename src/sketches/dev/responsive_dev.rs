@@ -6,13 +6,11 @@ use crate::framework::prelude::*;
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "responsive_dev",
     display_name: "Responsive Test",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: 700,
     h: 700,
-    gui_w: None,
-    gui_h: Some(150),
-    play_mode: PlayMode::Loop,
 };
 
 #[derive(SketchComponents)]
