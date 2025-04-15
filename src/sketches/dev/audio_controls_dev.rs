@@ -34,7 +34,7 @@ pub fn init(_app: &App, ctx: &Context) -> AudioControlsDev {
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
-                default: 0.0,
+                value: 0.0,
             },
         )
         .audio(
@@ -45,7 +45,7 @@ pub fn init(_app: &App, ctx: &Context) -> AudioControlsDev {
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
-                default: 0.0,
+                value: 0.0,
             },
         )
         .audio(
@@ -56,7 +56,7 @@ pub fn init(_app: &App, ctx: &Context) -> AudioControlsDev {
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
-                default: 0.0,
+                value: 0.0,
             },
         )
         .build();

@@ -663,12 +663,13 @@ impl<T: TimingSource> ControlHub<T> {
             if self.ui_controls.has(name) {
                 match value {
                     ControlValue::Float(_) => {
-                        if let UiControl::Slider { min, max, step, .. } =
-                            self.ui_controls.config(name).unwrap()
+                        if let UiControlConfig::Slider {
+                            min, max, step, ..
+                        } = self.ui_controls.config(name).unwrap()
                         {
                             let from = self.get_raw(name, current_frame);
                             let to =
-                                random_within_range_stepped(*min, *max, *step);
+                                random_within_range_stepped(min, max, step);
                             transition
                                 .values
                                 .insert(name.to_string(), (from, to));
@@ -681,7 +682,7 @@ impl<T: TimingSource> ControlHub<T> {
                             .set(name, ControlValue::from(random_bool()));
                     }
                     ControlValue::String(_) => {
-                        if let UiControl::Select { options, .. } =
+                        if let UiControlConfig::Select { options, .. } =
                             self.ui_controls.config(name).unwrap()
                         {
                             // Just update immediately since interpolating over
@@ -948,7 +949,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let slider = UiControl::Slider {
+                    let slider = UiControlConfig::Slider {
                         name: id.to_string(),
                         value,
                         min: conf.range[0],
@@ -970,7 +971,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let checkbox = UiControl::Checkbox {
+                    let checkbox = UiControlConfig::Checkbox {
                         name: id.to_string(),
                         value,
                         disabled,
@@ -988,7 +989,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                     let disabled = Self::extract_disabled_fn(&mut conf.shared);
 
-                    let select = UiControl::Select {
+                    let select = UiControlConfig::Select {
                         name: id.to_string(),
                         value: value.to_string(),
                         options: conf.options,
@@ -999,8 +1000,10 @@ impl<T: TimingSource> ControlHub<T> {
                 }
                 ControlType::Separator => {
                     let name = uuid_5();
-                    self.ui_controls
-                        .add(&name.clone(), UiControl::Separator { name });
+                    self.ui_controls.add(
+                        &name.clone(),
+                        UiControlConfig::Separator { name },
+                    );
                 }
                 ControlType::Osc => {
                     let conf: OscConfig =
@@ -1508,7 +1511,7 @@ foo_animation:
                 cc: 0,
                 min: 0.0,
                 max: 100.0,
-                default: 99.0,
+                value: 99.0,
             },
         );
 

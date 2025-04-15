@@ -18,11 +18,13 @@ pub struct MidiControlConfig {
     pub cc: u8,
     pub min: f32,
     pub max: f32,
-    pub default: f32,
+    /// Represents the initial value of this control and will not be updated
+    /// after instantiation
+    pub value: f32,
 }
 
 impl MidiControlConfig {
-    pub fn new(midi: (u8, u8), range: (f32, f32), default: f32) -> Self {
+    pub fn new(midi: (u8, u8), range: (f32, f32), value: f32) -> Self {
         let (channel, cc) = midi;
         let (min, max) = range;
         Self {
@@ -30,7 +32,7 @@ impl MidiControlConfig {
             cc,
             min,
             max,
-            default,
+            value,
         }
     }
 }
@@ -47,13 +49,6 @@ struct State {
 }
 
 impl State {
-    fn new() -> Self {
-        Self {
-            values: HashMap::default(),
-            last: HashMap::default(),
-        }
-    }
-
     fn get(&self, name: &str) -> f32 {
         *self.values.get(name).unwrap_or(&0.0)
     }
@@ -91,13 +86,13 @@ impl State {
     }
 }
 
-pub type MidiControlConfigs = HashMap<String, MidiControlConfig>;
-
 #[derive(Clone, Debug)]
 pub struct MidiControls {
     /// "High Resolution CC" AKA 14bit MIDI control change for CCs 0-31
     pub hrcc: bool,
-    configs: MidiControlConfigs,
+    /// Holds the original [`MidiControlConfig`] references and their default
+    /// values – runtime values are not included here!
+    configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<State>>,
     is_active: bool,
 }
@@ -106,7 +101,10 @@ impl Default for MidiControls {
     fn default() -> Self {
         Self {
             configs: HashMap::default(),
-            state: Arc::new(Mutex::new(State::new())),
+            state: Arc::new(Mutex::new(State {
+                values: HashMap::default(),
+                last: HashMap::default(),
+            })),
             is_active: false,
             hrcc: false,
         }
@@ -315,15 +313,15 @@ impl MidiControls {
 
 impl ControlCollection<MidiControlConfig, f32, f32> for MidiControls {
     fn add(&mut self, name: &str, config: MidiControlConfig) {
-        self.state.lock().unwrap().set(name, config.default);
+        self.state.lock().unwrap().set(name, config.value);
         self.configs.insert(name.to_string(), config);
     }
 
-    fn config(&self, name: &str) -> Option<&MidiControlConfig> {
-        self.configs.get(name)
+    fn config(&self, name: &str) -> Option<MidiControlConfig> {
+        self.configs.get(name).cloned()
     }
 
-    fn configs(&self) -> MidiControlConfigs {
+    fn configs(&self) -> HashMap<String, MidiControlConfig> {
         self.configs.clone()
     }
 

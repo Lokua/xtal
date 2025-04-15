@@ -70,42 +70,45 @@ impl From<String> for ControlValue {
 ///
 /// # Example
 /// ```rust
-/// let controls = Controls::New(&[
-///     Control::Checkbox {
-///         name: "animate_phase".to_string(),
-///         value: true,
-///         disabled: None,
-///     },
-///     Control::Slider {
-///         name: "phase",
-///         value: 0.0,
-///         min: 0.0,
-///         max: 1.0,
-///         // Slider will automatically become disabled when animate_phase is true
-///         disabled: Some(Box::new(|controls| controls.bool("animate_phase"))),
-///     };
-/// ])
+/// Control::Slider {
+///     name: "phase",
+///     value: 0.0,
+///     min: 0.0,
+///     max: 1.0,
+///
+///     // Slider will automatically become disabled when animate_phase is true
+///     disabled: Some(Box::new(|controls| controls.bool("animate_phase"))),
+/// };
 /// ```
 pub type DisabledFn = Option<Box<dyn Fn(&UiControls) -> bool>>;
 
-pub enum UiControl {
+pub enum UiControlConfig {
     Slider {
         name: String,
+        /// Represents the initial value of this control and will not be updated
+        /// after instantiation
         value: f32,
         min: f32,
         max: f32,
         step: f32,
+        /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
     Checkbox {
         name: String,
+        /// Represents the initial value of this control and will not be updated
+        /// after instantiation
         value: bool,
+        /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
     Select {
         name: String,
+        /// Represents the initial value of this control and will not be updated
+        /// after instantiation
         value: String,
         options: Vec<String>,
+        /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
     Separator {
@@ -113,73 +116,48 @@ pub enum UiControl {
     },
 }
 
-impl UiControl {
+impl UiControlConfig {
     pub fn name(&self) -> &str {
         match self {
-            UiControl::Slider { name, .. } => name,
-            UiControl::Checkbox { name, .. } => name,
-            UiControl::Select { name, .. } => name,
-            UiControl::Separator { name } => name,
+            UiControlConfig::Slider { name, .. } => name,
+            UiControlConfig::Checkbox { name, .. } => name,
+            UiControlConfig::Select { name, .. } => name,
+            UiControlConfig::Separator { name } => name,
         }
     }
 
     pub fn value(&self) -> ControlValue {
         match self {
-            UiControl::Slider { value, .. } => ControlValue::Float(*value),
-            UiControl::Checkbox { value, .. } => ControlValue::Bool(*value),
-            UiControl::Select { value, .. } => {
+            UiControlConfig::Slider { value, .. } => {
+                ControlValue::Float(*value)
+            }
+            UiControlConfig::Checkbox { value, .. } => {
+                ControlValue::Bool(*value)
+            }
+            UiControlConfig::Select { value, .. } => {
                 ControlValue::String(value.clone())
             }
-            UiControl::Separator { .. } => ControlValue::Bool(false),
+            UiControlConfig::Separator { .. } => ControlValue::Bool(false),
         }
     }
 
-    pub fn checkbox(name: &str, value: bool) -> UiControl {
-        UiControl::Checkbox {
+    pub fn checkbox(name: &str, value: bool) -> UiControlConfig {
+        UiControlConfig::Checkbox {
             name: name.to_string(),
             value,
             disabled: None,
         }
     }
 
-    pub fn checkbox_x<F>(name: &str, value: bool, disabled: F) -> UiControl
-    where
-        F: Fn(&UiControls) -> bool + 'static,
-    {
-        UiControl::Checkbox {
-            name: name.to_string(),
-            value,
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
-    pub fn select<S>(name: &str, value: &str, options: &[S]) -> UiControl
+    pub fn select<S>(name: &str, value: &str, options: &[S]) -> UiControlConfig
     where
         S: AsRef<str>,
     {
-        UiControl::Select {
+        UiControlConfig::Select {
             name: name.into(),
             value: value.into(),
             options: options.iter().map(|s| s.as_ref().to_string()).collect(),
             disabled: None,
-        }
-    }
-
-    pub fn select_x<S, F>(
-        name: &str,
-        value: &str,
-        options: &[S],
-        disabled: F,
-    ) -> UiControl
-    where
-        S: AsRef<str>,
-        F: Fn(&UiControls) -> bool + 'static,
-    {
-        UiControl::Select {
-            name: name.into(),
-            value: value.into(),
-            options: options.iter().map(|s| s.as_ref().to_string()).collect(),
-            disabled: Some(Box::new(disabled)),
         }
     }
 
@@ -188,8 +166,8 @@ impl UiControl {
         value: f32,
         range: (f32, f32),
         step: f32,
-    ) -> UiControl {
-        UiControl::Slider {
+    ) -> UiControlConfig {
+        UiControlConfig::Slider {
             name: name.to_string(),
             value,
             min: range.0,
@@ -200,8 +178,8 @@ impl UiControl {
     }
 
     /// Convenience version of [`Self::slider`] with default [0.0, 1.0] range.
-    pub fn slider_n(name: &str, value: f32) -> UiControl {
-        UiControl::Slider {
+    pub fn slider_n(name: &str, value: f32) -> UiControlConfig {
+        UiControlConfig::Slider {
             name: name.to_string(),
             value,
             min: 0.0,
@@ -211,31 +189,11 @@ impl UiControl {
         }
     }
 
-    pub fn slider_x<F>(
-        name: &str,
-        value: f32,
-        range: (f32, f32),
-        step: f32,
-        disabled: F,
-    ) -> UiControl
-    where
-        F: Fn(&UiControls) -> bool + 'static,
-    {
-        UiControl::Slider {
-            name: name.to_string(),
-            value,
-            min: range.0,
-            max: range.1,
-            step,
-            disabled: Some(Box::new(disabled)),
-        }
-    }
-
     pub fn is_disabled(&self, controls: &UiControls) -> bool {
         match self {
-            UiControl::Slider { disabled, .. }
-            | UiControl::Checkbox { disabled, .. }
-            | UiControl::Select { disabled, .. } => {
+            UiControlConfig::Slider { disabled, .. }
+            | UiControlConfig::Checkbox { disabled, .. }
+            | UiControlConfig::Select { disabled, .. } => {
                 disabled.as_ref().is_some_and(|f| f(controls))
             }
             _ => false,
@@ -257,42 +215,42 @@ impl UiControl {
     }
 }
 
-impl ControlConfig<ControlValue, f32> for UiControl {}
+impl ControlConfig<ControlValue, f32> for UiControlConfig {}
 
-impl Clone for UiControl {
+impl Clone for UiControlConfig {
     fn clone(&self) -> Self {
         match self {
-            UiControl::Checkbox {
+            UiControlConfig::Checkbox {
                 name,
                 value,
                 disabled: _,
-            } => UiControl::Checkbox {
+            } => UiControlConfig::Checkbox {
                 name: name.clone(),
                 value: *value,
                 disabled: None,
             },
-            UiControl::Select {
+            UiControlConfig::Select {
                 name,
                 value,
                 options,
                 disabled: _,
-            } => UiControl::Select {
+            } => UiControlConfig::Select {
                 name: name.clone(),
                 value: value.clone(),
                 options: options.clone(),
                 disabled: None,
             },
-            UiControl::Separator { name } => {
-                UiControl::Separator { name: name.clone() }
+            UiControlConfig::Separator { name } => {
+                UiControlConfig::Separator { name: name.clone() }
             }
-            UiControl::Slider {
+            UiControlConfig::Slider {
                 name,
                 value,
                 min,
                 max,
                 step,
                 disabled: _,
-            } => UiControl::Slider {
+            } => UiControlConfig::Slider {
                 name: name.clone(),
                 value: *value,
                 min: *min,
@@ -304,15 +262,15 @@ impl Clone for UiControl {
     }
 }
 
-impl fmt::Debug for UiControl {
+impl fmt::Debug for UiControlConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            UiControl::Checkbox { name, value, .. } => f
+            UiControlConfig::Checkbox { name, value, .. } => f
                 .debug_struct("Checkbox")
                 .field("name", name)
                 .field("value", value)
                 .finish(),
-            UiControl::Select {
+            UiControlConfig::Select {
                 name,
                 value,
                 options,
@@ -323,10 +281,10 @@ impl fmt::Debug for UiControl {
                 .field("value", value)
                 .field("options", options)
                 .finish(),
-            UiControl::Separator { name } => {
+            UiControlConfig::Separator { name } => {
                 f.debug_struct("Separator").field("name", name).finish()
             }
-            UiControl::Slider {
+            UiControlConfig::Slider {
                 name,
                 value,
                 min,
@@ -353,16 +311,16 @@ pub type ControlValues = HashMap<String, ControlValue>;
 /// WebView for greater UI flexibility
 #[derive(Clone)]
 pub struct UiControls {
-    /// Holds the original Control references and their default values - runtime
-    /// values are not included here!
-    configs: HashMap<String, UiControl>,
+    /// Holds the original [`UiControlConfig`] references and their default
+    /// values – runtime values are not included here!
+    configs: HashMap<String, UiControlConfig>,
     values: HashMap<String, ControlValue>,
     change_tracker: ChangeTracker,
 }
 
 impl UiControls {
-    pub fn new(controls: &[UiControl]) -> Self {
-        let configs: HashMap<String, UiControl> = controls
+    pub fn new(controls: &[UiControlConfig]) -> Self {
+        let configs: HashMap<String, UiControlConfig> = controls
             .iter()
             .map(|control| (control.name().to_string(), control.clone()))
             .collect();
@@ -379,7 +337,7 @@ impl UiControls {
         }
     }
 
-    pub fn extend(&mut self, controls: HashMap<String, UiControl>) {
+    pub fn extend(&mut self, controls: HashMap<String, UiControlConfig>) {
         let values: ControlValues = controls
             .values()
             .map(|control| (control.name().to_string(), control.value()))
@@ -432,7 +390,8 @@ impl UiControls {
     /// context)
     pub fn string_as_f32(&self, name: &str) -> f32 {
         let value = self.string(name);
-        if let Some(UiControl::Select { options, .. }) = self.config(name) {
+        if let Some(UiControlConfig::Select { options, .. }) = self.config(name)
+        {
             return options.iter().position(|x| *x == value).unwrap_or(0)
                 as f32;
         }
@@ -458,7 +417,7 @@ impl UiControls {
 
     pub fn slider_range(&self, name: &str) -> Option<(f32, f32)> {
         self.config(name).and_then(|control| match control {
-            UiControl::Slider { min, max, .. } => Some((*min, *max)),
+            UiControlConfig::Slider { min, max, .. } => Some((min, max)),
             _ => {
                 error!(
                     "Unable to find a Control definition for Slider `{}`",
@@ -470,19 +429,19 @@ impl UiControls {
     }
 }
 
-impl ControlCollection<UiControl, ControlValue, f32> for UiControls {
-    fn add(&mut self, name: &str, control: UiControl) {
+impl ControlCollection<UiControlConfig, ControlValue, f32> for UiControls {
+    fn add(&mut self, name: &str, control: UiControlConfig) {
         let value = control.value();
         self.configs.insert(name.to_string(), control);
         self.values.insert(name.to_string(), value);
         self.change_tracker.mark_changed();
     }
 
-    fn config(&self, name: &str) -> Option<&UiControl> {
-        self.configs.get(name)
+    fn config(&self, name: &str) -> Option<UiControlConfig> {
+        self.configs.get(name).cloned()
     }
 
-    fn configs(&self) -> HashMap<String, UiControl> {
+    fn configs(&self) -> HashMap<String, UiControlConfig> {
         self.configs.clone()
     }
 
@@ -510,8 +469,12 @@ impl ControlCollection<UiControl, ControlValue, f32> for UiControls {
         }
 
         match self.config(name) {
-            Some(UiControl::Checkbox { .. }) => Some(self.bool_as_f32(name)),
-            Some(UiControl::Select { .. }) => Some(self.string_as_f32(name)),
+            Some(UiControlConfig::Checkbox { .. }) => {
+                Some(self.bool_as_f32(name))
+            }
+            Some(UiControlConfig::Select { .. }) => {
+                Some(self.string_as_f32(name))
+            }
             _ => None,
         }
     }
@@ -563,7 +526,7 @@ impl fmt::Debug for UiControls {
 
 #[derive(Default)]
 pub struct UiControlBuilder {
-    controls: Vec<UiControl>,
+    controls: Vec<UiControlConfig>,
 }
 
 impl UiControlBuilder {
@@ -571,7 +534,7 @@ impl UiControlBuilder {
         Self::default()
     }
 
-    pub fn control(mut self, control: UiControl) -> Self {
+    pub fn control(mut self, control: UiControlConfig) -> Self {
         self.controls.push(control);
         self
     }
@@ -582,7 +545,7 @@ impl UiControlBuilder {
         value: bool,
         disabled: DisabledFn,
     ) -> Self {
-        self.control(UiControl::Checkbox {
+        self.control(UiControlConfig::Checkbox {
             name: name.to_string(),
             value,
             disabled,
@@ -599,7 +562,7 @@ impl UiControlBuilder {
     where
         S: AsRef<str>,
     {
-        self.control(UiControl::Select {
+        self.control(UiControlConfig::Select {
             name: name.into(),
             value: value.into(),
             options: options.iter().map(|s| s.as_ref().to_string()).collect(),
@@ -608,7 +571,7 @@ impl UiControlBuilder {
     }
 
     pub fn separator_internal(self, name: &str) -> Self {
-        self.control(UiControl::Separator {
+        self.control(UiControlConfig::Separator {
             name: name.to_string(),
         })
     }
@@ -625,7 +588,7 @@ impl UiControlBuilder {
         step: f32,
         disabled: DisabledFn,
     ) -> Self {
-        self.control(UiControl::Slider {
+        self.control(UiControlConfig::Slider {
             name: name.to_string(),
             value,
             min: range.0,
@@ -636,7 +599,7 @@ impl UiControlBuilder {
     }
 
     pub fn slider_n(self, name: &str, value: f32) -> Self {
-        self.control(UiControl::Slider {
+        self.control(UiControlConfig::Slider {
             name: name.to_string(),
             value,
             min: 0.0,
@@ -735,7 +698,8 @@ mod tests {
 
     #[test]
     fn test_controls_changed() {
-        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
+        let mut controls =
+            UiControls::new(&[UiControlConfig::slider_n("foo", 0.5)]);
         assert!(controls.changed());
         controls.mark_unchanged();
         assert!(!controls.changed());
@@ -743,7 +707,8 @@ mod tests {
 
     #[test]
     fn test_any_changed_in() {
-        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
+        let mut controls =
+            UiControls::new(&[UiControlConfig::slider_n("foo", 0.5)]);
 
         assert!(controls.any_changed_in(&["foo"]));
         controls.mark_unchanged();
@@ -755,7 +720,8 @@ mod tests {
 
     #[test]
     fn test_mark_unchanged() {
-        let mut controls = UiControls::new(&[UiControl::slider_n("foo", 0.5)]);
+        let mut controls =
+            UiControls::new(&[UiControlConfig::slider_n("foo", 0.5)]);
 
         controls.set("foo", ControlValue::Float(0.7));
         assert!(controls.changed());

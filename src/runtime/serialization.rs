@@ -68,12 +68,74 @@ pub struct SerializableSketchState {
     pub exclusions: Exclusions,
 }
 
+impl From<&TransitorySketchState> for SerializableSketchState {
+    fn from(state: &TransitorySketchState) -> Self {
+        let controls = state
+            .ui_controls
+            .configs()
+            .iter()
+            .filter_map(|(k, c)| {
+                if c.is_separator() {
+                    None
+                } else {
+                    let values = state.ui_controls.values();
+                    let value = values.get(k);
+                    Some(ControlConfig {
+                        kind: c.variant_string(),
+                        name: k.to_string(),
+                        value: value.unwrap_or(&c.value()).clone(),
+                    })
+                }
+            })
+            .collect();
+
+        let midi_controls = state
+            .midi_controls
+            .values()
+            .iter()
+            .map(|(name, value)| BasicNameValueConfig {
+                name: name.clone(),
+                value: *value,
+            })
+            .collect();
+
+        let osc_controls = state
+            .osc_controls
+            .values()
+            .iter()
+            .map(|(name, value)| BasicNameValueConfig {
+                name: name.clone(),
+                value: *value,
+            })
+            .collect();
+
+        let snapshots = state
+            .snapshots
+            .iter()
+            .map(|(name, snapshot)| {
+                (name.clone(), SerializableSnapshot::new(state, snapshot))
+            })
+            .collect();
+
+        let mappings = state.mappings.clone();
+        let exclusions = state.exclusions.clone();
+
+        Self {
+            version: PROGRAM_STATE_VERSION.to_string(),
+            ui_controls: controls,
+            midi_controls,
+            osc_controls,
+            snapshots,
+            mappings,
+            exclusions,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
-pub struct SerializableSnapshot {
-    #[serde(rename = "ui_controls", alias = "controls")]
-    pub ui_controls: Vec<ControlConfig>,
-    pub midi_controls: Vec<BasicNameValueConfig>,
-    pub osc_controls: Vec<BasicNameValueConfig>,
+pub struct BasicNameValueConfig {
+    pub name: String,
+    pub value: f32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -83,12 +145,6 @@ pub struct ControlConfig {
     pub name: String,
     #[serde(with = "control_value_format")]
     pub value: ControlValue,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct BasicNameValueConfig {
-    pub name: String,
-    pub value: f32,
 }
 
 mod control_value_format {
@@ -138,109 +194,48 @@ mod control_value_format {
     }
 }
 
-impl From<&TransitorySketchState> for SerializableSketchState {
-    fn from(state: &TransitorySketchState) -> Self {
-        let controls = state
-            .ui_controls
-            .configs()
-            .iter()
-            .filter_map(|(k, c)| {
-                if c.is_separator() {
-                    None
-                } else {
-                    let values = state.ui_controls.values();
-                    let value = values.get(k);
-                    Some(ControlConfig {
-                        kind: c.variant_string(),
-                        name: k.to_string(),
-                        value: value.unwrap_or(&c.value()).clone(),
-                    })
-                }
-            })
-            .collect();
-
-        let midi_controls = state
-            .midi_controls
-            .values()
-            .iter()
-            .map(|(name, value)| BasicNameValueConfig {
-                name: name.clone(),
-                value: *value,
-            })
-            .collect();
-
-        let osc_controls = state
-            .osc_controls
-            .values()
-            .iter()
-            .map(|(name, value)| BasicNameValueConfig {
-                name: name.clone(),
-                value: *value,
-            })
-            .collect();
-
-        let snapshots = state
-            .snapshots
-            .iter()
-            .map(|(name, snapshot)| {
-                (name.clone(), create_serializable_snapshot(state, snapshot))
-            })
-            .collect();
-
-        let mappings = state.mappings.clone();
-        let exclusions = state.exclusions.clone();
-
-        Self {
-            version: PROGRAM_STATE_VERSION.to_string(),
-            ui_controls: controls,
-            midi_controls,
-            osc_controls,
-            snapshots,
-            mappings,
-            exclusions,
-        }
-    }
+#[derive(Serialize, Deserialize)]
+pub struct SerializableSnapshot {
+    #[serde(rename = "ui_controls", alias = "controls")]
+    pub ui_controls: Vec<ControlConfig>,
+    pub midi_controls: Vec<BasicNameValueConfig>,
+    pub osc_controls: Vec<BasicNameValueConfig>,
 }
 
-fn create_serializable_snapshot(
-    state: &TransitorySketchState,
-    snapshot: &HashMap<String, ControlValue>,
-) -> SerializableSnapshot {
-    let mut controls = Vec::new();
-    for (name, value) in snapshot {
-        if let Some(config) = state.ui_controls.config(name) {
-            controls.push(ControlConfig {
-                kind: config.variant_string(),
-                name: name.clone(),
-                value: value.clone(),
-            });
-        }
-    }
+impl SerializableSnapshot {
+    pub fn new(
+        state: &TransitorySketchState,
+        snapshot: &HashMap<String, ControlValue>,
+    ) -> Self {
+        let mut ui_controls = Vec::new();
+        let mut midi_controls = Vec::new();
+        let mut osc_controls = Vec::new();
 
-    let mut midi_controls = Vec::new();
-    for (name, value) in snapshot {
-        if state.midi_controls.has(name) {
-            midi_controls.push(BasicNameValueConfig {
-                name: name.clone(),
-                value: value.as_float().unwrap(),
-            });
+        for (name, value) in snapshot {
+            if let Some(config) = state.ui_controls.config(name) {
+                ui_controls.push(ControlConfig {
+                    kind: config.variant_string(),
+                    name: name.clone(),
+                    value: value.clone(),
+                });
+            } else if state.midi_controls.has(name) {
+                midi_controls.push(BasicNameValueConfig {
+                    name: name.clone(),
+                    value: value.as_float().unwrap(),
+                });
+            } else if state.osc_controls.has(name) {
+                osc_controls.push(BasicNameValueConfig {
+                    name: name.clone(),
+                    value: value.as_float().unwrap(),
+                });
+            }
         }
-    }
 
-    let mut osc_controls = Vec::new();
-    for (name, value) in snapshot {
-        if state.osc_controls.has(name) {
-            osc_controls.push(BasicNameValueConfig {
-                name: name.clone(),
-                value: value.as_float().unwrap(),
-            });
+        SerializableSnapshot {
+            ui_controls,
+            midi_controls,
+            osc_controls,
         }
-    }
-
-    SerializableSnapshot {
-        ui_controls: controls,
-        midi_controls,
-        osc_controls,
     }
 }
 
@@ -298,7 +293,7 @@ impl TransitorySketchState {
                         cc: *cc,
                         min,
                         max,
-                        default: 0.0,
+                        value: 0.0,
                     },
                 );
             } else {

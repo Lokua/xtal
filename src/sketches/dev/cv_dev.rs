@@ -30,7 +30,7 @@ pub fn init(_app: &App, _ctx: &Context) -> CvTest {
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
-                default: 0.0,
+                value: 0.0,
             },
         )
         .control_from_config(
@@ -41,7 +41,7 @@ pub fn init(_app: &App, _ctx: &Context) -> CvTest {
                 pre_emphasis: 0.0,
                 detect: 0.0,
                 range: (0.0, 700.0),
-                default: 0.0,
+                value: 0.0,
             },
         )
         .build();

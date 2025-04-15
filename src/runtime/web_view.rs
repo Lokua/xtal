@@ -466,29 +466,29 @@ impl Default for Control {
     }
 }
 
-impl From<(&ui_controls::UiControl, &ControlHub<Timing>)> for Control {
+impl From<(&ui_controls::UiControlConfig, &ControlHub<Timing>)> for Control {
     #[allow(clippy::field_reassign_with_default)]
     fn from(
-        (ui_control, hub): (&ui_controls::UiControl, &ControlHub<Timing>),
+        (ui_control, hub): (&ui_controls::UiControlConfig, &ControlHub<Timing>),
     ) -> Self {
         let mut result = Control::default();
         result.disabled = ui_control.is_disabled(&hub.ui_controls);
         result.name = ui_control.name().to_string();
 
         match ui_control {
-            ui_controls::UiControl::Checkbox { name, .. } => {
+            ui_controls::UiControlConfig::Checkbox { name, .. } => {
                 result.kind = ControlKind::Checkbox;
                 result.value = hub.bool(name).to_string();
             }
-            ui_controls::UiControl::Select { name, options, .. } => {
+            ui_controls::UiControlConfig::Select { name, options, .. } => {
                 result.kind = ControlKind::Select;
                 result.value = hub.string(name);
                 result.options = options.clone();
             }
-            ui_controls::UiControl::Separator { .. } => {
+            ui_controls::UiControlConfig::Separator { .. } => {
                 result.kind = ControlKind::Separator;
             }
-            ui_controls::UiControl::Slider {
+            ui_controls::UiControlConfig::Slider {
                 name,
                 min,
                 max,

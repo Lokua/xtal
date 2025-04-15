@@ -21,13 +21,13 @@ pub type ConfigFile = IndexMap<String, MaybeControlConfig>;
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 pub enum MaybeControlConfig {
-    Control(ControlConfig),
+    Control(ScriptedControlConfig),
     #[allow(dead_code)]
     Other(serde_yml::Value),
 }
 
 #[derive(Deserialize, Debug)]
-pub struct ControlConfig {
+pub struct ScriptedControlConfig {
     #[serde(rename = "type")]
     pub control_type: ControlType,
     #[serde(flatten)]

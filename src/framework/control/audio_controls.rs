@@ -22,6 +22,7 @@ pub struct AudioControlConfig {
     /// The zero-indexed channel number (0 = first channel)
     pub channel: usize,
 
+    /// See [`SlewLimiter`]
     pub slew_limiter: SlewLimiter,
 
     #[allow(rustdoc::private_intra_doc_links)]
@@ -35,7 +36,10 @@ pub struct AudioControlConfig {
     pub detect: f32,
 
     pub range: (f32, f32),
-    pub default: f32,
+
+    /// Represents the initial value of this control and will not be updated
+    /// after instantiation
+    pub value: f32,
 }
 
 impl AudioControlConfig {
@@ -53,10 +57,12 @@ impl AudioControlConfig {
             detect,
             pre_emphasis,
             range,
-            default,
+            value: default,
         }
     }
 }
+
+impl ControlConfig<f32, f32> for AudioControlConfig {}
 
 /// A function used in [`AudioControls`] to reduce a channel's audio buffer to a
 /// single value suitable for parameter control. The
@@ -92,7 +98,7 @@ pub fn thru_buffer_processor(
 }
 
 #[derive(Debug)]
-struct AudioControlState {
+struct State {
     configs: HashMap<String, AudioControlConfig>,
     processor: MultichannelAudioProcessor,
     values: HashMap<String, f32>,
@@ -102,32 +108,17 @@ struct AudioControlState {
 pub struct AudioControls {
     pub is_active: bool,
     buffer_processor: BufferProcessor,
-    state: Arc<Mutex<AudioControlState>>,
+    state: Arc<Mutex<State>>,
     stream: Option<Stream>,
-}
-
-impl std::fmt::Debug for AudioControls {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AudioControls")
-            .field("is_active", &self.is_active)
-            .field("buffer_processor", &"<function pointer>")
-            .field("state", &self.state)
-            .field(
-                "stream",
-                &ternary!(self.stream.is_some(), "Some(Stream)", "None"),
-            )
-            .finish()
-    }
 }
 
 impl AudioControls {
     pub fn new(buffer_processor: BufferProcessor) -> Self {
-        // TODO: refactor - none of this data is needed until we call `start`
         let processor = MultichannelAudioProcessor::new(800, 16);
         Self {
             is_active: false,
             buffer_processor,
-            state: Arc::new(Mutex::new(AudioControlState {
+            state: Arc::new(Mutex::new(State {
                 configs: HashMap::default(),
                 values: HashMap::default(),
                 processor,
@@ -135,28 +126,6 @@ impl AudioControls {
             })),
             stream: None,
         }
-    }
-
-    /// Add a new control. Overwrites any previous control of the same name.
-    pub fn add(&mut self, name: &str, config: AudioControlConfig) {
-        let mut state = self.state.lock().unwrap();
-        state.values.insert(name.to_string(), config.default);
-        state.configs.insert(name.to_string(), config);
-    }
-
-    /// Get the latest processed audio value by name, normalized to [0, 1] then
-    /// mapped to the range set in [`AudioControlConfig`]. Returns 0.0 if name
-    /// isn't found.
-    pub fn get(&self, name: &str) -> f32 {
-        self.get_optional(name).unwrap_or(0.0)
-    }
-
-    pub fn get_optional(&self, name: &str) -> Option<f32> {
-        self.state.lock().unwrap().values.get(name).copied()
-    }
-
-    pub fn has(&self, name: &str) -> bool {
-        self.state.lock().unwrap().values.contains_key(name)
     }
 
     pub fn update_control<F>(&mut self, name: &str, f: F)
@@ -291,6 +260,71 @@ impl AudioControls {
         let stream_config = device.default_input_config()?.into();
 
         Ok((device, stream_config))
+    }
+}
+
+impl ControlCollection<AudioControlConfig, f32, f32> for AudioControls {
+    /// Add a new control. Overwrites any previous control of the same name
+    fn add(&mut self, name: &str, config: AudioControlConfig) {
+        let mut state = self.state.lock().unwrap();
+        state.values.insert(name.to_string(), config.value);
+        state.configs.insert(name.to_string(), config);
+    }
+
+    fn config(&self, name: &str) -> Option<AudioControlConfig> {
+        self.state.lock().unwrap().configs.get(name).cloned()
+    }
+
+    fn configs(&self) -> HashMap<String, AudioControlConfig> {
+        self.state.lock().unwrap().configs.clone()
+    }
+
+    /// Get the latest processed audio value by name, normalized to [0, 1] then
+    /// mapped to the range set in [`AudioControlConfig`]. Returns 0.0 if name
+    /// isn't found.
+    fn get(&self, name: &str) -> f32 {
+        self.get_optional(name).unwrap_or(0.0)
+    }
+
+    fn get_optional(&self, name: &str) -> Option<f32> {
+        self.state.lock().unwrap().values.get(name).copied()
+    }
+
+    fn remove(&mut self, name: &str) {
+        let mut state = self.state.lock().unwrap();
+        state.configs.remove(name);
+        state.values.remove(name);
+    }
+
+    fn set(&mut self, name: &str, value: f32) {
+        let mut state = self.state.lock().unwrap();
+        state.values.insert(name.to_string(), value);
+    }
+
+    fn values(&self) -> HashMap<String, f32> {
+        self.state.lock().unwrap().values.clone()
+    }
+
+    fn with_values_mut<F>(&self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut state = self.state.lock().unwrap();
+        f(&mut state.values);
+    }
+}
+
+impl std::fmt::Debug for AudioControls {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AudioControls")
+            .field("is_active", &self.is_active)
+            .field("buffer_processor", &"<function pointer>")
+            .field("state", &self.state)
+            .field(
+                "stream",
+                &ternary!(self.stream.is_some(), "Some(Stream)", "None"),
+            )
+            .finish()
     }
 }
 

@@ -13,8 +13,8 @@ pub trait ControlConfig<VWrapper, V> {}
 /// changes)
 pub trait ControlCollection<C: ControlConfig<VWrapper, V>, VWrapper, V: Default>
 {
-    fn add(&mut self, name: &str, control: C);
-    fn config(&self, name: &str) -> Option<&C>;
+    fn add(&mut self, name: &str, config: C);
+    fn config(&self, name: &str) -> Option<C>;
     fn configs(&self) -> HashMap<String, C>;
     fn get(&self, name: &str) -> V;
     fn get_optional(&self, name: &str) -> Option<V>;

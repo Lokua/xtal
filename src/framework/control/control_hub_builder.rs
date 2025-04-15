@@ -43,7 +43,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         self.ui_controls.as_mut().unwrap()
     }
 
-    pub fn ui(mut self, control: UiControl) -> Self {
+    pub fn ui(mut self, control: UiControlConfig) -> Self {
         let clone = control.clone();
         let name = clone.name();
         self.ensure_ui_controls().add(name, control);
@@ -56,7 +56,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         value: bool,
         disabled: DisabledFn,
     ) -> Self {
-        self.ui(UiControl::Checkbox {
+        self.ui(UiControlConfig::Checkbox {
             name: name.to_string(),
             value,
             disabled,
@@ -73,7 +73,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     where
         S: AsRef<str>,
     {
-        self.ui(UiControl::Select {
+        self.ui(UiControlConfig::Select {
             name: name.into(),
             value: value.into(),
             options: options.iter().map(|s| s.as_ref().to_string()).collect(),
@@ -89,7 +89,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
         step: f32,
         disabled: DisabledFn,
     ) -> Self {
-        self.ui(UiControl::Slider {
+        self.ui(UiControlConfig::Slider {
             name: name.to_string(),
             value,
             min: range.0,
@@ -104,7 +104,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
     }
 
     pub fn separator(self) -> Self {
-        self.ui(UiControl::Separator { name: uuid_5() })
+        self.ui(UiControlConfig::Separator { name: uuid_5() })
     }
 
     pub fn midi_controls(mut self, midi_controls: MidiControls) -> Self {
@@ -253,7 +253,7 @@ mod tests {
                             pre_emphasis: 0.0,
                             detect: 0.0,
                             range: (0.0, 1.0),
-                            default: 11.0,
+                            value: 11.0,
                         },
                     )
                     .build(),
@@ -283,7 +283,7 @@ mod tests {
                     pre_emphasis: 0.0,
                     detect: 0.0,
                     range: (0.0, 1.0),
-                    default: 11.0,
+                    value: 11.0,
                 },
             )
             .build();

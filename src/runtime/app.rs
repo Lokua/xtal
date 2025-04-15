@@ -165,8 +165,8 @@ impl AppModel {
         self.hub().map_or_else(Vec::new, |hub| {
             hub.ui_controls
                 .configs()
-                .iter()
-                .map(|(_, config)| wv::Control::from((config, hub)))
+                .values()
+                .map(|config| wv::Control::from((config, hub)))
                 .collect()
         })
     }

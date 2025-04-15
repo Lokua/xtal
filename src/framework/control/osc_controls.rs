@@ -10,21 +10,24 @@ use crate::framework::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct OscControlConfig {
+    /// The OSC address _without_ leading slash
     pub address: String,
     pub min: f32,
     pub max: f32,
-    pub default: f32,
+    /// Represents the initial value of this control and will not be updated
+    /// after instantiation
+    pub value: f32,
 }
 
 impl OscControlConfig {
-    pub fn new(address: &str, range: (f32, f32), default: f32) -> Self {
+    pub fn new(address: &str, range: (f32, f32), value: f32) -> Self {
         check_address(address);
         let (min, max) = range;
         Self {
             address: address.to_string(),
             min,
             max,
-            default,
+            value,
         }
     }
 }
@@ -32,17 +35,11 @@ impl OscControlConfig {
 impl ControlConfig<f32, f32> for OscControlConfig {}
 
 #[derive(Debug, Default)]
-struct OscState {
+struct State {
     values: HashMap<String, f32>,
 }
 
-impl OscState {
-    fn new() -> Self {
-        Self {
-            values: HashMap::default(),
-        }
-    }
-
+impl State {
     fn get(&self, address: &str) -> f32 {
         *self.values.get(address).unwrap_or(&0.0)
     }
@@ -71,15 +68,19 @@ impl OscState {
 #[derive(Clone, Debug)]
 pub struct OscControls {
     pub is_active: bool,
+    /// Holds the original [`OscControlConfig`] references and their default
+    /// values – runtime values are not included here!
     configs: HashMap<String, OscControlConfig>,
-    state: Arc<Mutex<OscState>>,
+    state: Arc<Mutex<State>>,
 }
 
 impl Default for OscControls {
     fn default() -> Self {
         Self {
             configs: HashMap::default(),
-            state: Arc::new(Mutex::new(OscState::new())),
+            state: Arc::new(Mutex::new(State {
+                values: HashMap::default(),
+            })),
             is_active: false,
         }
     }
@@ -123,12 +124,12 @@ impl OscControls {
 impl ControlCollection<OscControlConfig, f32, f32> for OscControls {
     fn add(&mut self, address: &str, config: OscControlConfig) {
         check_address(address);
-        self.state.lock().unwrap().set(address, config.default);
+        self.state.lock().unwrap().set(address, config.value);
         self.configs.insert(address.to_string(), config);
     }
 
-    fn config(&self, name: &str) -> Option<&OscControlConfig> {
-        self.configs.get(name)
+    fn config(&self, name: &str) -> Option<OscControlConfig> {
+        self.configs.get(name).cloned()
     }
 
     fn configs(&self) -> HashMap<String, OscControlConfig> {
