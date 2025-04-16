@@ -124,7 +124,7 @@ impl Sketch for ControlScriptDev {
                 .x_y(
                     0.0,
                     map_range(
-                        self.controls.get("rm"),
+                        self.controls.get("rm_a"),
                         0.0,
                         1.0,
                         -wr.hh(),

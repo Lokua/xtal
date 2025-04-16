@@ -216,11 +216,14 @@ red_circle_radius_hyst:
   output_high: 200
   pass_through: true
 
+red_circle_slew:
+  type: slider
+
 red_circle_radius_slew:
   type: effect
   kind: slew_limiter
-  rise: 0.6
-  fall: 0.6
+  rise: $red_circle_slew
+  fall: $red_circle_slew
 
 red_circle_radius_quant:
   type: effect
@@ -310,13 +313,16 @@ rm_b:
   type: triangle
   beats: 3
 
+rm_mix:
+  type: slider
+
 ring_modulator_example:
   type: effect
   kind: ring_modulator
-  mix: 0.0
+  mix: $rm_mix
   modulator: rm_b
 
-rm:
+rm_route:
   type: mod
   source: rm_a
   modulators:

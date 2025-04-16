@@ -109,7 +109,7 @@ impl<T: TimingSource> ControlHub<T> {
             vars: HashMap::default(),
             bypassed: HashMap::default(),
             eval_cache: EvalCache::new(),
-            dep_graph: DepGraph::new(),
+            dep_graph: DepGraph::default(),
             update_state: None,
             snapshots: HashMap::default(),
             active_transition: None,
@@ -262,12 +262,21 @@ impl<T: TimingSource> ControlHub<T> {
         let (config, effect) = effects.get_mut(modulator).unwrap();
 
         if let (
-            EffectKind::RingModulator { modulator, .. },
+            EffectKind::RingModulator {
+                modulator: modulation_source,
+                ..
+            },
             Effect::RingModulator(m),
         ) = (&config.kind, &mut *effect)
         {
-            // self.update_effect_params(m, modulator, current_frame);
-            m.apply(value, self.get_raw(modulator, current_frame))
+            let carrier = modulator;
+            warn_once!("before");
+            self.update_effect_params(m, carrier, current_frame);
+            warn_once!("after update");
+            let v =
+                m.apply(value, self.get_raw(modulation_source, current_frame));
+            warn_once!("after apply");
+            v
         } else {
             match effect {
                 Effect::Constrain(m) => m.apply(value),
@@ -325,7 +334,7 @@ impl<T: TimingSource> ControlHub<T> {
         let is_proxy = MapMode::is_proxy_name(name);
         let unproxied_name = &MapMode::unproxied_name(name).unwrap_or_default();
 
-        let is_dep = self.dep_graph.is_dependency(if is_proxy {
+        let is_dep = self.dep_graph.is_prerequisite(if is_proxy {
             unproxied_name
         } else {
             name

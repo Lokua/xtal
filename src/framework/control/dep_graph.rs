@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use nannou_egui::egui::ahash::HashSet;
+
 use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
 
@@ -11,61 +13,80 @@ pub type Graph = HashMap<String, Node>;
 
 pub type EvalOrder = Option<Vec<String>>;
 
-#[derive(Debug)]
+/// A directed graph structure that manages parameter dependency relationships.
+///
+/// The `DepGraph` keeps track of which control nodes ("consumers") depend on
+/// other nodes ("prerequisites") and calculates the correct order in which they
+/// should be evaluated..
+///
+/// # Usage Flow
+///
+/// 1. Create a new `DepGraph` instance
+/// 2. Add nodes with [`DepGraph::insert_node`], where each node represents a
+///    control with prerequisites
+/// 3. Call [`DepGraph::build_graph`] to analyze all prerequisites and compute
+///    the evaluation order
+/// 4. Use [`DepGraph::order`] to get the proper evaluation sequence and
+///    [`DepGraph::is_prerequisite`] to check if a node is required for other
+///    calculations
+/// ```
+#[derive(Debug, Default)]
 pub struct DepGraph {
-    graph: Graph,
+    /// Stores original node definitions with their parameters and dependencies
+    ///
+    /// # Example
+    /// ```
+    /// { "symmetry" -> Param::Hot("t1"), ... }
+    /// ```
+    node_defs: Graph,
+
+    /// Computed evaluation order for prerequisite nodes
     eval_order: EvalOrder,
-    /// Provides faster lookups than the eval_order list
-    is_dep: HashMap<String, bool>,
+
+    /// Lookup map for faster dependency checking
+    prerequisites: HashMap<String, bool>,
 }
 
 impl DepGraph {
-    pub fn new() -> Self {
-        Self {
-            graph: Graph::default(),
-            eval_order: None,
-            is_dep: HashMap::default(),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn has_dependents(&self, name: &str) -> bool {
-        self.eval_order.is_some() && self.graph.contains_key(name)
-    }
-
-    pub fn is_dependency(&self, name: &str) -> bool {
-        *self.is_dep.get(name).unwrap_or(&false)
-    }
-
-    pub fn node(&self, name: &str) -> Option<&Node> {
-        self.graph.get(name)
-    }
-
-    pub fn insert_node(&mut self, name: &str, node: Node) {
-        self.graph.insert(name.to_string(), node);
+    pub fn is_prerequisite(&self, name: &str) -> bool {
+        *self.prerequisites.get(name).unwrap_or(&false)
     }
 
     pub fn order(&self) -> &EvalOrder {
         &self.eval_order
     }
 
-    #[allow(unused)]
-    pub fn graph(&self) -> &Graph {
-        &self.graph
+    pub fn node(&self, name: &str) -> Option<&Node> {
+        self.node_defs.get(name)
+    }
+
+    pub fn insert_node(&mut self, name: &str, node: Node) {
+        self.node_defs.insert(name.to_string(), node);
     }
 
     pub fn clear(&mut self) {
-        self.graph.clear();
+        self.node_defs.clear();
         self.eval_order = None;
     }
 
-    /// Builds the final eval_order list using Kahn’s Algorithm (topological
-    /// sort).
+    /// Builds the prerequisite evaluation order using a modified Kahn's
+    /// Algorithm for topological sorting
     pub fn build_graph(&mut self) {
-        let (graph, mut in_degree) = self.create_reverse_dep_graph_and_order();
+        let (graph, mut in_degree) = self.extract_relationships();
 
+        let mut actual_deps: HashSet<String> = HashSet::default();
         let mut queue: VecDeque<String> = VecDeque::new();
         let mut sorted_order: Vec<String> = Vec::new();
+
+        // Ensure we don't incorrectly add the consumer in addition to its
+        // prerequisites (if the consumer itself is not a prerequisite)
+        for params in self.node_defs.values() {
+            for value in params.values() {
+                if let ParamValue::Hot(hot_name) = value {
+                    actual_deps.insert(hot_name.clone());
+                }
+            }
+        }
 
         for (node, &degree) in &in_degree {
             if degree == 0 {
@@ -74,7 +95,9 @@ impl DepGraph {
         }
 
         while let Some(node) = queue.pop_front() {
-            sorted_order.push(node.clone());
+            if actual_deps.contains(&node) {
+                sorted_order.push(node.clone());
+            }
 
             if let Some(deps) = graph.get(&node) {
                 for dep in deps {
@@ -88,9 +111,9 @@ impl DepGraph {
             }
         }
 
-        if sorted_order.len() == in_degree.len() {
+        if sorted_order.len() == actual_deps.len() {
             for dep in sorted_order.iter() {
-                self.is_dep.insert(dep.to_string(), true);
+                self.prerequisites.insert(dep.to_string(), true);
             }
             self.eval_order =
                 ternary!(sorted_order.is_empty(), None, Some(sorted_order));
@@ -103,27 +126,30 @@ impl DepGraph {
         }
     }
 
-    fn create_reverse_dep_graph_and_order(
+    /// Analyzes the node definitions to identify prerequisite relationships.
+    ///
+    /// Returns:
+    /// - A map of each prerequisite to the nodes that consume it
+    /// - A map tracking the number of prerequisites each node depends on
+    fn extract_relationships(
         &self,
     ) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
-        // { dependency: [dependents] }
+        // graph = { "consumer_node": ["prerequisite_node"] }
+        // "consumer_node depends on prerequisite_node(s)"
         let mut graph: HashMap<String, Vec<String>> = HashMap::default();
+
+        // Number of prerequisite nodes each consumer depends on
         let mut in_degree: HashMap<String, usize> = HashMap::default();
 
-        // self.graph = { "hot_effect": { param: Hot("hot_anim") }, ... }
-        // node_name = "hot_effect"
-        // node = { param: Hot("hot_anim") }
-        for (node_name, params) in self.graph.iter() {
-            // value = Hot("hot_anim")
-            for (_, value) in params.iter() {
-                // hot_value = "hot_anim"
-                if let ParamValue::Hot(hot_value) = value {
-                    in_degree.entry(hot_value.clone()).or_insert(0);
+        for (node_name, params) in self.node_defs.iter() {
+            // value = Hot("prerequisite_node")
+            for value in params.values() {
+                // hot_name = "the_name_of_slider_or_animation"
+                if let ParamValue::Hot(hot_name) = value {
+                    in_degree.entry(hot_name.clone()).or_insert(0);
 
-                    // graph = { "hot_anim": ["hot_effect"] }
-                    // "hot_effect depends on hot_anim"
                     graph
-                        .entry(hot_value.clone())
+                        .entry(hot_name.clone())
                         .or_default()
                         .push(node_name.clone());
 
