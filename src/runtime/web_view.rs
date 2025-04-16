@@ -134,7 +134,6 @@ pub enum Event {
     /// 2. Sent to main app to save dir to global state
     /// 3. Sent from here back to frontend to show the updated dir
     ReceiveDir(UserDir, String),
-    #[serde(rename_all = "camelCase")]
     Randomize(Exclusions),
     RemoveMapping(String),
     Reset,

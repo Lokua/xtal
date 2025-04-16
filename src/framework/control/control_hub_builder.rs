@@ -114,7 +114,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
 
     fn ensure_midi_controls(&mut self) -> &mut MidiControls {
         if self.midi_controls.is_none() {
-            self.midi_controls = Some(MidiControls::new());
+            self.midi_controls = Some(MidiControls::default());
         }
         self.midi_controls.as_mut().unwrap()
     }
@@ -147,7 +147,7 @@ impl<T: TimingSource> ControlHubBuilder<T> {
 
     fn ensure_osc_controls(&mut self) -> &mut OscControls {
         if self.osc_controls.is_none() {
-            self.osc_controls = Some(OscControls::new());
+            self.osc_controls = Some(OscControls::default());
         }
         self.osc_controls.as_mut().unwrap()
     }

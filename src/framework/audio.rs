@@ -45,6 +45,7 @@ impl Default for SlewConfig {
 
 /// **⚠️ Experimental**
 /// Single-channel, multiband audio with configurable FFT bands.
+#[derive(Default)]
 pub struct Audio {
     audio_processor: Arc<Mutex<AudioProcessor>>,
     slew_config: SlewConfig,
@@ -52,19 +53,6 @@ pub struct Audio {
     cutoffs: Vec<f32>,
     stream: Option<Stream>,
     is_active: bool,
-}
-
-impl Default for Audio {
-    fn default() -> Self {
-        Self {
-            audio_processor: Arc::new(Mutex::new(AudioProcessor::new())),
-            slew_config: SlewConfig::default(),
-            previous_band_values: vec![],
-            cutoffs: vec![],
-            stream: None,
-            is_active: false,
-        }
-    }
 }
 
 impl Audio {
@@ -96,7 +84,7 @@ impl Audio {
         let stream = device.build_input_stream(
             &stream_config,
             move |data: &[f32], _| {
-                // Using only left channel only for simplicity
+                // Using only left channel for simplicity
                 // Left = even indexes in interleaved audio
                 let left_channel: Vec<f32> =
                     data.iter().step_by(channels as usize).cloned().collect();
@@ -205,8 +193,8 @@ struct AudioProcessor {
     fft: Option<Arc<dyn Fft<f32>>>,
 }
 
-impl AudioProcessor {
-    pub fn new() -> Self {
+impl Default for AudioProcessor {
+    fn default() -> Self {
         Self {
             // Default, will be overridden
             sample_rate: 48_000,
@@ -216,7 +204,9 @@ impl AudioProcessor {
             fft: None,
         }
     }
+}
 
+impl AudioProcessor {
     pub fn initialize(&mut self, sample_rate: usize) {
         self.sample_rate = sample_rate;
         let frame_rate = frame_controller::fps();

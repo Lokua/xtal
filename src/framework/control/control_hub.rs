@@ -99,8 +99,8 @@ impl<T: TimingSource> ControlHub<T> {
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             ui_controls: UiControls::default(),
-            midi_controls: MidiControls::new(),
-            osc_controls: OscControls::new(),
+            midi_controls: MidiControls::default(),
+            osc_controls: OscControls::default(),
             audio_controls: AudioControlBuilder::new().build(),
             animation: Animation::new(timing),
             animations: HashMap::default(),
@@ -108,7 +108,7 @@ impl<T: TimingSource> ControlHub<T> {
             effects: RefCell::new(HashMap::default()),
             vars: HashMap::default(),
             bypassed: HashMap::default(),
-            eval_cache: EvalCache::new(),
+            eval_cache: EvalCache::default(),
             dep_graph: DepGraph::default(),
             update_state: None,
             snapshots: HashMap::default(),

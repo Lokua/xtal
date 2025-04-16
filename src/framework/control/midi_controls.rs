@@ -1,7 +1,8 @@
 //! Control sketch parameters with MIDI.
 //!
-//! Sketches do not need to interact with this module directly - see
+//! Sketches do not need to interact with this module directly – see
 //! [`ControlHub`].
+
 use nannou::math::map_range;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
@@ -86,7 +87,7 @@ impl State {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct MidiControls {
     /// "High Resolution CC" AKA 14bit MIDI control change for CCs 0-31
     pub hrcc: bool,
@@ -97,25 +98,7 @@ pub struct MidiControls {
     is_active: bool,
 }
 
-impl Default for MidiControls {
-    fn default() -> Self {
-        Self {
-            configs: HashMap::default(),
-            state: Arc::new(Mutex::new(State {
-                values: HashMap::default(),
-                last: HashMap::default(),
-            })),
-            is_active: false,
-            hrcc: false,
-        }
-    }
-}
-
 impl MidiControls {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
@@ -127,7 +110,7 @@ impl MidiControls {
             midi::ConnectionType::Control,
             &global::midi_control_in_port(),
             move |_, message| {
-                if message.len() < 3 || !is_control_change(message[0]) {
+                if !is_control_change(message[0]) {
                     return;
                 }
 
@@ -367,16 +350,9 @@ impl
     }
 }
 
+#[derive(Default)]
 pub struct MidiControlBuilder {
     controls: MidiControls,
-}
-
-impl Default for MidiControlBuilder {
-    fn default() -> Self {
-        Self {
-            controls: MidiControls::new(),
-        }
-    }
 }
 
 impl MidiControlBuilder {

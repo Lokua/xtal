@@ -1,7 +1,8 @@
 //! Control sketch parameters with OSC.
 //!
-//! Sketches do not need to interact with this module directly - see
+//! Sketches do not need to interact with this module directly – see
 //! [`ControlHub`].
+
 use nannou_osc as osc;
 use std::sync::{Arc, Mutex};
 
@@ -65,7 +66,7 @@ impl State {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct OscControls {
     pub is_active: bool,
     /// Holds the original [`OscControlConfig`] references and their default
@@ -74,23 +75,7 @@ pub struct OscControls {
     state: Arc<Mutex<State>>,
 }
 
-impl Default for OscControls {
-    fn default() -> Self {
-        Self {
-            configs: HashMap::default(),
-            state: Arc::new(Mutex::new(State {
-                values: HashMap::default(),
-            })),
-            is_active: false,
-        }
-    }
-}
-
 impl OscControls {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
@@ -182,16 +167,9 @@ impl
     }
 }
 
+#[derive(Default)]
 pub struct OscControlBuilder {
     controls: OscControls,
-}
-
-impl Default for OscControlBuilder {
-    fn default() -> Self {
-        Self {
-            controls: OscControls::new(),
-        }
-    }
 }
 
 impl OscControlBuilder {
@@ -229,6 +207,6 @@ impl OscControlBuilder {
 
 fn check_address(address: &str) {
     if address.starts_with('/') {
-        panic!("Unsupported address format. Remove leading `/` from address");
+        panic!("Unsupported address format. Remove leading `/`.");
     }
 }

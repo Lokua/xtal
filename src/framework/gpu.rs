@@ -1,3 +1,6 @@
+//! Helper module to provide sketches an easy way to integrate shaders into
+//! their sketch without having to deal with WGPU internals
+
 use bevy_reflect::{Reflect, TypeInfo, Typed};
 use bytemuck::{Pod, Zeroable};
 use naga;

@@ -16,7 +16,7 @@
 //!   symmetry: $t1
 //! ```
 //!
-//! See the [parameter handling documentation](doc-link) for details on how
+//! See the [parameter handling documentation](link) for details on how
 //! different parameter types are processed.
 //!
 //! [link]: https://github.com/Lokua/lattice/blob/main/docs/parameter_handling.md

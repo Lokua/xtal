@@ -1,7 +1,8 @@
 //! Control sketch parameters with GUI controls.
 //!
-//! Sketches do not need to interact with this module directly - see
+//! Sketches do not need to interact with this module directly – see
 //! [`ControlHub`].
+
 use std::fmt::{self, Debug};
 
 use indexmap::IndexMap;
@@ -310,7 +311,7 @@ pub type ControlValues = HashMap<String, ControlValue>;
 /// with without being coupled to a specific UI framework. The original version
 /// of Lattice used Egui for this purpose but has since moved on to using a
 /// WebView for greater UI flexibility
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct UiControls {
     /// Holds the original [`UiControlConfig`] references and their default
     /// values – runtime values are not included here!
@@ -504,12 +505,6 @@ impl
         F: FnOnce(&mut HashMap<String, ControlValue>),
     {
         f(&mut self.values)
-    }
-}
-
-impl Default for UiControls {
-    fn default() -> Self {
-        UiControls::new(&[])
     }
 }
 
