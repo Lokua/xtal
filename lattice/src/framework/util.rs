@@ -77,11 +77,13 @@ pub const CUBE_POSITIONS: [[f32; 3]; 36] = [
     [-0.5, 0.5, -0.5],
 ];
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! str_vec {
     ($($x:expr),* $(,)?) => (vec![$($x.to_string()),*]);
 }
 
+/// `ternary!(cond, true_case, false_case)`
 #[macro_export]
 macro_rules! ternary {
     ($condition: expr, $_true: expr, $_false: expr) => {

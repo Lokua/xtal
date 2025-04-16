@@ -67,8 +67,8 @@ impl From<String> for ControlValue {
     }
 }
 
-/// Used by [`UiControls`] to compute if a [`Control`] should be disabled or not
-/// based on the value of other controls
+/// Used by [`UiControls`] to compute if a [`UiControlConfig`] should be
+/// disabled or not based on the value of other controls
 ///
 /// # Example
 /// ```rust

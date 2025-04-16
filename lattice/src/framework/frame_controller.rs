@@ -86,10 +86,6 @@ pub fn set_fps(fps: f32) {
     FPS.store(fps, Ordering::Release);
 }
 
-pub fn is_paused() -> bool {
-    PAUSED.load(Ordering::Relaxed)
-}
-
 pub fn set_paused(paused: bool) {
     PAUSED.store(paused, Ordering::Relaxed);
 }

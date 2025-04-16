@@ -1,3 +1,4 @@
+//! Timing, animation, and easing methods
 pub mod animation;
 pub use animation::*;
 

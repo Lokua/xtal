@@ -1,6 +1,5 @@
+use lattice::internal::midi::print_ports;
 use std::error::Error;
-
-use lattice::midi::print_ports;
 
 fn main() -> Result<(), Box<dyn Error>> {
     print_ports()

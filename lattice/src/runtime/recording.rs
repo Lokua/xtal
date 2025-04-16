@@ -111,19 +111,6 @@ impl RecordingState {
         }
     }
 
-    pub fn toggle_recording(
-        &mut self,
-        sketch_config: &SketchConfig,
-        session_id: &str,
-    ) -> Result<String, Box<dyn Error>> {
-        if self.is_recording {
-            self.stop_recording(sketch_config, session_id)
-                .map(|_| "".to_string())
-        } else {
-            self.start_recording()
-        }
-    }
-
     pub fn on_encoding_message(
         &mut self,
         sketch_config: &SketchConfig,

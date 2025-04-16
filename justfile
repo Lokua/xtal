@@ -32,8 +32,11 @@ test-verbose *ARGS:
 bench *ARGS:
   cargo bench {{ARGS}}
 
-docs:
+docs-internal:
   cargo doc --package lattice --document-private-items --open
+  
+docs:
+  cargo doc --package lattice --open
 
 stats:
   sccache --show-stats

@@ -1,80 +1,60 @@
 # lattice
 
-A hobbyist project exploring generative art while learning Rust and
-[nannou][nannou]. Stuff like this:
+A framework build around [Nannou][nannou] with a feature-packed control UI.
 
-<img 
-  src="./images/displacement_2-627iz.png" 
-  alt="displacement_2-627iz" 
-  width="90%"
-/>
+## Intro
 
-<!-- <div>
-   <img src="./images/displacement_2-tm8s9.png" alt="displacement_2-tm8s9" width="30%">
-   <img src="./images/sierpinski_triangle-0x9az.png" alt="sierpinski_triangle-0x9az" width="30%">
-   <img src="./images/displacement_2-vnh7y.png" alt="displacement_2-vnh7y" width="30%">
-</div>
-<div>
-   <img src="./images/vertical-1nhw3.png" alt="vertical-1nhw3" width="30%">
-   <img src="./images/genuary_2-4psv0.png" alt="genuary_2-4psv0" width="30%">
-   <img src="./images/g25_20_23_brutal_arch-360ka.png" alt="g25_20_23_brutal_arch-360ka" width="30%">
-</div>
-<div>
-   <img src="./images/sand_lines_wgpu-8obz5.png" alt="sand_lines_wgpu-8obz5" width="30%">
-   <img src="./images/displacement_2-627iz.png" alt="displacement_2-627iz" width="30%">
-   <img src="./images/sand_lines-d8i8g.png" alt="sand_lines-d8i8g.png" width="30%">
-</div> -->
+Lattice is a hybrid Rust application and library build on top of the
+[Nannou](nannou) creative coding framework. It is essentially one big Nannou app
+packed with tons of features to aid in live performance with a strong emphasis
+on interaction and musically-aware synchronization.
 
-You can see more screenshots here on github by looking at the auto generated
-[markdown index](index.md) or checkout audio-visual compositions on
-[Instagram][insta].
-
-## Overview
-
-Whether you're curious about generative art, interested in audio-visual
-performance, or just learning Rust like I am, this project might be worth
-exploring. Originally started as a port of my [p5.js project][p5], it's grown
-into a surprisingly capable framework that handles the tedious parts of creative
-coding - like DAW synchronization, hot-reloading configurations, and
-multi-channel audio processing. While I'm still learning Rust best practices,
-the project offers some useful features for anyone wanting to experiment with
-algorithmic art, especially if you're interested in synchronizing visuals with
-music. It's set up to work with MIDI controllers and clock, OSC, audio input,
-and even shader programming, making it a fun playground for creative coding
-experiments.
+If you are already familiar with Rust and Nannou you should have no problem
+getting Lattice up and running quickly. If you are not familiar with Rust or
+Nannou but have experience with creative coding then I highly recommend you get
+comfortable building Nannou sketches first, starting with
+[their guide](https://guide.nannou.cc/). If you are completely new to creative
+coding I highly recommend checking out [The Coding Train](coding-train). All
+documentation in this project assumes you have a foundational understanding of
+Rust and Nannou.
 
 ## Features
 
-- Export images and capture mp4 videos with the press of a button
-- Declarative animation interface with times specified in musical beats, e.g.
-  `1.0` represents 1 beat, `0.5` an eight note, `4.0` a bar, and so on.
-- Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or OSC
-- Automate parameters with MIDI CC, OSC, CV, or audio with peak, rms, and
-  multiband mechanisms all available through a dead simple API
+- **Runtime switching of sketches**
+- **Record video** with a press of a button (requires [ffmpeg](ffmpeg) on your
+  PATH)
+- **Advanced Animation** with times specified in musical beats
+- Sync animations to BPM and frame count, MIDI clock, MIDI Time Code, or an
+  Ableton OscTransport plugin for rock solid timing
+- Automate parameters with external **MIDI CC, OSC, and Multichannel Audio**
+  with peak, rms, and multiband mechanisms all available through a dead simple
+  API
 - Sync sketch recording with external MIDI Start message which makes it very
   easy to align your track with the visuals perfectly in post-production
 - Write animations in code or configure your sketch to use an external yaml file
   that can be hot-reloaded at runtime (similar to live coding - see
   [Control Scripting](#control-scripting))
-- Declarative per-sketch UI control definitions to easily add sliders, selects,
-  and checkboxes
-- Automatic store/recall of per-sketch UI controls/parameters that can be source
-  controlled
-- Hot reloadable WGSL shaders with various templates to simplify setup
+- Declarative **per-sketch UI controls** definitions to easily add sliders,
+  selects, and checkboxes for sketch parameter control
+- **Automatic store/recall** of per-sketch UI controls/parameters that can be
+  source controlled
+- **Hot reloadable WGSL shaders** with various templates to simplify setup
 - **Snapshots** - store and recall all GUI, MIDI, and OSC controls in the UI's
   Snapshot Editor or by pressing `Shift + Number` to save and
   `<PlatformModifier> + Number` to recall. Snapshots are interpolated to/from at
   a configurable musical length from 1/16th note up to 4bars. Great for live
   performance!
-- **Randomization** - randomize all controls with configurable transition time.
-  Clicking on a slider's label will randomize just that single control, and
-  `<PlatformModifier> + Click` on a label will revert it to its last saved
-  state.
+- **Randomization** - randomize all controls with configurable transition time
+  (_amazing_). Clicking on a slider's label will randomize just that single
+  parameter, while `<PlatformMod> + Click` on a label will revert it to its last
+  saved state. This coupled with Snapshots will have you playing your sketch
+  like a musical instrument.
 - **Exclusions** - a column of checkboxes that pops up to the left of each
   control allowing you to exclude it from **Randomization**, saved with the
   sketch.
-- Runtime switching of sketches
-- Ability to override sketch BPM via tap tempo to sync with musicians during
+- Runtime mappings of MIDI CC to UI sliders, AKA **MIDI Learn**, saved with the
+  sketch.
+- Ability to override sketch BPM via **Tap Tempo** to sync with music during
   live performance
 - UI adapts to your operating system's theme preference (see screenshots below)
 
@@ -86,22 +66,27 @@ experiments.
 
 ![Lattice Controls - Dark Theme](assets/ui-dark.png)
 
-## Requirements
+## Getting Started
 
-This project has been developed on MacOS. I have no idea how it would run on
-other platforms. The project requires or optionally needs:
+> DISCLAIMER: Lattice is still pre-v1 and is currently in transition from a
+> binary application meant to be cloned into a reusable library. It has been
+> developed on macOS and has yet to be tested on other systems, though I assume
+> it'll run just fine being that its dependencies are cross-platform. At this
+> time it has no production build and must be run in "dev mode" – see below
+
+Some software you'll need:
 
 - Rust
-- Node/NPM or Bun
-- (optional) [just][just] for running commands
-- (optional) ffmpeg available on your path for video exports
+- Node or Bun for running the UI (for now at least until bundling is
+  implemented)
+- (optional) [ffmpeg](todo-link) available on your path for video exports
 
-## Usage
-
-Lattice is still a playground and meant to be cloned and run from source. I do
-plan on making it into a proper app or library eventually. Also my apologies if
-you plan on cloning you should know the repo contains a few hundred image files
-(using Git LFS) - they are safe to delete. Anyway...
+Until Lattice has a proper release on crates.io, you must clone this repo and
+run the [lattice-sketches] app. This is my personal sketch project inlined here
+for development convenience (You can see screenshots here on GitHub by looking
+at the auto generated [markdown index](index.md) or checkout some snippets of my
+audio-visual compositions on [Instagram][insta]) – feel free to use these to get
+started or just delete them and start from scratch.
 
 You will need to run two separate terminal processes: one for the UI controls (A
 Typescript/React app rendered in a [WebView][webview] with [Tao][tao] and
@@ -118,158 +103,270 @@ In another terminal window, launch the main Lattice app:
 
 ```sh
 cargo run --release -- <sketch>
-# or alternatively
-just start <sketch>
 ```
 
-Where `sketch` is a file in the src/sketches folder (without the extension) and
-registered in [src/sketches/mod.rs][module] as well as [src/main.rs][main]. The
-sketch parameter is completely optional. All sketches are selectable in the UI
-and when run without a default sketch, Lattice will load a template sketch.
+At this point you should see a main window with a template sketch and a UI. If
+not – please file an issue!
 
-Optionally you can pass a `timing` positional argument after the required
-`sketch` positional argument to specify what kind of timing system will be used
-to run animations on sketches that support it. Available options include:
+For comprehensive documentation (until we have a published version) run
+`cargo doc --package lattice --open` in the project root.
 
-#### `frame`
+# Lattice & Nannou
 
-Uses Lattice's internal frame system. This is the default and doesn't require
-any external devices to run.
+As mentioned in the intro, Lattice is essentially one big Nannou app. The first
+major difference is that a Lattice sketch must export a `SketchConfig` const
+containing metadata needed for the runtime to properly boot a sketch. The second
+major difference is that instead of the standalone `model`, `update`, and `view`
+functions as you find in raw-Nannou, a Lattice sketch must provide an
+implementation of the `Sketch` trait. You may also notice a 3rd context argument
+in each method not found in the Nannou signatures – we'll get into that later –
+but besides these differences, everything is the same as a Nannou app and Nannou
+is still the crate you're likely to interact with the most in your code.
 
-#### `osc`
+### Nannou Boilerplate
 
-Requires [assets/L.OscTransport.amxd][osc-transport] to be running in Ableton
-Live. This provides the most reliable syncing mechanism as Ableton does not
-properly send MIDI SPP messages and doesn't support MTC. See the
-[OSC](#open-sound-control-osc) section for more details.
+```rust
+use nannou::prelude::*;
 
-#### `midi`
+struct Model {}
 
-Uses MIDI clock and MIDI Song Position Pointers (SPP) to stay in sync (e.g. when
-a MIDI source loops or you jump to somewhere else in a timeline, your animations
-will jump or loop accordingly). Bitwig properly sends SPP; Ableton does not.
+fn model(app: &App) -> Model {
+    Model {}
+}
 
-#### `hybrid`
+fn update(app: &App, model: &mut Model, update: Update) {
+    // update model data
+}
 
-Uses a combination of MIDI clock (for precision) and MIDI Time Code (MTC) to
-stay in sync. This is useful for DAWs that don't support sending SPP but do
-support MTC. Ableton, for example, does not support MTC but you can work around
-that with https://support.showsync.com/sync-tools/livemtc/introduction
+// optional
+fn event(app: &App, model: &mut Model, event: Event) {
+    // respond to window and keyboard events
+}
 
-### Creating a new sketch:
+fn view(app: &App, model: &Model, frame: Frame) {
+    // draw stuff
+}
+```
 
-1. Copy the [template sketch][template] into a new file in the sketches folder.
-2. Rename the `SKETCH_CONFIG.name` field at the top of the file:
-   ```rust
-   pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-      name: "template", // <-- RENAME THIS!
-   ```
-3. Add that filename to the [src/sketches/mod.rs][module]
-4. Add that sketch module to the `register_sketches` call in
-   [src/main.rs][main]:
-5. Run that sketch via command line by `cargo run --release <name>` or
-   `just start <name>` where `name` is what you put in your file's
-   `SKETCH_CONFIG.name` field.
+### Lattice Boilerplate
 
-### Audio
+```rust
+use lattice::prelude::*;
+use nannou::prelude::*;
 
-#### Multichannel Audio
+pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
+    name: "MySketch",
+    display_name: "My Sketch",
+    play_mode: PlayMode::Loop,
+    fps: 60.0,
+    bpm: 134.0,
+    w: 500,
+    h: 500,
+};
+
+pub struct MySketch {}
+
+pub fn init(app: &App, ctx: &Context) -> MySketch {
+    Model {}
+}
+
+impl Sketch for MySketch {
+    fn update(&mut self, app: &App, update: Update, ctx: &Context) {
+        // update model data
+    }
+
+    // optional
+    fn event(&mut self, app: &App, event: &Event, ctx: &Context) {
+        // respond to window and keyboard events
+    }
+
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
+        // draw stuff
+    }
+}
+```
+
+At this point there is nothing really telling about _why_ one might want to use
+Lattice over Nannou, so let's get into some of the benefits in the next
+section...
+
+## ControlHub
+
+At the heart of Lattice is the `ControlHub` struct (which we'll refer to as hub
+from hereon). The hub is the one-stop shop for all controls and animations used
+in a sketch.
+
+```rust
+#[derive(SketchComponents)]
+pub struct MyModel {
+    hub: ControlHub<Timing>
+}
+```
+
+The above example shows the two requirements needed to use the hub:
+
+1. The model must derive `SketchComponents`. This provides implementations
+   needed for the runtime to communicate with the hub
+2. a `hub` field placed directly on the Model. The field can also be named
+   `controls` if you prefer, but it has to be either `hub` or `controls`.
+
+Now let's use the hub:
+
+```rust
+#[derive(SketchComponents)]
+pub struct Example {
+    hub: ControlHub<Timing>,
+}
+
+pub fn init(_app: &App, ctx: &Context) -> Example {
+    let hub = ControlHubBuilder::new()
+        .timing(Timing::new(ctx.bpm()))
+        .slider_n("hue", 0.0)
+        .slider_n("saturation", 0.0)
+        .slider_n("lightness", 0.0)
+        .build();
+
+    Example { hub }
+}
+
+impl Sketch for Example {
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
+        let draw = app.draw();
+
+        draw.background.color(WHITE);
+
+        let color = hsl(
+            self.hub.get("hue"),
+            self.hub.get("saturation"),
+            self.hub.get("lightness")
+        );
+
+        draw.ellipse()
+            .color(hsl())
+            .radius(200.0)
+            .x_y(0.0, 0.0);
+
+        draw.to_frame(app, &frame).unwrap();
+    }
+}
+```
+
+This sketch renders a circle in the middle of the screen and let's you change
+its color. If you adjust the sliders then press the **Save** button, the values
+of those sliders will be recalled the next time you run the sketch. If you click
+the label of the slider component, it will move to a random value over the
+transition time set by the **Transition Time** dropdown (expressed in musical
+beats). If you press the **Randomize** button, it will randomize all three
+sliders! If you don't like the changes, you can press the **Reload** button to
+revert the sketch to its last saved state (or the defaults you set in your
+sketch if you haven't yet saved). If you like the changes but don't want them to
+be the defaults that show when you first load the sketch, you can press the
+**Snapshots** button and save a snapshot to any 1 out of 10 slots for later
+recall. Now let's imagine that while you enjoy randomizing all the sliders,
+you'd prefer that the `hue` slider remained fixed at 10.33; for that you can
+press the **Exclusions** button which will allow you to exclude any control from
+global randomization. Of course this is all only so interesting when you're
+simply changing the colors of a single circle, but allow yourself a moment to
+imagine the creative possibilities with a more complex sketch with 10 or 20
+controls. Hopefully this now gives you a better idea of what Lattice provides on
+top of Nannou.
+
+## Animation
+
+Building on the ControlHub example sketch, let's add some animation. Instead of
+using a slider to control hue, let's animate it over time:
+
+```rust
+let hue = self.hub.animation.tri(16.0);
+
+let color = hsl(
+    hue,
+    self.hub.get("saturation"),
+    self.hub.get("lightness")
+);
+```
+
+The `Animation::tri` method generates a linear ramp from 0.0 to 1.0 and back to
+0.0 over the time expressed in its `duration` argument. In this case that
+animation will last for 16 beats, or 4 bars. The tempo being used is what you
+defined in your sketch's `SketchConfig::bpm` field, however you can override
+this at runtime by using the **Tap Tempo** button. If you are not familiar with
+musical timing here's the TL;DR: set your `bpm` to 60.0 – this means 1.0 beat
+will last exactly 1 second. If you want your animation to last 10 seconds, use
+10.0. That's basically it! But unlike using raw time units like seconds, these
+times will scale relative to `bpm`, so if you now set you're `bpm` to 120.0,
+everything will run twice as fast and you didn't need to update any code to
+accomplish this! Not to mention you can just Tap Tempo to synch with your DJ
+homey on stage.
+
+This is just the tip of what the Animation module is capable of; see
+[this breakpoints visualization](breakpoints) for an idea of some of the
+_insaaane_ curves it can produce between two points with relatively little
+effort.
+
+## Audio
+
+### Multichannel Audio
+
+**Example**
+
+```rust
+let hub = ControlHubBuilder::new()
+    .timing(Timing::new(ctx.bpm()))
+    .audio(
+        "bass_drum",
+        AudioControlConfig {
+            channel: 0,
+            slew_limiter: SlewLimiter::default(),
+            pre_emphasis: 0.0,
+            detect: 0.0,
+            range: (0.0, 1.0),
+            value: 0.0,
+        },
+    )
+    .audio(
+        "snare_drum",
+        AudioControlConfig {
+            channel: 1,
+            // You almost always want slew on Audio since it's so jumpy
+            slew_limiter: SlewLimiter::new(0.65, 0.65),
+            pre_emphasis: 0.0,
+            detect: 0.0,
+            range: (0.0, 1.0),
+            value: 0.0,
+        },
+    )
+    .build();
+```
 
 The `AudioControls` struct treats each audio channel as an individual control
 signal with optional slew limiting, suitable for audio-rate or control-rate
 signals. You can configure the audio device that used in Lattice globally for
-all sketches in the UI via the settings tab. On my computer I'm using the [16
-channel version of Blackhole][blackhole]. See setup example below:
+all sketches in the UI > Settings view. On my computer I'm using the [16 channel
+version of Blackhole][blackhole]. See [docs/tips.md](docs/tips.md#Audio) for
+more details on that.
 
-##### Aggregate Device Setup
+## MIDI
 
-![Mac Aggregate Device Setup](assets/aggregate-device-multichannel.png)
+**Example**
 
-> In the above setup I use 1-2 as the main outs and send the multichannel data
-> out to channels 3-18 in my DAW which then appear on Blackhole channels 1-16
+```rust
+let hub = ControlHubBuilder::new()
+    .timing(Timing::new(ctx.bpm()))
+    // The incoming MIDI u8 values are always normalized to a 0..=1 range
+    // name, (channel, controller), (min, max), default_value
+    .midi("foo", (0, 0), (100.0, 500.0), 0.0)
+    // midi_n = midi "normalized" - no min/max mapping beyond the default 0..=1
+    .midi_n("bar", (0, 1), 0.0)
+    .midi_n("baz", (0, 2), 0.0)
+    .build();
+```
 
-See [audio_controls_dev.rs](src/sketches/dev/audio_controls_dev.rs) or
-[cv_dev.rs](src/sketches/dev/cv_dev.rs) for an example that uses CV.
+MIDI input and output ports can be set in the UI > Settings view. See
+[docs/tips.md](docs/tips.md#midi) for more examples of how to get MIDI working
+smoothly between your DAW or MIDI controller and Lattice
 
-#### Single Channel, Multiband Audio (_experimental_)
-
-See [audio_dev.rs](src/sketches/dev/audio_dev.rs) for an example sketch.
-
-The `Audio` struct in lattice is configured to process the first channel of
-whatever audio device you have selected in the UI. I am currently doing this via
-Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture output
-from my DAW (setup screenshots below). Note that this module is experimental and
-doesn't integrate with the rest of Lattice as nicely as `AudioControls` does.
-
-##### Aggregate Device Setup
-
-![Mac Aggregate Device Setup](assets/aggregate-device-setup.png)
-
-##### Routing Audio to Blackhole 2ch `Out(3/4):In(1/2)`
-
-> Note that Blackhole automatically routes whatever its output channels are to
-> its own input, so sending audio out to Blackhole 3/4 will automatically appear
-> on inputs 1/2 in this setup; you don't even need to configure the inputs in
-> Ableton at all for this to work (just as long as you have the output config
-> set to "Lattice" and enable the appropriate ouputs in the output config under
-> Live's audio preferences)
-
-![Ableton Live - Blackhole Track Routing](assets/live-blackhole-track-routing.png)
-
-### MIDI
-
-MIDI input and output ports are now global settings in the UI
-
-### MIDI Loopback
-
-To automate synth parameters in Ableton and Lattice parameters simultaneously
-from _the same UI CC control in Live_ (as opposed to a physical control, in
-which case you can skip this section), you need to enable MIDI loopback by
-sending MIDI to `Lattice In` and also route `Lattice In` back in to Live to
-control parameters. Here's the routing:
-
-![Live MIDI Preferences](assets/live-midi-prefs.png)
-
-To use Ableton automation lanes to control Lattice params, follow these steps:
-
-1. Create a MIDI track and clip and add CC automation to it.
-2. In the tracks **MIDI To** router, select `IAC Driver Lattice In` and `Ch. 1`
-
-Those steps are all you need to send MIDI to Lattice to control parameters. As
-for controlling a live parameter with that same CC, follow these steps:
-
-1. Play your clip containing the CC data
-2. Stop the transport (this is important!)
-3. Enter MIDI Mapping mode.
-4. Locate the parameter to you want to map and select it (make sure it's the
-   last thing you've clicked)
-5. Press the Space bar to start the transport. This should do it!
-
-See the [midi_test.rs sketch][midi-sketch] for an example of how to map a
-control to something.
-
-> Note: the above instructions are for working without a MIDI controller. When
-> working with a MIDI controller you can just map the MIDI control to an Ableton
-> device knob that can send CC out to Lattice and also map the controller to an
-> Ableton parameter. In this case _you do not_ want Lattice enabled in Ableton's
-> MIDI Input ports at all as that just complicates things.
-
-### Sync Recording
-
-With MIDI ports configured in your DAW to send clock to Lattice, Lattice is
-already in a place where you can perfectly sync video recordings with audio from
-your DAW. Below are steps to setup Ableton Live such that you can record audio
-and video simultaneously when you press Play in the DAW (if you only want to
-record video you can just do steps 2 and 4):
-
-1. In Ableton > Preferences > Record, make sure **Start Transport With Record**
-   is set to **Off**
-2. Hit **Q Rec** in Lattice.
-3. Arm tracks in Ableton, arm the transport (Record button)
-4. Now, pressing play in Ableton will also initiate recording in Lattice,
-   likewise pressing Stop in Ableton will stop recording in Lattice.
-
-### Open Sound Control (OSC)
+## Open Sound Control (OSC)
 
 While MIDI is great for controlling parameters in the case that a MIDI
 controller can send 14bit high resolution MIDI, it sucks otherwise (128 values
@@ -277,7 +374,19 @@ just isn't enough precision for smooth parameter automation). For this reason
 Lattice supports OSC and comes with two MaxForLive devices designed to make
 integration with Ableton Live simpler.
 
-#### L.OscTransport
+**Example**
+
+```rust
+let hub = ControlHubBuilder::new()
+    .timing(Timing::new(ctx.bpm()))
+    // address (without leading slash), (min, max), default_value
+    .osc("bar", (100.0, 500.0), 22.0)
+    // Same as above without range mapping (assumes incoming 0.0..=1.0 range)
+    .osc_n("bar", 22.0)
+    .build();
+```
+
+### L.OscTransport
 
 [assets/L.OscTransport.amxd][osc-transport]
 
@@ -291,7 +400,7 @@ stopping, and syncing video recordings. The default host and port align with
 what Lattice expects and can be left alone, though you can configure this in
 [src/config.rs][config].
 
-#### L.OscSend
+### L.OscSend
 
 [assets/L.OscSend.amxd][osc-send]
 
@@ -302,26 +411,58 @@ that can send OSC, the "official" OSC Send device that comes with Ableton's
 Connection Kit does _not_ send high resolution data, which defeats the entire
 purpose!
 
-### Control Scripting
+## Control Scripting
 
-Lattice provides various interfaces for controlling parameters including
-`Controls` for UI (sliders, checkboxes, and selects), `MidiControls` and
-`OscControls` for controlling parameters from an external source,
-`AudioControls` for controlling parameters with audio or CV, and a comprehensive
-`Animation` module that can tween or generate random values and ramp to/from
-them at musical intervals. While these parameters are simple to setup, it's a
+While Lattice's various control and animation methods are easy to setup, it's a
 bit of pain to have to restart the rust sketch every time you want to change an
-animation or control configuration. For this reason Lattice provides a
-`ControlScript` mechanism that uses yaml for configuration and adds these
-controls dynamically and self-updates at runtime when the yaml file is changed.
-You still have to take care to setup the routings in your sketch (e.g.
-`let radius = model.controls.get("radius")`), but once these routings are in
-place you are free to edit their ranges, values, timing, etc. See [Control
-Script Test][control-script-test] for a working example or
+animation or control configuration – especially as your sketch matures. For this
+reason Lattice provides a script-like mechanism that uses yaml for configuration
+and adds these controls dynamically and self-updates at runtime when the yaml
+file is changed. You still have to take care to setup the routings in your
+sketch (e.g. `let radius = self.hub.get("radius")`), but once these routings are
+in place you are free to edit their ranges, values, timing, etc. It's also worth
+knowing that Control Scripting makes certain things like disabling controls
+based on the values of other controls and parameter modulation much easier than
+they'd be in real code. Checkout any sketch in
+[lattice-sketches][lattice-sketches] that has a corresponding yaml file of the
+same name for a working example or
 [docs/control_script_reference.md](docs/control_script_reference.md) for
 comprehensive documentation.
 
-## Resources
+## Keyboard Shortcuts
+
+Note that in the bottom of the UI is a console window that displays system
+alerts and general operation feedback; in the top left is a small (?) icon you
+can press to enabled **Help Mode**, which will use the console to display help
+information for any control you hover over. Native HTML titles are not very
+accessible and tooltip components are annoying and obstructive, hence this view,
+inspired by Ableton Live's Help View.
+
+| Feature         | Keyboard Shortcut |
+| --------------- | ----------------- |
+| Play/Pause      | P                 |
+| Advance         | A                 |
+| Reset           | R                 |
+| Clear           | -                 |
+| Capture Image   | I (i key)         |
+| Queue           | -                 |
+| Record          | -                 |
+| Save            | Cmd S or Shift S  |
+| Settings        | , (comma)         |
+| Reset Sketch    | Shift Cmd S       |
+| Perf Mode       | -                 |
+| Tap             | Space             |
+| Exclusions      | E                 |
+| Randomize       | Cmd R             |
+| Snapshots       | S                 |
+| Save Snap       | Shift Digit       |
+| Recall Snap     | Cmd Digit         |
+| Transition Time | -                 |
+| Fullscreen      | F                 |
+| Focus Main      | M                 |
+| Focus GUI       | G                 |
+
+## General Resources
 
 - https://sotrh.github.io/learn-wgpu
 - https://inconvergent.net/generative/
@@ -334,20 +475,23 @@ comprehensive documentation.
 - https://paulbourke.net/geometry/
 - https://easings.net/
 
-[p5]: https://github.com/Lokua/p5/tree/main
-[nannou]: https://github.com/nannou-org/nannou
+[blackhole]: https://existential.audio/blackhole/
+[breakpoints]:
+  https://media.githubusercontent.com/media/Lokua/lattice/main/images/breakpoints-flin7.png
+[coding-train]: https://thecodingtrain.com/
+[config]: src/config.rs
+[control-script-test]: src/sketches/scratch/control_script_test.rs
+[ffmpeg]: https://ffmpeg.org/
 [insta]: https://www.instagram.com/lokua/
 [just]: https://github.com/casey/just
-[blackhole]: https://existential.audio/blackhole/
-[config]: src/config.rs
-[template]: src/sketches/templates/template.rs
+[lattice-sketches]: lattice-sketches/sketches
 [midi-sketch]: src/sketches/midi_test.rs
-[module]: src/sketches/mod.rs
-[main]: src/main.rs
-[control-script-test]: src/sketches/scratch/control_script_test.rs
-[osc-transport]: assets/L.OscTransport.amxd
+[nannou]: https://github.com/nannou-org/nannou
 [osc-send]: assets/L.OscSend.amxd
-[webview]: https://en.wikipedia.org/wiki/WebView
+[osc-transport]: assets/L.OscTransport.amxd
+[p5]: https://github.com/Lokua/p5/tree/main
+[template]: src/sketches/templates/template.rs
 [tao]: https://github.com/tauri-apps/tao
-[wry]: https://github.com/tauri-apps/wry
 [vite]: https://vite.dev/
+[webview]: https://en.wikipedia.org/wiki/WebView
+[wry]: https://github.com/tauri-apps/wry

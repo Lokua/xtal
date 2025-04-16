@@ -6,13 +6,27 @@ use std::sync::RwLock;
 
 use crate::framework::prelude::*;
 
+/// Register all of your project's sketches
+///
+/// # Example
+/// ```rust,ignore
+/// use lattice::prelude::*;
+///
+/// mod my_sketches;
+/// use my_sketches::{a, b, c, d};
+///
+/// fn main() {
+///     register!(a, b, c, d)
+///     run();
+/// }
+/// ```
 #[macro_export]
 macro_rules! register {
     ($($module:ident),* $(,)?) => {
         {
-            use $crate::runtime;
+            use $crate::REGISTRY;
 
-            let mut registry = runtime::registry::REGISTRY.write().unwrap();
+            let mut registry = REGISTRY.write().unwrap();
 
             $(
                 registry.register(

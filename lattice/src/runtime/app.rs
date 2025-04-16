@@ -64,7 +64,6 @@ pub enum AppEvent {
     Randomize(Exclusions),
     ReceiveDir(wv::UserDir, String),
     ReceiveMappings(Mappings),
-    Record,
     RemoveMapping(String),
     Reset,
     Resize,
@@ -500,18 +499,6 @@ impl AppModel {
             }
             AppEvent::ReceiveMappings(mappings) => {
                 self.map_mode.set_mappings(mappings);
-            }
-            AppEvent::Record => {
-                self.recording_state
-                    .toggle_recording(self.sketch_config, &self.session_id)
-                    .inspect(|message| self.app_tx.alert(message.clone()))
-                    .inspect_err(|e| {
-                        self.app_tx.alert_and_log(
-                            format!("Recording error: {}", e),
-                            log::Level::Error,
-                        );
-                    })
-                    .ok();
             }
             AppEvent::RemoveMapping(name) => {
                 self.map_mode.remove(&name);

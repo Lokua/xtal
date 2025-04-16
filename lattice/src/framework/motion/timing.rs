@@ -1,24 +1,56 @@
-//! A timing abstraction built to allow various syncing mechanisms for Lattice's
-//! [`Animation`][animation] system, including:
+//! Various syncing mechanisms for Lattice's [`Animation`][animation] system.
 //!
-//! - Internal frame counting
+//! # Current Timing Implementations:
+//!
+//! - Internal frame counting (the default)
 //! - External MIDI Clock with SPP support
-//! - External MIDI Time Code
-//! - External Hybrid mechanism utilizing both MIDI Clock and MTC for when SPP
-//!   isn't supported
+//! - External Hybrid mechanism utilizing both MIDI Clock and MIDI Time Code for
+//!   when SPP isn't supported
 //! - External OSC for syncing specifically with Ableton Live via MaxForLive
 //!   (preferred)
 //! - Manual timing for generating visualizations of animation sequences
 //!   statically
 //!
 //! The core abstraction is the [`Timing`] enum which wraps various
-//! [`TimingSource`] implementations. In all cases you must provide a `bpm`
-//! parameter as like the [`Animation`][animation] module, time is provided in
-//! musical _beats_, e.g. 1.0 = 1 quarter note, 0.5 = 1 eight note, and so on.
-//! This provides the most intuitive way to write animations that are in sync
-//! with music.
+//! [`TimingSource`] implementations – in most cases this is what you need
+//! rather than the variants it wraps. In all cases you must provide a `bpm`
+//! parameter which can be retrieved from the Lattice
+//! [`Context`](crate::prelude::Context). The `TimingSource` then provides
+//! timing via `beats` (TODO: beats documentation)
 //!
-//! [animation]: crate::framework::motion::animation
+//! When running a lattice app you can pass a `timing` positional argument after
+//! the required `sketch` positional argument to specify what kind of timing
+//! system will be used to run animations on sketches that support it. Available
+//! options that are directly correlated to the TimingSource implementations in
+//! this module include:
+//!
+//! ## `frame`
+//!
+//! Uses Lattice's internal frame system. This is the default and doesn't
+//! require any external devices to run.
+//!
+//! ## `osc`
+//!
+//! Requires [assets/L.OscTransport.amxd][osc-transport] to be running in
+//! Ableton Live. This provides the most reliable syncing mechanism as Ableton
+//! does not properly send MIDI SPP messages and doesn't support MTC
+//!
+//! ## `midi`
+//!
+//! Uses MIDI clock and MIDI Song Position Pointers (SPP) to stay in sync (e.g.
+//! when a MIDI source loops or you jump to somewhere else in a timeline, your
+//! animations will jump or loop accordingly). Bitwig properly sends SPP;
+//! Ableton does not.
+//!
+//! ## `hybrid`
+//!
+//! Uses a combination of MIDI clock (for precision) and MIDI Time Code (MTC) to
+//! stay in sync. This is useful for DAWs that don't support sending SPP but do
+//! support MTC. Ableton, for example, does not support MTC but you can work
+//! around that with
+//! https://support.showsync.com/sync-tools/livemtc/introduction
+//!
+//! [animation]: crate::motion
 
 use nannou_osc as osc;
 use std::{
@@ -35,8 +67,8 @@ use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::prelude::*;
 
 /// The current Beats-Per-Minute (tempo) initialized from a
-/// [`SketchConfig::bpm`] whenever a sketch is loaded or physically tapped
-/// in live via the [`crate::runtime::tap_tempo::TapTempo`] feature in the UI.
+/// [`SketchConfig::bpm`] whenever a sketch is loaded or physically tapped in
+/// live via the **Tap Tempo** feature.
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
 
@@ -59,10 +91,12 @@ pub trait TimingSource: Clone {
     fn bpm(&self) -> f32;
 }
 
-/// Wrapper for all [`TimingSource`] implementations which allows
-/// run-time selection of a `TimingSource` via command line argument.
-/// Sketches can bypass the command line argument by using a `TimingSource`
-/// other than this directly.
+/// Wrapper for all [`TimingSource`] implementations which allows run-time
+/// selection of a `TimingSource` via command line argument. Sketches can bypass
+/// the command line argument by using a `TimingSource` other than this
+/// directly, for example if you have an audio-visual composition that depends
+/// on MIDI from a DAW timeline that is not meant to be run without that
+/// constraint.
 #[derive(Clone, Debug)]
 pub enum Timing {
     Frame(FrameTiming),
@@ -73,7 +107,6 @@ pub enum Timing {
 }
 
 impl Timing {
-    /// Temporary constructor until we can port older sketch to Sketch trait
     pub fn new(bpm: Bpm) -> Self {
         let args: Vec<String> = env::args().collect();
         let timing_arg = args.get(2).map(|s| s.as_str()).unwrap_or("frame");
@@ -110,6 +143,9 @@ impl TimingSource for Timing {
     }
 }
 
+/// Uses an internal frame counter coupled with the app's current BPM to provide
+/// beats to animations. This the default timing mechanism used when a Lattice
+/// app is run without a positional `timing` argument.
 #[derive(Clone, Debug)]
 pub struct FrameTiming {
     bpm: Bpm,
@@ -142,14 +178,16 @@ pub const SONG_POSITION: u8 = 0xF2; // 242
 const PULSES_PER_QUARTER_NOTE: u32 = 24;
 const TICKS_PER_QUARTER_NOTE: u32 = 960;
 
+/// Provides timing by following an internal MIDI clock with optional syncing to
+/// Song Position Pointer messages.
 #[derive(Clone, Debug)]
 pub struct MidiSongTiming {
     clock_count: Arc<AtomicU32>,
 
     /// When true, clock works as a subdivision of song_position; when false,
-    /// clock is "absolute" and only reset on receive START. See `HybridTiming`
-    /// for a combination of MTC and this struct for high precision sync for
-    /// cases when SPP can't be relied on.
+    /// clock is "absolute" and only reset upon receiving START. See
+    /// [`HybridTiming`] for a combination of MTC and this struct for high
+    /// precision sync for cases when SPP can't be relied on.
     follow_song_position_messages: bool,
 
     /// In MIDI ticks (1 tick = 1/960th of a quarter note)
@@ -283,6 +321,9 @@ impl TimingSource for MidiSongTiming {
 
 const MTC_QUARTER_FRAME: u8 = 0xF1;
 
+/// Provides timing by following a combination of an external MIDI clock's CLOCK
+/// messages along with MIDI Time Code (MTC) to support jumping the timeline.
+/// This mode is not 100% stable.
 #[derive(Clone, Debug)]
 pub struct HybridTiming {
     midi_timing: MidiSongTiming,

@@ -34,6 +34,7 @@ impl TapTempo {
         self.bpm
     }
 
+    #[cfg(test)]
     pub fn bpm(&self) -> f32 {
         self.bpm
     }

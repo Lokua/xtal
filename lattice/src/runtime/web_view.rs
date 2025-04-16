@@ -398,10 +398,11 @@ pub enum ControlKind {
     Slider,
 }
 
-/// Provides a uniform type for all [`ui_controls::Control`] variants. This is a
-/// work around for sending data over [`ipc_channel`] which uses `bincode` for
-/// serialization and can't support serde's untagged enum types which leads to
-/// really gnarly code on the frontend, for example a list of these:
+/// Provides a uniform type for all [`ui_controls::UiControlConfig`] variants.
+/// This is a work around for sending data over [`ipc_channel`] which uses
+/// `bincode` for serialization and can't support serde's untagged enum types
+/// which leads to really gnarly code on the frontend, for example a list of
+/// these:
 ///
 /// ```rust,ignore
 /// #[derive(Clone, Debug, Deserialize, Serialize)]

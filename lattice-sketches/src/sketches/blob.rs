@@ -1,7 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use nannou::prelude::*;
 
-// use lattice::prelude::*;
 use lattice::prelude::*;
 
 // Live/2025.02.19 Blob

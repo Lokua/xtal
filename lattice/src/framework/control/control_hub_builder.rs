@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_control_script_builder_helpers() {
-        let controls: ControlHub<ManualTiming> = ControlHubBuilder::new()
+        let controls = ControlHubBuilder::new()
             .timing(ManualTiming::new(Bpm::new(134.0)))
             .slider_n("foo", 0.5)
             .osc_n("bar", 22.0)

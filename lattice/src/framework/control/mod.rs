@@ -16,7 +16,8 @@ pub mod ui_controls;
 
 pub use audio_controls::*;
 pub use control_hub::*;
-pub use control_hub_builder::ControlHubBuilder;
+#[allow(unused_imports)]
+pub use control_hub_builder::*;
 pub use control_hub_provider::*;
 pub use control_traits::*;
 pub use midi_controls::*;

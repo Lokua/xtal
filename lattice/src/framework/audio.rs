@@ -16,7 +16,7 @@ use crate::global;
 /// envelope tracks changes in the input signal.
 /// TODO: deprecate and move to SlewLimiter
 #[derive(Debug, Clone, Copy)]
-pub struct SlewConfig {
+struct SlewConfig {
     /// Controls smoothing when signal amplitude increases.
     /// - 0.0 = instant attack (no smoothing)
     /// - 1.0 = very slow attack (maximum smoothing)
@@ -26,12 +26,6 @@ pub struct SlewConfig {
     /// - 0.0 = instant decay (no smoothing)
     /// - 1.0 = very slow decay (maximum smoothing)
     pub fall: f32,
-}
-
-impl SlewConfig {
-    pub fn new(rise: f32, fall: f32) -> Self {
-        Self { rise, fall }
-    }
 }
 
 impl Default for SlewConfig {

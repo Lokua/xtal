@@ -1,14 +1,14 @@
-//! Animation module providing musically-timed animation and transition
-//! controls.
+//! Animation module providing musically-timed animation and transition methods
 //!
 //! The core animation system supports:
 //!
-//! - Beat-synchronized timing with support for various clock sources (MIDI,
-//!   OSC, manual)
+//! - Beat-synchronized timing with support for various clock sources (frame
+//!   count, MIDI, OSC, manual)
 //! - Simple oscillations and phase-based animations
 //! - Linear and eased transitions between keyframes
 //! - Complex automation curves with configurable breakpoints
 //! - Randomized transitions with constraints
+//! - Post processing via effects
 //!
 //! # Musical Timing
 //!
@@ -17,60 +17,6 @@
 //! different timing sources (Frame, MIDI, OSC) that provide the current beat,
 //! allowing animations to stay in sync with external music software or
 //! hardware.
-//!
-//! # Basic Usage
-//!
-//! ```rust
-//! let animation = Animation::new(Timing::new(ctx.bpm()));
-//!
-//! // Simple oscillation between 0-1 over 4 beats
-//! let phase = animation.loop_phase(4.0); // Returns 0.0 to 1.0
-//!
-//! // Triangle wave oscillation between ranges
-//! let value = animation.triangle(
-//!     // Duration in beats
-//!     4.0,
-//!     // Min/max range
-//!     (0.0, 100.0),  
-//!     // Phase offset
-//!     0.0,           
-//! );
-//! ```
-//!
-//! # Advanced Automation
-//!
-//! The [`Animation::automate`] method provides DAW-style automation curves with
-//! multiple breakpoint types and transition modes:
-//!
-//! ```rust
-//! let value = animation.automate(
-//!     &[
-//!         // Start with a step change
-//!         Breakpoint::step(0.0, 0.0),
-//!         // Ramp with exponential easing
-//!         Breakpoint::ramp(1.0, 1.0, Easing::EaseInExpo),
-//!         // Add amplitude modulation
-//!         Breakpoint::wave(
-//!             // Position in beats
-//!             2.0,
-//!             // Base value
-//!             0.5,
-//!             Shape::Sine,
-//!             // Frequency in beats
-//!             0.25,
-//!             // Width
-//!             0.5,
-//!             // Amplitude
-//!             0.25,
-//!             Easing::Linear,
-//!             Constrain::None,
-//!         ),
-//!         // Mark end of sequence
-//!         Breakpoint::end(4.0, 0.0),
-//!     ],
-//!     Mode::Loop
-//! );
-//! ```
 
 use nannou::math::map_range;
 use nannou::rand::rngs::StdRng;
@@ -303,6 +249,66 @@ impl FromStr for Mode {
     }
 }
 
+///  Animation module providing musically-timed animation methods with support
+///  for incredibly easy to use basic oscillations as well as ultra-complex and
+///  expressive automation
+///
+///  # Basic Usage
+///
+///  ```rust
+///  let animation = Animation::new(Timing::new(ctx.bpm()));
+///
+///  // Simple ramp oscillation from 0.0 to 1.0 over 4 beats (repeating)
+///  let phase = animation.loop_phase(4.0);
+///
+///  // Triangle wave oscillation between ranges
+///  let value = animation.triangle(
+///      // Duration in beats
+///      4.0,
+///      // Min/max range
+///      (0.0, 100.0),  
+///      // Phase offset
+///      0.0,           
+///  );
+///  ```
+///
+///  # Advanced Automation
+///
+///  The [`Animation::automate`] method provides DAW-style automation curves
+///  with multiple breakpoint types and transition modes:
+///
+///  ```rust
+///  let value = animation.automate(
+///      &[
+///          // Start with a step change
+///          Breakpoint::step(0.0, 0.0),
+///          // Ramp with exponential easing
+///          Breakpoint::ramp(1.0, 1.0, Easing::EaseInExpo),
+///          // Add amplitude modulation
+///          Breakpoint::wave(
+///              // Position in beats
+///              2.0,
+///              // Base value
+///              0.5,
+///              Shape::Sine,
+///              // Frequency in beats
+///              0.25,
+///              // Width
+///              0.5,
+///              // Amplitude
+///              0.25,
+///              Easing::Linear,
+///              Constrain::None,
+///          ),
+///          // Mark end of sequence
+///          Breakpoint::end(4.0, 0.0),
+///      ],
+///      Mode::Loop
+///  );
+///  ```
+///
+/// See [`crate::prelude::effects`] for ways you can post-process the results
+/// of any animation method to achieve more complex results
 #[derive(Clone, Debug)]
 pub struct Animation<T: TimingSource> {
     pub timing: T,

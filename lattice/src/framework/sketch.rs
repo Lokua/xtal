@@ -117,7 +117,8 @@ pub trait SketchDerived {
     fn hub(&mut self) -> Option<&mut dyn ControlHubProvider>;
 }
 
+#[doc(hidden)]
 /// Trait used to enable dynamically loading sketches at runtime via
-/// [`crate::runtime::registry`]
+/// [`crate::REGISTRY`]
 pub trait SketchAll: Sketch + SketchDerived {}
 impl<T: Sketch + SketchDerived> SketchAll for T {}

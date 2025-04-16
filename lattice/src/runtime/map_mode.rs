@@ -65,17 +65,6 @@ impl MapMode {
         state.mappings = mappings;
     }
 
-    pub fn update_from_vec(&mut self, ms: &[(String, ChannelAndController)]) {
-        let mut state = self.state.lock().unwrap();
-        for m in ms {
-            state.mappings.insert(m.0.clone(), m.1);
-        }
-    }
-
-    pub fn has(&self, name: &str) -> bool {
-        self.state.lock().unwrap().mappings.contains_key(name)
-    }
-
     pub fn remove(&mut self, name: &str) {
         self.state.lock().unwrap().mappings.remove(name);
     }
