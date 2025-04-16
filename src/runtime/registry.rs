@@ -7,19 +7,29 @@ use std::sync::RwLock;
 use crate::framework::prelude::*;
 
 #[macro_export]
-macro_rules! register_sketches {
-    ($registry:expr, $($module:ident),*) => {
-        $(
-            $registry.register(
-                &$crate::sketches::$module::SKETCH_CONFIG,
-                |app, ctx| {
-                    Box::new($crate::sketches::$module::init(
-                        app,
-                        ctx
-                    )) as Box<dyn SketchAll>
-                }
-            );
-        )*
+macro_rules! register {
+    ($($module:ident),* $(,)?) => {
+        {
+            use $crate::framework::prelude::init_logger;
+            use $crate::runtime;
+
+            let mut registry = runtime::registry::REGISTRY.write().unwrap();
+
+            $(
+                registry.register(
+                    &$module::SKETCH_CONFIG,
+                    |app, ctx| {
+                        Box::new($module::init(
+                            app,
+                            ctx
+                        )) as Box<dyn $crate::framework::prelude::SketchAll>
+                    }
+                );
+            )*
+
+            registry.prepare();
+            drop(registry);
+        }
     };
 }
 

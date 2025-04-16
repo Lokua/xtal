@@ -1,14 +1,11 @@
-use lattice::framework::prelude::SketchAll;
 use lattice::framework::prelude::init_logger;
-use lattice::{register_sketches, runtime};
+use lattice::sketches::*;
+use lattice::{register, runtime};
 
 fn main() {
     init_logger();
 
-    let mut registry = runtime::registry::REGISTRY.write().unwrap();
-
-    register_sketches!(
-        registry,
+    register!(
         // ---------------------------------------------------------------------
         // MAIN
         // ---------------------------------------------------------------------
@@ -84,9 +81,6 @@ fn main() {
         basic_cube_shader_template,
         fullscreen_shader_template
     );
-
-    registry.prepare();
-    drop(registry);
 
     runtime::app::run();
 }
