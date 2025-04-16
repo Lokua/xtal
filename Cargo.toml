@@ -1,74 +1,9 @@
-[package]
-name = "lattice"
-version = "0.5.0"
-authors = ["Lokua <dev@lokua.net>"]
-edition = "2024"
-default-run = "lattice"
-
-# TODO: fixme
-[lib]
-doctest = false
-
-[features]
-default = []
-instrumentation = []
-
-# clean with:
-#   rm -rf target/incremental
-[profile.release]
-incremental = true
-
 [workspace]
-members = ["derives"]
+members = ["lattice", "lattice-derives", "lattice-sketches"]
+resolver = "3"
+default-members = ["lattice-sketches"]
 
-[dev-dependencies]
-criterion = "0.5.1"
-
-[[bench]]
-name = "frame_controller_bench"
-harness = false
-path = "benches/frame_controller_bench.rs"
-
-[dependencies]
-arboard = "3.4.1"
-# glam feature added as a hail-mary to deal with occasional
-# linking errors coming from bevy_reflect. This for some reason works?
-bevy_reflect = { version = "0.15.1", features = ["glam"] }
-bytemuck = "1.21.0"
-chrono = "0.4.38"
-clap = { version = "4.5.28", features = ["derive"] }
-cpal = "0.15.3"
-dark-light = "1.1.1"
-derives = { path = "./derives" }
-directories-next = "2.0.0"
-env_logger = "0.11.5"
-indexmap = { version = "2.7.1", features = ["serde"] }
-ipc-channel = "0.19.0"
-log = "0.4.22"
-midir = "0.10.1"
-naga = "0.13.0"
-nannou = "0.19.0"
-nannou_egui = "0.19.0"
-nannou_osc = "0.19.0"
-notify = "8.0.0"
-once_cell = "1.20"
-open = "5.3.2"
-parking_lot = "0.12.3"
-rayon = "1.10.0"
-rfd = "0.15.3"
-rustc-hash = "2.1.1"
-rustfft = "6.2.0"
-serde = "1.0.215"
-serde_json = "1.0.133"
-serde_yml = "0.0.12"
-serial_test = "3.2.0"
-tao = "0.32.8"
-termcolor = "1.4.1"
-wgpu-types = "=0.17.0"
-wry = { version = "0.50.5", features = ["devtools"] }
-# Bug: we shouldn't have to bring in serde_yaml
-# TODO: we might want to fork this since it's on GitLab, doesn't have the ability to submit issues, etc.
-yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [
-    "serde_yml",
-    "serde_yaml",
-] }
+# # clean with:
+# #   rm -rf target/incremental
+# [profile.release]
+# incremental = true

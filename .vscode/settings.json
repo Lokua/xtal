@@ -32,7 +32,9 @@
     "MISTYROSE",
     "msaa",
     "msbs",
+    "multisample",
     "multisampled",
+    "multiview",
     "nocapture",
     "onchange",
     "pmod",
@@ -57,6 +59,6 @@
     "Vortx",
     "walkdir"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation"],
+  // "rust-analyzer.cargo.features": ["instrumentation"],
   "rust-analyzer.check.command": "clippy"
 }

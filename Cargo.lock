@@ -1448,15 +1448,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derives"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
-]
-
-[[package]]
 name = "detect-desktop-environment"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3046,7 +3037,7 @@ dependencies = [
 
 [[package]]
 name = "lattice"
-version = "0.5.0"
+version = "0.11.0"
 dependencies = [
  "arboard",
  "bevy_reflect",
@@ -3056,11 +3047,11 @@ dependencies = [
  "cpal",
  "criterion",
  "dark-light",
- "derives",
  "directories-next",
  "env_logger",
  "indexmap 2.7.1",
  "ipc-channel",
+ "lattice-derives",
  "log",
  "midir",
  "naga",
@@ -3084,6 +3075,30 @@ dependencies = [
  "wgpu-types",
  "wry",
  "yaml-merge-keys",
+]
+
+[[package]]
+name = "lattice-derives"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "lattice-sketches"
+version = "0.0.1"
+dependencies = [
+ "bevy_reflect",
+ "bytemuck",
+ "env_logger",
+ "lattice",
+ "log",
+ "nannou",
+ "once_cell",
+ "rayon",
+ "termcolor",
 ]
 
 [[package]]
