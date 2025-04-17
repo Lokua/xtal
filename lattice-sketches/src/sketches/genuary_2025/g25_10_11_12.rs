@@ -1,6 +1,7 @@
+use lattice::prelude::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 // ~/Documents/Live/2025/2025.01.11 Lattice - Spiral
 

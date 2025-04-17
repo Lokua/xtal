@@ -1,4 +1,5 @@
 use geom::Ellipse;
+use lattice::prelude::*;
 use nannou::color::{Gradient, Mix};
 use nannou::prelude::*;
 use rayon::prelude::*;
@@ -6,7 +7,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use super::shared::displacer::*;
-use lattice::prelude::*;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_2a",
@@ -532,15 +533,19 @@ fn generate_pattern_options() -> Vec<String> {
     functions
         .iter()
         .flat_map(|a| functions.iter().map(move |b| format!("{},{}", a, b)))
-        .chain(str_vec![
-            "Custo",
-            "Spiral",
-            "Ripple",
-            "VortxFld",
-            "VortxFld2",
-            "FracRipl",
-            "Quantum",
-        ])
+        .chain(
+            [
+                "Custo",
+                "Spiral",
+                "Ripple",
+                "VortxFld",
+                "VortxFld2",
+                "FracRipl",
+                "Quantum",
+            ]
+            .into_iter()
+            .map(String::from),
+        )
         .collect()
 }
 

@@ -3,6 +3,8 @@ use bytemuck::{Pod, Zeroable};
 use lattice::prelude::*;
 use nannou::prelude::*;
 
+use crate::util::*;
+
 // b/w ~/Live/2025/Lattice - Inspired by Brutalism
 // Original non-automated version lives at sketches/brutalism
 

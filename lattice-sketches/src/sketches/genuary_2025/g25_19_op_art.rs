@@ -1,6 +1,7 @@
+use lattice::prelude::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 // b/w Ableton 2025/Lattice - Wave Fract
 

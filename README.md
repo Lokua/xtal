@@ -271,6 +271,43 @@ imagine the creative possibilities with a more complex sketch with 10 or 20
 controls. Hopefully this now gives you a better idea of what Lattice provides on
 top of Nannou.
 
+Here's a kitchen sync example you can use for reference:
+
+```rust
+let hub = ControlHubBuilder::new()
+    .timing(Timing::new(ctx.bpm()))
+    // name, default_value, (min, max), step, disabled_fn
+    .slider("a", 50.0, (0.0, 100.0), 1.0, None)
+    // slider "normalized" – name, default_value
+    .slider_n("b", 0.0)
+    // name, default_value, options, disabled_fn
+    .select("stuff", "a", &["a", "b", "c"], None)
+    // name, default_value, options, disabled_fn
+    .checkbox("d", false, None)
+    // Adds a faint horizontal line between controls
+    .separator()
+    // name, (channel, controller), (min, max), default_value
+    .midi("e", (0, 0), (0.0, 1.0), 0.5)
+    // midi "normalized"
+    .midi_n("f", (0, 1), 0.5)
+    // address, range, default_value
+    .osc("f", (0.0, 100.0), 0.5)
+    // osc "normalized"
+    .osc_n("g", 0.5)
+    .audio(
+        "h",
+        AudioControlConfig {
+            channel: 0,
+            slew_limiter: SlewLimiter::default(),
+            pre_emphasis: 0.0,
+            detect: 0.0,
+            range: (0.0, 1.0),
+            value: 0.0,
+        },
+    )
+    .build();
+```
+
 ## Animation
 
 Building on the ControlHub example sketch, let's add some animation. Instead of
@@ -299,117 +336,8 @@ everything will run twice as fast and you didn't need to update any code to
 accomplish this! Not to mention you can just Tap Tempo to synch with your DJ
 homey on stage.
 
-This is just the tip of what the Animation module is capable of; see
-[this breakpoints visualization](breakpoints) for an idea of some of the
-_insaaane_ curves it can produce between two points with relatively little
-effort.
-
-## Audio
-
-### Multichannel Audio
-
-**Example**
-
-```rust
-let hub = ControlHubBuilder::new()
-    .timing(Timing::new(ctx.bpm()))
-    .audio(
-        "bass_drum",
-        AudioControlConfig {
-            channel: 0,
-            slew_limiter: SlewLimiter::default(),
-            pre_emphasis: 0.0,
-            detect: 0.0,
-            range: (0.0, 1.0),
-            value: 0.0,
-        },
-    )
-    .audio(
-        "snare_drum",
-        AudioControlConfig {
-            channel: 1,
-            // You almost always want slew on Audio since it's so jumpy
-            slew_limiter: SlewLimiter::new(0.65, 0.65),
-            pre_emphasis: 0.0,
-            detect: 0.0,
-            range: (0.0, 1.0),
-            value: 0.0,
-        },
-    )
-    .build();
-```
-
-The `AudioControls` struct treats each audio channel as an individual control
-signal with optional slew limiting, suitable for audio-rate or control-rate
-signals. You can configure the audio device that used in Lattice globally for
-all sketches in the UI > Settings view. On my computer I'm using the [16 channel
-version of Blackhole][blackhole]. See [docs/tips.md](docs/tips.md#Audio) for
-more details on that.
-
-## MIDI
-
-**Example**
-
-```rust
-let hub = ControlHubBuilder::new()
-    .timing(Timing::new(ctx.bpm()))
-    // The incoming MIDI u8 values are always normalized to a 0..=1 range
-    // name, (channel, controller), (min, max), default_value
-    .midi("foo", (0, 0), (100.0, 500.0), 0.0)
-    // midi_n = midi "normalized" - no min/max mapping beyond the default 0..=1
-    .midi_n("bar", (0, 1), 0.0)
-    .midi_n("baz", (0, 2), 0.0)
-    .build();
-```
-
-MIDI input and output ports can be set in the UI > Settings view. See
-[docs/tips.md](docs/tips.md#midi) for more examples of how to get MIDI working
-smoothly between your DAW or MIDI controller and Lattice
-
-## Open Sound Control (OSC)
-
-While MIDI is great for controlling parameters in the case that a MIDI
-controller can send 14bit high resolution MIDI, it sucks otherwise (128 values
-just isn't enough precision for smooth parameter automation). For this reason
-Lattice supports OSC and comes with two MaxForLive devices designed to make
-integration with Ableton Live simpler.
-
-**Example**
-
-```rust
-let hub = ControlHubBuilder::new()
-    .timing(Timing::new(ctx.bpm()))
-    // address (without leading slash), (min, max), default_value
-    .osc("bar", (100.0, 500.0), 22.0)
-    // Same as above without range mapping (assumes incoming 0.0..=1.0 range)
-    .osc_n("bar", 22.0)
-    .build();
-```
-
-### L.OscTransport
-
-[assets/L.OscTransport.amxd][osc-transport]
-
-![L.OscTransport MaxForLive Device](assets/osc-transport.png)
-
-Place this on any track in Ableton and it will send high precision clock and
-exact transport location to Lattice. This should be preferred over using MIDI
-Timing however you should still make sure MIDI ports between Ableton and Lattice
-are configured properly as Lattice still depends on MIDI clock for starting,
-stopping, and syncing video recordings. The default host and port align with
-what Lattice expects and can be left alone, though you can configure this in
-[src/config.rs][config].
-
-### L.OscSend
-
-[assets/L.OscSend.amxd][osc-send]
-
-![L.OscSend MaxForLive Device](assets/osc-send.png)
-
-A super basic OSC value sender. While there are much fancier MaxForLive devices
-that can send OSC, the "official" OSC Send device that comes with Ableton's
-Connection Kit does _not_ send high resolution data, which defeats the entire
-purpose!
+This is just the tip of what the Animation module is capable of; consult the
+[docs][todo] for more details.
 
 ## Control Scripting
 
@@ -428,52 +356,6 @@ they'd be in real code. Checkout any sketch in
 same name for a working example or
 [docs/control_script_reference.md](docs/control_script_reference.md) for
 comprehensive documentation.
-
-## Keyboard Shortcuts
-
-Note that in the bottom of the UI is a console window that displays system
-alerts and general operation feedback; in the top left is a small (?) icon you
-can press to enabled **Help Mode**, which will use the console to display help
-information for any control you hover over. Native HTML titles are not very
-accessible and tooltip components are annoying and obstructive, hence this view,
-inspired by Ableton Live's Help View.
-
-| Feature         | Keyboard Shortcut |
-| --------------- | ----------------- |
-| Play/Pause      | P                 |
-| Advance         | A                 |
-| Reset           | R                 |
-| Clear           | -                 |
-| Capture Image   | I (i key)         |
-| Queue           | -                 |
-| Record          | -                 |
-| Save            | Cmd S or Shift S  |
-| Settings        | , (comma)         |
-| Reset Sketch    | Shift Cmd S       |
-| Perf Mode       | -                 |
-| Tap             | Space             |
-| Exclusions      | E                 |
-| Randomize       | Cmd R             |
-| Snapshots       | S                 |
-| Save Snap       | Shift Digit       |
-| Recall Snap     | Cmd Digit         |
-| Transition Time | -                 |
-| Fullscreen      | F                 |
-| Focus Main      | M                 |
-| Focus GUI       | G                 |
-
-## General Resources
-
-- https://sotrh.github.io/learn-wgpu
-- https://inconvergent.net/generative/
-- http://www.complexification.net/
-- https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
-- https://www.andylomas.com/cellularFormImages.html
-- http://www.complexification.net/gallery/machines/sandstroke/
-- https://thebookofshaders.com/
-- https://github.com/jasonwebb/2d-space-colonization-experiments
-- https://paulbourke.net/geometry/
-- https://easings.net/
 
 [blackhole]: https://existential.audio/blackhole/
 [breakpoints]:

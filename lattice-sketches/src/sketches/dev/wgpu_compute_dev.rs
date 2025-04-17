@@ -1,7 +1,8 @@
+use lattice::prelude::*;
 use nannou::prelude::*;
 use std::sync::{Arc, Mutex};
 
-use lattice::prelude::*;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "wgpu_compute_dev",

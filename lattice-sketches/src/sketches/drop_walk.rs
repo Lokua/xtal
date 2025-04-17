@@ -2,6 +2,7 @@ use lattice::prelude::*;
 use nannou::prelude::*;
 
 use super::shared::drop::*;
+use crate::util::*;
 
 // https://www.youtube.com/watch?v=p7IGZTjC008&t=613s
 // https://people.csail.mit.edu/jaffer/Marbling/Dropping-Paint

@@ -4,7 +4,7 @@ use nannou::{
 };
 use std::f32::consts::PI;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop.mjs
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop3.mjs

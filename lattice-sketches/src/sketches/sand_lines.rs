@@ -1,8 +1,9 @@
+use lattice::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
 
 use super::shared::sand_line::*;
-use lattice::prelude::*;
+use crate::util::*;
 
 // https://github.com/inconvergent/sand-spline/blob/master/main-hlines.py
 

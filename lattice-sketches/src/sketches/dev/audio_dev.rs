@@ -1,8 +1,9 @@
+use lattice::prelude::*;
 use nannou::color::named::*;
 use nannou::color::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "audio_dev",

@@ -1,10 +1,11 @@
+use lattice::prelude::*;
 use nannou::color::{Gradient, IntoLinSrgba, Mix};
 use nannou::prelude::*;
 use rayon::prelude::*;
 use std::sync::Arc;
 
-use lattice::prelude::*;
 use crate::sketches::shared::displacer::*;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "displacement_1",

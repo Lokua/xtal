@@ -1,6 +1,5 @@
 pub mod audio;
 pub mod control;
-pub mod distance;
 pub mod frame_controller;
 pub mod gpu;
 pub mod instrumentation;

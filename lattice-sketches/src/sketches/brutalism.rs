@@ -2,6 +2,9 @@ use bevy_reflect::Reflect;
 use bytemuck::{Pod, Zeroable};
 use lattice::prelude::*;
 use nannou::prelude::*;
+
+use crate::util::{CUBE_POSITIONS, QUAD_POSITIONS};
+
 // b/w ~/Live/2025/Lattice - Inspired by Brutalism
 // automated version is in sketches/genuary_2025/g25_20_23_brutal_arch
 

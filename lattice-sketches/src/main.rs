@@ -1,6 +1,7 @@
 use lattice::prelude::*;
 
 mod sketches;
+pub use sketches::shared::util;
 use sketches::*;
 
 fn main() {

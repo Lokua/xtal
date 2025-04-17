@@ -2,6 +2,8 @@ use bevy_reflect::Reflect;
 use lattice::prelude::*;
 use nannou::prelude::*;
 
+use crate::util::*;
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "shader_to_texture_dev",
     display_name: "Shader to Texture Development",

@@ -1,6 +1,7 @@
+use lattice::prelude::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 // https://www.generativehut.com/post/how-to-make-generative-art-feel-natural
 

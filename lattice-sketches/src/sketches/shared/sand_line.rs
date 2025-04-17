@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 pub trait NoiseStrategy {
     fn generate_noise(&self, n_points: usize, scale: f32) -> Vec<f32>;

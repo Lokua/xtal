@@ -1,7 +1,8 @@
 use bevy_reflect::Reflect;
+use lattice::prelude::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 // Bitwig/2025/Lattice - Flow Field w 312
 

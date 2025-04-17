@@ -1,7 +1,8 @@
+use lattice::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "vertical",
@@ -21,9 +22,11 @@ pub struct Vertical {
 }
 
 pub fn init(_app: &App, ctx: &Context) -> Vertical {
-    let mode_options = [str_vec!["multi_lerp"], XMods::to_names()].concat();
+    let mode_options =
+        [vec!["multi_lerp".to_string()], XMods::to_names()].concat();
 
-    fn disabled_unless_modes(modes: Vec<String>) -> DisabledFn {
+    fn disabled_unless_modes(modes: &[&str]) -> DisabledFn {
+        let modes: Vec<String> = modes.iter().map(|&s| s.to_string()).collect();
         Some(Box::new(move |controls| {
             !modes.contains(&controls.string("mode"))
         }))
@@ -42,7 +45,7 @@ pub fn init(_app: &App, ctx: &Context) -> Vertical {
             0.1,
             (0.0, 0.5),
             0.01,
-            disabled_unless_modes(str_vec![
+            disabled_unless_modes(&[
                 "multi_lerp",
                 "per_line",
                 "harmonic_cascade",
@@ -54,7 +57,7 @@ pub fn init(_app: &App, ctx: &Context) -> Vertical {
             0.1,
             (0.0, 1.0),
             0.01,
-            disabled_unless_modes(str_vec![
+            disabled_unless_modes(&[
                 "multi_lerp",
                 "wave_interference",
                 "fractal_waves",
@@ -67,7 +70,7 @@ pub fn init(_app: &App, ctx: &Context) -> Vertical {
             2.0,
             (1.0, 4.0),
             0.1,
-            disabled_unless_modes(str_vec![
+            disabled_unless_modes(&[
                 "multi_lerp",
                 "line_phase",
                 "wave_interference",
@@ -82,14 +85,14 @@ pub fn init(_app: &App, ctx: &Context) -> Vertical {
             0.05,
             (0.0, 0.2),
             0.01,
-            disabled_unless_modes(str_vec!["multi_lerp", "ripples"]),
+            disabled_unless_modes(&["multi_lerp", "ripples"]),
         )
         .slider(
             "x_complexity",
             1.0,
             (0.1, 3.0),
             0.1,
-            disabled_unless_modes(str_vec![
+            disabled_unless_modes(&[
                 "multi_lerp",
                 "spiral",
                 "wave_interference",
@@ -223,7 +226,7 @@ struct XMods {}
 
 impl XMods {
     fn to_names() -> Vec<String> {
-        str_vec![
+        [
             "per_line",
             "ripples",
             "line_phase",
@@ -233,8 +236,11 @@ impl XMods {
             "fractal_waves",
             "moire",
             "standing_waves",
-            "quantum_ripples"
+            "quantum_ripples",
         ]
+        .into_iter()
+        .map(String::from)
+        .collect()
     }
 
     fn func_by_name(name: String) -> XModFn {

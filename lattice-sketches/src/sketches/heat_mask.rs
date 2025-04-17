@@ -1,10 +1,12 @@
+use lattice::prelude::*;
 use nannou::color::Gradient;
 use nannou::prelude::*;
 use rayon::prelude::*;
 use std::sync::Arc;
 
 use super::shared::displacer::*;
-use lattice::prelude::*;
+use super::shared::distance;
+use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "heat_mask",
