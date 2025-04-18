@@ -4,6 +4,7 @@ version = "0.11.0"
 authors = ["Lokua <dev@lokua.net>"]
 edition = "2024"
 default-run = "lattice"
+license = "MIT"
 
 # TODO: fixme
 [lib]
@@ -59,7 +60,7 @@ termcolor = "1.4.1"
 wgpu-types = "=0.17.0"
 wry = { version = "0.50.5", features = ["devtools"] }
 # Bug: we shouldn't have to bring in serde_yaml
-# TODO: we might want to fork this since it's on GitLab, doesn't have the ability to submit issues, etc.
+# TODO: we might want to fork this
 yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [
     "serde_yml",
     "serde_yaml",

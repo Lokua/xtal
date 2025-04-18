@@ -1,7 +1,7 @@
 [workspace]
-members = ["lattice", "lattice-derives", "lattice-sketches"]
+members = ["lattice", "lattice-derives", "sketches"]
 resolver = "3"
-default-members = ["lattice-sketches"]
+default-members = ["sketches"]
 
 # # clean with:
 # #   rm -rf target/incremental

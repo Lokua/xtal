@@ -1,9 +1,10 @@
 [package]
-name = "lattice-sketches"
+name = "sketches"
 version = "0.0.1"
 authors = ["Lokua <dev@lokua.net>"]
 edition = "2024"
-default-run = "lattice-sketches"
+default-run = "sketches"
+license = "MIT"
 
 [dependencies]
 bevy_reflect = { version = "0.15.1", features = ["glam"] }

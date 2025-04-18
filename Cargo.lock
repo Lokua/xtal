@@ -3087,21 +3087,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lattice-sketches"
-version = "0.0.1"
-dependencies = [
- "bevy_reflect",
- "bytemuck",
- "env_logger",
- "lattice",
- "log",
- "nannou",
- "once_cell",
- "rayon",
- "termcolor",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5214,6 +5199,21 @@ name = "siphasher"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56199f7ddabf13fe5074ce809e7d3f42b42ae711800501b5b16ea82ad029c39d"
+
+[[package]]
+name = "sketches"
+version = "0.0.1"
+dependencies = [
+ "bevy_reflect",
+ "bytemuck",
+ "env_logger",
+ "lattice",
+ "log",
+ "nannou",
+ "once_cell",
+ "rayon",
+ "termcolor",
+]
 
 [[package]]
 name = "slab"
