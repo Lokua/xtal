@@ -1,8 +1,9 @@
 [package]
 name = "xtal"
-version = "0.11.0"
+version = "0.12.0"
 description = "A creative coding framework build on top of Nannou"
 authors = ["Lokua <dev@lokua.net>"]
+homepage = "https://github.com/Lokua/xtal"
 edition = "2024"
 default-run = "xtal"
 license = "MIT"
