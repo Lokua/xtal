@@ -4,6 +4,9 @@ start *ARGS:
 debug *ARGS:
   RUST_LOG=lattice=debug cargo run --release {{ARGS}}
 
+ui:
+  bun --cwd lattice-ui start
+
 instrument *ARGS:
   RUST_LOG=lattice=debug cargo run --release --features instrumentation {{ARGS}}
 
