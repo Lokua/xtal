@@ -13,6 +13,7 @@ doctest = false
 [features]
 default = []
 instrumentation = []
+logging = []
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -23,6 +24,7 @@ harness = false
 path = "benches/frame_controller_bench.rs"
 
 [dependencies]
+ahash = "0.8.11"
 arboard = "3.4.1"
 # glam feature added as a hail-mary to deal with occasional
 # linking errors coming from bevy_reflect. This for some reason works?

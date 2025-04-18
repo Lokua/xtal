@@ -25,7 +25,6 @@ pub mod internal {
 
 /// The recommended single import for all critical functionality
 pub mod prelude {
-    pub use crate::debug_throttled;
     pub use crate::framework::audio::Audio;
     pub use crate::framework::control::audio_controls::*;
     pub use crate::framework::control::control_hub::*;
@@ -34,19 +33,26 @@ pub mod prelude {
     pub use crate::framework::control::control_traits::*;
     pub use crate::framework::control::midi_controls::*;
     pub use crate::framework::control::osc_controls::*;
-    pub use crate::framework::control::ui_controls::DisabledFn;
     pub use crate::framework::control::ui_controls::*;
     pub use crate::framework::gpu;
-    pub use crate::framework::logging::*;
     pub use crate::framework::motion::*;
     pub use crate::framework::noise::*;
     pub use crate::framework::sketch::*;
-    pub use crate::framework::util::to_absolute_path;
+    pub use crate::framework::util::*;
     pub use crate::framework::window_rect::WindowRect;
     pub use crate::register;
     pub use crate::runtime::app::run;
     pub use crate::ternary;
     pub use lattice_derives::{SketchComponents, uniforms};
+
+    #[cfg(feature = "logging")]
+    pub use crate::debug_once;
+    #[cfg(feature = "logging")]
+    pub use crate::debug_throttled;
+    #[cfg(feature = "logging")]
+    pub use crate::framework::logging::*;
+    #[cfg(feature = "logging")]
+    pub use crate::warn_once;
 }
 
 /// Control sketch parameters with UI controls, MIDI, OSC, and audio

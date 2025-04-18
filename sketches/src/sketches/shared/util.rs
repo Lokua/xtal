@@ -13,9 +13,6 @@ use nannou::rand::rand;
 use nannou::rand::thread_rng;
 
 pub const PHI_F32: f32 = 1.618_033_9;
-pub const TWO_PI: f32 = PI * 2.0;
-
-// pub use nannou_egui::egui::ahash::HashMap;
 
 pub const QUAD_POSITIONS: [[f32; 3]; 6] = [
     // Bottom-left
@@ -77,20 +74,6 @@ pub const CUBE_POSITIONS: [[f32; 3]; 36] = [
     [-0.5, 0.5, -0.5],
 ];
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! str_vec {
-    ($($x:expr),* $(,)?) => (vec![$($x.to_string()),*]);
-}
-
-/// `ternary!(cond, true_case, false_case)`
-#[macro_export]
-macro_rules! ternary {
-    ($condition: expr, $_true: expr, $_false: expr) => {
-        if $condition { $_true } else { $_false }
-    };
-}
-
 pub trait IntoLinSrgb {
     fn into_lin_srgb(self) -> LinSrgb;
 }
@@ -129,10 +112,6 @@ pub fn luminance(color: &LinSrgb) -> f32 {
     0.2126 * color.red + 0.7152 * color.green + 0.0722 * color.blue
 }
 
-pub fn bool_to_f32(cond: bool) -> f32 {
-    if cond { 1.0 } else { 0.0 }
-}
-
 pub fn create_grid<F>(
     w: f32,
     h: f32,
@@ -162,46 +141,6 @@ where
     }
 
     (grid, cell_size)
-}
-
-pub fn set_window_size(window: &nannou::winit::window::Window, w: i32, h: i32) {
-    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
-    window.set_inner_size(logical_size);
-}
-
-pub fn set_window_position(app: &App, window_id: window::Id, x: i32, y: i32) {
-    app.window(window_id)
-        .unwrap()
-        .winit_window()
-        .set_outer_position(nannou::winit::dpi::PhysicalPosition::new(x, y));
-}
-
-pub fn uuid_5() -> String {
-    uuid(5)
-}
-
-/// Generate a random string of the specified length consisting of
-/// lowercase letters and numbers.
-pub fn uuid(length: usize) -> String {
-    const LETTERS: &str = "abcdefghijklmnopqrstuvwxyz";
-    const NUMBERS: &str = "0123456789";
-
-    let mut rng = thread_rng();
-    (0..length)
-        .map(|_| {
-            if rng.gen_bool(0.5) {
-                LETTERS
-                    .chars()
-                    .nth(rng.gen_range(0..LETTERS.len()))
-                    .unwrap()
-            } else {
-                NUMBERS
-                    .chars()
-                    .nth(rng.gen_range(0..NUMBERS.len()))
-                    .unwrap()
-            }
-        })
-        .collect()
 }
 
 pub trait TrigonometricExt {
@@ -254,65 +193,6 @@ pub fn trig_fn_lookup() -> HashMap<&'static str, fn(f32) -> f32> {
     map
 }
 
-pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
-    start + (end - start) * t
-}
-
-/// Utilities to contain a value within a range
-pub mod constrain {
-    /// Clamp a value between min and max
-    pub fn clamp(value: f32, min: f32, max: f32) -> f32 {
-        nannou::prelude::clamp(value, min, max)
-    }
-
-    /// Clamp a value between min and max such that values that overshoot are
-    /// mirrored back in, e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.8`
-    pub fn fold(value: f32, min: f32, max: f32) -> f32 {
-        if min == max {
-            return min;
-        }
-        if value == max {
-            return max;
-        }
-
-        let range = max - min;
-        let value = value - min;
-        let distance = value.abs();
-
-        let cycles = (distance / range).floor();
-        let remainder = distance % range;
-
-        if cycles as i32 % 2 == 0 {
-            if value >= 0.0 {
-                min + remainder
-            } else {
-                max - remainder
-            }
-        } else if value >= 0.0 {
-            max - remainder
-        } else {
-            min + remainder
-        }
-    }
-
-    /// Clamp a value between min and max such that values that overshoot enter
-    /// from the opposite bound  e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.2`
-    pub fn wrap(value: f32, min: f32, max: f32) -> f32 {
-        if min == max {
-            return min;
-        }
-        if value == max {
-            return max;
-        }
-
-        let range = max - min;
-        let value = value - min;
-
-        let wrapped = value - (value / range).floor() * range;
-        min + wrapped
-    }
-}
-
 pub fn rect_contains_point(rect: &Rect, point: &Vec2) -> bool {
     rect.left() <= point.x
         && point.x <= rect.right()
@@ -337,15 +217,6 @@ pub fn nearby_point(base_point: Vec2, radius: f32) -> Vec2 {
         base_point.x + distance * angle.cos(),
         base_point.y + distance * angle.sin(),
     )
-}
-
-pub fn safe_range(min: f32, max: f32) -> (f32, f32) {
-    let a = if max < min { max } else { min };
-    let mut b = if min > max { min } else { max };
-    if a == b {
-        b += f32::EPSILON;
-    }
-    (a, b)
 }
 
 pub fn multi_lerp(values: &[f32], t: f32) -> f32 {
@@ -413,13 +284,6 @@ pub fn rotate_point(point: Vec2, center: Vec2, angle: f32) -> Vec2 {
     rotated + center
 }
 
-pub fn random_within_range_stepped(min: f32, max: f32, step: f32) -> f32 {
-    let mut rng = rand::thread_rng();
-    let random_value = min + rng.gen_range(0.0..1.0) * (max - min);
-    let quantized_value = (random_value / step).round() * step;
-    f32::max(min, f32::min(max, quantized_value))
-}
-
 pub fn random_normal(std_dev: f32) -> f32 {
     let u1: f32 = random();
     let u2: f32 = random();
@@ -427,10 +291,6 @@ pub fn random_normal(std_dev: f32) -> f32 {
     // Use the Box-Muller transform to create a normal distribution
     let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * PI * u2).cos();
     z0 * std_dev
-}
-
-pub fn random_bool() -> bool {
-    random()
 }
 
 // https://www.generativehut.com/post/how-to-make-generative-art-feel-natural
@@ -545,27 +405,6 @@ pub fn str_to_f32_seed(id: &str) -> f32 {
     hash as f32
 }
 
-#[derive(Debug)]
-pub struct AtomicF32 {
-    inner: AtomicU32,
-}
-
-impl AtomicF32 {
-    pub const fn new(value: f32) -> Self {
-        Self {
-            inner: AtomicU32::new(value.to_bits()),
-        }
-    }
-
-    pub fn load(&self, order: Ordering) -> f32 {
-        f32::from_bits(self.inner.load(order))
-    }
-
-    pub fn store(&self, value: f32, order: Ordering) {
-        self.inner.store(value.to_bits(), order)
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use super::*;
@@ -582,7 +421,8 @@ pub mod tests {
         ($a:expr, $b:expr, $epsilon:expr) => {
             assert!(
                 ($a - $b).abs() < $epsilon,
-                "Values not approximately equal: {} and {}, difference: {}, tolerance: {}",
+                "Values not approximately equal: 
+                    {} and {}, difference: {}, tolerance: {}",
                 $a, $b, ($a - $b).abs(), $epsilon
             );
         };

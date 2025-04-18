@@ -1,6 +1,7 @@
+use lattice::prelude::lerp;
 use nannou::prelude::*;
 
-use crate::util::*;
+use super::util::random_normal;
 
 pub trait NoiseStrategy {
     fn generate_noise(&self, n_points: usize, scale: f32) -> Vec<f32>;

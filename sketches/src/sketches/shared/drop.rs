@@ -1,10 +1,7 @@
-use nannou::{
-    glam::Vec2,
-    rand::{random_f32, random_range},
-};
+use lattice::prelude::*;
+use nannou::glam::Vec2;
+use nannou::rand::{random_f32, random_range};
 use std::f32::consts::PI;
-
-use crate::util::*;
 
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop.mjs
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop3.mjs
