@@ -1,12 +1,14 @@
-use std::error::Error;
-
 use ipc_channel::ipc::{self, IpcSender};
 use rfd::FileDialog;
+use rust_embed::Embed;
+use std::error::Error;
 use tao::dpi::{self, LogicalPosition, LogicalSize, PixelUnit};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoop};
 use tao::window::{WindowBuilder, WindowSizeConstraints};
 use wry::WebViewBuilder;
+use wry::http::header::CONTENT_TYPE;
+use wry::http::{Request, Response};
 
 use super::web_view::{self as wv};
 use crate::framework::prelude::*;
@@ -19,13 +21,17 @@ const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 96 + 27;
 const MIN_SETTINGS_HEIGHT: i32 = 700;
 
+// #[cfg(feature = "prod")]
+#[derive(Embed)]
+#[folder = "static"]
+struct Asset;
+
 pub fn run() -> Result<(), Box<dyn Error>> {
     init_logger();
     info!("Starting web_view_process");
 
     let server_name = std::env::args().nth(1).unwrap();
     let (sender, receiver) = setup_ipc_connection(server_name).unwrap();
-
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
@@ -47,8 +53,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         .build(&event_loop)
         .unwrap();
 
-    let web_view = WebViewBuilder::new()
-        .with_url("http://localhost:3000")
+    let web_view_builder = WebViewBuilder::new()
         .with_devtools(true)
         // Events from UI -> Here -> Parent
         .with_ipc_handler(move |message| {
@@ -82,8 +87,29 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
                 _ => sender.send(event).unwrap(),
             }
-        })
-        .build(&window)?;
+        });
+
+    let web_view = if cfg!(feature = "prod") {
+        debug!("Using `prod` protocol handler");
+        web_view_builder
+            .with_url("app://index.html")
+            .with_custom_protocol("app".into(), move |_webview_id, request| {
+                match serve(request) {
+                    Ok(r) => r.map(Into::into),
+                    Err(e) => Response::builder()
+                        .header(CONTENT_TYPE, "text/plain")
+                        .status(500)
+                        .body(e.to_string().as_bytes().to_vec())
+                        .unwrap()
+                        .map(Into::into),
+                }
+            })
+            .build(&window)?
+    } else {
+        web_view_builder
+            .with_url("http://localhost:3000")
+            .build(&window)?
+    };
 
     // web_view.open_devtools();
 
@@ -180,4 +206,32 @@ fn derive_gui_height(controls: Vec<wv::Control>) -> i32 {
     trace!("Derived GUI height: {}", h);
 
     h
+}
+
+fn serve(
+    request: Request<Vec<u8>>,
+) -> Result<Response<Vec<u8>>, Box<dyn std::error::Error>> {
+    let uri_path = request.uri().path();
+    let path = ternary!(uri_path == "/", "index.html", &uri_path[1..]);
+
+    let asset =
+        Asset::get(path).ok_or_else(|| format!("Asset not found: {}", path))?;
+
+    let content = asset.data.into_owned();
+
+    // (can replace with `mime_guess` if needed)
+    let mimetype = if path.ends_with(".html") {
+        "text/html"
+    } else if path.ends_with(".js") {
+        "text/javascript"
+    } else if path.ends_with(".css") {
+        "text/css"
+    } else {
+        "application/octet-stream"
+    };
+
+    Response::builder()
+        .header(CONTENT_TYPE, mimetype)
+        .body(content)
+        .map_err(Into::into)
 }

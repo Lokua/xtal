@@ -1,6 +1,7 @@
 [package]
 name = "lattice"
 version = "0.11.0"
+description = "A creative coding framework build on top of Nannou"
 authors = ["Lokua <dev@lokua.net>"]
 edition = "2024"
 default-run = "lattice"
@@ -14,6 +15,7 @@ doctest = false
 default = []
 instrumentation = []
 logging = []
+prod = []
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -38,7 +40,7 @@ directories-next = "2.0.0"
 env_logger = "0.11.5"
 indexmap = { version = "2.7.1", features = ["serde"] }
 ipc-channel = "0.19.0"
-lattice-derives = { path = "../lattice-derives" }
+lattice-macros = { path = "../lattice-macros" }
 log = "0.4.22"
 midir = "0.10.1"
 naga = "0.13.0"
@@ -50,6 +52,7 @@ open = "5.3.2"
 parking_lot = "0.12.3"
 rayon = "1.10.0"
 rfd = "0.15.3"
+rust-embed = "8.7.0"
 rustc-hash = "2.1.1"
 rustfft = "6.2.0"
 serde = "1.0.215"

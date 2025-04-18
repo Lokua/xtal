@@ -1,4 +1,4 @@
-//! Naive/bare-bones instrumentation for quick insights
+//! Bare-bones instrumentation for quick insights
 
 #[cfg(feature = "instrumentation")]
 use std::time::{Duration, Instant};

@@ -1,8 +1,7 @@
 /target
-# Keeping vscode as 
-# .vscode
 .DS_Store
 out*.txt
 debug.txt
 *.log
 **/node_modules
+lattice/static

@@ -61,6 +61,6 @@
     "Vortx",
     "walkdir"
   ],
-  "rust-analyzer.cargo.features": ["instrumentation", "logging"],
+  "rust-analyzer.cargo.features": "all",
   "rust-analyzer.check.command": "clippy"
 }

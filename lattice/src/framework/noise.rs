@@ -1,3 +1,6 @@
+//! Wrappers around nannou::noise modules that simplify imports and work solely
+//! with f32
+
 use nannou::noise::{NoiseFn, OpenSimplex, Perlin, Seedable};
 
 pub struct PerlinNoise {

@@ -153,6 +153,10 @@ impl FromStr for Operator {
     }
 }
 
+/// Perform basic addition or multiplication on the result of an animation. This
+/// is only useful in a [control script][cs] context.
+///
+/// [cs]: https://github.com/Lokua/lattice/blob/main/docs/control_script_reference.md
 #[derive(Debug, Clone)]
 pub struct Math {
     pub operator: Operator,

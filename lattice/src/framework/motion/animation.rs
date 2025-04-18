@@ -1,22 +1,4 @@
 //! Animation module providing musically-timed animation and transition methods
-//!
-//! The core animation system supports:
-//!
-//! - Beat-synchronized timing with support for various clock sources (frame
-//!   count, MIDI, OSC, manual)
-//! - Simple oscillations and phase-based animations
-//! - Linear and eased transitions between keyframes
-//! - Complex automation curves with configurable breakpoints
-//! - Randomized transitions with constraints
-//! - Post processing via effects
-//!
-//! # Musical Timing
-//!
-//! All animations are synchronized to musical time expressed in beats, where
-//! one beat equals one quarter note. The animation system can be driven by
-//! different timing sources (Frame, MIDI, OSC) that provide the current beat,
-//! allowing animations to stay in sync with external music software or
-//! hardware.
 
 use nannou::math::map_range;
 use nannou::rand::rngs::StdRng;

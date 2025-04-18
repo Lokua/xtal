@@ -5,12 +5,8 @@ use nannou_egui::egui::ahash::HashSet;
 use super::param_mod::ParamValue;
 use crate::framework::prelude::*;
 
-/// { "symmetry" -> Param::Hot("t1"), ... }
 pub type Node = HashMap<String, ParamValue>;
-
-/// "t2" -> { "symmetry" -> Param::Hot("t1"), ... }
 pub type Graph = HashMap<String, Node>;
-
 pub type EvalOrder = Option<Vec<String>>;
 
 /// A directed graph structure that manages parameter dependency relationships.
@@ -134,8 +130,7 @@ impl DepGraph {
     fn extract_relationships(
         &self,
     ) -> (HashMap<String, Vec<String>>, HashMap<String, usize>) {
-        // graph = { "consumer_node": ["prerequisite_node"] }
-        // "consumer_node depends on prerequisite_node(s)"
+        // graph = { "prerequisite_node": ["consumer_node"] }
         let mut graph: HashMap<String, Vec<String>> = HashMap::default();
 
         // Number of prerequisite nodes each consumer depends on
@@ -144,7 +139,7 @@ impl DepGraph {
         for (node_name, params) in self.node_defs.iter() {
             // value = Hot("prerequisite_node")
             for value in params.values() {
-                // hot_name = "the_name_of_slider_or_animation"
+                // hot_name = "prerequisite_node"
                 if let ParamValue::Hot(hot_name) = value {
                     in_degree.entry(hot_name.clone()).or_insert(0);
 

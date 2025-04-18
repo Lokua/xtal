@@ -1,10 +1,13 @@
 //! A framework build around [Nannou][nannou] with a slick UI. See the project's
 //! [repo][repo] for an overview.
 //!
+//! 🚧 **Alpha**: This crate is starting to stabilize yet is still subject to
+//! frequent breaking change.
+//!
 //! [nannou]: https://github.com/nannou-org/nannou
 //! [repo]: https://github.com/lokua/lattice
 
-pub use lattice_derives::*;
+pub use lattice_macros::*;
 
 pub(crate) mod framework;
 pub(crate) mod runtime;
@@ -42,7 +45,7 @@ pub mod prelude {
     pub use crate::register;
     pub use crate::runtime::app::run;
     pub use crate::ternary;
-    pub use lattice_derives::{SketchComponents, uniforms};
+    pub use lattice_macros::{SketchComponents, uniforms};
 
     #[cfg(feature = "logging")]
     pub use crate::debug_once;
@@ -72,5 +75,5 @@ pub mod motion {
 
 /// A dumping ground for miscellaneous helpers
 pub mod util {
-    pub use crate::framework::util::to_absolute_path;
+    pub use crate::framework::util::*;
 }
