@@ -7,7 +7,15 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
-## [WIP]
+## [0.11.0] 2025-04-17
+
+### Changed
+
+- Separated the single binary application containing lattice and my sketches
+  into a proper lattice lib and sketches app. This is step 1 for making lattice
+  a reusable library – still a lot more to do
+
+## [2025-04-14]
 
 ### Added
 
@@ -24,8 +32,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ### Fixed
 
-- RingModulator Effect didn't properly support param modulation for its `mix`
-  parameter
+- RingModula – didn't properly support param modulation for its `mix` parameter
 - `DepGraph` no longer stores consumers that aren't themselves prerequisite
   nodes. This led to misplaced calls to `Hub::get` and warnings for consumers
   that are also effects (since effect values aren't calculated in `get`)
