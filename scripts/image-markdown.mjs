@@ -9,7 +9,7 @@ main()
 function main() {
   try {
     const root = xtalRoot()
-    const bucket = 'https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/'
+    const bucket = 'https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images'
     const imagesDir = path.join(os.homedir(), '/Pictures/Xtal')
     const indexFile = path.join(root, '/storage/images_metadata.json')
     const outputFile = path.join(root, 'index.md')
