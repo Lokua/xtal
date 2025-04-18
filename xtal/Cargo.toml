@@ -7,6 +7,7 @@ homepage = "https://github.com/Lokua/xtal"
 edition = "2024"
 default-run = "xtal"
 license = "MIT"
+readme = "../README.md"
 
 # TODO: fixme
 [lib]
