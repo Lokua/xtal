@@ -8,6 +8,7 @@ edition = "2024"
 default-run = "xtal"
 license = "MIT"
 readme = "../README.md"
+include = ["src/**", "static/**", "Cargo.toml", "README.md"]
 
 [lib]
 doctest = false
@@ -20,11 +21,6 @@ prod = []
 
 [dev-dependencies]
 criterion = "0.5.1"
-
-[[bench]]
-name = "frame_controller_bench"
-harness = false
-path = "benches/frame_controller_bench.rs"
 
 [dependencies]
 ahash = "0.8.11"

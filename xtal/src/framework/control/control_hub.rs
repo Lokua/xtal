@@ -1,6 +1,8 @@
 //! Provides a means of controlling sketch parameters with the various Xtal
-//! control systems from an external yaml file that can be hot-reloaded.
-#![doc = include_str!("../../../../docs/control_script_reference.md")]
+//! control systems from an external yaml file that can be hot-reloaded. See the
+//! [Control Script Reference][ref]
+//!
+//! [ref]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 
 use nannou::rand::{Rng, thread_rng};
 use notify::{Event, RecursiveMode, Watcher};
