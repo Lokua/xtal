@@ -47,10 +47,10 @@
 //! Uses a combination of MIDI clock (for precision) and MIDI Time Code (MTC) to
 //! stay in sync. This is useful for DAWs that don't support sending SPP but do
 //! support MTC. Ableton, for example, does not support MTC but you can work
-//! around that with
-//! https://support.showsync.com/sync-tools/livemtc/introduction
+//! around that with [Live MTC][livemtc].
 //!
 //! [animation]: crate::motion
+//! [livemtc]: https://support.showsync.com/sync-tools/livemtc/introduction
 
 use nannou_osc as osc;
 use std::{

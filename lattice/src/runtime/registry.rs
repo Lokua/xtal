@@ -1,8 +1,7 @@
 use indexmap::IndexMap;
 use nannou::prelude::*;
-use once_cell::sync::Lazy;
 use std::str;
-use std::sync::RwLock;
+use std::sync::{LazyLock, RwLock};
 
 use crate::framework::prelude::*;
 
@@ -57,8 +56,8 @@ pub struct SketchInfo {
     pub factory: DynamicSketchFn,
 }
 
-pub static REGISTRY: Lazy<RwLock<SketchRegistry>> =
-    Lazy::new(|| RwLock::new(SketchRegistry::new()));
+pub static REGISTRY: LazyLock<RwLock<SketchRegistry>> =
+    LazyLock::new(|| RwLock::new(SketchRegistry::new()));
 
 pub struct SketchRegistry {
     sketches: IndexMap<String, SketchInfo>,

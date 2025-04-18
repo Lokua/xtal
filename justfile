@@ -1,8 +1,8 @@
 start *ARGS:
-  RUST_LOG=lattice=info cargo run --release {{ARGS}}
+  RUST_LOG=lattice=info,sketches=info cargo run --release {{ARGS}}
 
 debug *ARGS:
-  RUST_LOG=lattice=debug cargo run --release {{ARGS}}
+  RUST_LOG=lattice=debug,sketches=debug cargo run --release {{ARGS}}
 
 ui:
   bun --cwd lattice-ui start
@@ -11,7 +11,7 @@ instrument *ARGS:
   RUST_LOG=lattice=debug cargo run --release --features instrumentation {{ARGS}}
 
 trace *ARGS:
-  RUST_LOG=lattice=trace cargo run --release {{ARGS}}
+  RUST_LOG=lattice=trace,sketches=trace cargo run --release {{ARGS}}
 
 # Usage: just trace-module framework::frame_controller <sketch>
 trace-module MODULE *ARGS:

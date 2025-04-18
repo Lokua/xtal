@@ -1,15 +1,14 @@
 use nannou_osc as osc;
-use once_cell::sync::Lazy;
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 
 use crate::global;
 
 use super::prelude::*;
 
-pub static SHARED_OSC_RECEIVER: Lazy<Arc<Receiver>> = Lazy::new(|| {
+pub static SHARED_OSC_RECEIVER: LazyLock<Arc<Receiver>> = LazyLock::new(|| {
     let receiver = Receiver::new();
     if let Err(e) = receiver.start() {
         warn!("Failed to start shared OSC receiver: {}", e);

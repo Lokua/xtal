@@ -38,37 +38,39 @@ pub fn init_logger() {
         .init();
 }
 
+/// Logs a warn message at most once for the exact arguments
 #[macro_export]
 macro_rules! warn_once {
-   ($($arg:tt)+) => {{
-       use once_cell::sync::Lazy;
-       use std::collections::HashSet;
-       use std::sync::Mutex;
+    ($($arg:tt)+) => {{
+        use std::collections::HashSet;
+        use std::sync::{Mutex, LazyLock};
 
-       static SEEN: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+        static SEEN: LazyLock<Mutex<HashSet<String>>> =
+            LazyLock::new(|| Mutex::new(HashSet::new()));
 
-       let message = format!($($arg)+);
-       let mut set = SEEN.lock().unwrap();
-       if set.insert(message.to_string()) {
-           log::warn!("{}", message);
-       }
+        let message = format!($($arg)+);
+        let mut set = SEEN.lock().unwrap();
+        if set.insert(message.to_string()) {
+            log::warn!("{}", message);
+        }
    }}
 }
 
+/// Logs a debug message at most once for the exact arguments
 #[macro_export]
 macro_rules! debug_once {
    ($($arg:tt)+) => {{
-       use once_cell::sync::Lazy;
-       use std::collections::HashSet;
-       use std::sync::Mutex;
+        use std::collections::HashSet;
+        use std::sync::{Mutex, LazyLock};
 
-       static SEEN: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+        static SEEN: LazyLock<Mutex<HashSet<String>>> =
+            LazyLock::new(|| Mutex::new(HashSet::new()));
 
-       let message = format!($($arg)+);
-       let mut set = SEEN.lock().unwrap();
-       if set.insert(message.to_string()) {
-           log::debug!("{}", message);
-       }
+        let message = format!($($arg)+);
+        let mut set = SEEN.lock().unwrap();
+        if set.insert(message.to_string()) {
+            log::debug!("{}", message);
+        }
    }}
 }
 
@@ -79,14 +81,13 @@ macro_rules! debug_throttled {
     ($interval_ms:expr, $($arg:tt)*) => {
         {
             use std::time::{Duration, Instant};
-            use std::sync::Mutex;
+            use std::sync::{Mutex, LazyLock};
             use std::collections::HashMap;
             use log::debug;
-            use once_cell::sync::Lazy;
 
             // Lazy initialization of throttle map
-            static DEBUG_THROTTLE: Lazy<Mutex<HashMap<&'static str, Instant>>> =
-                Lazy::new(|| Mutex::new(HashMap::default()));
+            static DEBUG_THROTTLE: LazyLock<Mutex<HashMap<&'static str, Instant>>> =
+                LazyLock::new(|| Mutex::new(HashMap::default()));
 
             // Throttle logic
             let key = stringify!($($arg)*);

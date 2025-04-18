@@ -3,17 +3,18 @@ use midir::MidiInput;
 use midir::MidiInputConnection;
 use midir::MidiOutput;
 use midir::MidiOutputConnection;
-use once_cell::sync::Lazy;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::thread;
 
 use super::prelude::*;
 
-static THREADS: Lazy<Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>>> =
-    Lazy::new(|| Mutex::new(HashMap::default()));
+static THREADS: LazyLock<
+    Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>>,
+> = LazyLock::new(|| Mutex::new(HashMap::default()));
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ConnectionType {

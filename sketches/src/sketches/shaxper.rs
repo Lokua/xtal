@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use lattice::{debug_once, prelude::*};
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "shaxper",
@@ -62,6 +62,7 @@ pub fn init(app: &App, ctx: &Context) -> ShaderExperiments {
 impl Sketch for ShaderExperiments {
     fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
+        debug_once!("This should happen only once");
 
         let params = ShaderParams {
             resolution: [wr.w(), wr.h(), 0.0, 0.0],

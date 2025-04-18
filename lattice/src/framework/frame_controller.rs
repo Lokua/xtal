@@ -6,15 +6,15 @@
 //! framework/runtime use and should not be interacted with directly.
 
 use nannou::prelude::*;
-use once_cell::sync::Lazy;
 use parking_lot::RwLock;
+use std::sync::LazyLock;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 use crate::framework::prelude::*;
 
-static CONTROLLER: Lazy<RwLock<FrameController>> =
-    Lazy::new(|| RwLock::new(FrameController::new()));
+static CONTROLLER: LazyLock<RwLock<FrameController>> =
+    LazyLock::new(|| RwLock::new(FrameController::new()));
 
 // Atomics used to lessen the amount of CONTROLLER locks
 static FRAME_COUNT: AtomicU32 = AtomicU32::new(0);

@@ -3059,7 +3059,6 @@ dependencies = [
  "nannou_egui",
  "nannou_osc",
  "notify",
- "once_cell",
  "open",
  "parking_lot",
  "rayon",
@@ -5210,7 +5209,6 @@ dependencies = [
  "lattice",
  "log",
  "nannou",
- "once_cell",
  "rayon",
  "termcolor",
 ]

@@ -1,7 +1,6 @@
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
 use directories_next::{BaseDirs, UserDirs};
-use once_cell::sync::Lazy;
 
 use crate::config::{
     MIDI_CLOCK_PORT, MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT,
@@ -9,8 +8,8 @@ use crate::config::{
 };
 
 /// Stores global state that is not easily shared via call chains
-pub static GLOBAL: Lazy<Mutex<Global>> =
-    Lazy::new(|| Mutex::new(Global::default()));
+pub static GLOBAL: LazyLock<Mutex<Global>> =
+    LazyLock::new(|| Mutex::new(Global::default()));
 
 pub fn audio_device_name() -> String {
     let global = GLOBAL.lock().unwrap();
