@@ -9,7 +9,7 @@ use super::serialization::{
     GlobalSettings, SerializableSketchState, TransitorySketchState,
 };
 use crate::framework::prelude::*;
-use crate::global;
+use crate::runtime::global;
 
 /// The appropriate OS config dir, currently used to store serialized
 /// [`GlobalSettings`]

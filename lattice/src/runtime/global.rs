@@ -1,11 +1,9 @@
+use directories_next::{BaseDirs, UserDirs};
 use std::sync::{LazyLock, Mutex};
 
-use directories_next::{BaseDirs, UserDirs};
+use crate::framework::prelude::*;
 
-use crate::config::{
-    MIDI_CLOCK_PORT, MIDI_CONTROL_IN_PORT, MIDI_CONTROL_OUT_PORT,
-    MULTICHANNEL_AUDIO_DEVICE_NAME, OSC_PORT,
-};
+const DEFAULT_OSC_PORT: u16 = 2346;
 
 /// Stores global state that is not easily shared via call chains
 pub static GLOBAL: LazyLock<Mutex<Global>> =
@@ -104,13 +102,50 @@ pub struct Global {
 
 impl Default for Global {
     fn default() -> Self {
+        let midi_input_port = midi::list_input_ports().map_or_else(
+            |_| String::new(),
+            |ports| {
+                ports
+                    .first()
+                    .map(|(_, port)| {
+                        trace!("Default MIDI input port: {}", port);
+                        port.clone()
+                    })
+                    .unwrap_or_default()
+            },
+        );
+
+        let midi_output_port = midi::list_output_ports().map_or_else(
+            |_| String::new(),
+            |ports| {
+                ports
+                    .first()
+                    .map(|(_, port)| {
+                        trace!("Default MIDI output port: {}", port);
+                        port.clone()
+                    })
+                    .unwrap_or_default()
+            },
+        );
+
         Self {
-            audio_device_name: MULTICHANNEL_AUDIO_DEVICE_NAME.to_string(),
+            audio_device_name: list_audio_devices().map_or_else(
+                |_| String::new(),
+                |devices| {
+                    devices
+                        .first()
+                        .map(|device| {
+                            trace!("Default audio device: {}", device);
+                            device.clone()
+                        })
+                        .unwrap_or_default()
+                },
+            ),
             images_dir: user_dir(|ud| ud.picture_dir(), "Images"),
-            midi_clock_port: MIDI_CLOCK_PORT.to_string(),
-            midi_control_in_port: MIDI_CONTROL_IN_PORT.to_string(),
-            midi_control_out_port: MIDI_CONTROL_OUT_PORT.to_string(),
-            osc_port: OSC_PORT,
+            midi_clock_port: midi_input_port.clone(),
+            midi_control_in_port: midi_input_port,
+            midi_control_out_port: midi_output_port,
+            osc_port: DEFAULT_OSC_PORT,
             user_data_dir: user_dir(|ud| ud.document_dir(), "SketchData"),
             videos_dir: user_dir(|ud| ud.video_dir(), "Videos"),
         }

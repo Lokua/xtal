@@ -9,15 +9,14 @@
 
 use cpal::{Device, Stream, StreamConfig, traits::*};
 use nannou::math::map_range;
-use std::{
-    error::Error,
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
+use std::error::Error;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
+use crate::framework::frame_controller;
 use crate::framework::prelude::*;
-use crate::{framework::frame_controller, global};
+use crate::runtime::global;
 
 #[derive(Clone, Debug)]
 pub struct AudioControlConfig {

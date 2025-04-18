@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::map_mode::{MapMode, Mappings};
 use crate::framework::control::control_hub::Snapshots;
 use crate::framework::prelude::*;
-use crate::global;
+use crate::runtime::global;
 
 pub const GLOBAL_SETTINGS_VERSION: &str = "1";
 

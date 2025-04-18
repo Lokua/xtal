@@ -1,4 +1,5 @@
 pub mod app;
+pub mod global;
 pub mod map_mode;
 pub mod recording;
 pub mod registry;

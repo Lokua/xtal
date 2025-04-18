@@ -91,7 +91,7 @@ impl MapMode {
 
         midi::on_message(
             midi::ConnectionType::Mapping,
-            crate::config::MIDI_CONTROL_IN_PORT,
+            &crate::global::midi_control_in_port(),
             move |_, msg| {
                 if !midi::is_control_change(msg[0]) {
                     return;

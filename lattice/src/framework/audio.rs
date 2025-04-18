@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 
 use super::prelude::*;
 use crate::framework::frame_controller;
-use crate::global;
+use crate::runtime::global;
 
 /// Configuration for envelope following behavior, controlling how quickly the
 /// envelope tracks changes in the input signal.

@@ -164,7 +164,7 @@ fn setup_ipc_connection(
 }
 
 fn derive_gui_height(controls: Vec<wv::Control>) -> i32 {
-    let unscientific_offset = controls.len() as i32 - 12;
+    let unscientific_offset = controls.len() as i32;
 
     let controls_height: i32 = controls
         .iter()

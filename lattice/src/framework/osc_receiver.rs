@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 
-use crate::global;
+use crate::runtime::global;
 
 use super::prelude::*;
 

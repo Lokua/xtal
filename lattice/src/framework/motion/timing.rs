@@ -228,7 +228,7 @@ impl MidiSongTiming {
 
         match midi::on_message(
             midi::ConnectionType::Clock,
-            crate::config::MIDI_CLOCK_PORT,
+            &crate::global::midi_clock_port(),
             move |_stamp, message| {
                 if message.is_empty() {
                     return;
@@ -364,7 +364,7 @@ impl HybridTiming {
 
         match midi::on_message(
             midi::ConnectionType::Clock,
-            crate::config::MIDI_CLOCK_PORT,
+            &crate::global::midi_clock_port(),
             move |_stamp, message| {
                 if message.len() < 2 || message[0] != MTC_QUARTER_FRAME {
                     return;
@@ -477,7 +477,10 @@ impl HybridTiming {
                                 .store(clock, Ordering::SeqCst);
 
                             debug!(
-                                "Beat difference ({}) exceeds threshold. mtc_beats: {}, midi_beats: {}, resetting clock to: {}:",
+                                "Beat difference ({}) exceeds threshold. 
+                                    mtc_beats: {}, 
+                                    midi_beats: {}, 
+                                    resetting clock to: {}:",
                                 beat_difference, mtc_beats, midi_beats, clock
                             );
 

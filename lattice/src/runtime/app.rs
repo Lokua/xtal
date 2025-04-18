@@ -21,7 +21,7 @@ use super::tap_tempo::TapTempo;
 use super::web_view::{self as wv};
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::{frame_controller, prelude::*};
-use crate::global;
+use crate::runtime::global;
 
 pub fn run() {
     nannou::app(model)

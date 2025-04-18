@@ -6,10 +6,9 @@
 
 pub use lattice_derives::*;
 
-pub(crate) mod config;
 pub(crate) mod framework;
-pub(crate) mod global;
 pub(crate) mod runtime;
+pub(crate) use runtime::global;
 
 /// Run the app after registering your sketches with [`register`]
 pub use crate::runtime::app::run;
