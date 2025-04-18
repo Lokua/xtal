@@ -6,7 +6,7 @@ creating stuff like this:
 <!-- TODO: add a gif! -->
 
 <img 
-  src="./images/displacement_2-627iz.png" 
+  src="https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/displacement_2-627iz.png" 
   alt="displacement_2-627iz" 
   width="90%"
 />
