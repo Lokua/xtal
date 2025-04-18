@@ -4,6 +4,9 @@ start *ARGS:
 debug *ARGS:
   RUST_LOG=lattice=debug cargo run --release {{ARGS}}
 
+ui:
+  bun --cwd lattice-ui start
+
 instrument *ARGS:
   RUST_LOG=lattice=debug cargo run --release --features instrumentation {{ARGS}}
 
@@ -32,8 +35,11 @@ test-verbose *ARGS:
 bench *ARGS:
   cargo bench {{ARGS}}
 
-docs:
+docs-internal:
   cargo doc --package lattice --document-private-items --open
+  
+docs:
+  cargo doc --package lattice --open
 
 stats:
   sccache --show-stats
