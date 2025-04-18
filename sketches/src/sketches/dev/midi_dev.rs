@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// ~/Documents/Live/2024/Lattice MIDI Test
+// ~/Documents/Live/2024/Xtal MIDI Test
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "midi_dev",

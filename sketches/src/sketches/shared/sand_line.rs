@@ -1,4 +1,4 @@
-use lattice::prelude::lerp;
+use xtal::prelude::lerp;
 use nannou::prelude::*;
 
 use super::util::random_normal;

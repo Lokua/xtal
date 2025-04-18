@@ -4,4 +4,4 @@ out*.txt
 debug.txt
 *.log
 **/node_modules
-lattice/static
+xtal/static

@@ -1,5 +1,5 @@
-use lattice::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use super::shared::drop::*;
 use crate::util::*;

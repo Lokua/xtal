@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 // Scratch sketch to follow along with https://thebookofshaders.com
 

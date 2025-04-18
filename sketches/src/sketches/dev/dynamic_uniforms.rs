@@ -2,7 +2,7 @@
 //! are definitely some issues with it
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "dynamic_uniforms",

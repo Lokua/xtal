@@ -1,7 +1,7 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
-// b/w Ableton 2025/Lattice - Wave Fract
+// b/w Ableton 2025/Xtal - Wave Fract
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_19_op_art",

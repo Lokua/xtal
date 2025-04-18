@@ -1,4 +1,4 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

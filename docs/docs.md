@@ -1,17 +1,17 @@
 > NOTE: this document for now will serve as a dumping ground until I figure out
 > exactly how I want to organize more formal documentation
 
-# Lattice & Nannou
+# Xtal & Nannou
 
-Lattice is essentially one big Nannou app. The first major difference is that a
-Lattice sketch must export a `SketchConfig` const containing metadata needed for
+Xtal is essentially one big Nannou app. The first major difference is that a
+Xtal sketch must export a `SketchConfig` const containing metadata needed for
 the runtime to properly boot a sketch. The second major difference is that
 instead of the standalone `model`, `update`, and `view` functions as you find in
-raw-Nannou, a Lattice sketch must provide an implementation of the `Sketch`
-trait. You may also notice a 3rd context argument in each method not found in
-the Nannou signatures – we'll get into that later – but besides these
-differences, everything is the same as a Nannou app and Nannou is still the
-crate you're likely to interact with the most in your code.
+raw-Nannou, a Xtal sketch must provide an implementation of the `Sketch` trait.
+You may also notice a 3rd context argument in each method not found in the
+Nannou signatures – we'll get into that later – but besides these differences,
+everything is the same as a Nannou app and Nannou is still the crate you're
+likely to interact with the most in your code.
 
 ### Nannou Boilerplate
 
@@ -38,10 +38,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
 }
 ```
 
-### Lattice Boilerplate
+### Xtal Boilerplate
 
 ```rust
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -80,7 +80,7 @@ Now let's get into some of the benefits in the next section...
 
 ## ControlHub
 
-At the heart of Lattice is the `ControlHub` struct (which we'll refer to as hub
+At the heart of Xtal is the `ControlHub` struct (which we'll refer to as hub
 from hereon). The hub is the one-stop shop for all controls and animations used
 in a sketch.
 
@@ -156,8 +156,8 @@ press the **Exclusions** button which will allow you to exclude any control from
 global randomization. Of course this is all only so interesting when you're
 simply changing the colors of a single circle, but allow yourself a moment to
 imagine the creative possibilities with a more complex sketch with 10 or 20
-controls. Hopefully this gives you a better idea of what Lattice provides on top
-of Nannou.
+controls. Hopefully this gives you a better idea of what Xtal provides on top of
+Nannou.
 
 ## Animation
 
@@ -192,19 +192,18 @@ information consult the cargo docs.
 
 ## Control Scripting
 
-While Lattice's various control and animation methods are easy to setup, it's a
-bit of pain to have to restart the rust sketch every time you want to change an
+While Xtal's various control and animation methods are easy to setup, it's a bit
+of pain to have to restart the rust sketch every time you want to change an
 animation or control configuration – especially as your sketch matures. For this
-reason Lattice provides a script-like mechanism that uses yaml for configuration
+reason Xtal provides a script-like mechanism that uses yaml for configuration
 and adds these controls dynamically and self-updates at runtime when the yaml
 file is changed. You still have to take care to setup the routings in your
 sketch (e.g. `let radius = self.hub.get("radius")`), but once these routings are
 in place you are free to edit their ranges, values, timing, etc. It's also worth
 knowing that Control Scripting makes certain things like disabling controls
 based on the values of other controls and parameter modulation much easier than
-they'd be in real code. Checkout any sketch in
-[lattice-sketches][lattice-sketches] that has a corresponding yaml file of the
-same name for a working example or
+they'd be in real code. Checkout any sketch in [xtal-sketches][xtal-sketches]
+that has a corresponding yaml file of the same name for a working example or
 [docs/control_script_reference.md](docs/control_script_reference.md) for
 comprehensive documentation.
 
@@ -257,7 +256,7 @@ let sd = hub.get("snare_drum");
 
 The `AudioControls` struct treats each audio channel as an individual control
 signal with optional slew limiting, suitable for audio-rate or control-rate
-signals. You can configure the audio device that is used in Lattice globally for
+signals. You can configure the audio device that is used in Xtal globally for
 all sketches in the **UI > Settings** view. On my computer I'm using the [16
 channel version of Blackhole][blackhole]. See below for how to set this up on
 macOS.
@@ -276,11 +275,11 @@ See [audio_controls_dev.rs](../src/sketches/dev/audio_controls_dev.rs) or
 
 See [audio_dev.rs](../src/sketches/dev/audio_dev.rs) for an example sketch.
 
-The `Audio` struct in lattice is configured to process the first channel of
+The `Audio` struct in xtal is configured to process the first channel of
 whatever audio device you have selected in the UI. I am currently doing this via
 Aggregate Device on my Mac using [Blackhole 2ch][blackhole] to capture output
 from my DAW (setup screenshots below). Note that this module is experimental and
-doesn't integrate with the rest of Lattice as nicely as `AudioControls` does.
+doesn't integrate with the rest of Xtal as nicely as `AudioControls` does.
 
 ### Aggregate Device Setup
 
@@ -292,7 +291,7 @@ doesn't integrate with the rest of Lattice as nicely as `AudioControls` does.
 > its own input, so sending audio out to Blackhole 3/4 will automatically appear
 > on inputs 1/2 in this setup; you don't even need to configure the inputs in
 > Ableton at all for this to work (just as long as you have the output config
-> set to "Lattice" and enable the appropriate ouputs in the output config under
+> set to "Xtal" and enable the appropriate ouputs in the output config under
 > Live's audio preferences)
 
 ![Ableton Live - Blackhole Track Routing](../assets/live-blackhole-track-routing.png)
@@ -317,21 +316,21 @@ MIDI clock, input, and output ports can be set in the UI > Settings view
 
 ### Loopback (Ableton)
 
-To automate synth parameters in Ableton and Lattice parameters simultaneously
-from _the same UI CC control in Live_ (as opposed to a physical control, in
-which case you can skip this section), you need to enable MIDI loopback by
-sending MIDI to `Lattice In` and also route `Lattice In` back in to Live to
-control parameters. Here's the routing:
+To automate synth parameters in Ableton and Xtal parameters simultaneously from
+_the same UI CC control in Live_ (as opposed to a physical control, in which
+case you can skip this section), you need to enable MIDI loopback by sending
+MIDI to `Xtal In` and also route `Xtal In` back in to Live to control
+parameters. Here's the routing:
 
 ![Live MIDI Preferences](../assets/live-midi-prefs.png)
 
-To use Ableton automation lanes to control Lattice params, follow these steps:
+To use Ableton automation lanes to control Xtal params, follow these steps:
 
 1. Create a MIDI track and clip and add CC automation to it.
-2. In the tracks **MIDI To** router, select `IAC Driver Lattice In` and `Ch. 1`
+2. In the tracks **MIDI To** router, select `IAC Driver Xtal In` and `Ch. 1`
 
-Those steps are all you need to send MIDI to Lattice to control parameters. As
-for controlling a live parameter with that same CC, follow these steps:
+Those steps are all you need to send MIDI to Xtal to control parameters. As for
+controlling a live parameter with that same CC, follow these steps:
 
 1. Play your clip containing the CC data
 2. Stop the transport (this is important!)
@@ -345,31 +344,31 @@ control to something.
 
 > Note: the above instructions are for working without a MIDI controller. When
 > working with a MIDI controller you can just map the MIDI control to an Ableton
-> device knob that can send CC out to Lattice and also map the controller to an
-> Ableton parameter. In this case _you do not_ want Lattice enabled in Ableton's
+> device knob that can send CC out to Xtal and also map the controller to an
+> Ableton parameter. In this case _you do not_ want Xtal enabled in Ableton's
 > MIDI Input ports at all as that just complicates things.
 
 ### Sync Recordings
 
-With MIDI ports configured in your DAW to send clock to Lattice, Lattice is
-already in a place where you can perfectly sync video recordings with audio from
-your DAW. Below are steps to setup Ableton Live such that you can record audio
-and video simultaneously when you press Play in the DAW (if you only want to
-record video you can just do steps 2 and 4):
+With MIDI ports configured in your DAW to send clock to Xtal, Xtal is already in
+a place where you can perfectly sync video recordings with audio from your DAW.
+Below are steps to setup Ableton Live such that you can record audio and video
+simultaneously when you press Play in the DAW (if you only want to record video
+you can just do steps 2 and 4):
 
 1. In Ableton > Preferences > Record, make sure **Start Transport With Record**
    is set to **Off**
-2. Hit **Q Rec** in Lattice.
+2. Hit **Q Rec** in Xtal.
 3. Arm tracks in Ableton, arm the transport (Record button)
-4. Now, pressing play in Ableton will also initiate recording in Lattice,
-   likewise pressing Stop in Ableton will stop recording in Lattice.
+4. Now, pressing play in Ableton will also initiate recording in Xtal, likewise
+   pressing Stop in Ableton will stop recording in Xtal.
 
 # Open Sound Control (OSC)
 
 While MIDI is great for controlling parameters in the case that a MIDI
 controller can send 14bit high resolution MIDI, it sucks otherwise (128 values
 just isn't enough precision for smooth parameter automation). For this reason
-Lattice supports OSC via [Nannou OSC][nannou-osc] and comes with two MaxForLive
+Xtal supports OSC via [Nannou OSC][nannou-osc] and comes with two MaxForLive
 devices designed to make integration with Ableton Live simpler.
 
 **Example**
@@ -392,11 +391,11 @@ let hub = ControlHubBuilder::new()
 ![L.OscTransport MaxForLive Device](../assets/osc-transport.png)
 
 Place this on any track in Ableton and it will send high precision clock and
-exact transport location to Lattice. This should be preferred over using MIDI
-Timing however you should still make sure MIDI ports between Ableton and Lattice
-are configured properly as Lattice still depends on MIDI clock for starting,
+exact transport location to Xtal. This should be preferred over using MIDI
+Timing however you should still make sure MIDI ports between Ableton and Xtal
+are configured properly as Xtal still depends on MIDI clock for starting,
 stopping, and syncing video recordings. The default host and port align with
-what Lattice expects and can be left alone, though you can configure this in
+what Xtal expects and can be left alone, though you can configure this in
 [src/config.rs][config].
 
 ### L.OscSend
@@ -527,7 +526,7 @@ fn view(&self, app: &App, frame: Frame, ctx: &Context) {
 [ffmpeg]: https://ffmpeg.org/
 [insta]: https://www.instagram.com/lokua/
 [just]: https://github.com/casey/just
-[lattice-sketches]: ../lattice-sketches/sketches
+[xtal-sketches]: ../xtal-sketches/sketches
 [midi-sketch]: src/sketches/midi_test.rs
 [nannou]: https://github.com/nannou-org/nannou
 [nannou-osc]: https://github.com/nannou-org/nannou/tree/master/nannou_osc

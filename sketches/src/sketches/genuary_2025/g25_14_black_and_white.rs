@@ -2,9 +2,9 @@ use bytemuck::{Pod, Zeroable};
 use gpu::GpuState;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// ~/Documents/Live/2025/2025.01.15 - 2020.01.28 F7 - Lattice Auto
+// ~/Documents/Live/2025/2025.01.15 - 2020.01.28 F7 - Xtal Auto
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_14_black_and_white",

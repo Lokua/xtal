@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use geom::Ellipse;
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::color::{LinSrgb, Srgb};
 use nannou::prelude::*;
 use nannou::rand::Rng;

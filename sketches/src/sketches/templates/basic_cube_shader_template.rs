@@ -1,5 +1,5 @@
 use bevy_reflect::Reflect;
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
 use crate::util::*;

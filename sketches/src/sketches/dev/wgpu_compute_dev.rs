@@ -1,4 +1,4 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 use std::sync::{Arc, Mutex};
 

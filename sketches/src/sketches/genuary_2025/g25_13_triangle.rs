@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// Live/2025/2025.01.14 Lattice - Sierpinski Triangle Project
+// Live/2025/2025.01.14 Xtal - Sierpinski Triangle Project
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_13_triangle",

@@ -4,7 +4,7 @@ use nannou::noise::Seedable;
 use nannou::noise::SuperSimplex;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 // https://www.youtube.com/watch?v=0YvPgYDR1oM&list=PLeCiJGCSl7jc5UWvIeyQAvmCNc47IuwkM&index=6
 

@@ -1,7 +1,7 @@
 use gpu::GpuState;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_5_isometric",

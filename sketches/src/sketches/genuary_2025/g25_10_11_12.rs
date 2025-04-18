@@ -1,7 +1,7 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
-// ~/Documents/Live/2025/2025.01.11 Lattice - Spiral
+// ~/Documents/Live/2025/2025.01.11 Xtal - Spiral
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_10_11_12",

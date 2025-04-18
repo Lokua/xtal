@@ -4,7 +4,7 @@ fn bench_fps_reads(c: &mut Criterion) {
     c.bench_function("fps_reads", |b| {
         b.iter(|| {
             for _ in 0..100 {
-                black_box(lattice::framework::frame_controller::fps());
+                black_box(xtal::framework::frame_controller::fps());
             }
         })
     });
@@ -14,7 +14,7 @@ fn bench_frame_count(c: &mut Criterion) {
     c.bench_function("frame_count", |b| {
         b.iter(|| {
             for _ in 0..100 {
-                black_box(lattice::framework::frame_controller::frame_count());
+                black_box(xtal::framework::frame_controller::frame_count());
             }
         })
     });

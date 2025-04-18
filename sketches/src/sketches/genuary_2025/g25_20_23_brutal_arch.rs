@@ -1,11 +1,11 @@
 use bevy_reflect::Reflect;
 use bytemuck::{Pod, Zeroable};
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
 use crate::util::*;
 
-// b/w ~/Live/2025/Lattice - Inspired by Brutalism
+// b/w ~/Live/2025/Xtal - Inspired by Brutalism
 // Original non-automated version lives at sketches/brutalism
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

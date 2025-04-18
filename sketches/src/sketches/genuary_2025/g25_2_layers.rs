@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 // b/w 2025 DD Running Free
 

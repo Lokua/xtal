@@ -1,51 +1,51 @@
 start *ARGS:
-  RUST_LOG=lattice=info,sketches=info cargo run --release {{ARGS}}
+  RUST_LOG=xtal=info,sketches=info cargo run --release {{ARGS}}
 
 debug *ARGS:
-  RUST_LOG=lattice=debug,sketches=debug cargo run --release {{ARGS}}
+  RUST_LOG=xtal=debug,sketches=debug cargo run --release {{ARGS}}
 
 ui:
-  bun --cwd lattice-ui start
+  bun --cwd xtal-ui start
 
 instrument *ARGS:
-  RUST_LOG=lattice=debug cargo run --release --features instrumentation {{ARGS}}
+  RUST_LOG=xtal=debug cargo run --release --features instrumentation {{ARGS}}
 
 trace *ARGS:
-  RUST_LOG=lattice=trace,sketches=trace cargo run --release {{ARGS}}
+  RUST_LOG=xtal=trace,sketches=trace cargo run --release {{ARGS}}
 
 # Usage: just trace-module framework::frame_controller <sketch>
 trace-module MODULE *ARGS:
-  RUST_LOG=lattice=info,lattice::{{MODULE}}=trace cargo run --release {{ARGS}}
+  RUST_LOG=xtal=info,xtal::{{MODULE}}=trace cargo run --release {{ARGS}}
 
 # Usage: just trace-module framework::frame_controller <sketch>
 debug-module MODULE *ARGS:
-  RUST_LOG=lattice=info,lattice::{{MODULE}}=debug cargo run --release {{ARGS}}
+  RUST_LOG=xtal=info,xtal::{{MODULE}}=debug cargo run --release {{ARGS}}
 
 # To test just a single test, past the test name e.g. just test my_test
 # To test a single module, pass the module name e.g. just test my::module
 test *ARGS:
-  RUST_LOG=lattice=trace cargo test --lib -- {{ARGS}}
+  RUST_LOG=xtal=trace cargo test --lib -- {{ARGS}}
   
 test-debug *ARGS:
-  RUST_LOG=lattice=debug cargo test --lib -- {{ARGS}}
+  RUST_LOG=xtal=debug cargo test --lib -- {{ARGS}}
 
 test-verbose *ARGS:
-  RUST_LOG=lattice=trace cargo test --lib --show-output -- {{ARGS}}  
+  RUST_LOG=xtal=trace cargo test --lib --show-output -- {{ARGS}}  
 
 bench *ARGS:
   cargo bench {{ARGS}}
 
 docs-internal:
-  cargo doc --package lattice --document-private-items --open
+  cargo doc --package xtal --document-private-items --open
   
 docs:
-  cargo doc --package lattice --open
+  cargo doc --package xtal --open
 
 stats:
   sccache --show-stats
 
 list_midi_ports:
-  RUST_LOG=lattice=debug cargo run --release --bin list_midi_ports
+  RUST_LOG=xtal=debug cargo run --release --bin list_midi_ports
 
 # ------------------------------------------------------------------------------
 #  Scripts

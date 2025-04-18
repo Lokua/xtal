@@ -1,4 +1,4 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 mod sketches;
 pub use sketches::shared::util;

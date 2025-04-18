@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// Live/2025/Lattice CV Test
+// Live/2025/Xtal CV Test
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "cv_test",

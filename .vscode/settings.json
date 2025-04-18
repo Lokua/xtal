@@ -59,7 +59,8 @@
     "verts",
     "veryslow",
     "Vortx",
-    "walkdir"
+    "walkdir",
+    "Xtal"
   ],
   "rust-analyzer.cargo.features": "all",
   "rust-analyzer.check.command": "clippy"
