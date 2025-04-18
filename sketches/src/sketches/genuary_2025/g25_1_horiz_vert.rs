@@ -1,7 +1,7 @@
 use nannou::color::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 // ~/Documents/Live/2024/2016 Begins
 

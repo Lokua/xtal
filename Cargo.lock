@@ -3036,58 +3036,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lattice"
-version = "0.11.0"
-dependencies = [
- "ahash 0.8.11",
- "arboard",
- "bevy_reflect",
- "bytemuck",
- "chrono",
- "clap",
- "cpal",
- "criterion",
- "dark-light",
- "directories-next",
- "env_logger",
- "indexmap 2.7.1",
- "ipc-channel",
- "lattice-macros",
- "log",
- "midir",
- "naga",
- "nannou",
- "nannou_egui",
- "nannou_osc",
- "notify",
- "open",
- "parking_lot",
- "rayon",
- "rfd",
- "rust-embed",
- "rustc-hash 2.1.1",
- "rustfft",
- "serde",
- "serde_json",
- "serde_yml",
- "serial_test",
- "tao",
- "termcolor",
- "wgpu-types",
- "wry",
- "yaml-merge-keys",
-]
-
-[[package]]
-name = "lattice-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5242,11 +5190,11 @@ dependencies = [
  "bevy_reflect",
  "bytemuck",
  "env_logger",
- "lattice",
  "log",
  "nannou",
  "rayon",
  "termcolor",
+ "xtal",
 ]
 
 [[package]]
@@ -7054,6 +7002,58 @@ name = "xml-rs"
 version = "0.8.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5b940ebc25896e71dd073bad2dbaa2abfe97b0a391415e22ad1326d9c54e3c4"
+
+[[package]]
+name = "xtal"
+version = "0.11.0"
+dependencies = [
+ "ahash 0.8.11",
+ "arboard",
+ "bevy_reflect",
+ "bytemuck",
+ "chrono",
+ "clap",
+ "cpal",
+ "criterion",
+ "dark-light",
+ "directories-next",
+ "env_logger",
+ "indexmap 2.7.1",
+ "ipc-channel",
+ "log",
+ "midir",
+ "naga",
+ "nannou",
+ "nannou_egui",
+ "nannou_osc",
+ "notify",
+ "open",
+ "parking_lot",
+ "rayon",
+ "rfd",
+ "rust-embed",
+ "rustc-hash 2.1.1",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "serde_yml",
+ "serial_test",
+ "tao",
+ "termcolor",
+ "wgpu-types",
+ "wry",
+ "xtal-macros",
+ "yaml-merge-keys",
+]
+
+[[package]]
+name = "xtal-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
 
 [[package]]
 name = "yaml-merge-keys"

@@ -41,20 +41,20 @@
 
 # General
 
-Lattice provides various interfaces for controlling parameters including
-`Controls` for UI (sliders, checkboxes, and selects), `MidiControls` and
-`OscControls` for controlling parameters from an external source,
-`AudioControls` for controlling parameters with audio or CV, and a comprehensive
-`Animation` module that can tween or generate random values and ramp to/from
-them at musical intervals. While these parameters are simple to setup, it's a
-bit of pain to have to restart the rust sketch every time you want to change an
-animation or control configuration. For this reason Lattice provides a scripting
-mechanism via the `ControlHub` struct that uses yaml for configuration and adds
-these controls dynamically and _self-updates at runtime when the yaml file is
-changed_, quite similar to live coding. You still have to take care to setup the
-routings in your sketch (e.g. `let radius = model.hub.get("radius")`), but once
-these routings are in place you are free to edit their ranges, values, timing,
-etc. Here's an example that covers the overall capabilities:
+Xtal provides various interfaces for controlling parameters including `Controls`
+for UI (sliders, checkboxes, and selects), `MidiControls` and `OscControls` for
+controlling parameters from an external source, `AudioControls` for controlling
+parameters with audio or CV, and a comprehensive `Animation` module that can
+tween or generate random values and ramp to/from them at musical intervals.
+While these parameters are simple to setup, it's a bit of pain to have to
+restart the rust sketch every time you want to change an animation or control
+configuration. For this reason Xtal provides a scripting mechanism via the
+`ControlHub` struct that uses yaml for configuration and adds these controls
+dynamically and _self-updates at runtime when the yaml file is changed_, quite
+similar to live coding. You still have to take care to setup the routings in
+your sketch (e.g. `let radius = model.hub.get("radius")`), but once these
+routings are in place you are free to edit their ranges, values, timing, etc.
+Here's an example that covers the overall capabilities:
 
 ```yaml
 radius:
@@ -136,7 +136,7 @@ pub struct Model {
     hub: ControlHub<Timing>,
 }
 
-pub fn init(_app: &App, ctx: &LatticeContext) -> Model {
+pub fn init(_app: &App, ctx: &XtalContext) -> Model {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "controls.yaml"),
         Timing::new(ctx.bpm()),
@@ -146,11 +146,11 @@ pub fn init(_app: &App, ctx: &LatticeContext) -> Model {
 }
 
 impl Sketch for Model {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &LatticeContext) {
+    fn update(&mut self, _app: &App, _update: Update, _ctx: &XtalContext) {
         // ...
     }
 
-    fn view(app: &App, m: &Model, frame: Frame, ctx: &LatticeContext) {
+    fn view(app: &App, m: &Model, frame: Frame, ctx: &XtalContext) {
         let draw = app.draw();
 
         let radius = m.controls.get("radius");
@@ -353,7 +353,7 @@ osc_example:
 
 Listens for incoming control change messages on the port specified in the
 [src/config.rs](src/config.rs)'s `MIDI_INPUT_PORT` constant (currently hardcoded
-to `IAC Driver Lattice In`). MIDI values are by default scaled to a `[0.0, 1.0]`
+to `IAC Driver Xtal In`). MIDI values are by default scaled to a `[0.0, 1.0]`
 range.
 
 **Params**
@@ -491,7 +491,7 @@ random_slewed_example:
 
 ## automate
 
-Advanced DAW-style animation. This is the bread-and-butter of Lattice.
+Advanced DAW-style animation. This is the bread-and-butter of Xtal.
 
 **Params**
 
@@ -919,8 +919,8 @@ wave_folder_example:
 # Parameter Modulation
 
 In addition to use of `effect` and `mod` types to modulate the output of
-controls, Lattice supports _parameter modulation_. It's easiest to explain with
-an example:
+controls, Xtal supports _parameter modulation_. It's easiest to explain with an
+example:
 
 ```yaml
 size_amount:
@@ -962,9 +962,9 @@ radius:
 
 In your sketch this control will be accessed via `m.controls.get("a1")`. This is
 especially useful for sketches that primarily rely on shaders - since like
-control scripts - shaders in Lattice support live reloading. Often creative
-coding is an experimental process and you may not know what controls you'll need
-up front and it's a huge pain to have to restart the Rust program every time you
+control scripts - shaders in Xtal support live reloading. Often creative coding
+is an experimental process and you may not know what controls you'll need up
+front and it's a huge pain to have to restart the Rust program every time you
 want to change a variable name or add a new one. To work around this, you can
 setup "banks":
 
@@ -981,7 +981,7 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &LatticeContext) -> Model {
+pub fn init(app: &App, ctx: &XtalContext) -> Model {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "example.yaml"),
         Timing::new(ctx.bpm()),
@@ -1011,7 +1011,7 @@ pub fn init(app: &App, ctx: &LatticeContext) -> Model {
 }
 
 impl Sketch for Model {
-  fn update(&mut self, app: &App, _update: Update, _ctx. &LatticeContext) {
+  fn update(&mut self, app: &App, _update: Update, _ctx. &XtalContext) {
       let params = ShaderParams {
           a: [
               // Allows us to use `var: a1` in our script
@@ -1062,5 +1062,5 @@ The above is admittedly a decent amount of boilerplate, but with this setup you
 are now free to live code in your script and shaders for hours uninterrupted
 without having to stop, recompile, wait... it's worth it.
 
-> NEW! Lattice now comes with a `uniforms` procedural macro to make all of the
+> NEW! Xtal now comes with a `uniforms` procedural macro to make all of the
 > above unnecessary. See ./src/sketches/dev/dynamic_uniforms.rs for an example.

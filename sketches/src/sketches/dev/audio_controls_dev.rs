@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// ~/Documents/Live/2025/Lattice Audio Controls Test Project/Lattice Audio Controls Test.als
+// ~/Documents/Live/2025/Xtal Audio Controls Test Project/Xtal Audio Controls Test.als
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "audio_controls_dev",

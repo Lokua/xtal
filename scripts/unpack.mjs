@@ -1,13 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { latticeRoot } from './helpers.mjs'
+import { xtalRoot } from './helpers.mjs'
 import { parse } from 'yaml'
 
 main()
 
 function main() {
   try {
-    const filePath = path.join(latticeRoot(), process.argv[2])
+    const filePath = path.join(xtalRoot(), process.argv[2])
     const content = fs.readFileSync(filePath, 'utf-8')
     const doc = parse(content)
     const output = Object.entries(doc)

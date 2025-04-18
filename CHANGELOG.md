@@ -11,9 +11,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ### Changed
 
-- Separated the single binary application containing lattice and my sketches
-  into a proper lattice lib and sketches app. This is step 1 for making lattice
-  a reusable library – still a lot more to do
+- Separated the single binary application containing xtal and my sketches into a
+  proper xtal lib and sketches app. This is step 1 for making xtal a reusable
+  library – still a lot more to do
 
 ## [2025-04-14]
 
@@ -66,7 +66,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   their control is in transition to indicate progress
 - **Data**, **Images**, and **Videos** directory options in settings to give the
   user control. These will be the conventional directories on the host OS if
-  possible, otherwise will default to `$HOME/[Images|Videos|Documents]/Lattice`
+  possible, otherwise will default to `$HOME/[Images|Videos|Documents]/Xtal`
 - Add **Open cache dir** and **Open config dir** buttons to settings
 
 ### Changed
@@ -113,9 +113,9 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - MIDI mapping a slider that only functioned as a modulation source did not
   result in the destination parameter being modulated because the proxy was not
   known as a dependency. See
-  [Issue #22](https://github.com/Lokua/lattice/issues/22)
+  [Issue #22](https://github.com/Lokua/xtal/issues/22)
 - Renaming a control in a Hub would cause orphaned proxies. See
-  [Issue #23](https://github.com/Lokua/lattice/issues/23)
+  [Issue #23](https://github.com/Lokua/xtal/issues/23)
 
 ## [0.7.0] - 2025-04-10
 
@@ -313,4 +313,4 @@ must consult the commit history, but overall at this point we have:
 ## [0.0.0] - 2024-11-30
 
 Project began as a basic Nannou app.
-https://github.com/Lokua/lattice/tree/bb18c8214a7f693c10f84f52562eb7e55c0f6a50
+https://github.com/Lokua/xtal/tree/bb18c8214a7f693c10f84f52562eb7e55c0f6a50

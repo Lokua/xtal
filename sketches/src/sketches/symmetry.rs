@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// Live/2025/Lattice - Gen 26 - Symmetry
+// Live/2025/Xtal - Gen 26 - Symmetry
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "symmetry",

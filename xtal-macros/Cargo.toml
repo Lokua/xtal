@@ -1,0 +1,16 @@
+[package]
+name = "xtal-macros"
+version = "0.1.0"
+description = "Macros for the the Xtal creative coding framework"
+authors = ["Lokua <dev@lokua.net>"]
+edition = "2024"
+readme = "../README.md"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"

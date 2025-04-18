@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "vertical_2",

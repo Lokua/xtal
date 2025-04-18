@@ -2,16 +2,15 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'url'
-import { latticeRoot } from './helpers.mjs'
+import { xtalRoot } from './helpers.mjs'
 
 main()
 
 function main() {
   try {
-    const root = latticeRoot()
-    const bucket =
-      'https://s3.us-east-1.amazonaws.com/lokua.net.lattice/images/'
-    const imagesDir = path.join(os.homedir(), '/Pictures/Lattice')
+    const root = xtalRoot()
+    const bucket = 'https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/'
+    const imagesDir = path.join(os.homedir(), '/Pictures/Xtal')
     const indexFile = path.join(root, '/storage/images_metadata.json')
     const outputFile = path.join(root, 'index.md')
 

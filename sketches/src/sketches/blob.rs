@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
 // Live/2025.02.19 Blob
 // Run with `osc` timing

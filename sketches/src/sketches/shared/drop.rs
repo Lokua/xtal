@@ -1,4 +1,4 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::glam::Vec2;
 use nannou::rand::{random_f32, random_range};
 use std::f32::consts::PI;

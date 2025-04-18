@@ -1,4 +1,4 @@
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::color::{Gradient, IntoLinSrgba};
 use nannou::prelude::*;
 use rayon::prelude::*;

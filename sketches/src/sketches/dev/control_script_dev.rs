@@ -1,9 +1,9 @@
 use nannou::color::*;
 use nannou::prelude::*;
 
-use lattice::prelude::*;
+use xtal::prelude::*;
 
-// Live/2025/Lattice - ControlScript Test
+// Live/2025/Xtal - ControlScript Test
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "control_script_dev",

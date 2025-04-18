@@ -1,8 +1,8 @@
 use bevy_reflect::Reflect;
-use lattice::prelude::*;
+use xtal::prelude::*;
 use nannou::prelude::*;
 
-// Bitwig/2025/Lattice - Flow Field w 312
+// Bitwig/2025/Xtal - Flow Field w 312
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g25_18_wind",
