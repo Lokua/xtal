@@ -1,8 +1,6 @@
 use lattice::prelude::*;
 use nannou::prelude::*;
 
-use crate::util::*;
-
 // b/w Ableton 2025/Lattice - Wave Fract
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

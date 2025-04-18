@@ -1,8 +1,6 @@
 use lattice::prelude::*;
 use nannou::prelude::*;
 
-use crate::util::*;
-
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "interference",
     display_name: "Interference",

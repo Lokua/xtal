@@ -2,8 +2,6 @@ use bevy_reflect::Reflect;
 use lattice::prelude::*;
 use nannou::prelude::*;
 
-use crate::util::*;
-
 // Bitwig/2025/Lattice - Flow Field w 312
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

@@ -1,8 +1,6 @@
 use lattice::prelude::*;
 use nannou::prelude::*;
 
-use crate::util::*;
-
 // ~/Documents/Live/2025/2025.01.11 Lattice - Spiral
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
