@@ -9,7 +9,6 @@ default-run = "xtal"
 license = "MIT"
 readme = "../README.md"
 
-# TODO: fixme
 [lib]
 doctest = false
 
@@ -65,9 +64,4 @@ tao = "0.32.8"
 termcolor = "1.4.1"
 wgpu-types = "=0.17.0"
 wry = { version = "0.50.5", features = ["devtools"] }
-# Bug: we shouldn't have to bring in serde_yaml
-# TODO: we might want to fork this
-yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [
-    "serde_yml",
-    "serde_yaml",
-] }
+yaml-merge-keys = { version = "0.8.1", features = ["serde_yml"] }
