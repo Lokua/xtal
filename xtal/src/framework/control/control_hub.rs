@@ -68,6 +68,12 @@ impl std::fmt::Debug for Callback {
     }
 }
 
+/// The single point of entry for all Xtal controls and animations. When
+/// declaring controls and animations in Rust code, use the
+/// [`crate::prelude::ControlHubBuilder`], otherwise if using a [Control
+/// Script][script-ref], see [`Self::from_path`].
+///
+/// [script-ref]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
     pub animation: Animation<T>,
@@ -137,6 +143,21 @@ impl<T: TimingSource> ControlHub<T> {
         script
     }
 
+    /// Instantiate a hub instance from a YAML control script. It is recommended
+    /// to place your script next to your sketch.rs file:
+    ///
+    /// # Example
+    /// ```rs
+    /// // my_sketch.rs
+    /// pub fn init(app: &App, ctx: &Context) -> MySketch {
+    ///     let hub = ControlHub::from_path(
+    ///         to_absolute_path(file!(), "my_sketch.yaml"),
+    ///         Timing::new(ctx.bpm()),
+    ///     );
+    ///
+    ///     MySketch { hub }
+    /// }
+    /// ```
     pub fn from_path(path: PathBuf, timing: T) -> Self {
         let state = Arc::new(Mutex::new(None));
         let state_clone = state.clone();

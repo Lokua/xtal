@@ -1,6 +1,9 @@
 use super::ControlHub;
 use crate::framework::prelude::*;
 
+/// The preferred way to build a hub instance in Rust code. Note that the
+/// builder cannot be used to instantiate a [`ControlHub`] instance that uses a
+/// Control Script; for that see [`ControlHub::from_path`]
 pub struct ControlHubBuilder<T: TimingSource> {
     timing: Option<T>,
     ui_controls: Option<UiControls>,
