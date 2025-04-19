@@ -26,6 +26,12 @@ const MIN_SETTINGS_HEIGHT: i32 = 700;
 #[folder = "static"]
 struct Asset;
 
+#[cfg(docsrs)]
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+    Ok(()) // stub to keep doc builds happy
+}
+
+#[cfg(not(docsrs))]
 pub fn run() -> Result<(), Box<dyn Error>> {
     init_logger();
     info!("Starting web_view_process");

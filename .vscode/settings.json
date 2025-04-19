@@ -11,6 +11,7 @@
     "Custo",
     "dioxus",
     "disp",
+    "docsrs",
     "doctest",
     "Egui",
     "fullsize",

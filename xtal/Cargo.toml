@@ -1,6 +1,6 @@
 [package]
 name = "xtal"
-version = "0.12.0"
+version = "0.12.1"
 description = "A creative coding framework build on top of Nannou"
 authors = ["Lokua <dev@lokua.net>"]
 homepage = "https://github.com/Lokua/xtal"
@@ -10,6 +10,11 @@ license = "MIT"
 readme = "../README.md"
 include = ["src/**", "static/**", "Cargo.toml", "README.md"]
 
+[package.metadata.docs.rs]
+features = ["docsrs"]
+rustc-args = ["--cfg", "docsrs"]
+all-features = true
+
 [lib]
 doctest = false
 
@@ -18,6 +23,7 @@ default = []
 instrumentation = []
 logging = []
 prod = []
+docsrs = []
 
 [dev-dependencies]
 criterion = "0.5.1"
