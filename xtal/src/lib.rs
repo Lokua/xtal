@@ -13,6 +13,7 @@ pub(crate) mod framework;
 pub(crate) mod runtime;
 pub(crate) use runtime::global;
 
+#[cfg(not(docsrs))]
 /// Run the app after registering your sketches with [`register`]
 pub use crate::runtime::app::run;
 

@@ -3,8 +3,9 @@ name = "xtal-macros"
 version = "0.1.0"
 description = "Macros for the the Xtal creative coding framework"
 authors = ["Lokua <dev@lokua.net>"]
+homepage = "https://github.com/Lokua/xtal"
 edition = "2024"
-readme = "../README.md"
+readme = "./README.md"
 license = "MIT"
 
 [lib]

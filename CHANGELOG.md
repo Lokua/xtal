@@ -7,6 +7,16 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.12.0] 2025-04-18
+
+### Changed
+
+- Renamed the project from Lattice to Xtal (maybe you get it)
+
+### Added
+
+- Ability to serve frontend via static assets and wry custom protocol
+
 ## [0.11.0] 2025-04-17
 
 ### Changed

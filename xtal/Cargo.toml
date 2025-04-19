@@ -1,13 +1,20 @@
 [package]
 name = "xtal"
-version = "0.11.0"
+version = "0.12.1"
 description = "A creative coding framework build on top of Nannou"
 authors = ["Lokua <dev@lokua.net>"]
+homepage = "https://github.com/Lokua/xtal"
 edition = "2024"
 default-run = "xtal"
 license = "MIT"
+readme = "../README.md"
+include = ["src/**", "static/**", "Cargo.toml", "README.md"]
 
-# TODO: fixme
+[package.metadata.docs.rs]
+features = ["docsrs"]
+rustc-args = ["--cfg", "docsrs"]
+all-features = true
+
 [lib]
 doctest = false
 
@@ -16,14 +23,10 @@ default = []
 instrumentation = []
 logging = []
 prod = []
+docsrs = []
 
 [dev-dependencies]
 criterion = "0.5.1"
-
-[[bench]]
-name = "frame_controller_bench"
-harness = false
-path = "benches/frame_controller_bench.rs"
 
 [dependencies]
 ahash = "0.8.11"
@@ -40,7 +43,7 @@ directories-next = "2.0.0"
 env_logger = "0.11.5"
 indexmap = { version = "2.7.1", features = ["serde"] }
 ipc-channel = "0.19.0"
-xtal-macros = { path = "../xtal-macros" }
+xtal-macros = { version = "0.1.0", path = "../xtal-macros" }
 log = "0.4.22"
 midir = "0.10.1"
 naga = "0.13.0"
@@ -63,9 +66,4 @@ tao = "0.32.8"
 termcolor = "1.4.1"
 wgpu-types = "=0.17.0"
 wry = { version = "0.50.5", features = ["devtools"] }
-# Bug: we shouldn't have to bring in serde_yaml
-# TODO: we might want to fork this
-yaml-merge-keys = { git = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys.git", features = [
-    "serde_yml",
-    "serde_yaml",
-] }
+yaml-merge-keys = { version = "0.8.1", features = ["serde_yml"] }

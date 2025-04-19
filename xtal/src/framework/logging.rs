@@ -1,3 +1,6 @@
+//! Logging module used for internal purposes yet can be helpful for debugging
+//! your own sketches. Requires the `logging` feature.
+
 use env_logger::{Builder, Env};
 use log::LevelFilter;
 use std::io::Write;
@@ -5,6 +8,7 @@ use termcolor::{Color, ColorSpec, WriteColor};
 
 pub use log::{debug, error, info, trace, warn};
 
+/// Requires the `logging` feature.
 pub fn init_logger() {
     Builder::from_env(Env::default().default_filter_or("xtal=info"))
         .filter_module("nannou", LevelFilter::Warn)
@@ -38,7 +42,8 @@ pub fn init_logger() {
         .init();
 }
 
-/// Logs a warn message at most once for the exact arguments
+/// Logs a warn message at most once for the exact arguments. Requires the
+/// `logging` feature.
 #[macro_export]
 macro_rules! warn_once {
     ($($arg:tt)+) => {{
@@ -56,7 +61,8 @@ macro_rules! warn_once {
    }}
 }
 
-/// Logs a debug message at most once for the exact arguments
+/// Logs a debug message at most once for the exact arguments. Requires the
+/// `logging` feature.
 #[macro_export]
 macro_rules! debug_once {
    ($($arg:tt)+) => {{
@@ -74,7 +80,8 @@ macro_rules! debug_once {
    }}
 }
 
-/// Logs a debug message at most once within a specified time interval.
+/// Logs a debug message at most once within a specified time interval. Requires
+/// the `logging` feature.
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! debug_throttled {
