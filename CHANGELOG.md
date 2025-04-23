@@ -7,6 +7,19 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.13.0] 2025-04-23
+
+### Fixed
+
+- Fixed regression in ui_controls caused by moving to shared to trait which
+  returned cloned configs for the configs call instead of config references
+  which results in disabled_fn always being None; added new config_refs fn for
+  this one case.
+
+## [0.12.1] 2025-04-??
+
+- crates.io debug deployments
+
 ## [0.12.0] 2025-04-18
 
 ### Changed

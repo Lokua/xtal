@@ -267,21 +267,29 @@ impl Clone for UiControlConfig {
 impl fmt::Debug for UiControlConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            UiControlConfig::Checkbox { name, value, .. } => f
+            UiControlConfig::Checkbox {
+                name,
+                value,
+                disabled,
+                ..
+            } => f
                 .debug_struct("Checkbox")
                 .field("name", name)
                 .field("value", value)
+                .field("disabled", &disabled.as_ref().map(|_| "<function>"))
                 .finish(),
             UiControlConfig::Select {
                 name,
                 value,
                 options,
+                disabled,
                 ..
             } => f
                 .debug_struct("Select")
                 .field("name", name)
                 .field("value", value)
                 .field("options", options)
+                .field("disabled", &disabled.as_ref().map(|_| "<function>"))
                 .finish(),
             UiControlConfig::Separator { name } => {
                 f.debug_struct("Separator").field("name", name).finish()
@@ -292,6 +300,7 @@ impl fmt::Debug for UiControlConfig {
                 min,
                 max,
                 step,
+                disabled,
                 ..
             } => f
                 .debug_struct("Slider")
@@ -300,6 +309,7 @@ impl fmt::Debug for UiControlConfig {
                 .field("min", min)
                 .field("max", max)
                 .field("step", step)
+                .field("disabled", &disabled.as_ref().map(|_| "<function>"))
                 .finish(),
         }
     }
@@ -335,7 +345,7 @@ impl UiControls {
         Self {
             configs,
             values,
-            change_tracker: ChangeTracker::new(true),
+            change_tracker: ChangeTracker::default(),
         }
     }
 
@@ -403,8 +413,8 @@ impl UiControls {
         self.change_tracker.mark_changed();
     }
 
-    pub fn disabled(&self, name: &str) -> Option<bool> {
-        self.config(name).map(|c| c.is_disabled(self))
+    pub fn disabled(&self, name: &str) -> bool {
+        self.configs.get(name).is_some_and(|c| c.is_disabled(self))
     }
 
     pub fn slider_range(&self, name: &str) -> Option<(f32, f32)> {
@@ -418,6 +428,10 @@ impl UiControls {
                 None
             }
         })
+    }
+
+    pub fn config_refs(&self) -> &IndexMap<String, UiControlConfig> {
+        &self.configs
     }
 }
 
@@ -510,8 +524,8 @@ impl
 
 impl fmt::Debug for UiControls {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut debug_struct = f.debug_struct("Controls");
-        debug_struct.field("controls", &self.configs);
+        let mut debug_struct = f.debug_struct("UiControls");
+        debug_struct.field("configs", &self.configs);
         debug_struct.field("values", &self.values);
         debug_struct.finish()
     }
@@ -609,34 +623,25 @@ impl UiControlBuilder {
 
 #[derive(Clone)]
 struct ChangeTracker {
-    save_previous: bool,
     changed: bool,
     previous_values: ControlValues,
 }
 
 impl Default for ChangeTracker {
     fn default() -> Self {
-        Self::new(false)
+        Self {
+            changed: true,
+            previous_values: ControlValues::default(),
+        }
     }
 }
 
 impl ChangeTracker {
-    fn new(save_previous: bool) -> Self {
-        Self {
-            changed: true,
-            save_previous,
-            previous_values: ControlValues::default(),
-        }
-    }
-
     fn changed(&self) -> bool {
-        self.check_can_save_previous();
         self.changed
     }
 
     fn any_changed_in(&self, names: &[&str], values: &ControlValues) -> bool {
-        self.check_can_save_previous();
-
         if self.previous_values.is_empty() {
             for name in names {
                 if !values.contains_key(*name) {
@@ -665,23 +670,12 @@ impl ChangeTracker {
     }
 
     fn mark_unchanged(&mut self, latest_values: &ControlValues) {
-        self.check_can_save_previous();
         self.changed = false;
         self.previous_values = latest_values.clone();
     }
 
     fn mark_changed(&mut self) {
         self.changed = true;
-    }
-
-    fn check_can_save_previous(&self) {
-        if !self.save_previous {
-            panic!(
-                "Cannot check previous values when `save_previous` is false.\n\
-                Use `Controls::with_previous` instead of `new`.
-                "
-            );
-        }
     }
 }
 

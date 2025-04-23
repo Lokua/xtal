@@ -1,3 +1,7 @@
+const DEFAULT_DISTANCE_ALG: f32 = 0.0;
+const CONCENTRIC_WAVES_ALG: f32 = 1.0;
+const MOIRE_ALG: f32 = 2.0;
+
 struct VertexInput {
     @location(0) position: vec2f,
 };
@@ -8,32 +12,20 @@ struct VertexOutput {
 };
 
 struct Params {
-    resolution: vec4f,
-
-    show_center: f32,
-    show_corners: f32,
-    radius: f32,
-    strength: f32,
-
-    corner_radius: f32,
-    corner_strength: f32,
-    scaling_power: f32,
-    auto_hue_shift: f32,
-
-    r: f32,
-    g: f32,
-    b: f32,
-    offset: f32,
-
-    ring_strength: f32,
-    angular_variation: f32,
-    threshold: f32,
-    mix: f32,
-
-    alg: f32,
-    j: f32,
-    k: f32,
-    time: f32,
+    // w, h, bg_alpha, show_center
+    a: vec4f,
+    // show_corners, radius, strength, corner_radius
+    b: vec4f,
+    // corner_strength, scaling_power, offset, ring_strength
+    c: vec4f,
+    // angular_variation, alg, j, k
+    d: vec4f,
+    // auto_hue_shift, r, g, b
+    e: vec4f,
+    // threshold, mix, time, comp_shift
+    f: vec4f,
+    // init_x, init_y, color_bands, unused
+    g: vec4f,
 }
 
 @group(0) @binding(0)
@@ -49,31 +41,58 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let aspect = params.resolution.x / params.resolution.y;
+    let w = params.a.x;
+    let h = params.a.y;
+    let bg_alpha = params.a.z;
+    let show_center = params.a.w;
+    let show_corners = params.b.x;
+    let radius = params.b.y;
+    var strength = params.b.z;
+    let corner_radius = params.b.w;
+    let corner_strength = params.c.x;
+    let scaling_power = params.c.y;
+    let offset = params.c.z;
+    let ring_strength = params.c.w;
+    let angular_variation = params.d.x;
+    let alg = params.d.y;
+    let j = params.d.z;
+    let k = params.d.w;
+    let auto_hue_shift = params.e.x;
+    let r = params.e.y;
+    let g = params.e.z;
+    let b = params.e.w;
+    let threshold = params.f.x;
+    let mix_value = params.f.y;
+    let time = params.f.z;
+    let comp_shift = params.f.w;
+    let init_x = params.g.x;
+    let init_y = params.g.y;
+    let color_bands = params.g.z;
+    
+    let aspect = w / h;
     var pos = position;
     pos.x *= aspect;
 
-    var total_displacement = vec2f(0.0);
+    var total_displacement = vec2f(init_x, init_y);
     var max_influence = 0.0;
 
     for (var i = 0u; i < 5u; i++) {
         let displacer_pos = get_displacer_position(i);
         var displacement = vec2f(0.0);
-        if i == 0u && params.show_center == 1.0 {
+        if i == 0u && show_center == 1.0 {
             displacement = displace(
                 pos, 
                 displacer_pos, 
-                params.radius, 
-                params.strength
+                radius, 
+                strength
             );
-        } else if i > 0u && params.show_corners == 1.0 {
+        } else if i > 0u && show_corners == 1.0 {
             displacement = displace(
                 pos, 
                 displacer_pos, 
-                params.corner_radius, 
-                params.corner_strength
+                corner_radius, 
+                corner_strength
             );
-
         }
         total_displacement += displacement;
         max_influence = max(max_influence, length(displacement));
@@ -81,34 +100,31 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     
     let angle = atan2(total_displacement.y, total_displacement.x);
     let disp_length = length(total_displacement);
-    let rings = sin(disp_length * params.ring_strength);
-    let angular_pattern = sin(angle * params.angular_variation);
-    let threshold = step(params.threshold, rings * angular_pattern);
-    let pattern = mix(rings * angular_pattern, threshold, params.mix);
+    let rings = sin(disp_length * ring_strength);
+    let angular_pattern = sin(angle * angular_variation);
+    let threshold_pattern = step(threshold, rings * angular_pattern);
+    let pattern = mix(rings * angular_pattern, threshold_pattern, mix_value);
     
     if max_influence < 0.01 {
         return vec4f(0.0, 0.0, 0.0, 1.0);
     }
 
-    if params.auto_hue_shift == 1.0 {
-        let hue_shift = 
-        (
-            sin((angle + params.time * 0.3) * 2.0) + 
-            sin((angle + params.time * 0.62) * 3.0)
-        ) * 0.25 + 0.5;
-
+    if auto_hue_shift == 1.0 {
+        let hue_shift = sin((angle + time) * color_bands) + 2.0 * 0.5;
+        let compliment_shift = (hue_shift + comp_shift) % 1.0;
+        
         return vec4f(
-            pattern * params.r * hue_shift,
-            pattern * params.g * (1.0 - hue_shift),
-            pattern * params.b,
-            1.0
+            clamp(pattern * r * hue_shift, 0.0, 1.0),
+            clamp(pattern * g * compliment_shift, 0.0, 1.0),
+            clamp(pattern * b * (1.0 - hue_shift), 0.0, 1.0),
+            bg_alpha
         );
     } else {
         return vec4f(
-            pattern * params.r,
-            pattern * params.g ,
-            pattern * params.b,
-            1.0
+            pattern * r,
+            pattern * g,
+            pattern * b,
+            bg_alpha
         ); 
     }
 }
@@ -119,19 +135,25 @@ fn displace(
     radius: f32, 
     strength: f32
 ) -> vec2f {
+    let alg = params.d.y;
+    let j = params.d.z;
+    let k = params.d.w;
+    let scaling_power = params.c.y;
+    
     var d = 0.0;
-    if params.alg == 0.0 {
+
+    if alg == DEFAULT_DISTANCE_ALG {
         d = distance(displacer_pos, point);
-    } else if params.alg == 1.0 {
-        d = concentric_waves(displacer_pos, point, params.j * 20.0);
-    } else if params.alg == 2.0 {
-        d = moire(displacer_pos, point, params.j) * params.k * 100.0;
+    } else if alg == CONCENTRIC_WAVES_ALG {
+        d = concentric_waves(displacer_pos, point, j);
+    } else if alg == MOIRE_ALG {
+        d = moire(displacer_pos, point, j) * k * 100.0;
     }
 
     let proximity = 1.0 - d / (radius * 2.0);
     let distance_factor = max(proximity, 0.0);
     let angle = atan2(point.y - displacer_pos.y, point.x - displacer_pos.x);
-    let force = strength * pow(distance_factor, params.scaling_power);
+    let force = strength * pow(distance_factor, scaling_power);
 
     return vec2f(cos(angle) * force, sin(angle) * force);
 }
@@ -148,8 +170,10 @@ fn moire(p1: vec2f, p2: vec2f, scale: f32) -> f32 {
 }
 
 fn get_displacer_position(index: u32) -> vec2f {
-    let max = 1.0 - params.offset;
-    let min = -1.0 + params.offset;
+    let offset = params.c.z;
+    
+    let max = 1.0 - offset;
+    let min = -1.0 + offset;
 
     switch(index) {
         // Center

@@ -1516,7 +1516,7 @@ baz:
             "#,
         );
 
-        assert_eq!(hub.ui_controls.disabled("foo"), Some(true));
+        assert!(hub.ui_controls.disabled("foo"));
     }
 
     #[test]

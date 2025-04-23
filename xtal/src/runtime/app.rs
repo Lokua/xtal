@@ -163,9 +163,9 @@ impl AppModel {
     fn web_view_controls(&mut self) -> Vec<wv::Control> {
         self.hub().map_or_else(Vec::new, |hub| {
             hub.ui_controls
-                .configs()
+                .config_refs()
                 .values()
-                .map(|config| wv::Control::from((config, hub)))
+                .map(|config| wv::Control::from_config_and_hub((config, hub)))
                 .collect()
         })
     }

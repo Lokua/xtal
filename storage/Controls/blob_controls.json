@@ -14,32 +14,37 @@
     {
       "type": "Slider",
       "name": "center_size",
-      "value": 2.2461998
+      "value": 1.1967
     },
     {
       "type": "Slider",
       "name": "invert",
-      "value": 0.023799999
+      "value": 0.1049
     },
     {
       "type": "Slider",
       "name": "smoothness",
-      "value": 0.91819996
+      "value": 0.9056
     },
     {
       "type": "Slider",
       "name": "blur",
-      "value": 16.2574
+      "value": 18.472
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 0.6784
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "clamp_min",
-      "value": -0.8576
+      "value": -0.5944
     }
   ],
   "midi_controls": [],
@@ -49,8 +54,23 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "outer_size",
-          "value": 0.445
+          "name": "clamp_min",
+          "value": -0.225
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.96
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -69,23 +89,54 @@
         },
         {
           "type": "Slider",
-          "name": "center_size",
-          "value": 0.96
+          "name": "outer_size",
+          "value": 0.445
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.023799999
         },
         {
           "type": "Slider",
-          "name": "clamp_min",
-          "value": -0.225
+          "name": "smoothness",
+          "value": 0.91819996
+        },
+        {
+          "type": "Slider",
+          "name": "outer_pos_t_mix",
+          "value": 0.4628
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 2.2461998
         },
         {
           "type": "Slider",
           "name": "blur",
-          "value": 20.0
+          "value": 16.2574
         },
         {
           "type": "Slider",
           "name": "color_mix",
-          "value": 1.0
+          "value": 0.6784
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.8576
+        },
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.4064
         }
       ],
       "midi_controls": [],
@@ -93,21 +144,6 @@
     },
     "3": {
       "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "outer_pos_t_mix",
-          "value": 0.096
-        },
-        {
-          "type": "Slider",
-          "name": "blur",
-          "value": 10.691199
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.058599997
-        },
         {
           "type": "Slider",
           "name": "center_size",
@@ -125,6 +161,21 @@
         },
         {
           "type": "Slider",
+          "name": "color_mix",
+          "value": 0.058599997
+        },
+        {
+          "type": "Slider",
+          "name": "outer_pos_t_mix",
+          "value": 0.096
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 10.691199
+        },
+        {
+          "type": "Slider",
           "name": "invert",
           "value": 0.67719996
         },
@@ -132,52 +183,6 @@
           "type": "Slider",
           "name": "clamp_min",
           "value": 0.1338
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "outer_size",
-          "value": 0.4064
-        },
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 0.023799999
-        },
-        {
-          "type": "Slider",
-          "name": "center_size",
-          "value": 2.2461998
-        },
-        {
-          "type": "Slider",
-          "name": "clamp_min",
-          "value": -0.8576
-        },
-        {
-          "type": "Slider",
-          "name": "smoothness",
-          "value": 0.91819996
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.6784
-        },
-        {
-          "type": "Slider",
-          "name": "blur",
-          "value": 16.2574
-        },
-        {
-          "type": "Slider",
-          "name": "outer_pos_t_mix",
-          "value": 0.4628
         }
       ],
       "midi_controls": [],

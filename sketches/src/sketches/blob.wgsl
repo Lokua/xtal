@@ -63,6 +63,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let bd = params.e.y;
     let clamp_min = params.e.z;
     let clamp_max = params.e.w;
+    let bg_alpha = params.f.x;
 
     var p = correct_aspect(position);
 
@@ -158,7 +159,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     color = color * (0.3 + 0.99 * circle_brightness); 
     color = mix(color, 1.0 - color, invert_color);
     
-    return vec4f(color, 1.0);
+    return vec4f(color, bg_alpha);
 }
 
 fn rotate_point(p: vec2f, angle: f32) -> vec2f {
