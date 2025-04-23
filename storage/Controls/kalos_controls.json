@@ -14,7 +14,7 @@
     {
       "type": "Checkbox",
       "name": "show_corners",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
@@ -64,12 +64,12 @@
     {
       "type": "Slider",
       "name": "j",
-      "value": 0.78239995
+      "value": 0.0455
     },
     {
       "type": "Slider",
       "name": "k",
-      "value": 0.7026
+      "value": 0.8112
     },
     {
       "type": "Checkbox",
@@ -79,12 +79,12 @@
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.0409
+      "value": 0.956
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.594
+      "value": 0.2622
     },
     {
       "type": "Slider",

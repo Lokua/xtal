@@ -119,8 +119,9 @@ impl Sketch for Blob {
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
-    fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
-        frame.clear(BLACK);
+    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
+        let draw = app.draw();
+        ctx.background(&frame, &draw, hsla(0.0, 0.0, 0.3, 0.02));
         self.gpu.render(&frame);
     }
 }

@@ -464,9 +464,9 @@ impl Default for Control {
     }
 }
 
-impl From<(&ui_controls::UiControlConfig, &ControlHub<Timing>)> for Control {
+impl Control {
     #[allow(clippy::field_reassign_with_default)]
-    fn from(
+    pub fn from_config_and_hub(
         (ui_control, hub): (&ui_controls::UiControlConfig, &ControlHub<Timing>),
     ) -> Self {
         let mut result = Control::default();
