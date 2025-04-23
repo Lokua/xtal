@@ -345,7 +345,7 @@ impl UiControls {
         Self {
             configs,
             values,
-            change_tracker: ChangeTracker::new(true),
+            change_tracker: ChangeTracker::default(),
         }
     }
 
@@ -623,34 +623,25 @@ impl UiControlBuilder {
 
 #[derive(Clone)]
 struct ChangeTracker {
-    save_previous: bool,
     changed: bool,
     previous_values: ControlValues,
 }
 
 impl Default for ChangeTracker {
     fn default() -> Self {
-        Self::new(false)
+        Self {
+            changed: true,
+            previous_values: ControlValues::default(),
+        }
     }
 }
 
 impl ChangeTracker {
-    fn new(save_previous: bool) -> Self {
-        Self {
-            changed: true,
-            save_previous,
-            previous_values: ControlValues::default(),
-        }
-    }
-
     fn changed(&self) -> bool {
-        self.check_can_save_previous();
         self.changed
     }
 
     fn any_changed_in(&self, names: &[&str], values: &ControlValues) -> bool {
-        self.check_can_save_previous();
-
         if self.previous_values.is_empty() {
             for name in names {
                 if !values.contains_key(*name) {
@@ -679,23 +670,12 @@ impl ChangeTracker {
     }
 
     fn mark_unchanged(&mut self, latest_values: &ControlValues) {
-        self.check_can_save_previous();
         self.changed = false;
         self.previous_values = latest_values.clone();
     }
 
     fn mark_changed(&mut self) {
         self.changed = true;
-    }
-
-    fn check_can_save_previous(&self) {
-        if !self.save_previous {
-            panic!(
-                "Cannot check previous values when `save_previous` is false.\n\
-                Use `Controls::with_previous` instead of `new`.
-                "
-            );
-        }
     }
 }
 

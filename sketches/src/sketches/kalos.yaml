@@ -1,0 +1,202 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+show_center:
+  var: a4
+  type: checkbox
+  default: true
+
+radius:
+  var: b2
+  type: slider
+  default: 0.5
+  range: [0.0, 10.0]
+  step: 0.01
+
+animate_strength:
+  type: checkbox
+  default: false
+strength:
+  var: b3
+  type: slider
+  default: 0.5
+  range: [0.0, 5.0]
+  step: 0.001
+  disabled: animate_strength
+strength_animation:
+  type: triangle
+  beats: 48
+
+show_corners:
+  var: b1
+  type: checkbox
+  default: false
+
+corner_radius:
+  var: b4
+  type: slider
+  default: 0.5
+  range: [0.0, 10.0]
+  step: 0.01
+
+corner_strength:
+  var: c1
+  type: slider
+  default: 0.5
+  range: [0.0, 5.0]
+  step: 0.001
+
+init_x:
+  var: g1
+  type: slider
+  range: [0, 10]
+
+init_y:
+  var: g2
+  type: slider
+  range: [0, 10]
+
+# ------------------------------------------------------------------------------
+#  ???
+# ------------------------------------------------------------------------------
+
+separator1:
+  type: separator
+
+scaling_power:
+  var: c2
+  type: slider
+  default: 1.0
+  range: [0.01, 20.0]
+  step: 0.01
+
+offset:
+  var: c3
+  type: slider
+  default: 0.2
+  range: [0.0, 1.0]
+  step: 0.01
+
+ring_strength:
+  var: c4
+  type: slider
+  default: 20.0
+  range: [1.0, 100.0]
+  step: 0.01
+
+angular_variation:
+  var: d1
+  type: slider
+  default: 4.0
+  range: [1.0, 45.0]
+  step: 1.0
+
+separator2:
+  type: separator
+
+alg:
+  var: d2
+  type: select
+  default: distance
+  options:
+    - distance
+    - concentric_waves
+    - moire
+
+j:
+  var: d3
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.0001
+  disabled: alg is distance
+
+k:
+  var: d4
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.0001
+  disabled: alg is not moire
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+auto_hue_shift:
+  var: e1
+  type: checkbox
+  default: false
+
+r:
+  var: e2
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.01
+
+g:
+  var: e3
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+  step: 0.01
+
+b:
+  var: e4
+  type: slider
+  default: 1.0
+  range: [0.0, 1.0]
+  step: 0.01
+
+bg_alpha:
+  var: a3
+  type: slider
+  default: 1.0
+
+color_bands:
+  var: g3
+  type: slider
+  range: [1, 12]
+  default: 3
+  step: 1
+
+comp_shift:
+  var: f4
+  type: slider
+  default: 0.5
+
+# ------------------------------------------------------------------------------
+#  Misc
+# ------------------------------------------------------------------------------
+
+separator4:
+  type: separator
+
+threshold:
+  var: f1
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.01
+
+mix:
+  var: f2
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.01
+
+time:
+  var: f3
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.0
+    - kind: end
+      position: 64.0
+      value: *TAU
