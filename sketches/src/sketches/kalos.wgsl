@@ -50,8 +50,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     var strength = params.b.z;
     let corner_radius = params.b.w;
     let corner_strength = params.c.x;
-    let scaling_power = params.c.y;
-    let offset = params.c.z;
     let ring_strength = params.c.w;
     let angular_variation = params.d.x;
     let alg = params.d.y;

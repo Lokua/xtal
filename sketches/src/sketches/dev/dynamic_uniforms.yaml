@@ -62,11 +62,29 @@ origin:
     - bottom-right
     - bottom-left
     - top-left
+    - animated
+    - animated-y
 
 origin_offset:
   var: e4
   type: slider
   disabled: origin is center
+
+origin_anim_x:
+  var: g1
+  type: random_slewed
+  beats: 16
+  range: [-1, 1]
+  slew: 0.8
+  stem: 94
+
+origin_anim_y:
+  var: g2
+  type: random_slewed
+  beats: 8
+  range: [-1, 1]
+  slew: 0.8
+  stem: 95
 
 # ------------------------------------------------------------------------------
 #  Color
@@ -119,6 +137,11 @@ color_steps:
   range: [1, 50]
   step: 1
 
+bg_alpha:
+  var: h2
+  type: slider
+  default: 1
+
 # ------------------------------------------------------------------------------
 #  Distance Params
 # ------------------------------------------------------------------------------
@@ -139,3 +162,27 @@ angle_mult:
   var: f2
   type: slider
   range: [0, 10]
+
+p2_x:
+  var: g3
+  type: slider
+  range: [0, 100]
+  default: 1
+
+p2_y:
+  var: g4
+  type: slider
+  range: [0, 100]
+  default: 1
+
+# ------------------------------------------------------------------------------
+#  Post Processing
+# ------------------------------------------------------------------------------
+
+post_separator:
+  type: separator
+
+film_grain:
+  var: h1
+  type: slider
+  range: [0, 2]

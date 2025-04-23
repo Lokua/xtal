@@ -1,6 +1,14 @@
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.283185307179586;
 
+const ORIGIN_CENTER: f32 = 0.0;
+const ORIGIN_TOP_RIGHT: f32 = 1.0;
+const ORIGIN_BOTTOM_RIGHT: f32 = 2.0;
+const ORIGIN_BOTTOM_LEFT: f32 = 3.0;
+const ORIGIN_TOP_LEFT: f32 = 4.0;
+const ORIGIN_ANIMATED: f32 = 5.0;
+const ORIGIN_ANIMATED_Y: f32 = 6.0;
+
 struct VertexInput {
     @location(0) position: vec2f,
 };
@@ -54,6 +62,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let angle_mult = params.f.y;
     let distance_mix = params.f.z;
     let color_steps = params.f.w;
+    let origin_anim_x = params.g.x;
+    let origin_anim_y = params.g.y;
+    let p2_x = params.g.z;
+    let p2_y = params.g.w;
+    let film_grain_amt = params.h.x;
+    let bg_alpha = params.h.y;
 
     if link_axes == 1.0 {
         wave_y_freq = wave_x_freq;
@@ -63,21 +77,36 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let offs = origin_offset;
     var center: vec2f;
-    if origin == 0.0 {
+
+    if origin == ORIGIN_CENTER {
         center = vec2f(0.0);
-    } else if origin == 1.0 {
+    } else if origin == ORIGIN_TOP_RIGHT {
         center = vec2f(1.0 - offs);
-    } else if origin == 2.0 {
+    } else if origin == ORIGIN_BOTTOM_RIGHT {
         center = vec2f(1.0 - offs, -1.0 + offs);
-    } else if origin == 3.0 {
+    } else if origin == ORIGIN_BOTTOM_LEFT {
         center = vec2f(-1.0 + offs);
-    } else if origin == 4.0 {
+    } else if origin == ORIGIN_TOP_LEFT {
         center = vec2f(-1.0 + offs, 1.0 - offs);
+    } else if origin == ORIGIN_ANIMATED {
+        center = vec2f(origin_anim_x * offs, origin_anim_y * offs);
+    } else if origin == ORIGIN_ANIMATED_Y {
+        center = vec2f(0.0, origin_anim_y * offs);
     }
 
     let cp = p - center;
-    var d = abs(concentric_waves(cp.x, cp.y, 0.0, 0.0, grain_size, angle_mult));
-    d = mix(length(cp), d, distance_mix);
+    let cp_len = length(cp);
+    var d = abs(
+        concentric_waves(
+            cp.x, 
+            cp.y, 
+            sin(cp.x * p2_x) * cp_len, 
+            tan(cp.y * p2_y) * cp_len, 
+            grain_size, 
+            angle_mult
+        )
+    );
+    d = mix(cp_len, d, distance_mix);
 
     var phase: f32;
     if wave_phase_animation == 1.0 {
@@ -87,9 +116,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     let wave1 = 
-        cos(d * wave_dist - phase) + 0.5 * cos((d * wave_dist - phase) * 3.0);
+        cos(d * wave_dist - phase) + 0.5 * 
+        cos((d * wave_dist - phase) * 3.0);
+
     let wave2 = 
-        cos(p.x * wave_x_freq) + 0.5 * cos((p.x * wave_x_freq) * 2.0);
+        cos(p.x * wave_x_freq) + 0.5 * 
+        cos((p.x * wave_x_freq) * 2.0);
+
     let wave3 = sin(p.y * wave_y_freq);
     
     let waves = (wave1 + wave2 + wave3);
@@ -112,7 +145,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         floor(color.b * color_steps) / color_steps
     );
 
-    return vec4f(color, 1.0);
+    color = film_grain(color, p, film_grain_amt);
+
+    return vec4f(color, bg_alpha);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {
@@ -179,5 +214,14 @@ fn hsl_to_rgb(hsl: vec3f) -> vec3f {
     }
     
     return rgb + m;
+}
+
+fn random_v2(p: vec2f) -> f32 {
+    return fract(sin(dot(p, vec2f(12.9898, 78.233))) * 43758.5453);
+}
+
+fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {
+    let random = random_v2(p);
+    return clamp(color + (random - 0.5) * intensity, vec3f(0.0), vec3f(1.0));
 }
 

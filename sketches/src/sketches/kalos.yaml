@@ -1,6 +1,10 @@
 _vars:
   TAU: &TAU 6.283185307179586
 
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
 show_center:
   var: a4
   type: checkbox
@@ -46,6 +50,13 @@ corner_strength:
   range: [0.0, 5.0]
   step: 0.001
 
+offset:
+  var: c3
+  type: slider
+  default: 0.2
+  range: [0.0, 1.0]
+  step: 0.01
+
 init_x:
   var: g1
   type: slider
@@ -62,20 +73,6 @@ init_y:
 
 separator1:
   type: separator
-
-scaling_power:
-  var: c2
-  type: slider
-  default: 1.0
-  range: [0.01, 20.0]
-  step: 0.01
-
-offset:
-  var: c3
-  type: slider
-  default: 0.2
-  range: [0.0, 1.0]
-  step: 0.01
 
 ring_strength:
   var: c4
@@ -94,6 +91,10 @@ angular_variation:
 separator2:
   type: separator
 
+# ------------------------------------------------------------------------------
+#  Algorithm
+# ------------------------------------------------------------------------------
+
 alg:
   var: d2
   type: select
@@ -102,6 +103,13 @@ alg:
     - distance
     - concentric_waves
     - moire
+
+scaling_power:
+  var: c2
+  type: slider
+  default: 1.0
+  range: [0.01, 20.0]
+  step: 0.01
 
 j:
   var: d3

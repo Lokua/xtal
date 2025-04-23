@@ -9,7 +9,7 @@
     {
       "type": "Slider",
       "name": "radius",
-      "value": 2.62
+      "value": 5.17
     },
     {
       "type": "Checkbox",
@@ -29,12 +29,17 @@
     {
       "type": "Slider",
       "name": "corner_radius",
-      "value": 0.52
+      "value": 0.35
     },
     {
       "type": "Slider",
       "name": "corner_strength",
-      "value": 0.367
+      "value": 0.28
+    },
+    {
+      "type": "Slider",
+      "name": "offset",
+      "value": 0.08
     },
     {
       "type": "Slider",
@@ -48,23 +53,13 @@
     },
     {
       "type": "Slider",
-      "name": "scaling_power",
-      "value": 17.34
-    },
-    {
-      "type": "Slider",
-      "name": "offset",
-      "value": 0.42
-    },
-    {
-      "type": "Slider",
       "name": "ring_strength",
-      "value": 47.73
+      "value": 48.77
     },
     {
       "type": "Slider",
       "name": "angular_variation",
-      "value": 17.0
+      "value": 45.0
     },
     {
       "type": "Select",
@@ -73,8 +68,13 @@
     },
     {
       "type": "Slider",
+      "name": "scaling_power",
+      "value": 0.78
+    },
+    {
+      "type": "Slider",
       "name": "j",
-      "value": 0.5175
+      "value": 0.0594
     },
     {
       "type": "Slider",
@@ -89,22 +89,22 @@
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.78
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.94
+      "value": 0.62
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 0.41
+      "value": 0.53
     },
     {
       "type": "Slider",
       "name": "bg_alpha",
-      "value": 0.0524
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -114,17 +114,17 @@
     {
       "type": "Slider",
       "name": "comp_shift",
-      "value": 0.6329
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "threshold",
-      "value": 0.83
+      "value": 0.9
     },
     {
       "type": "Slider",
       "name": "mix",
-      "value": 0.78
+      "value": 0.06
     }
   ],
   "midi_controls": [],
@@ -133,24 +133,24 @@
     "1": {
       "ui_controls": [
         {
+          "type": "Checkbox",
+          "name": "show_corners",
+          "value": true
+        },
+        {
+          "type": "Select",
+          "name": "alg",
+          "value": "concentric_waves"
+        },
+        {
           "type": "Slider",
-          "name": "angular_variation",
+          "name": "radius",
+          "value": 9.02
+        },
+        {
+          "type": "Slider",
+          "name": "g",
           "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "strength",
-          "value": 1.261
-        },
-        {
-          "type": "Slider",
-          "name": "ring_strength",
-          "value": 7.92
-        },
-        {
-          "type": "Slider",
-          "name": "j",
-          "value": 0.0455
         },
         {
           "type": "Slider",
@@ -158,19 +158,9 @@
           "value": 0.0
         },
         {
-          "type": "Checkbox",
-          "name": "show_center",
-          "value": true
-        },
-        {
           "type": "Slider",
-          "name": "corner_radius",
-          "value": 3.9299998
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 0.2168
+          "name": "scaling_power",
+          "value": 0.01
         },
         {
           "type": "Slider",
@@ -188,24 +178,39 @@
           "value": 0.8112
         },
         {
-          "type": "Checkbox",
-          "name": "auto_hue_shift",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "radius",
-          "value": 9.02
-        },
-        {
           "type": "Slider",
           "name": "threshold",
           "value": 0.1853
         },
         {
           "type": "Slider",
-          "name": "scaling_power",
-          "value": 0.01
+          "name": "corner_radius",
+          "value": 3.9299998
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 7.92
+        },
+        {
+          "type": "Slider",
+          "name": "j",
+          "value": 0.0455
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_center",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "strength",
+          "value": 1.261
         },
         {
           "type": "Slider",
@@ -214,18 +219,13 @@
         },
         {
           "type": "Checkbox",
-          "name": "show_corners",
+          "name": "auto_hue_shift",
           "value": true
         },
         {
           "type": "Slider",
-          "name": "g",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "alg",
-          "value": "concentric_waves"
+          "name": "r",
+          "value": 0.2168
         }
       ],
       "midi_controls": [],

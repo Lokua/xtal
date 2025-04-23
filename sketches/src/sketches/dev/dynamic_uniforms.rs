@@ -51,7 +51,7 @@ impl Sketch for DynamicUniformsDev {
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
-        frame.clear(BLACK);
+        // frame.clear(BLACK);
         self.gpu.render(&frame);
     }
 }
