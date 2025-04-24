@@ -18,6 +18,7 @@ fn main() {
         drop,
         drop_tines,
         drop_walk,
+        dynamic_uniforms,
         flow_field_basic,
         heat_mask,
         interference,
@@ -39,7 +40,6 @@ fn main() {
         bug_repro,
         control_script_dev,
         cv_dev,
-        dynamic_uniforms,
         effects_wavefolder_dev,
         midi_dev,
         non_yaml_dev,
@@ -73,6 +73,8 @@ fn main() {
         noise,
         perlin_loop,
         sand_line,
+        rip,
+        toy,
         vertical,
         vertical_2,
         z_sim,
@@ -81,6 +83,7 @@ fn main() {
         // ---------------------------------------------------------------------
         template,
         basic_cube_shader_template,
+        dyn_uni_fs_template,
         fullscreen_shader_template
     );
 

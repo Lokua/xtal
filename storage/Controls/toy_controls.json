@@ -1,0 +1,390 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "t_mult",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "t_disp",
+      "value": -0.7692
+    },
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 57.0
+    },
+    {
+      "type": "Slider",
+      "name": "cam",
+      "value": 0.2937
+    },
+    {
+      "type": "Slider",
+      "name": "rotation",
+      "value": 0.2028
+    },
+    {
+      "type": "Slider",
+      "name": "depth",
+      "value": 6.014
+    },
+    {
+      "type": "Checkbox",
+      "name": "swizzle",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "alg_mix",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "x_offs",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "y_offs",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "r_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "g_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "b_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 192.3776
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "b_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "x_offs",
+          "value": 2.5175
+        },
+        {
+          "type": "Slider",
+          "name": "depth",
+          "value": 6.014
+        },
+        {
+          "type": "Checkbox",
+          "name": "swizzle",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 57.0
+        },
+        {
+          "type": "Slider",
+          "name": "r_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 192.3776
+        },
+        {
+          "type": "Slider",
+          "name": "g_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "cam",
+          "value": 0.3776
+        },
+        {
+          "type": "Slider",
+          "name": "y_offs",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_disp",
+          "value": -0.7692
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": 0.4476
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "depth",
+          "value": 14.7552
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 57.0
+        },
+        {
+          "type": "Slider",
+          "name": "y_offs",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "cam",
+          "value": -0.9091
+        },
+        {
+          "type": "Slider",
+          "name": "x_offs",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "g_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 0.6573
+        },
+        {
+          "type": "Slider",
+          "name": "b_mult",
+          "value": 1.7762
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 407.3427
+        },
+        {
+          "type": "Slider",
+          "name": "t_disp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "r_mult",
+          "value": 0.7413
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "swizzle",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "x_offs",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 57.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 192.3776
+        },
+        {
+          "type": "Checkbox",
+          "name": "swizzle",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "g_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "r_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "y_offs",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "b_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_disp",
+          "value": -0.7692
+        },
+        {
+          "type": "Slider",
+          "name": "depth",
+          "value": 6.014
+        },
+        {
+          "type": "Slider",
+          "name": "cam",
+          "value": 0.2937
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": 0.2028
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "swizzle",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "cam",
+          "value": 0.3776
+        },
+        {
+          "type": "Slider",
+          "name": "t_disp",
+          "value": -0.7692
+        },
+        {
+          "type": "Slider",
+          "name": "y_offs",
+          "value": 5.6643
+        },
+        {
+          "type": "Slider",
+          "name": "g_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 57.0
+        },
+        {
+          "type": "Slider",
+          "name": "r_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "depth",
+          "value": 6.014
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": 0.4476
+        },
+        {
+          "type": "Slider",
+          "name": "x_offs",
+          "value": 2.5175
+        },
+        {
+          "type": "Slider",
+          "name": "b_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 192.3776
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.25
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "swizzle",
+    "t_mult",
+    "t_disp",
+    "n_lines"
+  ]
+}

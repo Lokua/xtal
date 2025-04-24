@@ -88,6 +88,11 @@
     },
     {
       "type": "Slider",
+      "name": "bg_alpha",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
       "name": "distance_mix",
       "value": 0.9895
     },
@@ -110,340 +115,22 @@
       "type": "Slider",
       "name": "p2_y",
       "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "film_grain",
+      "value": 0.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "2": {
+    "6": {
       "ui_controls": [
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "angle_mult",
-          "value": 9.2906
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.5202
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.7751
-        },
-        {
-          "type": "Slider",
-          "name": "color_steps",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 5.346
-        },
-        {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
-        },
         {
           "type": "Select",
           "name": "origin",
           "value": "center"
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 1.3637999
-        },
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 6.0148
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 58.310097
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 54.636097
-        },
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 35.3474
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.8833
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.6067
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 3.7644
-        },
-        {
-          "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.908
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 3.425
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 4.2640004
-        },
-        {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_steps",
-          "value": 12.0
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.81409997
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 0.86469996
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.3886
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 74.577095
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 141.26799
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "center"
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 0.090399995
-        },
-        {
-          "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.66639996
-        },
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "angle_mult",
-          "value": 9.8494
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.54069996
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.6538
-        },
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 4.5192
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 8.056
-        },
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 47.0621
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "4": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 0.0439
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 18.6014
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.38349998
-        },
-        {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 16.993399
-        },
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.9196
-        },
-        {
-          "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.27609998
-        },
-        {
-          "type": "Slider",
-          "name": "angle_mult",
-          "value": 6.4544997
-        },
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 33.6837
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.159
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 80.390396
-        },
-        {
-          "type": "Slider",
-          "name": "color_steps",
-          "value": 18.0
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 2.3267
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "center"
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 1.7996999
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 0.703
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.46249998
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 4.496
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.61719996
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "center"
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.9158
-        },
-        {
-          "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.2826
         },
         {
           "type": "Slider",
@@ -456,49 +143,9 @@
           "value": 15.0
         },
         {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 3.515
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 1.6944
-        },
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 0.1784
-        },
-        {
           "type": "Slider",
           "name": "angle_mult",
           "value": 4.7051
-        },
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.8023
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 25.848799
         },
         {
           "type": "Slider",
@@ -507,135 +154,8 @@
         },
         {
           "type": "Slider",
-          "name": "wave_dist",
-          "value": 158.4581
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 0.6791
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "5": {
-      "ui_controls": [
-        {
-          "type": "Slider",
           "name": "g_amp",
-          "value": 0.38349998
-        },
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 0.0439
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "center"
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 80.390396
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.9196
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 1.7996999
-        },
-        {
-          "type": "Slider",
-          "name": "angle_mult",
-          "value": 6.4544997
-        },
-        {
-          "type": "Slider",
-          "name": "color_steps",
-          "value": 18.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.46249998
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 3.2517
-        },
-        {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 18.6014
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 18.8811
-        },
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 60.4895
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 0.637
-        },
-        {
-          "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.27609998
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "7": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 25.848799
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 1.014
-        },
-        {
-          "type": "Checkbox",
-          "name": "link_axes",
-          "value": true
+          "value": 0.8023
         },
         {
           "type": "Slider",
@@ -644,58 +164,23 @@
         },
         {
           "type": "Slider",
-          "name": "color_steps",
-          "value": 2.0
+          "name": "distance_mix",
+          "value": 0.965
         },
         {
           "type": "Slider",
-          "name": "angle_mult",
-          "value": 0.5245
+          "name": "r_amp",
+          "value": 0.61719996
         },
         {
           "type": "Slider",
-          "name": "color_shift",
-          "value": 2.8999
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 3.449
-        },
-        {
-          "type": "Slider",
-          "name": "wave_dist",
-          "value": 9.0909
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 0.979
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.0
+          "name": "grain_size",
+          "value": 0.2797
         },
         {
           "type": "Slider",
           "name": "origin_offset",
-          "value": 0.8741
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.993
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "center"
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 0.2378
+          "value": 0.2826
         },
         {
           "type": "Checkbox",
@@ -704,8 +189,74 @@
         },
         {
           "type": "Slider",
-          "name": "r_amp",
+          "name": "wave_y_freq",
+          "value": 25.848799
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 0.2378
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 19.5804
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 3.515
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 0.1784
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "9": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 0.2636
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 6.3986
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.8023
+        },
+        {
+          "type": "Slider",
+          "name": "p2_y",
           "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.1119
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase_speed",
+          "value": 16.0
         },
         {
           "type": "Checkbox",
@@ -715,7 +266,87 @@
         {
           "type": "Slider",
           "name": "distance_mix",
-          "value": 0.5524
+          "value": 0.0629
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 17.4825
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 82.1678
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.61719996
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 1.5804
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 9.0909
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 2.812
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 4.4056
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 0.979
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "animated-y"
+        },
+        {
+          "type": "Slider",
+          "name": "p2_x",
+          "value": 10.8392
+        },
+        {
+          "type": "Slider",
+          "name": "color_steps",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.6119
+        },
+        {
+          "type": "Slider",
+          "name": "film_grain",
+          "value": 2.0
         }
       ],
       "midi_controls": [],
@@ -725,8 +356,23 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "color_freq",
-          "value": 3.0093
+          "name": "wave_y_freq",
+          "value": 25.848799
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 0.1748
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "animated-y"
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 0.3497
         },
         {
           "type": "Slider",
@@ -734,9 +380,44 @@
           "value": 7.6923
         },
         {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 0.9895
+        },
+        {
           "type": "Checkbox",
           "name": "link_axes",
           "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.6581
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 1.3986
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 3.0093
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.8023
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 1.6944
         },
         {
           "type": "Slider",
@@ -750,13 +431,8 @@
         },
         {
           "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.9895
-        },
-        {
-          "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 1.3986
+          "name": "color_steps",
+          "value": 12.0
         },
         {
           "type": "Slider",
@@ -764,135 +440,85 @@
           "value": 0.2832
         },
         {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 3.515
-        },
-        {
-          "type": "Select",
-          "name": "origin",
-          "value": "animated-y"
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 1.6944
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.6581
-        },
-        {
           "type": "Checkbox",
           "name": "wave_phase_animation",
           "value": true
         },
         {
-          "type": "Checkbox",
-          "name": "color_invert",
-          "value": true
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 3.515
         },
         {
           "type": "Slider",
           "name": "wave_phase_speed",
           "value": 32.0
-        },
-        {
-          "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 25.848799
-        },
-        {
-          "type": "Slider",
-          "name": "g_amp",
-          "value": 0.8023
-        },
-        {
-          "type": "Slider",
-          "name": "grain_size",
-          "value": 0.3497
-        },
-        {
-          "type": "Slider",
-          "name": "color_steps",
-          "value": 12.0
-        },
-        {
-          "type": "Slider",
-          "name": "angle_mult",
-          "value": 0.1748
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "6": {
+    "2": {
       "ui_controls": [
         {
           "type": "Slider",
+          "name": "color_phase",
+          "value": 5.346
+        },
+        {
+          "type": "Slider",
           "name": "wave_dist",
-          "value": 19.5804
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_phase_animation",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "color_amt",
-          "value": 0.2378
-        },
-        {
-          "type": "Slider",
-          "name": "distance_mix",
-          "value": 0.965
-        },
-        {
-          "type": "Slider",
-          "name": "color_shift",
-          "value": 0.1784
-        },
-        {
-          "type": "Slider",
-          "name": "r_amp",
-          "value": 0.61719996
-        },
-        {
-          "type": "Slider",
-          "name": "b_amp",
-          "value": 0.6581
+          "value": 54.636097
         },
         {
           "type": "Slider",
           "name": "color_freq",
-          "value": 3.0093
+          "value": 3.7644
         },
         {
           "type": "Slider",
-          "name": "g_amp",
-          "value": 0.8023
+          "name": "distance_mix",
+          "value": 0.7751
         },
         {
           "type": "Slider",
-          "name": "wave_y_freq",
-          "value": 25.848799
+          "name": "color_amt",
+          "value": 1.3637999
         },
         {
           "type": "Slider",
-          "name": "color_phase",
-          "value": 3.515
+          "name": "color_steps",
+          "value": 3.0
         },
         {
           "type": "Slider",
-          "name": "wave_x_freq",
-          "value": 4.496
+          "name": "origin_offset",
+          "value": 0.908
         },
         {
           "type": "Slider",
           "name": "grain_size",
-          "value": 0.2797
+          "value": 3.425
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 9.2906
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.5202
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 35.3474
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.8833
         },
         {
           "type": "Select",
@@ -901,8 +527,357 @@
         },
         {
           "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
           "name": "link_axes",
           "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 6.0148
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.6067
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 58.310097
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 3.2517
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 0.0439
+        },
+        {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 80.390396
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 18.6014
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 0.637
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "center"
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.46249998
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 1.7996999
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 60.4895
+        },
+        {
+          "type": "Slider",
+          "name": "color_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.27609998
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.38349998
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 6.4544997
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 18.8811
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.9196
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "7": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 1.014
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 9.0909
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.8741
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 0.2378
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 4.496
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 0.5245
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "center"
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 0.5524
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.993
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 2.8999
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 0.979
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 25.848799
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 3.449
+        },
+        {
+          "type": "Slider",
+          "name": "color_steps",
+          "value": 2.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 18.6014
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 6.4544997
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 16.993399
+        },
+        {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 0.159
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.46249998
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "center"
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 1.7996999
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.27609998
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 33.6837
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.9196
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 80.390396
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 0.703
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.38349998
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 2.3267
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 0.0439
+        },
+        {
+          "type": "Slider",
+          "name": "color_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.8023
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 3.515
         },
         {
           "type": "Slider",
@@ -911,8 +886,23 @@
         },
         {
           "type": "Slider",
-          "name": "origin_offset",
-          "value": 0.2826
+          "name": "color_shift",
+          "value": 0.1784
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 25.848799
+        },
+        {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 0.9158
+        },
+        {
+          "type": "Checkbox",
+          "name": "color_invert",
+          "value": true
         },
         {
           "type": "Slider",
@@ -920,9 +910,155 @@
           "value": 4.7051
         },
         {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 3.0093
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 0.6791
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.6581
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "center"
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.2826
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.61719996
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 1.6944
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 4.496
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 158.4581
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "g_amp",
+          "value": 0.54069996
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_axes",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "angle_mult",
+          "value": 9.8494
+        },
+        {
+          "type": "Slider",
+          "name": "r_amp",
+          "value": 0.81409997
+        },
+        {
+          "type": "Slider",
+          "name": "color_phase",
+          "value": 4.2640004
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 8.056
+        },
+        {
+          "type": "Slider",
+          "name": "wave_y_freq",
+          "value": 74.577095
+        },
+        {
+          "type": "Slider",
+          "name": "distance_mix",
+          "value": 0.6538
+        },
+        {
+          "type": "Slider",
+          "name": "wave_x_freq",
+          "value": 47.0621
+        },
+        {
+          "type": "Slider",
+          "name": "origin_offset",
+          "value": 0.66639996
+        },
+        {
           "type": "Checkbox",
           "name": "color_invert",
           "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_dist",
+          "value": 141.26799
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_phase_animation",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift",
+          "value": 4.5192
+        },
+        {
+          "type": "Select",
+          "name": "origin",
+          "value": "center"
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 0.3886
+        },
+        {
+          "type": "Slider",
+          "name": "color_steps",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 0.090399995
+        },
+        {
+          "type": "Slider",
+          "name": "color_amt",
+          "value": 0.86469996
         }
       ],
       "midi_controls": [],

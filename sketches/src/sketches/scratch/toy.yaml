@@ -1,0 +1,102 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Time
+# ------------------------------------------------------------------------------
+
+t_mult:
+  var: e1
+  type: slider
+  range: [0, 2]
+  default: 1
+  step: 0.125
+
+t_disp:
+  var: b3
+  type: slider
+  range: [-2, 2]
+
+# ------------------------------------------------------------------------------
+#  Core
+# ------------------------------------------------------------------------------
+
+n_lines:
+  var: c4
+  type: slider
+  range: [20, 200]
+  default: 100
+  step: 1
+
+cam:
+  var: a4
+  type: slider
+  range: [-2, 2]
+  default: 1.0
+
+rotation:
+  var: b2
+  type: slider
+  default: 0.2
+
+depth:
+  var: b4
+  type: slider
+  range: [0, 20]
+  default: 6
+
+swizzle:
+  var: d4
+  type: checkbox
+
+# ------------------------------------------------------------------------------
+#  Trig
+# ------------------------------------------------------------------------------
+
+angle_section:
+  type: separator
+
+alg_mix:
+  var: d1
+  type: slider
+
+x_offs:
+  var: d2
+  type: slider
+  range: [0, 20]
+
+y_offs:
+  var: d3
+  type: slider
+  range: [0, 20]
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+r_mult:
+  var: c1
+  type: slider
+  range: [0, 2]
+  default: 1
+
+g_mult:
+  var: c2
+  type: slider
+  range: [0, 2]
+  default: 1
+
+b_mult:
+  var: c3
+  type: slider
+  range: [0, 2]
+  default: 1
+
+brightness:
+  var: b1
+  type: slider
+  range: [20, 600]
+  default: 100

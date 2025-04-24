@@ -1,12 +1,10 @@
-//! This sketch is used to test an experimental [`uniforms`] proc macro. There
-//! are definitely some issues with it
 use nannou::prelude::*;
 
 use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "dynamic_uniforms",
-    display_name: "Dynamic Uniforms Dev",
+    name: "toy",
+    display_name: "Toy",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -20,13 +18,14 @@ pub struct DynamicUniformsDev {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 8)]
+#[uniforms(banks = 6)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
     let wr = ctx.window_rect();
+
     let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "dynamic_uniforms.yaml"),
+        to_absolute_path(file!(), "toy.yaml"),
         Timing::new(ctx.bpm()),
     );
 
@@ -35,7 +34,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
     let gpu = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "dynamic_uniforms.wgsl"),
+        to_absolute_path(file!(), "toy.wgsl"),
         &params,
         true,
     );
@@ -46,12 +45,12 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
 impl Sketch for DynamicUniformsDev {
     fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         let wr = ctx.window_rect();
-        let params = ShaderParams::from((&wr, &self.hub));
+        let mut params = ShaderParams::from((&wr, &self.hub));
+        params.set("a3", self.hub.animation.beats());
         self.gpu.update_params(app, wr.resolution_u32(), &params);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
-        // frame.clear(BLACK);
         self.gpu.render(&frame);
     }
 }

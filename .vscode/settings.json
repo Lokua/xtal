@@ -44,6 +44,7 @@
     "randomizable",
     "randomsmooth",
     "Ripl",
+    "rpos",
     "rustc",
     "rwlock",
     "sccache",

@@ -544,6 +544,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             vertex_buffers: &self.vertex_buffers,
             sample_count: self.sample_count,
             format: Frame::TEXTURE_FORMAT,
+            // format: wgpu::TextureFormat::Rgba16Float,
             topology: self.topology,
             blend: self.blend,
             depth_stencil: self.depth_stencil.clone(),

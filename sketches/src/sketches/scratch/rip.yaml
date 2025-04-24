@@ -1,0 +1,114 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+rpos_x:
+  var: a4
+  bypass: 0
+  type: random_slewed
+  beats: 4
+  range: [-1, 1]
+  slew: 0.7
+  stem: 88
+
+rpos_y:
+  var: b1
+  bypass: 0
+  type: random_slewed
+  beats: 6
+  range: [-1, 1]
+  slew: 0.7
+  delay: 0.5
+  stem: 89
+
+# ------------------------------------------------------------------------------
+#  Noise
+# ------------------------------------------------------------------------------
+
+n_freq:
+  var: b2
+  type: slider
+  range: [0, 2]
+  default: 1
+
+n_glitch:
+  var: e1
+  type: slider
+  default: 1
+  step: 0.0125
+
+n_amp:
+  var: e2
+  type: slider
+  range: [0.2, 3]
+  default: 0.65
+
+rand_a:
+  var: e3
+  type: slider
+  default: 1
+rand_b:
+  var: e4
+  type: slider
+  default: 1
+rand_c:
+  var: f1
+  type: slider
+  default: 1
+rand_mult:
+  var: f2
+  type: slider
+
+animate_q_freq:
+  var: c2
+  type: checkbox
+q_freq:
+  var: c1
+  type: slider
+  range: [0, 10]
+  disabled: animate_q_freq
+q_freq_animation:
+  var: b4
+  type: random_slewed
+  beats: 4
+  range: [0, 10]
+  slew: 0.8
+
+alg_mix:
+  var: b3
+  type: slider
+
+q_x_d:
+  var: c3
+  type: slider
+  range: [0, 3]
+
+q_y_d:
+  var: c4
+  type: slider
+  range: [0, 3]
+
+# ------------------------------------------------------------------------------
+#  Noise
+# ------------------------------------------------------------------------------
+
+color_mode:
+  var: d1
+  type: select
+  default: a
+  options: [Mode 1, Mode 2, Mode 3]
+
+color_param_a:
+  var: d2
+  type: slider
+
+color_param_b:
+  var: d3
+  type: slider
+  range: [1, 5]
+  step: 1
+  default: 1
+
+color_param_c:
+  var: d4
+  type: slider
