@@ -4,37 +4,37 @@
     {
       "type": "Slider",
       "name": "n_freq",
-      "value": 0.5804
+      "value": 1.7902
     },
     {
       "type": "Slider",
       "name": "n_glitch",
-      "value": 1.0
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "n_amp",
-      "value": 0.6699
+      "value": 0.758
     },
     {
       "type": "Slider",
       "name": "rand_a",
-      "value": 0.0105
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "rand_b",
-      "value": 0.035
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "rand_c",
-      "value": 0.9088
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "rand_mult",
-      "value": 0.56119996
+      "value": 1.0
     },
     {
       "type": "Checkbox",
@@ -44,78 +44,53 @@
     {
       "type": "Slider",
       "name": "q_freq",
-      "value": 7.4598
+      "value": 7.5524
     },
     {
       "type": "Slider",
       "name": "alg_mix",
-      "value": 0.8242
+      "value": 0.8776
     },
     {
       "type": "Slider",
       "name": "q_x_d",
-      "value": 2.9952
+      "value": 1.7413
     },
     {
       "type": "Slider",
       "name": "q_y_d",
-      "value": 2.7797
+      "value": 2.1189
     },
     {
       "type": "Select",
       "name": "color_mode",
-      "value": "Mode 1"
+      "value": "Mode 3"
     },
     {
       "type": "Slider",
       "name": "color_param_a",
-      "value": 0.2098
+      "value": 0.9406
     },
     {
       "type": "Slider",
       "name": "color_param_b",
-      "value": 5.0
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "color_param_c",
-      "value": 0.2552
+      "value": 0.0979
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "5": {
+    "3": {
       "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "rand_c",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "q_y_d",
-          "value": 2.7797
-        },
         {
           "type": "Select",
           "name": "color_mode",
-          "value": "Mode 1"
-        },
-        {
-          "type": "Slider",
-          "name": "n_amp",
-          "value": 0.758
-        },
-        {
-          "type": "Slider",
-          "name": "rand_b",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "rand_a",
-          "value": 0.0
+          "value": "Mode 2"
         },
         {
           "type": "Checkbox",
@@ -124,28 +99,48 @@
         },
         {
           "type": "Slider",
-          "name": "q_freq",
-          "value": 7.6224
+          "name": "rand_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "rand_c",
+          "value": 0.2643
+        },
+        {
+          "type": "Slider",
+          "name": "q_y_d",
+          "value": 2.0428
         },
         {
           "type": "Slider",
           "name": "n_freq",
-          "value": 1.7902
+          "value": 0.7343
+        },
+        {
+          "type": "Slider",
+          "name": "q_x_d",
+          "value": 1.9691999
         },
         {
           "type": "Slider",
           "name": "alg_mix",
-          "value": 0.5664
+          "value": 0.81
         },
         {
           "type": "Slider",
-          "name": "color_param_a",
-          "value": 0.3881
+          "name": "q_freq",
+          "value": 5.5214996
         },
         {
           "type": "Slider",
-          "name": "color_param_c",
-          "value": 0.1713
+          "name": "n_amp",
+          "value": 1.0565
         },
         {
           "type": "Slider",
@@ -154,25 +149,55 @@
         },
         {
           "type": "Slider",
-          "name": "q_x_d",
-          "value": 0.8916
+          "name": "color_param_a",
+          "value": 0.8486
         },
         {
           "type": "Slider",
-          "name": "rand_mult",
-          "value": 0.82659996
+          "name": "color_param_c",
+          "value": 0.123799995
         },
         {
           "type": "Slider",
-          "name": "color_param_b",
-          "value": 3.0
+          "name": "rand_a",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "rand_b",
+          "value": 1.0
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "1": {
+    "2": {
       "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "n_amp",
+          "value": 0.758
+        },
+        {
+          "type": "Slider",
+          "name": "q_freq",
+          "value": 10.0
+        },
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "Mode 2"
+        },
+        {
+          "type": "Slider",
+          "name": "q_x_d",
+          "value": 1.7308
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 2.0
+        },
         {
           "type": "Checkbox",
           "name": "animate_q_freq",
@@ -180,48 +205,33 @@
         },
         {
           "type": "Slider",
-          "name": "q_y_d",
-          "value": 0.25669998
-        },
-        {
-          "type": "Slider",
           "name": "alg_mix",
-          "value": 0.76699996
+          "value": 0.8217
         },
         {
           "type": "Slider",
-          "name": "color_param_b",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_c",
-          "value": 0.012399999
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_a",
-          "value": 0.7416
-        },
-        {
-          "type": "Slider",
-          "name": "q_x_d",
-          "value": 0.7495
-        },
-        {
-          "type": "Select",
-          "name": "color_mode",
-          "value": "Mode 3"
-        },
-        {
-          "type": "Slider",
-          "name": "q_freq",
-          "value": 5.9441
+          "name": "q_y_d",
+          "value": 1.7413
         },
         {
           "type": "Slider",
           "name": "n_freq",
-          "value": 2.0
+          "value": 1.7902
+        },
+        {
+          "type": "Slider",
+          "name": "n_glitch",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_c",
+          "value": 0.0524
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_a",
+          "value": 0.2238
         }
       ],
       "midi_controls": [],
@@ -236,23 +246,13 @@
         },
         {
           "type": "Slider",
-          "name": "rand_b",
-          "value": 0.035
-        },
-        {
-          "type": "Slider",
-          "name": "rand_mult",
-          "value": 0.56119996
+          "name": "color_param_a",
+          "value": 0.2098
         },
         {
           "type": "Slider",
           "name": "alg_mix",
           "value": 0.8242
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_a",
-          "value": 0.2098
         },
         {
           "type": "Select",
@@ -261,18 +261,13 @@
         },
         {
           "type": "Slider",
+          "name": "q_y_d",
+          "value": 2.7797
+        },
+        {
+          "type": "Slider",
           "name": "q_x_d",
           "value": 2.9952
-        },
-        {
-          "type": "Slider",
-          "name": "n_glitch",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_b",
-          "value": 5.0
         },
         {
           "type": "Checkbox",
@@ -281,8 +276,84 @@
         },
         {
           "type": "Slider",
+          "name": "color_param_c",
+          "value": 0.2552
+        },
+        {
+          "type": "Slider",
+          "name": "rand_b",
+          "value": 0.035
+        },
+        {
+          "type": "Slider",
           "name": "n_amp",
           "value": 0.6699
+        },
+        {
+          "type": "Slider",
+          "name": "n_glitch",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_freq",
+          "value": 7.4598
+        },
+        {
+          "type": "Slider",
+          "name": "rand_a",
+          "value": 0.0105
+        },
+        {
+          "type": "Slider",
+          "name": "n_freq",
+          "value": 0.5804
+        },
+        {
+          "type": "Slider",
+          "name": "rand_mult",
+          "value": 0.56119996
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 5.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "7": {
+      "ui_controls": [
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "Mode 1"
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_a",
+          "value": 0.0455
+        },
+        {
+          "type": "Slider",
+          "name": "n_amp",
+          "value": 0.6699
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_freq",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_freq",
+          "value": 0.0629
         },
         {
           "type": "Slider",
@@ -296,25 +367,60 @@
         },
         {
           "type": "Slider",
+          "name": "rand_mult",
+          "value": 0.0769
+        },
+        {
+          "type": "Slider",
+          "name": "n_glitch",
+          "value": 0.5625
+        },
+        {
+          "type": "Slider",
+          "name": "q_x_d",
+          "value": 2.4021
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_q_freq",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 0.7238
+        },
+        {
+          "type": "Slider",
+          "name": "rand_b",
+          "value": 0.035
+        },
+        {
+          "type": "Slider",
+          "name": "rand_c",
+          "value": 0.8147
+        },
+        {
+          "type": "Slider",
           "name": "q_y_d",
-          "value": 2.7797
-        },
-        {
-          "type": "Slider",
-          "name": "n_freq",
-          "value": 0.5804
-        },
-        {
-          "type": "Slider",
-          "name": "q_freq",
-          "value": 7.4598
+          "value": 0.6923
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "3": {
+    "1": {
       "ui_controls": [
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "Mode 3"
+        },
+        {
+          "type": "Slider",
+          "name": "q_y_d",
+          "value": 0.25669998
+        },
         {
           "type": "Checkbox",
           "name": "animate_q_freq",
@@ -323,108 +429,83 @@
         {
           "type": "Slider",
           "name": "alg_mix",
-          "value": 0.81
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_b",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "color_mode",
-          "value": "Mode 2"
-        },
-        {
-          "type": "Slider",
-          "name": "rand_c",
-          "value": 0.2643
-        },
-        {
-          "type": "Slider",
-          "name": "q_y_d",
-          "value": 2.0428
-        },
-        {
-          "type": "Slider",
-          "name": "rand_b",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "rand_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "q_x_d",
-          "value": 1.9691999
-        },
-        {
-          "type": "Slider",
-          "name": "n_glitch",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "rand_a",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "n_freq",
-          "value": 0.7343
+          "value": 0.76699996
         },
         {
           "type": "Slider",
           "name": "color_param_a",
-          "value": 0.8486
-        },
-        {
-          "type": "Slider",
-          "name": "n_amp",
-          "value": 1.0565
+          "value": 0.7416
         },
         {
           "type": "Slider",
           "name": "color_param_c",
-          "value": 0.123799995
+          "value": 0.012399999
         },
         {
           "type": "Slider",
           "name": "q_freq",
-          "value": 5.5214996
+          "value": 5.9441
+        },
+        {
+          "type": "Slider",
+          "name": "n_freq",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_x_d",
+          "value": 0.7495
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "2": {
+    "5": {
       "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "color_param_a",
-          "value": 0.2238
-        },
-        {
-          "type": "Slider",
-          "name": "q_y_d",
-          "value": 1.7413
-        },
-        {
-          "type": "Slider",
-          "name": "color_param_c",
-          "value": 0.0524
-        },
-        {
-          "type": "Select",
-          "name": "color_mode",
-          "value": "Mode 2"
-        },
         {
           "type": "Slider",
           "name": "n_freq",
           "value": 1.7902
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_q_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "q_y_d",
+          "value": 2.7797
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_b",
+          "value": 3.0
+        },
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "Mode 1"
+        },
+        {
+          "type": "Slider",
+          "name": "rand_a",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 0.5664
+        },
+        {
+          "type": "Slider",
+          "name": "rand_b",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -433,8 +514,23 @@
         },
         {
           "type": "Slider",
+          "name": "q_freq",
+          "value": 7.6224
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_c",
+          "value": 0.1713
+        },
+        {
+          "type": "Slider",
+          "name": "rand_mult",
+          "value": 0.82659996
+        },
+        {
+          "type": "Slider",
           "name": "q_x_d",
-          "value": 1.7308
+          "value": 0.8916
         },
         {
           "type": "Slider",
@@ -443,9 +539,20 @@
         },
         {
           "type": "Slider",
-          "name": "alg_mix",
-          "value": 0.8217
+          "name": "color_param_a",
+          "value": 0.3881
         },
+        {
+          "type": "Slider",
+          "name": "rand_c",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "8": {
+      "ui_controls": [
         {
           "type": "Checkbox",
           "name": "animate_q_freq",
@@ -453,13 +560,78 @@
         },
         {
           "type": "Slider",
-          "name": "q_freq",
-          "value": 10.0
+          "name": "alg_mix",
+          "value": 0.8776
         },
         {
           "type": "Slider",
           "name": "color_param_b",
-          "value": 2.0
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_freq",
+          "value": 1.7902
+        },
+        {
+          "type": "Slider",
+          "name": "rand_a",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_freq",
+          "value": 7.5524
+        },
+        {
+          "type": "Slider",
+          "name": "n_glitch",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_y_d",
+          "value": 2.1189
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_c",
+          "value": 0.0979
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_a",
+          "value": 0.9406
+        },
+        {
+          "type": "Slider",
+          "name": "q_x_d",
+          "value": 1.7413
+        },
+        {
+          "type": "Slider",
+          "name": "rand_b",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "Mode 3"
+        },
+        {
+          "type": "Slider",
+          "name": "rand_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_amp",
+          "value": 0.758
+        },
+        {
+          "type": "Slider",
+          "name": "rand_c",
+          "value": 1.0
         }
       ],
       "midi_controls": [],
@@ -469,18 +641,53 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "rand_c",
-          "value": 0.4371
+          "name": "q_x_d",
+          "value": 2.2657
         },
         {
           "type": "Slider",
-          "name": "n_amp",
-          "value": 0.993
+          "name": "n_freq",
+          "value": 1.5175
         },
         {
           "type": "Select",
           "name": "color_mode",
           "value": "Mode 3"
+        },
+        {
+          "type": "Slider",
+          "name": "color_param_a",
+          "value": 0.013499999
+        },
+        {
+          "type": "Slider",
+          "name": "alg_mix",
+          "value": 0.8951
+        },
+        {
+          "type": "Slider",
+          "name": "n_glitch",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "q_freq",
+          "value": 1.8182
+        },
+        {
+          "type": "Slider",
+          "name": "q_y_d",
+          "value": 2.7378
+        },
+        {
+          "type": "Slider",
+          "name": "rand_c",
+          "value": 0.4371
+        },
+        {
+          "type": "Slider",
+          "name": "rand_a",
+          "value": 0.1084
         },
         {
           "type": "Checkbox",
@@ -494,27 +701,7 @@
         },
         {
           "type": "Slider",
-          "name": "q_freq",
-          "value": 1.8182
-        },
-        {
-          "type": "Slider",
-          "name": "q_x_d",
-          "value": 2.2657
-        },
-        {
-          "type": "Slider",
-          "name": "rand_b",
-          "value": 0.1538
-        },
-        {
-          "type": "Slider",
-          "name": "q_y_d",
-          "value": 2.7378
-        },
-        {
-          "type": "Slider",
-          "name": "n_glitch",
+          "name": "rand_mult",
           "value": 0.0
         },
         {
@@ -524,28 +711,13 @@
         },
         {
           "type": "Slider",
-          "name": "n_freq",
-          "value": 1.5175
+          "name": "n_amp",
+          "value": 0.993
         },
         {
           "type": "Slider",
-          "name": "color_param_a",
-          "value": 0.013499999
-        },
-        {
-          "type": "Slider",
-          "name": "rand_a",
-          "value": 0.1084
-        },
-        {
-          "type": "Slider",
-          "name": "rand_mult",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "alg_mix",
-          "value": 0.8951
+          "name": "rand_b",
+          "value": 0.1538
         }
       ],
       "midi_controls": [],

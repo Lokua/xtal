@@ -1,0 +1,90 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "t_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "detail",
+      "value": 0.02
+    },
+    {
+      "type": "Slider",
+      "name": "increment",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "pos_x",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "pos_y",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "gyr_mix",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "gyr_b_amt",
+      "value": 0.001
+    },
+    {
+      "type": "Slider",
+      "name": "inner_mult",
+      "value": 13.1154
+    },
+    {
+      "type": "Slider",
+      "name": "outer_mult",
+      "value": 34.2657
+    },
+    {
+      "type": "Slider",
+      "name": "outer_meta",
+      "value": 0.9091
+    },
+    {
+      "type": "Slider",
+      "name": "colorize",
+      "value": 0.6853
+    },
+    {
+      "type": "Select",
+      "name": "edge_mode",
+      "value": "rgb"
+    },
+    {
+      "type": "Slider",
+      "name": "edge",
+      "value": 0.3112
+    },
+    {
+      "type": "Slider",
+      "name": "r",
+      "value": 0.7168
+    },
+    {
+      "type": "Slider",
+      "name": "g",
+      "value": 0.9895
+    },
+    {
+      "type": "Slider",
+      "name": "b",
+      "value": 0.5839
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

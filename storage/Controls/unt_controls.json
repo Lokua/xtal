@@ -1,0 +1,117 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "t_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "zoom",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "phase_gap",
+      "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 0.01
+    },
+    {
+      "type": "Checkbox",
+      "name": "rotate",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "enable_sym",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "sym",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "iterations",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "movement",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "movement_t",
+      "value": 3.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "sym",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "phase_gap",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "movement_t",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "iterations",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "movement",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "enable_sym",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.01
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}

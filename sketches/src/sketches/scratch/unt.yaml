@@ -1,0 +1,62 @@
+_vars:
+  PI: &PI 3.14159265359
+  TAU: &TAU 6.283185307179586
+
+t_mult:
+  var: a4
+  type: slider
+  range: [0.0125, 2]
+  step: 0.0125
+  default: 1
+
+zoom:
+  var: b1
+  type: slider
+  default: 1.5
+  range: [0.001, 10.0]
+
+phase_gap:
+  var: b2
+  type: slider
+  default: 8
+  range: [1, 16]
+
+brightness:
+  var: b3
+  type: slider
+  default: 0.01
+  range: [0.001, 0.02]
+
+rotate:
+  var: b4
+  type: checkbox
+
+enable_sym:
+  var: c1
+  type: checkbox
+
+sym:
+  var: c2
+  type: slider
+  range: [0.125, 5.0]
+  default: 1
+  disabled: not enable_sym
+
+iterations:
+  var: c3
+  type: slider
+  range: [1, 12]
+  step: 1
+  default: 4
+
+movement:
+  var: c4
+  type: slider
+  range: [0, 1]
+
+movement_t:
+  var: d1
+  type: slider
+  range: [0.25, 8]
+  step: 0.25
+  default: 3

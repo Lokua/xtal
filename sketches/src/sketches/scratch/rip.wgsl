@@ -56,14 +56,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     
     let st = correct_aspect(position);
 
-    var color = 0.0;
     var q = vec2f(0.0);
     q.x = fbm(q_freq * st + 0.55 * t);
     q.y = fbm(q_freq * st + 0.21 * t);
     q.x = mix(sin(q.x * q_x_d), tan(q.x * q_x_d), alg_mix);
     q.y = mix(cos(q.y * q_x_y), 1.0 / tan(q.y * q_x_y), alg_mix);
     
-    color = fbm(10.0 * st + 1.0 * q + 3.0 * r_pos);
+    var color = fbm(10.0 * st + 1.0 * q + 3.0 * r_pos);
 
     let component_a = color * clamp(length(q * color_param_a), 0.0, 1.0);
     let component_b = pow(color, color_param_b);
@@ -123,7 +122,7 @@ fn bilinear_noise(st: vec2f) -> f32 {
     
     let f00 = rand(i);
     let f10 = rand(i + vec2f(1.0 - n_glitch, n_glitch));
-    let f01 = rand(i + vec2f(n_glitch, 1.0 - n_glitch));
+    let f01 = rand(i + vec2f(n_glitch, 1.0 - (n_glitch)));
     let f11 = rand(i + vec2f(1.0 - n_glitch, 1.0 - n_glitch));
     
     let u = smoothstep(vec2f(0.0), vec2f(1.0), (1.0 - f));

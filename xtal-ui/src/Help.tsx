@@ -14,7 +14,7 @@ export const Help = {
   ),
   ControlLabel: format(
     `Clicking this label will randomize this parameter. [${mod} Click] will
-    revert to it it's last saved value.`
+    revert it to its last saved value.`
   ),
   DeleteMappings: 'Delete all MIDI Mappings',
   DisableMappings: 'Disable/Enable MIDI Mappings',
