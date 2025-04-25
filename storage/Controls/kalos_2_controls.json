@@ -3,89 +3,718 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "offset",
-      "value": 0.046
+      "name": "center_radius",
+      "value": 2.87
     },
     {
       "type": "Slider",
-      "name": "radius",
-      "value": 6.0699997
+      "name": "center_strength",
+      "value": 0.3
     },
     {
       "type": "Slider",
-      "name": "strength",
-      "value": 4.6670003
+      "name": "center_scaling",
+      "value": 12.0
     },
     {
       "type": "Slider",
-      "name": "scaling_power",
-      "value": 0.56
+      "name": "corner_radius",
+      "value": 1.89
+    },
+    {
+      "type": "Slider",
+      "name": "corner_strength",
+      "value": 1.6520001
+    },
+    {
+      "type": "Slider",
+      "name": "corner_scaling",
+      "value": 20.0
+    },
+    {
+      "type": "Slider",
+      "name": "corner_offset",
+      "value": 0.3357
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
     },
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.4068
+      "value": 0.84
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.6145
+      "value": 0.83
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 0.93659997
+      "value": 0.77
+    },
+    {
+      "type": "Slider",
+      "name": "neonize",
+      "value": 0.3805
     },
     {
       "type": "Slider",
       "name": "ring_strength",
-      "value": 7.58
-    },
-    {
-      "type": "Slider",
-      "name": "ring_harmonics",
-      "value": 4.0
-    },
-    {
-      "type": "Slider",
-      "name": "ring_harm_amt",
-      "value": 79.0
+      "value": 11.38
     },
     {
       "type": "Slider",
       "name": "angular_variation",
-      "value": 31.0
-    },
-    {
-      "type": "Slider",
-      "name": "frequency",
-      "value": 662.0
+      "value": 27.0
     },
     {
       "type": "Slider",
       "name": "lerp",
-      "value": 0.1697
+      "value": 0.22
+    },
+    {
+      "type": "Slider",
+      "name": "frequency",
+      "value": 3.0
     },
     {
       "type": "Slider",
       "name": "threshold",
-      "value": 0.5524
+      "value": 0.18
     },
     {
       "type": "Slider",
       "name": "mix",
-      "value": 0.9196
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "dots",
+      "value": 1000.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 6.83
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 4.13
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.4781
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 0.3805
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.88
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 10.522
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.71999997
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 1.6520001
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.84
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 19.8
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 11.38
+        },
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1137.7622
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 27.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.22
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 2.87
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.3357
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 27.0
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 11.38
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.77
+        },
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1000.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 1.6520001
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.84
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 1.89
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.83
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 0.3805
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 3.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "6": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 4.441
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 3.77
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 1.89
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 3.287
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.451
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1000.0
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 21.0
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.26
+        },
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.12
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.51
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 2.87
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 0.82
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1137.7622
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 11.38
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 6.75
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 5.418
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.96
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 11.389999
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 8.84
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.2854
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 4.8570004
+        },
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.45
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 19.0
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 0.0835
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 1.0430001
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.69
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 11.38
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.81
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 1.876
+        },
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1137.7622
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 2.424
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 4.1
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.68
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 28.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 7.73
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 5.5620003
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.97999996
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.24849999
+        },
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.68
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 7.6
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 0.3058
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.34
+        },
+        {
+          "type": "Slider",
+          "name": "corner_offset",
+          "value": 0.7172
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.47
+        },
+        {
+          "type": "Slider",
+          "name": "threshold",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "center_strength",
+          "value": 3.2150002
+        },
+        {
+          "type": "Slider",
+          "name": "angular_variation",
+          "value": 16.0
+        },
+        {
+          "type": "Slider",
+          "name": "corner_radius",
+          "value": 9.42
+        },
+        {
+          "type": "Slider",
+          "name": "center_radius",
+          "value": 0.22999999
+        },
+        {
+          "type": "Slider",
+          "name": "center_scaling",
+          "value": 5.564
+        },
+        {
+          "type": "Slider",
+          "name": "neonize",
+          "value": 0.1381
+        },
+        {
+          "type": "Slider",
+          "name": "corner_scaling",
+          "value": 11.67
+        },
+        {
+          "type": "Slider",
+          "name": "mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "dots",
+          "value": 1137.7622
+        },
+        {
+          "type": "Slider",
+          "name": "frequency",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "lerp",
+          "value": 0.94
+        },
+        {
+          "type": "Slider",
+          "name": "ring_strength",
+          "value": 11.38
+        },
+        {
+          "type": "Slider",
+          "name": "corner_strength",
+          "value": 0.90400004
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.96
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": [
     "ring_strength",
     "ring_harm_amt",
     "ring_harmonics",
     "threshold",
-    "mix"
+    "mix",
+    "invert",
+    "dots"
   ]
 }

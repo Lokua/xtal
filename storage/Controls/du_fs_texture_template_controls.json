@@ -1,0 +1,20 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "amt",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "does_nothing",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

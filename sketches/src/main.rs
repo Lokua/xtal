@@ -24,6 +24,8 @@ fn main() {
         interference,
         kalos,
         kalos_2,
+        marcher,
+        neon,
         sand_lines,
         shaxper,
         sierpinski_triangle,
@@ -31,6 +33,7 @@ fn main() {
         spiral_lines,
         swirl,
         symmetry,
+        toxy,
         wave_fract,
         // ---------------------------------------------------------------------
         // DEV
@@ -71,12 +74,9 @@ fn main() {
         displacement_1a,
         displacement_2,
         lines,
-        marcher,
         noise,
         perlin_loop,
         sand_line,
-        rip,
-        toy,
         unt,
         vertical,
         vertical_2,
@@ -86,7 +86,8 @@ fn main() {
         // ---------------------------------------------------------------------
         template,
         basic_cube_shader_template,
-        dyn_uni_fs_template,
+        du_fs_template,
+        du_fs_texture_template,
         fullscreen_shader_template
     );
 

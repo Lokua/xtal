@@ -20,15 +20,41 @@ increment:
   type: slider
   default: 1
 
+animate_pos_range:
+  var: c3
+  type: checkbox
+
+_pos_range: &POS_RANGE [-1.5, 1.5]
+
+pos_x_anim:
+  var: c4
+  type: random_slewed
+  beats: 4.0
+  range: *POS_RANGE
+  slew: 0.9
+  delay: 0.0
+  stem: 33
+
+pos_y_anim:
+  var: d1
+  type: random_slewed
+  beats: 4.0
+  range: *POS_RANGE
+  slew: 0.9
+  delay: 0.0
+  stem: 34
+
 pos_x:
   var: f4
   type: slider
-  range: [-1, 1]
+  range: *POS_RANGE
+  disabled: animate_pos_range
 
 pos_y:
   var: g1
   type: slider
-  range: [-1, 1]
+  range: *POS_RANGE
+  disabled: animate_pos_range
 
 # ------------------------------------------------------------------------------
 #  Gyration Algorithm Section
@@ -58,7 +84,7 @@ inner_section:
 inner_mult:
   var: b2
   type: slider
-  range: [1, 100]
+  range: [1, 80]
   default: 8
 
 outer_mult:
@@ -72,6 +98,26 @@ outer_meta:
   type: slider
   range: [0, 20]
   default: 0.8
+
+# ------------------------------------------------------------------------------
+#  V Wave
+# ------------------------------------------------------------------------------
+
+v_section:
+  type: separator
+
+v_base:
+  var: c1
+  type: slider
+  range: [0, 2]
+  default: 0.3
+
+v_y_offs:
+  var: c2
+  type: slider
+  range: [-10, 10]
+  default: 5
+  step: 1
 
 # ------------------------------------------------------------------------------
 #  Color
@@ -90,9 +136,14 @@ edge_mode:
   default: rgb
   options: [r, g, b, rg, rb, gb, rgb]
 
-edge:
+edge_thresh:
   var: h2
   type: slider
+
+edge_mix:
+  var: h4
+  type: slider
+  default: 0.5
 
 r:
   var: g2

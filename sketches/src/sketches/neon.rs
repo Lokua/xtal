@@ -3,8 +3,8 @@ use nannou::prelude::*;
 use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "toy",
-    display_name: "Toy",
+    name: "neon",
+    display_name: "Neon",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -25,7 +25,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
     let wr = ctx.window_rect();
 
     let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "toy.yaml"),
+        to_absolute_path(file!(), "neon.yaml"),
         Timing::new(ctx.bpm()),
     );
 
@@ -34,7 +34,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
     let gpu = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "toy.wgsl"),
+        to_absolute_path(file!(), "neon.wgsl"),
         &params,
         true,
     );
