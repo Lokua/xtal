@@ -7,6 +7,17 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.14.0] 2025-04-26
+
+## Added
+
+- Support for any number of textures (or however many a single bind group layout
+  can support)
+
+## Changed
+
+- Removed `watch` argument from higher-level `GpuState` constructors
+
 ## [0.13.0] 2025-04-23
 
 ### Fixed
