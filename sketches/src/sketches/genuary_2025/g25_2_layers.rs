@@ -60,6 +60,7 @@ pub fn init(app: &App, ctx: &Context) -> G25_2Layers {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_2_layers.wgsl"),
         &params,
+        0,
         true,
     );
 

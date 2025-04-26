@@ -36,6 +36,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         wr.resolution_u32(),
         to_absolute_path(file!(), "toxy.wgsl"),
         &params,
+        0,
         true,
     );
 

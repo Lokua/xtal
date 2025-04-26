@@ -1,6 +1,6 @@
 use bevy_reflect::Reflect;
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::*;
 
@@ -62,6 +62,7 @@ pub fn init(app: &App, ctx: &Context) -> BasicCubeShader {
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
         true,
+        0,
         true,
     );
 

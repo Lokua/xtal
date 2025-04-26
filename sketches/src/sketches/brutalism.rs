@@ -1,7 +1,7 @@
 use bevy_reflect::Reflect;
 use bytemuck::{Pod, Zeroable};
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::{CUBE_POSITIONS, QUAD_POSITIONS};
 
@@ -118,6 +118,7 @@ pub fn init(app: &App, ctx: &Context) -> Brutalism {
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
         true,
+        0,
         true,
     );
 
@@ -126,6 +127,7 @@ pub fn init(app: &App, ctx: &Context) -> Brutalism {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "brutalism_shader2.wgsl"),
         &post_params,
+        1,
         true,
     );
 
@@ -221,7 +223,7 @@ impl Sketch for Brutalism {
             .update(app, window_size, &params, &vertices);
 
         let texture = self.main_shader.render_to_texture(app);
-        self.post_shader.set_input_texture(app, &texture);
+        self.post_shader.set_texture(app, &texture);
         self.post_shader
             .update_params(app, window_size, &post_params);
     }

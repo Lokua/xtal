@@ -50,6 +50,7 @@ pub fn init(app: &App, ctx: &Context) -> Bos {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./bos.wgsl"),
         &params,
+        0,
         true,
     );
 

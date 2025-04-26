@@ -48,6 +48,7 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         window_size,
         to_absolute_path(file!(), "./g25_5_isometric.wgsl"),
         &params,
+        0,
         true,
     );
 

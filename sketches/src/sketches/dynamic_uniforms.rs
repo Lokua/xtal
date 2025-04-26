@@ -37,6 +37,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         wr.resolution_u32(),
         to_absolute_path(file!(), "dynamic_uniforms.wgsl"),
         &params,
+        0,
         true,
     );
 

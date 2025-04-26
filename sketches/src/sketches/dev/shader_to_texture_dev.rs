@@ -1,6 +1,6 @@
 use bevy_reflect::Reflect;
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::*;
 
@@ -75,6 +75,7 @@ pub fn init(app: &App, ctx: &Context) -> ShaderToTextureDev {
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
         true,
+        0,
         true,
     );
 
@@ -83,6 +84,7 @@ pub fn init(app: &App, ctx: &Context) -> ShaderToTextureDev {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),
         &post_process_params,
+        1,
         true,
     );
 
@@ -118,7 +120,7 @@ impl Sketch for ShaderToTextureDev {
         };
 
         let texture_view = self.first_pass.render_to_texture(app);
-        self.second_pass.set_input_texture(app, &texture_view);
+        self.second_pass.set_texture(app, &texture_view);
 
         let vertices = create_vertices();
         self.first_pass.update(

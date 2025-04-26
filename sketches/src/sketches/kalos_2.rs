@@ -38,6 +38,7 @@ pub fn init(app: &App, ctx: &Context) -> Kalos2Dyn {
         wr.resolution_u32(),
         to_absolute_path(file!(), "kalos_2_shader_1.wgsl"),
         &params,
+        0,
         true,
     );
 
@@ -46,6 +47,7 @@ pub fn init(app: &App, ctx: &Context) -> Kalos2Dyn {
         wr.resolution_u32(),
         to_absolute_path(file!(), "kalos_2_shader_2.wgsl"),
         &params,
+        2,
         true,
     );
 
@@ -71,10 +73,9 @@ impl Sketch for Kalos2Dyn {
         let texture = self.shader_1.render_to_texture(app);
 
         if let Some(ref prev_texture) = self.prev_texture {
-            self.shader_2
-                .set_input_textures(app, &texture, prev_texture);
+            self.shader_2.set_textures(app, &[&texture, prev_texture]);
         } else {
-            self.shader_2.set_input_texture(app, &texture);
+            self.shader_2.set_textures(app, &[&texture, &texture]);
         }
 
         let shader_2_output = self.shader_2.render_to_texture(app);

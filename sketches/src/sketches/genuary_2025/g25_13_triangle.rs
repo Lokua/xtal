@@ -52,6 +52,7 @@ pub fn init(app: &App, ctx: &Context) -> G25_13Triangle {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "g25_13_triangle.wgsl"),
         &params,
+        0,
         true,
     );
 

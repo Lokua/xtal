@@ -1,5 +1,5 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 // b/w Ableton 2025/Xtal - Wave Fract
 
@@ -81,6 +81,7 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_19_op_art.wgsl"),
         &params,
+        0,
         true,
     );
 

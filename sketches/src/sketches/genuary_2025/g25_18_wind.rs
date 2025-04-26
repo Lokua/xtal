@@ -1,6 +1,6 @@
 use bevy_reflect::Reflect;
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 // Bitwig/2025/Xtal - Flow Field w 312
 
@@ -114,6 +114,7 @@ pub fn init(app: &App, ctx: &Context) -> G25_18Wind {
         wgpu::PrimitiveTopology::TriangleList,
         Some(wgpu::BlendState::ALPHA_BLENDING),
         false,
+        0,
         true,
     );
 

@@ -1,5 +1,5 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "interference",
@@ -94,6 +94,7 @@ pub fn init(app: &App, ctx: &Context) -> Interference {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./interference.wgsl"),
         &params,
+        0,
         true,
     );
 

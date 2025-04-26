@@ -1,5 +1,7 @@
 //! Helper module to provide sketches an easy way to integrate shaders into
-//! their sketch without having to deal with WGPU internals
+//! their sketch without having to deal with WGPU internals. Note that texture
+//! support is limited to post-processing and feedback purposes as opposed to
+//! static images at this time.
 
 use bevy_reflect::{Reflect, TypeInfo, Typed};
 use bytemuck::{Pod, Zeroable};
@@ -28,6 +30,20 @@ struct PipelineCreationState<'a> {
     depth_stencil: Option<wgpu::DepthStencilState>,
 }
 
+struct Textures {
+    count: u32,
+    bind_group_layout: wgpu::BindGroupLayout,
+    bind_group: wgpu::BindGroup,
+}
+
+/// Housing for a single shader instance
+///
+/// # Type Parameters
+///
+/// * `V` - The vertex type that defines the structure of vertex data sent
+///   to the GPU. Must derive `Pod`, `Zeroable`, and `Reflect`. While the
+///   implementation uses the `Typed` trait, this is automatically
+///   implemented when deriving `Reflect`.
 pub struct GpuState<V: Pod + Zeroable> {
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: Option<wgpu::Buffer>,
@@ -42,13 +58,10 @@ pub struct GpuState<V: Pod + Zeroable> {
     vertex_buffers: Vec<wgpu::VertexBufferLayout<'static>>,
     sample_count: u32,
     window_size_physical: [u32; 2],
-
-    // TODO: these should be optional
-    texture_bind_group: wgpu::BindGroup,
-    texture_bind_group_layout: wgpu::BindGroupLayout,
+    textures: Option<Textures>,
     _marker: std::marker::PhantomData<V>,
 
-    // Shaded access for hot reloading
+    // State access for hot reloading
     update_state: Arc<Mutex<Option<PathBuf>>>,
     _watcher: Option<notify::RecommendedWatcher>,
 }
@@ -56,15 +69,6 @@ pub struct GpuState<V: Pod + Zeroable> {
 impl<V: Pod + Zeroable + Typed> GpuState<V> {
     /// Creates a new GPU state manager with custom vertex data.
     ///
-    /// # Type Parameters
-    ///
-    /// * `V` - The vertex type that defines the structure of vertex data sent to the GPU.
-    ///   Must derive `Pod`, `Zeroable`, and `Reflect`. While the implementation uses the
-    ///   `Typed` trait, this is automatically implemented when deriving `Reflect`.
-    /// * `window_size` - The logical width and height of the target window. This
-    ///   will be scaled internally to match the primary display's pixel depth.
-    ///
-    /// See a full example at `src/sketches/genuary_2025/g25_18_wind.rs`.
     /// See the specialized `new_procedural` and `new_full_screen` constructors
     /// for easier to get up and running shaders.
     #[allow(clippy::too_many_arguments)]
@@ -77,6 +81,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         topology: wgpu::PrimitiveTopology,
         blend: Option<wgpu::BlendState>,
         enable_depth_testing: bool,
+        texture_count: u32,
         watch: bool,
     ) -> Self {
         let shader_content = fs::read_to_string(&shader_path)
@@ -112,40 +117,60 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             &params_buffer,
         );
 
-        let texture_bind_group_layout =
-            Self::create_texture_bind_group_layout(device);
+        let textures = if texture_count > 0 {
+            let texture_bind_group_layout =
+                Self::create_texture_bind_group_layout(device, texture_count);
 
-        let dummy_texture = wgpu::TextureBuilder::new()
-            .size([1, 1])
-            .format(Frame::TEXTURE_FORMAT)
-            .dimension(wgpu::TextureDimension::D2)
-            .usage(
-                wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
-            )
-            .sample_count(1)
-            .build(device);
+            let dummy_texture = wgpu::TextureBuilder::new()
+                .size([1, 1])
+                .format(Frame::TEXTURE_FORMAT)
+                .dimension(wgpu::TextureDimension::D2)
+                .usage(
+                    wgpu::TextureUsages::TEXTURE_BINDING
+                        | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                )
+                .sample_count(1)
+                .build(device);
 
-        let dummy_view = dummy_texture.view().build();
+            let dummy_texture_sampler =
+                device.create_sampler(&wgpu::SamplerDescriptor::default());
 
-        let dummy_texture_sampler =
-            device.create_sampler(&wgpu::SamplerDescriptor::default());
+            let mut builder =
+                wgpu::BindGroupBuilder::new().sampler(&dummy_texture_sampler);
 
-        let texture_bind_group = wgpu::BindGroupBuilder::new()
-            .sampler(&dummy_texture_sampler)
-            .texture_view(&dummy_view)
-            .texture_view(&dummy_texture.view().build())
-            .build(device, &texture_bind_group_layout);
+            let view = dummy_texture.view().build();
 
-        let pipeline_layout =
+            for _ in 0..texture_count {
+                builder = builder.texture_view(&view);
+            }
+
+            let bind_group = builder.build(device, &texture_bind_group_layout);
+
+            Some(Textures {
+                count: texture_count,
+                bind_group_layout: texture_bind_group_layout,
+                bind_group,
+            })
+        } else {
+            None
+        };
+
+        let pipeline_layout = if let Some(textures) = &textures {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Pipeline Layout"),
                 bind_group_layouts: &[
                     &params_bind_group_layout,
-                    &texture_bind_group_layout,
+                    &textures.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
-            });
+            })
+        } else {
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Pipeline Layout"),
+                bind_group_layouts: &[&params_bind_group_layout],
+                push_constant_ranges: &[],
+            })
+        };
 
         let (vertex_buffer, n_vertices) = if let Some(verts) = vertices {
             let buffer = Self::create_vertex_buffer(device, verts);
@@ -223,8 +248,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             vertex_buffers,
             sample_count,
             window_size_physical,
-            texture_bind_group,
-            texture_bind_group_layout,
+            textures,
             update_state,
             _watcher: watcher,
         }
@@ -302,42 +326,32 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
     fn create_texture_bind_group_layout(
         device: &wgpu::Device,
+        texture_count: u32,
     ) -> wgpu::BindGroupLayout {
+        let mut entries = vec![wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Sampler(SamplerBindingType::Filtering),
+            count: None,
+        }];
+
+        for i in 0..texture_count {
+            entries.push(wgpu::BindGroupLayoutEntry {
+                binding: i + 1,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Float {
+                        filterable: true,
+                    },
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                count: None,
+            });
+        }
+
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(
-                        SamplerBindingType::Filtering,
-                    ),
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float {
-                            filterable: true,
-                        },
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float {
-                            filterable: true,
-                        },
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
-                    },
-                    count: None,
-                },
-            ],
+            entries: &entries,
             label: Some("Texture Bind Group Layout"),
         })
     }
@@ -412,78 +426,67 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         watcher
     }
 
-    pub fn set_input_texture(
+    /// Set one or more input textures. The number of `texture_views` provided
+    /// must match the `texture_count` argument supplied to the constructor. In
+    /// a feedback-patch scenario where you need 2 textures but only have 1 on
+    /// the first frame it is acceptable to pass the same initial texture for
+    /// each slot.
+    ///
+    /// # Feedback Example
+    ///
+    /// ```rust,ignore
+    /// if let Some(ref prev_texture) = self.prev_texture {
+    ///     self.shader.set_textures(app, &[&texture, prev_texture]);
+    /// } else {
+    ///     // No prev_texture on first frame,
+    ///     // just pass the first texture twice
+    ///     self.shader.set_textures(app, &[&texture, &texture]);
+    /// }
+    ///
+    /// self.prev_texture = Some(self.shader.render_to_texture(app));
+    /// ```
+    pub fn set_textures(
         &mut self,
         app: &App,
-        texture_view: &wgpu::TextureView,
+        texture_views: &[&wgpu::TextureView],
     ) {
+        assert!(
+            self.textures
+                .as_ref()
+                .is_some_and(|x| x.count as usize == texture_views.len()),
+            "`texture_views` length must match initial `texture_count` exactly"
+        );
+
         let window = app.main_window();
         let device = window.device();
+        let textures = self.textures.as_mut().unwrap();
 
         let sampler =
             device.create_sampler(&wgpu::SamplerDescriptor::default());
 
-        self.texture_bind_group =
+        let mut entries = vec![wgpu::BindGroupEntry {
+            binding: 0,
+            resource: wgpu::BindingResource::Sampler(&sampler),
+        }];
+
+        for (i, view) in texture_views.iter().enumerate() {
+            entries.push(wgpu::BindGroupEntry {
+                binding: (i + 1) as u32,
+                resource: wgpu::BindingResource::TextureView(view),
+            });
+        }
+
+        textures.bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.texture_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Sampler(&sampler),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(
-                            texture_view,
-                        ),
-                    },
-                    // Temporary hack until we have a proper count configuration
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: wgpu::BindingResource::TextureView(
-                            texture_view,
-                        ),
-                    },
-                ],
+                layout: &textures.bind_group_layout,
+                entries: &entries,
                 label: Some("Texture Bind Group"),
             });
     }
 
-    pub fn set_input_textures(
-        &mut self,
-        app: &App,
-        texture_view: &wgpu::TextureView,
-        feedback_texture: &wgpu::TextureView,
-    ) {
-        let window = app.main_window();
-        let device = window.device();
-
-        let sampler =
-            device.create_sampler(&wgpu::SamplerDescriptor::default());
-
-        self.texture_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.texture_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Sampler(&sampler),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(
-                            texture_view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: wgpu::BindingResource::TextureView(
-                            feedback_texture,
-                        ),
-                    },
-                ],
-                label: Some("Texture Bind Group"),
-            });
+    /// Like [`Self::set_textures`] for shaders that only have a single texture
+    pub fn set_texture(&mut self, app: &App, texture_view: &wgpu::TextureView) {
+        self.set_textures(app, &[texture_view]);
     }
 
     /// For non-procedural and full-screen shaders when vertices are altered on CPU
@@ -601,15 +604,22 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
         };
         let shader_module = device.create_shader_module(shader);
 
-        let pipeline_layout =
+        let pipeline_layout = if let Some(textures) = &self.textures {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Pipeline Layout"),
                 bind_group_layouts: &[
                     &self.params_bind_group_layout,
-                    &self.texture_bind_group_layout,
+                    &textures.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
-            });
+            })
+        } else {
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Pipeline Layout"),
+                bind_group_layouts: &[&self.params_bind_group_layout],
+                push_constant_ranges: &[],
+            })
+        };
 
         let creation_state = PipelineCreationState {
             device,
@@ -618,7 +628,6 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             vertex_buffers: &self.vertex_buffers,
             sample_count: self.sample_count,
             format: Frame::TEXTURE_FORMAT,
-            // format: wgpu::TextureFormat::Rgba16Float,
             topology: self.topology,
             blend: self.blend,
             depth_stencil: self.depth_stencil.clone(),
@@ -682,7 +691,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
+        if let Some(textures) = &self.textures {
+            render_pass.set_bind_group(1, &textures.bind_group, &[]);
+        }
 
         if let Some(ref vertex_buffer) = self.vertex_buffer {
             render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
@@ -768,7 +779,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
 
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.params_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
+            if let Some(textures) = &self.textures {
+                render_pass.set_bind_group(1, &textures.bind_group, &[]);
+            }
 
             if let Some(ref vertex_buffer) = self.vertex_buffer {
                 render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
@@ -865,6 +878,7 @@ impl GpuState<BasicPositionVertex> {
         window_size: [u32; 2],
         shader_path: PathBuf,
         params: &P,
+        texture_count: u32,
         watch: bool,
     ) -> Self {
         Self::new(
@@ -876,6 +890,7 @@ impl GpuState<BasicPositionVertex> {
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
             false,
+            texture_count,
             watch,
         )
     }
@@ -900,6 +915,7 @@ impl GpuState<()> {
             wgpu::PrimitiveTopology::TriangleList,
             Some(wgpu::BlendState::ALPHA_BLENDING),
             false,
+            0,
             watch,
         )
     }
@@ -913,7 +929,9 @@ impl GpuState<()> {
             .begin(&mut encoder);
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.params_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
+        if let Some(textures) = &self.textures {
+            render_pass.set_bind_group(1, &textures.bind_group, &[]);
+        }
         render_pass.draw(0..vertex_count, 0..1);
     }
 }

@@ -37,6 +37,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         wr.resolution_u32(),
         to_absolute_path(file!(), "du_fs_texture_template_1.wgsl"),
         &params,
+        0,
         true,
     );
 
@@ -45,6 +46,7 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         wr.resolution_u32(),
         to_absolute_path(file!(), "du_fs_texture_template_2.wgsl"),
         &params,
+        1,
         true,
     );
 
@@ -66,7 +68,7 @@ impl Sketch for DynamicUniformsDev {
         self.shader_2.update_params(app, res, &params);
 
         let texture = self.shader_1.render_to_texture(app);
-        self.shader_2.set_input_texture(app, &texture);
+        self.shader_2.set_texture(app, &texture);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {

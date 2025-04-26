@@ -53,6 +53,7 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_22_gradients_only.wgsl"),
         &params,
+        0,
         true,
     );
 

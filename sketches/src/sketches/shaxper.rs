@@ -53,6 +53,7 @@ pub fn init(app: &App, ctx: &Context) -> ShaderExperiments {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "shaxper.wgsl"),
         &params,
+        0,
         true,
     );
 

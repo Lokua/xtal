@@ -66,6 +66,7 @@ pub fn init(app: &App, ctx: &Context) -> Blob {
         window_rect.resolution_u32(),
         to_absolute_path(file!(), "./blob.wgsl"),
         &params,
+        0,
         true,
     );
 

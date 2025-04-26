@@ -63,6 +63,7 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "symmetry.wgsl"),
         &params,
+        0,
         true,
     );
 
