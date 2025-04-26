@@ -85,7 +85,6 @@ pub fn init(app: &App, ctx: &Context) -> ShaderToTextureDev {
         to_absolute_path(file!(), "shader_to_texture_dev2.wgsl"),
         &post_process_params,
         1,
-        true,
     );
 
     ShaderToTextureDev {

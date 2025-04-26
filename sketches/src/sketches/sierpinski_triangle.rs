@@ -54,7 +54,6 @@ pub fn init(app: &App, ctx: &Context) -> SierpinskiTriangle {
         to_absolute_path(file!(), "./sierpinski_triangle.wgsl"),
         &params,
         0,
-        true,
     );
 
     SierpinskiTriangle { controls, gpu }

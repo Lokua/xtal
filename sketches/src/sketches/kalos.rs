@@ -37,7 +37,6 @@ pub fn init(app: &App, ctx: &Context) -> Kalos {
         to_absolute_path(file!(), "kalos.wgsl"),
         &params,
         0,
-        true,
     );
 
     Kalos { hub, gpu }

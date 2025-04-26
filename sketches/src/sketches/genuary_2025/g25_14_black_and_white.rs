@@ -65,7 +65,6 @@ pub fn init(app: &App, ctx: &Context) -> BlackAndWhite {
         to_absolute_path(file!(), "./g25_14_black_and_white.wgsl"),
         &params,
         0,
-        true,
     );
 
     BlackAndWhite { controls, gpu }

@@ -39,7 +39,6 @@ pub fn init(app: &App, ctx: &Context) -> Kalos2Dyn {
         to_absolute_path(file!(), "kalos_2_shader_1.wgsl"),
         &params,
         0,
-        true,
     );
 
     let shader_2 = gpu::GpuState::new_fullscreen(
@@ -48,7 +47,6 @@ pub fn init(app: &App, ctx: &Context) -> Kalos2Dyn {
         to_absolute_path(file!(), "kalos_2_shader_2.wgsl"),
         &params,
         2,
-        true,
     );
 
     Kalos2Dyn {

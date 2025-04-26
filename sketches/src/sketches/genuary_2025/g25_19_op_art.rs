@@ -82,7 +82,6 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         to_absolute_path(file!(), "./g25_19_op_art.wgsl"),
         &params,
         0,
-        true,
     );
 
     Template { controls, gpu }

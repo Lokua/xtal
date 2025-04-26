@@ -51,7 +51,6 @@ pub fn init(app: &App, ctx: &Context) -> Bos {
         to_absolute_path(file!(), "./bos.wgsl"),
         &params,
         0,
-        true,
     );
 
     Bos { controls, gpu }

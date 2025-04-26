@@ -879,7 +879,6 @@ impl GpuState<BasicPositionVertex> {
         shader_path: PathBuf,
         params: &P,
         texture_count: u32,
-        watch: bool,
     ) -> Self {
         Self::new(
             app,
@@ -891,7 +890,7 @@ impl GpuState<BasicPositionVertex> {
             Some(wgpu::BlendState::ALPHA_BLENDING),
             false,
             texture_count,
-            watch,
+            true,
         )
     }
 }
@@ -904,7 +903,6 @@ impl GpuState<()> {
         window_size: [u32; 2],
         shader_path: PathBuf,
         params: &P,
-        watch: bool,
     ) -> Self {
         Self::new(
             app,
@@ -916,7 +914,7 @@ impl GpuState<()> {
             Some(wgpu::BlendState::ALPHA_BLENDING),
             false,
             0,
-            watch,
+            true,
         )
     }
 

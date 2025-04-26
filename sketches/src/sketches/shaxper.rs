@@ -54,7 +54,6 @@ pub fn init(app: &App, ctx: &Context) -> ShaderExperiments {
         to_absolute_path(file!(), "shaxper.wgsl"),
         &params,
         0,
-        true,
     );
 
     ShaderExperiments { controls, gpu }

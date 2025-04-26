@@ -67,7 +67,6 @@ pub fn init(app: &App, ctx: &Context) -> WaveFract {
         to_absolute_path(file!(), "wave_fract.wgsl"),
         &params,
         0,
-        true,
     );
 
     WaveFract { hub, gpu }

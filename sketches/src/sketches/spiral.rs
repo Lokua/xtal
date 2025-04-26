@@ -1,5 +1,5 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "spiral",
@@ -140,7 +140,6 @@ pub fn init(app: &App, ctx: &Context) -> Spiral {
         wr.resolution_u32(),
         to_absolute_path(file!(), "./spiral.wgsl"),
         &params,
-        true,
     );
 
     Spiral { controls, gpu }

@@ -1,5 +1,5 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 // ~/Documents/Live/2025/2025.01.11 Xtal - Spiral
 
@@ -136,7 +136,6 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "./g25_10_11_12.wgsl"),
         &params,
-        true,
     );
 
     let midi = MidiControlBuilder::new()

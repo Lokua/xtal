@@ -54,7 +54,6 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         to_absolute_path(file!(), "./g25_22_gradients_only.wgsl"),
         &params,
         0,
-        true,
     );
 
     Template {

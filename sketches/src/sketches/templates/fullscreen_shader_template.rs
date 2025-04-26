@@ -48,7 +48,6 @@ pub fn init(app: &App, ctx: &Context) -> FullscreenShader {
         to_absolute_path(file!(), "fullscreen_shader_template.wgsl"),
         &params,
         0,
-        true,
     );
 
     FullscreenShader { controls, gpu }

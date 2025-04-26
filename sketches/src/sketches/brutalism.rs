@@ -128,7 +128,6 @@ pub fn init(app: &App, ctx: &Context) -> Brutalism {
         to_absolute_path(file!(), "brutalism_shader2.wgsl"),
         &post_params,
         1,
-        true,
     );
 
     Brutalism {

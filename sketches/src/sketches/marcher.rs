@@ -37,7 +37,6 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         to_absolute_path(file!(), "marcher.wgsl"),
         &params,
         0,
-        true,
     );
 
     DynamicUniformsDev { hub, gpu }

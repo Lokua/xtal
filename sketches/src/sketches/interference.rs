@@ -95,7 +95,6 @@ pub fn init(app: &App, ctx: &Context) -> Interference {
         to_absolute_path(file!(), "./interference.wgsl"),
         &params,
         0,
-        true,
     );
 
     Interference { controls, gpu }

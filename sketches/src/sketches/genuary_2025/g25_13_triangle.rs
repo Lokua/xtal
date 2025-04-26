@@ -53,7 +53,6 @@ pub fn init(app: &App, ctx: &Context) -> G25_13Triangle {
         to_absolute_path(file!(), "g25_13_triangle.wgsl"),
         &params,
         0,
-        true,
     );
 
     let midi = MidiControlBuilder::new()

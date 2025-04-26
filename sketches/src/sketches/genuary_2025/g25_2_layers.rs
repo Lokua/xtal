@@ -61,7 +61,6 @@ pub fn init(app: &App, ctx: &Context) -> G25_2Layers {
         to_absolute_path(file!(), "./g25_2_layers.wgsl"),
         &params,
         0,
-        true,
     );
 
     G25_2Layers { controls, gpu }

@@ -64,7 +64,6 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         to_absolute_path(file!(), "symmetry.wgsl"),
         &params,
         0,
-        true,
     );
 
     Template { hub, gpu }

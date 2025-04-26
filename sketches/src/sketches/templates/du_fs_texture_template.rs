@@ -38,7 +38,6 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         to_absolute_path(file!(), "du_fs_texture_template_1.wgsl"),
         &params,
         0,
-        true,
     );
 
     let shader_2 = gpu::GpuState::new_fullscreen(
@@ -47,7 +46,6 @@ pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {
         to_absolute_path(file!(), "du_fs_texture_template_2.wgsl"),
         &params,
         1,
-        true,
     );
 
     DynamicUniformsDev {

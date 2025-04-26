@@ -73,7 +73,6 @@ pub fn init(app: &App, ctx: &Context) -> SpiralLines {
         wr.resolution_u32(),
         to_absolute_path(file!(), "spiral_lines.wgsl"),
         &params,
-        true,
     );
 
     SpiralLines { hub, gpu }

@@ -67,7 +67,6 @@ pub fn init(app: &App, ctx: &Context) -> Blob {
         to_absolute_path(file!(), "./blob.wgsl"),
         &params,
         0,
-        true,
     );
 
     Blob { hub, gpu }

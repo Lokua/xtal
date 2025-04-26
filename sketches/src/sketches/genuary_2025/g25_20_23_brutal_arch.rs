@@ -127,7 +127,6 @@ pub fn init(app: &App, ctx: &Context) -> Template {
         to_absolute_path(file!(), "g25_20_23_brutal_arch_shader2.wgsl"),
         &post_params,
         1,
-        true,
     );
 
     Template {
