@@ -73,6 +73,7 @@ fn main() {
         displacement_1,
         displacement_1a,
         displacement_2,
+        fb,
         lines,
         noise,
         perlin_loop,

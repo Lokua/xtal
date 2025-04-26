@@ -402,9 +402,7 @@ impl<T: TimingSource> Animation<T> {
     /// Creates a new [`Trigger`] with specified interval and delay;
     /// Use with [`Self::should_trigger`].
     pub fn create_trigger(&self, every: f32, delay: f32) -> Trigger {
-        if delay >= every {
-            panic!("Delay must be less than interval length");
-        }
+        assert!(delay <= every, "Delay must be less than interval length");
 
         Trigger {
             every,
