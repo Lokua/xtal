@@ -12,6 +12,7 @@ use notify::{Event, RecursiveMode, Watcher};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use wgpu_types::SamplerBindingType;
 
 use super::prelude::*;
 
@@ -131,8 +132,9 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             device.create_sampler(&wgpu::SamplerDescriptor::default());
 
         let texture_bind_group = wgpu::BindGroupBuilder::new()
-            .texture_view(&dummy_view)
             .sampler(&dummy_texture_sampler)
+            .texture_view(&dummy_view)
+            .texture_view(&dummy_texture.view().build())
             .build(device, &texture_bind_group_layout);
 
         let pipeline_layout =
@@ -301,15 +303,43 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
     fn create_texture_bind_group_layout(
         device: &wgpu::Device,
     ) -> wgpu::BindGroupLayout {
-        wgpu::BindGroupLayoutBuilder::new()
-            .texture(
-                wgpu::ShaderStages::FRAGMENT,
-                false,
-                wgpu::TextureViewDimension::D2,
-                wgpu::TextureSampleType::Float { filterable: true },
-            )
-            .sampler(wgpu::ShaderStages::FRAGMENT, true)
-            .build(device)
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(
+                        SamplerBindingType::Filtering,
+                    ),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float {
+                            filterable: true,
+                        },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float {
+                            filterable: true,
+                        },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+            ],
+            label: Some("Texture Bind Group Layout"),
+        })
     }
 
     fn create_render_pipeline(
@@ -399,13 +429,57 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(
+                            texture_view,
+                        ),
+                    },
+                    // Temporary hack until we have a proper count configuration
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(
+                            texture_view,
+                        ),
+                    },
+                ],
+                label: Some("Texture Bind Group"),
+            });
+    }
+
+    pub fn set_input_textures(
+        &mut self,
+        app: &App,
+        texture_view: &wgpu::TextureView,
+        feedback_texture: &wgpu::TextureView,
+    ) {
+        let window = app.main_window();
+        let device = window.device();
+
+        let sampler =
+            device.create_sampler(&wgpu::SamplerDescriptor::default());
+
+        self.texture_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &self.texture_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
                         resource: wgpu::BindingResource::TextureView(
                             texture_view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&sampler),
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(
+                            feedback_texture,
+                        ),
                     },
                 ],
                 label: Some("Texture Bind Group"),

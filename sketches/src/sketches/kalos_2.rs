@@ -17,6 +17,7 @@ pub struct Kalos2Dyn {
     hub: ControlHub<Timing>,
     shader_1: gpu::GpuState<gpu::BasicPositionVertex>,
     shader_2: gpu::GpuState<gpu::BasicPositionVertex>,
+    prev_texture: Option<wgpu::TextureView>,
 }
 
 #[uniforms(banks = 8)]
@@ -52,6 +53,7 @@ pub fn init(app: &App, ctx: &Context) -> Kalos2Dyn {
         hub,
         shader_1,
         shader_2,
+        prev_texture: None,
     }
 }
 
@@ -67,7 +69,17 @@ impl Sketch for Kalos2Dyn {
         self.shader_2.update_params(app, res, &params);
 
         let texture = self.shader_1.render_to_texture(app);
-        self.shader_2.set_input_texture(app, &texture);
+
+        if let Some(ref prev_texture) = self.prev_texture {
+            self.shader_2
+                .set_input_textures(app, &texture, prev_texture);
+        } else {
+            self.shader_2.set_input_texture(app, &texture);
+        }
+
+        let shader_2_output = self.shader_2.render_to_texture(app);
+
+        self.prev_texture = Some(shader_2_output);
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {

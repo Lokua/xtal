@@ -22,10 +22,11 @@ struct Params {
 var<uniform> params: Params;
 
 @group(1) @binding(0)
-var source_texture: texture_2d<f32>;
+var source_sampler: sampler;
 
 @group(1) @binding(1)
-var source_sampler: sampler;
+var source_texture: texture_2d<f32>;
+
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {

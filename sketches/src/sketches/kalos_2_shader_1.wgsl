@@ -18,7 +18,7 @@ struct Params {
     c: vec4f,
     // UNUSED, r, g, b
     d: vec4f,
-    // UNUSED, ring_strength, UNUSED, UNUSED
+    // UNUSED, ring_strength, feedback, UNUSED
     e: vec4f,
     // angular_variation, lerp, frequency, threshold
     f: vec4f,
@@ -147,7 +147,9 @@ fn get_displacer_position(index: u32) -> vec2f {
         case 4u: { pos = vec2f(-1.0 + corner_offset, 1.0 - corner_offset); }
         default: { pos = vec2f(0.0); }
     }
+
     pos.x *= aspect;
+    
     return pos;
 }
 

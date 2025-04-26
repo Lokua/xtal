@@ -156,3 +156,7 @@ dots:
   type: slider
   range: [100, 1500]
   default: 1000
+
+feedback:
+  var: e3
+  type: slider
