@@ -34,17 +34,17 @@
     {
       "type": "Checkbox",
       "name": "show_ripple",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
       "name": "ripple_amp",
-      "value": 0.049
+      "value": 0.2
     },
     {
       "type": "Slider",
       "name": "ripple_freq",
-      "value": 162.0
+      "value": 600.0
     },
     {
       "type": "Checkbox",
@@ -54,17 +54,17 @@
     {
       "type": "Slider",
       "name": "inner_mult",
-      "value": 8.0
+      "value": 7.9231
     },
     {
       "type": "Slider",
       "name": "outer_mult",
-      "value": 10.0
+      "value": 2.4476
     },
     {
       "type": "Slider",
       "name": "outer_mult_2",
-      "value": 0.8
+      "value": 0.6294
     },
     {
       "type": "Checkbox",
@@ -79,12 +79,12 @@
     {
       "type": "Checkbox",
       "name": "show_v",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
       "name": "v_base",
-      "value": 1.0
+      "value": 0.3
     },
     {
       "type": "Checkbox",
@@ -109,280 +109,33 @@
     {
       "type": "Slider",
       "name": "colorize",
-      "value": 1.0
+      "value": 0.6469
     },
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.6818
+      "value": 0.8986
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.9056
+      "value": 0.8287
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 1.0
+      "value": 0.2028
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "3": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "fm_base",
-          "value": 2.4476
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_v",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_ripple",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult_2",
-          "value": 0.4196
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.0421
-        },
-        {
-          "type": "Slider",
-          "name": "radial_freq",
-          "value": 76.9231
-        },
-        {
-          "type": "Slider",
-          "name": "v_base",
-          "value": 0.9685
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 61.2308
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "fm_freq",
-          "value": 0.0105
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult",
-          "value": 2.0979
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_swirl",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "ripple_amp",
-          "value": 0.0245
-        },
-        {
-          "type": "Slider",
-          "name": "fm_range",
-          "value": 220.2797
-        },
-        {
-          "type": "Slider",
-          "name": "ripple_freq",
-          "value": 46.4091
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_pulse",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_fm",
-          "value": true
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "radial_freq",
-          "value": 10.0
-        },
-        {
-          "type": "Slider",
-          "name": "ripple_amp",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ripple_freq",
-          "value": 600.0
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_pulse",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "fm_range",
-          "value": 350.0
-        },
-        {
-          "type": "Slider",
-          "name": "v_base",
-          "value": 0.3
-        },
-        {
-          "type": "Slider",
-          "name": "fm_freq",
-          "value": 0.2
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_ripple",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_swirl",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_v",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "fm_base",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult_2",
-          "value": 0.8
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult",
-          "value": 10.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_fm",
-          "value": true
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
     "4": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "v_base",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
           "name": "outer_mult_2",
           "value": 0.8
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_fm",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_v",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_ripple",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "pos_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.9056
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_swirl",
-          "value": true
         },
         {
           "type": "Slider",
@@ -391,48 +144,8 @@
         },
         {
           "type": "Slider",
-          "name": "ripple_freq",
-          "value": 162.0
-        },
-        {
-          "type": "Slider",
-          "name": "pos_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "fm_freq",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult",
-          "value": 10.0
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_alg",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "fm_range",
           "value": 350.0
-        },
-        {
-          "type": "Slider",
-          "name": "b",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ripple_amp",
-          "value": 0.049
         },
         {
           "type": "Slider",
@@ -448,6 +161,101 @@
           "type": "Checkbox",
           "name": "show_pulse",
           "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "v_base",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fm_freq",
+          "value": 0.2
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_v",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "pos_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_amp",
+          "value": 0.049
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_freq",
+          "value": 162.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_fm",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_alg",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_swirl",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_ripple",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "pos_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9056
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
         }
       ],
       "midi_controls": [],
@@ -456,9 +264,59 @@
     "2": {
       "ui_controls": [
         {
+          "type": "Checkbox",
+          "name": "show_pulse",
+          "value": false
+        },
+        {
           "type": "Slider",
           "name": "fm_range",
           "value": 350.0
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_amp",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_v",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_fm",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "v_base",
+          "value": 0.3
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_swirl",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 7.9231
+        },
+        {
+          "type": "Slider",
+          "name": "radial_freq",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "fm_freq",
+          "value": 0.2
         },
         {
           "type": "Slider",
@@ -467,8 +325,165 @@
         },
         {
           "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fm_base",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 2.4476
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_ripple",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult_2",
+          "value": 0.6294
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "radial_freq",
+          "value": 76.9231
+        },
+        {
+          "type": "Slider",
+          "name": "fm_range",
+          "value": 220.2797
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_fm",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_swirl",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "fm_base",
+          "value": 2.4476
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 2.0979
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_pulse",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_ripple",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "v_base",
+          "value": 0.9685
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 61.2308
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_freq",
+          "value": 46.4091
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult_2",
+          "value": 0.4196
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_v",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_amp",
+          "value": 0.0245
+        },
+        {
+          "type": "Slider",
+          "name": "fm_freq",
+          "value": 0.0105
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.0421
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "fm_freq",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "radial_freq",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "fm_base",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
           "name": "ripple_amp",
           "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
         },
         {
           "type": "Slider",
@@ -478,12 +493,22 @@
         {
           "type": "Checkbox",
           "name": "show_pulse",
-          "value": false
+          "value": true
         },
         {
-          "type": "Checkbox",
-          "name": "show_fm",
-          "value": false
+          "type": "Slider",
+          "name": "outer_mult_2",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "fm_range",
+          "value": 350.0
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
         },
         {
           "type": "Checkbox",
@@ -492,58 +517,33 @@
         },
         {
           "type": "Slider",
-          "name": "fm_freq",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 7.9231
-        },
-        {
-          "type": "Slider",
-          "name": "fm_base",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_ripple",
-          "value": false
-        },
-        {
-          "type": "Slider",
           "name": "outer_mult",
-          "value": 2.4476
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "radial_freq",
           "value": 10.0
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult_2",
-          "value": 0.6294
         },
         {
           "type": "Checkbox",
           "name": "show_v",
-          "value": false
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "ripple_freq",
+          "value": 600.0
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 8.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_ripple",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_fm",
+          "value": true
         }
       ],
       "midi_controls": [],
