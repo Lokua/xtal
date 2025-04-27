@@ -46,6 +46,9 @@ fn random_normal(seed: u32, mean: f32, stddev: f32) -> f32 {
 fn modulo(x: f32, y: f32) -> f32 {
     return x - y * floor(x / y);
 }
+fn mod_1(x: f32) -> f32 {
+    return modulo(x, 1.0);
+}
 fn mod_v2(x: vec2f, y: vec2f) -> vec2f {
     return x - y * floor(x / y);
 }

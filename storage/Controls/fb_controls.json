@@ -3,13 +3,63 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "amt",
-      "value": 1.0
+      "name": "feedback",
+      "value": 0.3636
     },
     {
       "type": "Slider",
-      "name": "does_nothing",
+      "name": "delay",
+      "value": 0.00125
+    },
+    {
+      "type": "Checkbox",
+      "name": "wrap_offs_x",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "sample_offs_x",
+      "value": 0.0629
+    },
+    {
+      "type": "Checkbox",
+      "name": "wrap_offs_y",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "sample_offs_y",
+      "value": 0.0122
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_radius",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "radius_animation_speed",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 0.4615
+    },
+    {
+      "type": "Slider",
+      "name": "center_range",
+      "value": 0.1993
+    },
+    {
+      "type": "Slider",
+      "name": "fract_mix",
       "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "grain_mix",
+      "value": 1.0
     }
   ],
   "midi_controls": [],

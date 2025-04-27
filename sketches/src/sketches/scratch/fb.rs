@@ -20,7 +20,7 @@ pub struct DynamicUniformsDev {
     feedback_delay_trigger: Trigger,
 }
 
-#[uniforms(banks = 4)]
+#[uniforms(banks = 6)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {

@@ -2,13 +2,90 @@
 #  Main
 # ------------------------------------------------------------------------------
 
-fb:
+feedback:
   var: a4
   type: slider
 
 delay:
   var: b1
   type: slider
-  range: [0.001, 1.0]
-  step: 0.001
+  range: [0.00125, 1.0]
+  step: 0.00125
   default: 1
+
+wrap_offs_x:
+  var: d1
+  type: checkbox
+
+sample_offs_x:
+  var: b2
+  type: slider
+  range: [0, 0.25]
+
+wrap_offs_y:
+  var: d2
+  type: checkbox
+
+sample_offs_y:
+  var: b3
+  type: slider
+  range: [0, 0.5]
+
+# ------------------------------------------------------------------------------
+#  Object Properties
+# ------------------------------------------------------------------------------
+
+radius_section:
+  type: separator
+
+animate_radius:
+  var: c3
+  type: checkbox
+
+radius_animation_speed:
+  type: slider
+  default: 1.0
+  range: [0.125, 2.0]
+  step: 0.125
+  disabled: not animate_radius
+
+radius_animation:
+  var: c1
+  type: random_slewed
+  beats: $radius_animation_speed
+  range: [0.0, 1.0]
+  slew: 0.75
+  delay: 0.0
+  stem: 9
+
+radius:
+  var: c4
+  type: slider
+  default: 0.5
+  disabled: animate_radius
+
+# ------------------------------------------------------------------------------
+#  Movement
+# ------------------------------------------------------------------------------
+
+movement_section:
+  type: separator
+
+center_range:
+  var: c2
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+fract_mix:
+  var: b4
+  type: slider
+
+grain_mix:
+  var: d3
+  type: slider
