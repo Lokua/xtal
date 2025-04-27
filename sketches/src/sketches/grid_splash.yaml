@@ -1,0 +1,85 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+grid_size:
+  var: a4
+  type: slider
+  range: [4, 48]
+  step: 1
+  default: 16
+
+circle_radius:
+  var: b1
+  type: slider
+  range: [0.001, 1.0]
+  default: 0.25
+
+line_width:
+  var: b2
+  type: slider
+  range: [0.01, 3.0]
+  default: 0.1
+
+invert:
+  var: d3
+  type: checkbox
+
+# ------------------------------------------------------------------------------
+#  Displacement Params
+# ------------------------------------------------------------------------------
+
+displacement_section:
+  type: separator
+
+freq:
+  var: b3
+  type: slider
+  range: [0, 10]
+  default: 0.1
+
+amp:
+  var: b4
+  type: slider
+  range: [1, 15]
+  default: 2
+
+t_wave:
+  var: c2
+  type: slider
+  range: [0, 50]
+
+# ------------------------------------------------------------------------------
+#  Alg
+# ------------------------------------------------------------------------------
+
+alg_section:
+  type: separator
+
+alg_mix:
+  var: c1
+  type: slider
+
+a_exp:
+  var: c3
+  type: slider
+  range: [0, 5]
+  default: 2
+
+a_rotate:
+  var: d1
+  type: checkbox
+
+a_rotation_speed:
+  var: d2
+  type: slider
+  range: [2, 32]
+  step: 2
+  default: 2
+  disabled: not a_rotate
+
+b_exp:
+  var: c4
+  type: slider
+  range: [0, 5]
+  default: 2

@@ -20,6 +20,7 @@ fn main() {
         drop_walk,
         dynamic_uniforms,
         flow_field_basic,
+        grid_splash,
         heat_mask,
         interference,
         kalos,

@@ -5,6 +5,7 @@
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.283185307179586;
 const PHI: f32 = 1.61803398875;
+const EPSILON: f32 = 1.1920929e-7;
 
 // -----------------------------------------------------------------------------
 //  UTILS
@@ -59,9 +60,21 @@ fn mod_v4(x: vec4f, y: vec4f) -> vec4f {
     return x - y * floor(x / y);
 }
 
+// fn powf(x: f32, y: f32) -> f32 {
+//     if (floor(y) == y && modulo(y, 2.0) == 1.0) {
+//         return sign(x) * pow(abs(x), y);
+//     }
+
+//     return pow(abs(x), y);
+// }
 fn powf(x: f32, y: f32) -> f32 {
-    return sign(x) * exp(log(abs(x)) * y);
+    let y_rounded = round(y);
+    if (abs(y - y_rounded) < 1e-4 && modulo(y_rounded, 2.0) == 1.0) {
+        return sign(x) * pow(abs(x), y);
+    }
+    return pow(abs(x), y);
 }
+
 
 // smooth minimum
 fn smin(a: f32, b: f32, k: f32) -> f32 {
@@ -100,6 +113,10 @@ fn rotate_z(p: vec3f, radians: f32) -> vec3f {
         p.x * s + p.y * c,
         p.z
     );
+}
+
+fn n(x: f32) -> f32 {
+    return x * 0.5 + 0.5;
 }
 
 // -----------------------------------------------------------------------------
