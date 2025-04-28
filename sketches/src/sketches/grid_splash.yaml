@@ -21,6 +21,10 @@ line_width:
   range: [0.01, 3.0]
   default: 0.1
 
+center_style_mix:
+  var: d4
+  type: slider
+
 invert:
   var: d3
   type: checkbox
@@ -60,12 +64,6 @@ alg_mix:
   var: c1
   type: slider
 
-a_exp:
-  var: c3
-  type: slider
-  range: [0, 5]
-  default: 2
-
 a_rotate:
   var: d1
   type: checkbox
@@ -77,6 +75,12 @@ a_rotation_speed:
   step: 2
   default: 2
   disabled: not a_rotate
+
+a_exp:
+  var: c3
+  type: slider
+  range: [0, 5]
+  default: 2
 
 b_exp:
   var: c4
