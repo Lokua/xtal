@@ -21,69 +21,128 @@ line_width:
   range: [0.01, 3.0]
   default: 0.1
 
-center_style_mix:
-  var: d4
+outer_spread:
+  var: g1
   type: slider
-
-invert:
-  var: d3
-  type: checkbox
-
-# ------------------------------------------------------------------------------
-#  Displacement Params
-# ------------------------------------------------------------------------------
-
-displacement_section:
-  type: separator
-
-freq:
-  var: b3
-  type: slider
-  range: [0, 10]
-  default: 0.1
-
-amp:
-  var: b4
-  type: slider
-  range: [1, 15]
-  default: 2
+  default: 0.01
 
 t_wave:
   var: c2
   type: slider
   range: [0, 50]
 
-# ------------------------------------------------------------------------------
-#  Alg
-# ------------------------------------------------------------------------------
-
-alg_section:
-  type: separator
-
-alg_mix:
-  var: c1
+ab_cd_mix:
+  var: d4
   type: slider
 
-a_rotate:
-  var: d1
-  type: checkbox
-
-a_rotation_speed:
-  var: d2
-  type: slider
-  range: [2, 32]
-  step: 2
-  default: 2
-  disabled: not a_rotate
-
-a_exp:
+ac_exp:
   var: c3
   type: slider
   range: [0, 5]
   default: 2
 
-b_exp:
+bd_exp:
   var: c4
   type: slider
   range: [0, 5]
   default: 2
+
+ac_rotate:
+  var: d1
+  type: checkbox
+
+ac_rotation_speed:
+  var: d2
+  type: slider
+  range: [2, 32]
+  step: 2
+  default: 2
+  disabled: not ac_rotate
+
+# ------------------------------------------------------------------------------
+#  a->b
+# ------------------------------------------------------------------------------
+
+ab_section:
+  type: separator
+
+ab_mix:
+  var: c1
+  type: slider
+
+ab_amp:
+  var: b4
+  type: slider
+  range: [1, 15]
+  default: 2
+
+ab_freq:
+  var: b3
+  type: slider
+  range: [0, 10]
+  default: 0.1
+
+# ------------------------------------------------------------------------------
+#  c->d
+# ------------------------------------------------------------------------------
+
+cd_section:
+  type: separator
+
+cd_mix:
+  var: f1
+  type: slider
+
+cd_amp:
+  var: f2
+  type: slider
+  range: [1, 15]
+  default: 2
+
+cd_freq:
+  var: f3
+  type: slider
+  range: [0, 10]
+  default: 0.1
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+invert:
+  var: d3
+  type: checkbox
+
+colorize:
+  var: e4
+  type: slider
+
+norm_color_disp:
+  var: f4
+  type: slider
+
+red_or_cyan:
+  var: e1
+  type: slider
+
+green_or_magenta:
+  var: e2
+  type: slider
+
+blue_or_yellow:
+  var: e3
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Effects
+# ------------------------------------------------------------------------------
+
+effects_section:
+  type: separator
+
+effects_mix:
+  var: g2
+  type: slider

@@ -929,8 +929,8 @@ impl AppModel {
         }
     }
 
-    /// Load MIDI, OSC, and UI controls along with any snapshots MIDI Mappings
-    /// the user has saved to disk
+    /// Load MIDI, OSC, and UI controls along with any snapshots or MIDI
+    /// mappings the user has saved to disk
     fn load_sketch_state(&mut self) -> Result<Exclusions, Box<dyn Error>> {
         let app_tx = self.app_tx.clone();
         let sketch_name = self.sketch_name();

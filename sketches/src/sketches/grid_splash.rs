@@ -15,10 +15,11 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct GridSplash {
     hub: ControlHub<Timing>,
-    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
+    shader: gpu::GpuState<gpu::BasicPositionVertex>,
+    texture: Option<wgpu::TextureView>,
 }
 
-#[uniforms(banks = 6)]
+#[uniforms(banks = 8)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> GridSplash {
@@ -31,15 +32,19 @@ pub fn init(app: &App, ctx: &Context) -> GridSplash {
 
     let params = ShaderParams::default();
 
-    let gpu = gpu::GpuState::new_fullscreen(
+    let shader = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "grid_splash.wgsl"),
         &params,
-        0,
+        1,
     );
 
-    GridSplash { hub, gpu }
+    GridSplash {
+        hub,
+        shader,
+        texture: None,
+    }
 }
 
 impl Sketch for GridSplash {
@@ -47,10 +52,15 @@ impl Sketch for GridSplash {
         let wr = ctx.window_rect();
         let mut params = ShaderParams::from((&wr, &self.hub));
         params.set("a3", self.hub.animation.beats());
-        self.gpu.update_params(app, wr.resolution_u32(), &params);
+        self.shader.update_params(app, wr.resolution_u32(), &params);
+
+        if let Some(ref texture) = self.texture {
+            self.shader.set_textures(app, &[texture]);
+        }
+        self.texture = Some(self.shader.render_to_texture(app));
     }
 
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
-        self.gpu.render(&frame);
+        self.shader.render(&frame);
     }
 }
