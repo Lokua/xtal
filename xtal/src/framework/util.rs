@@ -3,7 +3,7 @@ use nannou::prelude::*;
 use nannou::rand::Rng;
 use nannou::rand::rand;
 use nannou::rand::thread_rng;
-use std::collections::HashMap as StdHashMap;
+use std::collections::{HashMap as StdHashMap, HashSet as StdHashSet};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
@@ -12,6 +12,7 @@ use super::prelude::*;
 pub const TWO_PI: f32 = PI * 2.0;
 
 pub type HashMap<K, V> = StdHashMap<K, V, RandomState>;
+pub type HashSet<K> = StdHashSet<K, RandomState>;
 
 #[derive(Debug)]
 pub struct AtomicF32 {

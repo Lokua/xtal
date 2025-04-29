@@ -7,6 +7,15 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [unreleased] 2025-04-29
+
+### Changed
+
+- Added custom `useKeyDownOnce` hook since native keydown continuously fires
+  when held, keypress is deprecated, and keyup isn't great for timing sensitive
+  actions.
+- Similar to above handling of keydown on the backend via held-key tracking
+
 ## [0.14.0] 2025-04-26
 
 ## Added

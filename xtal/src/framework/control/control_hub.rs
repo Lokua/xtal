@@ -644,7 +644,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                 Ok(())
             }
-            None => Err(format!("No snapshot for {}", id)),
+            None => Err(format!("No snapshot \"{}\"", id)),
         }
     }
 

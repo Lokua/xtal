@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   Bypassed,
@@ -17,6 +17,7 @@ import Header from './Header'
 import Controls from './Controls'
 import Settings from './Settings'
 import Console from './Console'
+import useKeyDownOnce from './useKeyDownOnce'
 import { isMac, setCssBeat } from './util'
 
 type EventMap = {
@@ -331,109 +332,109 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => {
-    function keyHandler(e: KeyboardEvent) {
-      console.debug('[onKeyDown] e:', e)
+  useKeyDownOnce(
+    useCallback(
+      (e: KeyboardEvent) => {
+        console.debug('[onKeyDown] e:', e)
 
-      const platformModPressed = isMac ? e.metaKey : e.ctrlKey
+        const platformModPressed = isMac ? e.metaKey : e.ctrlKey
 
-      if (e.code.startsWith('Digit')) {
-        if (platformModPressed) {
-          post('SnapshotRecall', e.key)
-          setAlertText(`Snapshot ${e.key} saved`)
-        } else if (e.shiftKey) {
-          const actualKey = e.code.slice('Digit'.length)
-          post('SnapshotStore', actualKey)
-        }
-      }
-
-      switch (e.code) {
-        case 'Comma': {
-          setView(view === View.Settings ? View.Controls : View.Settings)
-          break
-        }
-        case 'KeyA': {
-          if (paused) {
-            post('Advance')
-          }
-          break
-        }
-        case 'KeyE': {
-          setShowExclusions(!showExclusions)
-          break
-        }
-        case 'KeyF': {
-          post('ToggleFullScreen')
-          break
-        }
-        case 'KeyI': {
-          post('CaptureFrame')
-          break
-        }
-        case 'KeyM': {
-          // Don't interfere with native minimization on macOS
-          if (!platformModPressed) {
-            post('ToggleMainFocus')
-          }
-          break
-        }
-        case 'KeyP': {
-          const value = !paused
-          setPaused(value)
-          post('Paused', value)
-          break
-        }
-        case 'KeyQ': {
+        if (e.code.startsWith('Digit')) {
           if (platformModPressed) {
-            post('Quit')
+            post('SnapshotRecall', e.key)
+            if (snapshots.includes(e.key)) {
+              setTransitionInProgress(true)
+            } else {
+              // It's fine, the backend will alert
+            }
+          } else if (e.shiftKey) {
+            const actualKey = e.code.slice('Digit'.length)
+            post('SnapshotStore', actualKey)
           }
-          break
         }
-        case 'KeyR': {
-          if (platformModPressed && e.shiftKey) {
-            post('SwitchSketch', sketchName)
-          } else if (platformModPressed) {
-            post('Randomize', exclusions)
-          } else {
-            post('Reset')
-          }
-          break
-        }
-        case 'KeyS': {
-          if (platformModPressed || e.shiftKey) {
-            post('Save', exclusions)
-          } else {
-            setShowSnapshots(!showSnapshots)
-          }
-          break
-        }
-        case 'Space': {
-          if (tapTempoEnabled) {
-            post('Tap')
-          }
-          break
-        }
-        default: {
-          break
-        }
-      }
-    }
 
-    document.addEventListener('keyup', keyHandler)
-
-    return () => {
-      document.removeEventListener('keyup', keyHandler)
-    }
-  }, [
-    controls,
-    exclusions,
-    paused,
-    showExclusions,
-    showSnapshots,
-    sketchName,
-    tapTempoEnabled,
-    view,
-  ])
+        switch (e.code) {
+          case 'Comma': {
+            setView(view === View.Settings ? View.Controls : View.Settings)
+            break
+          }
+          case 'KeyA': {
+            if (paused) {
+              post('Advance')
+            }
+            break
+          }
+          case 'KeyE': {
+            setShowExclusions(!showExclusions)
+            break
+          }
+          case 'KeyF': {
+            post('ToggleFullScreen')
+            break
+          }
+          case 'KeyI': {
+            post('CaptureFrame')
+            break
+          }
+          case 'KeyM': {
+            // Don't interfere with native minimization on macOS
+            if (!platformModPressed) {
+              post('ToggleMainFocus')
+            }
+            break
+          }
+          case 'KeyP': {
+            const value = !paused
+            setPaused(value)
+            post('Paused', value)
+            break
+          }
+          case 'KeyQ': {
+            if (platformModPressed) {
+              post('Quit')
+            }
+            break
+          }
+          case 'KeyR': {
+            if (platformModPressed && e.shiftKey) {
+              post('SwitchSketch', sketchName)
+            } else if (platformModPressed) {
+              post('Randomize', exclusions)
+            } else {
+              post('Reset')
+            }
+            break
+          }
+          case 'KeyS': {
+            if (platformModPressed || e.shiftKey) {
+              post('Save', exclusions)
+            } else {
+              setShowSnapshots(!showSnapshots)
+            }
+            break
+          }
+          case 'Space': {
+            if (tapTempoEnabled) {
+              post('Tap')
+            }
+            break
+          }
+          default: {
+            break
+          }
+        }
+      },
+      [
+        exclusions,
+        paused,
+        showExclusions,
+        showSnapshots,
+        sketchName,
+        tapTempoEnabled,
+        view,
+      ]
+    )
+  )
 
   useEffect(() => {
     setCssBeat(bpm)
@@ -598,6 +599,10 @@ export default function App() {
     setMappings({})
   }
 
+  function onOpenOsDir(osDir: OsDir) {
+    post('OpenOsDir', osDir)
+  }
+
   function onQueueRecord() {
     const value = !isQueued
     setIsQueued(value)
@@ -643,10 +648,6 @@ export default function App() {
   function onLoadSnapshot(slot: string) {
     post('SnapshotRecall', slot)
     setTransitionInProgress(true)
-  }
-
-  function onOpenOsDir(osDir: OsDir) {
-    post('OpenOsDir', osDir)
   }
 
   function onSaveSnapshot(slot: string) {

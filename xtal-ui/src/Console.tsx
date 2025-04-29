@@ -35,7 +35,7 @@ export default function Console({ alertText }: Props) {
     return () => {
       document.removeEventListener('mouseover', onMouseOver)
     }
-  }, [alertText])
+  }, [])
 
   return (
     <div className="console">

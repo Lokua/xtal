@@ -1,7 +1,7 @@
 use chrono::Utc;
 use nannou::prelude::*;
 use std::cell::{Cell, Ref};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
 use std::path::PathBuf;
 use std::process::Child;
@@ -120,6 +120,7 @@ struct AppModel {
     ctx: Context,
     hrcc: bool,
     image_index: Option<storage::ImageIndex>,
+    keys_held: HashSet<Key>,
     mappings_enabled: bool,
     main_maximized: Cell<bool>,
     main_window_id: window::Id,
@@ -1119,6 +1120,7 @@ fn model(app: &App) -> AppModel {
         ctx,
         hrcc: global_settings.hrcc,
         image_index,
+        keys_held: HashSet::default(),
         mappings_enabled: global_settings.mappings_enabled,
         main_maximized: Cell::new(false),
         main_window_id,
@@ -1173,9 +1175,21 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
 fn event(app: &App, model: &mut AppModel, event: Event) {
     match event {
         Event::WindowEvent {
+            simple: Some(KeyReleased(key)),
+            ..
+        } => {
+            model.keys_held.remove(&key);
+        }
+        Event::WindowEvent {
             simple: Some(KeyPressed(key)),
             ..
         } => {
+            if model.keys_held.contains(&key) {
+                return;
+            } else {
+                model.keys_held.insert(key);
+            }
+
             let logo_pressed = app.keys.mods.logo();
             let shift_pressed = app.keys.mods.shift();
             let ctrl_pressed = app.keys.mods.ctrl();
