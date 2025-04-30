@@ -130,6 +130,13 @@ colorize:
   var: h1
   type: slider
 
+steps:
+  var: i1
+  type: slider
+  range: [1, 16]
+  default: 16
+  step: 1
+
 edge_mode:
   var: h3
   type: select

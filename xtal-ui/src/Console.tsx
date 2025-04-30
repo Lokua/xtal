@@ -4,11 +4,16 @@ import IconButton from './IconButton'
 
 type Props = {
   alertText: string
+  showHelp: boolean
+  onToggleShowHelp: (negatedShowHelp: boolean) => void
 }
 
-export default function Console({ alertText }: Props) {
+export default function Console({
+  alertText,
+  showHelp,
+  onToggleShowHelp,
+}: Props) {
   const [helpText, setHelpText] = useState('')
-  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     function onMouseOver(e: MouseEvent) {
@@ -45,7 +50,7 @@ export default function Console({ alertText }: Props) {
           When off, the console will show system alerts."
         on={showHelp}
         onClick={() => {
-          setShowHelp(!showHelp)
+          onToggleShowHelp(!showHelp)
         }}
       />
       {showHelp ? helpText : alertText}

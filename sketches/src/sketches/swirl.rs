@@ -18,7 +18,7 @@ pub struct DynamicUniformsDev {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 8)]
+#[uniforms(banks = 10)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> DynamicUniformsDev {

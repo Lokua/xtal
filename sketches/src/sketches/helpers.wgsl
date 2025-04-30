@@ -60,13 +60,6 @@ fn mod_v4(x: vec4f, y: vec4f) -> vec4f {
     return x - y * floor(x / y);
 }
 
-// fn powf(x: f32, y: f32) -> f32 {
-//     if (floor(y) == y && modulo(y, 2.0) == 1.0) {
-//         return sign(x) * pow(abs(x), y);
-//     }
-
-//     return pow(abs(x), y);
-// }
 fn powf(x: f32, y: f32) -> f32 {
     let y_rounded = round(y);
     if (abs(y - y_rounded) < 1e-4 && modulo(y_rounded, 2.0) == 1.0) {
@@ -123,32 +116,74 @@ fn n(x: f32) -> f32 {
 //  COLOR
 // -----------------------------------------------------------------------------
 
-
-fn hsl_to_rgb(hsl: vec3f) -> vec3f {
-    let h = hsl.x;
-    let s = hsl.y;
-    let l = hsl.z;
+fn rgb_to_hsv(rgb: vec3f) -> vec3f {
+    let r = rgb.x;
+    let g = rgb.y;
+    let b = rgb.z;
     
-    let c = (1.0 - abs(2.0 * l - 1.0)) * s;
-    let x = c * (1.0 - abs(fract(h * 6.0) - 3.0 - 1.0));
-    let m = l - c / 2.0;
+    let cmax = max(max(r, g), b);
+    let cmin = min(min(r, g), b);
+    let delta = cmax - cmin;
     
-    var rgb: vec3f;
-    if (h < 1.0/6.0) {
-        rgb = vec3f(c, x, 0.0);
-    } else if (h < 2.0 / 6.0) {
-        rgb = vec3f(x, c, 0.0);
-    } else if (h < 3.0 / 6.0) {
-        rgb = vec3f(0.0, c, x);
-    } else if (h < 4.0 / 6.0) {
-        rgb = vec3f(0.0, x, c);
-    } else if (h < 5.0 / 6.0) {
-        rgb = vec3f(x, 0.0, c);
-    } else {
-        rgb = vec3f(c, 0.0, x);
+    var h = 0.0;
+    if (delta > 0.0) {
+        if (cmax == r) {
+            h = (g - b) / delta;
+            if (h < 0.0) {
+                h += 6.0;
+            }
+        } else if (cmax == g) {
+            h = ((b - r) / delta) + 2.0;
+        } else {
+            h = ((r - g) / delta) + 4.0;
+        }
+        h /= 6.0;
     }
     
-    return rgb + m;
+    var s = 0.0;
+    if (cmax > 0.0) {
+        s = delta / cmax;
+    }
+    
+    let v = cmax;
+    
+    return vec3f(h, s, v);
+}
+
+fn hsv_to_rgb(hsv: vec3f) -> vec3f {
+    let h = hsv.x;
+    let s = hsv.y;
+    let v = hsv.z;
+    
+    if (s == 0.0) {
+        return vec3f(v, v, v);
+    }
+    
+    let i = floor(h * 6.0);
+    let f = h * 6.0 - i;
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - f * s);
+    let t = v * (1.0 - (1.0 - f) * s);
+    
+    var r = 0.0;
+    var g = 0.0;
+    var b = 0.0;
+    
+    if (i % 6.0 == 0.0) {
+        r = v; g = t; b = p;
+    } else if (i % 6.0 == 1.0) {
+        r = q; g = v; b = p;
+    } else if (i % 6.0 == 2.0) {
+        r = p; g = v; b = t;
+    } else if (i % 6.0 == 3.0) {
+        r = p; g = q; b = v;
+    } else if (i % 6.0 == 4.0) {
+        r = t; g = p; b = v;
+    } else {
+        r = v; g = p; b = q;
+    }
+    
+    return vec3f(r, g, b);
 }
 
 fn mix_additive(c1: vec3f, c2: vec3f) -> vec3f {
@@ -223,3 +258,32 @@ fn glitch_blocks(
     let noise = fract(sin(dot(block, vec2f(12.9898, 78.233))) * 43758.5453);
     return mix(color, vec3f(1.0) - color, step(1.0 - intensity, noise));
 }
+
+// -----------------------------------------------------------------------------
+//  FEEDBACK
+// -----------------------------------------------------------------------------
+
+// // Commented out to avoid linter errors
+// fn apply_feedback(color: vec3f, p: vec2f, uv: vec2f, mix: f32) -> vec3f {
+//     var best_offset = vec2f(0.0);
+//     var max_brightness = 0.0;
+//     let pixel_size = vec2f(1.0 / params.a.x, 1.0 / params.a.y);
+
+//     for (var i = 0; i < 4; i++) {
+//         let sample_uv = uv + (OFFSETS[i] * pixel_size);
+//         let color = textureSample(source_texture, source_sampler, sample_uv);
+//         let brightness = dot(color.rgb, STANDARD_LUMINANCE);
+//         if (brightness > max_brightness) {
+//             max_brightness = brightness;
+//             best_offset = OFFSETS[i];
+//         }
+//     }
+
+//     let sample = textureSample(
+//         source_texture, 
+//         source_sampler, 
+//         uv + best_offset * 0.01
+//     );
+
+//     return mix(color, 1.0 - sample.rgb, mix);
+// }

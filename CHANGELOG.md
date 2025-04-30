@@ -9,6 +9,10 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 ## [unreleased] 2025-04-29
 
+### Added
+
+- Keyboard shortcut `[?]` or `[/]` to toggle help view
+
 ### Changed
 
 - Added custom `useKeyDownOnce` hook since native keydown continuously fires

@@ -1186,9 +1186,9 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
         } => {
             if model.keys_held.contains(&key) {
                 return;
-            } else {
-                model.keys_held.insert(key);
             }
+
+            model.keys_held.insert(key);
 
             let logo_pressed = app.keys.mods.logo();
             let shift_pressed = app.keys.mods.shift();

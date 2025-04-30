@@ -34,6 +34,9 @@ struct Params {
     g: vec4f,
     // colorize, edge_thresh, edge_mode, edge_mix
     h: vec4f,
+    // steps, ...
+    i: vec4f,
+    j: vec4f,
 }
 
 @group(0) @binding(0)
@@ -59,6 +62,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let colorize = params.h.x;
     let edge_thresh = params.h.y;
     let edge_mode = params.h.z;
+    let steps = params.i.x;
     
     var pos_x = params.f.w;
     var pos_y = params.g.x;
@@ -94,7 +98,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         colorized = paint_edges(colorized);
     }
     
-    let color = mix(bw, colorized, colorize);
+    var color = mix(bw, colorized, colorize);
+    color = floor(color * steps) / steps;
     
     return vec4f(color, 1.0);
 }

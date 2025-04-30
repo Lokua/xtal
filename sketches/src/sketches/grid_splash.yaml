@@ -124,6 +124,10 @@ norm_color_disp:
   var: f4
   type: slider
 
+band_dist:
+  var: g3
+  type: slider
+
 red_or_cyan:
   var: e1
   type: slider
@@ -143,6 +147,10 @@ blue_or_yellow:
 effects_section:
   type: separator
 
-effects_mix:
+feedback:
   var: g2
+  type: slider
+
+dry_add:
+  var: h1
   type: slider

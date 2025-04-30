@@ -203,6 +203,7 @@ export default function App() {
   const [paused, setPaused] = useState(false)
   const [perfMode, setPerfMode] = useState(false)
   const [showExclusions, setShowExclusions] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
   const [singleTransitionControlName, setSingleTransitionControlName] =
     useState('')
@@ -413,6 +414,10 @@ export default function App() {
             }
             break
           }
+          case 'Slash': {
+            setShowHelp(!showHelp)
+            break
+          }
           case 'Space': {
             if (tapTempoEnabled) {
               post('Tap')
@@ -428,8 +433,10 @@ export default function App() {
         exclusions,
         paused,
         showExclusions,
+        showHelp,
         showSnapshots,
         sketchName,
+        snapshots,
         tapTempoEnabled,
         view,
       ]
@@ -767,7 +774,11 @@ export default function App() {
         )}
       </main>
       <footer>
-        <Console alertText={alertText} />
+        <Console
+          alertText={alertText}
+          showHelp={showHelp}
+          onToggleShowHelp={setShowHelp}
+        />
       </footer>
     </div>
   )

@@ -392,7 +392,6 @@ pub fn launch(
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ControlKind {
     Checkbox,
-    DynamicSeparator,
     Select,
     Separator,
     Slider,
