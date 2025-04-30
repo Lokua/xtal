@@ -327,3 +327,22 @@ rm_route:
   source: rm_a
   modulators:
     - ring_modulator_example
+
+# ------------------------------------------------------------------------------
+#  Ramp (orange square)
+# ------------------------------------------------------------------------------
+
+ramp_section:
+  type: separator
+
+show_ramp:
+  type: checkbox
+
+ramp_phase:
+  type: slider
+  disabled: not show_ramp
+
+ramp:
+  type: ramp
+  beats: 4
+  phase: $ramp_phase

@@ -201,7 +201,7 @@ fn derive_gui_height(controls: Vec<wv::Control>) -> i32 {
     let controls_height: i32 = controls
         .iter()
         .map(|c| match c.kind {
-            wv::ControlKind::Separator => 9,
+            wv::ControlKind::Separator => 12,
             _ => 24,
         })
         .sum();

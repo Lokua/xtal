@@ -180,7 +180,7 @@ impl_effect_params!(
 // Animation
 //------------------------------------------------------------------------------
 
-impl SetFromParam for TriangleConfig {
+impl SetFromParam for RampConfig {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
@@ -207,6 +207,16 @@ impl SetFromParam for RandomSlewedConfig {
             "delay" => self.delay = ParamValue::Cold(value),
             "slew" => self.slew = ParamValue::Cold(value),
             _ => warn_for("RandomSlewed", name),
+        }
+    }
+}
+
+impl SetFromParam for TriangleConfig {
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            "phase" => self.phase = ParamValue::Cold(value),
+            _ => warn_for("Triangle", name),
         }
     }
 }

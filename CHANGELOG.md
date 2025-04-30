@@ -13,6 +13,8 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 
 - Keyboard shortcut `[?]` or `[/]` to toggle help view
 - Labels to Separator controls
+- `Animation::ramp_plus`; same as `ramp` with range mappings and phase offset
+  (also available in control scripts via `type: ramp`)
 
 ### Changed
 
@@ -20,6 +22,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
   when held, keypress is deprecated, and keyup isn't great for timing sensitive
   actions.
 - Similar to above handling of keydown on the backend via held-key tracking
+- Renamed `Animation::loop_phase` to `Animation::ramp`
 
 ## [0.14.0] 2025-04-26
 

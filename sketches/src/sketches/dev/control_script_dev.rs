@@ -17,16 +17,16 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 
 #[derive(SketchComponents)]
 pub struct ControlScriptDev {
-    controls: ControlHub<Timing>,
+    hub: ControlHub<Timing>,
 }
 
 pub fn init(_app: &App, ctx: &Context) -> ControlScriptDev {
-    let controls = ControlHub::from_path(
+    let hub = ControlHub::from_path(
         to_absolute_path(file!(), "control_script_dev.yaml"),
         Timing::new(ctx.bpm()),
     );
 
-    ControlScriptDev { controls }
+    ControlScriptDev { hub }
 }
 
 impl Sketch for ControlScriptDev {
@@ -39,33 +39,33 @@ impl Sketch for ControlScriptDev {
         ctx.background(
             &frame,
             &draw,
-            hsla(0.0, 0.0, 0.02, self.controls.get("bg_alpha")),
+            hsla(0.0, 0.0, 0.02, self.hub.get("bg_alpha")),
         );
 
-        if self.controls.bool("show_center_circle") {
+        if self.hub.bool("show_center_circle") {
             draw.ellipse()
-                .color(hsl(self.controls.get("center_hue"), 0.5, 0.5))
-                .radius(self.controls.get("center_radius"))
+                .color(hsl(self.hub.get("center_hue"), 0.5, 0.5))
+                .radius(self.hub.get("center_radius"))
                 .x_y(0.0, 0.0);
         }
 
-        if self.controls.bool("show_white_circle") {
+        if self.hub.bool("show_white_circle") {
             draw.ellipse()
                 .color(WHITE)
-                .radius(self.controls.get("white_radius"))
+                .radius(self.hub.get("white_radius"))
                 .x_y(
-                    self.controls.get("white_pos_x") * wr.hw(),
-                    self.controls.get("white_pos_y") * wr.hh(),
+                    self.hub.get("white_pos_x") * wr.hw(),
+                    self.hub.get("white_pos_y") * wr.hh(),
                 );
         }
 
-        if self.controls.bool("show_audio") {
+        if self.hub.bool("show_audio") {
             draw.rect()
                 .color(CYAN)
                 .x_y(
                     0.0,
                     map_range(
-                        self.controls.get("audio_rect_y"),
+                        self.hub.get("audio_rect_y"),
                         0.0,
                         1.0,
                         -wr.hh(),
@@ -75,13 +75,13 @@ impl Sketch for ControlScriptDev {
                 .w_h(wr.w() - 100.0, 30.0);
         }
 
-        if self.controls.bool("show_breakpoints") {
+        if self.hub.bool("show_breakpoints") {
             draw.rect()
                 .color(MAGENTA)
                 .x_y(
                     0.0,
                     map_range(
-                        self.controls.get("breakpoints_line"),
+                        self.hub.get("breakpoints_line"),
                         0.0,
                         1.0,
                         -wr.hh(),
@@ -91,26 +91,23 @@ impl Sketch for ControlScriptDev {
                 .w_h(wr.w(), 20.0);
         }
 
-        if self.controls.bool("show_red_circle") {
+        if self.hub.bool("show_red_circle") {
             draw.ellipse()
                 .color(RED)
-                .radius(self.controls.get("red_circle_radius"))
-                .x_y(
-                    self.controls.get("red_circle_pos_x") * wr.hw(),
-                    -wr.h() / 4.0,
-                );
+                .radius(self.hub.get("red_circle_radius"))
+                .x_y(self.hub.get("red_circle_pos_x") * wr.hw(), -wr.h() / 4.0);
         }
 
-        if self.controls.bool("show_midi_circle") {
+        if self.hub.bool("show_midi_circle") {
             draw.ellipse()
                 .color(YELLOW)
-                .radius(self.controls.get("midi_radius"))
+                .radius(self.hub.get("midi_radius"))
                 .x_y(0.0, 0.0);
         }
 
-        if self.controls.bool("show_random_section") {
-            let size = self.controls.get("random_size");
-            let size_slewed = self.controls.get("random_size_slewed");
+        if self.hub.bool("show_random_section") {
+            let size = self.hub.get("random_size");
+            let size_slewed = self.hub.get("random_size_slewed");
             draw.rect().color(BLACK).w_h(size, size).x_y(-wr.qw(), 0.0);
             draw.rect()
                 .color(BLACK)
@@ -118,13 +115,13 @@ impl Sketch for ControlScriptDev {
                 .x_y(wr.qw(), 0.0);
         }
 
-        if self.controls.bool("show_rm") {
+        if self.hub.bool("show_rm") {
             draw.rect()
                 .color(LIMEGREEN)
                 .x_y(
                     0.0,
                     map_range(
-                        self.controls.get("rm_a"),
+                        self.hub.get("rm_a"),
                         0.0,
                         1.0,
                         -wr.hh(),
@@ -132,6 +129,22 @@ impl Sketch for ControlScriptDev {
                     ),
                 )
                 .w_h(wr.w() - 100.0, 30.0);
+        }
+
+        if self.hub.bool("show_ramp") {
+            draw.rect()
+                .color(ORANGE)
+                .x_y(
+                    -wr.hw(),
+                    map_range(
+                        self.hub.get("ramp"),
+                        0.0,
+                        1.0,
+                        -wr.hh(),
+                        wr.hh(),
+                    ),
+                )
+                .w_h(100.0, 100.0);
         }
 
         draw.to_frame(app, &frame).unwrap();

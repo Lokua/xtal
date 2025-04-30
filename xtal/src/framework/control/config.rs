@@ -55,14 +55,16 @@ pub enum ControlType {
     Audio,
 
     // Animation
-    #[serde(rename = "triangle")]
-    Triangle,
     #[serde(rename = "automate")]
     Automate,
+    #[serde(rename = "ramp")]
+    Ramp,
     #[serde(rename = "random")]
     Random,
     #[serde(rename = "random_slewed")]
     RandomSlewed,
+    #[serde(rename = "triangle")]
+    Triangle,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -210,6 +212,7 @@ impl Default for AudioConfig {
 #[derive(Debug)]
 pub enum AnimationConfig {
     Automate(AutomateConfig),
+    Ramp(RampConfig),
     Random(RandomConfig),
     RandomSlewed(RandomSlewedConfig),
     Triangle(TriangleConfig),
@@ -219,78 +222,6 @@ pub enum AnimationConfig {
 pub enum KeyframeSequence {
     Breakpoints(Vec<Breakpoint>),
     None,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(default)]
-pub struct TriangleConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    pub beats: ParamValue,
-    pub range: [f32; 2],
-    pub phase: ParamValue,
-}
-
-impl Default for TriangleConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            beats: ParamValue::Cold(1.0),
-            range: [0.0, 1.0],
-            phase: ParamValue::Cold(0.0),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(default)]
-pub struct RandomConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    pub beats: ParamValue,
-    pub range: [f32; 2],
-    pub delay: ParamValue,
-    pub stem: u64,
-}
-
-impl Default for RandomConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            beats: ParamValue::Cold(1.0),
-            range: [0.0, 1.0],
-            delay: ParamValue::Cold(0.0),
-            stem: 93473,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(default)]
-pub struct RandomSlewedConfig {
-    #[allow(dead_code)]
-    #[serde(flatten)]
-    shared: Shared,
-    pub beats: ParamValue,
-    pub range: [f32; 2],
-    pub slew: ParamValue,
-    pub delay: ParamValue,
-    pub stem: u64,
-}
-
-impl Default for RandomSlewedConfig {
-    fn default() -> Self {
-        Self {
-            shared: Shared::default(),
-            beats: ParamValue::Cold(1.0),
-            range: [0.0, 1.0],
-            slew: ParamValue::Cold(0.65),
-            delay: ParamValue::Cold(0.0),
-            stem: 93472,
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -359,6 +290,100 @@ pub enum KindConfig {
         constrain: String,
     },
     End,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RampConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub phase: ParamValue,
+}
+
+impl Default for RampConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            phase: ParamValue::Cold(0.0),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RandomConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub delay: ParamValue,
+    pub stem: u64,
+}
+
+impl Default for RandomConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            delay: ParamValue::Cold(0.0),
+            stem: 93473,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RandomSlewedConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub slew: ParamValue,
+    pub delay: ParamValue,
+    pub stem: u64,
+}
+
+impl Default for RandomSlewedConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            slew: ParamValue::Cold(0.65),
+            delay: ParamValue::Cold(0.0),
+            stem: 93472,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct TriangleConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub beats: ParamValue,
+    pub range: [f32; 2],
+    pub phase: ParamValue,
+}
+
+impl Default for TriangleConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            beats: ParamValue::Cold(1.0),
+            range: [0.0, 1.0],
+            phase: ParamValue::Cold(0.0),
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

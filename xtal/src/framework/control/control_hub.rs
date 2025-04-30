@@ -379,7 +379,21 @@ impl<T: TimingSource> ControlHub<T> {
                 self.animations.get(name).map(|(config, sequence)| {
                     match (config, sequence) {
                         (
-                            AnimationConfig::Triangle(conf),
+                            AnimationConfig::Automate(conf),
+                            KeyframeSequence::Breakpoints(breakpoints),
+                        ) => {
+                            let breakpoints = self.resolve_breakpoint_params(
+                                name,
+                                breakpoints,
+                                current_frame,
+                            );
+                            self.animation.automate(
+                                &breakpoints,
+                                Mode::from_str(&conf.mode).unwrap(),
+                            )
+                        }
+                        (
+                            AnimationConfig::Ramp(conf),
                             KeyframeSequence::None,
                         ) => {
                             let conf = self.resolve_animation_config_params(
@@ -387,7 +401,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 name,
                                 current_frame,
                             );
-                            self.animation.triangle(
+                            self.animation.ramp_plus(
                                 conf.beats.as_float(),
                                 (conf.range[0], conf.range[1]),
                                 conf.phase.as_float(),
@@ -427,17 +441,18 @@ impl<T: TimingSource> ControlHub<T> {
                             )
                         }
                         (
-                            AnimationConfig::Automate(conf),
-                            KeyframeSequence::Breakpoints(breakpoints),
+                            AnimationConfig::Triangle(conf),
+                            KeyframeSequence::None,
                         ) => {
-                            let breakpoints = self.resolve_breakpoint_params(
+                            let conf = self.resolve_animation_config_params(
+                                conf,
                                 name,
-                                breakpoints,
                                 current_frame,
                             );
-                            self.animation.automate(
-                                &breakpoints,
-                                Mode::from_str(&conf.mode).unwrap(),
+                            self.animation.triangle(
+                                conf.beats.as_float(),
+                                (conf.range[0], conf.range[1]),
+                                conf.phase.as_float(),
                             )
                         }
                         _ => unimplemented!(),
@@ -1098,16 +1113,32 @@ impl<T: TimingSource> ControlHub<T> {
 
                     self.audio_controls.add(id, audio_control);
                 }
-                ControlType::Triangle => {
-                    let conf: TriangleConfig =
+                ControlType::Automate => {
+                    let conf: AutomateConfig =
                         serde_yml::from_value(config.config.clone())?;
+
+                    let breakpoints = conf
+                        .breakpoints
+                        .iter()
+                        .cloned()
+                        .map(Breakpoint::from)
+                        .collect();
 
                     self.animations.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::Triangle(conf),
-                            KeyframeSequence::None,
+                            AnimationConfig::Automate(conf),
+                            KeyframeSequence::Breakpoints(breakpoints),
                         ),
+                    );
+                }
+                ControlType::Ramp => {
+                    let conf: RampConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.animations.insert(
+                        id.to_string(),
+                        (AnimationConfig::Ramp(conf), KeyframeSequence::None),
                     );
                 }
                 ControlType::Random => {
@@ -1131,22 +1162,15 @@ impl<T: TimingSource> ControlHub<T> {
                         ),
                     );
                 }
-                ControlType::Automate => {
-                    let conf: AutomateConfig =
+                ControlType::Triangle => {
+                    let conf: TriangleConfig =
                         serde_yml::from_value(config.config.clone())?;
-
-                    let breakpoints = conf
-                        .breakpoints
-                        .iter()
-                        .cloned()
-                        .map(Breakpoint::from)
-                        .collect();
 
                     self.animations.insert(
                         id.to_string(),
                         (
-                            AnimationConfig::Automate(conf),
-                            KeyframeSequence::Breakpoints(breakpoints),
+                            AnimationConfig::Triangle(conf),
+                            KeyframeSequence::None,
                         ),
                     );
                 }

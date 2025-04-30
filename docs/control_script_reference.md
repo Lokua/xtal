@@ -12,18 +12,19 @@
 - [OSC](#osc)
 - [Audio](#audio)
 - [Animation](#animation)
+  - [ramp](#ramp)
   - [triangle](#triangle)
   - [random](#random)
   - [random_slewed](#random_slewed)
   - [automate](#automate)
     - [breakpoints](#automatebreakpoints)
     - [kind](#kind)
-      - [ramp](#ramp)
-      - [step](#step)
-      - [wave](#wave)
-      - [random](#random)
-      - [random_smooth](#randomsmooth)
-      - [end](#end)
+      - [ramp](#breakpoint-ramp)
+      - [step](#breakpoint-step)
+      - [wave](#breakpoint-wave)
+      - [random](#breakpoint-random)
+      - [random_smooth](#breakpoint-randomsmooth)
+      - [end](#breakpoint-end)
 - [Modulation](#modulation)
   - [mod](#mod)
 - [Effects](#effects)
@@ -408,6 +409,28 @@ animation_example:
 
 # Animation
 
+## ramp
+
+An that linearly ramps from min to max over the specified number of beats.
+
+**Params**
+
+- `type` - `ramp`
+- `beats` - defaults to `1.0`
+- `range` - defaults to `[0.0, 1.0]`
+- `phase` - Phase offset expressed as percentage (0..1) of the above range.
+
+**Example**
+
+```yaml
+ramp_example:
+  type: ramp
+  # 16 beats = 4 bars
+  beats: 16.0
+  range: [0.0, 1.0]
+  phase: 0.0
+```
+
 ## triangle
 
 A "ping pong" animation that linearly ramps from min to max and back to min as
@@ -513,6 +536,8 @@ Each breakpoint shares the following _required_ fields:
 
 ### automate.breakpoints.kind
 
+<a id="breakpoint-ramp"></a>
+
 #### `ramp`
 
 Ramps from `value` at `position` to the next point's value with optional easing.
@@ -522,9 +547,13 @@ Ramps from `value` at `position` to the next point's value with optional easing.
 - `easing` - a snake cased version of any of the easings defined in
   [src/framework/easings.rs](src/framework/easings.rs). Defaults to `linear`
 
+<a id="breakpoint-step"></a>
+
 #### `step`
 
 Holds `value` from this point's `position` until the next point.
+
+<a id="breakpoint-wave"></a>
 
 #### `wave`
 
@@ -547,6 +576,8 @@ Like `ramp`, but with a secondary amplitude modulation applied on top of it
   waveforms!
 - `constrain` - one of `none`, `clamp`, or `fold`. Defaults to `none`.
 
+<a id="breakpoint-random"></a>
+
 #### `random`
 
 Generates a random number somewhere above or below the set `value` by
@@ -557,7 +588,11 @@ Generates a random number somewhere above or below the set `value` by
 - `amplitude` - how much +- the random number generator will deviate from
   `value` when choosing a number
 
+<a id="breakpoint-random_smooth"></a>
+
 #### `random_smooth`
+
+**⚠️ Experimental**
 
 Like the [`ramp`](#ramp) type only uses perlin noise to deviate from the base
 ramp.
@@ -567,6 +602,8 @@ ramp.
 - `frequency` - the rate of amplitude modulation, expressed in beats.
 - `amplitude`- how much above and below the base ramp to add/subtract. Defaults
   to `0.25`
+
+<a id="breakpoint-end"></a>
 
 #### `end`
 
