@@ -1031,10 +1031,11 @@ impl<T: TimingSource> ControlHub<T> {
                     self.ui_controls.add(id, select);
                 }
                 ControlType::Separator => {
-                    let name = uuid_5();
                     self.ui_controls.add(
-                        &name.clone(),
-                        UiControlConfig::Separator { name },
+                        id,
+                        UiControlConfig::Separator {
+                            name: id.to_string(),
+                        },
                     );
                 }
                 ControlType::Osc => {

@@ -52,17 +52,16 @@ _outer_scale_range: &outer_scale_range 1.5
 
 outer_scale:
   type: automate
+  # bypass: 0.0
   breakpoints:
     - kind: ramp
       position: 0.0
       value: 0.0
       easing: ease_in
-
     - kind: ramp
       position: 2.0
       value: *outer_scale_range
       easing: ease_out
-
     - kind: end
       position: 4.0
       value: 0.0
@@ -70,17 +69,16 @@ outer_scale:
 outer_scale_2:
   var: d4
   type: automate
+  # bypass: 0.0
   breakpoints:
     - kind: ramp
       position: 0.0
       value: 0.0
       easing: ease_in
-
     - kind: ramp
       position: 3.0
       value: *outer_scale_range
       easing: ease_out
-
     - kind: end
       position: 6.0
       value: 0.0
@@ -89,7 +87,7 @@ outer_scale_2:
 #  Center
 # ------------------------------------------------------------------------------
 
-center_separator:
+center:
   type: separator
 
 t_long:
@@ -104,27 +102,22 @@ center_y:
       position: 0.0
       value: 0.0
       amplitude: 0.0
-
     - kind: random
       position: 2.0
       value: 0.0
       amplitude: 2.0
-
     - kind: random
       position: 4.0
       value: 0.0
       amplitude: 2.0
-
     - kind: random
       position: 5.0
       value: 0.0
       amplitude: 2.0
-
     - kind: random
       position: 6.0
       value: 0.0
       amplitude: 2.0
-
     - kind: end
       position: 12.0
       value: 0.0
@@ -166,7 +159,7 @@ center_size:
 #  Global Appearance
 # ------------------------------------------------------------------------------
 
-global_separator:
+global:
   type: separator
 
 invert:
@@ -194,7 +187,7 @@ bg_alpha:
 #  Un
 # ------------------------------------------------------------------------------
 
-transform_separator:
+transforms:
   type: separator
 
 rot_angle:
@@ -226,22 +219,9 @@ rot_mod:
 
 bd:
   var: e2
-  type: audio
-  channel: 0
-  slew: [0.0, 0.3]
+  type: triangle
+  beats: 1
   range: [0.6, 1]
-
-bd_amp:
-  type: effect
-  kind: math
-  operator: mult
-  operand: 1.0
-
-bd_mod:
-  type: mod
-  source: bd
-  modulators:
-    - bd_amp
 
 clamp_min:
   var: e3
@@ -251,7 +231,6 @@ clamp_min:
 
 clamp_max:
   var: e4
-  bypass: _
   type: automate
   breakpoints:
     - kind: ramp
@@ -265,13 +244,3 @@ clamp_max:
     - kind: end
       position: 24
       value: 0
-
-# ???
-d1:
-  type: audio
-  channel: 2
-  slew: [0.5, 0.5]
-  detect: 0.0
-  range: [0.7, 1.0]
-
-_: _

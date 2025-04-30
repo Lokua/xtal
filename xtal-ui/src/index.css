@@ -397,6 +397,17 @@ input[type='range']::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+.separator-control-container {
+  display: flex;
+  align-items: center;
+  margin-left: 0.25rem;
+  color: var(--text-color-muted);
+
+  small {
+    font-size: calc(var(--control-font-size) - 0.125rem);
+  }
+}
+
 .separator {
   position: relative;
   width: 100%;
@@ -542,12 +553,6 @@ input[type='range']::-webkit-slider-thumb {
     svg {
       fill: var(--muted-color);
     }
-
-    /* &:hover {
-      svg {
-        fill: var(--control-text-color);
-      }
-    } */
 
     &.on {
       background-color: unset;

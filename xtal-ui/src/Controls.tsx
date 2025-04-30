@@ -265,8 +265,13 @@ export default function Controls({
             )
           }
 
-          if (c.kind === 'DynamicSeparator' || c.kind === 'Separator') {
-            return <Separator key={c.name || index} />
+          if (c.kind === 'Separator') {
+            return (
+              <div className="separator-control-container">
+                <small>{c.name}</small>
+                <Separator key={c.name || index} />
+              </div>
+            )
           }
 
           return null

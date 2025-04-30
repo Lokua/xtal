@@ -25,7 +25,7 @@ pub fn init_logger() {
                 log::Level::Warn => Color::Yellow,
                 log::Level::Error => Color::Red,
             }))
-            .set_bold(true);
+            .set_bold(false);
 
             buffer.set_color(&spec)?;
 

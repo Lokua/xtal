@@ -12,6 +12,7 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 ### Added
 
 - Keyboard shortcut `[?]` or `[/]` to toggle help view
+- Labels to Separator controls
 
 ### Changed
 

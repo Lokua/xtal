@@ -209,10 +209,10 @@ impl Default for AudioConfig {
 
 #[derive(Debug)]
 pub enum AnimationConfig {
-    Triangle(TriangleConfig),
     Automate(AutomateConfig),
     Random(RandomConfig),
     RandomSlewed(RandomSlewedConfig),
+    Triangle(TriangleConfig),
 }
 
 #[derive(Clone, Debug)]
