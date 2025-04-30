@@ -80,7 +80,7 @@ impl Sketch for Noise {
         let total_segments = (360.0 / angle_increment) as i32;
 
         let draw_rotated = draw.rotate(if self.controls.bool("rotate") {
-            self.controls.animation.loop_phase(32.0) * PI * 2.0
+            self.controls.animation.ramp(32.0) * PI * 2.0
         } else {
             0.0
         });

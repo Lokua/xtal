@@ -230,9 +230,9 @@ fn get_phase(spiral: &Spiral, param_name: &str, animation_time: f32) -> f32 {
 
     if spiral.controls.bool(&animate_param) {
         if spiral.controls.bool(&invert_param) {
-            spiral.controls.animation.loop_phase(time) * TAU
+            spiral.controls.animation.ramp(time) * TAU
         } else {
-            (1.0 - spiral.controls.animation.loop_phase(time)) * TAU
+            (1.0 - spiral.controls.animation.ramp(time)) * TAU
         }
     } else {
         spiral.controls.get(&phase_param)

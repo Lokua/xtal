@@ -1,6 +1,6 @@
-use xtal::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::*;
 
@@ -104,13 +104,7 @@ impl Sketch for AnimationDev {
         // GREEN BALL
         draw.ellipse()
             .x_y(
-                map_range(
-                    self.animation.loop_phase(8.0),
-                    0.0,
-                    1.0,
-                    -edge,
-                    edge,
-                ),
+                map_range(self.animation.ramp(8.0), 0.0, 1.0, -edge, edge),
                 0.0,
             )
             .radius(radius)

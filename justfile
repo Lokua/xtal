@@ -24,13 +24,13 @@ debug-module MODULE *ARGS:
 # To test just a single test, past the test name e.g. just test my_test
 # To test a single module, pass the module name e.g. just test my::module
 test *ARGS:
-  RUST_LOG=xtal=trace cargo test --lib -- {{ARGS}}
+  RUST_LOG=xtal=trace cargo test --lib --package xtal -- {{ARGS}}
   
 test-debug *ARGS:
-  RUST_LOG=xtal=debug cargo test --lib -- {{ARGS}}
+  RUST_LOG=xtal=debug cargo test --lib --package xtal -- {{ARGS}}
 
 test-verbose *ARGS:
-  RUST_LOG=xtal=trace cargo test --lib --show-output -- {{ARGS}}  
+  RUST_LOG=xtal=trace cargo test --lib --package xtal --show-output -- {{ARGS}}  
 
 bench *ARGS:
   cargo bench {{ARGS}}

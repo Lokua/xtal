@@ -251,9 +251,9 @@ fn get_phase(
 
     if template.controls.bool(&animate_param) {
         if template.controls.bool(&invert_param) {
-            template.controls.animation.loop_phase(time) * TAU
+            template.controls.animation.ramp(time) * TAU
         } else {
-            (1.0 - template.controls.animation.loop_phase(time)) * TAU
+            (1.0 - template.controls.animation.ramp(time)) * TAU
         }
     } else {
         template.controls.get(&phase_param)

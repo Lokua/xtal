@@ -320,9 +320,20 @@ impl<T: TimingSource> Animation<T> {
 
     /// Return a relative phase position from [0, 1] within
     /// the passed in duration (specified in beats)
-    pub fn loop_phase(&self, duration: f32) -> f32 {
+    pub fn ramp(&self, duration: f32) -> f32 {
         let total_beats = self.beats();
         (total_beats / duration) % 1.0
+    }
+
+    /// Like [`Self::ramp`] with range mapping and phase offset
+    pub fn ramp_plus(
+        &self,
+        duration: f32,
+        (min, max): (f32, f32),
+        phase_offset: f32,
+    ) -> f32 {
+        let x = (self.beats() / duration + phase_offset) % 1.0;
+        map_range(x, 0.0, 1.0, min, max)
     }
 
     /// Cycle from 0 to 1 and back to 0 over the passed in duration
@@ -650,6 +661,46 @@ pub mod animation_tests {
 
     pub fn create_instance() -> Animation<FrameTiming> {
         Animation::new(FrameTiming::new(Bpm::new(BPM)))
+    }
+
+    #[test]
+    #[serial]
+    fn test_ramp() {
+        init(0);
+        let a = create_instance();
+
+        let val = a.ramp(1.0);
+        assert_eq!(val, 0.0, "downbeat");
+
+        init(2);
+        let val = a.ramp(1.0);
+        assert_eq!(val, 0.5, "1/8");
+
+        init(3);
+        let val = a.ramp(1.0);
+        assert_eq!(val, 0.75, "3/16");
+    }
+
+    #[test]
+    #[serial]
+    fn test_ramp_plus() {
+        init(0);
+        let a = create_instance();
+
+        let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
+        assert_eq!(val, 0.5);
+
+        init(1);
+        let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
+        assert_eq!(val, 0.75);
+
+        init(2);
+        let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
+        assert_eq!(val, 0.0);
+
+        init(3);
+        let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
+        assert_eq!(val, 0.25);
     }
 
     #[test]
