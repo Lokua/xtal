@@ -23,7 +23,7 @@ struct VertexOutput {
 struct Params {
     // w, h, t, grid_size
     a: vec4f,
-    // circle_radius, line_width, freq, amp
+    // circle_radius, line_width, a_freq, a_amp
     b: vec4f,
     // ab_mix, t_wave, a_exp, b_exp
     c: vec4f,
@@ -31,12 +31,15 @@ struct Params {
     d: vec4f,
     // red_or_cyan, blue_or_magenta, green_or_yellow, colorize
     e: vec4f,
-    // cd_mix, cd_amp, cd_freq, norm_color_disp
+    // cd_mix, c_amp, d_freq, norm_color_disp
     f: vec4f,
-    // outer_spread, feedback, band_dist, UNUSED
+    // outer_spread, feedback, band_dist, b_freq
     g: vec4f,
-    // dry_add, ...
+    // dry_add, b_amp, d_freq, d_amp
     h: vec4f,
+    // link_ab_amp, link_ab_freq, link_cd_amp, link_cd_freq 
+    i: vec4f,
+    j: vec4f,
 }
 
 @group(0) @binding(0)
@@ -66,8 +69,8 @@ fn fs_main(
     let grid_size = params.a.w;
     var circle_radius = params.b.x;
     let line_width = params.b.y;
-    let ab_freq = params.b.z;
-    let ab_amp = params.b.w;
+    let a_freq = params.b.z;
+    let a_amp = params.b.w;
     let ab_mix = params.c.x;
     let t_wave = params.c.y;
     let invert = params.d.z == 1.0;
@@ -77,25 +80,34 @@ fn fs_main(
     let blue_or_yellow = params.e.z;
     let colorize = params.e.w;
     let cd_mix = params.f.x;
-    let cd_amp = params.f.y;
-    let cd_freq = params.f.z;
+    let c_amp = params.f.y;
+    let c_freq = params.f.z;
     let norm_color_disp = params.f.w;
     let outer_spread = params.g.x;
     let feedback = params.g.y;
     let dry_add = params.h.x;
     let band_dist = params.g.z;
+    let link_ab_amp = params.i.x == 1.0;
+    let link_ab_freq = params.i.y == 1.0;
+    let link_cd_amp = params.i.z == 1.0;
+    let link_cd_freq = params.i.w == 1.0;
+    var b_freq = select(params.g.w, a_freq, link_ab_freq);
+    var b_amp = select(params.h.y, a_amp, link_ab_amp);
+    var d_freq = select(params.h.z, c_freq, link_cd_freq);
+    var d_amp = select(params.h.w, c_amp, link_cd_amp);
+
 
     let p = correct_aspect(position);
     let grid_pos = fract(p * grid_size) * 2.0 - 1.0;
 
     let v0 = mix(
-        weave_a(vec2f(0.0), p, ab_freq) * ab_amp,
-        weave_b(vec2f(0.0), p, ab_freq) * ab_amp,
+        weave_a(vec2f(0.0), p, a_freq) * a_amp,
+        weave_b(vec2f(0.0), p, b_freq) * b_amp,
         ab_mix
     );
     let v1 = mix(
-        weave_c(vec2f(0.0), p, cd_freq * 2.0) * cd_amp,
-        weave_d(vec2f(0.0), p, cd_freq * 3.0) * cd_amp,
+        weave_c(vec2f(0.0), p, c_freq * 2.0) * c_amp,
+        weave_d(vec2f(0.0), p, d_freq * 3.0) * d_amp,
         cd_mix
     );
 

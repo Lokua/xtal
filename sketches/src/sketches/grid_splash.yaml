@@ -70,17 +70,39 @@ ab_mix:
   var: c1
   type: slider
 
-ab_amp:
+link_ab_amp:
+  var: i1
+  type: checkbox
+
+link_ab_freq:
+  var: i2
+  type: checkbox
+
+a_amp:
   var: b4
   type: slider
   range: [1, 15]
   default: 2
 
-ab_freq:
+a_freq:
   var: b3
   type: slider
   range: [0, 10]
   default: 0.1
+
+b_amp:
+  var: h2
+  type: slider
+  range: [1, 15]
+  default: 2
+  disabled: link_ab_amp
+
+b_freq:
+  var: g4
+  type: slider
+  range: [0, 10]
+  default: 0.1
+  disabled: link_ab_freq
 
 # ------------------------------------------------------------------------------
 #  c->d
@@ -93,17 +115,39 @@ cd_mix:
   var: f1
   type: slider
 
-cd_amp:
+link_cd_amp:
+  var: i3
+  type: checkbox
+
+link_cd_freq:
+  var: i4
+  type: checkbox
+
+c_amp:
   var: f2
   type: slider
   range: [1, 15]
   default: 2
 
-cd_freq:
+c_freq:
   var: f3
   type: slider
   range: [0, 10]
   default: 0.1
+
+d_amp:
+  var: h3
+  type: slider
+  range: [1, 15]
+  default: 2
+  disabled: link_cd_amp
+
+d_freq:
+  var: h4
+  type: slider
+  range: [0, 10]
+  default: 0.1
+  disabled: link_cd_freq
 
 # ------------------------------------------------------------------------------
 #  Color

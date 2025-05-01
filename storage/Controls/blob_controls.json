@@ -4,12 +4,12 @@
     {
       "type": "Slider",
       "name": "outer_size",
-      "value": 0.445
+      "value": 0.3497
     },
     {
       "type": "Slider",
-      "name": "outer_pos_t_mix",
-      "value": 0.5
+      "name": "outer_scale_animation_mix",
+      "value": 0.5559
     },
     {
       "type": "Slider",
@@ -24,7 +24,7 @@
     {
       "type": "Slider",
       "name": "smoothness",
-      "value": 0.49699998
+      "value": 0.7098
     },
     {
       "type": "Slider",
@@ -34,34 +34,283 @@
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 1.0
+      "value": 0.7832
     },
     {
       "type": "Slider",
-      "name": "bg_alpha",
-      "value": 1.0
+      "name": "chromatic_feedback",
+      "value": 0.507
+    },
+    {
+      "type": "Slider",
+      "name": "chromatic_feedback_spread",
+      "value": 0.019
+    },
+    {
+      "type": "Slider",
+      "name": "edge_mix",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "edge_size",
+      "value": 18.3042
     },
     {
       "type": "Slider",
       "name": "clamp_min",
-      "value": -0.225
+      "value": -0.3147
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "1": {
+    "2": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "outer_pos_t_mix",
-          "value": 0.5
+          "name": "outer_size",
+          "value": 0.4064
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 2.2461998
+        },
+        {
+          "type": "Slider",
+          "name": "edge_size",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.91819996
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 16.2574
+        },
+        {
+          "type": "Slider",
+          "name": "outer_scale_animation_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.023799999
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.8576
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.6784
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
         },
         {
           "type": "Slider",
           "name": "invert",
           "value": 0.0
         },
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.3497
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.3147
+        },
+        {
+          "type": "Slider",
+          "name": "chromatic_feedback",
+          "value": 0.507
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.7098
+        },
+        {
+          "type": "Slider",
+          "name": "chromatic_feedback_spread",
+          "value": 0.019
+        },
+        {
+          "type": "Slider",
+          "name": "outer_scale_animation_mix",
+          "value": 0.5559
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.96
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.7832
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_size",
+          "value": 18.3042
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": -0.9371
+        },
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.1608
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_size",
+          "value": 16.0769
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "chromatic_feedback",
+          "value": 0.8322
+        },
+        {
+          "type": "Slider",
+          "name": "outer_scale_animation_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.5699
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.1923
+        },
+        {
+          "type": "Slider",
+          "name": "chromatic_feedback_spread",
+          "value": 0.0046
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.96
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.058599997
+        },
+        {
+          "type": "Slider",
+          "name": "clamp_min",
+          "value": 0.1338
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.67719996
+        },
+        {
+          "type": "Slider",
+          "name": "edge_size",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "smoothness",
+          "value": 0.0252
+        },
+        {
+          "type": "Slider",
+          "name": "blur",
+          "value": 10.691199
+        },
+        {
+          "type": "Slider",
+          "name": "outer_scale_animation_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "outer_size",
+          "value": 0.2884
+        },
+        {
+          "type": "Slider",
+          "name": "center_size",
+          "value": 0.46339998
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
         {
           "type": "Slider",
           "name": "color_mix",
@@ -74,8 +323,13 @@
         },
         {
           "type": "Slider",
-          "name": "smoothness",
-          "value": 0.49699998
+          "name": "clamp_min",
+          "value": -0.225
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -84,105 +338,18 @@
         },
         {
           "type": "Slider",
-          "name": "clamp_min",
-          "value": -0.225
-        },
-        {
-          "type": "Slider",
           "name": "outer_size",
           "value": 0.445
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
+        },
         {
           "type": "Slider",
-          "name": "blur",
-          "value": 10.691199
+          "name": "outer_scale_animation_mix",
+          "value": 0.0
         },
         {
           "type": "Slider",
           "name": "smoothness",
-          "value": 0.0252
-        },
-        {
-          "type": "Slider",
-          "name": "outer_size",
-          "value": 0.2884
-        },
-        {
-          "type": "Slider",
-          "name": "clamp_min",
-          "value": 0.1338
-        },
-        {
-          "type": "Slider",
-          "name": "center_size",
-          "value": 0.46339998
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.058599997
-        },
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 0.67719996
-        },
-        {
-          "type": "Slider",
-          "name": "outer_pos_t_mix",
-          "value": 0.096
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 0.023799999
-        },
-        {
-          "type": "Slider",
-          "name": "smoothness",
-          "value": 0.91819996
-        },
-        {
-          "type": "Slider",
-          "name": "center_size",
-          "value": 2.2461998
-        },
-        {
-          "type": "Slider",
-          "name": "clamp_min",
-          "value": -0.8576
-        },
-        {
-          "type": "Slider",
-          "name": "outer_size",
-          "value": 0.4064
-        },
-        {
-          "type": "Slider",
-          "name": "blur",
-          "value": 16.2574
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.6784
-        },
-        {
-          "type": "Slider",
-          "name": "outer_pos_t_mix",
-          "value": 0.4628
+          "value": 0.49699998
         }
       ],
       "midi_controls": [],

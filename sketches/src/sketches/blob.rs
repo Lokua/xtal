@@ -19,7 +19,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 #[derive(SketchComponents)]
 pub struct Blob {
     hub: ControlHub<Timing>,
-    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
+    shader: gpu::GpuState<gpu::BasicPositionVertex>,
+    feedback_texture: Option<wgpu::TextureView>,
 }
 
 #[repr(C)]
@@ -34,10 +35,10 @@ struct ShaderParams {
     // invert, center_size, smoothness, color_mix
     b: [f32; 4],
 
-    // t_long, center_y, outer_scale, center_size
+    // t_long, center_y, outer_scale_animation_a, center_size
     c: [f32; 4],
 
-    // unused, outer_size, outer_pos_t_mix, outer_scale_2
+    // UNUSED, outer_size, outer_scale_animation_mix, outer_scale_animation_b
     d: [f32; 4],
 
     e: [f32; 4],
@@ -61,15 +62,19 @@ pub fn init(app: &App, ctx: &Context) -> Blob {
         f: [0.0; 4],
     };
 
-    let gpu = gpu::GpuState::new_fullscreen(
+    let shader = gpu::GpuState::new_fullscreen(
         app,
         window_rect.resolution_u32(),
-        to_absolute_path(file!(), "./blob.wgsl"),
+        to_absolute_path(file!(), "blob.wgsl"),
         &params,
-        0,
+        1,
     );
 
-    Blob { hub, gpu }
+    Blob {
+        hub,
+        shader,
+        feedback_texture: None,
+    }
 }
 
 impl Sketch for Blob {
@@ -77,7 +82,12 @@ impl Sketch for Blob {
         let wr = ctx.window_rect();
 
         let params = ShaderParams {
-            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            resolution: [
+                wr.w(),
+                wr.h(),
+                self.hub.get("edge_mix"),
+                self.hub.get("edge_size"),
+            ],
             a: [
                 self.hub.get("t1"),
                 self.hub.get("t2"),
@@ -93,7 +103,7 @@ impl Sketch for Blob {
             c: [
                 self.hub.get("t_long"),
                 self.hub.get("center_y"),
-                self.hub.get("outer_scale"),
+                self.hub.get("c3"),
                 self.hub.get("c4"),
             ],
             d: [
@@ -116,12 +126,18 @@ impl Sketch for Blob {
             ],
         };
 
-        self.gpu.update_params(app, wr.resolution_u32(), &params);
+        self.shader.update_params(app, wr.resolution_u32(), &params);
+
+        if let Some(ref feedback_texture) = self.feedback_texture {
+            self.shader.set_textures(app, &[feedback_texture]);
+        }
+
+        self.feedback_texture = Some(self.shader.render_to_texture(app));
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &Context) {
         let draw = app.draw();
         ctx.background(&frame, &draw, hsla(0.0, 0.0, 0.3, 0.02));
-        self.gpu.render(&frame);
+        self.shader.render(&frame);
     }
 }

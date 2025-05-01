@@ -57,14 +57,34 @@
       "value": 0.0
     },
     {
-      "type": "Slider",
-      "name": "ab_amp",
-      "value": 1.8322
+      "type": "Checkbox",
+      "name": "link_ab_amp",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_ab_freq",
+      "value": false
     },
     {
       "type": "Slider",
-      "name": "ab_freq",
-      "value": 2.2028
+      "name": "a_amp",
+      "value": 10.986
+    },
+    {
+      "type": "Slider",
+      "name": "a_freq",
+      "value": 2.6923
+    },
+    {
+      "type": "Slider",
+      "name": "b_amp",
+      "value": 10.8881
+    },
+    {
+      "type": "Slider",
+      "name": "b_freq",
+      "value": 2.7273
     },
     {
       "type": "Slider",
@@ -72,14 +92,34 @@
       "value": 0.8846
     },
     {
-      "type": "Slider",
-      "name": "cd_amp",
-      "value": 1.0
+      "type": "Checkbox",
+      "name": "link_cd_amp",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_cd_freq",
+      "value": false
     },
     {
       "type": "Slider",
-      "name": "cd_freq",
-      "value": 0.0
+      "name": "c_amp",
+      "value": 2.028
+    },
+    {
+      "type": "Slider",
+      "name": "c_freq",
+      "value": 1.3636
+    },
+    {
+      "type": "Slider",
+      "name": "d_amp",
+      "value": 2.2238
+    },
+    {
+      "type": "Slider",
+      "name": "d_freq",
+      "value": 0.3147
     },
     {
       "type": "Checkbox",
@@ -130,17 +170,57 @@
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "0": {
+    "1": {
       "ui_controls": [
         {
-          "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.8112
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.0
+          "name": "d_freq",
+          "value": 0.6643
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 1.4318
+        },
+        {
+          "type": "Slider",
+          "name": "bd_exp",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 5.5944
+        },
+        {
+          "type": "Slider",
+          "name": "ac_exp",
+          "value": 0.5944
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -149,93 +229,58 @@
         },
         {
           "type": "Slider",
-          "name": "band_dist",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 1.9406
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 1.8322
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 2.2028
-        },
-        {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 6.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_freq",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 0.1668
+          "name": "c_amp",
+          "value": 2.0
         },
         {
           "type": "Slider",
           "name": "circle_radius",
-          "value": 0.2246
+          "value": 0.2525
         },
         {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": true
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 0.3287
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 7.2028
+        },
+        {
+          "type": "Slider",
+          "name": "d_amp",
+          "value": 2.5175
+        },
+        {
+          "type": "Slider",
+          "name": "red_or_cyan",
+          "value": 0.0
         },
         {
           "type": "Slider",
           "name": "t_wave",
-          "value": 6.6434
+          "value": 6.2937
+        },
+        {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": true
         },
         {
           "type": "Slider",
           "name": "ab_cd_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.8462
+          "value": 0.4371
         },
         {
           "type": "Slider",
@@ -244,18 +289,53 @@
         },
         {
           "type": "Slider",
-          "name": "norm_color_disp",
+          "name": "colorize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.1608
+          "name": "grid_size",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "green_or_magenta",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ab_mix",
+          "value": 0.7727
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.6189
+        },
+        {
+          "type": "Slider",
+          "name": "band_dist",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": true
         },
         {
           "type": "Slider",
           "name": "ac_rotation_speed",
           "value": 6.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
         }
       ],
       "midi_controls": [],
@@ -265,73 +345,18 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "norm_color_disp",
+          "name": "grid_size",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 10.986
+        },
+        {
+          "type": "Slider",
+          "name": "dry_add",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 2.6154
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 0.0874
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.7727
-        },
-        {
-          "type": "Slider",
-          "name": "t_wave",
-          "value": 5.4196
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 1.993
-        },
-        {
-          "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.4371
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.8846
-        },
-        {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 1.5259
-        },
-        {
-          "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.8112
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 2.6049
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.1608
-        },
-        {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.3392
         },
         {
           "type": "Slider",
@@ -340,33 +365,38 @@
         },
         {
           "type": "Slider",
-          "name": "cd_amp",
-          "value": 3.6434
-        },
-        {
-          "type": "Slider",
-          "name": "cd_freq",
-          "value": 3.2867
-        },
-        {
-          "type": "Slider",
-          "name": "dry_add",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
           "name": "green_or_magenta",
           "value": 0.8462
         },
         {
           "type": "Slider",
-          "name": "grid_size",
-          "value": 18.0
+          "name": "norm_color_disp",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 1.5259
+        },
+        {
+          "type": "Slider",
+          "name": "ac_rotation_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 5.5944
+        },
+        {
+          "type": "Slider",
+          "name": "ab_cd_mix",
+          "value": 0.2657
         },
         {
           "type": "Slider",
@@ -374,25 +404,24 @@
           "value": 4.021
         },
         {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
+        },
+        {
           "type": "Checkbox",
-          "name": "invert",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
           "value": true
         },
         {
           "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 4.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "8": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.6189
+          "name": "band_dist",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -401,23 +430,23 @@
         },
         {
           "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
           "name": "cd_mix",
           "value": 0.8846
         },
         {
           "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.0699
+          "name": "red_or_cyan",
+          "value": 0.8112
         },
         {
           "type": "Slider",
-          "name": "cd_freq",
-          "value": 6.2937
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 11.1818
+          "name": "d_amp",
+          "value": 2.9091
         },
         {
           "type": "Checkbox",
@@ -425,34 +454,9 @@
           "value": true
         },
         {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 2.6399
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 1.2238
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 8.0
-        },
-        {
           "type": "Slider",
           "name": "blue_or_yellow",
-          "value": 0.9161
+          "value": 0.1608
         },
         {
           "type": "Slider",
@@ -461,38 +465,18 @@
         },
         {
           "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.6364
+          "name": "d_freq",
+          "value": 1.6434
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "dry_add",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 2.1748
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.7483
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 2.0695
+          "name": "c_freq",
+          "value": 7.2028
         },
         {
           "type": "Slider",
@@ -500,140 +484,29 @@
           "value": 0.3392
         },
         {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
           "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.2909
+          "name": "c_amp",
+          "value": 2.028
         },
         {
           "type": "Slider",
           "name": "t_wave",
-          "value": 4.3706
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "dry_add",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.4371
+          "value": 5.4196
         },
         {
           "type": "Slider",
           "name": "colorize",
-          "value": 1.0
+          "value": 0.0874
         },
         {
           "type": "Slider",
-          "name": "grid_size",
-          "value": 18.0
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.8462
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 0.5944
-        },
-        {
-          "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.1853
-        },
-        {
-          "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.2525
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 6.2238
-        },
-        {
-          "type": "Slider",
-          "name": "t_wave",
-          "value": 6.2937
-        },
-        {
-          "type": "Slider",
-          "name": "cd_freq",
-          "value": 4.021
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 11.1818
-        },
-        {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.3287
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 5.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 6.0
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 1.4318
-        },
-        {
-          "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.6189
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.8846
-        },
-        {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.7727
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.9615
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 4.035
+          "name": "b_amp",
+          "value": 1.6853
         }
       ],
       "midi_controls": [],
@@ -643,48 +516,13 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.0629
+          "name": "ac_rotation_speed",
+          "value": 4.0
         },
         {
           "type": "Slider",
-          "name": "outer_spread",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_freq",
-          "value": 8.986
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.8601
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 0.8007
-        },
-        {
-          "type": "Slider",
-          "name": "circle_radius",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 1.6434
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 3.1538
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 3.8881
+          "name": "ab_mix",
+          "value": 0.6154
         },
         {
           "type": "Slider",
@@ -693,8 +531,48 @@
         },
         {
           "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.7622
+          "name": "ab_cd_mix",
+          "value": 0.2343
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "c_amp",
+          "value": 2.028
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.0629
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 0.8007
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 7.2028
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 10.8881
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "cd_mix",
+          "value": 0.8601
         },
         {
           "type": "Slider",
@@ -703,13 +581,73 @@
         },
         {
           "type": "Slider",
-          "name": "ab_freq",
-          "value": 6.2238
+          "name": "green_or_magenta",
+          "value": 0.3497
+        },
+        {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "t_wave",
+          "value": 0.3497
         },
         {
           "type": "Slider",
           "name": "red_or_cyan",
           "value": 0.9091
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "dry_add",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 10.986
+        },
+        {
+          "type": "Slider",
+          "name": "d_freq",
+          "value": 7.1678
+        },
+        {
+          "type": "Slider",
+          "name": "ac_exp",
+          "value": 1.6434
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -718,215 +656,39 @@
         },
         {
           "type": "Slider",
-          "name": "t_wave",
-          "value": 0.3497
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.3497
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.6154
+          "name": "band_dist",
+          "value": 1.0
         },
         {
           "type": "Checkbox",
-          "name": "ac_rotate",
+          "name": "link_ab_freq",
           "value": false
         },
         {
           "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 4.0
+          "name": "b_freq",
+          "value": 2.7273
         },
         {
           "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.2343
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": true
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.4965
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 2.0695
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 2.6049
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 11.1818
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.7727
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.8846
-        },
-        {
-          "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "t_wave",
-          "value": 4.3706
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 2.6399
-        },
-        {
-          "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.2909
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 1.2238
-        },
-        {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.3392
+          "name": "d_amp",
+          "value": 2.2238
         },
         {
           "type": "Slider",
           "name": "blue_or_yellow",
-          "value": 0.1678
-        },
-        {
-          "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.6049
-        },
-        {
-          "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.6364
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_freq",
-          "value": 6.2937
-        },
-        {
-          "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.7797
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 4.035
-        },
-        {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "dry_add",
-          "value": 0.0
+          "value": 0.7622
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "9": {
+    "0": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "t_wave",
-          "value": 9.2657
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 4.021
-        },
-        {
-          "type": "Slider",
-          "name": "dry_add",
+          "name": "outer_spread",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.0699
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.6573
-        },
-        {
-          "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.2909
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 48.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 1.0
         },
         {
           "type": "Slider",
@@ -935,18 +697,13 @@
         },
         {
           "type": "Slider",
-          "name": "cd_amp",
-          "value": 1.7343
-        },
-        {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": true
+          "name": "cd_mix",
+          "value": 0.8846
         },
         {
           "type": "Slider",
-          "name": "line_width",
-          "value": 3.0
+          "name": "bd_exp",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
@@ -955,139 +712,18 @@
         },
         {
           "type": "Slider",
-          "name": "cd_freq",
-          "value": 2.4825
+          "name": "band_dist",
+          "value": 1.0
         },
         {
           "type": "Slider",
           "name": "colorize",
-          "value": 0.8636
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 3.4266
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.3007
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 2.6049
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 3.6923
-        },
-        {
-          "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.3462
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.7727
-        },
-        {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "band_dist",
-          "value": 1.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "4": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 2.8601
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ab_freq",
-          "value": 5.5594
         },
         {
           "type": "Slider",
           "name": "circle_radius",
-          "value": 0.3817
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.8846
-        },
-        {
-          "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.5524
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 10.0
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 1.4336
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_rotation_speed",
-          "value": 6.0
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.1608
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 0.6791
-        },
-        {
-          "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.3392
-        },
-        {
-          "type": "Slider",
-          "name": "green_or_magenta",
-          "value": 0.8462
+          "value": 0.2246
         },
         {
           "type": "Slider",
@@ -1100,14 +736,210 @@
           "value": 6.6434
         },
         {
+          "type": "Slider",
+          "name": "green_or_magenta",
+          "value": 0.8462
+        },
+        {
           "type": "Checkbox",
           "name": "ac_rotate",
-          "value": true
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "ac_rotation_speed",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "ac_exp",
+          "value": 1.9406
+        },
+        {
+          "type": "Slider",
+          "name": "grid_size",
+          "value": 6.0
         },
         {
           "type": "Slider",
           "name": "dry_add",
           "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 0.1668
+        },
+        {
+          "type": "Slider",
+          "name": "ab_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 0.1608
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "8": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 10.8881
+        },
+        {
+          "type": "Slider",
+          "name": "d_freq",
+          "value": 7.1678
+        },
+        {
+          "type": "Slider",
+          "name": "ac_exp",
+          "value": 2.6049
+        },
+        {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 10.986
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "red_or_cyan",
+          "value": 0.6189
+        },
+        {
+          "type": "Slider",
+          "name": "c_amp",
+          "value": 2.028
+        },
+        {
+          "type": "Slider",
+          "name": "green_or_magenta",
+          "value": 0.7483
+        },
+        {
+          "type": "Slider",
+          "name": "cd_mix",
+          "value": 0.8846
+        },
+        {
+          "type": "Slider",
+          "name": "t_wave",
+          "value": 4.3706
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "d_amp",
+          "value": 2.2238
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 0.9161
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 2.7273
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "ab_mix",
+          "value": 0.7727
+        },
+        {
+          "type": "Slider",
+          "name": "bd_exp",
+          "value": 2.6399
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 7.2028
+        },
+        {
+          "type": "Slider",
+          "name": "ac_rotation_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 2.0695
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 0.3392
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "grid_size",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "ab_cd_mix",
+          "value": 0.6364
+        },
+        {
+          "type": "Slider",
+          "name": "band_dist",
+          "value": 1.0
         },
         {
           "type": "Checkbox",
@@ -1116,64 +948,44 @@
         },
         {
           "type": "Slider",
-          "name": "cd_freq",
-          "value": 2.6923
+          "name": "norm_color_disp",
+          "value": 0.0699
         },
         {
           "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.8112
+          "name": "dry_add",
+          "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "ab_amp",
-          "value": 2.5175
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 5.0
+          "name": "circle_radius",
+          "value": 0.2909
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "7": {
+    "2": {
       "ui_controls": [
         {
-          "type": "Checkbox",
-          "name": "ac_rotate",
-          "value": true
+          "type": "Slider",
+          "name": "cd_mix",
+          "value": 0.8846
         },
         {
           "type": "Slider",
-          "name": "cd_freq",
-          "value": 1.5734
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 2.3776
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
+          "name": "c_amp",
           "value": 2.028
         },
         {
           "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.7448
+          "name": "grid_size",
+          "value": 8.0
         },
         {
           "type": "Slider",
-          "name": "bd_exp",
-          "value": 4.2657
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 10.3497
+          "name": "band_dist",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -1183,27 +995,27 @@
         {
           "type": "Slider",
           "name": "ac_rotation_speed",
-          "value": 6.0
+          "value": 4.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.5529
+          "name": "norm_color_disp",
+          "value": 0.6049
         },
         {
           "type": "Slider",
-          "name": "grid_size",
-          "value": 30.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.0455
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.6224
+          "name": "feedback",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
@@ -1211,24 +1023,74 @@
           "value": true
         },
         {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "d_amp",
+          "value": 2.9091
+        },
+        {
+          "type": "Slider",
+          "name": "d_freq",
+          "value": 1.6434
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 1.0
+        },
+        {
           "type": "Slider",
           "name": "green_or_magenta",
-          "value": 1.0
+          "value": 0.4965
         },
         {
           "type": "Slider",
-          "name": "feedback",
-          "value": 1.0
+          "name": "ac_exp",
+          "value": 2.6049
         },
         {
           "type": "Slider",
-          "name": "ab_freq",
-          "value": 3.8811
+          "name": "b_amp",
+          "value": 2.0
         },
         {
           "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.2762
+          "name": "a_freq",
+          "value": 2.6923
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "bd_exp",
+          "value": 2.6399
+        },
+        {
+          "type": "Slider",
+          "name": "ab_mix",
+          "value": 0.7727
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 5.5944
         },
         {
           "type": "Slider",
@@ -1237,49 +1099,159 @@
         },
         {
           "type": "Slider",
-          "name": "red_or_cyan",
-          "value": 0.1853
+          "name": "circle_radius",
+          "value": 0.2909
         },
         {
           "type": "Slider",
-          "name": "line_width",
-          "value": 0.6373
+          "name": "blue_or_yellow",
+          "value": 0.1678
+        },
+        {
+          "type": "Slider",
+          "name": "red_or_cyan",
+          "value": 0.7797
         },
         {
           "type": "Slider",
           "name": "outer_spread",
-          "value": 0.7343
+          "value": 0.3392
         },
         {
           "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
+          "name": "line_width",
+          "value": 2.0695
         },
         {
           "type": "Slider",
           "name": "ab_cd_mix",
-          "value": 0.0944
+          "value": 0.6364
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 7.2028
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "6": {
+    "9": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "cd_freq",
-          "value": 0.0699
+          "name": "ac_exp",
+          "value": 2.6049
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 10.986
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "d_freq",
+          "value": 0.3147
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 0.3007
+        },
+        {
+          "type": "Slider",
+          "name": "cd_mix",
+          "value": 0.6573
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "band_dist",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_size",
+          "value": 48.0
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "ab_cd_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "c_amp",
+          "value": 2.028
+        },
+        {
+          "type": "Slider",
+          "name": "bd_exp",
+          "value": 4.021
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.3462
+        },
+        {
+          "type": "Slider",
+          "name": "d_amp",
+          "value": 2.2238
+        },
+        {
+          "type": "Slider",
+          "name": "ac_rotation_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 1.3636
+        },
+        {
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 0.8636
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 2.7273
         },
         {
           "type": "Slider",
           "name": "green_or_magenta",
-          "value": 0.2378
-        },
-        {
-          "type": "Slider",
-          "name": "t_wave",
-          "value": 3.6713
+          "value": 0.0699
         },
         {
           "type": "Checkbox",
@@ -1288,38 +1260,18 @@
         },
         {
           "type": "Slider",
-          "name": "norm_color_disp",
-          "value": 0.9615
-        },
-        {
-          "type": "Slider",
-          "name": "cd_amp",
-          "value": 1.3427
-        },
-        {
-          "type": "Slider",
-          "name": "feedback",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ac_exp",
-          "value": 0.5944
-        },
-        {
-          "type": "Slider",
-          "name": "grid_size",
-          "value": 12.0
+          "name": "ab_mix",
+          "value": 0.7727
         },
         {
           "type": "Slider",
           "name": "dry_add",
-          "value": 0.0175
+          "value": 0.0
         },
         {
-          "type": "Slider",
-          "name": "outer_spread",
-          "value": 0.3287
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
         },
         {
           "type": "Checkbox",
@@ -1328,63 +1280,199 @@
         },
         {
           "type": "Slider",
-          "name": "circle_radius",
-          "value": 0.3817
+          "name": "b_amp",
+          "value": 10.8881
         },
         {
           "type": "Slider",
-          "name": "ab_freq",
-          "value": 1.3287
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 0.6791
-        },
-        {
-          "type": "Slider",
-          "name": "blue_or_yellow",
-          "value": 0.9161
-        },
-        {
-          "type": "Slider",
-          "name": "ab_cd_mix",
-          "value": 0.9336
-        },
-        {
-          "type": "Slider",
-          "name": "bd_exp",
-          "value": 5.0
-        },
-        {
-          "type": "Slider",
-          "name": "cd_mix",
-          "value": 0.5594
-        },
-        {
-          "type": "Slider",
-          "name": "ab_amp",
-          "value": 1.3916
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
+          "name": "t_wave",
+          "value": 9.2657
         },
         {
           "type": "Slider",
           "name": "red_or_cyan",
-          "value": 0.4021
+          "value": 0.8112
         },
         {
           "type": "Slider",
-          "name": "ab_mix",
-          "value": 0.5524
+          "name": "circle_radius",
+          "value": 0.2909
+        },
+        {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "circle_radius",
+          "value": 0.7136
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "d_freq",
+          "value": 1.6434
+        },
+        {
+          "type": "Slider",
+          "name": "b_freq",
+          "value": 5.5944
+        },
+        {
+          "type": "Slider",
+          "name": "green_or_magenta",
+          "value": 0.1119
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_size",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "c_freq",
+          "value": 7.2028
+        },
+        {
+          "type": "Slider",
+          "name": "t_wave",
+          "value": 3.4965
+        },
+        {
+          "type": "Slider",
+          "name": "c_amp",
+          "value": 2.028
+        },
+        {
+          "type": "Slider",
+          "name": "a_amp",
+          "value": 10.986
+        },
+        {
+          "type": "Slider",
+          "name": "a_freq",
+          "value": 2.6923
         },
         {
           "type": "Slider",
           "name": "ac_rotation_speed",
-          "value": 6.0
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "dry_add",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.2413
+        },
+        {
+          "type": "Slider",
+          "name": "ab_mix",
+          "value": 0.5105
+        },
+        {
+          "type": "Slider",
+          "name": "bd_exp",
+          "value": 2.7622
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 2.08
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 0.6643
+        },
+        {
+          "type": "Slider",
+          "name": "cd_mix",
+          "value": 0.5979
+        },
+        {
+          "type": "Slider",
+          "name": "red_or_cyan",
+          "value": 0.549
+        },
+        {
+          "type": "Slider",
+          "name": "d_amp",
+          "value": 2.9091
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "band_dist",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ac_exp",
+          "value": 3.3392
+        },
+        {
+          "type": "Slider",
+          "name": "ab_cd_mix",
+          "value": 0.535
+        },
+        {
+          "type": "Slider",
+          "name": "b_amp",
+          "value": 1.6853
+        },
+        {
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 0.3671
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
         }
       ],
       "midi_controls": [],
@@ -1393,6 +1481,11 @@
   },
   "mappings": {},
   "exclusions": [
-    "invert"
+    "invert",
+    "ac_rotate",
+    "link_ab_amp",
+    "link_ab_freq",
+    "link_cd_amp",
+    "link_cd_freq"
   ]
 }

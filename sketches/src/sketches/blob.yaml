@@ -38,21 +38,21 @@ t4:
 outer_size:
   var: d2
   type: slider
-  range: [0, 2]
+  range: [0, 1]
 
-outer_pos_t_mix:
+outer_scale_animation_mix:
   var: d3
   type: slider
 
-# this alone adds phase cancellation to t1-4 -
+# outer_scale_animation_a alone adds phase cancellation to t1-4 -
 # q1 moves out the most, q4 the least...
-# we take advantage of that by mixing with outer_scale_2
+# we take advantage of that by mixing with outer_scale_animation_b
 
 _outer_scale_range: &outer_scale_range 1.5
 
-outer_scale:
+outer_scale_animation_a:
+  var: c3
   type: automate
-  # bypass: 0.0
   breakpoints:
     - kind: ramp
       position: 0.0
@@ -66,10 +66,9 @@ outer_scale:
       position: 4.0
       value: 0.0
 
-outer_scale_2:
+outer_scale_animation_b:
   var: d4
   type: automate
-  # bypass: 0.0
   breakpoints:
     - kind: ramp
       position: 0.0
@@ -92,6 +91,8 @@ center:
 
 t_long:
   type: triangle
+  beats: 32
+  range: [-50, 50]
 
 center_y:
   type: automate
@@ -178,13 +179,26 @@ blur:
 color_mix:
   type: slider
 
-bg_alpha:
+chromatic_feedback:
+  var: d1
+  type: slider
+
+chromatic_feedback_spread:
   var: f1
   type: slider
-  default: 1.0
+  range: [0.0001, 0.1]
+  default: 0.01
+
+edge_mix:
+  type: slider
+
+edge_size:
+  type: slider
+  range: [1, 50]
+  default: 1
 
 # ------------------------------------------------------------------------------
-#  Un
+#  Transforms
 # ------------------------------------------------------------------------------
 
 transforms:
@@ -198,9 +212,6 @@ rot_angle:
       position: 0
       value: 0
       amplitude: 0.5
-    - kind: step
-      position: 4
-      value: 0
     - kind: end
       position: 6
       value: 0
@@ -243,4 +254,4 @@ clamp_max:
       easing: ease_in_quint
     - kind: end
       position: 24
-      value: 0
+      value: -0.5

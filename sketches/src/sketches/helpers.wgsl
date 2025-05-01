@@ -263,6 +263,15 @@ fn glitch_blocks(
 //  FEEDBACK
 // -----------------------------------------------------------------------------
 
+// const STANDARD_LUMINANCE: vec3f = vec3f(0.2126, 0.7152, 0.0722);
+
+// var<private> OFFSETS: array<vec2f, 4> = array<vec2f, 4>(
+//     vec2f(-1.0, 0.0),
+//     vec2f(1.0, 0.0),
+//     vec2f(0.0, -1.0),
+//     vec2f(0.0, 1.0)
+// );
+
 // // Commented out to avoid linter errors
 // fn apply_feedback(color: vec3f, p: vec2f, uv: vec2f, mix: f32) -> vec3f {
 //     var best_offset = vec2f(0.0);
