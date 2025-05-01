@@ -55,8 +55,11 @@ pub enum Easing {
 
     Custom(fn(f32) -> f32),
 
-    // --- PARAMETRIC EASINGS
+    // ------------------
+    // PARAMETRIC EASINGS
+    // ------------------
     Exponential(f32),
+    MirrorExponential(f32, f32),
     Sigmoid(f32),
 }
 
@@ -99,6 +102,7 @@ impl Easing {
         "logarithmic",
         "custom",
         "exponential",
+        "mirror_exponential",
         "sigmoid",
     ];
 
@@ -110,7 +114,10 @@ impl Easing {
             .iter()
             .copied()
             .filter(|&name| {
-                name != "custom" && name != "exponential" && name != "sigmoid"
+                name != "custom"
+                    && name != "exponential"
+                    && name != "sigmoid"
+                    && name != "mirror_exponential"
             })
             .collect()
     }
@@ -154,6 +161,9 @@ impl Easing {
 
             // Parametric
             Self::Exponential(power) => exponential(t, *power),
+            Self::MirrorExponential(curvature, max_exponent) => {
+                mirror_exponential(t, *curvature, *max_exponent)
+            }
             Self::Sigmoid(steepness) => sigmoid(t, *steepness),
         }
     }
@@ -203,6 +213,7 @@ impl FromStr for Easing {
             "custom" => unimplemented!(),
 
             "exponential" => Ok(Self::Exponential(2.0)),
+            "mirror_exponential" => Ok(Self::MirrorExponential(2.0, 5.0)),
             "sigmoid" => Ok(Self::Sigmoid(5.0)),
 
             _ => Err(format!("Unknown easing function: {}", name)),
@@ -252,6 +263,7 @@ impl Display for Easing {
             Self::Custom(_) => "custom",
 
             Self::Exponential(_) => "exponential",
+            Self::MirrorExponential(..) => "mirror_exponential",
             Self::Sigmoid(_) => "sigmoid",
         };
 
@@ -475,10 +487,47 @@ pub fn logarithmic(t: f32) -> f32 {
     (1.0 + t * 9.0).ln() / 10.0f32.ln()
 }
 
-// --- PARAMETRIC EASINGS
+// -----------------------------------------------------------------------------
+//  PARAMETRIC EASINGS
+// -----------------------------------------------------------------------------
 
 pub fn exponential(t: f32, exponent: f32) -> f32 {
     t.powf(exponent)
+}
+
+/// Creates a symmetric exponential easing function where the parameter controls
+/// the curve in both directions from linear.
+///
+/// * `t` - Input value (0.0 to 1.0)
+/// * `curvature` - Controls curve shape:
+///   * 0.0: Linear
+///   * >0: Ease-in curves (increasing strength)
+///   * <0: Ease-out curves (mirror of positive values)
+///
+/// # Example
+/// * curvature = 0.0 → Linear curve
+/// * curvature = 1.0 → equivalent of calling `exponential(t, max_exponent)`
+/// * curvature = -1.0 → mirror of the above
+pub fn mirror_exponential(t: f32, curvature: f32, max_exponent: f32) -> f32 {
+    if curvature == 0.0 {
+        return t;
+    }
+
+    if curvature > 0.0 {
+        // Positive curvature: Ease-in effect
+        // Map curvature range [0.0, 1.0] to exponent range [1.0, max_exponent]
+        let normalized_curvature = curvature.min(1.0); // Clamp to max 1.0
+        let exponent = 1.0 + normalized_curvature * (max_exponent - 1.0);
+        t.powf(exponent)
+    } else {
+        // Negative curvature: Ease-out effect (mirror of positive)
+        // Use the absolute value to get the same exponent as the positive case
+        let normalized_curvature = (-curvature).min(1.0); // Clamp to max 1.0
+        let exponent = 1.0 + normalized_curvature * (max_exponent - 1.0);
+
+        // For ease-out, we apply the "flip" formula
+        1.0 - (1.0 - t).powf(exponent)
+    }
 }
 
 /// Suggested range [1, 10]

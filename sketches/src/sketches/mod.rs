@@ -6,6 +6,7 @@ pub mod drop;
 pub mod drop_tines;
 pub mod drop_walk;
 pub mod dynamic_uniforms;
+pub mod easing_vis;
 pub mod flow_field_basic;
 pub mod grid_splash;
 pub mod heat_mask;

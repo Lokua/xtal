@@ -19,6 +19,7 @@ fn main() {
         drop_tines,
         drop_walk,
         dynamic_uniforms,
+        easing_vis,
         flow_field_basic,
         grid_splash,
         heat_mask,
