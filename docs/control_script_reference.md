@@ -19,12 +19,12 @@
   - [automate](#automate)
     - [breakpoints](#automatebreakpoints)
     - [kind](#kind)
-      - [ramp](#breakpoint-ramp)
-      - [step](#breakpoint-step)
-      - [wave](#breakpoint-wave)
-      - [random](#breakpoint-random)
-      - [random_smooth](#breakpoint-randomsmooth)
-      - [end](#breakpoint-end)
+      - [ramp](#breakpoint-kind-ramp)
+      - [step](#breakpoint-kind-step)
+      - [wave](#breakpoint-kind-wave)
+      - [random](#breakpoint-kind-random)
+      - [random_smooth](#breakpoint-kind-randomsmooth)
+      - [end](#breakpoint-kind-end)
 - [Modulation](#modulation)
   - [mod](#mod)
 - [Effects](#effects)
@@ -328,8 +328,8 @@ let phase = if hub.bool("animate_phase") {
 
 # OSC
 
-Listens for incoming floats on the port specified in the
-[src/config.rs](src/config.rs)'s `OSC_PORT` constant (`2346`).
+Listens for incoming OSC floats from the port specified in **Settings > OSC >
+Port**.
 
 **Params**
 
@@ -352,10 +352,8 @@ osc_example:
 
 # MIDI
 
-Listens for incoming control change messages on the port specified in the
-[src/config.rs](src/config.rs)'s `MIDI_INPUT_PORT` constant (currently hardcoded
-to `IAC Driver Xtal In`). MIDI values are by default scaled to a `[0.0, 1.0]`
-range.
+Listens for incoming control change messages on the port specified **Settings >
+MIDI > Input Port**. MIDI values are by default scaled to a `[0.0, 1.0]` range.
 
 **Params**
 
@@ -379,9 +377,9 @@ midi_example:
 
 # Audio
 
-Listens for audio signals on the device specified in
-[src/config.rs](src/config.rs)'s `MULTICHANNEL_AUDIO_DEVICE_NAME` constant and
-transforms them into a stream suitable for parameter automation/modulation.
+Listens for audio signals on the device specified in **Settings > Audio >
+Device** and transforms them into a stream suitable for parameter
+automation/modulation.
 
 **Params**
 
@@ -528,15 +526,17 @@ Advanced DAW-style animation. This is the bread-and-butter of Xtal.
 Each breakpoint shares the following _required_ fields:
 
 - `kind` - one of `step`, `ramp`, `wave`, `random`, `random_smooth`, or `end`.
-  See the [`kind`](#kind) section below.
+  See the [`kind`](#breakpoint-kind) section below.
 - `position` - expressed in beats. The first breakpoint must start at position
   `0.0` or the program will throw
 - `value` - the value this breakpoint will (usually) be when the timing is
   exactly at `position`
 
+<a id="breakpoint-kind"></a>
+
 ### automate.breakpoints.kind
 
-<a id="breakpoint-ramp"></a>
+<a id="breakpoint-kind-ramp"></a>
 
 #### `ramp`
 
@@ -544,16 +544,16 @@ Ramps from `value` at `position` to the next point's value with optional easing.
 
 **Additional Params**
 
-- `easing` - a snake cased version of any of the easings defined in
-  [src/framework/easings.rs](src/framework/easings.rs). Defaults to `linear`
+- `easing` - a snake cased version of any of the easings defined in [easings][].
+  Defaults to `linear`
 
-<a id="breakpoint-step"></a>
+<a id="breakpoint-kind-step"></a>
 
 #### `step`
 
 Holds `value` from this point's `position` until the next point.
 
-<a id="breakpoint-wave"></a>
+<a id="breakpoint-kind-wave"></a>
 
 #### `wave`
 
@@ -569,14 +569,13 @@ Like `ramp`, but with a secondary amplitude modulation applied on top of it
   one, and `0.5` will produce the regular triangle. Sine is similarly
   transformed into a saw-like asymmetric shape.
 - `shape` - one of `sine`, `triangle`, or `square`. Defaults to `sine`
-- `easing` - a snake cased version of any of the easings defined in
-  [src/framework/easings.rs](src/framework/easings.rs). Defaults to `linear`.
-  The combination of `wave` and `easing` (especially the crazier ones like
-  `ease_in_out_bounce`) and `clamp: fold` can produce some _very_ complex
-  waveforms!
+- `easing` - a snake cased version of any of the easings defined in [easings][].
+  Defaults to `linear`. The combination of `wave` and `easing` (especially the
+  crazier ones like `ease_in_out_bounce`) and `clamp: fold` can produce some
+  _very_ complex waveforms!
 - `constrain` - one of `none`, `clamp`, or `fold`. Defaults to `none`.
 
-<a id="breakpoint-random"></a>
+<a id="breakpoint-kind-random"></a>
 
 #### `random`
 
@@ -588,7 +587,7 @@ Generates a random number somewhere above or below the set `value` by
 - `amplitude` - how much +- the random number generator will deviate from
   `value` when choosing a number
 
-<a id="breakpoint-random_smooth"></a>
+<a id="breakpoint-kind-random_smooth"></a>
 
 #### `random_smooth`
 
@@ -603,7 +602,7 @@ ramp.
 - `amplitude`- how much above and below the base ramp to add/subtract. Defaults
   to `0.25`
 
-<a id="breakpoint-end"></a>
+<a id="breakpoint-kind-end"></a>
 
 #### `end`
 
@@ -1101,3 +1100,5 @@ without having to stop, recompile, wait... it's worth it.
 
 > NEW! Xtal now comes with a `uniforms` procedural macro to make all of the
 > above unnecessary. See ./src/sketches/dev/dynamic_uniforms.rs for an example.
+
+[easings]: ../xtal/src/framework/motion/easing.rs

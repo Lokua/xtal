@@ -1,7 +1,7 @@
 //! Easing functions, most of which borrowed from
 //! [easings.net](https://github.com/ai/easings.net), which in turn come from
-//! [Robert Penner](http://robertpenner.com/easing/), the guy who _literally_
-//! wrote the book on easings.
+//! [Robert Penner](http://robertpenner.com/easing/), the guy who literally
+//! wrote the book.
 
 use std::f32::consts::PI;
 use std::fmt::{Display, Formatter};
