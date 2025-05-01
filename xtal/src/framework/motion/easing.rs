@@ -59,7 +59,7 @@ pub enum Easing {
     // PARAMETRIC EASINGS
     // ------------------
     Exponential(f32),
-    MirrorExponential(f32, f32),
+    Curve(f32, f32),
     Sigmoid(f32),
 }
 
@@ -102,7 +102,7 @@ impl Easing {
         "logarithmic",
         "custom",
         "exponential",
-        "mirror_exponential",
+        "curve",
         "sigmoid",
     ];
 
@@ -117,7 +117,7 @@ impl Easing {
                 name != "custom"
                     && name != "exponential"
                     && name != "sigmoid"
-                    && name != "mirror_exponential"
+                    && name != "curve"
             })
             .collect()
     }
@@ -161,8 +161,8 @@ impl Easing {
 
             // Parametric
             Self::Exponential(power) => exponential(t, *power),
-            Self::MirrorExponential(curvature, max_exponent) => {
-                mirror_exponential(t, *curvature, *max_exponent)
+            Self::Curve(curvature, max_exponent) => {
+                curve(t, *curvature, *max_exponent)
             }
             Self::Sigmoid(steepness) => sigmoid(t, *steepness),
         }
@@ -213,7 +213,7 @@ impl FromStr for Easing {
             "custom" => unimplemented!(),
 
             "exponential" => Ok(Self::Exponential(2.0)),
-            "mirror_exponential" => Ok(Self::MirrorExponential(2.0, 5.0)),
+            "curve" => Ok(Self::Curve(2.0, 5.0)),
             "sigmoid" => Ok(Self::Sigmoid(5.0)),
 
             _ => Err(format!("Unknown easing function: {}", name)),
@@ -263,7 +263,7 @@ impl Display for Easing {
             Self::Custom(_) => "custom",
 
             Self::Exponential(_) => "exponential",
-            Self::MirrorExponential(..) => "mirror_exponential",
+            Self::Curve(..) => "curve",
             Self::Sigmoid(_) => "sigmoid",
         };
 
@@ -495,6 +495,8 @@ pub fn exponential(t: f32, exponent: f32) -> f32 {
     t.powf(exponent)
 }
 
+pub const SUGGESTED_CURVE_MAX_EXPONENT: f32 = 10.0;
+
 /// Creates a symmetric exponential easing function where the parameter controls
 /// the curve in both directions from linear.
 ///
@@ -508,7 +510,7 @@ pub fn exponential(t: f32, exponent: f32) -> f32 {
 /// * curvature = 0.0 → Linear curve
 /// * curvature = 1.0 → equivalent of calling `exponential(t, max_exponent)`
 /// * curvature = -1.0 → mirror of the above
-pub fn mirror_exponential(t: f32, curvature: f32, max_exponent: f32) -> f32 {
+pub fn curve(t: f32, curvature: f32, max_exponent: f32) -> f32 {
     if curvature == 0.0 {
         return t;
     }

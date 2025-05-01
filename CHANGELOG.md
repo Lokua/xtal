@@ -7,14 +7,17 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
-## [unreleased] 2025-04-29
+## [unreleased] 2025-05-01
 
 ### Added
 
 - Keyboard shortcut `[?]` or `[/]` to toggle help view
 - Labels to Separator controls
-- `Animation::ramp_plus`; same as `ramp` with range mappings and phase offset
-  (also available in control scripts via `type: ramp`)
+- `Animation::ramp_plus`; same as `ramp` with range mappings and phase offset,
+  also available in control scripts via `type: ramp`.
+- `Easing::Curve` for symmetric exponential easing (-1.0 ease out, 0.0 linear,
+  1.0 ease in), also available in a control script context via the Math effect
+  set to `operator: curve`
 
 ### Changed
 

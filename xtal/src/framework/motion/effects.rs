@@ -138,6 +138,7 @@ impl Default for Hysteresis {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     Add,
+    Curve,
     Mult,
 }
 
@@ -147,14 +148,18 @@ impl FromStr for Operator {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "add" => Ok(Operator::Add),
+            "curve" => Ok(Operator::Curve),
             "mult" => Ok(Operator::Mult),
-            _ => Err(format!("No op named {}", s)),
+            _ => Err(format!("No operator named {}", s)),
         }
     }
 }
 
-/// Perform basic addition or multiplication on the result of an animation. This
-/// is only useful in a [control script][cs] context.
+/// **⚠️ Experimental**
+///
+/// Perform addition, multiplication, or apply a custom exponential easing on
+/// the result of an animation. This is mainly useful in a [control script][cs]
+/// context.
 ///
 /// [cs]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 #[derive(Debug, Clone)]
@@ -174,6 +179,10 @@ impl Math {
     pub fn apply(&self, input: f32) -> f32 {
         match self.operator {
             Operator::Add => self.operand + input,
+            Operator::Curve => {
+                Easing::Curve(self.operand, SUGGESTED_CURVE_MAX_EXPONENT)
+                    .apply(input)
+            }
             Operator::Mult => self.operand * input,
         }
     }

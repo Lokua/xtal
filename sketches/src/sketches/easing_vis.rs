@@ -48,9 +48,7 @@ pub fn init(_app: &App, ctx: &Context) -> EasingVis {
             0.2,
             (-1.0, 1.0),
             0.01,
-            Some(Box::new(|controls| {
-                controls.string("easing") != "mirror_exponential"
-            })),
+            Some(Box::new(|controls| controls.string("easing") != "curve")),
         )
         .slider(
             "sigmoid_steepness",
@@ -69,8 +67,8 @@ pub fn init(_app: &App, ctx: &Context) -> EasingVis {
 
     let easing = match easing {
         Easing::Exponential(_) => Easing::Exponential(hub.get("exponent")),
-        Easing::MirrorExponential(..) => {
-            Easing::MirrorExponential(hub.get("curve"), 10.0)
+        Easing::Curve(..) => {
+            Easing::Curve(hub.get("curve"), SUGGESTED_CURVE_MAX_EXPONENT)
         }
         Easing::Sigmoid(_) => Easing::Sigmoid(hub.get("sigmoid_steepness")),
         _ => easing,
@@ -89,9 +87,10 @@ impl Sketch for EasingVis {
                 Easing::Exponential(_) => {
                     Easing::Exponential(self.hub.get("exponent"))
                 }
-                Easing::MirrorExponential(..) => {
-                    Easing::MirrorExponential(self.hub.get("curve"), 10.0)
-                }
+                Easing::Curve(..) => Easing::Curve(
+                    self.hub.get("curve"),
+                    SUGGESTED_CURVE_MAX_EXPONENT,
+                ),
                 Easing::Sigmoid(_) => {
                     Easing::Sigmoid(self.hub.get("sigmoid_steepness"))
                 }

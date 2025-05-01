@@ -773,8 +773,13 @@ Basic addition or multiplication
 
 - `type` - `effect`
 - `kind` - `math`
-- `operator` - `add` or `mult`. Defaults to `add`
-- `operand` - the number to add or multiply with the input. Defaults to `1.0`
+- `operator` - `add`, `mult`, or `curve`. Defaults to `add`
+- `operand` - the number to add or multiply with the input or the shape of the
+  curve to apply. Defaults to `1.0`
+
+When `operator` is `curve` this functions as an exponential easing function that
+expects the input to be in range of [0.0, 1.0]. A curve of 0.0 produces linear
+output, -1.0 is maximum ease-out, 1.0 maximum ease-in.
 
 **Example**
 
@@ -1099,6 +1104,7 @@ are now free to live code in your script and shaders for hours uninterrupted
 without having to stop, recompile, wait... it's worth it.
 
 > NEW! Xtal now comes with a `uniforms` procedural macro to make all of the
-> above unnecessary. See ./src/sketches/dev/dynamic_uniforms.rs for an example.
+> above unnecessary. See ./sketches/src/sketches/dynamic_uniforms.rs for an
+> example.
 
 [easings]: ../xtal/src/framework/motion/easing.rs

@@ -344,5 +344,22 @@ ramp_phase:
 
 ramp:
   type: ramp
-  beats: 4
+  beats: 2
   phase: $ramp_phase
+
+curve:
+  type: slider
+  range: [-1, 1]
+  disabled: not show_ramp
+
+ramp_curve:
+  type: effect
+  kind: math
+  operator: curve
+  operand: $curve
+
+ramp_mod:
+  type: mod
+  source: ramp
+  modulators:
+    - ramp_curve
