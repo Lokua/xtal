@@ -1,17 +1,5 @@
 Files sorted from most to least recent
 
-## grid_splash-0uova.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/grid_splash-0uova.png" alt="grid_splash-0uova.png">
-
-## grid_splash-sew9b.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/grid_splash-sew9b.png" alt="grid_splash-sew9b.png">
-
-## grid_splash-pe4o4.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/grid_splash-pe4o4.png" alt="grid_splash-pe4o4.png">
-
 ## grid_splash-7faog.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/grid_splash-7faog.png" alt="grid_splash-7faog.png">
