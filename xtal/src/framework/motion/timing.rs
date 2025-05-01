@@ -222,13 +222,21 @@ impl MidiSongTiming {
     }
 
     fn setup_midi_listener(&self) {
+        let Some(midi_clock_port) = crate::global::midi_clock_port() else {
+            warn!(
+                "Skipping {} listener setup; no MIDI port.",
+                midi::ConnectionType::Clock
+            );
+            return;
+        };
+
         let clock_count = self.clock_count.clone();
         let song_position = self.song_position.clone();
         let follow_song_position_messages = self.follow_song_position_messages;
 
         match midi::on_message(
             midi::ConnectionType::Clock,
-            &crate::global::midi_clock_port(),
+            &midi_clock_port,
             move |_stamp, message| {
                 if message.is_empty() {
                     return;
@@ -355,6 +363,14 @@ impl HybridTiming {
     }
 
     fn setup_mtc_listener(&self) {
+        let Some(midi_clock_port) = crate::global::midi_clock_port() else {
+            warn!(
+                "Skipping {} listener setup; no MIDI port.",
+                midi::ConnectionType::Clock
+            );
+            return;
+        };
+
         let hours = self.hours.clone();
         let minutes = self.minutes.clone();
         let seconds = self.seconds.clone();
@@ -364,7 +380,7 @@ impl HybridTiming {
 
         match midi::on_message(
             midi::ConnectionType::Clock,
-            &crate::global::midi_clock_port(),
+            &midi_clock_port,
             move |_stamp, message| {
                 if message.len() < 2 || message[0] != MTC_QUARTER_FRAME {
                     return;

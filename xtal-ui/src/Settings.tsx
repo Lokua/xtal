@@ -238,7 +238,10 @@ export default function Settings({
         ) : (
           <div className="empty-message-container">
             <em>
-              MIDI Mappings are unavailable to sketches without Slider controls
+              <small>
+                MIDI Mappings are unavailable to sketches without Slider
+                controls
+              </small>
             </em>
           </div>
         )}

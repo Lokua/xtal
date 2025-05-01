@@ -28,13 +28,15 @@ impl Default for GlobalSettings {
     fn default() -> Self {
         Self {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
-            audio_device_name: global::audio_device_name(),
+            audio_device_name: global::audio_device_name().unwrap_or_default(),
             hrcc: false,
             images_dir: global::images_dir(),
             mappings_enabled: true,
-            midi_clock_port: global::midi_clock_port(),
-            midi_control_in_port: global::midi_control_in_port(),
-            midi_control_out_port: global::midi_control_out_port(),
+            midi_clock_port: global::midi_clock_port().unwrap_or_default(),
+            midi_control_in_port: global::midi_control_in_port()
+                .unwrap_or_default(),
+            midi_control_out_port: global::midi_control_out_port()
+                .unwrap_or_default(),
             osc_port: global::osc_port(),
             transition_time: 4.0,
             user_data_dir: global::user_data_dir(),

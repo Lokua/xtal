@@ -284,7 +284,7 @@ consider the evaluation order to ensure your controls behave as expected.
 
 **Example**
 
-Disable the `phase` slider when the `animate_phase` checkbox is checked:
+Disable a manual `phase` slider when the `animate_phase` checkbox is checked:
 
 ```yaml
 animate_phase:
@@ -293,7 +293,7 @@ animate_phase:
 
 phase:
   type: slider
-  disabled: not animate_phase
+  disabled: animate_phase
 ```
 
 Disable the `origin_offset` control when the origin is `center`
@@ -320,10 +320,15 @@ look like this:
 
 ```rust
 let phase = if hub.bool("animate_phase") {
-  animation.loop_phase(4.0) * TAU;
+  hub.get("phase_animation");
 } else {
   hub.get("phase");
 };
+
+// Since the above pattern is so common, hub provides a helper to
+// make this a bit more readable:
+
+let phase = hub.select("animate_phase", "phase_animation", "phase");
 ```
 
 # OSC
@@ -1022,7 +1027,7 @@ struct ShaderParams {
     f: [f32; 4],
 }
 
-pub fn init(app: &App, ctx: &XtalContext) -> Model {
+pub fn init(app: &App, ctx: &Context) -> Model {
     let hub = ControlHub::from_path(
         to_absolute_path(file!(), "example.yaml"),
         Timing::new(ctx.bpm()),
@@ -1031,7 +1036,6 @@ pub fn init(app: &App, ctx: &XtalContext) -> Model {
     // No point in initializing this to anything other than zero
     // as they will just get overwritten in the update function
     let params = ShaderParams {
-        resolution: [0.0; 4],
         a: [0.0; 4],
         b: [0.0; 4],
         c: [0.0; 4],
@@ -1040,45 +1044,50 @@ pub fn init(app: &App, ctx: &XtalContext) -> Model {
         f: [0.0; 4],
     };
 
-    let gpu = gpu::GpuState::new_fullscreen(
+    let shader = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
         to_absolute_path(file!(), "example.wgsl"),
         &params,
+        0,
         true,
     );
 
-    Model { hub, wr, gpu }
+    Model { hub, wr, shader }
 }
 
 impl Sketch for Model {
-  fn update(&mut self, app: &App, _update: Update, _ctx. &XtalContext) {
-      let params = ShaderParams {
-          a: [
-              // Allows us to use `var: a1` in our script
-              // while still showing a friendly name in the UI
-              m.controls.get("a1"),
-              m.controls.get("a2"),
-              m.controls.get("a3"),
-              m.controls.get("a4"),
-          ],
-          b: [
-              m.controls.get("b1"),
-              m.controls.get("b2"),
-              m.controls.get("b3"),
-              m.controls.get("b4"),
-          ],
-          c: [
-              m.controls.get("c1"),
-              m.controls.get("c2"),
-              m.controls.get("c3"),
-              m.controls.get("c4"),
-          ],
-          // ...
-      };
+    fn update(&mut self, app: &App, _update: Update, _ctx. &XtalContext) {
+        let params = ShaderParams {
+            a: [
+                // Allows us to use `var: a1` in our script
+                // while still showing a friendly name in the UI
+                m.controls.get("a1"),
+                m.controls.get("a2"),
+                m.controls.get("a3"),
+                m.controls.get("a4"),
+            ],
+            b: [
+                m.controls.get("b1"),
+                m.controls.get("b2"),
+                m.controls.get("b3"),
+                m.controls.get("b4"),
+            ],
+            c: [
+                m.controls.get("c1"),
+                m.controls.get("c2"),
+                m.controls.get("c3"),
+                m.controls.get("c4"),
+            ],
+            // ...
+        };
 
-      self.gpu.update_params(app, ctx.window_rect().resolution_u32(), &params);
-  }
+        self.shader.update_params(
+          app,
+          ctx.window_rect().resolution_u32(),
+          &params
+        );
+    }
 
   // ...
 }
@@ -1096,7 +1105,7 @@ struct Params {
 fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
     let radius = params.a.x;
     let pos_x = params.a.y;
-    // ...
+    // etc.
 ```
 
 The above is admittedly a decent amount of boilerplate, but with this setup you
@@ -1104,7 +1113,8 @@ are now free to live code in your script and shaders for hours uninterrupted
 without having to stop, recompile, wait... it's worth it.
 
 > NEW! Xtal now comes with a `uniforms` procedural macro to make all of the
-> above unnecessary. See ./sketches/src/sketches/dynamic_uniforms.rs for an
-> example.
+> above unnecessary. See [dynamic_uniforms.rs][dyn-uni-example] for an example.
 
 [easings]: ../xtal/src/framework/motion/easing.rs
+[dyn-uni-example]:
+  https://github.com/Lokua/xtal/blob/main/sketches/src/sketches/dynamic_uniforms.rs

@@ -7,7 +7,7 @@ Xtal is essentially one big Nannou app. The first major difference is that a
 Xtal sketch must export a `SketchConfig` const containing metadata needed for
 the runtime to properly boot a sketch. The second major difference is that
 instead of the standalone `model`, `update`, and `view` functions as you find in
-raw-Nannou, a Xtal sketch must provide an implementation of the `Sketch` trait.
+raw-Nannou, an Xtal sketch must provide an implementation of the `Sketch` trait.
 You may also notice a 3rd context argument in each method not found in the
 Nannou signatures – we'll get into that later – but besides these differences,
 everything is the same as a Nannou app and Nannou is still the crate you're
@@ -130,7 +130,7 @@ impl Sketch for Example {
         );
 
         draw.ellipse()
-            .color(hsl())
+            .color(color)
             .radius(200.0)
             .x_y(0.0, 0.0);
 
@@ -185,7 +185,7 @@ will last exactly 1 second. If you want your animation to last 10 seconds, use
 times will scale relative to `bpm`, so if you now set you're `bpm` to 120.0,
 everything will run twice as fast and you didn't need to update any code to
 accomplish this! Not to mention you can just Tap Tempo to synch with your DJ
-homey on stage.
+homie on stage.
 
 This is just the tip of what the Animation module is capable of; for more
 information consult the cargo docs.
@@ -427,8 +427,8 @@ fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
     let wr = ctx.window_rect();
 
     if wr.changed() {
-        self.model.expensive_setup(wr.w(), wr.h());
-        wr().mark_unchanged(); // <- don't forget this
+        self.expensive_setup(wr.w(), wr.h());
+        wr.mark_unchanged(); // <- don't forget this
     }
 ```
 
@@ -444,7 +444,7 @@ Similar to only recalculating certain data when the window changes, the
 ```rust
 fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
     if self.hub.changed() {
-        self.model.do_stuff();
+        self.do_stuff();
         self.hub.mark_unchanged(); // <- don't forget this
     }
 ```
@@ -456,13 +456,13 @@ changes:
 ```rust
 fn update(&mut self, _app: &App, _update: Update, ctx: &Context) {
     if self.hub.any_changed_in(&["algorithm", "object_count"]) {
-        self.model.do_stuff();
+        self.do_stuff();
         self.hub.mark_unchanged(); // <- don't forget this
     }
 ```
 
 And again, just like `WindowRect::changed`, this _always_ returns true on the
-first render, so as a general rule/pattern - use empty data structures in `init`
+first render, so as a general rule/pattern – use empty data structures in `init`
 and then update them in one of these changed blocks if you need to support
 complex runtime data realignments.
 
@@ -511,9 +511,9 @@ fn view(&self, app: &App, frame: Frame, ctx: &Context) {
 - https://sotrh.github.io/learn-wgpu
 - https://inconvergent.net/generative/
 - http://www.complexification.net/
+- http://www.complexification.net/gallery/machines/sandstroke/
 - https://n-e-r-v-o-u-s.com/projects/albums/floraform-system/
 - https://www.andylomas.com/cellularFormImages.html
-- http://www.complexification.net/gallery/machines/sandstroke/
 - https://thebookofshaders.com/
 - https://github.com/jasonwebb/2d-space-colonization-experiments
 - https://paulbourke.net/geometry/

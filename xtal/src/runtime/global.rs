@@ -1,4 +1,5 @@
 use directories_next::{BaseDirs, UserDirs};
+use std::error::Error;
 use std::sync::{LazyLock, Mutex};
 
 use crate::framework::prelude::*;
@@ -9,14 +10,19 @@ const DEFAULT_OSC_PORT: u16 = 2346;
 pub static GLOBAL: LazyLock<Mutex<Global>> =
     LazyLock::new(|| Mutex::new(Global::default()));
 
-pub fn audio_device_name() -> String {
+pub fn audio_device_name() -> Option<String> {
     let global = GLOBAL.lock().unwrap();
     global.audio_device_name.clone()
 }
 
 pub fn set_audio_device_name(name: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.audio_device_name = name.to_string();
+    global.audio_device_name = set_device_or_fallback(
+        "Audio device",
+        name,
+        list_audio_devices,
+        |name| name,
+    );
 }
 
 pub fn images_dir() -> String {
@@ -24,39 +30,54 @@ pub fn images_dir() -> String {
     global.images_dir.clone()
 }
 
-pub fn set_images_dir(dir: String) {
+pub fn set_images_dir(dir: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.images_dir = dir;
+    global.images_dir = dir.to_string();
 }
 
-pub fn midi_clock_port() -> String {
+pub fn midi_clock_port() -> Option<String> {
     let global = GLOBAL.lock().unwrap();
     global.midi_clock_port.clone()
 }
 
-pub fn set_midi_clock_port(port: String) {
+pub fn set_midi_clock_port(port: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.midi_clock_port = port;
+    global.midi_clock_port = set_device_or_fallback(
+        "MIDI clock port",
+        port,
+        midi::list_input_ports,
+        |(_, name)| name,
+    );
 }
 
-pub fn midi_control_in_port() -> String {
+pub fn midi_control_in_port() -> Option<String> {
     let global = GLOBAL.lock().unwrap();
     global.midi_control_in_port.clone()
 }
 
-pub fn set_midi_control_in_port(port: String) {
+pub fn set_midi_control_in_port(port: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.midi_control_in_port = port;
+    global.midi_clock_port = set_device_or_fallback(
+        "MIDI control in port",
+        port,
+        midi::list_input_ports,
+        |(_, name)| name,
+    );
 }
 
-pub fn midi_control_out_port() -> String {
+pub fn midi_control_out_port() -> Option<String> {
     let global = GLOBAL.lock().unwrap();
     global.midi_control_out_port.clone()
 }
 
-pub fn set_midi_control_out_port(port: String) {
+pub fn set_midi_control_out_port(port: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.midi_control_out_port = port;
+    global.midi_clock_port = set_device_or_fallback(
+        "MIDI control out port",
+        port,
+        midi::list_input_ports,
+        |(_, name)| name,
+    );
 }
 
 pub fn osc_port() -> u16 {
@@ -74,9 +95,9 @@ pub fn user_data_dir() -> String {
     global.user_data_dir.clone()
 }
 
-pub fn set_user_data_dir(dir: String) {
+pub fn set_user_data_dir(dir: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.user_data_dir = dir;
+    global.user_data_dir = dir.to_string();
 }
 
 pub fn videos_dir() -> String {
@@ -84,17 +105,17 @@ pub fn videos_dir() -> String {
     global.videos_dir.clone()
 }
 
-pub fn set_videos_dir(dir: String) {
+pub fn set_videos_dir(dir: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.videos_dir = dir;
+    global.videos_dir = dir.to_string();
 }
 
 pub struct Global {
-    audio_device_name: String,
+    audio_device_name: Option<String>,
     images_dir: String,
-    midi_clock_port: String,
-    midi_control_in_port: String,
-    midi_control_out_port: String,
+    midi_clock_port: Option<String>,
+    midi_control_in_port: Option<String>,
+    midi_control_out_port: Option<String>,
     osc_port: u16,
     user_data_dir: String,
     videos_dir: String,
@@ -102,45 +123,20 @@ pub struct Global {
 
 impl Default for Global {
     fn default() -> Self {
-        let midi_input_port = midi::list_input_ports().map_or_else(
-            |_| String::new(),
-            |ports| {
-                ports
-                    .first()
-                    .map(|(_, port)| {
-                        trace!("Default MIDI input port: {}", port);
-                        port.clone()
-                    })
-                    .unwrap_or_default()
-            },
-        );
+        let audio_device_name = list_audio_devices()
+            .ok()
+            .and_then(|devices| devices.first().cloned());
 
-        let midi_output_port = midi::list_output_ports().map_or_else(
-            |_| String::new(),
-            |ports| {
-                ports
-                    .first()
-                    .map(|(_, port)| {
-                        trace!("Default MIDI output port: {}", port);
-                        port.clone()
-                    })
-                    .unwrap_or_default()
-            },
-        );
+        let midi_input_port = midi::list_input_ports()
+            .ok()
+            .and_then(|ports| ports.first().map(|(_, name)| name.clone()));
+
+        let midi_output_port = midi::list_output_ports()
+            .ok()
+            .and_then(|ports| ports.first().map(|(_, name)| name.clone()));
 
         Self {
-            audio_device_name: list_audio_devices().map_or_else(
-                |_| String::new(),
-                |devices| {
-                    devices
-                        .first()
-                        .map(|device| {
-                            trace!("Default audio device: {}", device);
-                            device.clone()
-                        })
-                        .unwrap_or_default()
-                },
-            ),
+            audio_device_name,
             images_dir: user_dir(|ud| ud.picture_dir(), "Images"),
             midi_clock_port: midi_input_port.clone(),
             midi_control_in_port: midi_input_port,
@@ -171,4 +167,33 @@ fn user_dir(
         .unwrap_or_else(|| panic!("Could not determine directory path"))
         .to_string_lossy()
         .into_owned()
+}
+
+fn set_device_or_fallback<T>(
+    label: &str,
+    requested: &str,
+    list_fn: impl Fn() -> Result<Vec<T>, Box<dyn Error>>,
+    extract_name: impl Fn(&T) -> &str,
+) -> Option<String> {
+    match list_fn() {
+        Ok(devices) => {
+            if devices.iter().any(|d| extract_name(d) == requested) {
+                Some(requested.to_string())
+            } else if let Some(fallback) = devices.first() {
+                let fallback_name = extract_name(fallback);
+                warn!(
+                    "No {label} named '{requested}'; \
+                    falling back to '{fallback_name}'"
+                );
+                Some(fallback_name.to_string())
+            } else {
+                warn!("No available {label}s");
+                None
+            }
+        }
+        Err(err) => {
+            warn!("Failed to list {label}s: {err}");
+            None
+        }
+    }
 }

@@ -27,6 +27,12 @@ when it reaches v1, but until then consider all changes as possibly breaking.
 - Similar to above handling of keydown on the backend via held-key tracking
 - Renamed `Animation::loop_phase` to `Animation::ramp`
 
+### Fixed
+
+- Xtal no longer assumes the user's system will have MIDI or audio ports or that
+  any saved port configurations will be valid on next launch; now uses fallback
+  port if available or None when no ports exist
+
 ## [0.14.0] 2025-04-26
 
 ## Added

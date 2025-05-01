@@ -252,7 +252,7 @@ impl AudioControls {
     fn device_and_stream_config()
     -> Result<(Device, StreamConfig), Box<dyn Error>> {
         let host = cpal::default_host();
-        let device_name = global::audio_device_name();
+        let device_name = global::audio_device_name().unwrap_or_default();
         let device = host
             .input_devices()?
             .find(|d| d.name().map(|n| n == device_name).unwrap_or(false))

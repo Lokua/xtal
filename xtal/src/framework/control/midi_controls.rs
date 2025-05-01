@@ -7,11 +7,9 @@ use nannou::math::map_range;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
+use super::control_traits::{ControlCollection, ControlConfig};
 use crate::framework::midi::is_control_change;
 use crate::framework::prelude::*;
-use crate::runtime::global;
-
-use super::control_traits::{ControlCollection, ControlConfig};
 
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {
@@ -100,6 +98,15 @@ pub struct MidiControls {
 
 impl MidiControls {
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
+        let Some(midi_control_in_port) = crate::global::midi_control_in_port()
+        else {
+            warn!(
+                "Skipping {} listener setup; no MIDI port.",
+                midi::ConnectionType::Control
+            );
+            return Ok(());
+        };
+
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
         let hrcc = self.hrcc;
@@ -108,7 +115,7 @@ impl MidiControls {
 
         match midi::on_message(
             midi::ConnectionType::Control,
-            &global::midi_control_in_port(),
+            &midi_control_in_port,
             move |_, message| {
                 if !is_control_change(message[0]) {
                     return;

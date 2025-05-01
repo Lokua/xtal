@@ -229,12 +229,12 @@ impl AppModel {
                 self.save_global_state();
             }
             AppEvent::ChangeMidiClockPort(port) => {
-                global::set_midi_clock_port(port);
+                global::set_midi_clock_port(&port);
                 AppModel::start_midi_clock_listener(self.app_tx.tx.clone());
                 self.save_global_state();
             }
             AppEvent::ChangeMidiControlInputPort(port) => {
-                global::set_midi_control_in_port(port);
+                global::set_midi_control_in_port(&port);
                 if let Some(hub) = self.hub_mut() {
                     hub.midi_controls
                         .restart()
@@ -246,7 +246,7 @@ impl AppModel {
                 self.save_global_state();
             }
             AppEvent::ChangeMidiControlOutputPort(port) => {
-                global::set_midi_control_out_port(port.clone());
+                global::set_midi_control_out_port(&port);
                 let mut midi = midi::MidiOut::new(&port);
                 self.midi_out = match midi.connect() {
                     Ok(_) => Some(midi),
@@ -476,9 +476,9 @@ impl AppModel {
                     );
                 }
                 match user_dir {
-                    wv::UserDir::Images => global::set_images_dir(dir),
+                    wv::UserDir::Images => global::set_images_dir(&dir),
                     wv::UserDir::UserData => {
-                        global::set_user_data_dir(dir);
+                        global::set_user_data_dir(&dir);
                         if let Some(image_index) = &self.image_index {
                             if !storage::image_metadata_exists()
                                 && !image_index.items.is_empty()
@@ -494,7 +494,7 @@ impl AppModel {
                             }
                         }
                     }
-                    wv::UserDir::Videos => global::set_videos_dir(dir),
+                    wv::UserDir::Videos => global::set_videos_dir(&dir),
                 }
                 self.save_global_state();
             }
@@ -756,7 +756,8 @@ impl AppModel {
                 let registry = REGISTRY.read().unwrap();
 
                 self.wv_tx.emit(wv::Event::Init {
-                    audio_device: global::audio_device_name(),
+                    audio_device: global::audio_device_name()
+                        .unwrap_or_default(),
                     audio_devices: list_audio_devices().unwrap_or_default(),
                     hrcc: self.hrcc,
                     images_dir: global::images_dir(),
@@ -765,9 +766,12 @@ impl AppModel {
                         dark_light::Mode::Light
                     ),
                     mappings_enabled: self.mappings_enabled,
-                    midi_clock_port: global::midi_clock_port(),
-                    midi_input_port: global::midi_control_in_port(),
-                    midi_output_port: global::midi_control_out_port(),
+                    midi_clock_port: global::midi_clock_port()
+                        .unwrap_or_default(),
+                    midi_input_port: global::midi_control_in_port()
+                        .unwrap_or_default(),
+                    midi_output_port: global::midi_control_out_port()
+                        .unwrap_or_default(),
                     midi_input_ports: midi::list_input_ports().unwrap(),
                     midi_output_ports: midi::list_output_ports().unwrap(),
                     osc_port: global::osc_port(),
@@ -910,12 +914,14 @@ impl AppModel {
         if let Err(e) = storage::save_global_state(GlobalSettings {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             images_dir: global::images_dir(),
-            audio_device_name: global::audio_device_name(),
+            audio_device_name: global::audio_device_name().unwrap_or_default(),
             hrcc: self.hrcc,
             mappings_enabled: self.mappings_enabled,
-            midi_clock_port: global::midi_clock_port(),
-            midi_control_in_port: global::midi_control_in_port(),
-            midi_control_out_port: global::midi_control_out_port(),
+            midi_clock_port: global::midi_clock_port().unwrap_or_default(),
+            midi_control_in_port: global::midi_control_in_port()
+                .unwrap_or_default(),
+            midi_control_out_port: global::midi_control_out_port()
+                .unwrap_or_default(),
             osc_port: global::osc_port(),
             transition_time: self.transition_time,
             user_data_dir: global::user_data_dir(),
@@ -992,22 +998,24 @@ impl AppModel {
     }
 
     fn start_midi_clock_listener(midi_tx: mpsc::Sender<AppEvent>) {
-        let midi_handler_result = midi::on_message(
-            midi::ConnectionType::GlobalStartStop,
-            &global::midi_clock_port(),
-            move |_stamp, message| match message[0] {
-                START => midi_tx.send(AppEvent::MidiStart).unwrap(),
-                CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
-                STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
-                _ => {}
-            },
-        );
-        if let Err(e) = midi_handler_result {
-            warn!(
-                "Failed to initialize {:?} MIDI connection. Error: {}",
+        if let Some(midi_clock_port) = global::midi_clock_port() {
+            let midi_handler_result = midi::on_message(
                 midi::ConnectionType::GlobalStartStop,
-                e
+                &midi_clock_port,
+                move |_stamp, message| match message[0] {
+                    START => midi_tx.send(AppEvent::MidiStart).unwrap(),
+                    CONTINUE => midi_tx.send(AppEvent::MidiContinue).unwrap(),
+                    STOP => midi_tx.send(AppEvent::MidiStop).unwrap(),
+                    _ => {}
+                },
             );
+            if let Err(e) = midi_handler_result {
+                warn!(
+                    "Failed to initialize {:?} MIDI connection. Error: {}",
+                    midi::ConnectionType::GlobalStartStop,
+                    e
+                );
+            }
         }
     }
 }
@@ -1027,13 +1035,13 @@ fn model(app: &App) -> AppModel {
         Ok(gs) => {
             info!("Restoring global settings: {:?}", gs);
             global::set_audio_device_name(&gs.audio_device_name);
-            global::set_images_dir(gs.images_dir.clone());
-            global::set_midi_clock_port(gs.midi_clock_port.clone());
-            global::set_midi_control_in_port(gs.midi_control_in_port.clone());
-            global::set_midi_control_out_port(gs.midi_control_out_port.clone());
+            global::set_images_dir(&gs.images_dir);
+            global::set_midi_clock_port(&gs.midi_clock_port);
+            global::set_midi_control_in_port(&gs.midi_control_in_port);
+            global::set_midi_control_out_port(&gs.midi_control_out_port);
             global::set_osc_port(gs.osc_port);
-            global::set_user_data_dir(gs.user_data_dir.clone());
-            global::set_videos_dir(gs.videos_dir.clone());
+            global::set_user_data_dir(&gs.user_data_dir);
+            global::set_videos_dir(&gs.videos_dir);
             gs
         }
         Err(e) => {
@@ -1089,14 +1097,16 @@ fn model(app: &App) -> AppModel {
     let midi_tx = raw_event_tx.clone();
     AppModel::start_midi_clock_listener(midi_tx);
 
-    let mut midi = midi::MidiOut::new(&global::midi_control_out_port());
-    let midi_out = match midi.connect() {
-        Ok(_) => Some(midi),
-        Err(e) => {
-            error!("{}", e);
-            None
+    let midi_out = global::midi_control_out_port().and_then(|port| {
+        let mut midi = midi::MidiOut::new(&port);
+        match midi.connect() {
+            Ok(_) => Some(midi),
+            Err(e) => {
+                error!("{}", e);
+                None
+            }
         }
-    };
+    });
 
     let image_index = storage::load_image_index()
         .inspect_err(|e| error!("Error in model: {}", e))

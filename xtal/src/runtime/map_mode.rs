@@ -86,12 +86,21 @@ impl MapMode {
     where
         F: Fn(Result<(), MappingError>) + Send + Sync + 'static,
     {
+        let Some(midi_control_in_port) = crate::global::midi_control_in_port()
+        else {
+            warn!(
+                "Skipping {} listener setup; no MIDI port.",
+                midi::ConnectionType::Mapping
+            );
+            return Ok(());
+        };
+
         let state = self.state.clone();
         let name = name.to_owned();
 
         midi::on_message(
             midi::ConnectionType::Mapping,
-            &crate::global::midi_control_in_port(),
+            &midi_control_in_port,
             move |_, msg| {
                 if !midi::is_control_change(msg[0]) {
                     return;
