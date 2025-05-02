@@ -1,6 +1,6 @@
 [package]
 name = "xtal"
-version = "0.14.0"
+version = "0.15.0"
 description = "A creative coding framework build on top of Nannou"
 authors = ["Lokua <dev@lokua.net>"]
 homepage = "https://github.com/Lokua/xtal"
