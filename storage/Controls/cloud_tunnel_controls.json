@@ -1,0 +1,192 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "t_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "direction",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "detail",
+      "value": 0.01
+    },
+    {
+      "type": "Slider",
+      "name": "ray_scale_factor",
+      "value": 0.6315
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "h1",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "s1",
+      "value": 0.9
+    },
+    {
+      "type": "Slider",
+      "name": "v1",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "h2",
+      "value": 0.9
+    },
+    {
+      "type": "Slider",
+      "name": "s2",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "v2",
+      "value": 0.99
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.022799999
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.2731
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.0109
+        },
+        {
+          "type": "Slider",
+          "name": "ray_scale_factor",
+          "value": 0.9162
+        },
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.894
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.74
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2491
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.7822
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": false
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.9
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.99
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "ray_scale_factor",
+          "value": 0.6315
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "t_mult",
+    "direction",
+    "bg_alpha"
+  ]
+}

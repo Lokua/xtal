@@ -108,6 +108,17 @@ fn rotate_z(p: vec3f, radians: f32) -> vec3f {
     );
 }
 
+fn rotate_point(p: vec2f, angle_degrees: f32) -> vec2f {
+    let angle = radians(angle_degrees);
+    let cos_angle = cos(angle);
+    let sin_angle = sin(angle);
+    
+    return vec2f(
+        p.x * cos_angle - p.y * sin_angle,
+        p.x * sin_angle + p.y * cos_angle
+    );
+}
+
 fn n(x: f32) -> f32 {
     return x * 0.5 + 0.5;
 }

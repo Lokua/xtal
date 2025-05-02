@@ -1,3 +1,76 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+t_mult:
+  var: d2
+  type: slider
+  range: [0.025, 2.0]
+  step: 0.025
+  default: 0.125
+
 direction:
   var: a4
   type: checkbox
+
+detail:
+  var: c3
+  type: slider
+  range: [0.001, 0.03]
+  step: 0.0001
+  default: 0.01
+
+ray_scale_factor:
+  var: c4
+  type: slider
+  range: [0.15, 1.0]
+  default: 0.7
+
+bg_alpha:
+  var: d1
+  type: slider
+  default: 1.0
+
+# ------------------------------------------------------------------------------
+#  Color 1
+# ------------------------------------------------------------------------------
+
+color_1:
+  type: separator
+
+h1:
+  var: b1
+  type: slider
+  default: 0.5
+
+s1:
+  var: b2
+  type: slider
+  default: 0.9
+
+v1:
+  var: b3
+  type: slider
+  default: 0.2
+
+# ------------------------------------------------------------------------------
+#  Color 2
+# ------------------------------------------------------------------------------
+
+color_2:
+  type: separator
+
+h2:
+  var: b4
+  type: slider
+  default: 0.9
+
+s2:
+  var: c1
+  type: slider
+  default: 0.2
+
+v2:
+  var: c2
+  type: slider
+  default: 0.99
