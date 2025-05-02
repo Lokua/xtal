@@ -56,6 +56,7 @@ pub use self::genuary_2025::g25_22_gradients_only;
 pub mod scratch;
 pub use self::scratch::bos;
 pub use self::scratch::chromatic_aberration;
+pub use self::scratch::cloud_tunnel;
 pub use self::scratch::displacement_1;
 pub use self::scratch::displacement_1a;
 pub use self::scratch::displacement_2;

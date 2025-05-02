@@ -1,0 +1,3 @@
+direction:
+  var: a4
+  type: checkbox

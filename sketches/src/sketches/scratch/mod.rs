@@ -1,5 +1,6 @@
 pub mod bos;
 pub mod chromatic_aberration;
+pub mod cloud_tunnel;
 pub mod displacement_1;
 pub mod displacement_1a;
 pub mod displacement_2;

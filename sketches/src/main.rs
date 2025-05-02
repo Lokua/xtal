@@ -72,6 +72,7 @@ fn main() {
         // ---------------------------------------------------------------------
         bos,
         chromatic_aberration,
+        cloud_tunnel,
         displacement_1,
         displacement_1a,
         displacement_2,
