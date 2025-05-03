@@ -16,6 +16,8 @@
     "disp",
     "docsrs",
     "doctest",
+    "dpdx",
+    "dpdy",
     "Egui",
     "fullsize",
     "horiz",

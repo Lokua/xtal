@@ -19,7 +19,7 @@ struct Params {
     b: vec4f,
     // s2, v2, detail, ray_scale_factor
     c: vec4f,
-    // bg_alpha, t_mult, ..
+    // bg_alpha, t_mult, depth_scale, UNUSED
     d: vec4f,
 }
 
@@ -53,6 +53,7 @@ fn cloud_tunnel(pos: vec2f) -> vec3f {
     let v2 = params.c.y;
     let detail = params.c.z;
     let ray_scale_factor = params.c.w;
+    let depth_scale = params.d.z;
 
     // step size
     var step = 0.02;
@@ -67,7 +68,7 @@ fn cloud_tunnel(pos: vec2f) -> vec3f {
     var aspect_pos = correct_aspect(pos);
     
     // ray position
-    var p = vec3f(sin(t * 0.25) * 0.333, cos(t) * 0.0125, -10.0);
+    var p = vec3f(sin(t * 0.25) * 0.333, cos(t) * 0.125, -10.0);
 
     // in HSV
     let color1 = vec3f(h1, s1, v1);
@@ -96,12 +97,12 @@ fn cloud_tunnel(pos: vec2f) -> vec3f {
         let center_factor = smoothstep(0.0, 10.5, center_dist);
         o += mix(color1, color2, cloud_depth) * center_factor;
 
-        let depth_rotation = sin(p.z * 0.02) * 500.0;
+        let depth_rotation = sin(p.z * 0.02) * depth_scale;
+        let sin_rot = sin(depth_rotation);
+        let cos_rot = cos(depth_rotation * 0.333);
         let rotated_pos = vec2f(
-            aspect_pos.x * cos(depth_rotation * 0.333) - 
-            aspect_pos.y * sin(depth_rotation),
-            aspect_pos.x * sin(depth_rotation) + 
-            aspect_pos.y * cos(depth_rotation * 0.333)
+            aspect_pos.x * cos_rot - aspect_pos.y * sin_rot,
+            aspect_pos.x * sin_rot + aspect_pos.y * cos_rot
         );
 
         p += (vec3f(rotated_pos, 1.0) * ray_scale_factor * step) * direction;

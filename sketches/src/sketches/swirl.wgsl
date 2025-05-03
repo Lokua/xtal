@@ -92,7 +92,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let cz = (ray_dir.z * 0.5 + 0.5);
 
     let bw = vec3f(c);
-    var colorized = vec3f(n.x * r, n.y * g, (cz + c) * b) * c;
+    var colorized = vec3f(n.x * r, n.y * g, (dd * cz + c) * b) * c;
 
     if c >= 0.0 && c <= edge_thresh {
         colorized = paint_edges(colorized);

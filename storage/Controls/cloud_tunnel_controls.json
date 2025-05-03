@@ -4,22 +4,27 @@
     {
       "type": "Slider",
       "name": "t_mult",
-      "value": 1.0
+      "value": 0.5
     },
     {
       "type": "Checkbox",
       "name": "direction",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
       "name": "detail",
-      "value": 0.01
+      "value": 0.0261
     },
     {
       "type": "Slider",
       "name": "ray_scale_factor",
-      "value": 0.6315
+      "value": 0.2595
+    },
+    {
+      "type": "Slider",
+      "name": "depth_scale",
+      "value": 500.0
     },
     {
       "type": "Slider",
@@ -29,68 +34,48 @@
     {
       "type": "Slider",
       "name": "h1",
-      "value": 0.5
+      "value": 0.9266
     },
     {
       "type": "Slider",
       "name": "s1",
-      "value": 0.9
+      "value": 0.2832
     },
     {
       "type": "Slider",
       "name": "v1",
-      "value": 0.2
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "h2",
-      "value": 0.9
+      "value": 0.9301
     },
     {
       "type": "Slider",
       "name": "s2",
-      "value": 0.2
+      "value": 0.1364
     },
     {
       "type": "Slider",
       "name": "v2",
-      "value": 0.99
+      "value": 0.9895
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "2": {
+    "3": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "detail",
-          "value": 0.022799999
-        },
-        {
-          "type": "Slider",
-          "name": "s2",
-          "value": 0.2731
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "s1",
-          "value": 0.0109
-        },
-        {
-          "type": "Slider",
-          "name": "ray_scale_factor",
-          "value": 0.9162
-        },
-        {
-          "type": "Slider",
           "name": "v2",
-          "value": 0.894
+          "value": 0.9895
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.0261
         },
         {
           "type": "Slider",
@@ -99,23 +84,48 @@
         },
         {
           "type": "Slider",
-          "name": "h2",
-          "value": 0.74
+          "name": "t_mult",
+          "value": 0.5
         },
         {
           "type": "Slider",
-          "name": "v1",
-          "value": 0.2491
+          "name": "ray_scale_factor",
+          "value": 0.0848
         },
         {
           "type": "Slider",
-          "name": "h1",
-          "value": 0.7822
+          "name": "s2",
+          "value": 0.1364
         },
         {
           "type": "Checkbox",
           "name": "direction",
-          "value": false
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.2832
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 500.0
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.9266
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9301
         }
       ],
       "midi_controls": [],
@@ -125,33 +135,18 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "s1",
-          "value": 0.9
-        },
-        {
-          "type": "Slider",
-          "name": "v1",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "s2",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "v2",
-          "value": 0.99
-        },
-        {
-          "type": "Slider",
           "name": "t_mult",
-          "value": 1.0
+          "value": 0.125
         },
         {
           "type": "Slider",
-          "name": "h2",
-          "value": 0.9
+          "name": "h1",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 500.0
         },
         {
           "type": "Checkbox",
@@ -160,13 +155,23 @@
         },
         {
           "type": "Slider",
-          "name": "ray_scale_factor",
-          "value": 0.6315
+          "name": "bg_alpha",
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "bg_alpha",
-          "value": 1.0
+          "name": "v2",
+          "value": 0.99
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.9
         },
         {
           "type": "Slider",
@@ -175,8 +180,150 @@
         },
         {
           "type": "Slider",
-          "name": "h1",
+          "name": "s2",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "ray_scale_factor",
+          "value": 0.6315
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.9895
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.0261
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.2832
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
           "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.9266
+        },
+        {
+          "type": "Slider",
+          "name": "ray_scale_factor",
+          "value": 0.2595
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 500.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9301
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.1364
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.022799999
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.7822
+        },
+        {
+          "type": "Slider",
+          "name": "ray_scale_factor",
+          "value": 0.9162
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.2731
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.74
+        },
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.894
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2491
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.0109
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 500.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 0.125
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
         }
       ],
       "midi_controls": [],

@@ -119,6 +119,12 @@ fn rotate_point(p: vec2f, angle_degrees: f32) -> vec2f {
     );
 }
 
+fn rotate(v: vec2f, angle: f32) -> vec2f {
+    let c = cos(angle);
+    let s = sin(angle);
+    return vec2f(c * v.x - s * v.y, s * v.x + c * v.y);
+}
+
 fn n(x: f32) -> f32 {
     return x * 0.5 + 0.5;
 }
@@ -195,6 +201,49 @@ fn hsv_to_rgb(hsv: vec3f) -> vec3f {
     }
     
     return vec3f(r, g, b);
+}
+
+fn lch_to_rgb(l: f32, c: f32, h_deg: f32) -> vec3f {
+    // Convert LCH to Lab
+    let h_rad = radians(h_deg);
+    let a = cos(h_rad) * c;
+    let b = sin(h_rad) * c;
+
+    // Convert Lab to XYZ
+    let fy = (l + 16.0) / 116.0;
+    let fx = fy + (a / 500.0);
+    let fz = fy - (b / 200.0);
+
+    let fx3 = pow(fx, 3.0);
+    let fz3 = pow(fz, 3.0);
+    let x = select((fx - 16.0 / 116.0) / 7.787, fx3, fx3 > 0.008856);
+    let y = select(
+        (fy - 16.0 / 116.0) / 7.787, 
+        pow(fy, 3.0), 
+        pow(fy, 3.0) > 0.008856
+    );
+    let z = select((fz - 16.0 / 116.0) / 7.787, fz3, fz3 > 0.008856);
+
+    // D65 white point
+    let X = x * 0.95047;
+    let Y = y;
+    let Z = z * 1.08883;
+
+    // Convert XYZ to linear RGB
+    let r_lin =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+    let g_lin = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+    let b_lin =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+
+    // Linear to sRGB gamma correction
+    return vec3f(
+        clamp(gamma_correct(r_lin), 0.0, 1.0),
+        clamp(gamma_correct(g_lin), 0.0, 1.0),
+        clamp(gamma_correct(b_lin), 0.0, 1.0)
+    );
+}
+
+fn gamma_correct(c: f32) -> f32 {
+    return select(12.92 * c, 1.055 * pow(c, 1.0 / 2.4) - 0.055, c > 0.0031308);
 }
 
 fn mix_additive(c1: vec3f, c2: vec3f) -> vec3f {

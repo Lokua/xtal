@@ -16,15 +16,21 @@ direction:
 detail:
   var: c3
   type: slider
-  range: [0.001, 0.03]
+  range: [0.001, 0.04]
   step: 0.0001
   default: 0.01
 
 ray_scale_factor:
   var: c4
   type: slider
-  range: [0.15, 1.0]
+  range: [0.001, 1.0]
   default: 0.7
+
+depth_scale:
+  var: d3
+  type: slider
+  range: [1, 1000]
+  default: 500
 
 bg_alpha:
   var: d1

@@ -1,0 +1,45 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "amp",
+      "value": 0.535
+    },
+    {
+      "type": "Slider",
+      "name": "freq",
+      "value": 1.6783
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_ma_b",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "h1",
+      "value": 0.7098
+    },
+    {
+      "type": "Slider",
+      "name": "h2",
+      "value": 0.4336
+    },
+    {
+      "type": "Slider",
+      "name": "h3",
+      "value": 0.1364
+    },
+    {
+      "type": "Slider",
+      "name": "contrast",
+      "value": 1.2308
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

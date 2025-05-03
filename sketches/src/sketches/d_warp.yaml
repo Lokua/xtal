@@ -1,0 +1,104 @@
+# ------------------------------------------------------------------------------
+#  FBM
+# ------------------------------------------------------------------------------
+
+amp:
+  var: a4
+  type: slider
+  default: 0.2
+
+freq:
+  var: b1
+  type: slider
+  range: [0, 10]
+  default: 3
+
+# toggle between maNa and maNb animations
+use_ma_b:
+  var: e2
+  type: checkbox
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+lch_chroma:
+  var: b3
+  type: slider
+
+lch_hue:
+  var: b2
+  type: slider
+
+contrast:
+  var: e1
+  type: slider
+  range: [1, 3]
+  default: 1
+
+# ------------------------------------------------------------------------------
+#  Mask Animations
+# ------------------------------------------------------------------------------
+
+ma1a:
+  var: c1
+  type: random_slewed
+  beats: 12
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 88
+
+ma2a:
+  var: c2
+  type: random_slewed
+  beats: 16
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+  stem: 89
+
+ma3a:
+  var: c3
+  type: random_slewed
+  beats: 20
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 90
+
+ma4a:
+  var: c4
+  type: random_slewed
+  beats: 32
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+  stem: 71
+
+ma1b:
+  var: d1
+  type: ramp
+  beats: 12
+  range: [1, -1]
+
+ma2b:
+  var: d2
+  type: ramp
+  beats: 33
+  range: [1, -1]
+
+ma3b:
+  var: d3
+  type: ramp
+  beats: 13
+  range: [1, -1]
+
+ma4b:
+  var: d4
+  type: ramp
+  beats: 35
+  range: [-1, 1]

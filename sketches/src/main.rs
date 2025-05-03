@@ -14,6 +14,8 @@ fn main() {
         blob,
         breakpoints_2,
         brutalism,
+        cloud_tunnel,
+        d_warp,
         displacement_2a,
         drop,
         drop_tines,
@@ -72,7 +74,6 @@ fn main() {
         // ---------------------------------------------------------------------
         bos,
         chromatic_aberration,
-        cloud_tunnel,
         displacement_1,
         displacement_1a,
         displacement_2,

@@ -20,7 +20,7 @@ struct Params {
     c: vec4f,
     // fract_count, fract_zoom, fract_contrast, wave_reduce_mix, 
     d: vec4f,
-    // dist_alg_mix, dist_alg_y_mult, wave_3_alg_mix, p_mult
+    // dist_alg_mix, dist_alg_y_mult, wave_3_alg_mix, UNUSED
     e: vec4f,
     // ....
     f: vec4f,
@@ -40,9 +40,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let color_mix = params.e.z;
-    let p_mult = params.e.w;
-
-    var p = correct_aspect(position) * p_mult;
+    var p = correct_aspect(position);
 
     let fract_dist_reduce_mix = 0.5;
     let fract_dist_map_mix = 0.5;
