@@ -12,10 +12,6 @@ Files sorted from most to least recent
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/cloud_tunnel-44fkq.png" alt="cloud_tunnel-44fkq.png">
 
-## cloud_tunnel-4d1a3.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/cloud_tunnel-4d1a3.png" alt="cloud_tunnel-4d1a3.png">
-
 ## cloud_tunnel-iuy1n.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/cloud_tunnel-iuy1n.png" alt="cloud_tunnel-iuy1n.png">
