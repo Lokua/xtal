@@ -1,0 +1,57 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+mode:
+  var: a4
+  type: select
+  default: gradient
+  options:
+    - gradient
+    - gradient_stepped
+    - circle
+    - circle_stepped
+    - grid
+    - grid_warped
+    - grid_radial
+    - grid_multi
+
+radius:
+  var: b1
+  type: slider
+  default: 0.25
+  disabled:
+    mode is not circle and mode is not circle_stepped and mode is not
+    grid_radial and mode is not grid_multi
+
+thickness:
+  var: b2
+  type: slider
+  default: 0.1
+  disabled:
+    mode is not grid and mode is not grid_warped and mode is not grid_radial and
+    mode is not grid_multi
+
+grid_size:
+  var: b4
+  type: slider
+  default: 0.2
+  disabled:
+    mode is not grid and mode is not grid_warped and mode is not grid_radial and
+    mode is not grid_multi
+
+step_size:
+  var: b3
+  type: slider
+  default: 10.0
+  range: [1, 20]
+  disabled:
+    mode is not gradient_stepped and mode is not circle stepped and mode is not
+    grid_radial and mode is not grid_multi
+
+warp_amt:
+  var: c1
+  type: slider
+  disabled:
+    mode is not grid_warped and mode is not grid_radial and mode is not
+    grid_multi

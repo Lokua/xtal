@@ -56,6 +56,7 @@ pub use self::genuary_2025::g25_20_23_brutal_arch;
 pub use self::genuary_2025::g25_22_gradients_only;
 
 pub mod scratch;
+pub use self::scratch::basics;
 pub use self::scratch::bos;
 pub use self::scratch::chromatic_aberration;
 pub use self::scratch::displacement_1;

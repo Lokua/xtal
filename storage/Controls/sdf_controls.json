@@ -1,0 +1,35 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "grid_size",
+      "value": 0.0569
+    },
+    {
+      "type": "Slider",
+      "name": "cell_size",
+      "value": 0.015
+    },
+    {
+      "type": "Slider",
+      "name": "line_thickness",
+      "value": 0.007
+    },
+    {
+      "type": "Slider",
+      "name": "falloff",
+      "value": 0.1294
+    },
+    {
+      "type": "Slider",
+      "name": "displacement",
+      "value": 0.0699
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

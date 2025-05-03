@@ -1,3 +1,4 @@
+pub mod basics;
 pub mod bos;
 pub mod chromatic_aberration;
 pub mod displacement_1;
