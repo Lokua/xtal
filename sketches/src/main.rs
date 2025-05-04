@@ -23,6 +23,7 @@ fn main() {
         dynamic_uniforms,
         easing_vis,
         flow_field_basic,
+        g_warp,
         grid_splash,
         heat_mask,
         interference,

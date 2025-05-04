@@ -167,11 +167,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     if (mode == GRID_RADIAL) {
         let d = length(p) - radius;
-        let warp = vec2f(sin(p.y + t), cos(p.x + t)) * 
-            (d * step_size) * 
-            warp_amt;
+        let warp = vec2f(cos(p.y + t), sin(p.x + t)) * d * warp_amt * 10.0;
         let cp = (p + warp) / cell_size;
-        let gx = abs(fract(cp.x) - 0.5);
+        let gx = d - abs(fract(cp.x) - 0.5);
         let line = step(gx, thickness);
         let o = clamp(line, 0.0, 1.0);
         return vec4f(vec3f(o), 1.0);

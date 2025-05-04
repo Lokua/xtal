@@ -1,0 +1,45 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Select",
+      "name": "mode",
+      "value": "gradient"
+    },
+    {
+      "type": "Slider",
+      "name": "cell_size",
+      "value": 0.375
+    },
+    {
+      "type": "Slider",
+      "name": "thickness",
+      "value": 0.3
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amt",
+      "value": 2.7273
+    },
+    {
+      "type": "Slider",
+      "name": "softness",
+      "value": 1.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "chroma",
+      "value": 0.5035
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

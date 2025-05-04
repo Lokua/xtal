@@ -10,6 +10,7 @@ pub mod drop_walk;
 pub mod dynamic_uniforms;
 pub mod easing_vis;
 pub mod flow_field_basic;
+pub mod g_warp;
 pub mod grid_splash;
 pub mod heat_mask;
 pub mod interference;

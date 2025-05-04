@@ -1,0 +1,65 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+mode:
+  var: a4
+  type: select
+  default: gradient
+  options:
+    - gradient
+    - gradient_stepped
+    - circle
+    - circle_stepped
+    - grid
+    - grid_smooth
+    - grid_radial
+    - grid_warped
+
+a1:
+  var: c3
+  type: triangle
+  beats: 8
+
+a2:
+  var: c4
+  type: triangle
+  beats: 12
+
+a3:
+  var: d1
+  type: triangle
+  beats: 20
+
+cell_size:
+  var: b4
+  type: slider
+  range: [0.025, 1.0]
+  default: 0.2
+  step: 0.025
+
+thickness:
+  var: b2
+  type: slider
+  default: 0.1
+  step: 0.025
+  range: [0.025, 0.475]
+
+warp_amt:
+  var: c1
+  type: slider
+  range: [0, 10]
+
+softness:
+  var: c2
+  type: slider
+  default: 0.2
+
+invert:
+  var: a4
+  type: checkbox
+
+chroma:
+  var: b1
+  type: slider
+  default: 1.0

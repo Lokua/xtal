@@ -203,7 +203,11 @@ fn hsv_to_rgb(hsv: vec3f) -> vec3f {
     return vec3f(r, g, b);
 }
 
-fn lch_to_rgb(l: f32, c: f32, h_deg: f32) -> vec3f {
+fn lch_to_rgb(lch: vec3f) -> vec3f {
+    let l = lch.x;
+    let c = lch.y; 
+    let h_deg = lch.z;
+
     // Convert LCH to Lab
     let h_rad = radians(h_deg);
     let a = cos(h_rad) * c;
@@ -246,8 +250,200 @@ fn gamma_correct(c: f32) -> f32 {
     return select(12.92 * c, 1.055 * pow(c, 1.0 / 2.4) - 0.055, c > 0.0031308);
 }
 
+// returned components are not normalized; 
+// ranges: ([0.0, 100.0], [0.0, 100.0], [0.0, 360.0])
+fn rgb_to_lch(rgb: vec3f) -> vec3f {
+    let rgb_lin = linearize_rgb(rgb);
+
+    // Linear RGB to XYZ
+    let x = 0.4124 * rgb_lin.x + 0.3576 * rgb_lin.y + 0.1805 * rgb_lin.z;
+    let y = 0.2126 * rgb_lin.x + 0.7152 * rgb_lin.y + 0.0722 * rgb_lin.z;
+    let z = 0.0193 * rgb_lin.x + 0.1192 * rgb_lin.y + 0.9505 * rgb_lin.z;
+
+    // Normalize by D65 white point
+    let xn = x / 0.95047;
+    let yn = y;
+    let zn = z / 1.08883;
+
+    // Convert to Lab
+    let fx = lab_f(xn);
+    let fy = lab_f(yn);
+    let fz = lab_f(zn);
+
+    let l = 116.0 * fy - 16.0;
+    let a = 500.0 * (fx - fy);
+    let b = 200.0 * (fy - fz);
+
+    // Convert to LCH
+    let c = length(vec2f(a, b));
+    let h_rad = atan2(b, a);
+    let h = fract(degrees(h_rad) / 360.0) * 360.0;
+
+    return vec3f(l, c, h);
+}
+
+fn inv_gamma_correct(c: f32) -> f32 {
+    return select(c / 12.92, pow((c + 0.055) / 1.055, 2.4), c > 0.04045);
+}
+
+fn linearize_rgb(rgb: vec3f) -> vec3f {
+    return vec3f(
+        inv_gamma_correct(rgb.x),
+        inv_gamma_correct(rgb.y),
+        inv_gamma_correct(rgb.z)
+    );
+}
+
+fn lab_f(t: f32) -> f32 {
+    return select(pow(t, 1.0 / 3.0), 7.787 * t + 16.0 / 116.0, t > 0.008856);
+}
+
+fn rgb_to_hsl(rgb: vec3f) -> vec3f {
+    let r = rgb.x;
+    let g = rgb.y;
+    let b = rgb.z;
+
+    let max_c = max(max(r, g), b);
+    let min_c = min(min(r, g), b);
+    let delta = max_c - min_c;
+
+    let l = (max_c + min_c) * 0.5;
+
+    var h = 0.0;
+    var s = 0.0;
+
+    if delta > 0.0 {
+        s = delta / (1.0 - abs(2.0 * l - 1.0));
+
+        if max_c == r {
+            h = (g - b) / delta;
+            if g < b {
+                h += 6.0;
+            }
+        } else if max_c == g {
+            h = (b - r) / delta + 2.0;
+        } else {
+            h = (r - g) / delta + 4.0;
+        }
+
+        h /= 6.0;
+    }
+
+    return vec3f(h, s, l);
+}
+
+fn hsl_to_rgb(hsl: vec3f) -> vec3f {
+    let h = hsl.x;
+    let s = hsl.y;
+    let l = hsl.z;
+
+    if s == 0.0 {
+        return vec3f(l, l, l);
+    }
+
+    let q = select(l * (1.0 + s), l + s - l * s, l < 0.5);
+    let p = 2.0 * l - q;
+
+    return vec3f(
+        hue_to_rgb(p, q, h + 1.0 / 3.0),
+        hue_to_rgb(p, q, h),
+        hue_to_rgb(p, q, h - 1.0 / 3.0)
+    );
+}
+
+fn hue_to_rgb(p: f32, q: f32, t: f32) -> f32 {
+    var t_mod = t;
+    if t_mod < 0.0 { t_mod += 1.0; }
+    if t_mod > 1.0 { t_mod -= 1.0; }
+
+    if t_mod < 1.0 / 6.0 {
+        return p + (q - p) * 6.0 * t_mod;
+    } else if t_mod < 0.5 {
+        return q;
+    } else if t_mod < 2.0 / 3.0 {
+        return p + (q - p) * (2.0 / 3.0 - t_mod) * 6.0;
+    } else {
+        return p;
+    }
+}
+
+fn rgb_to_oklch(rgb: vec3f) -> vec3f {
+  let r = select(
+    rgb.x / 12.92, 
+    pow((rgb.x + 0.055) / 1.055, 2.4), 
+    rgb.x > 0.04045
+  );
+  let g = select(
+    rgb.y / 12.92, 
+    pow((rgb.y + 0.055) / 1.055, 2.4), 
+    rgb.y > 0.04045
+  );
+  let b = select(
+    rgb.z / 12.92, 
+    pow((rgb.z + 0.055) / 1.055, 2.4), 
+    rgb.z > 0.04045
+  );
+
+  let l = 0.41222147 * r + 0.53633254 * g + 0.05144599 * b;
+  let m = 0.21190350 * r + 0.68069954 * g + 0.10739696 * b;
+  let s = 0.08830246 * r + 0.28171884 * g + 0.62997870 * b;
+
+  let l_ = pow(l, 1.0 / 3.0);
+  let m_ = pow(m, 1.0 / 3.0);
+  let s_ = pow(s, 1.0 / 3.0);
+
+  let ok_l = 0.21045426 * l_ + 0.79361779 * m_ - 0.00407205 * s_;
+  let ok_a = 1.97799850 * l_ - 2.42859220 * m_ + 0.45059371 * s_;
+  let ok_b = 0.02590404 * l_ + 0.78277177 * m_ - 0.80867577 * s_;
+
+  let c = length(vec2f(ok_a, ok_b));
+  let h = fract(degrees(atan2(ok_b, ok_a)) / 360.0);
+
+  return vec3f(ok_l, c, h);
+}
+
+fn oklch_to_rgb(oklch: vec3f) -> vec3f {
+  let l = oklch.x;
+  let c = oklch.y;
+  let h = oklch.z * 360.0;
+
+  let cx = cos(radians(h)) * c;
+  let cy = sin(radians(h)) * c;
+
+  let l_ = l + 0.39633778 * cx + 0.21580376 * cy;
+  let m_ = l - 0.10556135 * cx - 0.06385417 * cy;
+  let s_ = l - 0.08948418 * cx - 1.29148555 * cy;
+
+  let l3 = l_ * l_ * l_;
+  let m3 = m_ * m_ * m_;
+  let s3 = s_ * s_ * s_;
+
+  let r_lin = 4.07674166 * l3 - 3.30771159 * m3 + 0.23096993 * s3;
+  let g_lin = -1.26843800 * l3 + 2.60975740 * m3 - 0.34131940 * s3;
+  let b_lin = -0.00419609 * l3 - 0.70341861 * m3 + 1.70761470 * s3;
+
+  let r = select(
+    12.92 * r_lin, 
+    1.055 * pow(r_lin, 1.0 / 2.4) - 0.055, 
+    r_lin > 0.0031308
+  );
+  let g = select(
+    12.92 * g_lin, 
+    1.055 * pow(g_lin, 1.0 / 2.4) - 0.055, 
+    g_lin > 0.0031308
+  );
+  let b = select(
+    12.92 * b_lin, 
+    1.055 * pow(b_lin, 1.0 / 2.4) - 0.055, 
+    b_lin > 0.0031308
+  );
+
+  return clamp(vec3f(r, g, b), vec3f(0.0), vec3f(1.0));
+}
+
 fn mix_additive(c1: vec3f, c2: vec3f) -> vec3f {
     return clamp(c1 + c2, vec3f(0.0), vec3f(1.0));
+    
 }
 
 fn mix_subtractive(c1: vec3f, c2: vec3f) -> vec3f {

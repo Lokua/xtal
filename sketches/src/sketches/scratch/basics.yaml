@@ -63,9 +63,7 @@ step_size:
   type: slider
   default: 10.0
   range: [1, 20]
-  disabled:
-    mode is not gradient_stepped and mode is not circle stepped and mode is not
-    grid_radial
+  disabled: mode is not gradient_stepped and mode is not circle stepped
 
 warp_amt:
   var: c1
