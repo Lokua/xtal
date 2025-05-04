@@ -60,7 +60,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let ma4 = select(ma4a, ma4b, use_ma_b);
     let contrast = params.e.x;
     let show_masks = params.e.w == 1.0;
-    let grain_size = params.f.x;
+    let grain_size = params.f.x * 10.0;
     let swirl = params.f.y;
     let posterize = bool(params.f.z);
     let posterize_steps = params.f.w;
