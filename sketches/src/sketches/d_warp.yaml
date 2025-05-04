@@ -2,6 +2,17 @@
 #  FBM
 # ------------------------------------------------------------------------------
 
+hash_alg:
+  var: e3
+  type: select
+  default: hash
+  options:
+    - rand_hash_dot3
+    - rand_sine_dot
+    - rand_fract
+    - rand_bit_style
+    - rand_int_floor
+
 amp:
   var: a4
   type: slider
@@ -10,13 +21,34 @@ amp:
 freq:
   var: b1
   type: slider
-  range: [0, 10]
+  range: [0, 40]
   default: 3
+
+swirl:
+  var: f2
+  type: slider
+
+show_grains:
+  var: g1
+  type: checkbox
+
+grain_size:
+  var: f1
+  type: slider
+  range: [50, 1000]
+  default: 500
+  disabled: not show_grains
+
+show_masks:
+  var: e4
+  type: checkbox
+  default: true
 
 # toggle between maNa and maNb animations
 use_ma_b:
   var: e2
   type: checkbox
+  disabled: not show_masks
 
 # ------------------------------------------------------------------------------
 #  Color
@@ -25,19 +57,36 @@ use_ma_b:
 color:
   type: separator
 
-lch_chroma:
-  var: b3
+l:
+  var: b2
   type: slider
 
-lch_hue:
-  var: b2
+c:
+  var: b3
+  type: slider
+  range: [0, 0.5]
+
+h:
+  var: b4
   type: slider
 
 contrast:
   var: e1
   type: slider
-  range: [1, 3]
-  default: 1
+  range: [1, 10]
+  default: 0
+
+posterize:
+  var: f3
+  type: checkbox
+
+posterize_steps:
+  var: f4
+  type: slider
+  range: [2, 6]
+  step: 1
+  default: 3
+  disabled: not posterize
 
 # ------------------------------------------------------------------------------
 #  Mask Animations

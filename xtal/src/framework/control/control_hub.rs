@@ -293,13 +293,8 @@ impl<T: TimingSource> ControlHub<T> {
         ) = (&config.kind, &mut *effect)
         {
             let carrier = modulator;
-            warn_once!("before");
             self.update_effect_params(m, carrier, current_frame);
-            warn_once!("after update");
-            let v =
-                m.apply(value, self.get_raw(modulation_source, current_frame));
-            warn_once!("after apply");
-            v
+            m.apply(value, self.get_raw(modulation_source, current_frame))
         } else {
             match effect {
                 Effect::Constrain(m) => m.apply(value),
@@ -1023,6 +1018,7 @@ impl<T: TimingSource> ControlHub<T> {
                         value,
                         disabled,
                     };
+
                     self.ui_controls.add(id, checkbox);
                 }
                 ControlType::Select => {
