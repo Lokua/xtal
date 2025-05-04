@@ -12,8 +12,8 @@ creating stuff like this:
 />
 
 You can see more screenshots here on github by looking at the auto generated
-[markdown index](index.md) or checkout audio-visual compositions on
-[Instagram][insta].
+[image index](https://lokua.github.io/xtal/) or checkout audio-visual
+compositions on [Instagram][insta].
 
 ## Intro
 
