@@ -1,0 +1,128 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Select",
+      "name": "mode",
+      "value": "grid_warped"
+    },
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "thickness",
+      "value": 0.025
+    },
+    {
+      "type": "Slider",
+      "name": "cell_size",
+      "value": 0.375
+    },
+    {
+      "type": "Slider",
+      "name": "step_size",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amt",
+      "value": 0.5804
+    },
+    {
+      "type": "Slider",
+      "name": "softness",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Select",
+          "name": "mode",
+          "value": "grid_warped"
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "cell_size",
+          "value": 0.025
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "thickness",
+          "value": 0.025
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.0664
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Select",
+          "name": "mode",
+          "value": "grid_warped"
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "thickness",
+          "value": 0.025
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "cell_size",
+          "value": 0.375
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.5804
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}

@@ -12,9 +12,24 @@ mode:
     - circle
     - circle_stepped
     - grid
-    - grid_warped
+    - grid_smooth
     - grid_radial
-    - grid_multi
+    - grid_warped
+
+a1:
+  var: c3
+  type: triangle
+  beats: 8
+
+a2:
+  var: c4
+  type: triangle
+  beats: 12
+
+a3:
+  var: d1
+  type: triangle
+  beats: 20
 
 radius:
   var: b1
@@ -22,23 +37,26 @@ radius:
   default: 0.25
   disabled:
     mode is not circle and mode is not circle_stepped and mode is not
-    grid_radial and mode is not grid_multi
+    grid_radial
 
 thickness:
   var: b2
   type: slider
   default: 0.1
+  step: 0.025
+  range: [0.025, 0.475]
   disabled:
     mode is not grid and mode is not grid_warped and mode is not grid_radial and
-    mode is not grid_multi
+    mode is not grid_smooth
 
-grid_size:
+cell_size:
   var: b4
   type: slider
   default: 0.2
+  step: 0.025
   disabled:
     mode is not grid and mode is not grid_warped and mode is not grid_radial and
-    mode is not grid_multi
+    mode is not grid_smooth
 
 step_size:
   var: b3
@@ -47,11 +65,15 @@ step_size:
   range: [1, 20]
   disabled:
     mode is not gradient_stepped and mode is not circle stepped and mode is not
-    grid_radial and mode is not grid_multi
+    grid_radial
 
 warp_amt:
   var: c1
   type: slider
-  disabled:
-    mode is not grid_warped and mode is not grid_radial and mode is not
-    grid_multi
+  disabled: mode is not grid_warped and mode is not grid_radial
+
+softness:
+  var: c2
+  type: slider
+  default: 0.2
+  disabled: mode is not grid_warped and mode is not grid_smooth
