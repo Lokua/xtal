@@ -154,6 +154,37 @@ fn random_normal(seed: u32, mean: f32, stddev: f32) -> f32 {
     return mean + stddev * z0;
 }
 
+fn rand_hash_dot3(p: vec2f) -> f32 {
+    let p3 = fract(vec3f(p.xyx) * 0.13);
+    let p4 = p3 + vec3f(7.0, 157.0, 113.0);
+    return fract(dot(p4, vec3f(268.5453123, 143.2354234, 424.2424234)));
+}
+
+fn rand_fract(p: vec2f) -> f32 {
+    let q = fract(p * vec2f(123.34, 456.21));
+    return fract(q.x * q.y * 19.19);
+}
+
+fn rand_3d_hash_collapse(p: vec2f) -> f32 {
+    let p3 = fract(vec3f(p.xyx) * 0.1031);
+    let p4 = p3 + dot(p3, p3.yzx + 19.19);
+    return fract((p4.x + p4.y) * p4.z);
+}
+
+fn rand_bit_style(p: vec2f) -> f32 {
+    let k1 = 0.3183099; // 1/PI
+    let k2 = 0.3678794; // 1/e
+    let x = sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453;
+    return fract(x * k1 + k2);
+}
+
+fn rand_int_floor(p: vec2f) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let n = dot(i, vec2f(1.0, 57.0));
+    return fract(sin(n) * 43758.5453123);
+}
+
 // -----------------------------------------------------------------------------
 //  COLOR
 // -----------------------------------------------------------------------------

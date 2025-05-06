@@ -1,3 +1,6 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
 # ------------------------------------------------------------------------------
 #  Main
 # ------------------------------------------------------------------------------
@@ -48,6 +51,17 @@ softness:
   default: 0.2
   disabled: map_mode is not smax
 
+segment:
+  var: g2
+  type: checkbox
+
+segment_size:
+  var: g3
+  type: slider
+  default: 12
+  range: [1, 24]
+  disabled: not segment
+
 # ------------------------------------------------------------------------------
 #  Rotation
 # ------------------------------------------------------------------------------
@@ -58,6 +72,14 @@ rotation:
 rotate:
   var: b3
   type: checkbox
+
+rot_t:
+  var: g4
+  type: slider
+  default: 0.0375
+  range: [0.025, 1]
+  step: 0.025
+  disabled: not rotate
 
 twist_x:
   var: b4
@@ -79,7 +101,7 @@ auto_rot_x:
 rot_x:
   var: e1
   type: slider
-  range: [0, 7]
+  range: [0, *TAU]
   disabled: not rotate or auto_rot_x
 
 auto_rot_y:
@@ -90,5 +112,44 @@ auto_rot_y:
 rot_y:
   var: e2
   type: slider
-  range: [0, 7]
+  range: [0, *TAU]
   disabled: not rotate or auto_rot_y
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+noise:
+  var: e3
+  type: checkbox
+  disabled: posterize
+
+posterize:
+  var: e4
+  type: checkbox
+
+posterize_steps:
+  var: f1
+  type: slider
+  range: [6, 48]
+  default: 24
+  step: 6
+
+r:
+  var: f2
+  type: slider
+g:
+  var: f3
+  type: slider
+b:
+  var: f4
+  type: slider
+
+white_intensity:
+  var: g1
+  type: slider
+  range: [1, 10]
+  default: 1.5

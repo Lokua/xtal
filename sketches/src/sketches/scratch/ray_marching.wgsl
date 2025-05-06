@@ -21,9 +21,13 @@ struct Params {
     c: vec4f,
     // a3, twist_y, animate_rot_x, animate_rot_y
     d: vec4f,
-    // rot_x, rot_y, ..
+    // rot_x, rot_y, posterize_steps, posterize
     e: vec4f,
+    // color_steps, r, g, b
     f: vec4f,
+    // white_intensity, segment, segment_size, rot_t
+    g: vec4f,
+    h: vec4f,
 }
 
 @group(0) @binding(0)
@@ -50,6 +54,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let a1 = params.c.z;
     let a2 = params.c.w;
     let a3 = params.d.x;
+    let posterize = bool(params.e.w);
 
     let p = correct_aspect(position);
 
@@ -59,12 +64,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let color = ray_march(p, ray_origin, ray_direction);
 
-    return vec4f(color, select(1.0, 0.01, all(color == vec3f(0.0)))); 
+    return select(
+        vec4f(color, select(1.0, 0.01, all(color == vec3f(0.0)))), 
+        vec4f(color, 1.0), 
+        posterize
+    );
 }
 
 
 fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
-    let t = params.a.z * 0.25;
+    let rot_t = params.g.w;
+    let t = params.a.z * rot_t;
     let rot = bool(params.b.z);
     let twist_x = params.b.w;
     let twist_y = params.d.y;
@@ -72,46 +82,63 @@ fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
     let animate_rot_y = bool(params.d.w);
     let rot_x = params.e.x;
     let rot_y = params.e.y;
+    let posterize = bool(params.e.w);
+    let color_steps = params.f.x;
+    let r = params.f.y;
+    let g = params.f.z;
+    let b = params.f.w;
+    let white_intensity = params.g.x;
 
     var total_distance_traveled = 0.0;
     let steps = 64;
     let min_hit_distance = 0.001;
     let max_trace_distance = 1000.0;
-    let bg_color = vec3f(0.45);
-    let light_position = vec3f(5.0, -25.0, 2.0);
+    let light_position = vec3f(5.0, -25.0, .0);
+    let color = vec3f(r, g, b);
     let noise = fbm(p);
-    let rx = twist_x + select(rot_x, t, animate_rot_x);
-    let ry = twist_y + select(rot_y, t, animate_rot_y);
+    let rx = select(rot_x, t, animate_rot_x);
+    let ry = select(rot_y, t, animate_rot_y);
 
     for (var i = 0; i < steps; i++) {
-        var current_position = 
+        var current_p = 
             ray_origin + total_distance_traveled * ray_direction;
 
         if (rot) {
-            let xz = rotate(current_position.xz, current_position.y * rx);
-            current_position.x = xz.x;
-            current_position.z = xz.y;
+            let xz = rotate(current_p.xz, current_p.y * twist_x + rx);
+            current_p.x = xz.x;
+            current_p.z = xz.y;
 
-            let yz = rotate(current_position.yz, current_position.y *  ry);
-            current_position.y = yz.x;
-            current_position.z = yz.y;
+            let yz = rotate(current_p.yz, current_p.y * twist_y + ry);
+            current_p.y = yz.x;
+            current_p.z = yz.y;
         }
 
-        let distance_to_closest = map(current_position);
+        let distance_to_closest = map(current_p);
 
         if (distance_to_closest < min_hit_distance) {
-            let normal = calculate_normal(current_position);
+            let normal = calculate_normal(current_p);
 
             let direction_to_light = 
-                normalize(current_position - light_position);
+                normalize(current_p - light_position);
 
-            let diffuse_intensity = max(0.02, dot(normal, direction_to_light));
+            var diffuse = max(
+                // This 0.02 value is tightly coupled to the fs_main black
+                // detection where we use black for outlines and then "erase"
+                // them via 0.0 alpha. Moving this below ~0.2 produces unwanted
+                // trails under that condition - be careful editing
+                0.02, 
+                dot(normal, direction_to_light)
+            );
 
-            return vec3f(0.9) * diffuse_intensity;
+            if (posterize) {
+                diffuse = floor(diffuse * color_steps) / color_steps;
+            }
+
+            return vec3f(color * white_intensity) * diffuse;
         }
 
         if (total_distance_traveled > max_trace_distance) {
-            return mix(bg_color, vec3f(noise - 0.45, noise - 0.15, noise), 0.25);
+            return mix(color / white_intensity, vec3f(noise) - color, 0.0);
         }
         
         total_distance_traveled += distance_to_closest;
@@ -137,15 +164,27 @@ fn map(p: vec3f) -> f32 {
     let softness = params.c.y;
     let map_mode = i32(params.a.w);
     let disp_freq = params.b.y;
+    let posterize_steps = bool(params.e.z);
+    let posterize = bool(params.e.w);
+    let segment = bool(params.g.y);
+    let segment_size = params.g.z;
 
     let freq = disp_freq;
-    let noise = fbm(p.xy) * warp_amt * 0.025;
+    let noise = select(
+        0.0, 
+        fbm(p.xy) * warp_amt * 0.0025, 
+        !posterize && posterize_steps
+    );
     let wave = sin(freq * p);
     let product = wave.x * wave.y * wave.z;
-    let displacement = (product + noise) *  warp_amt;
+    let displacement = select(
+        (product + noise) *  warp_amt,
+        floor(product * segment_size) / segment_size * warp_amt,
+        segment
+    );
 
-    let sdf1 = distance_from_sphere(p, vec3f(0.0));
-    let sdf2 = distance_from_sphere(p, vec3f(0.0)) - 0.0618;
+    let sdf1 = sd_sphere(p, vec3f(0.0));
+    let sdf2 = sd_sphere(p, vec3f(0.0)) + displacement - 0.0618 * 1.5;
 
     if (map_mode == 0) {
         return sdf1 + displacement;
@@ -158,7 +197,13 @@ fn map(p: vec3f) -> f32 {
     return smax(sdf1, -sdf2, softness) + displacement;
 }
 
-fn distance_from_sphere(p: vec3f, c: vec3f) -> f32 {
+fn gyr(p: vec3f) -> f32 {
+    let a = sin(p.xyz);
+    let b = cos(p.zxy);
+    return mix(dot(a, b), length(a - b), 0.0);
+}
+
+fn sd_sphere(p: vec3f, c: vec3f) -> f32 {
     let radius = params.b.x;
     return length(p - c) - radius;
 }

@@ -193,11 +193,6 @@ fn fbm(p: vec2f) -> f32 {
     return t;
 }
 
-fn harmonic_noise(p: vec2f) -> f32 {
-    let t = params.a.z;
-    return sin(p.x * 4.0 + sin(p.y * 4.0 + t)) * 0.5 + 0.5;
-}
-
 fn rotate(v: vec2f, angle: f32) -> vec2f {
     let c = cos(angle);
     let s = sin(angle);
@@ -300,75 +295,75 @@ fn mix_angle(a: f32, b: f32, t: f32) -> f32 {
 }
 
 fn rgb_to_oklch(rgb: vec3f) -> vec3f {
-  let r = select(
-    rgb.x / 12.92, 
-    pow((rgb.x + 0.055) / 1.055, 2.4), 
-    rgb.x > 0.04045
-  );
-  let g = select(
-    rgb.y / 12.92, 
-    pow((rgb.y + 0.055) / 1.055, 2.4), 
-    rgb.y > 0.04045
-  );
-  let b = select(
-    rgb.z / 12.92, 
-    pow((rgb.z + 0.055) / 1.055, 2.4), 
-    rgb.z > 0.04045
-  );
+    let r = select(
+        rgb.x / 12.92, 
+        pow((rgb.x + 0.055) / 1.055, 2.4), 
+        rgb.x > 0.04045
+    );
+    let g = select(
+        rgb.y / 12.92, 
+        pow((rgb.y + 0.055) / 1.055, 2.4), 
+        rgb.y > 0.04045
+    );
+    let b = select(
+        rgb.z / 12.92, 
+        pow((rgb.z + 0.055) / 1.055, 2.4), 
+        rgb.z > 0.04045
+    );
 
-  let l = 0.41222147 * r + 0.53633254 * g + 0.05144599 * b;
-  let m = 0.21190350 * r + 0.68069954 * g + 0.10739696 * b;
-  let s = 0.08830246 * r + 0.28171884 * g + 0.62997870 * b;
+    let l = 0.41222147 * r + 0.53633254 * g + 0.05144599 * b;
+    let m = 0.21190350 * r + 0.68069954 * g + 0.10739696 * b;
+    let s = 0.08830246 * r + 0.28171884 * g + 0.62997870 * b;
 
-  let l_ = pow(l, 1.0 / 3.0);
-  let m_ = pow(m, 1.0 / 3.0);
-  let s_ = pow(s, 1.0 / 3.0);
+    let l_ = pow(l, 1.0 / 3.0);
+    let m_ = pow(m, 1.0 / 3.0);
+    let s_ = pow(s, 1.0 / 3.0);
 
-  let ok_l = 0.21045426 * l_ + 0.79361779 * m_ - 0.00407205 * s_;
-  let ok_a = 1.97799850 * l_ - 2.42859220 * m_ + 0.45059371 * s_;
-  let ok_b = 0.02590404 * l_ + 0.78277177 * m_ - 0.80867577 * s_;
+    let ok_l = 0.21045426 * l_ + 0.79361779 * m_ - 0.00407205 * s_;
+    let ok_a = 1.97799850 * l_ - 2.42859220 * m_ + 0.45059371 * s_;
+    let ok_b = 0.02590404 * l_ + 0.78277177 * m_ - 0.80867577 * s_;
 
-  let c = length(vec2f(ok_a, ok_b));
-  let h = fract(degrees(atan2(ok_b, ok_a)) / 360.0);
+    let c = length(vec2f(ok_a, ok_b));
+    let h = fract(degrees(atan2(ok_b, ok_a)) / 360.0);
 
-  return vec3f(ok_l, c, h);
+    return vec3f(ok_l, c, h);
 }
 
 fn oklch_to_rgb(oklch: vec3f) -> vec3f {
-  let l = oklch.x;
-  let c = oklch.y;
-  let h = oklch.z * 360.0;
+    let l = oklch.x;
+    let c = oklch.y;
+    let h = oklch.z * 360.0;
 
-  let cx = cos(radians(h)) * c;
-  let cy = sin(radians(h)) * c;
+    let cx = cos(radians(h)) * c;
+    let cy = sin(radians(h)) * c;
 
-  let l_ = l + 0.39633778 * cx + 0.21580376 * cy;
-  let m_ = l - 0.10556135 * cx - 0.06385417 * cy;
-  let s_ = l - 0.08948418 * cx - 1.29148555 * cy;
+    let l_ = l + 0.39633778 * cx + 0.21580376 * cy;
+    let m_ = l - 0.10556135 * cx - 0.06385417 * cy;
+    let s_ = l - 0.08948418 * cx - 1.29148555 * cy;
 
-  let l3 = l_ * l_ * l_;
-  let m3 = m_ * m_ * m_;
-  let s3 = s_ * s_ * s_;
+    let l3 = l_ * l_ * l_;
+    let m3 = m_ * m_ * m_;
+    let s3 = s_ * s_ * s_;
 
-  let r_lin = 4.07674166 * l3 - 3.30771159 * m3 + 0.23096993 * s3;
-  let g_lin = -1.26843800 * l3 + 2.60975740 * m3 - 0.34131940 * s3;
-  let b_lin = -0.00419609 * l3 - 0.70341861 * m3 + 1.70761470 * s3;
+    let r_lin = 4.07674166 * l3 - 3.30771159 * m3 + 0.23096993 * s3;
+    let g_lin = -1.26843800 * l3 + 2.60975740 * m3 - 0.34131940 * s3;
+    let b_lin = -0.00419609 * l3 - 0.70341861 * m3 + 1.70761470 * s3;
 
-  let r = select(
-    12.92 * r_lin, 
-    1.055 * pow(r_lin, 1.0 / 2.4) - 0.055, 
-    r_lin > 0.0031308
-  );
-  let g = select(
-    12.92 * g_lin, 
-    1.055 * pow(g_lin, 1.0 / 2.4) - 0.055, 
-    g_lin > 0.0031308
-  );
-  let b = select(
-    12.92 * b_lin, 
-    1.055 * pow(b_lin, 1.0 / 2.4) - 0.055, 
-    b_lin > 0.0031308
-  );
+    let r = select(
+        12.92 * r_lin, 
+        1.055 * pow(r_lin, 1.0 / 2.4) - 0.055, 
+        r_lin > 0.0031308
+    );
+    let g = select(
+        12.92 * g_lin, 
+        1.055 * pow(g_lin, 1.0 / 2.4) - 0.055, 
+        g_lin > 0.0031308
+    );
+    let b = select(
+        12.92 * b_lin, 
+        1.055 * pow(b_lin, 1.0 / 2.4) - 0.055, 
+        b_lin > 0.0031308
+    );
 
-  return clamp(vec3f(r, g, b), vec3f(0.0), vec3f(1.0));
+    return clamp(vec3f(r, g, b), vec3f(0.0), vec3f(1.0));
 }

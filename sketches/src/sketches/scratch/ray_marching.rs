@@ -17,7 +17,7 @@ pub struct RayMarching {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 6)]
+#[uniforms(banks = 8)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> RayMarching {

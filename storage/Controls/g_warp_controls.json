@@ -32,9 +32,14 @@
       "value": 1.0
     },
     {
+      "type": "Slider",
+      "name": "noise_mix",
+      "value": 0.0
+    },
+    {
       "type": "Checkbox",
       "name": "invert",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
