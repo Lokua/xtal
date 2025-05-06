@@ -46,8 +46,7 @@ function main() {
     let markdown = `
 Files sorted from most to least recent. Source code available on 
 [GitHub](https://github.com/Lokua/xtal).
-
-
+\n\n
 `
     for (const { filename } of imageIndex.items) {
       markdown += `## ${filename}\n\n`
