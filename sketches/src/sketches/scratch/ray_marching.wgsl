@@ -1,3 +1,4 @@
+// https://michaelwalczyk.com/blog-ray-marching.html
 // https://www.fxhash.xyz/article/unleashing-the-power-of-shaders-for-generative-art%3A-an-inside-look-at-the-creation-of-%27shoals%27
 
 const TAU: f32 = 6.283185307179586;
