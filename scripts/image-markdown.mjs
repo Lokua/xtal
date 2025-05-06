@@ -43,10 +43,12 @@ function main() {
       )
     }
 
-    let markdown = 'Files sorted from most to least recent. '
-    markdown +=
-      'Source code available on [GitHub/Lokua](https://github.com/Lokua/xtal).'
+    let markdown = `
+Files sorted from most to least recent. Source code available on 
+[GitHub](https://github.com/Lokua/xtal).
 
+
+`
     for (const { filename } of imageIndex.items) {
       markdown += `## ${filename}\n\n`
       markdown += `<img src="${bucket}/${filename}" alt="${filename}">\n\n`
