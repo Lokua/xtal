@@ -67,6 +67,7 @@ pub use self::scratch::fb;
 pub use self::scratch::lines;
 pub use self::scratch::noise;
 pub use self::scratch::perlin_loop;
+pub use self::scratch::ray_marching;
 pub use self::scratch::sand_line;
 pub use self::scratch::unt;
 pub use self::scratch::vertical;

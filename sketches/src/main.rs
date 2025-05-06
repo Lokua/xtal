@@ -83,6 +83,7 @@ fn main() {
         lines,
         noise,
         perlin_loop,
+        ray_marching,
         sand_line,
         unt,
         vertical,

@@ -1,0 +1,94 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+a1:
+  var: c3
+  type: triangle
+  beats: 8
+
+a2:
+  var: c4
+  type: triangle
+  beats: 12
+
+a3:
+  var: d1
+  type: triangle
+  beats: 20
+
+radius:
+  var: b1
+  type: slider
+  range: [0.01, 3.0]
+  default: 0.25
+
+warp_amt:
+  var: c1
+  type: slider
+
+disp_freq:
+  var: b2
+  type: slider
+  range: [0.0, 20.0]
+  default: 5.0
+
+map_mode:
+  var: a4
+  type: select
+  default: default
+  options:
+    - default
+    - max
+    - smax
+
+softness:
+  var: c2
+  type: slider
+  default: 0.2
+  disabled: map_mode is not smax
+
+# ------------------------------------------------------------------------------
+#  Rotation
+# ------------------------------------------------------------------------------
+
+rotation:
+  type: separator
+
+rotate:
+  var: b3
+  type: checkbox
+
+twist_x:
+  var: b4
+  type: slider
+  range: [0, 7]
+  disabled: not rotate
+
+twist_y:
+  var: d2
+  type: slider
+  range: [0, 7]
+  disabled: not rotate
+
+auto_rot_x:
+  var: d3
+  type: checkbox
+  disabled: not rotate
+
+rot_x:
+  var: e1
+  type: slider
+  range: [0, 7]
+  disabled: not rotate or auto_rot_x
+
+auto_rot_y:
+  var: d4
+  type: checkbox
+  disabled: not rotate
+
+rot_y:
+  var: e2
+  type: slider
+  range: [0, 7]
+  disabled: not rotate or auto_rot_y

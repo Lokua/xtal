@@ -1,0 +1,75 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "radius",
+      "value": 1.0764
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amt",
+      "value": 0.1294
+    },
+    {
+      "type": "Slider",
+      "name": "disp_freq",
+      "value": 8.7413
+    },
+    {
+      "type": "Select",
+      "name": "map_mode",
+      "value": "default"
+    },
+    {
+      "type": "Slider",
+      "name": "softness",
+      "value": 0.2
+    },
+    {
+      "type": "Checkbox",
+      "name": "rotate",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "twist_x",
+      "value": 2.3497
+    },
+    {
+      "type": "Slider",
+      "name": "twist_y",
+      "value": 0.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_rot_x",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "rot_x",
+      "value": 0.6119
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_rot_y",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "rot_y",
+      "value": 2.2028
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": [
+    "map_mode",
+    "rotate",
+    "auto_rot_x",
+    "auto_rot_y"
+  ]
+}

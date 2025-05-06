@@ -8,6 +8,7 @@ pub mod fb;
 pub mod lines;
 pub mod noise;
 pub mod perlin_loop;
+pub mod ray_marching;
 pub mod sand_line;
 pub mod unt;
 pub mod vertical;
