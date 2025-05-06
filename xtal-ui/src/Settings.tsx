@@ -108,6 +108,7 @@ export default function Settings({
         <h2>Storage</h2>
         <fieldset
           data-help-id="UserDataDir"
+          title={userDataDir}
           className="folder-option"
           onClick={() => {
             onChangeFolder(UserDir.UserData)
@@ -121,6 +122,7 @@ export default function Settings({
         </fieldset>
         <fieldset
           data-help-id="ImagesDir"
+          title={imagesDir}
           className="folder-option"
           onClick={() => {
             onChangeFolder(UserDir.Images)
@@ -134,6 +136,7 @@ export default function Settings({
         </fieldset>
         <fieldset
           data-help-id="VideosDir"
+          title={videosDir}
           className="folder-option"
           onClick={() => {
             onChangeFolder(UserDir.Videos)
