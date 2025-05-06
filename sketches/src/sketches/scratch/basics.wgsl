@@ -1,3 +1,7 @@
+const TAU: f32 = 6.283185307179586;
+const PHI: f32 = 1.61803398875;
+
+// Modes
 const GRADIENT: i32 = 0;
 const GRADIENT_STEPPED: i32 = 1;
 const CIRCLE: i32 = 2;
@@ -6,6 +10,7 @@ const GRID: i32 = 4;
 const GRID_SMOOTH: i32 = 5;
 const GRID_RADIAL: i32 = 6;
 const GRID_WARPED: i32 = 7;
+const RAY_MARCH: i32 = 8;
 
 struct VertexInput {
     @location(0) position: vec2f,
@@ -200,7 +205,132 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         return vec4f(vec3f(o), 1.0);
     }
 
+    // Following along at: https://michaelwalczyk.com/blog-ray-marching.html
+    if (mode == RAY_MARCH) {
+        // z is kind of like fov (field of view)
+        let cam_pos = vec3f(0.0, 0.0, -2.0);
+        var ray_origin = cam_pos;
+        var ray_direction = vec3f(p, 1.0);
+        let shaded_color = ray_march(p, ray_origin, ray_direction);
+        return vec4f(shaded_color, 1.0); 
+    }
+
     return vec4f(1.0);
+}
+
+
+fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
+    let t = params.a.z * 0.25;
+
+    var total_distance_traveled = 0.0;
+    let steps = 64;
+    let min_hit_distance = 0.001;
+    let max_trace_distance = 1000.0;
+
+    for (var i = 0; i < steps; i++) {
+        var current_position = 
+            ray_origin + total_distance_traveled * ray_direction;
+
+        // let xz = rotate(current_position.xz, current_position.y * 0.3 + t);
+        // current_position.x = xz.x;
+        // current_position.z = xz.y;
+        // let yz = rotate(current_position.yz, current_position.y * 0.5 + t);
+        // current_position.y = yz.x;
+        // current_position.z = yz.y;
+
+        let distance_to_closest = map_the_world(current_position);
+
+        if (distance_to_closest < min_hit_distance) {
+            let normal = calculate_normal(current_position);
+            let light_position = vec3f(5.0, -2.0, 2.0);
+            let direction_to_light = 
+                normalize(current_position - light_position);
+            let diffuse_intensity = max(0.02, dot(normal, direction_to_light));
+            // return normal * 0.5 + 0.5;
+            // return (normal * 0.5 + 0.5) * diffuse_intensity;
+            // return (vec3f(0.33, 0.4, 1.0) * diffuse_intensity);
+            return (vec3f(0.9) * diffuse_intensity);
+        }
+
+        if (total_distance_traveled > max_trace_distance) {
+            break;
+        }
+        
+        total_distance_traveled += distance_to_closest;
+    }
+
+    let noise = fbm(p);
+    return vec3f(noise - 0.45, noise - 0.15, noise);
+}
+
+fn calculate_normal(p: vec3f) -> vec3f {
+    let step = vec3f(0.001, 0.0, 0.0);
+
+    let gx = map_the_world(p + step.xyy) - map_the_world(p - step.xyy);
+    let gy = map_the_world(p + step.yxy) - map_the_world(p - step.yxy);
+    let gz = map_the_world(p + step.yyx) - map_the_world(p - step.yyx);
+
+    let normal = vec3f(gx, gy, gz);
+
+    return normalize(normal);
+}
+
+fn map_the_world(p: vec3f) -> f32 {
+    let warp_amt = params.c.x;
+    let softness = params.c.y;
+
+    let freq = 5.0;
+    let noise = fbm(p.xy) * warp_amt * 0.025;
+    let wave = sin(freq * p);
+    let product = wave.x * wave.y * wave.z;
+    let displacement = (product + noise) *  warp_amt;
+
+    let sdf1 = distance_from_sphere(p, vec3f(0.0));
+    let sdf2 = distance_from_sphere(p, vec3f(0.0)) - 0.0618;
+
+    return sdf1 + displacement;
+    // return max(sdf1, -sdf2) + displacement;
+    // return smax(sdf1, -sdf2, softness) + displacement;
+}
+
+fn distance_from_sphere(p: vec3f, c: vec3f) -> f32 {
+    let radius = params.b.x;
+    return length(p - c) - radius;
+}
+
+fn fbm(p: vec2f) -> f32 {
+    let OCTAVES = 5;
+    let G = 0.5;
+
+    var value = 0.0;
+    var amplitude = 1.0;
+    var frequency = 1.0;
+
+    for (var i = 0; i < OCTAVES; i++) {
+        value = value + random2(p * frequency) * amplitude;
+        frequency = frequency * 2.0;
+        amplitude = amplitude * G;
+    }
+
+    return value;
+}
+
+fn random2(p: vec2f) -> f32 {
+    return fract(sin(dot(p, vec2f(12.9898, 78.233))) * 43758.5453);
+}
+
+fn smax(a: f32, b: f32, k: f32) -> f32 {
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(a, b, h) - k * h * (1.0 - h);
+}
+
+fn rotate(v: vec2f, a: f32) -> vec2f {
+    let s = sin(a);
+    let c = cos(a);
+    return vec2f(
+        c * v.x - s * v.y,
+        s * v.x + c * v.y,
+    );
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {

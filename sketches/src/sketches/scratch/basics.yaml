@@ -15,6 +15,7 @@ mode:
     - grid_smooth
     - grid_radial
     - grid_warped
+    - ray_march
 
 a1:
   var: c3
@@ -37,7 +38,7 @@ radius:
   default: 0.25
   disabled:
     mode is not circle and mode is not circle_stepped and mode is not
-    grid_radial
+    grid_radial and mode is not ray_march
 
 thickness:
   var: b2
@@ -65,13 +66,17 @@ step_size:
   range: [1, 20]
   disabled: mode is not gradient_stepped and mode is not circle stepped
 
-warp_amt:
-  var: c1
-  type: slider
-  disabled: mode is not grid_warped and mode is not grid_radial
-
 softness:
   var: c2
   type: slider
   default: 0.2
-  disabled: mode is not grid_warped and mode is not grid_smooth
+  disabled:
+    mode is not grid_warped and mode is not grid_smooth and mode is not
+    ray_march
+
+warp_amt:
+  var: c1
+  type: slider
+  disabled:
+    mode is not grid_warped and mode is not grid_radial and mode is not
+    ray_march

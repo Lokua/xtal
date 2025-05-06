@@ -8,18 +8,23 @@
     },
     {
       "type": "Slider",
+      "name": "scale",
+      "value": 2.3077
+    },
+    {
+      "type": "Slider",
       "name": "cell_size",
-      "value": 0.375
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "thickness",
-      "value": 0.3
+      "value": 0.475
     },
     {
       "type": "Slider",
       "name": "warp_amt",
-      "value": 2.7273
+      "value": 3.042
     },
     {
       "type": "Slider",
@@ -29,7 +34,7 @@
     {
       "type": "Checkbox",
       "name": "invert",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",

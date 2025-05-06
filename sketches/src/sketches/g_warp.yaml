@@ -19,17 +19,21 @@ mode:
 a1:
   var: c3
   type: triangle
-  beats: 8
-
+  beats: 12
 a2:
   var: c4
   type: triangle
-  beats: 12
-
+  beats: 16
 a3:
   var: d1
   type: triangle
   beats: 20
+
+scale:
+  var: d2
+  type: slider
+  range: [0, 4]
+  default: 1
 
 cell_size:
   var: b4
@@ -55,6 +59,17 @@ softness:
   type: slider
   default: 0.2
 
+noise_mix:
+  var: d3
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
 invert:
   var: a4
   type: checkbox
@@ -63,3 +78,4 @@ chroma:
   var: b1
   type: slider
   default: 1.0
+  range: [0.0, 4.0]

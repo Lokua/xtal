@@ -17,7 +17,7 @@ pub struct GWarp {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 4)]
+#[uniforms(banks = 5)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> GWarp {

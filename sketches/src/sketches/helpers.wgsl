@@ -8,40 +8,8 @@ const PHI: f32 = 1.61803398875;
 const EPSILON: f32 = 1.1920929e-7;
 
 // -----------------------------------------------------------------------------
-//  UTILS
+//  GENERAL
 // -----------------------------------------------------------------------------
-
-fn random_v2(p: vec2f) -> f32 {
-    return fract(sin(dot(p, vec2f(12.9898, 78.233))) * 43758.5453);
-}
-
-// 2D noise functions adapted from:
-// https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
-// Not sure what's better? random_v2 or hash...
-fn hash(p: vec2f) -> f32 {
-    let p3 = fract(vec3f(p.xyx) * 0.13);
-    let p4 = p3 + vec3f(7.0, 157.0, 113.0);
-    return fract(dot(p4, vec3f(268.5453123, 143.2354234, 424.2424234)));
-}
-
-// Basic random number generation (PCG)
-fn rand_pcg(seed: u32) -> f32 {
-    var state = seed * 747796405u + 2891336453u;
-    var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    var result = (word >> 22u) ^ word;
-    return f32(result) / 4294967295.0;
-}
-
-// Box-Muller transform for normal distribution
-fn random_normal(seed: u32, mean: f32, stddev: f32) -> f32 {
-    let u1 = rand_pcg(seed);
-    let u2 = rand_pcg(seed + 1u);
-    
-    let mag = sqrt(-2.0 * log(u1));
-    let z0 = mag * cos(6.28318530718 * u2);
-    
-    return mean + stddev * z0;
-}
 
 // wgsl % operator is a remainder operator, not modulo
 fn modulo(x: f32, y: f32) -> f32 {
@@ -68,11 +36,15 @@ fn powf(x: f32, y: f32) -> f32 {
     return pow(abs(x), y);
 }
 
-
 // smooth minimum
 fn smin(a: f32, b: f32, k: f32) -> f32 {
     let h = max(k - abs(a - b), 0.0) / k;
     return min(a, b) - h * h * k * 0.25;
+}
+
+fn smax(a: f32, b: f32, k: f32) -> f32 {
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(a, b, h) - k * h * (1.0 - h);
 }
 
 fn rotate_x(p: vec3f, radians: f32) -> vec3f {
@@ -127,6 +99,59 @@ fn rotate(v: vec2f, angle: f32) -> vec2f {
 
 fn n(x: f32) -> f32 {
     return x * 0.5 + 0.5;
+}
+
+// -----------------------------------------------------------------------------
+//  RANDOM
+// -----------------------------------------------------------------------------
+
+fn fbm(p: vec2f) -> f32 {
+    let OCTAVES = 5;
+    let G = 0.5;
+
+    var value = 0.0;
+    var amplitude = 1.0;
+    var frequency = 1.0;
+
+    for (var i = 0; i < OCTAVES; i++) {
+        value = value + random2(p * frequency) * amplitude;
+        frequency = frequency * 2.0;
+        amplitude = amplitude * G;
+    }
+
+    return value;
+}
+
+fn random2(p: vec2f) -> f32 {
+    return fract(sin(dot(p, vec2f(12.9898, 78.233))) * 43758.5453);
+}
+
+// 2D noise functions adapted from:
+// https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+// Not sure what's better? random_v2 or hash...
+fn hash(p: vec2f) -> f32 {
+    let p3 = fract(vec3f(p.xyx) * 0.13);
+    let p4 = p3 + vec3f(7.0, 157.0, 113.0);
+    return fract(dot(p4, vec3f(268.5453123, 143.2354234, 424.2424234)));
+}
+
+// Basic random number generation (PCG)
+fn rand_pcg(seed: u32) -> f32 {
+    var state = seed * 747796405u + 2891336453u;
+    var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    var result = (word >> 22u) ^ word;
+    return f32(result) / 4294967295.0;
+}
+
+// Box-Muller transform for normal distribution
+fn random_normal(seed: u32, mean: f32, stddev: f32) -> f32 {
+    let u1 = rand_pcg(seed);
+    let u2 = rand_pcg(seed + 1u);
+    
+    let mag = sqrt(-2.0 * log(u1));
+    let z0 = mag * cos(6.28318530718 * u2);
+    
+    return mean + stddev * z0;
 }
 
 // -----------------------------------------------------------------------------
@@ -368,77 +393,77 @@ fn hue_to_rgb(p: f32, q: f32, t: f32) -> f32 {
 }
 
 fn rgb_to_oklch(rgb: vec3f) -> vec3f {
-  let r = select(
-    rgb.x / 12.92, 
-    pow((rgb.x + 0.055) / 1.055, 2.4), 
-    rgb.x > 0.04045
-  );
-  let g = select(
-    rgb.y / 12.92, 
-    pow((rgb.y + 0.055) / 1.055, 2.4), 
-    rgb.y > 0.04045
-  );
-  let b = select(
-    rgb.z / 12.92, 
-    pow((rgb.z + 0.055) / 1.055, 2.4), 
-    rgb.z > 0.04045
-  );
+    let r = select(
+        rgb.x / 12.92, 
+        pow((rgb.x + 0.055) / 1.055, 2.4), 
+        rgb.x > 0.04045
+    );
+    let g = select(
+        rgb.y / 12.92, 
+        pow((rgb.y + 0.055) / 1.055, 2.4), 
+        rgb.y > 0.04045
+    );
+    let b = select(
+        rgb.z / 12.92, 
+        pow((rgb.z + 0.055) / 1.055, 2.4), 
+        rgb.z > 0.04045
+    );
 
-  let l = 0.41222147 * r + 0.53633254 * g + 0.05144599 * b;
-  let m = 0.21190350 * r + 0.68069954 * g + 0.10739696 * b;
-  let s = 0.08830246 * r + 0.28171884 * g + 0.62997870 * b;
+    let l = 0.41222147 * r + 0.53633254 * g + 0.05144599 * b;
+    let m = 0.21190350 * r + 0.68069954 * g + 0.10739696 * b;
+    let s = 0.08830246 * r + 0.28171884 * g + 0.62997870 * b;
 
-  let l_ = pow(l, 1.0 / 3.0);
-  let m_ = pow(m, 1.0 / 3.0);
-  let s_ = pow(s, 1.0 / 3.0);
+    let l_ = pow(l, 1.0 / 3.0);
+    let m_ = pow(m, 1.0 / 3.0);
+    let s_ = pow(s, 1.0 / 3.0);
 
-  let ok_l = 0.21045426 * l_ + 0.79361779 * m_ - 0.00407205 * s_;
-  let ok_a = 1.97799850 * l_ - 2.42859220 * m_ + 0.45059371 * s_;
-  let ok_b = 0.02590404 * l_ + 0.78277177 * m_ - 0.80867577 * s_;
+    let ok_l = 0.21045426 * l_ + 0.79361779 * m_ - 0.00407205 * s_;
+    let ok_a = 1.97799850 * l_ - 2.42859220 * m_ + 0.45059371 * s_;
+    let ok_b = 0.02590404 * l_ + 0.78277177 * m_ - 0.80867577 * s_;
 
-  let c = length(vec2f(ok_a, ok_b));
-  let h = fract(degrees(atan2(ok_b, ok_a)) / 360.0);
+    let c = length(vec2f(ok_a, ok_b));
+    let h = fract(degrees(atan2(ok_b, ok_a)) / 360.0);
 
-  return vec3f(ok_l, c, h);
+    return vec3f(ok_l, c, h);
 }
 
 fn oklch_to_rgb(oklch: vec3f) -> vec3f {
-  let l = oklch.x;
-  let c = oklch.y;
-  let h = oklch.z * 360.0;
+    let l = oklch.x;
+    let c = oklch.y;
+    let h = oklch.z * 360.0;
 
-  let cx = cos(radians(h)) * c;
-  let cy = sin(radians(h)) * c;
+    let cx = cos(radians(h)) * c;
+    let cy = sin(radians(h)) * c;
 
-  let l_ = l + 0.39633778 * cx + 0.21580376 * cy;
-  let m_ = l - 0.10556135 * cx - 0.06385417 * cy;
-  let s_ = l - 0.08948418 * cx - 1.29148555 * cy;
+    let l_ = l + 0.39633778 * cx + 0.21580376 * cy;
+    let m_ = l - 0.10556135 * cx - 0.06385417 * cy;
+    let s_ = l - 0.08948418 * cx - 1.29148555 * cy;
 
-  let l3 = l_ * l_ * l_;
-  let m3 = m_ * m_ * m_;
-  let s3 = s_ * s_ * s_;
+    let l3 = l_ * l_ * l_;
+    let m3 = m_ * m_ * m_;
+    let s3 = s_ * s_ * s_;
 
-  let r_lin = 4.07674166 * l3 - 3.30771159 * m3 + 0.23096993 * s3;
-  let g_lin = -1.26843800 * l3 + 2.60975740 * m3 - 0.34131940 * s3;
-  let b_lin = -0.00419609 * l3 - 0.70341861 * m3 + 1.70761470 * s3;
+    let r_lin = 4.07674166 * l3 - 3.30771159 * m3 + 0.23096993 * s3;
+    let g_lin = -1.26843800 * l3 + 2.60975740 * m3 - 0.34131940 * s3;
+    let b_lin = -0.00419609 * l3 - 0.70341861 * m3 + 1.70761470 * s3;
 
-  let r = select(
-    12.92 * r_lin, 
-    1.055 * pow(r_lin, 1.0 / 2.4) - 0.055, 
-    r_lin > 0.0031308
-  );
-  let g = select(
-    12.92 * g_lin, 
-    1.055 * pow(g_lin, 1.0 / 2.4) - 0.055, 
-    g_lin > 0.0031308
-  );
-  let b = select(
-    12.92 * b_lin, 
-    1.055 * pow(b_lin, 1.0 / 2.4) - 0.055, 
-    b_lin > 0.0031308
-  );
+    let r = select(
+        12.92 * r_lin, 
+        1.055 * pow(r_lin, 1.0 / 2.4) - 0.055, 
+        r_lin > 0.0031308
+    );
+    let g = select(
+        12.92 * g_lin, 
+        1.055 * pow(g_lin, 1.0 / 2.4) - 0.055, 
+        g_lin > 0.0031308
+    );
+    let b = select(
+        12.92 * b_lin, 
+        1.055 * pow(b_lin, 1.0 / 2.4) - 0.055, 
+        b_lin > 0.0031308
+    );
 
-  return clamp(vec3f(r, g, b), vec3f(0.0), vec3f(1.0));
+    return clamp(vec3f(r, g, b), vec3f(0.0), vec3f(1.0));
 }
 
 fn mix_additive(c1: vec3f, c2: vec3f) -> vec3f {
@@ -500,7 +525,7 @@ fn mix_burn(c1: vec3f, c2: vec3f) -> vec3f {
 // -----------------------------------------------------------------------------
 
 fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {
-    let random = random_v2(p);
+    let random = random2(p);
     return clamp(color + (random - 0.5) * intensity, vec3f(0.0), vec3f(1.0));
 }
 

@@ -49,14 +49,23 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
 // Shaping Functions: linear interpolation
 fn bos_05a(pos: vec2f) -> vec4f {
+    // Convert NDC [-1.0, 1.0] to UV [0.0, 1.0] coordinates
     let uv = pos * 0.5 + 0.5;
 
     let y = uv.x;
-    var color = vec3f(y);
 
-    // Plot
-    let pct = smoothstep(params.a, 0.0, abs(uv.y - uv.x));
-    color = (1.0 - pct) * color + pct * vec3f(0.0, 1.0, 0.0);
+    // Black->white gradient from bottom-to-top 
+    // (uv.x would produce left-to-right)
+    var color = vec3f(uv.y);
+
+    // Without abs, this colors the entire bottom-right half/triangle
+    // let diagonal_line = uv.y - uv.x;
+    let diagonal_line = abs(uv.y - uv.x);
+
+    // Plot, pct = percent
+    let pct = smoothstep(params.a, 0.0, diagonal_line);
+
+    color = (1.0 - pct) * color + pct * vec3f(1.0, 0.0, 0.0);
 
     return vec4f(color, 1.0);
 }
@@ -200,14 +209,14 @@ fn bos_07d(pos: vec2f) -> vec4f {
 
 // Polar Shapes
 fn bos_07e(pos: vec2f) -> vec4f {
-    let r = length(pos) * 2.0;
+    let r = length(pos) * 1.5;
     let a = atan2(pos.y, pos.x);
     let v = trunc(params.a * 20.0);
     // let f = cos(a * v);
     // let f = abs(cos(a * v));
     // let f = abs(cos(a * v)) * 0.75 + 0.9;
-    let f = abs(cos(a * 12.0) * sin(a * v)) * 0.8 + 0.1;
-    // let f = smoothstep(-0.5, 1.0, cos(a * 10.0)) * 0.2 + 0.5;
+    let f = abs(cos(a * 12.0) * sin(a * v)) + 0.5;
+    // let f = smoothstep(-0.5, 1.0, cos(a * 12.0)) * 0.2 + 0.5;
     let color = vec3f(1.0 - smoothstep(f, f + 0.02, r));
     return vec4(color, 1.0);
 }
@@ -244,7 +253,7 @@ fn bos_07g(pos: vec2f) -> vec4f {
     return vec4(color, 1.0);
 }
 
-// Comnbining Powers
+// Combining Powers
 fn bos_07h(pos: vec2f) -> vec4f {
     let n = trunc(params.a * 12.0);
     let a = atan2(pos.y, pos.x) + PI;
@@ -254,7 +263,7 @@ fn bos_07h(pos: vec2f) -> vec4f {
     return vec4(color, 1.0);
 }
 
-// Comnbining Powers: Challenge - mixing distance fields
+// Combining Powers: Challenge - mixing distance fields
 fn bos_07i(pos: vec2f) -> vec4f {
     let d1 = polygon_distance(pos, u32(trunc(params.a * 12.0)));
     let d2 = polygon_distance(pos, u32(trunc(params.b * 12.0)));
