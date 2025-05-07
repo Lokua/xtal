@@ -1,8 +1,8 @@
-use xtal::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
-use crate::sketches::shared::sand_line::*;
+use crate::sketches::common::sand_line::*;
 use crate::util::*;
 
 // https://github.com/inconvergent/sand-spline/blob/master/main-hlines.py

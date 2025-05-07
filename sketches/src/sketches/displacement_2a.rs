@@ -1,12 +1,12 @@
 use geom::Ellipse;
-use xtal::prelude::*;
 use nannou::color::{Gradient, Mix};
 use nannou::prelude::*;
 use rayon::prelude::*;
 use std::str::FromStr;
 use std::sync::Arc;
+use xtal::prelude::*;
 
-use super::shared::displacer::*;
+use super::common::displacer::*;
 use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

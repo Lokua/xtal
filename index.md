@@ -4,6 +4,10 @@ Files sorted from most to least recent. Source code available on
 
 
 
+## ray_marching-70ym7.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/ray_marching-70ym7.png" alt="ray_marching-70ym7.png">
+
 ## ray_marching-20p28.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/ray_marching-20p28.png" alt="ray_marching-20p28.png">

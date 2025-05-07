@@ -3,18 +3,23 @@
   "ui_controls": [
     {
       "type": "Slider",
+      "name": "cam_z",
+      "value": -2.0
+    },
+    {
+      "type": "Slider",
       "name": "radius",
-      "value": 1.1286
+      "value": 0.5432
     },
     {
       "type": "Slider",
       "name": "warp_amt",
-      "value": 0.3182
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "disp_freq",
-      "value": 3.1469
+      "value": 2.9371
     },
     {
       "type": "Select",
@@ -37,14 +42,24 @@
       "value": 12.0
     },
     {
+      "type": "Slider",
+      "name": "segment_edge",
+      "value": 0.0
+    },
+    {
       "type": "Checkbox",
       "name": "rotate",
       "value": true
     },
     {
       "type": "Slider",
+      "name": "rot_t",
+      "value": 0.225
+    },
+    {
+      "type": "Slider",
       "name": "twist_x",
-      "value": 2.8392
+      "value": 0.0
     },
     {
       "type": "Slider",
@@ -59,7 +74,7 @@
     {
       "type": "Slider",
       "name": "rot_x",
-      "value": 1.1993
+      "value": 0.0
     },
     {
       "type": "Checkbox",
@@ -79,7 +94,7 @@
     {
       "type": "Checkbox",
       "name": "posterize",
-      "value": true
+      "value": false
     },
     {
       "type": "Slider",
@@ -105,52 +120,22 @@
       "type": "Slider",
       "name": "white_intensity",
       "value": 1.2832
+    },
+    {
+      "type": "Slider",
+      "name": "bg_noise",
+      "value": 0.0664
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "5": {
+    "1": {
       "ui_controls": [
-        {
-          "type": "Checkbox",
-          "name": "auto_rot_x",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "softness",
-          "value": 0.2727
-        },
-        {
-          "type": "Slider",
-          "name": "disp_freq",
-          "value": 14.6154
-        },
-        {
-          "type": "Slider",
-          "name": "rot_x",
-          "value": 3.2063
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.9476
-        },
         {
           "type": "Slider",
           "name": "white_intensity",
           "value": 1.2832
-        },
-        {
-          "type": "Checkbox",
-          "name": "rotate",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 1.0
         },
         {
           "type": "Checkbox",
@@ -159,18 +144,8 @@
         },
         {
           "type": "Slider",
-          "name": "twist_y",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "map_mode",
-          "value": "smax"
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_steps",
-          "value": 18.0
+          "name": "b",
+          "value": 0.8951
         },
         {
           "type": "Checkbox",
@@ -178,19 +153,24 @@
           "value": false
         },
         {
-          "type": "Slider",
-          "name": "warp_amt",
-          "value": 0.7937
-        },
-        {
-          "type": "Slider",
-          "name": "b",
-          "value": 0.8951
-        },
-        {
           "type": "Checkbox",
           "name": "auto_rot_y",
-          "value": true
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.0664
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 2.9371
         },
         {
           "type": "Slider",
@@ -199,18 +179,78 @@
         },
         {
           "type": "Checkbox",
-          "name": "posterize",
+          "name": "rotate",
           "value": true
         },
         {
           "type": "Slider",
-          "name": "radius",
-          "value": 0.9195
+          "name": "cam_z",
+          "value": -2.0
         },
         {
           "type": "Slider",
           "name": "rot_y",
           "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.2063
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": false
+        },
+        {
+          "type": "Select",
+          "name": "map_mode",
+          "value": "default"
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9476
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.5432
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -221,31 +261,187 @@
       "midi_controls": [],
       "osc_controls": []
     },
-    "4": {
+    "6": {
       "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 3.1469
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 1.3182
+        },
+        {
+          "type": "Select",
+          "name": "map_mode",
+          "value": "smax"
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.2378
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.5769
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 1.1993
+        },
+        {
+          "type": "Slider",
+          "name": "white_intensity",
+          "value": 4.6189
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.2937
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.1573
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.4371
+        },
         {
           "type": "Checkbox",
           "name": "posterize",
           "value": true
         },
         {
-          "type": "Slider",
-          "name": "b",
-          "value": 0.8951
-        },
-        {
-          "type": "Slider",
-          "name": "softness",
-          "value": 0.1294
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": true
         },
         {
           "type": "Slider",
           "name": "radius",
-          "value": 0.9405
+          "value": 1.1809
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": true
         },
         {
           "type": "Slider",
-          "name": "twist_y",
+          "name": "g",
+          "value": 0.1573
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9476
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 1.1993
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
           "value": 0.0
         },
         {
@@ -255,8 +451,43 @@
         },
         {
           "type": "Slider",
-          "name": "rot_y",
+          "name": "softness",
+          "value": 0.4825
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.0664
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 3.0769
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
           "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.8951
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
         },
         {
           "type": "Slider",
@@ -264,19 +495,9 @@
           "value": 1.0
         },
         {
-          "type": "Slider",
-          "name": "white_intensity",
-          "value": 1.5664
-        },
-        {
           "type": "Checkbox",
-          "name": "auto_rot_y",
+          "name": "segment",
           "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "rot_x",
-          "value": 1.1993
         },
         {
           "type": "Checkbox",
@@ -285,48 +506,18 @@
         },
         {
           "type": "Slider",
-          "name": "segment_size",
-          "value": 12.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "segment",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "twist_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
           "name": "warp_amt",
-          "value": 0.5734
+          "value": 0.1189
         },
         {
           "type": "Slider",
-          "name": "disp_freq",
-          "value": 6.8531
-        },
-        {
-          "type": "Checkbox",
-          "name": "noise",
-          "value": true
+          "name": "radius",
+          "value": 2.6759
         },
         {
           "type": "Slider",
-          "name": "g",
-          "value": 0.9476
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_steps",
-          "value": 18.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "rotate",
-          "value": true
+          "name": "white_intensity",
+          "value": 1.5664
         }
       ],
       "midi_controls": [],
@@ -336,33 +527,13 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "twist_x",
-          "value": 2.8392
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_steps",
-          "value": 18.0
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 1.0
+          "name": "bg_noise",
+          "value": 0.0664
         },
         {
           "type": "Checkbox",
-          "name": "rotate",
+          "name": "auto_rot_x",
           "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.9476
-        },
-        {
-          "type": "Checkbox",
-          "name": "segment",
-          "value": false
         },
         {
           "type": "Select",
@@ -370,14 +541,29 @@
           "value": "smax"
         },
         {
-          "type": "Slider",
-          "name": "warp_amt",
-          "value": 0.3182
-        },
-        {
           "type": "Checkbox",
           "name": "auto_rot_y",
           "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 1.1286
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 2.8392
+        },
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
         },
         {
           "type": "Checkbox",
@@ -386,18 +572,8 @@
         },
         {
           "type": "Slider",
-          "name": "rot_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
           "name": "disp_freq",
           "value": 3.1469
-        },
-        {
-          "type": "Slider",
-          "name": "white_intensity",
-          "value": 1.2832
         },
         {
           "type": "Slider",
@@ -406,8 +582,58 @@
         },
         {
           "type": "Slider",
-          "name": "radius",
-          "value": 1.1286
+          "name": "rot_t",
+          "value": 0.225
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 1.1993
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9476
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.3182
         },
         {
           "type": "Slider",
@@ -421,33 +647,18 @@
         },
         {
           "type": "Slider",
-          "name": "segment_size",
-          "value": 12.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "auto_rot_x",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "noise",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "rot_x",
-          "value": 1.1993
+          "name": "white_intensity",
+          "value": 1.2832
         }
       ],
       "midi_controls": [],
       "osc_controls": []
     },
-    "3": {
+    "4": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "twist_y",
+          "name": "twist_x",
           "value": 0.0
         },
         {
@@ -457,23 +668,43 @@
         },
         {
           "type": "Slider",
-          "name": "rot_y",
-          "value": 0.0
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": true
         },
         {
           "type": "Slider",
-          "name": "rot_x",
-          "value": 1.1993
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
         },
         {
           "type": "Slider",
-          "name": "disp_freq",
-          "value": 3.0769
+          "name": "softness",
+          "value": 0.1294
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "twist_x",
-          "value": 0.0
+          "name": "white_intensity",
+          "value": 1.5664
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": false
         },
         {
           "type": "Slider",
@@ -482,13 +713,431 @@
         },
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.8951
+          "name": "g",
+          "value": 0.9476
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 0.0
         },
         {
           "type": "Slider",
           "name": "r",
           "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 1.1993
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.8951
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.0664
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 6.8531
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.5734
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.9405
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "7": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.2727
+        },
+        {
+          "type": "Slider",
+          "name": "white_intensity",
+          "value": 2.2587
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.15
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 1.1993
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.4371
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 7.6748
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 1.2227
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.6573
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 13.2867
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.6084
+        },
+        {
+          "type": "Select",
+          "name": "map_mode",
+          "value": "smax"
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.1049
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "0": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.2063
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.8951
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.0664
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9476
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.5432
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "white_intensity",
+          "value": 1.2832
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 2.9371
+        },
+        {
+          "type": "Select",
+          "name": "map_mode",
+          "value": "smax"
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 12.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "segment",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_y",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "rot_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "segment_edge",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "softness",
+          "value": 0.2727
+        },
+        {
+          "type": "Slider",
+          "name": "bg_noise",
+          "value": 0.0664
+        },
+        {
+          "type": "Slider",
+          "name": "disp_freq",
+          "value": 14.6154
+        },
+        {
+          "type": "Slider",
+          "name": "segment_size",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "radius",
+          "value": 0.9195
+        },
+        {
+          "type": "Slider",
+          "name": "rot_x",
+          "value": 3.2063
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.8951
+        },
+        {
+          "type": "Slider",
+          "name": "twist_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "noise",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "rotate",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_rot_x",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amt",
+          "value": 0.7937
         },
         {
           "type": "Slider",
@@ -501,54 +1150,29 @@
           "value": 18.0
         },
         {
-          "type": "Checkbox",
-          "name": "rotate",
-          "value": true
-        },
-        {
           "type": "Slider",
           "name": "white_intensity",
-          "value": 1.5664
-        },
-        {
-          "type": "Slider",
-          "name": "softness",
-          "value": 0.4825
-        },
-        {
-          "type": "Checkbox",
-          "name": "segment",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "noise",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "radius",
-          "value": 2.6759
-        },
-        {
-          "type": "Slider",
-          "name": "warp_amt",
-          "value": 0.1189
-        },
-        {
-          "type": "Checkbox",
-          "name": "auto_rot_y",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "auto_rot_x",
-          "value": true
+          "value": 1.2832
         },
         {
           "type": "Checkbox",
           "name": "posterize",
           "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "twist_y",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "map_mode",
+          "value": "smax"
+        },
+        {
+          "type": "Slider",
+          "name": "rot_t",
+          "value": 0.225
         }
       ],
       "midi_controls": [],

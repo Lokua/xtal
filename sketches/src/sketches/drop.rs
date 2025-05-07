@@ -1,7 +1,7 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
-use super::shared::drop::*;
+use super::common::drop::*;
 use crate::util::*;
 
 // https://www.youtube.com/watch?v=p7IGZTjC008&t=613s

@@ -1,11 +1,11 @@
-use xtal::prelude::*;
 use nannou::color::Gradient;
 use nannou::prelude::*;
 use rayon::prelude::*;
 use std::sync::Arc;
+use xtal::prelude::*;
 
-use super::shared::displacer::*;
-use super::shared::distance;
+use super::common::displacer::*;
+use super::common::distance;
 use crate::util::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {

@@ -1,7 +1,7 @@
 use xtal::prelude::*;
 
 mod sketches;
-pub use sketches::shared::util;
+pub use sketches::common::util;
 use sketches::*;
 
 fn main() {
@@ -12,8 +12,6 @@ fn main() {
         // MAIN
         // ---------------------------------------------------------------------
         blob,
-        breakpoints_2,
-        brutalism,
         cloud_tunnel,
         d_warp,
         displacement_2a,
@@ -21,8 +19,6 @@ fn main() {
         drop_tines,
         drop_walk,
         dynamic_uniforms,
-        easing_vis,
-        flow_field_basic,
         g_warp,
         grid_splash,
         heat_mask,
@@ -31,9 +27,9 @@ fn main() {
         kalos_2,
         marcher,
         neon,
+        ray_marching,
         sand_lines,
         shaxper,
-        sierpinski_triangle,
         spiral,
         spiral_lines,
         swirl,
@@ -75,16 +71,20 @@ fn main() {
         // ---------------------------------------------------------------------
         basics,
         bos,
+        breakpoints_2,
+        brutalism,
         chromatic_aberration,
         displacement_1,
         displacement_1a,
         displacement_2,
+        easing_vis,
         fb,
+        flow_field_basic,
         lines,
         noise,
         perlin_loop,
-        ray_marching,
         sand_line,
+        sierpinski_triangle,
         unt,
         vertical,
         vertical_2,

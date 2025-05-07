@@ -28,6 +28,7 @@ struct Params {
     f: vec4f,
     // white_intensity, segment, segment_size, rot_t
     g: vec4f,
+    // bg_noise, cam_z, segment_edge, UNUSED
     h: vec4f,
 }
 
@@ -45,21 +46,12 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let t = params.a.z * 0.25;
-    let mode = i32(params.a.w);
-    let radius = params.b.x;
-    let thickness = params.b.y;
-    let step_size = params.b.z;
-    let cell_size = params.b.w;
-    let warp_amt = params.c.x;
-    let softness = params.c.y;
-    let a1 = params.c.z;
-    let a2 = params.c.w;
-    let a3 = params.d.x;
     let posterize = bool(params.e.w);
+    let cam_z = params.h.y;
 
     let p = correct_aspect(position);
 
-    let cam_pos = vec3f(0.0, 0.0, -2.0);
+    let cam_pos = vec3f(0.0, 0.0, cam_z);
     var ray_origin = cam_pos;
     var ray_direction = vec3f(p, 1.0);
 
@@ -89,6 +81,7 @@ fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
     let g = params.f.z;
     let b = params.f.w;
     let white_intensity = params.g.x;
+    let bg_noise = params.h.x;
 
     var total_distance_traveled = 0.0;
     let steps = 64;
@@ -139,7 +132,11 @@ fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
         }
 
         if (total_distance_traveled > max_trace_distance) {
-            return mix(color / white_intensity, vec3f(noise) - color, 0.0);
+            return mix(
+                color / white_intensity, 
+                vec3f(noise) - color, 
+                bg_noise
+            );
         }
         
         total_distance_traveled += distance_to_closest;
@@ -169,6 +166,7 @@ fn map(p: vec3f) -> f32 {
     let posterize = bool(params.e.w);
     let segment = bool(params.g.y);
     let segment_size = params.g.z;
+    let segment_edge = params.h.z;
 
     let freq = disp_freq;
     let noise = select(
@@ -178,9 +176,18 @@ fn map(p: vec3f) -> f32 {
     );
     let wave = sin(freq * p);
     let product = wave.x * wave.y * wave.z;
+
+    let segmented_value = floor(product * segment_size) / segment_size;
+    let transition_factor = smoothstep(
+        0.0, 
+        0.05, 
+        abs(fract(product * segment_size) - 0.5) - segment_edge
+    );
+    let smooth_segmented = mix(product, segmented_value, transition_factor);
+    
     let displacement = select(
-        (product + noise) *  warp_amt,
-        floor(product * segment_size) / segment_size * warp_amt,
+        (product + noise) * warp_amt,
+        smooth_segmented * warp_amt,
         segment
     );
 
@@ -196,12 +203,6 @@ fn map(p: vec3f) -> f32 {
     }
 
     return smax(sdf1, -sdf2, softness) + displacement;
-}
-
-fn gyr(p: vec3f) -> f32 {
-    let a = sin(p.xyz);
-    let b = cos(p.zxy);
-    return mix(dot(a, b), length(a - b), 0.0);
 }
 
 fn sd_sphere(p: vec3f, c: vec3f) -> f32 {

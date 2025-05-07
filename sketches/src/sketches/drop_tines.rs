@@ -3,7 +3,7 @@ use nannou::prelude::*;
 
 use xtal::prelude::*;
 
-use super::shared::drop::Drop;
+use super::common::drop::Drop;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "drop_tines",
