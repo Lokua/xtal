@@ -16,7 +16,7 @@ struct VertexOutput {
 struct Params {
     // w, h, t, map_mode
     a: vec4f,
-    // radius, disp_freq, rotate, twist_x
+    // space, disp_freq, rotate, twist_x
     b: vec4f,
     // warp_amt, softness, a1, a2
     c: vec4f,
@@ -29,7 +29,10 @@ struct Params {
     // white_intensity, segment, segment_size, rot_t
     g: vec4f,
     // bg_noise, cam_z, segment_edge, bg_mode
+    // clamp, ...
     h: vec4f,
+    i: vec4f,
+    j: vec4f,
 }
 
 @group(0) @binding(0)
@@ -190,6 +193,9 @@ fn map(p: vec3f) -> f32 {
     let segment = bool(params.g.y);
     let segment_size = params.g.z;
     let segment_edge = params.h.z;
+    let box_x = params.i.y;
+    let box_y = params.i.z;
+    let box_z = params.i.w;
 
     let freq = disp_freq;
     let noise = select(
@@ -198,12 +204,12 @@ fn map(p: vec3f) -> f32 {
         !posterize && posterize_steps
     );
     let wave = sin(freq * p);
-    let product = wave.x * wave.y * wave.z;
+    var product = wave.x * wave.y * wave.z;
 
     let segmented_value = floor(product * segment_size) / segment_size;
     let transition_factor = smoothstep(
         0.0, 
-        0.05, 
+        0.06, 
         abs(fract(product * segment_size) - 0.5) - segment_edge
     );
     let smooth_segmented = mix(product, segmented_value, transition_factor);
@@ -214,8 +220,9 @@ fn map(p: vec3f) -> f32 {
         segment
     );
 
-    let sdf1 = sd_sphere(p, vec3f(0.0));
-    let sdf2 = sd_sphere(p, vec3f(0.0)) + displacement - 0.0618 * 1.5;
+    let sdf1 = sdf(p, vec3f(box_x, box_y, box_z));
+    let sdf2 = sdf(p, vec3f(box_x, -box_y, box_z)) + 
+        displacement - 0.0618 * 1.5;
 
     if (map_mode == 0) {
         return sdf1 + displacement;
@@ -228,9 +235,37 @@ fn map(p: vec3f) -> f32 {
     return smax(sdf1, -sdf2, softness) + displacement;
 }
 
-fn sd_sphere(p: vec3f, c: vec3f) -> f32 {
-    let radius = params.b.x;
-    return length(p - c) - radius;
+// fn sdf(pos: vec3f, c: vec3f) -> f32 {
+//     let space = params.b.x;
+//     let clamp = params.i.x;
+
+//     let i = round(pos / space);
+//     let p = pos - space * clamp(i, vec3f(-clamp), vec3f(clamp));
+//     let q = abs(p) - c;
+
+//     return length(max(q, vec3f(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
+// }
+
+fn sdf(pos: vec3f, c: vec3f) -> f32 {
+    let space = params.b.x;
+    let clamp = params.i.x;
+    
+    let scale = phi_scale(pos);
+    let adjusted_space = space * scale;
+    
+    let i = round(pos / adjusted_space);
+    let p = pos - adjusted_space * clamp(i, vec3f(-clamp), vec3f(clamp));
+    
+    let scaled_c = c * scale;
+    let q = abs(p) - scaled_c;
+
+    return length(max(q, vec3f(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+fn phi_scale(pos: vec3f) -> f32 {
+    let dist = length(pos);
+    let steps_from_center = floor(dist / 2.0);
+    return pow(1.0 / PHI, steps_from_center);
 }
 
 fn fbm(p: vec2f) -> f32 {

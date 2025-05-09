@@ -1,0 +1,160 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "cam_z",
+      "value": -3.2692
+    },
+    {
+      "type": "Slider",
+      "name": "space",
+      "value": 0.4282
+    },
+    {
+      "type": "Slider",
+      "name": "clamp",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "box_x",
+      "value": 0.3671
+    },
+    {
+      "type": "Slider",
+      "name": "box_y",
+      "value": 0.8042
+    },
+    {
+      "type": "Slider",
+      "name": "box_z",
+      "value": 0.7517
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amt",
+      "value": 0.6678
+    },
+    {
+      "type": "Slider",
+      "name": "disp_freq",
+      "value": 4.5455
+    },
+    {
+      "type": "Select",
+      "name": "map_mode",
+      "value": "default"
+    },
+    {
+      "type": "Slider",
+      "name": "softness",
+      "value": 0.4441
+    },
+    {
+      "type": "Checkbox",
+      "name": "segment",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "segment_size",
+      "value": 7.0315
+    },
+    {
+      "type": "Slider",
+      "name": "segment_edge",
+      "value": 0.45
+    },
+    {
+      "type": "Checkbox",
+      "name": "rotate",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "rot_t",
+      "value": 0.325
+    },
+    {
+      "type": "Slider",
+      "name": "twist_x",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "twist_y",
+      "value": 0.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_rot_x",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "rot_x",
+      "value": 3.3393
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_rot_y",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "rot_y",
+      "value": 0.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "noise",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "posterize",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "posterize_steps",
+      "value": 18.0
+    },
+    {
+      "type": "Slider",
+      "name": "r",
+      "value": 0.979
+    },
+    {
+      "type": "Slider",
+      "name": "g",
+      "value": 0.8252
+    },
+    {
+      "type": "Slider",
+      "name": "b",
+      "value": 0.7622
+    },
+    {
+      "type": "Slider",
+      "name": "white_intensity",
+      "value": 1.8182
+    },
+    {
+      "type": "Slider",
+      "name": "bg_noise",
+      "value": 0.1608
+    },
+    {
+      "type": "Select",
+      "name": "bg_mode",
+      "value": "brg"
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

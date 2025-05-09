@@ -70,9 +70,7 @@ softness:
   var: c2
   type: slider
   default: 0.2
-  disabled:
-    mode is not grid_warped and mode is not grid_smooth and mode is not
-    ray_march
+  disabled: mode is not grid_warped and mode is not grid_smooth
 
 warp_amt:
   var: c1
@@ -80,3 +78,15 @@ warp_amt:
   disabled:
     mode is not grid_warped and mode is not grid_radial and mode is not
     ray_march
+
+freq:
+  var: d2
+  type: slider
+  default: 5
+  range: [0, 100]
+  disabled: mode is not ray_march
+
+rotate:
+  var: d3
+  type: checkbox
+  disabled: mode is not ray_march

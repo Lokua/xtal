@@ -26,11 +26,30 @@ cam_z:
   default: -2
   range: [-5, 0]
 
-radius:
+space:
   var: b1
   type: slider
   range: [0.01, 3.0]
   default: 0.25
+
+clamp:
+  var: i1
+  type: slider
+
+box_x:
+  var: i2
+  type: slider
+  default: 1
+
+box_y:
+  var: i3
+  type: slider
+  default: 1
+
+box_z:
+  var: i4
+  type: slider
+  default: 0
 
 warp_amt:
   var: c1
@@ -95,13 +114,13 @@ rot_t:
 twist_x:
   var: b4
   type: slider
-  range: [0, 7]
+  range: [0, *TAU]
   disabled: not rotate
 
 twist_y:
   var: d2
   type: slider
-  range: [0, 7]
+  range: [0, *TAU]
   disabled: not rotate
 
 auto_rot_x:

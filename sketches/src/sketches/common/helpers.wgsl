@@ -551,6 +551,33 @@ fn mix_burn(c1: vec3f, c2: vec3f) -> vec3f {
     return 1.0 - clamp((1.0 - c1) / c2, vec3f(0.0), vec3f(1.0));
 }
 
+fn swap_rgb(c: vec3f, mode: i32) -> vec3f {
+    // Original and single-channel fills
+    if (mode == 0) { return c; }
+    if (mode == 1) { return c.rrr; }
+    if (mode == 2) { return c.ggg; }
+    if (mode == 3) { return c.bbb; }
+    
+    // Double-channel duplications (one channel copied to another)
+    if (mode == 4) { return c.rrg; }
+    if (mode == 5) { return c.rrb; }
+    if (mode == 6) { return c.rgg; }
+    if (mode == 7) { return c.rbb; }
+    if (mode == 8) { return c.grr; }
+    if (mode == 9) { return c.brr; }
+    if (mode == 10) { return c.ggr; }
+    if (mode == 11) { return c.bbr; }
+    
+    // Channel permutations (all three channels used, just reordered)
+    if (mode == 12) { return c.rbg; }
+    if (mode == 13) { return c.grb; }
+    if (mode == 14) { return c.gbr; }
+    if (mode == 15) { return c.brg; }
+    if (mode == 16) { return c.bgr; }
+    
+    return c;
+}
+
 // -----------------------------------------------------------------------------
 //  POST PROCESSING
 // -----------------------------------------------------------------------------

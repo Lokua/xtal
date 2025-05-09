@@ -61,6 +61,7 @@
     "shaxper",
     "smax",
     "smin",
+    "smoothmin",
     "stddev",
     "termcolor",
     "themechanged",

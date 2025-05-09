@@ -28,7 +28,7 @@ struct Params {
     b: vec4f,
     // warp_amt, softness, a1, a2
     c: vec4f,
-    // a3, ...
+    // a3, freq, rotate, ..
     d: vec4f,
 }
 
@@ -220,36 +220,35 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
 
 fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
-    let t = params.a.z * 0.25;
+    let t = params.a.z / 4.0;
+    let rotate = bool(params.d.z);
 
     var total_distance_traveled = 0.0;
-    let steps = 64;
+    let steps = 128;
     let min_hit_distance = 0.001;
     let max_trace_distance = 1000.0;
+    let light_position = vec3f(5.0, -2.0, 2.0);
 
     for (var i = 0; i < steps; i++) {
-        var current_position = 
+        var current_p = 
             ray_origin + total_distance_traveled * ray_direction;
 
-        // let xz = rotate(current_position.xz, current_position.y * 0.3 + t);
-        // current_position.x = xz.x;
-        // current_position.z = xz.y;
-        // let yz = rotate(current_position.yz, current_position.y * 0.5 + t);
-        // current_position.y = yz.x;
-        // current_position.z = yz.y;
+        if (rotate) {
+            let xz = rotate(current_p.xz, current_p.y * 0.3 + t);
+            current_p.x = xz.x;
+            current_p.z = xz.y;
+            let yz = rotate(current_p.yz, current_p.y * 0.5 + (t / 2.0));
+            current_p.y = yz.x;
+            current_p.z = yz.y;
+        }
 
-        let distance_to_closest = map_the_world(current_position);
+        let distance_to_closest = map_the_world(current_p);
 
         if (distance_to_closest < min_hit_distance) {
-            let normal = calculate_normal(current_position);
-            let light_position = vec3f(5.0, -2.0, 2.0);
-            let direction_to_light = 
-                normalize(current_position - light_position);
+            let normal = calculate_normal(current_p);
+            let direction_to_light = normalize(current_p - light_position);
             let diffuse_intensity = max(0.02, dot(normal, direction_to_light));
-            // return normal * 0.5 + 0.5;
-            // return (normal * 0.5 + 0.5) * diffuse_intensity;
-            // return (vec3f(0.33, 0.4, 1.0) * diffuse_intensity);
-            return (vec3f(0.9) * diffuse_intensity);
+            return ((normal * 0.5 + 0.5) * diffuse_intensity).rgb;
         }
 
         if (total_distance_traveled > max_trace_distance) {
@@ -259,8 +258,7 @@ fn ray_march(p: vec2f, ray_origin: vec3f, ray_direction: vec3f) -> vec3f {
         total_distance_traveled += distance_to_closest;
     }
 
-    let noise = fbm(p);
-    return vec3f(noise - 0.45, noise - 0.15, noise);
+    return vec3f(1.0);
 }
 
 fn calculate_normal(p: vec3f) -> vec3f {
@@ -277,20 +275,15 @@ fn calculate_normal(p: vec3f) -> vec3f {
 
 fn map_the_world(p: vec3f) -> f32 {
     let warp_amt = params.c.x;
-    let softness = params.c.y;
+    let freq = params.d.y;
 
-    let freq = 5.0;
-    let noise = fbm(p.xy) * warp_amt * 0.025;
     let wave = sin(freq * p);
     let product = wave.x * wave.y * wave.z;
-    let displacement = (product + noise) *  warp_amt;
+    let displacement = product *  warp_amt;
 
     let sdf1 = distance_from_sphere(p, vec3f(0.0));
-    let sdf2 = distance_from_sphere(p, vec3f(0.0)) - 0.0618;
 
     return sdf1 + displacement;
-    // return max(sdf1, -sdf2) + displacement;
-    // return smax(sdf1, -sdf2, softness) + displacement;
 }
 
 fn distance_from_sphere(p: vec3f, c: vec3f) -> f32 {
