@@ -34,32 +34,32 @@
     {
       "type": "Slider",
       "name": "gyr_mix",
-      "value": 0.0
+      "value": 0.8706
     },
     {
       "type": "Slider",
       "name": "gyr_b_amt",
-      "value": 0.00064
+      "value": 0.00026
     },
     {
       "type": "Slider",
       "name": "inner_mult",
-      "value": 19.507
+      "value": 65.6364
     },
     {
       "type": "Slider",
       "name": "outer_mult",
-      "value": 14.3357
+      "value": 3.4965
     },
     {
       "type": "Slider",
       "name": "outer_meta",
-      "value": 1.3986
+      "value": 20.0
     },
     {
       "type": "Slider",
       "name": "v_base",
-      "value": 0.1399
+      "value": 1.3776
     },
     {
       "type": "Slider",
@@ -69,88 +69,78 @@
     {
       "type": "Slider",
       "name": "colorize",
-      "value": 1.0
+      "value": 0.2238
     },
     {
       "type": "Slider",
       "name": "steps",
-      "value": 16.0
+      "value": 3.0
     },
     {
       "type": "Select",
       "name": "edge_mode",
-      "value": "rgb"
+      "value": "gb"
     },
     {
       "type": "Slider",
       "name": "edge_thresh",
-      "value": 1.0
+      "value": 0.39409998
     },
     {
       "type": "Slider",
       "name": "edge_mix",
-      "value": 1.0
+      "value": 0.3225
     },
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.2552
+      "value": 0.25689998
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.8881
+      "value": 0.9662
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 0.1294
+      "value": 0.5022
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "1": {
+    "6": {
       "ui_controls": [
         {
-          "type": "Slider",
-          "name": "v_y_offs",
-          "value": 5.0
+          "type": "Checkbox",
+          "name": "animate_pos_range",
+          "value": false
         },
         {
           "type": "Slider",
-          "name": "g",
-          "value": 0.5175
+          "name": "edge_thresh",
+          "value": 0.39409998
         },
         {
           "type": "Slider",
-          "name": "outer_mult",
-          "value": 1.3986
+          "name": "pos_x",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "gb"
         },
         {
           "type": "Slider",
-          "name": "gyr_mix",
+          "name": "pos_y",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "r",
-          "value": 0.9965
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 16.1923
+          "name": "steps",
+          "value": 3.0
         },
         {
           "type": "Slider",
@@ -159,18 +149,63 @@
         },
         {
           "type": "Slider",
-          "name": "colorize",
+          "name": "b",
+          "value": 0.5022
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_b_amt",
+          "value": 0.00094
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "outer_meta",
+          "value": 16.7544
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 0.61539996
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.25689998
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 45.984898
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.9662
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_mix",
+          "value": 0.6414
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
           "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "pos_x",
-          "value": 0.0
+          "name": "edge_mix",
+          "value": 0.3225
         },
         {
           "type": "Slider",
-          "name": "edge_thresh",
-          "value": 0.0245
+          "name": "colorize",
+          "value": 0.4585
         },
         {
           "type": "Slider",
@@ -179,144 +214,8 @@
         },
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.1678
-        },
-        {
-          "type": "Slider",
-          "name": "outer_meta",
-          "value": 2.5175
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_b_amt",
-          "value": 0.001
-        },
-        {
-          "type": "Select",
-          "name": "edge_mode",
-          "value": "gb"
-        },
-        {
-          "type": "Slider",
-          "name": "pos_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_pos_range",
-          "value": false
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 8.1818
-        },
-        {
-          "type": "Slider",
-          "name": "pos_y",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "animate_pos_range",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "outer_meta",
-          "value": 2.028
-        },
-        {
-          "type": "Slider",
-          "name": "pos_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_b_amt",
-          "value": 0.00024
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult",
-          "value": 6.2937
-        },
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "v_base",
-          "value": 0.3217
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 0.9965
-        },
-        {
-          "type": "Slider",
-          "name": "b",
-          "value": 0.7273
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.049
-        },
-        {
-          "type": "Select",
-          "name": "edge_mode",
-          "value": "gb"
-        },
-        {
-          "type": "Slider",
-          "name": "edge_thresh",
-          "value": 0.0559
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.2552
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "v_y_offs",
-          "value": 4.0
+          "value": 5.0
         }
       ],
       "midi_controls": [],
@@ -326,53 +225,13 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.8566
+          "name": "v_base",
+          "value": 0.1399
         },
         {
           "type": "Slider",
-          "name": "outer_mult",
-          "value": 14.3357
-        },
-        {
-          "type": "Slider",
-          "name": "pos_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "edge_thresh",
-          "value": 0.0245
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 0.9965
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
+          "name": "colorize",
           "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_b_amt",
-          "value": 0.00064
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_mix",
-          "value": 0.0
         },
         {
           "type": "Slider",
@@ -381,13 +240,63 @@
         },
         {
           "type": "Slider",
+          "name": "gyr_b_amt",
+          "value": 0.00064
+        },
+        {
+          "type": "Slider",
           "name": "edge_mix",
           "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "pos_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
         },
         {
           "type": "Checkbox",
           "name": "animate_pos_range",
           "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 19.507
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 14.3357
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.8566
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.9965
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "gb"
+        },
+        {
+          "type": "Slider",
+          "name": "edge_thresh",
+          "value": 0.0245
         },
         {
           "type": "Slider",
@@ -401,74 +310,8 @@
         },
         {
           "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "steps",
           "value": 16.0
-        },
-        {
-          "type": "Select",
-          "name": "edge_mode",
-          "value": "gb"
-        },
-        {
-          "type": "Slider",
-          "name": "inner_mult",
-          "value": 19.507
-        },
-        {
-          "type": "Slider",
-          "name": "pos_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "v_base",
-          "value": 0.1399
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "4": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "colorize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail",
-          "value": 0.02
-        },
-        {
-          "type": "Slider",
-          "name": "v_y_offs",
-          "value": 5.0
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "outer_meta",
-          "value": 1.3986
-        },
-        {
-          "type": "Slider",
-          "name": "outer_mult",
-          "value": 14.3357
         },
         {
           "type": "Slider",
@@ -482,18 +325,49 @@
         },
         {
           "type": "Slider",
-          "name": "r",
-          "value": 0.2552
+          "name": "gyr_mix",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "gyr_b_amt",
-          "value": 0.00064
+          "name": "outer_mult",
+          "value": 1.3986
         },
         {
           "type": "Slider",
           "name": "inner_mult",
-          "value": 19.507
+          "value": 16.1923
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "pos_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_thresh",
+          "value": 0.0245
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "gb"
         },
         {
           "type": "Slider",
@@ -502,27 +376,42 @@
         },
         {
           "type": "Slider",
-          "name": "v_base",
-          "value": 0.1399
+          "name": "gyr_b_amt",
+          "value": 0.001
         },
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.1294
-        },
-        {
-          "type": "Select",
-          "name": "edge_mode",
-          "value": "rgb"
+          "name": "outer_meta",
+          "value": 2.5175
         },
         {
           "type": "Slider",
-          "name": "g",
-          "value": 0.8881
+          "name": "r",
+          "value": 0.9965
         },
         {
           "type": "Slider",
-          "name": "edge_thresh",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "v_y_offs",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
           "value": 1.0
         },
         {
@@ -532,13 +421,18 @@
         },
         {
           "type": "Slider",
-          "name": "edge_mix",
-          "value": 1.0
+          "name": "v_base",
+          "value": 0.1399
         },
         {
           "type": "Slider",
-          "name": "steps",
-          "value": 16.0
+          "name": "g",
+          "value": 0.5175
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.1678
         }
       ],
       "midi_controls": [],
@@ -546,6 +440,31 @@
     },
     "2": {
       "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.12529999
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0069
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 0.13669999
+        },
         {
           "type": "Slider",
           "name": "pos_y",
@@ -558,43 +477,8 @@
         },
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.21859999
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "increment",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "v_base",
-          "value": 0.2028
-        },
-        {
-          "type": "Slider",
           "name": "edge_thresh",
           "value": 0.48229998
-        },
-        {
-          "type": "Slider",
-          "name": "gyr_mix",
-          "value": 0.7657
-        },
-        {
-          "type": "Slider",
-          "name": "v_y_offs",
-          "value": -3.0
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 0.6392
         },
         {
           "type": "Slider",
@@ -608,6 +492,11 @@
         },
         {
           "type": "Slider",
+          "name": "v_base",
+          "value": 0.2028
+        },
+        {
+          "type": "Slider",
           "name": "outer_meta",
           "value": 9.1327
         },
@@ -617,9 +506,181 @@
           "value": 13.6261
         },
         {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.21859999
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.6392
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_mix",
+          "value": 0.7657
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "v_y_offs",
+          "value": -3.0
+        },
+        {
           "type": "Checkbox",
           "name": "animate_pos_range",
           "value": false
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "g"
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "detail",
+          "value": 0.049
+        },
+        {
+          "type": "Slider",
+          "name": "pos_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "inner_mult",
+          "value": 8.1818
+        },
+        {
+          "type": "Slider",
+          "name": "pos_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_pos_range",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 6.2937
+        },
+        {
+          "type": "Slider",
+          "name": "outer_meta",
+          "value": 2.028
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.7273
+        },
+        {
+          "type": "Slider",
+          "name": "v_y_offs",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "v_base",
+          "value": 0.3217
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "gb"
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.2552
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_thresh",
+          "value": 0.0559
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_b_amt",
+          "value": 0.00024
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.9965
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "outer_meta",
+          "value": 1.3986
+        },
+        {
+          "type": "Slider",
+          "name": "outer_mult",
+          "value": 14.3357
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.2552
+        },
+        {
+          "type": "Slider",
+          "name": "increment",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -628,23 +689,73 @@
         },
         {
           "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0069
+          "name": "inner_mult",
+          "value": 19.507
         },
         {
           "type": "Slider",
-          "name": "g",
-          "value": 0.12529999
+          "name": "b",
+          "value": 0.1294
         },
         {
-          "type": "Select",
-          "name": "edge_mode",
-          "value": "g"
+          "type": "Slider",
+          "name": "edge_thresh",
+          "value": 1.0
         },
         {
           "type": "Slider",
           "name": "colorize",
-          "value": 0.13669999
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "v_base",
+          "value": 0.1399
+        },
+        {
+          "type": "Select",
+          "name": "edge_mode",
+          "value": "rgb"
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_pos_range",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "v_y_offs",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "pos_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "gyr_b_amt",
+          "value": 0.00064
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.8881
+        },
+        {
+          "type": "Slider",
+          "name": "pos_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 16.0
         }
       ],
       "midi_controls": [],
