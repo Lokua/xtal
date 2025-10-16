@@ -14,6 +14,7 @@ pub mod kalos;
 pub mod kalos_2;
 pub mod marcher;
 pub mod neon;
+pub mod neural;
 pub mod ray_marching;
 pub mod shaxper;
 pub mod spiral;

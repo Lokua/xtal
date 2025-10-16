@@ -19,7 +19,7 @@ struct Params {
     b: vec4f,
     // s2, v2, detail, ray_scale_factor
     c: vec4f,
-    // bg_alpha, t_mult, depth_scale, UNUSED
+    // bg_alpha, t_mult, depth_scale, zoom
     d: vec4f,
 }
 
@@ -54,6 +54,7 @@ fn cloud_tunnel(pos: vec2f) -> vec3f {
     let detail = params.c.z;
     let ray_scale_factor = params.c.w;
     let depth_scale = params.d.z;
+    let zoom = params.d.w;
 
     // step size
     var step = 0.02;
@@ -65,7 +66,7 @@ fn cloud_tunnel(pos: vec2f) -> vec3f {
     // output color
     var o = vec3f(0.0);
 
-    var aspect_pos = correct_aspect(pos);
+    var aspect_pos = correct_aspect(pos * zoom);
     
     // ray position
     var p = vec3f(sin(t * 0.25) * 0.333, cos(t) * 0.125, -10.0);

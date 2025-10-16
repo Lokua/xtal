@@ -13,6 +13,13 @@ hash_alg:
     - rand_bit_style
     - rand_int_floor
 
+t_mult:
+  var: g2
+  type: slider
+  default: 1.0
+  range: [0.25, 4.0]
+  step: 0.25
+
 amp:
   var: a4
   type: slider
@@ -23,6 +30,13 @@ freq:
   type: slider
   range: [0, 40]
   default: 3
+
+freq_mult:
+  var: g3
+  type: slider
+  range: [0.1, 9.0]
+  default: 2.0
+  step: 0.1
 
 swirl:
   var: f2
