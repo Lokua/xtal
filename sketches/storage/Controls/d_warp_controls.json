@@ -8,18 +8,28 @@
     },
     {
       "type": "Slider",
+      "name": "t_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
       "name": "amp",
-      "value": 0.6399
+      "value": 0.7622
     },
     {
       "type": "Slider",
       "name": "freq",
-      "value": 3.6364
+      "value": 6.014
+    },
+    {
+      "type": "Slider",
+      "name": "freq_mult",
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "swirl",
-      "value": 0.0664
+      "value": 0.2552
     },
     {
       "type": "Checkbox",
@@ -29,7 +39,7 @@
     {
       "type": "Slider",
       "name": "grain_size",
-      "value": 604.7203
+      "value": 500.0
     },
     {
       "type": "Checkbox",
@@ -44,27 +54,27 @@
     {
       "type": "Slider",
       "name": "l",
-      "value": 0.9336
+      "value": 0.7378
     },
     {
       "type": "Slider",
       "name": "c",
-      "value": 0.236
+      "value": 0.3864
     },
     {
       "type": "Slider",
       "name": "h",
-      "value": 0.1189
+      "value": 0.2378
     },
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 7.7343
+      "value": 4.3671
     },
     {
       "type": "Checkbox",
       "name": "posterize",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
@@ -79,38 +89,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "hash_alg",
-          "value": "rand_bit_style"
-        },
-        {
-          "type": "Slider",
           "name": "grain_size",
           "value": 1000.0
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.5524
-        },
-        {
-          "type": "Slider",
-          "name": "c",
-          "value": 0.1836
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_steps",
-          "value": 3.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_ma_b",
-          "value": true
         },
         {
           "type": "Slider",
@@ -119,23 +99,8 @@
         },
         {
           "type": "Slider",
-          "name": "h",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_masks",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_grains",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "posterize",
-          "value": false
+          "name": "t_mult",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -144,15 +109,19 @@
         },
         {
           "type": "Slider",
-          "name": "amp",
-          "value": 0.6888
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
+          "name": "posterize_steps",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 3.2028
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_grains",
+          "value": true
+        },
         {
           "type": "Checkbox",
           "name": "show_masks",
@@ -160,18 +129,13 @@
         },
         {
           "type": "Slider",
-          "name": "c",
-          "value": 0.0734
+          "name": "amp",
+          "value": 0.6888
         },
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 3.958
-        },
-        {
-          "type": "Checkbox",
-          "name": "posterize",
-          "value": false
+          "name": "c",
+          "value": 0.1836
         },
         {
           "type": "Select",
@@ -180,18 +144,13 @@
         },
         {
           "type": "Slider",
-          "name": "posterize_steps",
-          "value": 3.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_grains",
-          "value": true
+          "name": "swirl",
+          "value": 0.5524
         },
         {
           "type": "Slider",
-          "name": "grain_size",
-          "value": 604.7203
+          "name": "h",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
@@ -199,29 +158,9 @@
           "value": true
         },
         {
-          "type": "Slider",
-          "name": "amp",
-          "value": 0.6958
-        },
-        {
-          "type": "Slider",
-          "name": "freq",
-          "value": 3.6364
-        },
-        {
-          "type": "Slider",
-          "name": "h",
-          "value": 0.6888
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0664
-        },
-        {
-          "type": "Slider",
-          "name": "l",
-          "value": 0.7517
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": false
         }
       ],
       "midi_controls": [],
@@ -236,18 +175,8 @@
         },
         {
           "type": "Slider",
-          "name": "c",
-          "value": 0.3864
-        },
-        {
-          "type": "Checkbox",
-          "name": "show_grains",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "posterize",
-          "value": true
+          "name": "contrast",
+          "value": 3.958
         },
         {
           "type": "Checkbox",
@@ -256,13 +185,33 @@
         },
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 3.958
+          "name": "freq",
+          "value": 3.3566
+        },
+        {
+          "type": "Slider",
+          "name": "c",
+          "value": 0.3864
         },
         {
           "type": "Checkbox",
-          "name": "use_ma_b",
+          "name": "posterize",
           "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0664
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_grains",
+          "value": true
+        },
+        {
+          "type": "Select",
+          "name": "hash_alg",
+          "value": "rand_bit_style"
         },
         {
           "type": "Slider",
@@ -276,23 +225,18 @@
         },
         {
           "type": "Slider",
-          "name": "swirl",
-          "value": 0.0664
-        },
-        {
-          "type": "Select",
-          "name": "hash_alg",
-          "value": "rand_bit_style"
-        },
-        {
-          "type": "Slider",
-          "name": "freq",
-          "value": 3.3566
+          "name": "t_mult",
+          "value": 1.0
         },
         {
           "type": "Slider",
           "name": "amp",
           "value": 0.6608
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_ma_b",
+          "value": true
         },
         {
           "type": "Slider",
@@ -302,8 +246,243 @@
       ],
       "midi_controls": [],
       "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 7.7343
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "amp",
+          "value": 0.6399
+        },
+        {
+          "type": "Slider",
+          "name": "h",
+          "value": 0.1189
+        },
+        {
+          "type": "Select",
+          "name": "hash_alg",
+          "value": "rand_bit_style"
+        },
+        {
+          "type": "Slider",
+          "name": "c",
+          "value": 0.236
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0664
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_masks",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_grains",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_ma_b",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "freq",
+          "value": 3.6364
+        },
+        {
+          "type": "Slider",
+          "name": "l",
+          "value": 0.9336
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 604.7203
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "freq",
+          "value": 3.6364
+        },
+        {
+          "type": "Select",
+          "name": "hash_alg",
+          "value": "rand_bit_style"
+        },
+        {
+          "type": "Slider",
+          "name": "amp",
+          "value": 0.6958
+        },
+        {
+          "type": "Slider",
+          "name": "c",
+          "value": 0.0734
+        },
+        {
+          "type": "Slider",
+          "name": "l",
+          "value": 0.7517
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "h",
+          "value": 0.6888
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_masks",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 3.958
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 604.7203
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_ma_b",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0664
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_grains",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.1958
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 2.0
+        },
+        {
+          "type": "Select",
+          "name": "hash_alg",
+          "value": "rand_bit_style"
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 9.7483
+        },
+        {
+          "type": "Slider",
+          "name": "amp",
+          "value": 0.7203
+        },
+        {
+          "type": "Checkbox",
+          "name": "posterize",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_ma_b",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "c",
+          "value": 0.1696
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_masks",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "l",
+          "value": 0.6364
+        },
+        {
+          "type": "Slider",
+          "name": "grain_size",
+          "value": 604.7203
+        },
+        {
+          "type": "Slider",
+          "name": "h",
+          "value": 0.7797
+        },
+        {
+          "type": "Slider",
+          "name": "freq",
+          "value": 1.6783
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_grains",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
     }
   },
   "mappings": {},
-  "exclusions": []
+  "exclusions": [
+    "t_mult"
+  ]
 }

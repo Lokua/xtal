@@ -24,7 +24,7 @@ struct Params {
     e: vec4f,
     // grain_size, swirl, posterize, posterize_steps
     f: vec4f,
-    // show_grains, ...
+    // show_grains, t_mult, unused, unused
     g: vec4f,
 }
 
@@ -41,7 +41,8 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let t = params.a.z;
+    let t_mult = params.g.y;
+    let t = params.a.z * t_mult;
     let l = params.b.y;
     let c = params.b.z;
     let h = params.b.w;
@@ -83,7 +84,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let grain_opacity = 1.0;
     let grain = select(
         0.0, 
-        // grain_size * length(q),
         grain_size + (sin(t * 0.1) + cos(t * 0.2)) * (grain_size * 0.1), 
         show_grains
     );
@@ -96,13 +96,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         let r_strength = mix(1.0, 5.0, mask);
         r = vec2f(
             fbm(p + r_strength * q + vec2f(1.7, 9.2)),
-            // fbm(p + grain + r_strength * q + vec2f(1.7, 9.2)),
             fbm(p + r_strength * q + vec2f(8.3, 2.8))
         );
     } else {
         r = vec2f(
             fbm(p * q + vec2f(1.7, 9.2)),
-            // fbm(p + grain * q + vec2f(1.7, 9.2)),
             fbm(p + q + vec2f(8.3, 2.8))
         );
     }
@@ -139,11 +137,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         color.y = max(0.1, floor(color.y * posterize_steps) / posterize_steps);
     }
 
-    // let outline = step(0.2, abs(f_a - f_b)) + step(0.09, abs(f_b - f_c));
-    // color *= 1.0 - clamp(outline, 0.0, 1.0);
-
-    // color = film_grain(color, color.xz, 0.5);
-
     return vec4f(oklch_to_rgb(color), 1.0);
 }
 
@@ -166,7 +159,6 @@ fn make_wrapped_mask(p: vec2f, center: vec2f, radius: f32, t: f32) -> f32 {
         }
     }
 
-    // return step(min_dist, radius);
     return smoothstep(radius, 0.0, min_dist);
 }
 
@@ -177,6 +169,7 @@ fn make_mask(p: vec2f, center: vec2f, radius: f32) -> f32 {
 fn fbm(p: vec2f) -> f32 {
     var a = params.a.w;
     var f = params.b.x;
+    var f_mult = params.g.z;
 
     let octaves = 5;
     let H = 1.0;
@@ -186,7 +179,7 @@ fn fbm(p: vec2f) -> f32 {
 
     for (var i = 0; i < octaves; i++) {
         t += a * noise(p * f);
-        f *= 2.0;
+        f *= f_mult;
         a *= G;
     }
 
