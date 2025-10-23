@@ -4,17 +4,17 @@
     {
       "type": "Slider",
       "name": "t_mult",
-      "value": 1.0
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "t_mix",
-      "value": 0.479
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "scale_factor",
-      "value": 5.3
+      "value": 3.0
     },
     {
       "type": "Checkbox",
@@ -24,7 +24,7 @@
     {
       "type": "Slider",
       "name": "c",
-      "value": 0.81
+      "value": 0.74
     },
     {
       "type": "Checkbox",
@@ -34,17 +34,17 @@
     {
       "type": "Slider",
       "name": "s",
-      "value": 0.63
+      "value": 0.7
     },
     {
       "type": "Slider",
       "name": "weight",
-      "value": 3.49
+      "value": 1.8
     },
     {
       "type": "Slider",
       "name": "posterize_steps",
-      "value": 16.0
+      "value": 66.0
     },
     {
       "type": "Slider",
@@ -54,38 +54,134 @@
     {
       "type": "Slider",
       "name": "r",
-      "value": 1.007
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 2.4126
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 4.4056
+      "value": 0.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "2": {
+    "3": {
       "ui_controls": [
         {
-          "type": "Slider",
-          "name": "s",
-          "value": 0.63
+          "type": "Checkbox",
+          "name": "rot_s",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "rot_c",
+          "value": false
         },
         {
           "type": "Slider",
           "name": "r",
-          "value": 1.007
+          "value": 1.049
+        },
+        {
+          "type": "Slider",
+          "name": "scale_factor",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mix",
+          "value": 0.479
+        },
+        {
+          "type": "Slider",
+          "name": "weight",
+          "value": 5.12
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 2.035
+        },
+        {
+          "type": "Slider",
+          "name": "c",
+          "value": 0.79
+        },
+        {
+          "type": "Slider",
+          "name": "s",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 3.1049
+        },
+        {
+          "type": "Slider",
+          "name": "fractalize",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "weight",
+          "value": 3.49
+        },
+        {
+          "type": "Checkbox",
+          "name": "rot_s",
+          "value": false
         },
         {
           "type": "Slider",
           "name": "g",
           "value": 2.4126
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 4.4056
+        },
+        {
+          "type": "Checkbox",
+          "name": "rot_c",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_steps",
+          "value": 16.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 1.007
         },
         {
           "type": "Slider",
@@ -98,24 +194,9 @@
           "value": 5.3
         },
         {
-          "type": "Checkbox",
-          "name": "rot_c",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "rot_s",
-          "value": false
-        },
-        {
           "type": "Slider",
           "name": "c",
           "value": 0.81
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_steps",
-          "value": 16.0
         },
         {
           "type": "Slider",
@@ -124,18 +205,8 @@
         },
         {
           "type": "Slider",
-          "name": "weight",
-          "value": 3.49
-        },
-        {
-          "type": "Slider",
-          "name": "t_mult",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "b",
-          "value": 4.4056
+          "name": "s",
+          "value": 0.63
         }
       ],
       "midi_controls": [],
@@ -150,13 +221,8 @@
         },
         {
           "type": "Slider",
-          "name": "t_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "scale_factor",
-          "value": 3.0
+          "name": "posterize_steps",
+          "value": 66.0
         },
         {
           "type": "Slider",
@@ -165,23 +231,53 @@
         },
         {
           "type": "Slider",
-          "name": "fractalize",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
           "name": "t_mult",
           "value": 0.5
         },
         {
           "type": "Slider",
-          "name": "posterize_steps",
-          "value": 66.0
+          "name": "scale_factor",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "fractalize",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "rot_s",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.0
         },
         {
           "type": "Slider",
           "name": "s",
           "value": 0.7
+        },
+        {
+          "type": "Checkbox",
+          "name": "rot_c",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "t_mix",
+          "value": 0.0
         }
       ],
       "midi_controls": [],

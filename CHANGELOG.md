@@ -7,6 +7,13 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [0.16.0] 2025-10-22
+
+### Fixed
+
+- Lazy copy/paste in global resulted in all ports using `midi_clock_port`
+  instead of respective in and out ports
+
 ## [0.15.0] 2025-05-02
 
 ### Added
