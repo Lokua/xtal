@@ -57,7 +57,7 @@ pub fn midi_control_in_port() -> Option<String> {
 
 pub fn set_midi_control_in_port(port: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.midi_clock_port = set_device_or_fallback(
+    global.midi_control_in_port = set_device_or_fallback(
         "MIDI control in port",
         port,
         midi::list_input_ports,
@@ -72,7 +72,7 @@ pub fn midi_control_out_port() -> Option<String> {
 
 pub fn set_midi_control_out_port(port: &str) {
     let mut global = GLOBAL.lock().unwrap();
-    global.midi_clock_port = set_device_or_fallback(
+    global.midi_control_out_port = set_device_or_fallback(
         "MIDI control out port",
         port,
         midi::list_input_ports,

@@ -27,6 +27,7 @@ fn main() {
         kalos_2,
         marcher,
         neon,
+        neural,
         ray_marching,
         sand_lines,
         shaxper,

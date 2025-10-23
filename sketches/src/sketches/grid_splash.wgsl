@@ -65,7 +65,8 @@ fn fs_main(
     @location(0) position: vec2f, 
     @location(1) uv: vec2f
 ) -> @location(0) vec4f {
-    let t = params.a.z;
+    let t = params.a.z * 0.25;
+    // let t = params.a.z;
     let grid_size = params.a.w;
     var circle_radius = params.b.x;
     let line_width = params.b.y;

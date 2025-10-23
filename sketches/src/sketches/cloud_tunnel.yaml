@@ -32,6 +32,13 @@ depth_scale:
   range: [1, 1000]
   default: 500
 
+zoom:
+  var: d4
+  type: slider
+  range: [0.01, 4.0]
+  step: 0.01
+  default: 1.0
+
 bg_alpha:
   var: d1
   type: slider
