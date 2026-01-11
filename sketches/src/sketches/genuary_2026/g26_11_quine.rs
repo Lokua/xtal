@@ -23,6 +23,24 @@ pub struct Quine {
     trigger: Trigger,
 }
 
+fn replace_word_spaces(line: &str, space_count: usize) -> String {
+    let trimmed = line.trim();
+    if trimmed.is_empty() {
+        return line.to_string();
+    }
+
+    // Find leading whitespace
+    let leading_spaces = line.len() - line.trim_start().len();
+    let leading = &line[..leading_spaces];
+
+    // Replace spaces between words with variable spacing
+    let replacement = " ".repeat(space_count);
+    let words: Vec<&str> = trimmed.split_whitespace().collect();
+    let result = words.join(&replacement);
+
+    format!("{}{}", leading, result)
+}
+
 pub fn init(_app: &App, ctx: &Context) -> Quine {
     let hub = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
@@ -37,9 +55,7 @@ pub fn init(_app: &App, ctx: &Context) -> Quine {
         .map(|s| s.to_string())
         .collect();
 
-    // Add separator to mark start/end of program
-    lines.insert(0, "---".to_string());
-    lines.push("---".to_string());
+    lines.push("-".repeat(70).to_string());
 
     let font = Font::from_bytes(include_bytes!(
         "/Users/lokua/Library/Fonts/FiraCode-Regular.ttf"
@@ -74,12 +90,31 @@ impl Sketch for Quine {
         let start_y = wr.top() - 20.0;
         let line_height = 16.0;
 
+        let max_spaces = [2, 5, 8, 11];
+        let phase_offsets = [0.0, 0.3, 0.6, 0.9, 0.2, 0.5, 0.8, 0.1, 0.4, 0.7];
+
         for i in 0..self.lines.len() {
             let line_index = (i + self.offset) % self.lines.len();
             let line = &self.lines[line_index];
             let y = start_y - (i as f32 * line_height);
 
-            draw.text(line)
+            // Get max space range for this line
+            let max_space = max_spaces[line_index % max_spaces.len()];
+
+            // Get phase offset for this line (consistent per line)
+            let phase_offset = phase_offsets[line_index % phase_offsets.len()];
+
+            // Use triangle wave to animate space count
+            let space_count = self
+                .hub
+                .animation
+                .triangle(2.0, (1.0, max_space as f32), phase_offset)
+                .floor() as usize;
+
+            // Replace spaces between words
+            let animated_line = replace_word_spaces(line, space_count);
+
+            draw.text(&animated_line)
                 .color(WHITE)
                 .font_size(12)
                 .font(self.font.clone())
