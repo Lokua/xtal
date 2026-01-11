@@ -51,6 +51,9 @@ pub use self::genuary_2025::g25_19_op_art;
 pub use self::genuary_2025::g25_20_23_brutal_arch;
 pub use self::genuary_2025::g25_22_gradients_only;
 
+pub mod genuary_2026;
+pub use self::genuary_2026::g26_11_quine;
+
 pub mod scratch;
 pub use self::scratch::basics;
 pub use self::scratch::bos;
