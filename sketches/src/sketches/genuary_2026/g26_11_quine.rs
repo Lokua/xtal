@@ -38,6 +38,13 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     h: 1244,
 };
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderParams {
+    resolution: [f32; 4],
+    a: [f32; 4],
+}
+
 #[derive(SketchComponents)]
 pub struct Quine {
     hub: ControlHub<Timing>,
@@ -46,17 +53,39 @@ pub struct Quine {
     scroll_offset: f32,
     smoothed_x_offsets: Vec<f32>,
     smoothed_space_counts: Vec<f32>,
+    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-pub fn init(_app: &App, ctx: &Context) -> Quine {
+pub fn init(app: &App, ctx: &Context) -> Quine {
     let hub = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
         .slider("scroll_rate", SCROLL_RATE, (0.25, 4.0), 0.25, None)
-        .slider("comment_gray_value", COMMENT_GRAY_VALUE, (0.0, 1.0), 0.1, None)
+        .slider(
+            "comment_gray_value",
+            COMMENT_GRAY_VALUE,
+            (0.0, 1.0),
+            0.1,
+            None,
+        )
         .slider("fog_rate", FOG_RATE, (1.0, 32.0), 0.1, None)
         .slider("fog_intensity", FOG_INTENSITY, (0.0, 2.0), 0.1, None)
         .slider("fog_spacing", FOG_SPACING, (1.0, 500.0), 1.0, None)
         .build();
+
+    let wr = ctx.window_rect();
+
+    let params = ShaderParams {
+        resolution: [0.0; 4],
+        a: [0.0; 4],
+    };
+
+    let gpu = gpu::GpuState::new_fullscreen(
+        app,
+        wr.resolution_u32(),
+        to_absolute_path(file!(), "g26_11_quine.wgsl"),
+        &params,
+        0,
+    );
 
     let path = to_absolute_path(file!(), "g26_11_quine.rs");
     let lines: Vec<String> = std::fs::read_to_string(&path)
@@ -106,12 +135,22 @@ pub fn init(_app: &App, ctx: &Context) -> Quine {
         scroll_offset: 0.0,
         smoothed_x_offsets,
         smoothed_space_counts,
+        gpu,
     }
 }
 
 impl Sketch for Quine {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
+    fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
         self.hub.update();
+
+        let wr = ctx.window_rect();
+
+        let params = ShaderParams {
+            resolution: [wr.w(), wr.h(), 0.0, 0.0],
+            a: [self.hub.animation.beats(), 0.0, 0.0, 0.0],
+        };
+
+        self.gpu.update_params(app, wr.resolution_u32(), &params);
 
         let scroll_rate = self.hub.get("scroll_rate");
         if scroll_rate > 0.0 {
@@ -173,13 +212,11 @@ impl Sketch for Quine {
     }
 
     fn view(&self, app: &App, frame: Frame, ctx: &Context) {
+        frame.clear(BLACK);
+        self.gpu.render(&frame);
+
         let wr = ctx.window_rect();
         let draw = app.draw();
-
-        draw.rect()
-            .x_y(0.0, 0.0)
-            .w_h(wr.w(), wr.h())
-            .color(hsl(0.0, 0.0, 0.02));
 
         let start_x = wr.left() + 110.0;
         let start_y = wr.top() - 20.0;
@@ -255,8 +292,11 @@ impl Sketch for Quine {
             let fog_intensity = self.hub.get("fog_intensity");
             let fog_spacing = self.hub.get("fog_spacing");
 
-            let fog_offset =
-                self.hub.animation.ramp_plus(fog_rate, (0.0, wr.h() * 2.0), 0.0);
+            let fog_offset = self.hub.animation.ramp_plus(
+                fog_rate,
+                (0.0, wr.h() * 2.0),
+                0.0,
+            );
             let fog_y = y + fog_offset;
             let fog_wave = ((fog_y / fog_spacing).sin() * 0.5 + 0.5).powf(2.0);
             let fog_alpha = 1.0 - (fog_wave * fog_intensity).min(1.0);
