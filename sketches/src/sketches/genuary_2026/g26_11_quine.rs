@@ -1,15 +1,29 @@
+//! # Genuary 2026 Day 11: Quine
+//!
+//! **Prompt:** "Quine - Make a sketch that displays its own source code"
+//!
+//! This sketch displays its own source code in a continuous scrolling
+//! animation, with rhythmic word spacing synchronized to a Jamuary track.
+//! The code appears in a foggy sage-based color palette with animated
+//! saturation and lightness, while word spacing pulses on the "2 and"
+//! and "4 and" beats of each bar.
+//!
+//! Created for Genuary 2026 and synchronized with Jamuary music
+//! production.
+
 use nannou::color::*;
 use nannou::prelude::*;
 use nannou::text::Font;
 
 use xtal::prelude::*;
 
-const SCROLL_RATE: f32 = 0.5;
-const LINE_RATE: f32 = 4.0;
+const SCROLL_RATE: f32 = 0.25;
+const LINE_RATE: f32 = 5.0;
 const SATURATION_RATE: f32 = 4.0;
 const LIGHTNESS_RATE: f32 = 8.0;
 const CHAR_WIDTH: f32 = 8.0;
 const MIN_SPACE: f32 = 8.0;
+const COMMENT_GRAY_VALUE: f32 = 0.4;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g26_11_quine",
@@ -27,7 +41,6 @@ pub struct Quine {
     lines: Vec<String>,
     font: Font,
     scroll_offset: f32,
-    // Store smoothed values for horizontal and space animations
     smoothed_x_offsets: Vec<f32>,
     smoothed_space_counts: Vec<f32>,
 }
@@ -37,9 +50,7 @@ pub fn init(_app: &App, ctx: &Context) -> Quine {
         .timing(Timing::new(ctx.bpm()))
         .build();
 
-    // Get absolute path to this source file
     let path = to_absolute_path(file!(), "g26_11_quine.rs");
-    // Read and filter non-empty lines from source file
     let lines: Vec<String> = std::fs::read_to_string(&path)
         .unwrap_or_else(|_| String::from("Could not read file"))
         .lines()
@@ -47,39 +58,37 @@ pub fn init(_app: &App, ctx: &Context) -> Quine {
         .map(|s| s.to_string())
         .collect();
 
-    // Load font from bytes at compile time
     let font = Font::from_bytes(include_bytes!(
         "/Users/lokua/Library/Fonts/FiraCode-Regular.ttf"
     ))
     .unwrap();
 
-    // Precompute initial smoothed values to avoid lunge
     let max_spaces = [1, 2, 3];
     let phase_offsets = [0.25, 0.5, 0.75];
     let num_lines = lines.len();
     let mut smoothed_x_offsets = vec![0.0; num_lines];
     let mut smoothed_space_counts = vec![0.0; num_lines];
-    for idx in 0..num_lines {
-        let line = &lines[idx];
+    for i in 0..num_lines {
+        let line = &lines[i];
         let trimmed = line.trim();
         let word_count = trimmed.split_whitespace().count();
         let has_word_spaces = word_count > 1;
-        let max_offset = max_spaces[idx % max_spaces.len()];
-        let phase_offset = phase_offsets[idx % phase_offsets.len()];
+        let max_offset = max_spaces[i % max_spaces.len()];
+        let phase_offset = phase_offsets[i % phase_offsets.len()];
         if has_word_spaces {
             let target_space_count = hub.animation.triangle(
                 LINE_RATE,
                 (1.0, max_offset as f32),
                 phase_offset,
             );
-            smoothed_space_counts[idx] = target_space_count;
+            smoothed_space_counts[i] = target_space_count;
         } else {
             let target_x_offset = hub.animation.triangle(
                 LINE_RATE,
                 (0.0, max_offset as f32 * 8.0),
                 phase_offset,
             );
-            smoothed_x_offsets[idx] = target_x_offset;
+            smoothed_x_offsets[i] = target_x_offset;
         }
     }
     Quine {
@@ -97,51 +106,59 @@ impl Sketch for Quine {
         self.hub.update();
 
         if SCROLL_RATE > 0.0 {
-            // Animate scroll offset based on beats and scroll rate
             let current_offset = self.hub.animation.beats() / SCROLL_RATE;
             let max_offset = self.lines.len() as f32;
             self.scroll_offset = current_offset % max_offset;
         }
-        // Smoothing for horizontal and space animations
+
         let max_spaces = [2, 3, 4, 5];
         let phase_offsets = [0.0, 0.3, 0.6, 0.9, 0.2, 0.5, 0.8, 0.1, 0.4, 0.7];
         let num_lines = self.lines.len();
-        // Ensure vectors are correct length
+
         if self.smoothed_x_offsets.len() != num_lines {
             self.smoothed_x_offsets = vec![0.0; num_lines];
         }
         if self.smoothed_space_counts.len() != num_lines {
             self.smoothed_space_counts = vec![0.0; num_lines];
         }
-        // Smoothing factor (0.2 = fast, 0.05 = slow)
+
         let alpha = 0.15;
-        for idx in 0..num_lines {
-            let line = &self.lines[idx];
+        for i in 0..num_lines {
+            let line = &self.lines[i];
             let trimmed = line.trim();
             let word_count = trimmed.split_whitespace().count();
             let has_word_spaces = word_count > 1;
-            let max_offset = max_spaces[idx % max_spaces.len()];
-            let phase_offset = phase_offsets[idx % phase_offsets.len()];
+            let max_offset = max_spaces[i % max_spaces.len()];
+            let phase_offset = phase_offsets[i % phase_offsets.len()];
             if has_word_spaces {
-                let target_space_count = self.hub.animation.triangle(
-                    LINE_RATE,
-                    (1.0, max_offset as f32),
-                    phase_offset,
-                );
-                self.smoothed_space_counts[idx] =
-                    self.smoothed_space_counts[idx] * (1.0 - alpha)
-                        + target_space_count * alpha;
-                self.smoothed_x_offsets[idx] = 0.0;
+                let is_even = (i % 2) == 0;
+                let max = max_offset as f32;
+                let start = ternary!(is_even, 0.0, max);
+                let end = ternary!(is_even, max, 0.0);
+                let breakpoints = vec![
+                    Breakpoint::step(0.0, start),
+                    Breakpoint::ramp(1.5, end, Easing::Linear),
+                    Breakpoint::step(2.0, end),
+                    Breakpoint::ramp(3.5, start, Easing::Linear),
+                    Breakpoint::end(4.0, start),
+                ];
+
+                let target_space_count =
+                    self.hub.animation.automate(&breakpoints, Mode::Loop);
+                self.smoothed_space_counts[i] = self.smoothed_space_counts[i]
+                    * (1.0 - alpha)
+                    + target_space_count * alpha;
+                self.smoothed_x_offsets[i] = 0.0;
             } else {
                 let target_x_offset = self.hub.animation.triangle(
                     LINE_RATE,
                     (0.0, max_offset as f32 * 8.0),
                     phase_offset,
                 );
-                self.smoothed_x_offsets[idx] = self.smoothed_x_offsets[idx]
+                self.smoothed_x_offsets[i] = self.smoothed_x_offsets[i]
                     * (1.0 - alpha)
                     + target_x_offset * alpha;
-                self.smoothed_space_counts[idx] = 0.0;
+                self.smoothed_space_counts[i] = 0.0;
             }
         }
     }
@@ -173,11 +190,9 @@ impl Sketch for Quine {
         let visible_lines =
             ((wr.h() / line_height).ceil() as usize).min(num_lines);
         for i in 0..visible_lines {
-            // Wrap line index for scrolling
             let line_index =
                 ((i as f32 + self.scroll_offset).floor() as usize) % num_lines;
             let line = &self.lines[line_index];
-            // Animate vertical position with fractional scroll
             let y = start_y
                 - ((i as f32 - (self.scroll_offset.fract())) * line_height);
 
@@ -194,12 +209,10 @@ impl Sketch for Quine {
                 lightness,
                 ..
             } = base_color;
-            // Convert hue to [0,1] for hsl()
             let (h, mut s, mut l) =
                 (hue.to_degrees() / 360.0, saturation, lightness);
 
             if !is_comment {
-                // Animate saturation
                 let sat_anim = if SATURATION_RATE > 0.0 {
                     self.hub.animation.triangle(
                         SATURATION_RATE,
@@ -209,7 +222,6 @@ impl Sketch for Quine {
                 } else {
                     0.0
                 };
-                // Animate lightness
                 let light_anim = if LIGHTNESS_RATE > 0.0 {
                     self.hub.animation.triangle(
                         LIGHTNESS_RATE,
@@ -224,7 +236,8 @@ impl Sketch for Quine {
             }
 
             let color = if is_comment {
-                rgb(0.3, 0.3, 0.3).into()
+                rgb(COMMENT_GRAY_VALUE, COMMENT_GRAY_VALUE, COMMENT_GRAY_VALUE)
+                    .into()
             } else {
                 hsl(h, s, l).into()
             };
