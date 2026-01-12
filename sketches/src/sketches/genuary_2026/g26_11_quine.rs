@@ -24,6 +24,9 @@ const LIGHTNESS_RATE: f32 = 8.0;
 const CHAR_WIDTH: f32 = 8.0;
 const MIN_SPACE: f32 = 8.0;
 const COMMENT_GRAY_VALUE: f32 = 0.4;
+const FOG_RATE: f32 = 32.0;
+const FOG_INTENSITY: f32 = 0.4;
+const FOG_SPACING: f32 = 50.0;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "g26_11_quine",
@@ -48,6 +51,11 @@ pub struct Quine {
 pub fn init(_app: &App, ctx: &Context) -> Quine {
     let hub = ControlHubBuilder::new()
         .timing(Timing::new(ctx.bpm()))
+        .slider("scroll_rate", SCROLL_RATE, (0.25, 4.0), 0.25, None)
+        .slider("comment_gray_value", COMMENT_GRAY_VALUE, (0.0, 1.0), 0.1, None)
+        .slider("fog_rate", FOG_RATE, (1.0, 32.0), 0.1, None)
+        .slider("fog_intensity", FOG_INTENSITY, (0.0, 2.0), 0.1, None)
+        .slider("fog_spacing", FOG_SPACING, (1.0, 500.0), 1.0, None)
         .build();
 
     let path = to_absolute_path(file!(), "g26_11_quine.rs");
@@ -105,8 +113,9 @@ impl Sketch for Quine {
     fn update(&mut self, _app: &App, _update: Update, _ctx: &Context) {
         self.hub.update();
 
-        if SCROLL_RATE > 0.0 {
-            let current_offset = self.hub.animation.beats() / SCROLL_RATE;
+        let scroll_rate = self.hub.get("scroll_rate");
+        if scroll_rate > 0.0 {
+            let current_offset = self.hub.animation.beats() / scroll_rate;
             let max_offset = self.lines.len() as f32;
             self.scroll_offset = current_offset % max_offset;
         }
@@ -235,12 +244,28 @@ impl Sketch for Quine {
                 l = (l + light_anim).clamp(0.0, 1.0);
             }
 
-            let color = if is_comment {
-                rgb(COMMENT_GRAY_VALUE, COMMENT_GRAY_VALUE, COMMENT_GRAY_VALUE)
-                    .into()
+            let comment_gray = self.hub.get("comment_gray_value");
+            let base_color: Rgb = if is_comment {
+                rgb(comment_gray, comment_gray, comment_gray).into()
             } else {
                 hsl(h, s, l).into()
             };
+
+            let fog_rate = self.hub.get("fog_rate");
+            let fog_intensity = self.hub.get("fog_intensity");
+            let fog_spacing = self.hub.get("fog_spacing");
+
+            let fog_offset =
+                self.hub.animation.ramp_plus(fog_rate, (0.0, wr.h() * 2.0), 0.0);
+            let fog_y = y + fog_offset;
+            let fog_wave = ((fog_y / fog_spacing).sin() * 0.5 + 0.5).powf(2.0);
+            let fog_alpha = 1.0 - (fog_wave * fog_intensity).min(1.0);
+            let color = srgba(
+                base_color.red,
+                base_color.green,
+                base_color.blue,
+                fog_alpha,
+            );
 
             if has_word_spaces && !is_comment {
                 let space_width =
