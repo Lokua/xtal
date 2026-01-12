@@ -282,8 +282,8 @@ impl Sketch for Quine {
             }
 
             let comment_gray = self.hub.get("comment_gray_value");
-            let base_color: Rgb = if is_comment {
-                rgb(comment_gray, comment_gray, comment_gray).into()
+            let base_color = if is_comment {
+                rgb(comment_gray, comment_gray, comment_gray)
             } else {
                 hsl(h, s, l).into()
             };

@@ -54,6 +54,7 @@ pub use self::genuary_2025::g25_22_gradients_only;
 
 pub mod genuary_2026;
 pub use self::genuary_2026::g26_11_quine;
+pub use self::genuary_2026::g26_12_boxes;
 
 pub mod scratch;
 pub use self::scratch::basics;
