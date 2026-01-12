@@ -1,0 +1,35 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "scroll_rate",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "line_rate",
+      "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "hue_rate",
+      "value": 9.2
+    },
+    {
+      "type": "Slider",
+      "name": "saturation_rate",
+      "value": 5.0
+    },
+    {
+      "type": "Slider",
+      "name": "lightness_rate",
+      "value": 6.6
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}
