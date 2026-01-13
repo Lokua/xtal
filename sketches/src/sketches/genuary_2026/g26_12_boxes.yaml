@@ -1,15 +1,11 @@
-# ------------------------------------------------------------------------------
-#  Main
-# ------------------------------------------------------------------------------
-
 depth_min:
   type: triangle
   beats: 16
-  range: [0.25, 0.5]
+  range: [0.33, 0.5]
 
 depth_max:
   type: triangle
-  beats: 12
+  beats: 24
   range: [0.5, 1.0]
 
 depth:
@@ -47,3 +43,62 @@ pinch_points:
   type: triangle
   range: [1.0, 5.0]
   beats: 14
+
+invert:
+  var: b4
+  type: checkbox
+  default: false
+
+falloff:
+  var: c1
+  type: triangle
+  range: [8.0, 2.0]
+  beats: 8
+
+grain_amount:
+  var: c2
+  type: slider
+  default: 0.0
+  bypass: 1.0
+
+bridge_density:
+  var: c3
+  type: slider
+  default: 0
+  range: [0, 10]
+  step: 1
+  bypass: 1
+
+bg_noise_scale:
+  var: c4
+  type: slider
+  default: 5.0
+  range: [0.0, 10.0]
+  bypass: 10.0
+
+bg_noise_brightness:
+  var: d1
+  type: slider
+  default: 0.1
+  bypass: 0.04
+
+contrast:
+  var: d2
+  type: slider
+  default: 1.0
+  range: [0.0, 2.0]
+  bypass: 1.0
+
+saturation:
+  var: d3
+  type: slider
+  default: 1.0
+  range: [0.0, 100.0]
+  bypass: 50
+
+hue_shift:
+  var: d4
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+  bypass: 0.95
