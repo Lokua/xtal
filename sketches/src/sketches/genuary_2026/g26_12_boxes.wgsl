@@ -10,9 +10,11 @@ struct VertexOutput {
 struct Params {
     // w, h, beats, depth
     a: vec4f,
-    // boxify, cell_size, num_pinches, unused
+    // boxify, cell_size, num_pinches, invert
     b: vec4f,
+    // falloff, grain_amount, bridge_density, bg_noise_scale
     c: vec4f,
+    // bg_noise_brightness, contrast, saturation, hue_shift
     d: vec4f,
 }
 
@@ -33,6 +35,16 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let quant = params.b.x;
     let cell_size = params.b.y;
     let num_pinches = params.b.z;
+    let invert = params.b.w;
+    let falloff = params.c.x;
+    let grain_amount = params.c.y;
+    let bridge_density = params.c.z;
+    let bg_noise_scale = params.c.w;
+    let bg_noise_brightness = params.d.x;
+    let contrast = params.d.y;
+    let saturation = params.d.z;
+    let hue_shift = params.d.w;
+
     let pos = correct_aspect(position);
 
     // Create multiple pinch points
@@ -101,17 +113,59 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         f32(in_corner_region);
     let connecting_lines = max(diagonal1, diagonal2);
 
+    // Add bridge lines - thin connecting lines at grid boundaries
+    let grid_id = floor(p);
+    let bridge_threshold = bridge_density * 0.5;
+    let show_bridge = hash(grid_id) < bridge_threshold;
+
+    let on_h_edge = abs(cell.y - 0.5) < 0.02;
+    let on_v_edge = abs(cell.x - 0.5) < 0.02;
+    let bridges = (on_h_edge || on_v_edge) && show_bridge;
+
     let box = max(max(outer_box, inner_box), connecting_lines);
+    let box_with_bridges = max(box, f32(bridges));
 
-    // Vary brightness based on distance from pinch center
-    // Closer to pinch = brighter
+    // Toggle inversion
+    let final_box = mix(box_with_bridges, 1.0 - box_with_bridges, invert);
+
+    // Vary color and brightness using box distance (not radial)
+    let box_dist = max(abs(pinch_center.x), abs(pinch_center.y));
     let min_brightness = 0.1;
-    let falloff = 2.0;
-    let brightness = mix(1.0, min_brightness, clamp(dist * falloff, 0.0, 1.0));
+    let depth_factor = clamp(box_dist * falloff, 0.0, 1.0);
+    let brightness = mix(1.0, min_brightness, depth_factor);
 
+    // Mix between coral (center) and copper (edges)
+    // Lean more toward coral
+    let coral = vec3f(1.0, 0.5, 0.5);
+    let copper = vec3f(1.0, 0.5, 0.35);
+    let color_mix = pow(depth_factor, 2.0);
+    var base_color = mix(coral, copper, color_mix);
 
-    let coral = vec3f(1.0, 0.5, 0.35);
-    let color = vec3f(box) * coral * brightness;
+    // Apply hue shift
+    let hsv = rgb_to_hsv(base_color);
+    let shifted_hsv = vec3f(fract(hsv.x + hue_shift), hsv.y, hsv.z);
+    base_color = hsv_to_rgb(shifted_hsv);
+
+    // Add grain/noise texture
+    let grain = hash(position * 10000.0) * grain_amount;
+    let grainy_brightness = brightness + grain - grain_amount * 0.5;
+
+    // Background noise for negative space
+    let bg_noise = fbm(position * bg_noise_scale, 5);
+    let bg_color = vec3f(bg_noise * bg_noise_brightness);
+
+    // Mix between noisy background and colored boxes
+    var color = mix(bg_color, base_color * grainy_brightness,
+        final_box);
+
+    // Apply contrast
+    color = (color - 0.5) * contrast + 0.5;
+
+    // Apply distance-based saturation (edge = more saturated)
+    let dist_sat = max(abs(pinch_center.x), abs(pinch_center.y));
+    let sat_factor = mix(0.0, saturation, dist_sat * 2.0);
+    let luminance = dot(color, vec3f(0.299, 0.587, 0.114));
+    color = mix(vec3f(luminance), color, sat_factor);
 
     return vec4f(color, 1.0);
 }
@@ -123,5 +177,68 @@ fn correct_aspect(position: vec2f) -> vec2f {
     var p = position;
     p.x *= aspect;
     return p;
+}
+
+fn hash(p: vec2f) -> f32 {
+    var p3 = fract(vec3f(p.xyx) * 0.13);
+    p3 += dot(p3, p3.yzx + 3.333);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+fn noise(p: vec2f) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+
+    let a = hash(i);
+    let b = hash(i + vec2f(1.0, 0.0));
+    let c = hash(i + vec2f(0.0, 1.0));
+    let d = hash(i + vec2f(1.0, 1.0));
+
+    let u = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) +
+        (d - b) * u.x * u.y;
+}
+
+fn fbm(p: vec2f, octaves: i32) -> f32 {
+    var value = 0.0;
+    var amplitude = 0.5;
+    var frequency = 1.0;
+    var pos = p;
+
+    for (var i = 0; i < octaves; i++) {
+        value += amplitude * noise(pos * frequency);
+        frequency *= 2.0;
+        amplitude *= 0.5;
+    }
+
+    return value;
+}
+
+fn rgb_to_hsv(c: vec3f) -> vec3f {
+    let k = vec4f(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    let p = mix(
+        vec4f(c.bg, k.wz),
+        vec4f(c.gb, k.xy),
+        step(c.b, c.g)
+    );
+    let q = mix(
+        vec4f(p.xyw, c.r),
+        vec4f(c.r, p.yzx),
+        step(p.x, c.r)
+    );
+    let d = q.x - min(q.w, q.y);
+    let e = 1.0e-10;
+    return vec3f(
+        abs(q.z + (q.w - q.y) / (6.0 * d + e)),
+        d / (q.x + e),
+        q.x
+    );
+}
+
+fn hsv_to_rgb(c: vec3f) -> vec3f {
+    let k = vec4f(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    let p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);
+    return c.z * mix(k.xxx, clamp(p - k.xxx, vec3f(0.0), vec3f(1.0)), c.y);
 }
 
