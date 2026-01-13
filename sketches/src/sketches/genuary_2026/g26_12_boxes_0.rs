@@ -6,7 +6,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "g26_12_boxes",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 145.0,
+    bpm: 134.0,
     w: 700,
     h: 700,
 };
