@@ -52,7 +52,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let quantized_z = floor(normalized_z * quant_steps) / quant_steps;
     let final_z = mix(normalized_z, quantized_z, quant);
 
-    let scale = final_z * 4.0;
+    let scale = final_z * 3.0;
 
     // Create box grid that scales with depth
     let p = pos * scale;
@@ -103,7 +103,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let box = max(max(outer_box, inner_box), connecting_lines);
 
-    return vec4f(vec3f(box), 1.0);
+    // Vary brightness based on distance from pinch center
+    // Closer to pinch = brighter
+    let min_brightness = 0.1;
+    let falloff = 2.0;
+    let brightness = mix(1.0, min_brightness, clamp(dist * falloff, 0.0, 1.0));
+
+
+    let coral = vec3f(1.0, 0.5, 0.35);
+    let color = vec3f(box) * coral * brightness;
+
+    return vec4f(color, 1.0);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {
