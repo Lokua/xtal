@@ -2,6 +2,48 @@
 #  Main
 # ------------------------------------------------------------------------------
 
+depth_min:
+  type: triangle
+  beats: 16
+  range: [0.25, 0.5]
+
+depth_max:
+  type: triangle
+  beats: 12
+  range: [0.5, 1.0]
+
 depth:
   var: a4
+  type: automate
+  mode: loop
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: $depth_min
+    - kind: ramp
+      position: 1.5
+      value: 0.5
+    - kind: ramp
+      position: 3.0
+      value: $depth_max
+    - kind: end
+      position: 4.0
+      value: $depth_min
+
+boxify:
+  var: b1
   type: slider
+  default: 0.0
+
+cell_size:
+  var: b2
+  type: triangle
+  range: [0.25, 0.5]
+  beats: 4
+  bypass: 0.25
+
+pinch_points:
+  var: b3
+  type: triangle
+  range: [1.0, 5.0]
+  beats: 14
