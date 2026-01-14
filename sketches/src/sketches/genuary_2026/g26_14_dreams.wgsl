@@ -12,6 +12,7 @@ struct Params {
     b: vec4f,
     c: vec4f,
     d: vec4f,
+    e: vec4f,
 }
 
 @group(0) @binding(0)
@@ -36,16 +37,25 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let contour_smoothness = params.c.y;
     let depth_strength = params.c.z;
     let roundness = params.c.w;
+    let scroll_down = params.d.x > 0.5;
+    let scroll_speed = params.d.y;
+    let extrude_amount = params.d.z;
+    let extrude_frequency = params.d.w;
 
     let pos = correct_aspect(position);
-    let animated_pos = pos + vec2f(time * 0.02, time * 0.01);
+    let scroll_dir = select(-1.0, 1.0, scroll_down);
+    let scroll_offset = vec2f(0.0, scroll_dir * time * scroll_speed);
+    let scrolled_pos = pos + scroll_offset;
 
     let voronoi_result = voronoi_boxes(
-        animated_pos * scale,
-        roundness
+        scrolled_pos * scale,
+        roundness,
+        time,
+        extrude_amount,
+        extrude_frequency
     );
 
-    let cloud = fbm(animated_pos * scale, octaves);
+    let cloud = fbm(scrolled_pos * scale, octaves);
     let shaped = mix(
         cloud,
         voronoi_result.value,
@@ -85,7 +95,13 @@ struct VoronoiResult {
     edge_dist: f32,
 }
 
-fn voronoi_boxes(p: vec2f, roundness: f32) -> VoronoiResult {
+fn voronoi_boxes(
+    p: vec2f,
+    roundness: f32,
+    time: f32,
+    extrude_amount: f32,
+    extrude_frequency: f32
+) -> VoronoiResult {
     let cell = floor(p);
     let local_p = fract(p);
 
@@ -104,13 +120,23 @@ fn voronoi_boxes(p: vec2f, roundness: f32) -> VoronoiResult {
             );
             let point = neighbor + rand_offset;
 
+            let cell_hash = hash(cell_id + vec2f(43.21, 19.17));
+            let pulse_offset = cell_hash * 6.28318;
+            let pulse = sin(time * extrude_frequency + pulse_offset);
+            let pulse_01 = pulse * 0.5 + 0.5;
+            let size_mod = 1.0 - (pulse_01 * extrude_amount);
+
             let to_point = point - local_p;
-            let box_dist = rounded_box_dist(to_point, roundness);
+            let box_dist = rounded_box_dist(
+                to_point,
+                roundness,
+                size_mod
+            );
 
             if box_dist < min_dist {
                 second_min = min_dist;
                 min_dist = box_dist;
-                closest_value = hash(cell_id + vec2f(43.21, 19.17));
+                closest_value = cell_hash;
             } else if box_dist < second_min {
                 second_min = box_dist;
             }
@@ -125,9 +151,13 @@ fn voronoi_boxes(p: vec2f, roundness: f32) -> VoronoiResult {
     return result;
 }
 
-fn rounded_box_dist(p: vec2f, roundness: f32) -> f32 {
+fn rounded_box_dist(
+    p: vec2f,
+    roundness: f32,
+    size_mod: f32
+) -> f32 {
     let corner_radius = mix(0.0, 0.3, roundness);
-    let box_size = vec2f(0.3);
+    let box_size = vec2f(0.3) * size_mod;
     let q = abs(p) - box_size + corner_radius;
     let dist = length(max(q, vec2f(0.0))) +
         min(max(q.x, q.y), 0.0) - corner_radius;
