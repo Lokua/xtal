@@ -3,6 +3,7 @@ use nannou::prelude::*;
 use nannou::rand::Rng;
 use nannou::rand::rand;
 use nannou::rand::thread_rng;
+use serde::Deserialize;
 use std::collections::{HashMap as StdHashMap, HashSet as StdHashSet};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -197,6 +198,58 @@ pub fn uuid(length: usize) -> String {
 
 pub(crate) fn uuid_5() -> String {
     uuid(5)
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImageData {
+    pub resolution: usize,
+    pub width: usize,
+    pub height: usize,
+    pub grayscale: bool,
+    #[serde(rename = "brightnessFlat")]
+    pub brightness_flat: Option<Vec<f32>>,
+    #[serde(rename = "brightnessGrid")]
+    pub brightness_grid: Option<Vec<Vec<f32>>>,
+    #[serde(rename = "rgbFlat")]
+    pub rgb_flat: Option<Vec<[f32; 3]>>,
+    #[serde(rename = "rgbGrid")]
+    pub rgb_grid: Option<Vec<Vec<[f32; 3]>>>,
+}
+
+impl ImageData {
+    pub fn from_json_file(
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<Self, String> {
+        let contents = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read JSON file: {}", e))?;
+
+        serde_json::from_str(&contents)
+            .map_err(|e| format!("Failed to parse JSON: {}", e))
+    }
+
+    pub fn brightness_flat(&self) -> Result<&Vec<f32>, String> {
+        self.brightness_flat
+            .as_ref()
+            .ok_or_else(|| "Image data does not contain brightness_flat (use grayscale mode)".to_string())
+    }
+
+    pub fn brightness_grid(&self) -> Result<&Vec<Vec<f32>>, String> {
+        self.brightness_grid
+            .as_ref()
+            .ok_or_else(|| "Image data does not contain brightness_grid (use grayscale mode)".to_string())
+    }
+
+    pub fn rgb_flat(&self) -> Result<&Vec<[f32; 3]>, String> {
+        self.rgb_flat
+            .as_ref()
+            .ok_or_else(|| "Image data does not contain rgb_flat (don't use grayscale mode)".to_string())
+    }
+
+    pub fn rgb_grid(&self) -> Result<&Vec<Vec<[f32; 3]>>, String> {
+        self.rgb_grid
+            .as_ref()
+            .ok_or_else(|| "Image data does not contain rgb_grid (don't use grayscale mode)".to_string())
+    }
 }
 
 #[cfg(test)]

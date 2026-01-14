@@ -105,7 +105,7 @@ fn calculate_wave(
     let wave_distort = params.d.z;
     let type_mix = params.c.y;
 
-    let rot = mat2x2f(
+    let rot = mat2x2<f32>(
         cos(angle * TAU), -sin(angle * TAU),
         sin(angle * TAU), cos(angle * TAU)
     );

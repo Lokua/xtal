@@ -1,0 +1,39 @@
+_vars:
+  PI: &PI 3.14159265359
+  TAU: &TAU 6.283185307179586
+
+rotation_x:
+  var: a3
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+
+rotation_y:
+  var: a4
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+
+z_offset:
+  var: b1
+  type: slider
+  range: [-10.0, -0.5]
+  default: -2.0
+
+depth_scale:
+  var: b2
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+
+grid_scale:
+  var: b3
+  type: slider
+  range: [0.1, 2.0]
+  default: 1.0
+
+brightness_multiplier:
+  var: b4
+  type: slider
+  range: [0.5, 3.0]
+  default: 2.0
