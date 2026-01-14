@@ -34,6 +34,8 @@ rotation_y_anim:
   type: random_slewed
   beats: 4
   range: [*N_PI, *PI]
+  # range: [*N_TAU, *TAU]
+  # range: [-2.0, 2.0]
   slew: 0.7
   stem: 91
 
@@ -44,10 +46,17 @@ rotation_y:
   default: 0.0
   disabled: animate_y
 
+# grid_scale:
+#   var: b1
+#   type: slider
+#   range: [0.1, 2.0]
+#   default: 1.0
+
 grid_scale:
   var: b1
-  type: slider
-  range: [0.1, 2.0]
+  type: triangle
+  beats: 32
+  range: [1.0, 1.5]
   default: 1.0
 
 animate_depth:
@@ -70,8 +79,20 @@ depth_mode:
   default: 0.0
   disabled: animate_depth
 
+# depth_strength:
+#   var: b3
+#   type: slider
+#   range: [0.0, 10.0]
+#   default: 1.0
+
 depth_strength:
   var: b3
-  type: slider
-  range: [0.0, 10.0]
+  type: osc
+  range: [1.0, 10.0]
   default: 1.0
+
+shape_chaos:
+  var: d2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0

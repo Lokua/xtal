@@ -20,6 +20,12 @@ struct Params {
 @group(0) @binding(0)
 var<uniform> params: Params;
 
+fn hash(p: vec2f) -> f32 {
+    var p3 = fract(vec3f(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
     var out: VertexOutput;
@@ -38,6 +44,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let rotation_y_slider = params.a.w;
 
     let animate_depth = params.d.x;
+    let shape_chaos = params.d.y;
     let depth_mode_anim = params.d.z;
 
     let rotation_x = select(rotation_x_slider, rotation_x_anim, animate_x > 0.5);
@@ -46,8 +53,27 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
     var pos = vec3f(vert.position.xy * grid_scale, 0.0);
 
+    let brightness = (vert.color.r + vert.color.g + vert.color.b) / 3.0;
+
+    if shape_chaos > 0.0 {
+        let cell_id = floor(vert.uv * 256.0);
+        let random_val = hash(cell_id);
+        let angle = random_val * 6.28318;
+        let offset_scale = (random_val * 2.0 - 1.0) * 0.015;
+
+        let local_uv = fract(vert.uv * 256.0);
+        let centered = (local_uv - 0.5) * 2.0;
+
+        let rotated_x = centered.x * cos(angle * shape_chaos) - centered.y * sin(angle * shape_chaos);
+        let rotated_y = centered.x * sin(angle * shape_chaos) + centered.y * cos(angle * shape_chaos);
+
+        pos.x += (rotated_x - centered.x) * 0.003 * shape_chaos;
+        pos.y += (rotated_y - centered.y) * 0.003 * shape_chaos;
+        pos.x += offset_scale * shape_chaos;
+        pos.y += offset_scale * random_val * shape_chaos;
+    }
+
     if depth_mode != 0.0 {
-        let brightness = (vert.color.r + vert.color.g + vert.color.b) / 3.0;
         if depth_mode < 0.0 {
             pos.z = (1.0 - brightness) * depth_strength * abs(depth_mode);
         } else {

@@ -24,7 +24,12 @@
     {
       "type": "Slider",
       "name": "grid_scale",
-      "value": 0.6115
+      "value": 0.7311
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_depth",
+      "value": true
     },
     {
       "type": "Slider",
@@ -34,6 +39,11 @@
     {
       "type": "Slider",
       "name": "depth_strength",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "shape_chaos",
       "value": 1.0
     }
   ],
@@ -49,12 +59,12 @@
         },
         {
           "type": "Slider",
-          "name": "rotation_x",
+          "name": "rotation_y",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "rotation_y",
+          "name": "rotation_x",
           "value": 0.0
         }
       ],
@@ -65,12 +75,12 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "rotation_x",
+          "name": "rotation_y",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "rotation_y",
+          "name": "rotation_x",
           "value": 0.0
         },
         {
