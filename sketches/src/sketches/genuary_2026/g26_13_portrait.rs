@@ -11,11 +11,20 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     h: 700,
 };
 
+#[repr(C)]
+#[derive(
+    Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable, bevy_reflect::Reflect,
+)]
+struct Vertex {
+    position: [f32; 3],
+    uv: [f32; 2],
+    brightness: f32,
+}
+
 #[derive(SketchComponents)]
 pub struct SelfPortrait {
     hub: ControlHub<Timing>,
-    gpu: gpu::GpuState<gpu::BasicPositionVertex>,
-    image_data: ImageData,
+    gpu: gpu::GpuState<Vertex>,
 }
 
 #[uniforms(banks = 8)]
@@ -34,23 +43,22 @@ pub fn init(app: &App, ctx: &Context) -> SelfPortrait {
     .expect("Failed to load portrait image data");
 
     let params = ShaderParams::default();
+    let vertices = create_grid_vertices(&image_data);
 
-    let mut gpu = gpu::GpuState::new_fullscreen(
+    let gpu = gpu::GpuState::new(
         app,
         ctx.window_rect().resolution_u32(),
         to_absolute_path(file!(), "g26_13_portrait.wgsl"),
         &params,
-        1,
+        Some(&vertices),
+        wgpu::PrimitiveTopology::TriangleList,
+        Some(wgpu::BlendState::ALPHA_BLENDING),
+        true,
+        0,
+        true,
     );
 
-    let texture_view = create_brightness_texture(app, &image_data);
-    gpu.set_texture(app, &texture_view);
-
-    SelfPortrait {
-        hub,
-        gpu,
-        image_data,
-    }
+    SelfPortrait { hub, gpu }
 }
 
 impl Sketch for SelfPortrait {
@@ -66,55 +74,64 @@ impl Sketch for SelfPortrait {
     }
 }
 
-fn create_brightness_texture(
-    app: &App,
-    image_data: &ImageData,
-) -> wgpu::TextureView {
-    let window = app.main_window();
-    let device = window.device();
-    let queue = window.queue();
-
+fn create_grid_vertices(image_data: &ImageData) -> Vec<Vertex> {
     let brightness_grid = image_data
         .brightness_grid()
         .expect("Expected grayscale image data");
 
     let resolution = image_data.resolution;
+    let mut vertices = Vec::new();
 
-    let rgba_data: Vec<u8> = brightness_grid
-        .iter()
-        .flat_map(|row| {
-            row.iter().flat_map(|&brightness| {
-                let byte_val = (brightness * 255.0).clamp(0.0, 255.0) as u8;
-                [byte_val, byte_val, byte_val, 255]
-            })
-        })
-        .collect();
+    let cell_size = 2.0 / resolution as f32;
 
-    let texture = wgpu::TextureBuilder::new()
-        .size([resolution as u32, resolution as u32])
-        .format(wgpu::TextureFormat::Rgba8Unorm)
-        .usage(
-            wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::COPY_DST,
-        )
-        .build(device);
+    (0..resolution).for_each(|y| {
+        for x in 0..resolution {
+            let brightness = brightness_grid[y][x];
 
-    let texture_size = wgpu::Extent3d {
-        width: resolution as u32,
-        height: resolution as u32,
-        depth_or_array_layers: 1,
-    };
+            let x0 = -1.0 + (x as f32) * cell_size;
+            let y0 = 1.0 - (y as f32) * cell_size;
+            let x1 = x0 + cell_size;
+            let y1 = y0 - cell_size;
 
-    queue.write_texture(
-        texture.as_image_copy(),
-        &rgba_data,
-        wgpu::ImageDataLayout {
-            offset: 0,
-            bytes_per_row: Some(4 * resolution as u32),
-            rows_per_image: Some(resolution as u32),
-        },
-        texture_size,
-    );
+            let u0 = x as f32 / resolution as f32;
+            let v0 = y as f32 / resolution as f32;
+            let u1 = (x + 1) as f32 / resolution as f32;
+            let v1 = (y + 1) as f32 / resolution as f32;
 
-    texture.view().build()
+            vertices.extend_from_slice(&[
+                Vertex {
+                    position: [x0, y0, 0.0],
+                    uv: [u0, v0],
+                    brightness,
+                },
+                Vertex {
+                    position: [x1, y0, 0.0],
+                    uv: [u1, v0],
+                    brightness,
+                },
+                Vertex {
+                    position: [x1, y1, 0.0],
+                    uv: [u1, v1],
+                    brightness,
+                },
+                Vertex {
+                    position: [x0, y0, 0.0],
+                    uv: [u0, v0],
+                    brightness,
+                },
+                Vertex {
+                    position: [x1, y1, 0.0],
+                    uv: [u1, v1],
+                    brightness,
+                },
+                Vertex {
+                    position: [x0, y1, 0.0],
+                    uv: [u0, v1],
+                    brightness,
+                },
+            ]);
+        }
+    });
+
+    vertices
 }

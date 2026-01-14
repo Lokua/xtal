@@ -24,7 +24,7 @@
     {
       "type": "Slider",
       "name": "grid_scale",
-      "value": 0.5
+      "value": 0.9
     },
     {
       "type": "Slider",
@@ -39,21 +39,6 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "depth_scale",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "rotation_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness_multiplier",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
           "name": "grid_scale",
           "value": 1.0
         },
@@ -66,6 +51,21 @@
           "type": "Slider",
           "name": "z_offset",
           "value": -2.0
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "brightness_multiplier",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "rotation_x",
+          "value": 0.0
         }
       ],
       "midi_controls": [],
@@ -75,13 +75,18 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "grid_scale",
-          "value": 0.5
+          "name": "z_offset",
+          "value": -2.0
         },
         {
           "type": "Slider",
           "name": "brightness_multiplier",
           "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_scale",
+          "value": 0.5
         },
         {
           "type": "Slider",
@@ -92,11 +97,6 @@
           "type": "Slider",
           "name": "rotation_x",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "z_offset",
-          "value": -2.0
         },
         {
           "type": "Slider",
