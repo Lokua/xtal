@@ -2,11 +2,14 @@
 #  Main
 # ------------------------------------------------------------------------------
 
+main:
+  type: separator
+
 scale:
   var: b1
   type: slider
   default: 2.0
-  range: [0.5, 10.0]
+  range: [0.5, 20.0]
 
 octaves:
   var: b2
@@ -31,6 +34,9 @@ contrast:
 #  Shape
 # ------------------------------------------------------------------------------
 
+shape:
+  type: separator
+
 contour_levels:
   var: c1
   type: slider
@@ -54,3 +60,34 @@ roundness:
   type: slider
   default: 0.7
   range: [0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+#  Animation
+# ------------------------------------------------------------------------------
+
+animation:
+  type: separator
+
+scroll_down:
+  var: d1
+  type: checkbox
+  default: true
+
+scroll_speed:
+  var: d2
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.025
+
+extrude_amount:
+  var: d3
+  type: slider
+  default: 0.0
+  range: [0.0, 0.5]
+
+extrude_frequency:
+  var: d4
+  type: slider
+  default: 1.0
+  range: [0.1, 10.0]

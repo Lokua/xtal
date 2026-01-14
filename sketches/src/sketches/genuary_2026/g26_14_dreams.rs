@@ -17,7 +17,7 @@ pub struct Dreams {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 4)]
+#[uniforms(banks = 8)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> Dreams {

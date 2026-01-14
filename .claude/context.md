@@ -229,3 +229,13 @@ own branches.
 - Make commits when requested by the user
 - DO NOT push unless explicitly requested
 - Use whatever branch the user currently has checked out
+
+## Working Together
+
+- When I ask questions like "is it possible to...", that isn't a directive to
+  implement what I'm asking about, it's an invitation for you to seek clarity so
+  we can arrive at the most favorable outcome.
+- I am the author of the entirety of the source code, so for simple things you
+  don't know, it'll often be quicker for you to ask me than it will be for you
+  to run a bunch of commands and try to figure it out yourself - whatever you
+  think will reduce me spending too many tokens.
