@@ -1,18 +1,20 @@
 struct VertexInput {
     @location(0) position: vec3f,
     @location(1) uv: vec2f,
-    @location(2) brightness: f32
+    @location(2) color: vec3f
 };
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4f,
     @location(0) uv: vec2f,
-    @location(1) brightness: f32
+    @location(1) color: vec3f
 };
 
 struct Params {
     a: vec4f,
     b: vec4f,
+    c: vec4f,
+    d: vec4f,
 }
 
 @group(0) @binding(0)
@@ -22,21 +24,34 @@ var<uniform> params: Params;
 fn vs_main(vert: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.uv = vert.uv;
-    out.brightness = vert.brightness;
+    out.color = vert.color;
 
-    let rotation_x = params.a.z;
-    let rotation_y = params.a.w;
     let grid_scale = params.b.x;
-    let depth_mode = params.b.z;
-    let depth_strength = params.b.w;
+    let depth_mode_slider = params.b.y;
+    let depth_strength = params.b.z;
+
+    let animate_x = params.c.x;
+    let animate_y = params.c.y;
+    let rotation_x_anim = params.c.z;
+    let rotation_y_anim = params.c.w;
+    let rotation_x_slider = params.a.z;
+    let rotation_y_slider = params.a.w;
+
+    let animate_depth = params.d.x;
+    let depth_mode_anim = params.d.z;
+
+    let rotation_x = select(rotation_x_slider, rotation_x_anim, animate_x > 0.5);
+    let rotation_y = select(rotation_y_slider, rotation_y_anim, animate_y > 0.5);
+    let depth_mode = select(depth_mode_slider, depth_mode_anim, animate_depth > 0.5);
 
     var pos = vec3f(vert.position.xy * grid_scale, 0.0);
 
     if depth_mode != 0.0 {
+        let brightness = (vert.color.r + vert.color.g + vert.color.b) / 3.0;
         if depth_mode < 0.0 {
-            pos.z = (1.0 - vert.brightness) * depth_strength * abs(depth_mode);
+            pos.z = (1.0 - brightness) * depth_strength * abs(depth_mode);
         } else {
-            pos.z = vert.brightness * depth_strength * depth_mode;
+            pos.z = brightness * depth_strength * depth_mode;
         }
     }
 
@@ -83,7 +98,5 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4f {
-    let brightness_multiplier = params.b.y;
-    let brightness = input.brightness * brightness_multiplier;
-    return vec4f(vec3f(brightness), 1.0);
+    return vec4f(input.color, 1.0);
 }

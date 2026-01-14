@@ -2,34 +2,39 @@
   "version": "2",
   "ui_controls": [
     {
+      "type": "Checkbox",
+      "name": "animate_x",
+      "value": false
+    },
+    {
       "type": "Slider",
       "name": "rotation_x",
-      "value": 0.0
+      "value": 0.0000145
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_y",
+      "value": true
     },
     {
       "type": "Slider",
       "name": "rotation_y",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "z_offset",
-      "value": -2.0
-    },
-    {
-      "type": "Slider",
-      "name": "depth_scale",
-      "value": 1.0
+      "value": 0.5712145
     },
     {
       "type": "Slider",
       "name": "grid_scale",
-      "value": 0.9
+      "value": 0.6115
     },
     {
       "type": "Slider",
-      "name": "brightness_multiplier",
-      "value": 2.0
+      "name": "depth_mode",
+      "value": 0.7483
+    },
+    {
+      "type": "Slider",
+      "name": "depth_strength",
+      "value": 1.0
     }
   ],
   "midi_controls": [],
@@ -44,27 +49,12 @@
         },
         {
           "type": "Slider",
-          "name": "rotation_y",
+          "name": "rotation_x",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "z_offset",
-          "value": -2.0
-        },
-        {
-          "type": "Slider",
-          "name": "depth_scale",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness_multiplier",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "rotation_x",
+          "name": "rotation_y",
           "value": 0.0
         }
       ],
@@ -75,18 +65,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "z_offset",
-          "value": -2.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness_multiplier",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "grid_scale",
-          "value": 0.5
+          "name": "rotation_x",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -95,13 +75,8 @@
         },
         {
           "type": "Slider",
-          "name": "rotation_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "depth_scale",
-          "value": 1.0
+          "name": "grid_scale",
+          "value": 0.5
         }
       ],
       "midi_controls": [],
