@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "scale",
-      "value": 8.5455
+      "value": 13.3864
     },
     {
       "type": "Slider",
@@ -19,27 +19,27 @@
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 0.972
+      "value": 0.8147
     },
     {
       "type": "Slider",
       "name": "contour_levels",
-      "value": 19.3706
+      "value": 20.0
     },
     {
       "type": "Slider",
       "name": "contour_smoothness",
-      "value": 0.0
+      "value": 0.493
     },
     {
       "type": "Slider",
       "name": "depth_strength",
-      "value": 0.4196
+      "value": 0.6993
     },
     {
       "type": "Slider",
       "name": "roundness",
-      "value": 0.1713
+      "value": 1.0
     },
     {
       "type": "Checkbox",
@@ -59,7 +59,27 @@
     {
       "type": "Slider",
       "name": "extrude_frequency",
-      "value": 1.0
+      "value": 0.9308
+    },
+    {
+      "type": "Slider",
+      "name": "gap_amount",
+      "value": 0.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "wave_enabled",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "wave_speed",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave_scale",
+      "value": 0.042
     }
   ],
   "midi_controls": [],

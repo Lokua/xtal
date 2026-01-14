@@ -91,3 +91,45 @@ extrude_frequency:
   type: slider
   default: 1.0
   range: [0.1, 10.0]
+
+# ------------------------------------------------------------------------------
+#  Gaps
+# ------------------------------------------------------------------------------
+
+gaps:
+  type: separator
+
+gap_amount:
+  var: e1
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+#  Density Waves
+# ------------------------------------------------------------------------------
+
+density_waves:
+  type: separator
+
+wave_enabled:
+  var: e2
+  type: checkbox
+  default: false
+
+wave_invert:
+  var: f1
+  type: checkbox
+  default: false
+
+wave_speed:
+  var: e3
+  type: slider
+  default: 0.3
+  range: [0.1, 2.0]
+
+wave_scale:
+  var: e4
+  type: slider
+  default: 0.01
+  range: [0.0, 0.05]

@@ -13,6 +13,7 @@ struct Params {
     c: vec4f,
     d: vec4f,
     e: vec4f,
+    f: vec4f,
 }
 
 @group(0) @binding(0)
@@ -41,21 +42,52 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let scroll_speed = params.d.y;
     let extrude_amount = params.d.z;
     let extrude_frequency = params.d.w;
+    let gap_amount = params.e.x;
+    let wave_enabled = params.e.y > 0.5;
+    let wave_speed = params.e.z;
+    let wave_scale = params.e.w;
+    let wave_invert = params.f.x > 0.5;
+
+    let bone_white = vec3f(0.96, 0.96, 0.92);
+    let background = vec3f(0.05, 0.05, 0.08);
+    let gap_background = vec3f(0.96, 0.96, 1.0);
 
     let pos = correct_aspect(position);
     let scroll_dir = select(-1.0, 1.0, scroll_down);
     let scroll_offset = vec2f(0.0, scroll_dir * time * scroll_speed);
     let scrolled_pos = pos + scroll_offset;
 
+    var local_scale = scale;
+    if wave_enabled {
+        let movement = vec2f(
+            sin(time * wave_speed * 0.2) * 3.0,
+            select(1.0, -1.0, wave_invert) * time * wave_speed * 0.5
+        );
+        let noise_pos = scrolled_pos * 0.8 + movement;
+
+        let n1 = fbm(noise_pos, 3);
+        let n2 = fbm(noise_pos * 1.3 + vec2f(5.2, 1.3), 3);
+
+        let combined = n1 * n2;
+        var sharp = pow(combined, 4.0);
+        sharp = clamp(sharp, 0.0, 0.004);
+        local_scale = mix(scale, scale * (1.0 + wave_scale), sharp);
+    }
+
     let voronoi_result = voronoi_boxes(
-        scrolled_pos * scale,
+        scrolled_pos * local_scale,
         roundness,
         time,
         extrude_amount,
-        extrude_frequency
+        extrude_frequency,
+        gap_amount
     );
 
-    let cloud = fbm(scrolled_pos * scale, octaves);
+    if voronoi_result.is_gap {
+        return vec4f(gap_background, 1.0);
+    }
+
+    let cloud = fbm(scrolled_pos * local_scale, octaves);
     let shaped = mix(
         cloud,
         voronoi_result.value,
@@ -74,8 +106,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     final_value = pow(final_value, contrast);
     final_value = final_value * brightness;
 
-    let bone_white = vec3f(0.96, 0.96, 0.92);
-    let background = vec3f(0.05, 0.05, 0.08);
     let color = mix(background, bone_white, final_value);
 
     return vec4f(color, 1.0);
@@ -93,6 +123,7 @@ fn correct_aspect(position: vec2f) -> vec2f {
 struct VoronoiResult {
     value: f32,
     edge_dist: f32,
+    is_gap: bool,
 }
 
 fn voronoi_boxes(
@@ -100,7 +131,8 @@ fn voronoi_boxes(
     roundness: f32,
     time: f32,
     extrude_amount: f32,
-    extrude_frequency: f32
+    extrude_frequency: f32,
+    gap_amount: f32
 ) -> VoronoiResult {
     let cell = floor(p);
     let local_p = fract(p);
@@ -108,6 +140,7 @@ fn voronoi_boxes(
     var min_dist = 1000.0;
     var second_min = 1000.0;
     var closest_value = 0.0;
+    var closest_cell_id = vec2f(0.0);
 
     for (var y = -1; y <= 1; y++) {
         for (var x = -1; x <= 1; x++) {
@@ -137,17 +170,22 @@ fn voronoi_boxes(
                 second_min = min_dist;
                 min_dist = box_dist;
                 closest_value = cell_hash;
+                closest_cell_id = cell_id;
             } else if box_dist < second_min {
                 second_min = box_dist;
             }
         }
     }
 
+    let gap_hash = hash(closest_cell_id + vec2f(77.7, 55.5));
+    let is_gap = gap_hash < gap_amount;
+
     let edge_dist = smoothstep(0.0, 0.1, second_min - min_dist);
 
     var result: VoronoiResult;
     result.value = closest_value;
     result.edge_dist = 1.0 - edge_dist;
+    result.is_gap = is_gap;
     return result;
 }
 
