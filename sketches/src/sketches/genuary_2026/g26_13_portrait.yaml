@@ -1,19 +1,48 @@
 _vars:
   PI: &PI 3.14159265359
+  N_PI: &N_PI -3.14159265359
   TAU: &TAU 6.283185307179586
   N_TAU: &N_TAU -6.283185307179586
+
+animate_x:
+  var: c1
+  type: checkbox
+  default: false
+
+rotation_x_anim:
+  var: c3
+  type: random_slewed
+  beats: 1
+  range: [*N_PI, *PI]
+  slew: 0.7
+  stem: 90
 
 rotation_x:
   var: a3
   type: slider
-  range: [*N_TAU, *TAU]
+  range: [*N_PI, *PI]
   default: 0.0
+  disabled: animate_x
+
+animate_y:
+  var: c2
+  type: checkbox
+  default: false
+
+rotation_y_anim:
+  var: c4
+  type: random_slewed
+  beats: 4
+  range: [*N_PI, *PI]
+  slew: 0.7
+  stem: 91
 
 rotation_y:
   var: a4
   type: slider
-  range: [*N_TAU, *TAU]
+  range: [*N_PI, *PI]
   default: 0.0
+  disabled: animate_y
 
 grid_scale:
   var: b1
@@ -21,20 +50,28 @@ grid_scale:
   range: [0.1, 2.0]
   default: 1.0
 
-brightness_multiplier:
-  var: b2
-  type: slider
-  range: [0.5, 3.0]
-  default: 1.0
+animate_depth:
+  var: d1
+  type: checkbox
+  default: false
+
+depth_mode_anim:
+  var: d3
+  type: random_slewed
+  beats: 1
+  range: [-1.0, 1.0]
+  slew: 0.6
+  stem: 92
 
 depth_mode:
-  var: b3
+  var: b2
   type: slider
   range: [-1.0, 1.0]
   default: 0.0
+  disabled: animate_depth
 
 depth_strength:
-  var: b4
+  var: b3
   type: slider
-  range: [0.0, 2.0]
-  default: 0.5
+  range: [0.0, 10.0]
+  default: 1.0

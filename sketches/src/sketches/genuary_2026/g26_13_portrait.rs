@@ -1,3 +1,7 @@
+//! Genuary 2026 | 13 - Self Portrait
+//! Image data generated via `downsample` command from
+//! https://github.com/Lokua/gen-gen
+
 use nannou::prelude::*;
 use xtal::prelude::*;
 
@@ -6,7 +10,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Genuary 2026 | 13 - Self Portrait",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    bpm: 108.0,
     w: 700,
     h: 700,
 };
@@ -18,7 +22,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
 struct Vertex {
     position: [f32; 3],
     uv: [f32; 2],
-    brightness: f32,
+    color: [f32; 3],
 }
 
 #[derive(SketchComponents)]
@@ -75,63 +79,130 @@ impl Sketch for SelfPortrait {
 }
 
 fn create_grid_vertices(image_data: &ImageData) -> Vec<Vertex> {
-    let brightness_grid = image_data
-        .brightness_grid()
-        .expect("Expected grayscale image data");
-
     let resolution = image_data.resolution;
     let mut vertices = Vec::new();
-
     let cell_size = 2.0 / resolution as f32;
 
-    (0..resolution).for_each(|y| {
-        for x in 0..resolution {
-            let brightness = brightness_grid[y][x];
+    if image_data.grayscale {
+        let brightness_grid = image_data
+            .brightness_grid()
+            .expect("Expected grayscale image data");
 
-            let x0 = -1.0 + (x as f32) * cell_size;
-            let y0 = 1.0 - (y as f32) * cell_size;
-            let x1 = x0 + cell_size;
-            let y1 = y0 - cell_size;
+        (0..resolution).for_each(|y| {
+            for x in 0..resolution {
+                let brightness = brightness_grid[y][x];
+                let linear = srgb_to_linear(brightness);
+                let color = [linear, linear, linear];
 
-            let u0 = x as f32 / resolution as f32;
-            let v0 = y as f32 / resolution as f32;
-            let u1 = (x + 1) as f32 / resolution as f32;
-            let v1 = (y + 1) as f32 / resolution as f32;
+                let x0 = -1.0 + (x as f32) * cell_size;
+                let y0 = 1.0 - (y as f32) * cell_size;
+                let x1 = x0 + cell_size;
+                let y1 = y0 - cell_size;
 
-            vertices.extend_from_slice(&[
-                Vertex {
-                    position: [x0, y0, 0.0],
-                    uv: [u0, v0],
-                    brightness,
-                },
-                Vertex {
-                    position: [x1, y0, 0.0],
-                    uv: [u1, v0],
-                    brightness,
-                },
-                Vertex {
-                    position: [x1, y1, 0.0],
-                    uv: [u1, v1],
-                    brightness,
-                },
-                Vertex {
-                    position: [x0, y0, 0.0],
-                    uv: [u0, v0],
-                    brightness,
-                },
-                Vertex {
-                    position: [x1, y1, 0.0],
-                    uv: [u1, v1],
-                    brightness,
-                },
-                Vertex {
-                    position: [x0, y1, 0.0],
-                    uv: [u0, v1],
-                    brightness,
-                },
-            ]);
-        }
-    });
+                let u0 = x as f32 / resolution as f32;
+                let v0 = y as f32 / resolution as f32;
+                let u1 = (x + 1) as f32 / resolution as f32;
+                let v1 = (y + 1) as f32 / resolution as f32;
+
+                vertices.extend_from_slice(&[
+                    Vertex {
+                        position: [x0, y0, 0.0],
+                        uv: [u0, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y0, 0.0],
+                        uv: [u1, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y1, 0.0],
+                        uv: [u1, v1],
+                        color,
+                    },
+                    Vertex {
+                        position: [x0, y0, 0.0],
+                        uv: [u0, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y1, 0.0],
+                        uv: [u1, v1],
+                        color,
+                    },
+                    Vertex {
+                        position: [x0, y1, 0.0],
+                        uv: [u0, v1],
+                        color,
+                    },
+                ]);
+            }
+        });
+    } else {
+        let rgb_grid = image_data.rgb_grid().expect("Expected RGB image data");
+
+        (0..resolution).for_each(|y| {
+            for x in 0..resolution {
+                let rgb = rgb_grid[y][x];
+                let color = [
+                    srgb_to_linear(rgb[0]),
+                    srgb_to_linear(rgb[1]),
+                    srgb_to_linear(rgb[2]),
+                ];
+
+                let x0 = -1.0 + (x as f32) * cell_size;
+                let y0 = 1.0 - (y as f32) * cell_size;
+                let x1 = x0 + cell_size;
+                let y1 = y0 - cell_size;
+
+                let u0 = x as f32 / resolution as f32;
+                let v0 = y as f32 / resolution as f32;
+                let u1 = (x + 1) as f32 / resolution as f32;
+                let v1 = (y + 1) as f32 / resolution as f32;
+
+                vertices.extend_from_slice(&[
+                    Vertex {
+                        position: [x0, y0, 0.0],
+                        uv: [u0, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y0, 0.0],
+                        uv: [u1, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y1, 0.0],
+                        uv: [u1, v1],
+                        color,
+                    },
+                    Vertex {
+                        position: [x0, y0, 0.0],
+                        uv: [u0, v0],
+                        color,
+                    },
+                    Vertex {
+                        position: [x1, y1, 0.0],
+                        uv: [u1, v1],
+                        color,
+                    },
+                    Vertex {
+                        position: [x0, y1, 0.0],
+                        uv: [u0, v1],
+                        color,
+                    },
+                ]);
+            }
+        });
+    }
 
     vertices
+}
+
+fn srgb_to_linear(c: f32) -> f32 {
+    if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    }
 }
