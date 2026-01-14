@@ -140,6 +140,7 @@ impl Sketch for MySketch {
 1. **Indentation**: Use consistent block-level indentation only. DO NOT align
    parameters, struct fields, or array elements to match previous lines. Each
    nested level gets one indent, period.
+
    ```rust
    // GOOD - consistent block indentation
    let params = ShaderParams {
@@ -162,10 +163,24 @@ impl Sketch for MySketch {
    - snake_case for functions, variables, modules
    - PascalCase for types, traits, enums
    - SCREAMING_SNAKE_CASE for constants
-5. **Formatting**: Use `rustfmt` defaults (already configured)
-6. **Comments**: Use `//` for line comments, `///` for doc comments
+5. **Formatting**: Use `rustfmt` defaults (already configured).
+6. **Comments**: Use `//` for line comments, `///` for doc comments. ever, ever
+   place comments on the same line as code. Always place them above the line
+   they pertain to.
 7. **Control variables**: Prefer using `var: a1`, `var: b2` etc. in YAML for
    shader-bound parameters (matches the uniform bank convention)
+8. **Ordering**: Follow the "main up top" organizational pattern. Code is read
+   from top to bottom in order of importance and use. Utility and implementation
+   details go at the bottom. For example if a fragment main uses an `fbm`
+   function, and that uses a `hash` function, the order would be `fs_main`
+   followed by `fbm` and then `hash`
+
+## Important Constraints
+
+- **WGSL Limitation**: Cannot use `textureSample` in vertex shaders - must pass
+  data as vertex attributes
+- **Hot Reload**: WGSL shaders hot-reload, Rust files require manual restart,
+  please inform me when this needs to happen
 
 ## Example Sketches
 
@@ -195,8 +210,6 @@ See `docs/control_script_reference.md` line 996 for details.
 
 - `xtal/src/framework/` - Core framework code (motion, control, gpu)
 - `sketches/src/sketches/` - Example sketches
-- `sketches/src/sketches/genuary_2025/` - Comprehensive sketch examples
-- `sketches/src/sketches/genuary_2026/` - Latest sketch examples
 - `docs/` - Framework documentation
 - `xtal-ui/` - Web-based control UI (TypeScript/React)
 
