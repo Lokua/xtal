@@ -67,7 +67,6 @@ pub fn init(app: &App, ctx: &Context) -> SelfPortrait {
 
 impl Sketch for SelfPortrait {
     fn update(&mut self, app: &App, _update: Update, ctx: &Context) {
-        debug_throttled!(500, "{:#?}", self.hub.get("depth_strength"));
         let wr = ctx.window_rect();
         let params = ShaderParams::from((&wr, &self.hub));
         self.gpu.update_params(app, wr.resolution_u32(), &params);
