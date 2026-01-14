@@ -74,31 +74,26 @@ bg_noise_scale:
   type: slider
   default: 5.0
   range: [0.0, 10.0]
-  bypass: 10.0
 
 bg_noise_brightness:
   var: d1
   type: slider
   default: 0.1
-  bypass: 0.04
 
 contrast:
   var: d2
   type: slider
   default: 1.0
   range: [0.0, 2.0]
-  bypass: 1.0
 
 saturation:
   var: d3
   type: slider
   default: 1.0
   range: [0.0, 100.0]
-  bypass: 50
 
 hue_shift:
   var: d4
   type: slider
   default: 0.0
   range: [0.0, 1.0]
-  bypass: 0.95
