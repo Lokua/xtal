@@ -124,5 +124,8 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4f {
-    return vec4f(input.color, 1.0);
+    let lavender = vec3f(0.75, 0.58, 0.89);
+    let brightness = (input.color.r + input.color.g + input.color.b) / 3.0;
+    let out_color = lavender * brightness;
+    return vec4f(out_color, 1.0);
 }
