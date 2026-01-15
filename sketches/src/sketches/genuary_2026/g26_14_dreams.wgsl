@@ -67,11 +67,14 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
         let n1 = fbm(noise_pos, 3);
         let n2 = fbm(noise_pos * 1.3 + vec2f(5.2, 1.3), 3);
+        let n3 = fbm(noise_pos * 3.7 + vec2f(9.4, 7.1), 2);
 
-        let combined = n1 * n2;
-        var sharp = pow(combined, 4.0);
-        sharp = clamp(sharp, 0.0, 0.004);
-        local_scale = mix(scale, scale * (1.0 + wave_scale), sharp);
+        let combined = clamp(n1 * n2, 0.0, 1.0);
+        let sharpened = pow(combined, 4.0);
+        let modulated = sharpened * (0.5 + n3 * 0.5);
+        let capped = clamp(modulated, 0.0, 0.6);
+
+        local_scale = mix(scale, scale * (1.0 + wave_scale), capped);
     }
 
     let voronoi_result = voronoi_boxes(
