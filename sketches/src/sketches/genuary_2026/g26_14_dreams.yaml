@@ -131,5 +131,5 @@ wave_speed:
 wave_scale:
   var: e4
   type: slider
-  default: 0.01
-  range: [0.0, 0.05]
+  default: 0.2
+  range: [0.0, 1.0]

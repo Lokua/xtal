@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "scale",
-      "value": 13.3864
+      "value": 12.0909
     },
     {
       "type": "Slider",
@@ -19,7 +19,7 @@
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 0.8147
+      "value": 0.9108
     },
     {
       "type": "Slider",
@@ -34,12 +34,12 @@
     {
       "type": "Slider",
       "name": "depth_strength",
-      "value": 0.6993
+      "value": 0.4196
     },
     {
       "type": "Slider",
       "name": "roundness",
-      "value": 1.0
+      "value": 0.0
     },
     {
       "type": "Checkbox",
@@ -72,19 +72,116 @@
       "value": true
     },
     {
+      "type": "Checkbox",
+      "name": "wave_invert",
+      "value": true
+    },
+    {
       "type": "Slider",
       "name": "wave_speed",
-      "value": 0.5
+      "value": 0.7378
     },
     {
       "type": "Slider",
       "name": "wave_scale",
-      "value": 0.042
+      "value": 0.1259
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "wave_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "wave_speed",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "roundness",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_enabled",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "scroll_down",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "extrude_frequency",
+          "value": 0.9308
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 0.9108
+        },
+        {
+          "type": "Slider",
+          "name": "wave_scale",
+          "value": 0.0804
+        },
+        {
+          "type": "Slider",
+          "name": "scroll_speed",
+          "value": 0.05
+        },
+        {
+          "type": "Slider",
+          "name": "octaves",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "depth_strength",
+          "value": 0.4196
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "extrude_amount",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "scale",
+          "value": 12.0909
+        },
+        {
+          "type": "Slider",
+          "name": "contour_smoothness",
+          "value": 0.493
+        },
+        {
+          "type": "Slider",
+          "name": "contour_levels",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "gap_amount",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": []
 }
