@@ -1,0 +1,153 @@
+_vars:
+  BG_SLEW: &BG_SLEW 0.5
+  BG_MIN: &BG_MIN 32
+  BG_MAX: &BG_MAX 64
+# ------------------------------------------------------------------------------
+#  Text
+# ------------------------------------------------------------------------------
+
+font_size:
+  var: a4
+  # type: ramp
+  type: random_slewed
+  beats: 1
+  range: [128, 200]
+  slew: 0.5
+  delay: 0.0
+  stem: 2
+
+font_size_offset:
+  var: b4
+  type: triangle
+  beats: 3
+  range: [4, 12]
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+colors:
+  type: separator
+
+hue:
+  var: b1
+  type: slider
+saturation:
+  var: b2
+  type: slider
+lightness:
+  var: b3
+  type: slider
+
+bg_colors:
+  type: separator
+
+bg_hue:
+  var: c1
+  type: slider
+bg_saturation:
+  var: c2
+  type: slider
+bg_lightness:
+  var: c3
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Grid Animations
+# ------------------------------------------------------------------------------
+
+grid_animations:
+  type: separator
+
+# Row 0
+grid_0_0:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 11
+
+grid_0_1:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 22
+
+grid_0_2:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 33
+
+# Row 1
+grid_1_0:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 44
+
+grid_1_1:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 55
+
+grid_1_2:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 66
+
+# Row 2
+grid_2_0:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 77
+
+grid_2_1:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 88
+
+grid_2_2:
+  type: random_slewed
+  beats: 0.5
+  range: [*BG_MIN, *BG_MAX]
+  slew: *BG_SLEW
+  delay: 0.0
+  stem: 99
+
+# ------------------------------------------------------------------------------
+#  Automation
+# ------------------------------------------------------------------------------
+
+automation:
+  type: separator
+
+fade:
+  type: automate
+  mode: once
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.0
+    - kind: end
+      position: 7.0
+      value: 1.0
