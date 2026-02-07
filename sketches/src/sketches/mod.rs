@@ -57,6 +57,7 @@ pub use self::genuary_2026::g26_11_quine;
 pub use self::genuary_2026::g26_12_boxes;
 pub use self::genuary_2026::g26_13_portrait;
 pub use self::genuary_2026::g26_14_dreams;
+pub use self::genuary_2026::g26_15;
 
 pub mod scratch;
 pub use self::scratch::basics;
