@@ -2,14 +2,18 @@ use nannou::prelude::*;
 
 use xtal::prelude::*;
 
+const LOGICAL_WIDTH: i32 = crate::sketches::common::MBP_16_WIDTH_LOGICAL
+    - crate::sketches::common::CONTROL_PANEL_WIDTH;
+const LOGICAL_HEIGHT: i32 = (LOGICAL_WIDTH as f32 * 9.0 / 16.0) as i32;
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "auto_grid_splash",
     display_name: "Grid Splash",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: 700,
-    h: 700,
+    w: LOGICAL_WIDTH,
+    h: LOGICAL_HEIGHT,
 };
 
 #[derive(SketchComponents)]

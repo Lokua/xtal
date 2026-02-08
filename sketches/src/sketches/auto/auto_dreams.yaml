@@ -8,11 +8,18 @@ main:
 scale:
   var: b1
   type: random_slewed
-  beats: 8
+  beats: 12
   range: [10.0, 20.0]
-  slew: 0.5
+  slew: 0.7
   delay: 0.0
   stem: 77
+
+# scale:
+#   var: b1
+#   type: triangle
+#   beats: 128
+#   range: [10.0, 20.0]
+#   phase: 0.0
 
 octaves:
   var: b2
@@ -132,6 +139,18 @@ gap_amount:
   delay: 0.0
   stem: 33
 
+gap_amount_curve:
+  type: effect
+  kind: math
+  operator: curve
+  operand: -0.5
+
+gap_amount_modulated:
+  type: mod
+  source: gap_amount
+  modulators:
+    - gap_amount_curve
+
 # ------------------------------------------------------------------------------
 #  Density Waves
 # ------------------------------------------------------------------------------
@@ -174,13 +193,13 @@ wave_scale_bias:
   type: effect
   kind: math
   operator: curve
-  operand: -0.5
+  operand: -0.25
 
 wave_scale_range:
   type: effect
   kind: math
   operator: mult
-  operand: 0.05
+  operand: 0.2
 
 wave_scale_modulated:
   type: mod

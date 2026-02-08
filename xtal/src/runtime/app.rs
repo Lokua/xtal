@@ -598,7 +598,7 @@ impl AppModel {
                 }
 
                 if any_sent {
-                    self.app_tx.alert_and_log("MIDI Sent", log::Level::Info);
+                    self.app_tx.alert_and_log("MIDI Sent", log::Level::Debug);
                 }
             }
             AppEvent::SnapshotEnded => {
@@ -606,7 +606,7 @@ impl AppModel {
                 self.wv_tx.emit(wv::Event::SnapshotEnded(controls));
                 self.app_tx.alert_and_log(
                     "Snapshot/Transition ended",
-                    log::Level::Info,
+                    log::Level::Debug,
                 );
                 self.app_tx.emit(AppEvent::SendMidi);
             }
