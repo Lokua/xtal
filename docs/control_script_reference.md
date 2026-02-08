@@ -671,7 +671,11 @@ Recall saved snapshots at beat positions.
   - YAML booleans: `true` / `false`
   - string expressions (same syntax as UI control `disabled`)
   - string literals `"true"` / `"false"`
-- `stages` - list of stage entries
+- `stages` - explicit list of stage entries
+- `beats` - shorthand interval in beats (must be finite and > `0.0`)
+- `snapshots` - shorthand list of snapshot ids to play every `beats`
+
+Use either explicit `stages` or shorthand `beats + snapshots`, not both.
 
 ### snapshot_sequence.stages
 
@@ -683,7 +687,15 @@ Recall saved snapshots at beat positions.
 
 The last entry must be `kind: end`.
 
-**Example**
+### snapshot_sequence shorthand (`beats + snapshots`)
+
+- `beats` + `snapshots` is compiled to explicit stages internally.
+- Generated stage positions are `0, beats, 2*beats, ...`.
+- An automatic final `kind: end` is generated at
+  `snapshots.len() * beats`.
+- Snapshot ids in `snapshots` can be YAML strings or unquoted numbers.
+
+**Explicit Example**
 
 ```yaml
 my_sequence:
@@ -698,6 +710,19 @@ my_sequence:
     - kind: end
       position: 9.0
 ```
+
+**Shorthand Example**
+
+```yaml
+my_sequence:
+  type: snapshot_sequence
+  beats: 4
+  snapshots: [1, 2, 3, 0]
+```
+
+If a script edit is invalid (for example mixed explicit and shorthand fields),
+the update is rejected and the previous active `ControlHub` configuration keeps
+running.
 
 # Modulation
 
@@ -1091,7 +1116,11 @@ Recall saved snapshots on beat-aligned positions.
   - YAML booleans: `true` / `false`
   - string expressions (same syntax as UI control `disabled`)
   - string literals `"true"` / `"false"`
-- `stages` - list of stage entries
+- `stages` - explicit list of stage entries
+- `beats` - shorthand interval in beats (must be finite and > `0.0`)
+- `snapshots` - shorthand list of snapshot ids to play every `beats`
+
+Use either explicit `stages` or shorthand `beats + snapshots`, not both.
 
 **Stage Params**
 
@@ -1103,7 +1132,7 @@ Recall saved snapshots on beat-aligned positions.
 
 The last entry must be `kind: end`.
 
-**Example**
+**Explicit Example**
 
 ```yaml
 sequence:
@@ -1119,6 +1148,18 @@ sequence:
     - kind: end
       position: 9.0
 ```
+
+**Shorthand Example**
+
+```yaml
+sequence:
+  type: snapshot_sequence
+  beats: 4
+  snapshots: [1, 2, 3, 0]
+```
+
+Invalid script changes do not crash the app. They are rejected and the previous
+active control state remains in effect.
 
 # Using `var`
 

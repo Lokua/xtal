@@ -388,12 +388,123 @@ impl Default for TriangleConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
-#[serde(default)]
+#[derive(Debug, Clone, Default)]
 pub struct SnapshotSequenceConfig {
-    #[serde(default, deserialize_with = "to_disabled_fn")]
     pub disabled: Option<DisabledConfig>,
     pub stages: Vec<SnapshotSequenceStageConfig>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(default)]
+struct SnapshotSequenceConfigRaw {
+    #[serde(default, deserialize_with = "to_disabled_fn")]
+    disabled: Option<DisabledConfig>,
+    stages: Option<Vec<SnapshotSequenceStageConfig>>,
+    beats: Option<f32>,
+    snapshots: Option<Vec<SnapshotId>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum SnapshotId {
+    String(String),
+    Int(i64),
+    Uint(u64),
+    Float(f64),
+}
+
+impl SnapshotId {
+    fn into_string(self) -> Result<String, String> {
+        match self {
+            SnapshotId::String(value) => Ok(value),
+            SnapshotId::Int(value) => Ok(value.to_string()),
+            SnapshotId::Uint(value) => Ok(value.to_string()),
+            SnapshotId::Float(value) => {
+                if !value.is_finite() {
+                    return Err("snapshot must be finite".to_string());
+                }
+
+                if value.fract() == 0.0 {
+                    Ok(format!("{value:.0}"))
+                } else {
+                    Ok(value.to_string())
+                }
+            }
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for SnapshotSequenceConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = SnapshotSequenceConfigRaw::deserialize(deserializer)?;
+
+        let has_stages = raw.stages.is_some();
+        let has_beats = raw.beats.is_some();
+        let has_snapshots = raw.snapshots.is_some();
+
+        if has_stages && (has_beats || has_snapshots) {
+            return Err(serde::de::Error::custom(
+                "snapshot_sequence cannot define both `stages` and \
+                 `beats`/`snapshots` shorthand",
+            ));
+        }
+
+        if has_beats ^ has_snapshots {
+            return Err(serde::de::Error::custom(
+                "snapshot_sequence shorthand requires both `beats` and \
+                 `snapshots`",
+            ));
+        }
+
+        if let Some(stages) = raw.stages {
+            return Ok(Self {
+                disabled: raw.disabled,
+                stages,
+            });
+        }
+
+        if let (Some(beats), Some(snapshots)) = (raw.beats, raw.snapshots) {
+            if !beats.is_finite() || beats <= 0.0 {
+                return Err(serde::de::Error::custom(
+                    "snapshot_sequence `beats` must be finite and > 0.0",
+                ));
+            }
+
+            if snapshots.is_empty() {
+                return Err(serde::de::Error::custom(
+                    "snapshot_sequence shorthand `snapshots` cannot be empty",
+                ));
+            }
+
+            let mut stages = Vec::with_capacity(snapshots.len() + 1);
+            for (index, snapshot) in snapshots.into_iter().enumerate() {
+                let snapshot = snapshot
+                    .into_string()
+                    .map_err(serde::de::Error::custom)?;
+                stages.push(SnapshotSequenceStageConfig::Stage {
+                    snapshot,
+                    position: index as f32 * beats,
+                });
+            }
+
+            stages.push(SnapshotSequenceStageConfig::End {
+                position: stages.len() as f32 * beats,
+            });
+
+            return Ok(Self {
+                disabled: raw.disabled,
+                stages,
+            });
+        }
+
+        Ok(Self {
+            disabled: raw.disabled,
+            stages: vec![],
+        })
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -893,5 +1004,58 @@ stages:
         let controls = UiControls::default();
 
         assert!(disabled.as_ref().is_some_and(|f| f(&controls)));
+    }
+
+    #[test]
+    fn test_snapshot_sequence_shorthand_normalizes_to_stages() {
+        let yaml = r#"
+type: snapshot_sequence
+beats: 2
+snapshots: [1, 2, "3"]
+"#;
+
+        let config: SnapshotSequenceConfig =
+            serde_yml::from_str(yaml).expect("Expected valid config");
+
+        assert_eq!(config.stages.len(), 4);
+        assert_eq!(config.stages[0].snapshot(), Some("1"));
+        assert_eq!(config.stages[0].position(), 0.0);
+        assert_eq!(config.stages[1].snapshot(), Some("2"));
+        assert_eq!(config.stages[1].position(), 2.0);
+        assert_eq!(config.stages[2].snapshot(), Some("3"));
+        assert_eq!(config.stages[2].position(), 4.0);
+        assert!(matches!(
+            config.stages[3],
+            SnapshotSequenceStageConfig::End { position: 6.0 }
+        ));
+    }
+
+    #[test]
+    fn test_snapshot_sequence_shorthand_rejects_mixed_forms() {
+        let yaml = r#"
+type: snapshot_sequence
+beats: 2
+snapshots: [1, 2]
+stages:
+  - kind: stage
+    snapshot: 1
+    position: 0.0
+  - kind: end
+    position: 4.0
+"#;
+
+        let result = serde_yml::from_str::<SnapshotSequenceConfig>(yaml);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_snapshot_sequence_shorthand_rejects_partial_form() {
+        let yaml = r#"
+type: snapshot_sequence
+beats: 2
+"#;
+
+        let result = serde_yml::from_str::<SnapshotSequenceConfig>(yaml);
+        assert!(result.is_err());
     }
 }

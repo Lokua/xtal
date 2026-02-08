@@ -29,7 +29,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let time = params.a.z + 1600.0;
+    let time = params.a.z;
     let scale = params.b.x;
     let octaves = i32(params.b.y);
     let brightness = params.b.z;
@@ -54,7 +54,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let pos = correct_aspect(position);
     let scroll_dir = select(-1.0, 1.0, scroll_down);
-    let scroll_offset = vec2f(0.0, scroll_dir * time * scroll_speed);
+    let scroll_phase = scroll_dir * time * scroll_speed;
+    let scroll_offset = vec2f(0.0, scroll_phase);
     let scrolled_pos = pos + scroll_offset;
 
     var local_scale = scale;
@@ -72,12 +73,22 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         let n2 = fbm(noise_pos * 3.7 + vec2f(9.4, 7.1), 2);
         let modulated = shaped * (0.5 + n2 * 0.5);
         let capped = clamp(modulated, 0.0, 0.6);
+        let wave_strength = 8.0;
 
-        local_scale = mix(scale, scale * (1.0 + wave_scale), capped);
+        local_scale = mix(
+            scale,
+            scale * (1.0 + wave_scale * wave_strength),
+            capped
+        );
     }
 
+    // Decouple advection from animated scale to keep a stable fall speed/direction.
+    // This multiplier sets visual speed in pattern space without tying it to scale.
+    let pattern_scroll = vec2f(0.0, scroll_phase * 12.0);
+    let pattern_pos = pos * local_scale + pattern_scroll;
+
     let voronoi_result = voronoi_boxes(
-        scrolled_pos * local_scale,
+        pattern_pos,
         roundness,
         time,
         extrude_amount,
@@ -89,7 +100,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         return vec4f(gap_background, 1.0);
     }
 
-    let cloud = fbm(scrolled_pos * local_scale, octaves);
+    let cloud = fbm(pattern_pos, octaves);
     let shaped = mix(
         cloud,
         voronoi_result.value,

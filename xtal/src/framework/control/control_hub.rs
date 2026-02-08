@@ -53,6 +53,7 @@ struct SnapshotTransition {
 struct SnapshotSequenceRuntime {
     sequence_length: f32,
     disabled: DisabledFn,
+    last_phase: Option<f32>,
 }
 
 impl Default for SnapshotSequenceRuntime {
@@ -60,6 +61,7 @@ impl Default for SnapshotSequenceRuntime {
         Self {
             sequence_length: 0.0,
             disabled: None,
+            last_phase: None,
         }
     }
 }
@@ -676,6 +678,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                 self.active_transition = Some(transition);
 
+                info!("Snapshot \"{}\" recalled", id);
                 Ok(())
             }
             None => Err(format!("No snapshot \"{}\"", id)),
@@ -698,7 +701,7 @@ impl<T: TimingSource> ControlHub<T> {
         self.snapshot_sequence_runtime
             .disabled
             .as_ref()
-            .map_or(true, |disabled| !disabled(&self.ui_controls))
+            .is_none_or(|disabled| !disabled(&self.ui_controls))
     }
 
     pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
@@ -824,12 +827,8 @@ impl<T: TimingSource> ControlHub<T> {
             .as_ref()
             .is_some_and(|disabled| disabled(&self.ui_controls));
 
-        if !sequence_disabled {
-            self.update_snapshot_sequences();
-        }
-
         if let Some(transition) = &self.active_transition {
-            if frame_controller::frame_count() > transition.end_frame {
+            if frame_controller::frame_count() >= transition.end_frame {
                 for (name, (_from, to)) in &transition.values {
                     if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
@@ -849,6 +848,12 @@ impl<T: TimingSource> ControlHub<T> {
                 }
             }
         }
+
+        if !sequence_disabled {
+            self.update_snapshot_sequences();
+        } else {
+            self.snapshot_sequence_runtime.last_phase = None;
+        }
     }
 
     fn update_snapshot_sequences(&mut self) {
@@ -862,21 +867,54 @@ impl<T: TimingSource> ControlHub<T> {
 
         let sequence_length = self.snapshot_sequence_runtime.sequence_length;
         if sequence_length <= 0.0 {
+            self.snapshot_sequence_runtime.last_phase = None;
             return;
         }
 
         let phase = current_beat % sequence_length;
+        let previous_phase = self.snapshot_sequence_runtime.last_phase;
+        self.snapshot_sequence_runtime.last_phase = Some(phase);
 
         // Last stage is always kind:end (validated), so we evaluate only
         // stage entries here.
         let end = sequence.stages.len().saturating_sub(1);
         let stages = &sequence.stages[..end];
 
+        if previous_phase.is_none() {
+            for stage in stages {
+                let stage_position = stage.position();
+                let should_fire = Self::is_within_forward_window(
+                    phase,
+                    stage_position,
+                    beat_epsilon,
+                );
+
+                if should_fire {
+                    if let Some(stage_id) = stage.snapshot() {
+                        let stage_id = stage_id.to_string();
+                        if let Err(e) = self.recall_snapshot(&stage_id) {
+                            warn!(
+                                "snapshot_sequence stage {} failed: {}",
+                                stage_id, e
+                            );
+                        }
+                    }
+                    return;
+                }
+            }
+
+            return;
+        }
+
+        let previous_phase = previous_phase.unwrap_or(phase);
         for stage in stages {
             let stage_position = stage.position();
-            let linear = (phase - stage_position).abs();
-            let wrapped = (sequence_length - linear).abs();
-            let should_fire = linear.min(wrapped) <= beat_epsilon;
+            let should_fire = Self::is_stage_crossed(
+                previous_phase,
+                phase,
+                stage_position,
+                beat_epsilon,
+            );
 
             if should_fire {
                 if let Some(stage_id) = stage.snapshot() {
@@ -891,6 +929,31 @@ impl<T: TimingSource> ControlHub<T> {
                 return;
             }
         }
+    }
+
+    fn is_stage_crossed(
+        previous_phase: f32,
+        phase: f32,
+        stage_position: f32,
+        _beat_epsilon: f32,
+    ) -> bool {
+        if phase == previous_phase {
+            return false;
+        }
+
+        if previous_phase <= phase {
+            stage_position > previous_phase && stage_position <= phase
+        } else {
+            stage_position > previous_phase || stage_position <= phase
+        }
+    }
+
+    fn is_within_forward_window(
+        phase: f32,
+        stage_position: f32,
+        beat_epsilon: f32,
+    ) -> bool {
+        phase >= stage_position && phase < stage_position + beat_epsilon
     }
 
     pub fn merge_program_state(&mut self, state: &TransitorySketchState) {
@@ -1860,5 +1923,88 @@ sequence:
         );
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    #[serial]
+    fn test_snapshot_sequence_forward_window_avoids_duplicate_fires() {
+        let epsilon = 0.25;
+        let stage = 2.0;
+
+        assert!(ControlHub::<FrameTiming>::is_within_forward_window(
+            2.0, stage, epsilon
+        ));
+        assert!(!ControlHub::<FrameTiming>::is_within_forward_window(
+            1.75, stage, epsilon
+        ));
+        assert!(!ControlHub::<FrameTiming>::is_within_forward_window(
+            2.25, stage, epsilon
+        ));
+    }
+
+    #[test]
+    #[serial]
+    fn test_snapshot_sequence_stage_crossing_detects_non_wrap_and_wrap() {
+        let epsilon = 0.001;
+
+        assert!(ControlHub::<FrameTiming>::is_stage_crossed(
+            1.0, 2.1, 2.0, epsilon
+        ));
+        assert!(!ControlHub::<FrameTiming>::is_stage_crossed(
+            1.0, 1.9, 2.0, epsilon
+        ));
+
+        assert!(ControlHub::<FrameTiming>::is_stage_crossed(
+            3.9, 0.2, 0.1, epsilon
+        ));
+        assert!(!ControlHub::<FrameTiming>::is_stage_crossed(
+            3.9, 0.2, 2.0, epsilon
+        ));
+    }
+
+    #[test]
+    #[serial]
+    #[ignore = "requires audio device in test environment"]
+    fn test_snapshot_sequence_invalid_reload_keeps_current_state() {
+        let hub_yaml = r#"
+sequence:
+  type: snapshot_sequence
+  beats: 4
+  snapshots: [1, 2]
+"#;
+
+        let hub = create_snapshot_sequence_hub(hub_yaml);
+        let initial_length = hub.snapshot_sequence_runtime.sequence_length;
+        let initial_stages = hub
+            .snapshot_sequence
+            .as_ref()
+            .map(|sequence| sequence.stages.len());
+
+        let invalid = ControlHub::<FrameTiming>::parse_from_str(
+            r#"
+sequence:
+  type: snapshot_sequence
+  beats: 4
+  snapshots: [1, 2]
+  stages:
+    - kind: stage
+      snapshot: 1
+      position: 0.0
+    - kind: end
+      position: 8.0
+"#,
+        );
+
+        assert!(invalid.is_err());
+        assert_eq!(
+            hub.snapshot_sequence_runtime.sequence_length,
+            initial_length
+        );
+        assert_eq!(
+            hub.snapshot_sequence
+                .as_ref()
+                .map(|sequence| sequence.stages.len()),
+            initial_stages
+        );
     }
 }
