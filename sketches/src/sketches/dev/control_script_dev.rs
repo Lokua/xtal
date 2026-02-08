@@ -147,6 +147,21 @@ impl Sketch for ControlScriptDev {
                 .w_h(100.0, 100.0);
         }
 
+        if self.hub.bool("show_curve_viz") {
+            let n = 8;
+            let bar_h = wr.h() / n as f32;
+            let color = hsla(0.55, 0.7, 0.5, 0.7);
+            for i in 0..n {
+                let val = self.hub.get(&format!("cv_{i}"));
+                let bar_w = val * wr.w();
+                let y = wr.top() - (i as f32 + 0.5) * bar_h;
+                draw.rect()
+                    .color(color)
+                    .w_h(bar_w, bar_h - 2.0)
+                    .x_y(-wr.hw() + bar_w * 0.5, y);
+            }
+        }
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

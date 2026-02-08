@@ -363,3 +363,128 @@ ramp_mod:
   source: ramp
   modulators:
     - ramp_curve
+
+# ------------------------------------------------------------------------------
+#  Curve Visualization
+# ------------------------------------------------------------------------------
+
+curve_viz_section:
+  type: separator
+
+show_curve_viz:
+  type: checkbox
+  default: true
+
+curve_viz_amount:
+  type: slider
+  range: [-1, 1]
+
+curve_viz_bias:
+  type: effect
+  kind: math
+  operator: curve
+  operand: $curve_viz_amount
+
+cv_0:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 200
+
+cv_1:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 201
+
+cv_2:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 202
+
+cv_3:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 203
+
+cv_4:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 204
+
+cv_5:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 205
+
+cv_6:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 206
+
+cv_7:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  stem: 207
+
+cv_0_mod:
+  type: mod
+  source: cv_0
+  modulators:
+    - curve_viz_bias
+
+cv_1_mod:
+  type: mod
+  source: cv_1
+  modulators:
+    - curve_viz_bias
+
+cv_2_mod:
+  type: mod
+  source: cv_2
+  modulators:
+    - curve_viz_bias
+
+cv_3_mod:
+  type: mod
+  source: cv_3
+  modulators:
+    - curve_viz_bias
+
+cv_4_mod:
+  type: mod
+  source: cv_4
+  modulators:
+    - curve_viz_bias
+
+cv_5_mod:
+  type: mod
+  source: cv_5
+  modulators:
+    - curve_viz_bias
+
+cv_6_mod:
+  type: mod
+  source: cv_6
+  modulators:
+    - curve_viz_bias
+
+cv_7_mod:
+  type: mod
+  source: cv_7
+  modulators:
+    - curve_viz_bias
