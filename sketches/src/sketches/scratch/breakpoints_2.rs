@@ -1,6 +1,6 @@
-use xtal::prelude::*;
 use nannou::color::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "breakpoints_2",

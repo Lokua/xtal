@@ -16,6 +16,7 @@
   - [triangle](#triangle)
   - [random](#random)
   - [random_slewed](#random_slewed)
+  - [snapshot_sequence](#snapshot_sequence)
   - [automate](#automate)
     - [breakpoints](#automatebreakpoints)
     - [kind](#kind)
@@ -657,6 +658,45 @@ automate_example:
     - kind: end
       position: 5.0
       value: 1.0
+```
+
+## snapshot_sequence
+
+Recall saved snapshots at beat positions.
+
+**Params**
+
+- `type` - `snapshot_sequence`
+- `disabled` - optional bypass. Supports:
+  - YAML booleans: `true` / `false`
+  - string expressions (same syntax as UI control `disabled`)
+  - string literals `"true"` / `"false"`
+- `stages` - list of stage entries
+
+### snapshot_sequence.stages
+
+- `kind` - `stage` or `end`
+- `position` - beat position for this entry. First entry must be `0.0`, and all
+  positions must be strictly increasing.
+- `snapshot` - required when `kind: stage`. Can be written as a string or an
+  unquoted number in YAML.
+
+The last entry must be `kind: end`.
+
+**Example**
+
+```yaml
+my_sequence:
+  type: snapshot_sequence
+  stages:
+    - kind: stage
+      snapshot: 1
+      position: 0.0
+    - kind: stage
+      snapshot: "2"
+      position: 5.0
+    - kind: end
+      position: 9.0
 ```
 
 # Modulation

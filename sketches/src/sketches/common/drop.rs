@@ -1,7 +1,7 @@
-use xtal::prelude::*;
 use nannou::glam::Vec2;
 use nannou::rand::{random_f32, random_range};
 use std::f32::consts::PI;
+use xtal::prelude::*;
 
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop.mjs
 // https://github.com/Lokua/p5/blob/main/src/sketches/drop3.mjs
