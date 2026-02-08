@@ -1,5 +1,5 @@
-use xtal::prelude::lerp;
 use nannou::prelude::*;
+use xtal::prelude::lerp;
 
 use super::util::random_normal;
 

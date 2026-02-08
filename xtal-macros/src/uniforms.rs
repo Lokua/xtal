@@ -1,8 +1,9 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
+    DeriveInput, Ident, LitInt, Token,
     parse::{Parse, ParseStream},
-    parse_macro_input, DeriveInput, Ident, LitInt, Token,
+    parse_macro_input,
 };
 
 pub fn uniforms_impl(attr: TokenStream, item: TokenStream) -> TokenStream {

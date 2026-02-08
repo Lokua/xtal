@@ -1,5 +1,5 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::*;
 

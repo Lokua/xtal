@@ -65,6 +65,8 @@ pub enum ControlType {
     RandomSlewed,
     #[serde(rename = "triangle")]
     Triangle,
+    #[serde(rename = "snapshot_sequence")]
+    SnapshotSequence,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -386,6 +388,45 @@ impl Default for TriangleConfig {
     }
 }
 
+#[derive(Debug, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct SnapshotSequenceConfig {
+    #[serde(default, deserialize_with = "to_disabled_fn")]
+    pub disabled: Option<DisabledConfig>,
+    pub stages: Vec<SnapshotSequenceStageConfig>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum SnapshotSequenceStageConfig {
+    Stage {
+        #[serde(deserialize_with = "deserialize_stage_id")]
+        snapshot: String,
+        position: f32,
+    },
+    End {
+        position: f32,
+    },
+}
+
+impl SnapshotSequenceStageConfig {
+    pub fn position(&self) -> f32 {
+        match self {
+            SnapshotSequenceStageConfig::Stage { position, .. } => *position,
+            SnapshotSequenceStageConfig::End { position } => *position,
+        }
+    }
+
+    pub fn snapshot(&self) -> Option<&str> {
+        match self {
+            SnapshotSequenceStageConfig::Stage { snapshot, .. } => {
+                Some(snapshot.as_str())
+            }
+            SnapshotSequenceStageConfig::End { .. } => None,
+        }
+    }
+}
+
 //------------------------------------------------------------------------------
 // Modulation & Effects
 //------------------------------------------------------------------------------
@@ -521,18 +562,31 @@ fn to_disabled_fn<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    let expression = match String::deserialize(deserializer) {
-        Ok(expr) => expr,
-        Err(_) => return Ok(None),
-    };
-
-    if expression.trim().is_empty() {
-        return Ok(None);
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum DisabledInput {
+        String(String),
+        Bool(bool),
     }
 
-    match parse_disabled_expression(&expression) {
-        Ok(disabled_fn) => Ok(Some(DisabledConfig { disabled_fn })),
-        Err(e) => Err(serde::de::Error::custom(e)),
+    match DisabledInput::deserialize(deserializer) {
+        Ok(DisabledInput::Bool(value)) => {
+            let disabled_fn =
+                Some(Box::new(move |_controls: &UiControls| value)
+                    as Box<dyn Fn(&UiControls) -> bool + 'static>);
+            Ok(Some(DisabledConfig { disabled_fn }))
+        }
+        Ok(DisabledInput::String(expression)) => {
+            if expression.trim().is_empty() {
+                return Ok(None);
+            }
+
+            match parse_disabled_expression(&expression) {
+                Ok(disabled_fn) => Ok(Some(DisabledConfig { disabled_fn })),
+                Err(e) => Err(serde::de::Error::custom(e)),
+            }
+        }
+        Err(_) => Ok(None),
     }
 }
 
@@ -588,6 +642,16 @@ type ParseResult =
 
 fn parse_condition(condition: &str) -> ParseResult {
     let condition = condition.trim();
+
+    if condition.eq_ignore_ascii_case("true") {
+        let closure = Box::new(|_controls: &UiControls| true);
+        return Ok(Some(closure));
+    }
+
+    if condition.eq_ignore_ascii_case("false") {
+        let closure = Box::new(|_controls: &UiControls| false);
+        return Ok(Some(closure));
+    }
 
     if let Some(inner_condition) = condition.strip_prefix("not ") {
         let inner_closure = parse_condition(inner_condition)?;
@@ -666,6 +730,37 @@ where
     }
 }
 
+fn deserialize_stage_id<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StageId {
+        String(String),
+        Int(i64),
+        Uint(u64),
+        Float(f64),
+    }
+
+    match StageId::deserialize(deserializer)? {
+        StageId::String(value) => Ok(value),
+        StageId::Int(value) => Ok(value.to_string()),
+        StageId::Uint(value) => Ok(value.to_string()),
+        StageId::Float(value) => {
+            if !value.is_finite() {
+                return Err(serde::de::Error::custom("stage must be finite"));
+            }
+
+            if value.fract() == 0.0 {
+                Ok(format!("{value:.0}"))
+            } else {
+                Ok(value.to_string())
+            }
+        }
+    }
+}
+
 fn default_iterations() -> usize {
     1
 }
@@ -707,4 +802,96 @@ fn default_param_value_0() -> ParamValue {
 }
 fn default_param_value_1() -> ParamValue {
     ParamValue::Cold(1.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_snapshot_sequence_stage_deserializes_number_to_string() {
+        let yaml = r#"
+type: snapshot_sequence
+stages:
+  - kind: stage
+    snapshot: 1
+    position: 0.0
+"#;
+
+        let config: SnapshotSequenceConfig =
+            serde_yml::from_str(yaml).expect("Expected valid config");
+
+        assert_eq!(config.stages[0].snapshot(), Some("1"));
+    }
+
+    #[test]
+    fn test_snapshot_sequence_stage_deserializes_string() {
+        let yaml = r#"
+type: snapshot_sequence
+stages:
+  - kind: stage
+    snapshot: "1"
+    position: 0.0
+"#;
+
+        let config: SnapshotSequenceConfig =
+            serde_yml::from_str(yaml).expect("Expected valid config");
+
+        assert_eq!(config.stages[0].snapshot(), Some("1"));
+    }
+
+    #[test]
+    fn test_snapshot_sequence_stage_rejects_missing_stage() {
+        let yaml = r#"
+type: snapshot_sequence
+stages:
+  - kind: stage
+    position: 0.0
+"#;
+
+        let result = serde_yml::from_str::<SnapshotSequenceConfig>(yaml);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_snapshot_sequence_disabled_bool_true() {
+        let yaml = r#"
+type: snapshot_sequence
+disabled: true
+stages:
+  - kind: stage
+    snapshot: 1
+    position: 0.0
+  - kind: end
+    position: 1.0
+"#;
+
+        let mut config: SnapshotSequenceConfig =
+            serde_yml::from_str(yaml).expect("Expected valid config");
+        let disabled = config.disabled.take().and_then(|d| d.disabled_fn);
+        let controls = UiControls::default();
+
+        assert!(disabled.as_ref().is_some_and(|f| f(&controls)));
+    }
+
+    #[test]
+    fn test_snapshot_sequence_disabled_string_true() {
+        let yaml = r#"
+type: snapshot_sequence
+disabled: "true"
+stages:
+  - kind: stage
+    snapshot: 1
+    position: 0.0
+  - kind: end
+    position: 1.0
+"#;
+
+        let mut config: SnapshotSequenceConfig =
+            serde_yml::from_str(yaml).expect("Expected valid config");
+        let disabled = config.disabled.take().and_then(|d| d.disabled_fn);
+        let controls = UiControls::default();
+
+        assert!(disabled.as_ref().is_some_and(|f| f(&controls)));
+    }
 }
