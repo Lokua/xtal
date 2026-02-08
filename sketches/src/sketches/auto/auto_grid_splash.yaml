@@ -2,6 +2,14 @@
 #  Main
 # ------------------------------------------------------------------------------
 
+sequence:
+  type: snapshot_sequence
+  stages:
+    - state: 1
+      position: 0.0
+    - name: 2
+      position: 5.0
+
 grid_size:
   var: a4
   type: slider
