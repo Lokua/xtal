@@ -4,11 +4,16 @@
 
 sequence:
   type: snapshot_sequence
+  disabled: false
   stages:
-    - state: 1
+    - kind: stage
+      snapshot: 1
       position: 0.0
-    - name: 2
+    - kind: stage
+      snapshot: 2
       position: 5.0
+    - kind: end
+      position: 9.0
 
 grid_size:
   var: a4

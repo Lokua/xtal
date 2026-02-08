@@ -39,6 +39,7 @@ type EventMap = {
   Error: string
   Hrcc: boolean
   HubPopulated: [RawControl[], Bypassed]
+  SnapshotSequenceEnabled: boolean
   Init: {
     audioDevice: string
     audioDevices: string[]
@@ -67,6 +68,7 @@ type EventMap = {
     paused: boolean
     mappings: Mappings
     sketchName: string
+    snapshotSequenceEnabled: boolean
     snapshotSlots: string[]
     tapTempoEnabled: boolean
   }
@@ -112,7 +114,7 @@ type EventMap = {
 }
 
 function subscribe<K extends keyof EventMap>(
-  callback: (event: K, data: EventMap[K]) => void
+  callback: (event: K, data: EventMap[K]) => void,
 ) {
   function handler(e: MessageEvent) {
     if (!e.data) return
@@ -135,12 +137,12 @@ function subscribe<K extends keyof EventMap>(
 }
 
 function post<K extends keyof EventMap>(
-  event: EventMap[K] extends void ? K : never
+  event: EventMap[K] extends void ? K : never,
 ): void
 
 function post<K extends keyof EventMap>(
   event: EventMap[K] extends void ? never : K,
-  data: EventMap[K]
+  data: EventMap[K],
 ): void
 
 function post<K extends keyof EventMap>(event: K, data?: EventMap[K]): void {
@@ -210,6 +212,7 @@ export default function App() {
   const [sketchName, setSketchName] = useState('')
   const [sketchNames, setSketchNames] = useState<string[]>([])
   const [snapshots, setSnapshots] = useState<string[]>([])
+  const [snapshotSequenceEnabled, setSnapshotSequenceEnabled] = useState(false)
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
   const [transitionTime, setTransitionTime] = useState(4)
   const [transitionInProgress, setTransitionInProgress] = useState(false)
@@ -251,6 +254,12 @@ export default function App() {
           setBypassed(bypassed)
           break
         }
+        case 'SnapshotSequenceEnabled': {
+          setSnapshotSequenceEnabled(
+            data as EventMap['SnapshotSequenceEnabled'],
+          )
+          break
+        }
         case 'Init': {
           const d = data as EventMap['Init']
           setAudioDevice(d.audioDevice)
@@ -285,6 +294,7 @@ export default function App() {
           setPaused(d.paused)
           setSketchName(d.sketchName)
           setSnapshots(d.snapshotSlots)
+          setSnapshotSequenceEnabled(d.snapshotSequenceEnabled)
           // TODO: why are we sending this with the sketch?
           setTapTempoEnabled(d.tapTempoEnabled)
           break
@@ -342,6 +352,7 @@ export default function App() {
 
         if (e.code.startsWith('Digit')) {
           if (platformModPressed) {
+            if (snapshotSequenceEnabled) return
             post('SnapshotRecall', e.key)
             if (snapshots.includes(e.key)) {
               setTransitionInProgress(true)
@@ -349,6 +360,7 @@ export default function App() {
               // It's fine, the backend will alert
             }
           } else if (e.shiftKey) {
+            if (snapshotSequenceEnabled) return
             const actualKey = e.code.slice('Digit'.length)
             post('SnapshotStore', actualKey)
           }
@@ -436,11 +448,12 @@ export default function App() {
         showHelp,
         showSnapshots,
         sketchName,
+        snapshotSequenceEnabled,
         snapshots,
         tapTempoEnabled,
         view,
-      ]
-    )
+      ],
+    ),
   )
 
   useEffect(() => {
@@ -457,8 +470,8 @@ export default function App() {
     return control.kind === 'Checkbox'
       ? 'UpdateControlBool'
       : control.kind === 'Slider'
-      ? 'UpdateControlFloat'
-      : 'UpdateControlString'
+        ? 'UpdateControlFloat'
+        : 'UpdateControlString'
   }
 
   function onAdvance() {
@@ -482,8 +495,8 @@ export default function App() {
               ...c,
               value,
             }
-          : c
-      )
+          : c,
+      ),
     )
 
     post(updateEventForControl(control), {
@@ -565,14 +578,14 @@ export default function App() {
   function onClickRandomizeSingleControl(name: string) {
     post(
       'Randomize',
-      controls.filter((c) => c.name !== name).map((c) => c.name)
+      controls.filter((c) => c.name !== name).map((c) => c.name),
     )
     setSingleTransitionControlName(name)
   }
 
   function onClickRevert(control: Control) {
     const originalControl = controlsLastSaved.find(
-      (c) => c.name === control.name
+      (c) => c.name === control.name,
     )!
     const updatedControl = {
       ...control,
@@ -586,7 +599,7 @@ export default function App() {
         }
 
         return c
-      })
+      }),
     )
 
     post(updateEventForControl(control), {
@@ -653,11 +666,13 @@ export default function App() {
   }
 
   function onLoadSnapshot(slot: string) {
+    if (snapshotSequenceEnabled) return
     post('SnapshotRecall', slot)
     setTransitionInProgress(true)
   }
 
   function onSaveSnapshot(slot: string) {
+    if (snapshotSequenceEnabled) return
     setSnapshots(snapshots.concat(slot).slice().sort())
     post('SnapshotStore', slot)
   }
@@ -676,7 +691,7 @@ export default function App() {
     setExclusions(
       exclusions.includes(name)
         ? exclusions.filter((n) => n !== name)
-        : exclusions.concat(name)
+        : exclusions.concat(name),
     )
   }
 
@@ -767,6 +782,7 @@ export default function App() {
             onClickRevert={onClickRevert}
             onToggleExclusion={onToggleExclusion}
             snapshots={snapshots}
+            snapshotSequenceEnabled={snapshotSequenceEnabled}
             onDeleteSnapshot={onDeleteSnapshot}
             onLoadSnapshot={onLoadSnapshot}
             onSaveSnapshot={onSaveSnapshot}

@@ -41,6 +41,7 @@ export type Props = {
   showSnapshots: boolean
   singleTransitionControlName: string
   snapshots: string[]
+  snapshotSequenceEnabled: boolean
   transitionInProgress: boolean
   onChange: (control: Control, value: ControlValue) => void
   onClickRandomize: (name: string) => void
@@ -61,6 +62,7 @@ export default function Controls({
   showSnapshots,
   singleTransitionControlName,
   snapshots,
+  snapshotSequenceEnabled,
   transitionInProgress,
   onChange,
   onClickRandomize,
@@ -113,7 +115,7 @@ export default function Controls({
       'control-row',
       ((!excluded && transitionInProgress) ||
         singleTransitionControlName === name) &&
-        'in-transition'
+        'in-transition',
     )
 
   return (
@@ -121,6 +123,7 @@ export default function Controls({
       {showSnapshots && (
         <header>
           <Snapshots
+            disabled={snapshotSequenceEnabled}
             snapshots={snapshots}
             onDelete={onDeleteSnapshot}
             onLoad={onLoadSnapshot}
