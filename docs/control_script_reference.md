@@ -667,6 +667,10 @@ modulators. A modulator can be an [effect](#effects), [animation](#animation),
 or the output of a [slider](#slider) (TODO: validate if Osc/Midi/Audio can be
 modulators).
 
+`mod` mutates the value of its `source` mapping at runtime. In sketches, read
+the `source` name with `hub.get("source_name")`. Do not read the name of the
+`mod` mapping itself.
+
 **Params**
 
 - `type` - `mod`
@@ -685,12 +689,48 @@ mod_example:
     - some_slider
 ```
 
+**DO**
+
+```yaml
+curve_input:
+  type: random_slewed
+  range: [0.0, 1.0]
+
+curve_fx:
+  type: effect
+  kind: math
+  operator: curve
+  operand: $curve_amount
+
+curve_route:
+  type: mod
+  source: curve_input
+  modulators:
+    - curve_fx
+```
+
+```rust
+// Correct: read the source. `mod` has already mutated this value.
+let v = self.hub.get("curve_input");
+```
+
+**DO NOT**
+
+```rust
+// Incorrect: `curve_route` is a routing declaration, not the value to read.
+let v = self.hub.get("curve_route");
+```
+
 # Effects
 
 Effects can only be used as modulators within a `mod` configuration and cannot
 be used as sources. A single effect can be used more than once, for example you
 might have several animations that use stepped randomness and may want to smooth
 them all out with a single slew_limiter.
+
+Effects follow the same access rule as `mod`: they are processing steps in a
+route, not values to read directly from sketches. Read the `mod` source mapping
+with `hub.get("source_name")`, not the `effect` mapping name.
 
 ## constrain
 
@@ -784,7 +824,8 @@ Basic addition or multiplication
 
 When `operator` is `curve` this functions as an exponential easing function that
 expects the input to be in range of [0.0, 1.0]. A curve of 0.0 produces linear
-output, -1.0 is maximum ease-out, 1.0 maximum ease-in.
+output, 1.0 is maximum ease-out and will bias towards max, -1.0 is maximum
+ease-in and will bias towards min.
 
 **Example**
 

@@ -501,34 +501,30 @@ pub const SUGGESTED_CURVE_MAX_EXPONENT: f32 = 10.0;
 /// the curve in both directions from linear.
 ///
 /// * `t` - Input value (0.0 to 1.0)
-/// * `curvature` - Controls curve shape:
-///   * 0.0: Linear
-///   * >0: Ease-in curves (increasing strength)
-///   * <0: Ease-out curves (mirror of positive values)
+/// * `curvature` - Controls curve shape
 ///
 /// # Example
 /// * curvature = 0.0 → Linear curve
-/// * curvature = 1.0 → equivalent of calling `exponential(t, max_exponent)`
-/// * curvature = -1.0 → mirror of the above
+/// * curvature = 1.0 → strong ease-out / bias towards max
+/// * curvature = -1.0 → strong ease-in / bias towards min
 pub fn curve(t: f32, curvature: f32, max_exponent: f32) -> f32 {
     if curvature == 0.0 {
         return t;
     }
 
     if curvature > 0.0 {
-        // Positive curvature: Ease-in effect
+        // Positive curvature: Ease-out effect
         // Map curvature range [0.0, 1.0] to exponent range [1.0, max_exponent]
         let normalized_curvature = curvature.min(1.0); // Clamp to max 1.0
         let exponent = 1.0 + normalized_curvature * (max_exponent - 1.0);
-        t.powf(exponent)
+        1.0 - (1.0 - t).powf(exponent)
     } else {
-        // Negative curvature: Ease-out effect (mirror of positive)
+        // Negative curvature: Ease-in effect (mirror of positive)
         // Use the absolute value to get the same exponent as the positive case
         let normalized_curvature = (-curvature).min(1.0); // Clamp to max 1.0
         let exponent = 1.0 + normalized_curvature * (max_exponent - 1.0);
 
-        // For ease-out, we apply the "flip" formula
-        1.0 - (1.0 - t).powf(exponent)
+        t.powf(exponent)
     }
 }
 

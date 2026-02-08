@@ -164,7 +164,7 @@ impl Sketch for MySketch {
    - PascalCase for types, traits, enums
    - SCREAMING_SNAKE_CASE for constants
 5. **Formatting**: Use `rustfmt` defaults (already configured).
-6. **Comments**: Use `//` for line comments, `///` for doc comments. ever, ever
+6. **Comments**: Use `//` for line comments, `///` for doc comments. Never, ever
    place comments on the same line as code. Always place them above the line
    they pertain to.
 7. **Control variables**: Prefer using `var: a1`, `var: b2` etc. in YAML for

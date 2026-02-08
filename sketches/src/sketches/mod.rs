@@ -24,6 +24,10 @@ pub mod symmetry;
 pub mod toxy;
 pub mod wave_fract;
 
+pub mod auto;
+pub use self::auto::auto_cloud;
+pub use self::auto::auto_dreams;
+
 pub mod dev;
 pub use self::dev::animation_dev;
 pub use self::dev::audio_controls_dev;
