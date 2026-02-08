@@ -55,16 +55,15 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let pos = correct_aspect(position);
     let scroll_dir = select(-1.0, 1.0, scroll_down);
     let scroll_phase = scroll_dir * time * scroll_speed;
-    let scroll_offset = vec2f(0.0, scroll_phase);
-    let scrolled_pos = pos + scroll_offset;
 
     var local_scale = scale;
-    if wave_enabled {
+    let wave_active = wave_enabled && abs(wave_scale) > 0.0001;
+    if wave_active {
         let movement = vec2f(
             sin(time * wave_speed * 0.2) * 3.0,
             select(1.0, -1.0, wave_invert) * time * wave_speed * 0.5
         );
-        let noise_pos = scrolled_pos * 0.8 + movement;
+        let noise_pos = (pos + vec2f(0.0, scroll_phase)) * 0.8 + movement;
 
         let n = fbm(noise_pos, 3);
         let wave_raw = clamp((n - 0.35) * 3.0, 0.0, 1.0);
@@ -149,6 +148,9 @@ fn voronoi_boxes(
 ) -> VoronoiResult {
     let cell = floor(p);
     let local_p = fract(p);
+    let animate_extrude = extrude_amount > 0.0001;
+    let extrude_phase = time * extrude_frequency;
+    let corner_radius = mix(0.0, 0.3, roundness);
 
     var min_dist = 1000.0;
     var second_min = 1000.0;
@@ -160,22 +162,27 @@ fn voronoi_boxes(
             let neighbor = vec2f(f32(x), f32(y));
             let cell_id = cell + neighbor;
 
-            let rand_offset = vec2f(
-                hash(cell_id),
-                hash(cell_id + vec2f(127.1, 311.7))
-            );
+            // Derive a stable 2D jitter from a single hash to cut hash calls.
+            let jitter_seed = hash(cell_id + vec2f(127.1, 311.7));
+            let rand_offset = fract(vec2f(
+                jitter_seed * 13.37 + 0.17,
+                jitter_seed * 91.73 + 0.83
+            ));
             let point = neighbor + rand_offset;
 
             let cell_hash = hash(cell_id + vec2f(43.21, 19.17));
-            let pulse_offset = cell_hash * 6.28318;
-            let pulse = sin(time * extrude_frequency + pulse_offset);
-            let pulse_01 = pulse * 0.5 + 0.5;
-            let size_mod = 1.0 - (pulse_01 * extrude_amount);
+            var size_mod = 1.0;
+            if animate_extrude {
+                let pulse_offset = cell_hash * 6.28318;
+                let pulse = sin(extrude_phase + pulse_offset);
+                let pulse_01 = pulse * 0.5 + 0.5;
+                size_mod = 1.0 - (pulse_01 * extrude_amount);
+            }
 
             let to_point = point - local_p;
             let box_dist = rounded_box_dist(
                 to_point,
-                roundness,
+                corner_radius,
                 size_mod
             );
 
@@ -204,10 +211,9 @@ fn voronoi_boxes(
 
 fn rounded_box_dist(
     p: vec2f,
-    roundness: f32,
+    corner_radius: f32,
     size_mod: f32
 ) -> f32 {
-    let corner_radius = mix(0.0, 0.3, roundness);
     let box_size = vec2f(0.3) * size_mod;
     let q = abs(p) - box_size + corner_radius;
     let dist = length(max(q, vec2f(0.0))) +
@@ -238,10 +244,9 @@ fn fbm(p: vec2f, octaves: i32) -> f32 {
     var value = 0.0;
     var amplitude = 0.5;
     var frequency = 1.0;
-    var pos = p;
 
     for (var i = 0; i < octaves; i++) {
-        value += amplitude * noise(pos * frequency);
+        value += amplitude * noise(p * frequency);
         frequency *= 2.0;
         amplitude *= 0.5;
     }

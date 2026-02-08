@@ -1,5 +1,6 @@
 use std::cell::Cell;
 use std::error::Error;
+use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -51,6 +52,7 @@ impl RecordingState {
 
     pub fn start_recording(&mut self) -> Result<String, Box<dyn Error>> {
         if let Some(path) = &self.recording_dir {
+            fs::create_dir_all(path)?;
             self.is_recording = true;
             let message =
                 format!("Recording. Frames will be written to {:?}", path);
