@@ -1,241 +1,115 @@
 # Xtal Project Context
 
-## Project Overview
+## What This Project Is
 
-Xtal is a Rust creative coding framework built on [Nannou](https://nannou.cc/)
-for creating generative art and audio-visual compositions. It emphasizes live
-performance capabilities with beat-synchronized animation, MIDI/OSC integration,
-and hot-reloadable controls.
+Xtal is a Rust creative-coding framework (Nannou-based) for live generative
+visual/audio performance with beat-synced motion, MIDI/OSC/audio control, and a
+React-based control UI.
 
-## Key Architecture Components
+## Repo Map (Start Here)
 
-### 1. ControlHub and Control Scripting
+- `/Users/lokua/code/xtal-project/xtal/src/framework/control/`
+  - `control_hub.rs`: runtime control orchestration, snapshots, script updates
+  - `config.rs`: YAML schema + deserialization + expression parsing helpers
+- `/Users/lokua/code/xtal-project/xtal/src/framework/motion/`
+  - `animation.rs`: beat-based animation primitives and timing behavior
+- `/Users/lokua/code/xtal-project/sketches/src/sketches/`
+  - sketches + their YAML control scripts (same folder as sketch `.rs`)
+- `/Users/lokua/code/xtal-project/docs/`
+  - `control_script_reference.md`: source of truth for script schema/behavior
+  - `ui.md`: UI architecture and interaction notes
+- `/Users/lokua/code/xtal-project/xtal-ui/`
+  - React/TypeScript UI frontend
 
-The `ControlHub` is the central system for managing all sketch parameters.
-Instead of hardcoding values or recompiling for every parameter change, Xtal
-uses YAML-based control scripts that hot-reload at runtime.
+## High-Value Mental Model
 
-**Core Pattern:**
+- `ControlHub` is the runtime source of parameter truth.
+- YAML control scripts define mappings and animations; they hot-reload.
+- Sketches read values from the hub each frame (`hub.get("param")`).
+- Timing-sensitive features should be reasoned about in beats, not wall-time.
 
-```rust
-// In sketch init
-let hub = ControlHub::from_path(
-    to_absolute_path(file!(), "sketch_name.yaml"),
-    Timing::new(ctx.bpm()),
-);
+## Hot Reload and Restart Boundaries
 
-// In update method
-let param_value = self.hub.get("param_name");
-```
+- Hot reload while app is running:
+  - YAML control scripts
+  - WGSL shaders
+- Requires restart:
+  - Rust code changes (`xtal`, `sketches`, `xtal-ui` backend integration)
 
-**Control scripts live alongside sketches** (same directory as the .rs file) and
-define:
+This distinction saves debugging time when behavior appears “unchanged.”
 
-- UI controls (sliders, checkboxes, selects)
-- Animations (ramp, triangle, random, automate)
-- MIDI/OSC/Audio mappings
-- Effects chains (math, map, wave_folder, etc.)
-- Parameter modulation (using `$reference` syntax)
+## Fast Debug Workflow
 
-**Important:** See `docs/control_script_reference.md` for complete control
-scripting documentation.
+1. Run sketch in release mode for realistic timing:
+   - `RUST_LOG=xtal=info,sketches=info cargo run --release <sketch_name>`
+2. If working on control scripts, edit YAML first to validate behavior quickly.
+3. If behavior differs from expectations, check logs for YAML parse/validation
+   errors before changing runtime logic.
+4. For frontend changes, also verify UI build:
+   - `npm --prefix /Users/lokua/code/xtal-project/xtal-ui run build`
 
-### 2. Animation System
+## Control Script Implementation Notes
 
-The animation module (`xtal/src/framework/motion/`) provides beat-synchronized
-animation primitives:
+- Prefer adding schema/validation in `config.rs` when possible so invalid input
+  fails at parse/compile of config, not inside frame updates.
+- Runtime update paths in `control_hub.rs` should stay simple and cheap; avoid
+  recomputing static per-sequence/per-mapping facts each frame.
+- Expression-backed booleans (`true`/`false` and string forms) are expected to
+  work where config supports disabled-style flags.
 
-- `ramp(beats)` - sawtooth wave over N beats
-- `tri(beats)` - triangle wave over N beats
-- `random(beats, range)` - stepped random values
-- `random_slewed(beats, range, slew, phase)` - smoothed random
-- `automate(breakpoints, mode)` - powerful keyframe system
+## UI Integration Pattern (When Exposing New Hub State)
 
-**Critical behavior for `automate`:**
+When adding a new runtime status to UI:
 
-- Breakpoints define transitions between values
-- `kind: step` holds the value until the next breakpoint
-- `kind: ramp` interpolates FROM current value TO next breakpoint's value over
-  the time span
-- `kind: end` marks the loop point
-- The `value` field at a `ramp` breakpoint is the TARGET value that will be
-  reached by the time the animation reaches the NEXT breakpoint's position
+1. Add a query method on `ControlHub` (single source of truth).
+2. Thread field through web-view events (`LoadSketch` and incremental updates).
+3. Store in UI app state.
+4. Gate interactions in both:
+   - UI components (visual affordance/overlay)
+   - keyboard shortcuts/handlers (hard guard)
 
-See the animation module source code for full details.
+This avoids UI appearing disabled while hotkeys still mutate state.
 
-### 3. Shader Integration
+## Common Pitfalls
 
-Most sketches use WGSL shaders via the `gpu::GpuState` wrapper. Parameters are
-passed as uniform buffers.
+- YAML numeric vs string coercion assumptions: serde will not coerce all scalar
+  types automatically for typed fields.
+- Beat-loop boundaries: clarify whether a terminal marker is an executable stage
+  or just loop end.
+- Overcomplicated runtime state: prefer deterministic recomputation from current
+  beat + static config where feasible.
 
-**Two approaches:**
+## Style and Collaboration Preferences
 
-1. **Using the `#[uniforms]` macro** (simpler, recommended):
+- Keep Rust code straightforward over clever.
+- Avoid over-abstracting single-use runtime structures.
+- Put validation where it prevents runtime surprises.
+- If behavior choice is ambiguous, prefer semantic YAML that communicates intent
+  clearly over compact but unclear forms.
+- Ask the author directly when intent is ambiguous or multiple valid semantics
+  exist; this is often faster and cheaper than deep exploration.
+- If the likely answer is simple and local to current work, prefer a quick
+  targeted check over broad tool-driven investigation.
 
-```rust
-#[uniforms(banks = 4)]
-struct ShaderParams {}
+## Useful References
 
-// Auto-populates from ControlHub vars a1-d4
-let mut params = ShaderParams::from((&wr, &self.hub));
-params.set("a3", custom_value);
-```
+- Control script docs:
+  `/Users/lokua/code/xtal-project/docs/control_script_reference.md`
+- UI architecture:
+  `/Users/lokua/code/xtal-project/docs/ui.md`
+- Framework entry area:
+  `/Users/lokua/code/xtal-project/xtal/src/framework/`
 
-2. **Manual struct with Pod/Zeroable** (full control):
+## Coding Style Guidelines
 
-```rust
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct ShaderParams {
-    resolution: [f32; 4],
-    colors: [f32; 4],
-    // ... more fields
-}
-```
-
-Shaders are hot-reloaded when modified. See `genuary_2025/` and `genuary_2026/`
-sketches for examples.
-
-### 4. Sketch Structure
-
-All sketches follow this pattern:
-
-```rust
-use nannou::prelude::*;
-use xtal::prelude::*;
-
-pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "sketch_name",
-    display_name: "Display Name",
-    play_mode: PlayMode::Loop,
-    fps: 60.0,
-    bpm: 120.0,
-    w: 700,
-    h: 700,
-};
-
-#[derive(SketchComponents)]
-pub struct MySketch {
-    hub: ControlHub<Timing>,
-    // other components...
-}
-
-pub fn init(app: &App, ctx: &Context) -> MySketch {
-    // Initialize ControlHub, GPU state, etc.
-}
-
-impl Sketch for MySketch {
-    fn update(&mut self, app: &App, update: Update, ctx: &Context) {
-        // Update logic, read controls, calculate params
-    }
-
-    fn view(&self, app: &App, frame: Frame, ctx: &Context) {
-        // Render
-    }
-}
-```
-
-## Code Style Guidelines
-
-1. **Indentation**: Use consistent block-level indentation only. DO NOT align
-   parameters, struct fields, or array elements to match previous lines. Each
-   nested level gets one indent, period.
-
-   ```rust
-   // GOOD - consistent block indentation
-   let params = ShaderParams {
-       resolution: [wr.w(), wr.h(), 0.0, 0.0],
-       colors: [1.0, 0.0, 0.0, 1.0],
-       values: [x, y, z, w],
-   };
-
-   // BAD - aligning to match previous line lengths
-   let params = ShaderParams {
-       resolution: [wr.w(), wr.h(), 0.0, 0.0],
-       colors:     [1.0,    0.0,    0.0,  1.0],  // Don't do this!
-       values:     [x,      y,      z,    w],    // Don't do this!
-   };
-   ```
-
-2. **Line length**: Keep lines under 80 characters where practical
-3. **Imports**: Group by std/external/internal, separated by blank lines
-4. **Naming**:
-   - snake_case for functions, variables, modules
-   - PascalCase for types, traits, enums
-   - SCREAMING_SNAKE_CASE for constants
-5. **Formatting**: Use `rustfmt` defaults (already configured).
-6. **Comments**: Use `//` for line comments, `///` for doc comments. Never, ever
-   place comments on the same line as code. Always place them above the line
-   they pertain to.
-7. **Control variables**: Prefer using `var: a1`, `var: b2` etc. in YAML for
-   shader-bound parameters (matches the uniform bank convention)
-8. **Ordering**: Follow the "main up top" organizational pattern. Code is read
-   from top to bottom in order of importance and use. Utility and implementation
-   details go at the bottom. For example if a fragment main uses an `fbm`
-   function, and that uses a `hash` function, the order would be `fs_main`
-   followed by `fbm` and then `hash`
-
-## Important Constraints
-
-- **WGSL Limitation**: Cannot use `textureSample` in vertex shaders - must pass
-  data as vertex attributes
-- **Hot Reload**: WGSL shaders hot-reload, Rust files require manual restart,
-  please inform me when this needs to happen
-
-## Example Sketches
-
-**Best references for learning patterns:**
-
-- `sketches/src/sketches/genuary_2025/g25_14_black_and_white.rs` - Complex
-  automate breakpoints, manual shader params
-- `sketches/src/sketches/genuary_2025/g25_20_23_brutal_arch.rs` - Extensive
-  control scripting with hold-ramp patterns
-- `sketches/src/sketches/genuary_2026/g26_12_boxes.rs` - Simple shader-based
-  sketch with uniforms macro
-
-Control script examples in the same directories show various animation patterns.
-
-## Important Constraints
-
-### Parameter Modulation
-
-- Only `f32` scalar fields can be modulated with `$reference` syntax
-- List parameters like `range: [f32; 2]` CANNOT be modulated
-- `effect` and `mod` type mappings CANNOT be parameter modulation sources
-- Only animations and UI controls can be modulation sources
-
-See `docs/control_script_reference.md` line 996 for details.
-
-## Key Directories
-
-- `xtal/src/framework/` - Core framework code (motion, control, gpu)
-- `sketches/src/sketches/` - Example sketches
-- `docs/` - Framework documentation
-- `xtal-ui/` - Web-based control UI (TypeScript/React)
-
-## Development Tips
-
-1. Use `cargo run --release` for performance (debug builds are slow)
-2. Edit YAML control scripts while running - they hot-reload
-3. Edit WGSL shaders while running - they hot-reload
-4. Check `docs/control_script_reference.md` when working with control scripts
-5. Run `cargo doc --package xtal --open` for full API documentation
-
-## Git Workflow
-
-**IMPORTANT:** Work directly on the user's current branch. DO NOT create your
-own branches.
-
-- Make commits when requested by the user
-- DO NOT push unless explicitly requested
-- Use whatever branch the user currently has checked out
-
-## Working Together
-
-- When I ask questions like "is it possible to...", that isn't a directive to
-  implement what I'm asking about, it's an invitation for you to seek clarity so
-  we can arrive at the most favorable outcome.
-- I am the author of the entirety of the source code, so for simple things you
-  don't know, it'll often be quicker for you to ask me than it will be for you
-  to run a bunch of commands and try to figure it out yourself - whatever you
-  think will reduce me spending too many tokens.
+1. Use consistent block indentation only; do not column-align fields or args.
+2. Keep lines reasonably short (target ~80 chars when practical).
+3. Group imports by std, external crates, and internal modules.
+4. Use Rust naming conventions:
+   - `snake_case` for functions/variables/modules
+   - `PascalCase` for types/enums/traits
+   - `SCREAMING_SNAKE_CASE` for constants
+5. Prefer small, explicit functions and predictable control flow over clever
+   abstractions.
+6. Put comments above the code they explain; avoid end-of-line comments.
+7. Keep frequently-read entry logic near the top; push helpers/utilities lower.
