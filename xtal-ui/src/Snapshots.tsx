@@ -6,6 +6,7 @@ const availableSlots = Array(10)
   .map((_, i) => String((i + 1) % 10))
 
 type Props = {
+  disabled: boolean
   snapshots: string[]
   onDelete: (snapshot: string) => void
   onLoad: (snapshot: string) => void
@@ -13,6 +14,7 @@ type Props = {
 }
 
 export default function Snapshots({
+  disabled,
   snapshots,
   onDelete,
   onLoad,
@@ -23,7 +25,7 @@ export default function Snapshots({
       {availableSlots.map((slot) => {
         const hasSnapshot = !!snapshots.find((id) => id === slot)
         return (
-          <div key={slot}>
+          <div key={slot} className="snapshot-slot">
             <button
               className={clsx('slot', hasSnapshot && 'on')}
               onClick={() => {
@@ -47,6 +49,13 @@ export default function Snapshots({
           </div>
         )
       })}
+      {disabled && (
+        <div className="snapshot-sequence-overlay">
+          Snapshot Sequence in progress.
+          <br />
+          Disable to edit snapshots
+        </div>
+      )}
     </div>
   )
 }
