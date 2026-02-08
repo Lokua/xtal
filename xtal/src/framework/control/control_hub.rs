@@ -50,6 +50,26 @@ struct SnapshotTransition {
     end_frame: u32,
 }
 
+struct SnapshotSequenceRuntime {
+    sequence_length: f32,
+    disabled: DisabledFn,
+}
+
+impl Default for SnapshotSequenceRuntime {
+    fn default() -> Self {
+        Self {
+            sequence_length: 0.0,
+            disabled: None,
+        }
+    }
+}
+
+impl std::fmt::Debug for SnapshotSequenceRuntime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SnapshotSequenceRuntime")
+    }
+}
+
 pub type Snapshots = HashMap<String, ControlValues>;
 
 pub type Exclusions = Vec<String>;
@@ -97,6 +117,8 @@ pub struct ControlHub<T: TimingSource> {
     update_state: Option<UpdateState>,
     active_transition: Option<SnapshotTransition>,
     transition_time: f32,
+    snapshot_sequence: Option<SnapshotSequenceConfig>,
+    snapshot_sequence_runtime: SnapshotSequenceRuntime,
     snapshot_ended_callbacks: Vec<Callback>,
     populated_callbacks: Vec<Callback>,
     #[cfg(feature = "instrumentation")]
@@ -122,6 +144,8 @@ impl<T: TimingSource> ControlHub<T> {
             snapshots: HashMap::default(),
             active_transition: None,
             transition_time: 4.0,
+            snapshot_sequence: None,
+            snapshot_sequence_runtime: SnapshotSequenceRuntime::default(),
             snapshot_ended_callbacks: vec![],
             populated_callbacks: vec![],
             midi_proxies_enabled: true,
@@ -783,6 +807,16 @@ impl<T: TimingSource> ControlHub<T> {
             }
         }
 
+        let sequence_disabled = self
+            .snapshot_sequence_runtime
+            .disabled
+            .as_ref()
+            .is_some_and(|disabled| disabled(&self.ui_controls));
+
+        if !sequence_disabled {
+            self.update_snapshot_sequences();
+        }
+
         if let Some(transition) = &self.active_transition {
             if frame_controller::frame_count() > transition.end_frame {
                 for (name, (_from, to)) in &transition.values {
@@ -802,6 +836,48 @@ impl<T: TimingSource> ControlHub<T> {
                 for callback in &self.snapshot_ended_callbacks {
                     callback.call();
                 }
+            }
+        }
+    }
+
+    fn update_snapshot_sequences(&mut self) {
+        let current_beat = self.animation.beats();
+        let beat_epsilon =
+            (1.0 / self.animation.beats_to_frames(1.0)).max(0.000_001);
+
+        let Some(sequence) = self.snapshot_sequence.as_ref() else {
+            return;
+        };
+
+        let sequence_length = self.snapshot_sequence_runtime.sequence_length;
+        if sequence_length <= 0.0 {
+            return;
+        }
+
+        let phase = current_beat % sequence_length;
+
+        // Last stage is always kind:end (validated), so we evaluate only
+        // stage entries here.
+        let end = sequence.stages.len().saturating_sub(1);
+        let stages = &sequence.stages[..end];
+
+        for stage in stages {
+            let stage_position = stage.position();
+            let linear = (phase - stage_position).abs();
+            let wrapped = (sequence_length - linear).abs();
+            let should_fire = linear.min(wrapped) <= beat_epsilon;
+
+            if should_fire {
+                if let Some(stage_id) = stage.snapshot() {
+                    let stage_id = stage_id.to_string();
+                    if let Err(e) = self.recall_snapshot(&stage_id) {
+                        warn!(
+                            "snapshot_sequence stage {} failed: {}",
+                            stage_id, e
+                        );
+                    }
+                }
+                return;
             }
         }
     }
@@ -918,6 +994,7 @@ impl<T: TimingSource> ControlHub<T> {
         let raw_config = serde_yml::from_str(yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;
         let config: ConfigFile = serde_yml::from_value(merged_config)?;
+        Self::validate_config_file(&config)?;
         Ok(config)
     }
 
@@ -948,6 +1025,8 @@ impl<T: TimingSource> ControlHub<T> {
 
         self.ui_controls = UiControls::default();
         self.animations.clear();
+        self.snapshot_sequence = None;
+        self.snapshot_sequence_runtime = SnapshotSequenceRuntime::default();
         self.modulations.clear();
         self.vars.clear();
         self.bypassed.clear();
@@ -1170,6 +1249,20 @@ impl<T: TimingSource> ControlHub<T> {
                         ),
                     );
                 }
+                ControlType::SnapshotSequence => {
+                    let mut conf: SnapshotSequenceConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.snapshot_sequence_runtime.disabled =
+                        Self::extract_snapshot_sequence_disabled_fn(
+                            &mut conf.disabled,
+                        );
+                    self.snapshot_sequence_runtime.sequence_length = conf
+                        .stages
+                        .last()
+                        .map_or(0.0, |stage| stage.position());
+                    self.snapshot_sequence = Some(conf);
+                }
                 ControlType::Modulation => {
                     let conf: ModulationConfig =
                         serde_yml::from_value(config.config.clone())?;
@@ -1279,6 +1372,116 @@ impl<T: TimingSource> ControlHub<T> {
         } else {
             None
         }
+    }
+
+    fn extract_snapshot_sequence_disabled_fn(
+        disabled: &mut Option<DisabledConfig>,
+    ) -> DisabledFn {
+        if let Some(disabled_config) = disabled {
+            disabled_config.disabled_fn.take()
+        } else {
+            None
+        }
+    }
+
+    fn validate_snapshot_sequence_config(
+        name: &str,
+        conf: &SnapshotSequenceConfig,
+    ) -> Result<(), Box<dyn Error>> {
+        if conf.stages.len() < 2 {
+            return Err(format!(
+                "snapshot_sequence {} must contain at least one stage and one end",
+                name
+            )
+            .into());
+        }
+
+        if conf.stages[0].position() != 0.0 {
+            return Err(format!(
+                "snapshot_sequence {} first stage must be at position 0.0",
+                name
+            )
+            .into());
+        }
+
+        let mut previous_position = -1.0;
+        for (index, stage) in conf.stages.iter().enumerate() {
+            let position = stage.position();
+
+            if !position.is_finite() || position < 0.0 {
+                return Err(format!(
+                    "snapshot_sequence {} stage {} has invalid position {}",
+                    name, index, position
+                )
+                .into());
+            }
+
+            if position <= previous_position {
+                return Err(format!(
+                    "snapshot_sequence {} stages must have strictly increasing \
+                    positions",
+                    name
+                )
+                .into());
+            }
+
+            previous_position = position;
+        }
+
+        if !matches!(
+            conf.stages.last(),
+            Some(SnapshotSequenceStageConfig::End { .. })
+        ) {
+            return Err(format!(
+                "snapshot_sequence {} must end with kind: end",
+                name
+            )
+            .into());
+        }
+
+        if conf.stages[..conf.stages.len() - 1].iter().any(|stage| {
+            !matches!(stage, SnapshotSequenceStageConfig::Stage { .. })
+        }) {
+            return Err(format!(
+                "snapshot_sequence {} entries before the final end must be kind: stage",
+                name
+            )
+            .into());
+        }
+
+        Ok(())
+    }
+
+    fn validate_config_file(config: &ConfigFile) -> Result<(), Box<dyn Error>> {
+        let mut sequence_count = 0;
+
+        for (id, maybe_config) in config {
+            let maybe_config = match maybe_config {
+                MaybeControlConfig::Control(config) => config,
+                MaybeControlConfig::Other(_) => continue,
+            };
+
+            if !matches!(
+                maybe_config.control_type,
+                ControlType::SnapshotSequence
+            ) {
+                continue;
+            }
+
+            let conf: SnapshotSequenceConfig =
+                serde_yml::from_value(maybe_config.config.clone())?;
+            Self::validate_snapshot_sequence_config(id, &conf)?;
+            sequence_count += 1;
+        }
+
+        if sequence_count > 1 {
+            return Err(
+                "Only one snapshot_sequence mapping is supported for now"
+                    .into(),
+            );
+        }
+
+        Ok(())
     }
 
     fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
@@ -1570,5 +1773,81 @@ foo_animation:
 
         init(1);
         assert_eq!(hub.get("foo_animation"), 99.0);
+    }
+
+    fn create_snapshot_sequence_hub(
+        sequence_yaml: &str,
+    ) -> ControlHub<FrameTiming> {
+        let yaml = format!(
+            r#"
+a:
+  type: slider
+  default: 0
+
+{}
+"#,
+            sequence_yaml
+        );
+
+        let mut hub = create_instance(&yaml);
+        hub.set_transition_time(0.0);
+
+        hub.take_snapshot("1");
+        hub.ui_controls.set("a", ControlValue::Float(1.0));
+        hub.take_snapshot("2");
+        hub.ui_controls.set("a", ControlValue::Float(-10.0));
+        hub
+    }
+
+    #[test]
+    #[serial]
+    #[ignore = "requires audio device in test environment"]
+    fn test_snapshot_sequence_loop_scheduling() {
+        let mut hub = create_snapshot_sequence_hub(
+            r#"
+sequence:
+  type: snapshot_sequence
+  stages:
+    - kind: stage
+      snapshot: 1
+      position: 0.0
+    - kind: stage
+      snapshot: 2
+      position: 0.5
+    - kind: end
+      position: 1.0
+"#,
+        );
+
+        init(0);
+        hub.update();
+        assert_eq!(hub.get("a"), 0.0, "stage 1 at beat 0.0");
+
+        init(2);
+        hub.update();
+        assert_eq!(hub.get("a"), 1.0, "stage 2 at beat 0.5");
+
+        init(5);
+        hub.update();
+        assert_eq!(hub.get("a"), 0.0, "wrapped stage 1");
+    }
+
+    #[test]
+    #[serial]
+    fn test_snapshot_sequence_invalid_positions() {
+        let result = ControlHub::<FrameTiming>::parse_from_str(
+            r#"
+sequence:
+  type: snapshot_sequence
+  stages:
+    - kind: stage
+      snapshot: 1
+      position: 0.5
+    - kind: end
+      position: 0.25
+"#,
+        );
+
+        assert!(result.is_err());
     }
 }

@@ -5,12 +5,12 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use geom::Ellipse;
-use xtal::prelude::*;
 use nannou::color::{LinSrgb, Srgb};
 use nannou::prelude::*;
 use nannou::rand::Rng;
 use nannou::rand::rand;
 use nannou::rand::thread_rng;
+use xtal::prelude::*;
 
 pub const PHI_F32: f32 = 1.618_033_9;
 

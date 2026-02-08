@@ -1,7 +1,7 @@
-use xtal::prelude::*;
 use nannou::color::named::*;
 use nannou::color::*;
 use nannou::prelude::*;
+use xtal::prelude::*;
 
 use crate::util::*;
 

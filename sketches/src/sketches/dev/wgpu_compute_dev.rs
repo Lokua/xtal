@@ -1,6 +1,6 @@
-use xtal::prelude::*;
 use nannou::prelude::*;
 use std::sync::{Arc, Mutex};
+use xtal::prelude::*;
 
 use crate::util::*;
 
