@@ -38,6 +38,7 @@
   - [slew_limiter](#slew_limiter)
   - [wave_folder](#wave_folder)
 - [Parameter Modulation](#parameter-modulation)
+- [Snapshot Sequence](#snapshot-sequence)
 - [Using `var`](#using-var)
 
 # General
@@ -1038,6 +1039,46 @@ In the above example we use a UI slider to control the maximum amount of a basic
 - Only named fields that are of type `f32` can be modulated. For example any
   `value` or parameter such was the Wave Folder's `symmetry` param, but not any
   mapping's `range` since that's a list.
+
+# Snapshot Sequence
+
+Recall saved snapshots on beat-aligned positions.
+
+**Params**
+
+- `type` - `snapshot_sequence`
+- `disabled` - optional bypass. Supports:
+  - YAML booleans: `true` / `false`
+  - string expressions (same syntax as UI control `disabled`)
+  - string literals `"true"` / `"false"`
+- `stages` - list of stage entries
+
+**Stage Params**
+
+- `kind` - `stage` or `end`
+- `position` - beat position for this entry. First entry must be `0.0`, and all
+  positions must be strictly increasing.
+- `snapshot` - required when `kind: stage`. Can be written as a string or an
+  unquoted number in YAML.
+
+The last entry must be `kind: end`.
+
+**Example**
+
+```yaml
+sequence:
+  type: snapshot_sequence
+  disabled: false
+  stages:
+    - kind: stage
+      snapshot: 1
+      position: 0.0
+    - kind: stage
+      snapshot: 2
+      position: 5.0
+    - kind: end
+      position: 9.0
+```
 
 # Using `var`
 
