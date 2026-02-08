@@ -690,6 +690,17 @@ impl<T: TimingSource> ControlHub<T> {
         self.snapshots.clear()
     }
 
+    pub fn snapshot_sequence_enabled(&self) -> bool {
+        if self.snapshot_sequence.is_none() {
+            return false;
+        }
+
+        self.snapshot_sequence_runtime
+            .disabled
+            .as_ref()
+            .map_or(true, |disabled| !disabled(&self.ui_controls))
+    }
+
     pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
     where
         F: Fn() + 'static,

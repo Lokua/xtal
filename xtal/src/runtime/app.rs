@@ -381,6 +381,11 @@ impl AppModel {
                     self.hub().map_or_else(HashMap::default, |h| h.bypassed());
                 let event = wv::Event::HubPopulated((controls, bypassed));
                 self.wv_tx.emit(event);
+                let sequence_enabled = self
+                    .hub()
+                    .is_some_and(|hub| hub.snapshot_sequence_enabled());
+                self.wv_tx
+                    .emit(wv::Event::SnapshotSequenceEnabled(sequence_enabled));
                 self.app_tx.alert("Hub repopulated");
             }
             AppEvent::EncodingComplete => {
@@ -743,6 +748,12 @@ impl AppModel {
                     let controls = self.web_view_controls();
                     self.wv_tx.emit(wv::Event::UpdatedControls(controls));
                 }
+
+                let sequence_enabled = self
+                    .hub()
+                    .is_some_and(|hub| hub.snapshot_sequence_enabled());
+                self.wv_tx
+                    .emit(wv::Event::SnapshotSequenceEnabled(sequence_enabled));
             }
             AppEvent::WebViewReady => {
                 self.wv_ready = true;
@@ -883,6 +894,9 @@ impl AppModel {
         let snapshot_slots = self
             .hub()
             .map_or_else(Vec::new, |hub| hub.snapshot_keys_sorted());
+        let snapshot_sequence_enabled = self
+            .hub()
+            .is_some_and(|hub| hub.snapshot_sequence_enabled());
 
         let event = wv::Event::LoadSketch {
             bpm: self.ctx.bpm().get(),
@@ -897,6 +911,7 @@ impl AppModel {
             sketch_width: self.sketch_config.w,
             sketch_height: self.sketch_config.h,
             snapshot_slots,
+            snapshot_sequence_enabled,
             tap_tempo_enabled: self.tap_tempo_enabled,
             exclusions,
         };
@@ -1226,10 +1241,16 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
             };
 
             if let Some(digit) = digit.map(|s| s.to_string()) {
-                if shift_pressed {
-                    model.app_tx.emit(AppEvent::SnapshotStore(digit));
-                } else if platform_mod_pressed {
-                    model.app_tx.emit(AppEvent::SnapshotRecall(digit));
+                let sequence_enabled = model
+                    .hub()
+                    .is_some_and(|hub| hub.snapshot_sequence_enabled());
+
+                if !sequence_enabled {
+                    if shift_pressed {
+                        model.app_tx.emit(AppEvent::SnapshotStore(digit));
+                    } else if platform_mod_pressed {
+                        model.app_tx.emit(AppEvent::SnapshotRecall(digit));
+                    }
                 }
             }
 

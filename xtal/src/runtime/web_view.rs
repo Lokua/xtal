@@ -77,6 +77,7 @@ pub enum Event {
     /// Sent from parent whenever a control script has changed and controls have
     /// been reloaded
     HubPopulated((Vec<Control>, Bypassed)),
+    SnapshotSequenceEnabled(bool),
 
     /// Sent from parent after child sends [`Event::Ready`]
     #[serde(rename_all = "camelCase")]
@@ -115,6 +116,7 @@ pub enum Event {
         sketch_width: i32,
         sketch_height: i32,
         snapshot_slots: Vec<String>,
+        snapshot_sequence_enabled: bool,
         tap_tempo_enabled: bool,
         exclusions: Exclusions,
     },
@@ -282,6 +284,7 @@ pub fn launch(
                     app_tx.emit(AppEvent::Hrcc(hrcc));
                 }
                 Event::HubPopulated(_) => {}
+                Event::SnapshotSequenceEnabled(_) => {}
                 Event::Init { .. } => {}
                 Event::LoadSketch { .. } => {}
                 Event::Mappings(mappings) => {
