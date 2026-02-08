@@ -3,7 +3,7 @@ use nannou::prelude::*;
 use xtal::prelude::*;
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "grid_splash",
+    name: "auto_grid_splash",
     display_name: "Grid Splash",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -26,7 +26,7 @@ pub fn init(app: &App, ctx: &Context) -> GridSplash {
     let wr = ctx.window_rect();
 
     let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "grid_splash.yaml"),
+        to_absolute_path(file!(), "auto_grid_splash.yaml"),
         Timing::new(ctx.bpm()),
     );
 
@@ -35,7 +35,7 @@ pub fn init(app: &App, ctx: &Context) -> GridSplash {
     let shader = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "grid_splash.wgsl"),
+        to_absolute_path(file!(), "auto_grid_splash.wgsl"),
         &params,
         1,
     );
