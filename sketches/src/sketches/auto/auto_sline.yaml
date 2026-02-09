@@ -2,217 +2,242 @@ _vars:
   TAU: &TAU 6.283185307179586
 
 # ------------------------------------------------------------------------------
-#  Main Parameters
+#  Density / Geometry
 # ------------------------------------------------------------------------------
 
-passes:
+geometry_separator:
+  type: separator
+
+density:
   type: slider
-  range: [1.0, 20.0]
+  range: [1.0, 10.0]
   default: 1.0
   step: 1.0
   bypass: 1
 
-n_lines:
+line_count:
+  var: b1
   type: slider
-  range: [1, 256]
-  default: 64.0
+  range: [8.0, 256.0]
+  default: 120.0
   step: 1.0
 
-points_per_segment:
+samples_per_line:
+  var: b2
   type: slider
-  range: [10, 20000]
-  default: 100.0
+  range: [64.0, 4000.0]
+  default: 1200.0
   step: 10.0
 
 point_size:
+  var: b3
   type: slider
-  range: [0.0005, 0.01]
+  range: [0.0002, 0.006]
   default: 0.001
   step: 0.0001
 
-harmonic_influence:
+domain_scale:
+  var: c1
   type: slider
-  range: [0.01, 10.0]
-  default: 0.2
+  range: [0.2, 1.8]
+  default: 1.0
   step: 0.01
 
 # ------------------------------------------------------------------------------
-#  Noise & Variation
+#  Wave Motion
 # ------------------------------------------------------------------------------
 
-noise_separator:
+wave_separator:
   type: separator
-
-noise_scale:
-  type: slider
-  range: [0.0, 0.002]
-  default: 0.00001
-  step: 0.00001
-
-angle_variation:
-  type: slider
-  range: [0.0, *TAU]
-  default: 0.2
-  step: 0.1
-
-# ------------------------------------------------------------------------------
-#  Grid & Wave Parameters
-# ------------------------------------------------------------------------------
-
-grid_separator:
-  type: separator
-
-col_freq:
-  type: slider
-  range: [0.01, 256.0]
-  default: 0.5
-  step: 0.01
-
-row_freq:
-  type: slider
-  range: [0.01, 256.0]
-  default: 0.5
-  step: 0.01
-
-width:
-  type: random_slewed
-  range: [0.01, 2.00]
-  beats: 6
-  slew: 0.7
-  stem: 1
-
-distortion:
-  type: random_slewed
-  range: [0.0, 10.0]
-  beats: 6
-  slew: 0.7
-  stem: 6
 
 wave_amp:
+  var: c2
   type: slider
-  range: [0.0001, 0.5]
-  default: 1.0
-  step: 0.0001
+  range: [0.0, 1.2]
+  default: 0.18
+  step: 0.001
 
-# ------------------------------------------------------------------------------
-#  Center Controls
-# ------------------------------------------------------------------------------
-
-center_separator:
-  type: separator
-
-center_count:
+wave_freq:
+  var: c3
   type: slider
-  range: [0.0, 10.0]
-  default: 1.0
-  step: 1.0
-
-center_spread:
-  type: triangle
-  range: [0.0, 2.0]
-  beats: 64
-
-center_falloff:
-  type: triangle
-  range: [0.01, 10.0]
-  beats: 24
-
-circle_radius:
-  type: random_slewed
-  range: [0.001, 0.5]
-  beats: 4
-  slew: 0.7
-  stem: 0
-
-circle_force:
-  type: triangle
-  range: [0.001, 5.0]
-  beats: 32
-
-circle_phase:
-  type: slider
-  range: [0.0, *TAU]
-  default: 0.0
-  step: 0.1
-
-# ------------------------------------------------------------------------------
-#  Clipping
-# ------------------------------------------------------------------------------
-
-clip_separator:
-  type: separator
-
-clip_start:
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.8
+  range: [0.0, 40.0]
+  default: 6.0
   step: 0.01
 
-clip_grade:
+phase_rate:
+  var: c4
   type: slider
-  range: [0.0, 1.0]
+  range: [-4, 4]
+  default: 0.25
+  step: 0.25
+
+tilt:
+  var: d1
+  type: slider
+  range: [-4.0, 4.0]
   default: 0.3
   step: 0.01
 
+wave_breathe_enabled:
+  var: h1
+  type: checkbox
+  default: false
+
+wave_breathe_depth:
+  var: h2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.25
+  step: 0.01
+  disabled: not wave_breathe_enabled
+
+wave_breathe_rate:
+  var: h3
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.125
+  step: 0.125
+  disabled: not wave_breathe_enabled
+
+harmonic_amp:
+  var: g4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.2
+  step: 0.01
+
+line_hue_span:
+  var: h4
+  type: slider
+  range: [0.0, 0.6]
+  default: 0.14
+  step: 0.01
+
 # ------------------------------------------------------------------------------
-#  Stripe
+#  Focus Field
+# ------------------------------------------------------------------------------
+
+focus_separator:
+  type: separator
+
+focus_x:
+  var: d2
+  type: random_slewed
+  range: [-1.0, 1.0]
+  beats: 6
+  slew: 0.7
+  stem: 0
+
+focus_y:
+  var: d3
+  type: random_slewed
+  range: [-1.0, 1.0]
+  beats: 11
+  slew: 0.7
+  stem: 1
+
+focus_pull:
+  var: d4
+  type: random_slewed
+  range: [-12.0, 6.0]
+  beats: 2
+  slew: 0.65
+  stem: 2
+
+# ------------------------------------------------------------------------------
+#  Line Rate Gradient
+# ------------------------------------------------------------------------------
+
+rate_separator:
+  type: separator
+
+rate_gradient:
+  var: g1
+  type: slider
+  range: [-1.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+rate_spread:
+  var: g2
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.5
+  step: 0.25
+
+focus_color_impact:
+  var: g3
+  type: slider
+  range: [0.0, 6.0]
+  default: 1.0
+  step: 0.25
+
+# ------------------------------------------------------------------------------
+#  Stripe Motion
 # ------------------------------------------------------------------------------
 
 stripe_separator:
   type: separator
 
-# Uncomment if you want to add these checkboxes back
-# animate_stripe_phase:
-#   type: checkbox
-#   default: false
-#
-# invert_animate_stripe_phase:
-#   type: checkbox
-#   default: false
-
-stripe_amp:
-  type: random_slewed
-  range: [0.0, 0.5]
-  beats: 12
-  slew: 0.7
-  stem: 2
+stripe_amount:
+  var: e1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.08
+  step: 0.001
 
 stripe_freq:
-  type: random_slewed
-  range: [0.0, 64.0]
-  beats: 17
-  slew: 0.7
-  stem: 3
-
-stripe_mix:
-  type: random_slewed
-  range: [0.0, 1.0]
-  beats: 20
-  slew: 0.7
-  stem: 4
-
-stripe_step:
-  type: random_slewed
-  range: [0.0, 1.0]
-  beats: 27
-  slew: 0.7
-  stem: 5
-
-stripe_min:
+  var: e2
   type: slider
-  range: [0.0, 1.0]
-  default: 0.0
+  range: [0.0, 48.0]
+  default: 7.0
   step: 0.01
 
-stripe_max:
+stripe_rate:
+  var: e3
   type: slider
-  range: [0.0, 1.0]
+  range: [-4, 4]
+  default: 0.25
+  step: 0.25
+
+# ------------------------------------------------------------------------------
+#  Color / Texture
+# ------------------------------------------------------------------------------
+
+color_separator:
+  type: separator
+
+glow:
+  var: e4
+  type: slider
+  range: [0.0, 2.0]
   default: 1.0
   step: 0.01
 
-stripe_phase:
+hue:
+  var: f2
   type: slider
-  range: [0.0, *TAU]
-  default: 0.0
+  range: [0.0, 1.0]
+  default: 0.92
+  step: 0.01
+
+brightness:
+  var: f3
+  type: slider
+  range: [0.1, 2.0]
+  default: 1.0
+  step: 0.01
+
+bg_lift:
+  var: f4
+  type: slider
+  range: [0.0, 0.25]
+  default: 0.05
   step: 0.001
-  bypass: 0.5
+
+jitter:
+  var: f1
+  type: slider
+  range: [0.0, 0.08]
+  default: 0.002
+  step: 0.0001

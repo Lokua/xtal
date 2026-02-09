@@ -3,132 +3,102 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "passes",
+      "name": "density",
       "value": 1.0
     },
     {
       "type": "Slider",
-      "name": "n_lines",
-      "value": 173.0
+      "name": "line_count",
+      "value": 41.0
     },
     {
       "type": "Slider",
-      "name": "points_per_segment",
-      "value": 1900.0
+      "name": "samples_per_line",
+      "value": 3994.0
     },
     {
       "type": "Slider",
       "name": "point_size",
-      "value": 0.0016
+      "value": 0.001
     },
     {
       "type": "Slider",
-      "name": "harmonic_influence",
-      "value": 1.02
-    },
-    {
-      "type": "Slider",
-      "name": "noise_scale",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "angle_variation",
-      "value": 0.1
-    },
-    {
-      "type": "Slider",
-      "name": "col_freq",
-      "value": 7.17
-    },
-    {
-      "type": "Slider",
-      "name": "row_freq",
-      "value": 3.59
-    },
-    {
-      "type": "Slider",
-      "name": "width",
-      "value": 1.09
-    },
-    {
-      "type": "Slider",
-      "name": "distortion",
-      "value": 0.7
+      "name": "domain_scale",
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "wave_amp",
-      "value": 0.2256
+      "value": 0.021
     },
     {
       "type": "Slider",
-      "name": "center_count",
-      "value": 9.0
+      "name": "wave_freq",
+      "value": 29.93
     },
     {
       "type": "Slider",
-      "name": "center_falloff",
-      "value": 1.3
+      "name": "phase_rate",
+      "value": 4.0
     },
     {
       "type": "Slider",
-      "name": "circle_radius",
-      "value": 0.218
+      "name": "tilt",
+      "value": -4.0
     },
     {
       "type": "Slider",
-      "name": "circle_force",
-      "value": 0.071
+      "name": "focus_pull",
+      "value": -7.64
     },
     {
       "type": "Slider",
-      "name": "circle_phase",
-      "value": 0.3
+      "name": "rate_gradient",
+      "value": 1.0
     },
     {
       "type": "Slider",
-      "name": "clip_start",
-      "value": 0.64
+      "name": "rate_spread",
+      "value": 1.0
     },
     {
       "type": "Slider",
-      "name": "clip_grade",
-      "value": 0.3
-    },
-    {
-      "type": "Slider",
-      "name": "stripe_amp",
+      "name": "stripe_amount",
       "value": 0.0
     },
     {
       "type": "Slider",
       "name": "stripe_freq",
-      "value": 10.0
+      "value": 17.45
     },
     {
       "type": "Slider",
-      "name": "stripe_mix",
-      "value": 0.5
-    },
-    {
-      "type": "Slider",
-      "name": "stripe_step",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "stripe_min",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "stripe_max",
+      "name": "stripe_rate",
       "value": 1.0
     },
     {
       "type": "Slider",
-      "name": "stripe_phase",
+      "name": "glow",
+      "value": 1.8
+    },
+    {
+      "type": "Slider",
+      "name": "hue",
+      "value": 0.91
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 1.08
+    },
+    {
+      "type": "Slider",
+      "name": "bg_lift",
+      "value": 0.023
+    },
+    {
+      "type": "Slider",
+      "name": "jitter",
       "value": 0.0
     }
   ],
