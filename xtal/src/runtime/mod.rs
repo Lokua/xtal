@@ -1,4 +1,5 @@
 pub mod app;
+pub mod frame_recorder;
 pub mod global;
 pub mod map_mode;
 pub mod recording;

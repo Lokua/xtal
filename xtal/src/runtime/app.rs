@@ -404,7 +404,24 @@ impl AppModel {
                 frame_controller::reset_frame_count();
 
                 if self.recording_state.is_queued {
-                    match self.recording_state.start_recording() {
+                    let window = self.main_window(app).unwrap();
+                    let dqp = window.device_queue_pair().clone();
+                    let size = window.inner_size_pixels();
+                    let output_path =
+                        recording::video_output_path(
+                            &self.session_id,
+                            self.sketch_config.name,
+                        )
+                        .unwrap()
+                        .to_string_lossy()
+                        .into_owned();
+                    match self.recording_state.start_recording(
+                        &dqp,
+                        &output_path,
+                        size.0,
+                        size.1,
+                        self.sketch_config.fps,
+                    ) {
                         Ok(message) => {
                             self.app_tx.alert(message);
                             self.wv_tx.emit(wv::Event::StartRecording);
@@ -649,7 +666,24 @@ impl AppModel {
                 }
             }
             AppEvent::StartRecording => {
-                match self.recording_state.start_recording() {
+                let window = self.main_window(app).unwrap();
+                let dqp = window.device_queue_pair().clone();
+                let size = window.inner_size_pixels();
+                let output_path =
+                    recording::video_output_path(
+                        &self.session_id,
+                        self.sketch_config.name,
+                    )
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned();
+                match self.recording_state.start_recording(
+                    &dqp,
+                    &output_path,
+                    size.0,
+                    size.1,
+                    self.sketch_config.fps,
+                ) {
                     Ok(message) => {
                         self.app_tx.alert(message);
                     }
@@ -667,7 +701,7 @@ impl AppModel {
                 if rs.is_recording && !rs.is_encoding {
                     match self
                         .recording_state
-                        .stop_recording(self.sketch_config, &self.session_id)
+                        .stop_recording(&self.app_tx)
                     {
                         Ok(_) => {
                             self.wv_tx.emit(wv::Event::Encoding(true));
@@ -796,27 +830,6 @@ impl AppModel {
         }
     }
 
-    fn capture_recording_frame(&self, app: &App) {
-        let frame_count = self.recording_state.recorded_frames.get();
-        let window = self.main_window(app).unwrap();
-
-        let recording_dir = match &self.recording_state.recording_dir {
-            Some(path) => path,
-            None => {
-                error!(
-                    "Unable to access recording dir {:?}",
-                    &self.recording_state.recording_dir
-                );
-                return;
-            }
-        };
-
-        let filename = format!("frame-{:06}.png", frame_count);
-        window.capture_frame(recording_dir.join(filename));
-
-        self.recording_state.recorded_frames.set(frame_count + 1);
-    }
-
     fn switch_sketch(&mut self, app: &App, name: &str) {
         let registry = REGISTRY.read().unwrap();
 
@@ -849,9 +862,7 @@ impl AppModel {
     /// and switching sketches at runtime like window sizing, placement,
     /// persisted state recall, and sending data to the UI
     fn init_sketch_environment(&mut self, app: &App) {
-        self.recording_state = recording::RecordingState::new(
-            recording::frames_dir(&self.session_id, self.sketch_config.name),
-        );
+        self.recording_state = RecordingState::default();
 
         let window = self.main_window(app).unwrap();
         window.set_title(self.sketch_config.display_name);
@@ -1189,8 +1200,7 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     );
 
     if model.recording_state.is_encoding {
-        model.recording_state.on_encoding_message(
-            model.sketch_config,
+        model.recording_state.poll_finalize(
             &mut model.session_id,
             &model.app_tx,
         );
@@ -1300,11 +1310,28 @@ fn event(app: &App, model: &mut AppModel, event: Event) {
 }
 
 fn view(app: &App, model: &AppModel, frame: Frame) {
+    let is_recording = model.recording_state.is_recording;
+
     let did_render = frame_controller::wrapped_view(
         app,
         &model.sketch,
         frame,
-        |app, sketch, frame| sketch.view(app, frame, &model.ctx),
+        |app, sketch, frame| {
+            if is_recording {
+                let window = app
+                    .window(model.main_window_id)
+                    .unwrap();
+                let device = window.device();
+                if let Ok(mut recorder) =
+                    model.recording_state.frame_recorder.try_borrow_mut()
+                {
+                    if let Some(rec) = recorder.as_mut() {
+                        rec.ensure_gpu_resources(device, &frame);
+                    }
+                }
+            }
+            sketch.view(app, frame, &model.ctx);
+        },
     );
 
     if did_render {
@@ -1314,8 +1341,19 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
             model.clear_next_frame.set(false);
         }
 
-        if model.recording_state.is_recording {
-            model.capture_recording_frame(app);
+        if is_recording {
+            let window = app
+                .window(model.main_window_id)
+                .unwrap();
+            let device = window.device();
+            let queue = window.queue();
+            if let Ok(mut recorder) =
+                model.recording_state.frame_recorder.try_borrow_mut()
+            {
+                if let Some(rec) = recorder.as_mut() {
+                    rec.capture_frame(device, queue);
+                }
+            }
         }
     }
 }
