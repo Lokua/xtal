@@ -389,6 +389,12 @@ Xtal's ffmpeg recorder reads these environment variables at startup:
   buffers ~= 63 MiB, `12` buffers ~= 95 MiB. Apple Silicon recommendation: start
   with `6`, try `8` if you see occasional "waited ...ms" warnings, and only go
   higher if waits are bursty rather than constant.
+Build-time note:
+- Reporting instrumentation is controlled by the `recording-report` cargo
+  feature.
+- The feature is enabled by default for `xtal`.
+- To compile without report instrumentation:
+  `cargo run -p xtal --no-default-features`.
 
 Examples:
 

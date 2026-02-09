@@ -19,11 +19,12 @@ all-features = true
 doctest = false
 
 [features]
-default = []
+default = ["recording-report"]
 instrumentation = []
 logging = []
 prod = []
 docsrs = []
+recording-report = []
 
 [dev-dependencies]
 criterion = "0.5.1"

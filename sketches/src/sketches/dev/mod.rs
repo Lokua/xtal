@@ -9,6 +9,7 @@ pub mod midi_dev;
 pub mod non_yaml_dev;
 pub mod osc_dev;
 pub mod osc_transport_dev;
+pub mod recording_dev;
 pub mod responsive_dev;
 pub mod shader_to_texture_dev;
 pub mod wgpu_compute_dev;
