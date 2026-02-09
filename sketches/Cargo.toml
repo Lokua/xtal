@@ -6,6 +6,10 @@ edition = "2024"
 default-run = "sketches"
 license = "MIT"
 
+[features]
+default = ["recording-report"]
+recording-report = ["xtal/recording-report"]
+
 [dependencies]
 bevy_reflect = { version = "0.15.1", features = ["glam"] }
 bytemuck = "1.21.0"

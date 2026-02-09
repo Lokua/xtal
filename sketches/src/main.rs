@@ -58,6 +58,7 @@ fn main() {
         non_yaml_dev,
         osc_dev,
         osc_transport_dev,
+        recording_dev,
         responsive_dev,
         shader_to_texture_dev,
         wgpu_compute_dev,

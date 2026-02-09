@@ -42,6 +42,7 @@ pub use self::dev::midi_dev;
 pub use self::dev::non_yaml_dev;
 pub use self::dev::osc_dev;
 pub use self::dev::osc_transport_dev;
+pub use self::dev::recording_dev;
 pub use self::dev::responsive_dev;
 pub use self::dev::shader_to_texture_dev;
 pub use self::dev::wgpu_compute_dev;
