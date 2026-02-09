@@ -5,3 +5,4 @@ debug.txt
 *.log
 **/node_modules
 xtal/static
+.claude

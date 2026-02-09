@@ -12,3 +12,8 @@ pub const MBP_16_WIDTH_LOGICAL: i32 = MBP_16_WIDTH_PHYSICAL / 2;
 
 #[allow(dead_code)]
 pub const CONTROL_PANEL_WIDTH: i32 = 560;
+
+#[allow(dead_code)]
+pub const HD_WIDTH: i32 = 1920 / 2;
+#[allow(dead_code)]
+pub const HD_HEIGHT: i32 = 1080 / 2;

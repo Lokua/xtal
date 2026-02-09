@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::error::Error;
 use std::path::PathBuf;
-use std::sync::mpsc;
 use std::sync::Arc;
+use std::sync::mpsc;
 use std::thread;
 
 use nannou::wgpu;
@@ -61,8 +61,7 @@ impl RecordingState {
         )?;
         *self.frame_recorder.borrow_mut() = Some(recorder);
         self.is_recording = true;
-        let message =
-            format!("Recording to {}", output_path);
+        let message = format!("Recording to {}", output_path);
         info!("{}", message);
         Ok(message)
     }
@@ -136,8 +135,7 @@ impl RecordingState {
                 FinalizeMessage::Error(error) => {
                     self.is_encoding = false;
                     self.finalize_rx = None;
-                    let message =
-                        format!("Recording error: {}", error);
+                    let message = format!("Recording error: {}", error);
                     event_tx.alert(message.clone());
                     error!("{}", message);
                     *session_id = generate_session_id();

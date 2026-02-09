@@ -481,9 +481,8 @@ impl<'de> Deserialize<'de> for SnapshotSequenceConfig {
 
             let mut stages = Vec::with_capacity(snapshots.len() + 1);
             for (index, snapshot) in snapshots.into_iter().enumerate() {
-                let snapshot = snapshot
-                    .into_string()
-                    .map_err(serde::de::Error::custom)?;
+                let snapshot =
+                    snapshot.into_string().map_err(serde::de::Error::custom)?;
                 stages.push(SnapshotSequenceStageConfig::Stage {
                     snapshot,
                     position: index as f32 * beats,
