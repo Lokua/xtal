@@ -1,29 +1,4 @@
-const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.283185307179586;
-const PHI: f32 = 1.61803398875;
-
-// const NEAR_COLOR = vec3f(0.96, 0.93, 0.86); // warm beige
-// const MID_COLOR = vec3f(0.82, 0.77, 0.68); // medium beige
-// const FAR_COLOR = vec3f(0.62, 0.58, 0.52); // darker beige
-const NEAR_COLOR = vec3f(0.98, 0.94, 0.85); // very light warm beige
-const MID_COLOR = vec3f(0.75, 0.65, 0.55);  // distinctly darker beige
-const FAR_COLOR = vec3f(0.45, 0.40, 0.35);  // much darker beige
-
-const FULLSCREEN_TRIANGLE_VERTS = array<vec2f, 3>(
-    vec2f(-1.0, -3.0),
-    vec2f( 3.0,  1.0),
-    vec2f(-1.0,  1.0)
-);
-
-struct ColoredPosition {
-    pos: vec2f,
-    color: vec3f,
-};
-
-struct DistortionResult {
-    offset: vec2f,
-    distance: f32,
-};
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
@@ -32,31 +7,25 @@ struct VertexOutput {
 }
 
 struct Params {
-    // w, h, ..unused
-    resolution: vec4f,
-
-    // ax, ay, bx, by
+    // a1, a2 are width/height from dynamic uniforms, a4 is beats.
     a: vec4f,
 
-    // points_per_segment, noise_scale, angle_variation, n_lines
+    // b1 line_count, b2 samples_per_line, b3 point_size
     b: vec4f,
 
-    // point_size, col_freq, width, distortion
+    // c1 domain_scale, c2 wave_amp, c3 wave_freq, c4 phase_rate
     c: vec4f,
 
-    // clip_start, clip_grade, unused, row_freq
+    // d1 tilt, d2 focus_x, d3 focus_y, d4 focus_pull
     d: vec4f,
 
-    // stripe_step, stripe_mix, stripe_amp, stripe_freq
+    // e1 stripe_amount, e2 stripe_freq, e3 stripe_rate, e4 glow
     e: vec4f,
 
-    // unused, circle_radius, circle_phase, wave_amp
+    // f1 jitter, f2 hue, f3 brightness, f4 bg_lift
     f: vec4f,
-
-    // center_count, center_spread, center_falloff, circle_force
+    // g1 rate_gradient, g2 rate_spread, g3 focus_color_impact, g4 harmonic_amp
     g: vec4f,
-
-    // stripe_min, stripe_phase, harmonic_influence, stripe_max
     h: vec4f,
 }
 
@@ -65,349 +34,174 @@ var<uniform> params: Params;
 
 @vertex
 fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
-        // Use first 3 vertices for background
     if (vidx < 3u) {
-        // Full-screen triangle vertices
-        var pos = FULLSCREEN_TRIANGLE_VERTS;
         var out: VertexOutput;
-        out.pos = vec4f(pos[vidx], 0.0, 1.0);
-        // Use uv for noise sampling if needed
-        out.uv = (pos[vidx] + 1.0) * 0.5;
-        // Background doesn’t need a specific point_color
+        let bg_pos = fullscreen_triangle_pos(vidx);
+        out.pos = vec4f(bg_pos, 0.0, 1.0);
         out.point_color = vec4f(0.0);
+        out.uv = (bg_pos + 1.0) * 0.5;
         return out;
     }
 
-    // Adjust index for spiral vertices: subtract background vertex count
     let vert_index = vidx - 3u;
 
-    let points_per_segment = params.b.x;
-    let noise_scale = params.b.y;
-    let angle_variation = params.b.z;
-    let n_lines = params.b.w;
-    let point_size = params.c.x;
-    let col_freq = params.c.y;
-    let width = params.c.z;
-    let harmonic_influence = params.h.z;
+    let line_count = max(1.0, params.b.x);
+    let samples_per_line = max(2.0, params.b.y);
+    let point_size = max(0.00001, params.b.z);
 
-    let total_points_per_pass = u32(n_lines * points_per_segment);
-    let point_index = (vert_index / 6u) % total_points_per_pass;
+    let domain_scale = max(0.01, params.c.x);
+    let wave_amp = params.c.y;
+    let wave_freq = params.c.z;
+    let phase_rate = params.c.w;
+    let beats = params.a.w;
+
+    let tilt = params.d.x;
+    let focus = vec2f(params.d.y, params.d.z);
+    let focus_pull = params.d.w;
+
+    let stripe_amount = params.e.x;
+    let stripe_freq = params.e.y;
+    let stripe_rate = params.e.z;
+    let glow = params.e.w;
+
+    let jitter = params.f.x;
+    let hue = params.f.y;
+    let brightness = params.f.z;
+    let rate_gradient = params.g.x;
+    let rate_spread = params.g.y;
+    let focus_color_impact = params.g.z;
+    let harmonic_amp = params.g.w;
+    let wave_breathe_enabled = params.h.x;
+    let wave_breathe_depth = params.h.y;
+    let wave_breathe_rate = params.h.z;
+    let line_hue_span = params.h.w;
+
+    let total_points = u32(line_count * samples_per_line);
+    let point_index = (vert_index / 6u) % total_points;
     let corner_index = vert_index % 6u;
-    let line_idx = floor(f32(point_index) / points_per_segment);
-    let point_in_line = f32(point_index) % points_per_segment;
-    let t = point_in_line / (points_per_segment - 1.0);
 
-    // Distribute lines evenly in vertical space
-    let step = 1.8 / (n_lines - 1.0);
-    let offset = (n_lines - 1.0) * 0.5;
-    let y_pos = (line_idx - offset) * step;
+    let line_idx = floor(f32(point_index) / samples_per_line);
+    let point_in_line = f32(point_index) % samples_per_line;
 
-    let base_freq = TAU;
-    // Use line_idx directly for phase to ensure unique offset per line
-    let phase_offset = line_idx * 0.1;
-    
-    let harmonic1 = sin(t * base_freq + phase_offset);
-    let harmonic2 = sin(t * base_freq + phase_offset * 2.0) * 0.5;
-    let harmonic3 = sin(t * base_freq + phase_offset * 3.0) * 0.3;
-    
-    let combined_harmonic = harmonic1 + harmonic2 + harmonic3;
+    let t = point_in_line / (samples_per_line - 1.0);
+    let line_norm = select(0.0, line_idx / (line_count - 1.0), line_count > 1.0);
+    let aspect = params.a.x / max(1.0, params.a.y);
 
-    let noise_seed = point_index + 1u;
-    let noise = random_normal(noise_seed, 1.0) * 
-        noise_scale * 
-        (1.0 + abs(combined_harmonic));
+    var pos = vec2f(
+        mix(-aspect, aspect, t),
+        line_norm * 2.0 - 1.0
+    ) * domain_scale;
 
-    let spiral_factor = line_idx / n_lines;
-    let spiral_angle = t * TAU + spiral_factor * TAU;
-    
-    let colored_pos = get_pos(
-        t, 
-        line_idx, 
-        col_freq * (1.0 + 0.2 * sin(spiral_angle)), 
-        width,
-        spiral_factor
-    );
-    var adjusted_pos = colored_pos.pos;
+    let line_bias = line_norm * 2.0 - 1.0;
+    let line_rate_scale = max(0.0, 1.0 - line_bias * rate_gradient * rate_spread);
+    let line_phase = beats * phase_rate * line_rate_scale + line_idx * tilt;
+    let breathe_phase = sin(beats * TAU * wave_breathe_rate);
+    let breathe_gain = 1.0 + wave_breathe_enabled * wave_breathe_depth * breathe_phase;
+    let wave_amp_mod = max(0.0, wave_amp * breathe_gain);
+    let stripe_phase = beats * stripe_rate;
 
-    let angle = random_normal(point_index, angle_variation) + 
-        spiral_angle * 0.5 + 
-        combined_harmonic * 0.3;
+    // Add a second harmonic with an irrational ratio for richer motion.
+    let base_phase = (t * TAU * wave_freq) + line_phase;
+    let harmonic_ratio = 1.61803398875;
+    let harmonic_phase = base_phase * harmonic_ratio + line_phase * 0.17;
+    let wave_shape = sin(base_phase) + sin(harmonic_phase) * harmonic_amp;
+    let wave = wave_shape * wave_amp_mod;
+    pos.y += wave;
 
-    let ref_a = vec2f(params.a.x, y_pos);
-    let ref_b = vec2f(params.a.z, y_pos);
-    let line_dir = normalize(ref_b - ref_a);
-    let perp_dir = vec2f(-line_dir.y, line_dir.x);
-    
-    let rotated_dir = vec2f(
-        perp_dir.x * cos(angle) - perp_dir.y * sin(angle),
-        perp_dir.x * sin(angle) + perp_dir.y * cos(angle)
-    );
+    let to_focus = focus - pos;
+    let dist = max(length(to_focus), 0.0001);
+    pos += (to_focus / dist) * (focus_pull * 0.05) / (1.0 + dist * 6.0);
 
-    adjusted_pos = colored_pos.pos + 
-        rotated_dir * 
-        noise * 
-        (1.0 + 0.3 * combined_harmonic);
+    let grain = random_normal(point_index + 37u, 1.0) * jitter;
+    let jitter_angle = 0.0;
+    let grain_dir = vec2f(cos(jitter_angle), sin(jitter_angle));
+    pos += grain_dir * grain;
 
-    let w = params.resolution.x;
-    let h = params.resolution.y;
-    let aspect = w / h;
-    adjusted_pos.x /= aspect;
+    let stripe = sin((pos.y * stripe_freq) + stripe_phase);
+    pos.x += stripe * stripe_amount * 0.25;
 
-    let modulation_factor = 1.0 + harmonic_influence * combined_harmonic;
-    let dynamic_point_size = point_size * modulation_factor;
+    pos.x /= aspect;
 
-    var final_pos = adjusted_pos + 
-        get_corner_offset(corner_index, dynamic_point_size);
-    final_pos = clamp(final_pos, vec2f(-1.0), vec2f(1.0));
+    let shade = mix(0.7, 1.0, line_norm) * brightness;
+    let stripe_energy = 0.5 + 0.5 * abs(stripe);
+    let glow_gain = 1.0 + glow * (0.5 + stripe_energy * 1.6);
+    let focus_strength = clamp(abs(focus_pull) / 12.0, 0.0, 1.0);
+    let depth_falloff = 0.38 + focus_strength * 0.95;
+    let depth_mask = exp(-dist * depth_falloff);
+    let depth_amount = depth_mask * focus_strength * max(0.0, focus_color_impact);
+    let depth_gain = 1.0 + depth_amount * 1.8;
+    let focus_for_color = vec2f(focus.x / aspect, focus.y);
+    let focus_dir = pos - focus_for_color;
+    let focus_dist = max(length(focus_dir), 0.0001);
+    let pulse = 0.5 + 0.5 * sin(beats * 0.35);
+    let blast_radius = mix(0.22, 1.05, pulse);
+    let blast_mask = exp(-pow(focus_dist / max(0.0001, blast_radius), 2.0));
+    let line_hue_offset = (line_norm - 0.5) * line_hue_span;
+    let blast_hue_offset = blast_mask * focus_strength * focus_color_impact * 0.18;
+    let final_hue = fract(hue + line_hue_offset + blast_hue_offset);
+    let final_sat = 0.82 + 0.12 * blast_mask * focus_strength;
+    let neon = hsv2rgb(vec3f(final_hue, final_sat, 1.0));
+    let color = neon * shade * glow_gain * depth_gain;
+
+    let quad_offset = quad_corner(corner_index, point_size);
 
     var out: VertexOutput;
-    out.pos = vec4f(final_pos, 0.0, 1.0);
-    let alpha = 0.1 * modulation_factor;
-    out.point_color = vec4f(colored_pos.color, alpha);
-    out.uv = (final_pos.xy + 1.0) * 0.5;
+    out.pos = vec4f(pos + quad_offset, 0.0, 1.0);
+    out.point_color = vec4f(color, 0.08 + glow * 0.08);
+    out.uv = (out.pos.xy + 1.0) * 0.5;
     return out;
 }
 
 @fragment
 fn fs_main(
-    @builtin(position) pos: vec4f,
     @location(0) point_color: vec4f,
-    @location(1) uv: vec2f,
+    @location(1) _uv: vec2f,
 ) -> @location(0) vec4f {
-    let invert = params.d.z;
-    let near_black = vec4f(vec3f(0.05), 1.0);
-    
-    var color = select(near_black, point_color, point_color.a > 0.0);
-    if invert == 1.0 {
-        return vec4f(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
+    let bg = hsv2rgb(vec3f(fract(params.f.y + 0.03), 0.45, params.f.w));
+    if (point_color.a <= 0.0) {
+        return vec4f(bg, 1.0);
     }
-    
-    return color;
+    return point_color;
 }
 
-fn get_pos(
-    t: f32, 
-    line_idx: f32, 
-    col_freq: f32,
-    width: f32,
-    spiral_factor: f32,
-) -> ColoredPosition {
-    let distortion = params.c.w;
-    let time = params.d.y;
-    let row_freq = params.d.w;
-    let wave_amp = params.f.w;
-    let center_count = params.g.x;  
-    let center_spread = params.g.y; 
-    let center_falloff = params.g.z;
-    let circle_radius = params.f.y;
-    let circle_phase = params.f.z;
-    let circle_force = params.g.w;
-    let n_lines = params.b.w;
-    let clip_start = params.d.x;
-    let clip_grade = params.d.y;
-    
-    // Get base position and apply wave distortion
-    var pos = get_base_grid_pos(t, line_idx, n_lines, width);
-    pos = apply_wave_distortion(pos, col_freq, row_freq, width, wave_amp);
-    
-    // Calculate and apply total distortion
-    let distortion_result = calculate_total_distortion(
-        pos, width, center_count, center_spread, 
-        circle_radius, circle_force, center_falloff, distortion
-    );
-    
-    let raw_offset = distortion_result.offset * width;
-    pos += vec2f(
-        soft_clip(raw_offset.x, clip_start, clip_grade),
-        soft_clip(raw_offset.y, clip_start, clip_grade)
-    );
-    
-    // Apply final modulation
-    let angle = atan2(pos.y, pos.x);
-    let final_r = length(pos);
-    let r_modulated = apply_stripe_modulation(final_r, angle);
-    pos *= r_modulated / max(final_r, 0.0001);
-    
-    // Calculate color based on distance to nearest center
-    let normalized_dist = distortion_result.distance;
-    let mid_range = smoothstep(0.1, 0.3, normalized_dist);
-    let far_range = smoothstep(0.3, 0.5, normalized_dist);
-
-    let near_to_mid = mix(NEAR_COLOR, MID_COLOR, mid_range);
-    let final_color = mix(near_to_mid, FAR_COLOR, far_range);
-    
-    return ColoredPosition(pos, final_color);
-}
-
-fn get_base_grid_pos(t: f32, line_idx: f32, n_lines: f32, width: f32) -> vec2f {
-    let x = (t * 2.0 - 1.0) * width;
-    let y = ((line_idx / (n_lines - 1.0)) * 2.0 - 1.0) * width;
-    return vec2f(x, y);
-}
-
-fn apply_wave_distortion(
-    pos: vec2f, 
-    col_freq: f32, 
-    row_freq: f32, 
-    width: f32, 
-    wave_amp: f32
-) -> vec2f {
-    let x_freq = max(col_freq, 0.1);
-    let y_freq = max(row_freq, 0.1);
-    let x_wave = sin(pos.x * x_freq) * width * wave_amp;
-    let y_wave = sin(pos.y * y_freq) * width * wave_amp;
-    
-    return vec2f(
-        pos.x + y_wave,
-        pos.y + x_wave
-    );
-}
-
-fn calculate_distortion_force(
-    normalized_dist: f32, 
-    base_force: f32,
-    radius: f32,
-    dist: f32
-) -> f32 {
-    let ripple_freq = 3.0 * PI * normalized_dist;
-    let ripple = sin(ripple_freq) * cos(ripple_freq * 0.5);
-    
-    let harmonic_dist = sin(normalized_dist * PI * 2.0) * 
-        cos(normalized_dist * PI * 4.0) * 
-        sin(normalized_dist * PI * 1.5);
-    
-    return base_force * (1.0 + harmonic_dist + ripple * 0.5) * 
-        radius / (dist + radius * 0.1);
-}
-
-fn get_distortion_direction(delta: vec2f, normalized_dist: f32) -> vec2f {
-    let rotation_angle = normalized_dist * PI * 2.0;
-    let rotated_dir = vec2f(
-        delta.x * cos(rotation_angle) - delta.y * sin(rotation_angle),
-        delta.x * sin(rotation_angle) + delta.y * cos(rotation_angle)
-    );
-    
-    return mix(
-        normalize(delta),
-        normalize(rotated_dir),
-        sin(normalized_dist * PI) * 0.5 + 0.5
-    );
-}
-
-fn calculate_total_distortion(
-    pos: vec2f,
-    width: f32,
-    center_count: f32,
-    center_spread: f32,
-    circle_radius: f32,
-    circle_force: f32,
-    center_falloff: f32,
-    distortion: f32
-) -> DistortionResult {
-    var total_distortion = vec2f(0.0);
-    var min_dist = 99999.9;  // Track closest center
-    
-    for (var i = 0.0; i < center_count; i += 1.0) {
-        let center_pos = get_grid_position(i, center_count, center_spread);
-        let delta = pos - center_pos;
-        let dist = length(delta);
-        
-        if (dist == 0.0) { continue; }
-        
-        min_dist = min(min_dist, dist);
-        
-        let radius = width * circle_radius;
-        let normalized_dist = dist / (width * 2.0);
-        let base_force = distortion * circle_force;
-        
-        let force = calculate_distortion_force(
-            normalized_dist, 
-            base_force, 
-            radius, 
-            dist
-        );
-        let falloff = exp(-pow(normalized_dist, 1.5) * center_falloff);
-        let direction = get_distortion_direction(delta, normalized_dist);
-        
-        total_distortion += direction * force * falloff;
-    }
-    
-    return DistortionResult(
-        total_distortion,
-        min_dist / (width * 2.0)
-    );
-}
-
-fn get_grid_position(index: f32, count: f32, width: f32) -> vec2f {
-    let grid_size = ceil(sqrt(count));
-    let row = floor(index / grid_size);
-    let col = index % grid_size;
-    
-    let cell_size = 2.0 / (grid_size);
-    let offset = (grid_size - 1.0) * 0.5;
-    
-    let x = (col - offset) * cell_size * width;
-    let y = (row - offset) * cell_size * width;
-    
-    return vec2f(x, y);
-}
-
-fn apply_stripe_modulation(radius: f32, pos_angle: f32) -> f32 {
-    let stripe_step = params.e.x;
-    let stripe_mix = params.e.y;
-    let stripe_amp = params.e.z;
-    let stripe_freq = params.e.w;
-    let stripe_phase = params.h.y;
-    let stripe_min = params.h.x;
-    let stripe_max = params.h.w;
-    let normalized_phase = stripe_phase * stripe_freq;
-    let stripe_input = sin(stripe_freq * pos_angle + normalized_phase);
-    let stripe1 = step(stripe_step, stripe_input); 
-    let stripe2 = smoothstep(stripe_min, stripe_max, stripe_input); 
-    let stripe = mix(stripe1, stripe2, stripe_mix);
-    let modulation = 1.0 + stripe_amp * (2.0 * stripe - 1.0);
-    return radius * modulation;
-}
-
-fn get_corner_offset(index: u32, point_size: f32) -> vec2f {
-    let s = point_size;
+fn fullscreen_triangle_pos(index: u32) -> vec2f {
     switch (index) {
-        case 0u: { return vec2f(-s, -s); }
-        case 1u: { return vec2f(-s,  s); }
-        case 2u: { return vec2f( s,  s); }
-        case 3u: { return vec2f(-s, -s); }
-        case 4u: { return vec2f( s,  s); }
-        case 5u: { return vec2f( s, -s); }
-        default: { return vec2f(0.0); }
+        case 0u: { return vec2f(-1.0, -3.0); }
+        case 1u: { return vec2f(3.0, 1.0); }
+        case 2u: { return vec2f(-1.0, 1.0); }
+        default: { return vec2f(-1.0, -3.0); }
     }
 }
 
-fn soft_clip(x: f32, clip_start: f32, softness: f32) -> f32 {
-    if (abs(x) < clip_start) { return x; }
-    let overshoot = abs(x) - clip_start;
-    let soft_limit = softness * (1.0 - exp(-overshoot / softness));
-    return sign(x) * (clip_start + soft_limit);
+fn quad_corner(index: u32, size: f32) -> vec2f {
+    switch (index) {
+        case 0u: { return vec2f(-size, -size); }
+        case 1u: { return vec2f(-size, size); }
+        case 2u: { return vec2f(size, size); }
+        case 3u: { return vec2f(-size, -size); }
+        case 4u: { return vec2f(size, size); }
+        case 5u: { return vec2f(size, -size); }
+        default: { return vec2f(0.0, 0.0); }
+    }
 }
 
-// fn soft_clip(x: f32, clip_start: f32, softness: f32) -> f32 {
-//     if (abs(x) < clip_start) { return x; }
-//     let overshoot = abs(x) - clip_start;
-//     let normalized = overshoot / softness;
-//     let soft_limit = softness * tanh(normalized);
-//     return sign(x) * (clip_start + soft_limit);
-// }
+fn hsv2rgb(c: vec3f) -> vec3f {
+    let rgb = clamp(abs(fract(c.x + vec3f(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0) - 1.0, vec3f(0.0), vec3f(1.0));
+    let shaped = rgb * rgb * (3.0 - 2.0 * rgb);
+    return c.z * mix(vec3f(1.0), shaped, c.y);
+}
 
 fn rand_pcg(seed: u32) -> f32 {
     var state = seed * 747796405u + 2891336453u;
     var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    var result = (word >> 22u) ^ word;
+    let result = (word >> 22u) ^ word;
     return f32(result) / 4294967295.0;
 }
 
 fn random_normal(seed: u32, std_dev: f32) -> f32 {
-    let u1 = rand_pcg(seed);
+    let u1 = max(0.00001, rand_pcg(seed));
     let u2 = rand_pcg(seed + 1u);
     let mag = sqrt(-2.0 * log(u1));
-    let z0 = mag * cos(2.0 * PI * u2);
+    let z0 = mag * cos(TAU * u2);
     return std_dev * z0;
 }
