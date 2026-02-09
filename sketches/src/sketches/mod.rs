@@ -27,6 +27,7 @@ pub mod wave_fract;
 pub mod auto;
 pub use self::auto::auto_cloud;
 pub use self::auto::auto_dreams;
+pub use self::auto::auto_dyn_uni;
 pub use self::auto::auto_grid_splash;
 
 pub mod dev;

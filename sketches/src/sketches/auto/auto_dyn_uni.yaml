@@ -1,0 +1,188 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Wave
+# ------------------------------------------------------------------------------
+
+wave_phase_animation:
+  var: e1
+  type: checkbox
+  default: true
+
+wave_phase_speed:
+  type: slider
+  range: [1, 32]
+  step: 1
+  default: 1
+  disabled: not wave_phase_animation
+
+wave_phase:
+  var: b1
+  type: automate
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0
+    - kind: end
+      position: $wave_phase_speed
+      value: *TAU
+
+wave_dist:
+  var: b2
+  type: slider
+  range: [0, 200]
+
+link_axes:
+  var: e2
+  type: checkbox
+  default: false
+  range: [-1.0, 1.0]
+  slew: 0.65
+  stem: 88
+
+wave_x_freq:
+  var: b3
+  type: slider
+  range: [0, 100]
+
+wave_y_freq:
+  var: b4
+  type: slider
+  range: [0, 100]
+  disabled: link_axes
+
+origin:
+  var: e3
+  type: select
+  default: center
+  options:
+    - center
+    - top-right
+    - bottom-right
+    - bottom-left
+    - top-left
+    - animated
+    - animated-y
+
+origin_offset:
+  var: e4
+  type: slider
+  disabled: origin is center
+
+origin_anim_x:
+  var: g1
+  type: random_slewed
+  beats: 16
+  range: [-1, 1]
+  slew: 0.8
+  stem: 94
+
+origin_anim_y:
+  var: g2
+  type: random_slewed
+  beats: 8
+  range: [-1, 1]
+  slew: 0.8
+  stem: 95
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_separator:
+  type: separator
+
+color_invert:
+  var: d4
+  type: checkbox
+
+color_amt:
+  var: c1
+  type: slider
+  range: [0, 2]
+  default: 0.5
+
+color_freq:
+  var: c2
+  type: slider
+  range: [0, 20]
+
+color_phase:
+  var: c3
+  type: slider
+  range: [0, *TAU]
+  step: 0.001
+
+r_amp:
+  var: c4
+  type: slider
+
+g_amp:
+  var: d1
+  type: slider
+
+b_amp:
+  var: d2
+  type: slider
+
+color_shift:
+  var: d3
+  type: slider
+  range: [0, *TAU]
+
+color_steps:
+  var: f4
+  type: slider
+  range: [1, 50]
+  step: 1
+
+bg_alpha:
+  var: h2
+  type: slider
+  default: 1
+
+# ------------------------------------------------------------------------------
+#  Distance Params
+# ------------------------------------------------------------------------------
+
+pattern_separator:
+  type: separator
+
+distance_mix:
+  var: f3
+  type: slider
+
+grain_size:
+  var: f1
+  type: slider
+  range: [0, 10]
+
+angle_mult:
+  var: f2
+  type: slider
+  range: [0, 10]
+
+p2_x:
+  var: g3
+  type: slider
+  range: [0, 100]
+  default: 1
+
+p2_y:
+  var: g4
+  type: slider
+  range: [0, 100]
+  default: 1
+
+# ------------------------------------------------------------------------------
+#  Post Processing
+# ------------------------------------------------------------------------------
+
+post_separator:
+  type: separator
+
+film_grain:
+  var: h1
+  type: slider
+  range: [0, 2]
