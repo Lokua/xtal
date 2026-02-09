@@ -407,14 +407,13 @@ impl AppModel {
                     let window = self.main_window(app).unwrap();
                     let dqp = window.device_queue_pair().clone();
                     let size = window.inner_size_pixels();
-                    let output_path =
-                        recording::video_output_path(
-                            &self.session_id,
-                            self.sketch_config.name,
-                        )
-                        .unwrap()
-                        .to_string_lossy()
-                        .into_owned();
+                    let output_path = recording::video_output_path(
+                        &self.session_id,
+                        self.sketch_config.name,
+                    )
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned();
                     match self.recording_state.start_recording(
                         &dqp,
                         &output_path,
@@ -669,14 +668,13 @@ impl AppModel {
                 let window = self.main_window(app).unwrap();
                 let dqp = window.device_queue_pair().clone();
                 let size = window.inner_size_pixels();
-                let output_path =
-                    recording::video_output_path(
-                        &self.session_id,
-                        self.sketch_config.name,
-                    )
-                    .unwrap()
-                    .to_string_lossy()
-                    .into_owned();
+                let output_path = recording::video_output_path(
+                    &self.session_id,
+                    self.sketch_config.name,
+                )
+                .unwrap()
+                .to_string_lossy()
+                .into_owned();
                 match self.recording_state.start_recording(
                     &dqp,
                     &output_path,
@@ -699,10 +697,7 @@ impl AppModel {
                 let rs = &self.recording_state;
 
                 if rs.is_recording && !rs.is_encoding {
-                    match self
-                        .recording_state
-                        .stop_recording(&self.app_tx)
-                    {
+                    match self.recording_state.stop_recording(&self.app_tx) {
                         Ok(_) => {
                             self.wv_tx.emit(wv::Event::Encoding(true));
                         }
@@ -1200,10 +1195,9 @@ fn update(app: &App, model: &mut AppModel, update: Update) {
     );
 
     if model.recording_state.is_encoding {
-        model.recording_state.poll_finalize(
-            &mut model.session_id,
-            &model.app_tx,
-        );
+        model
+            .recording_state
+            .poll_finalize(&mut model.session_id, &model.app_tx);
     }
 }
 
@@ -1318,9 +1312,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         frame,
         |app, sketch, frame| {
             if is_recording {
-                let window = app
-                    .window(model.main_window_id)
-                    .unwrap();
+                let window = app.window(model.main_window_id).unwrap();
                 let device = window.device();
                 if let Ok(mut recorder) =
                     model.recording_state.frame_recorder.try_borrow_mut()
@@ -1342,9 +1334,7 @@ fn view(app: &App, model: &AppModel, frame: Frame) {
         }
 
         if is_recording {
-            let window = app
-                .window(model.main_window_id)
-                .unwrap();
+            let window = app.window(model.main_window_id).unwrap();
             let device = window.device();
             let queue = window.queue();
             if let Ok(mut recorder) =

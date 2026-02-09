@@ -2,9 +2,7 @@ use nannou::prelude::*;
 
 use xtal::prelude::*;
 
-const LOGICAL_WIDTH: i32 = crate::sketches::common::MBP_16_WIDTH_LOGICAL
-    - crate::sketches::common::CONTROL_PANEL_WIDTH;
-const LOGICAL_HEIGHT: i32 = (LOGICAL_WIDTH as f32 * 9.0 / 16.0) as i32;
+use crate::sketches::common::{HD_HEIGHT, HD_WIDTH};
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "auto_dyn_uni",
@@ -12,8 +10,8 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: LOGICAL_WIDTH,
-    h: LOGICAL_HEIGHT,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
 };
 
 #[derive(SketchComponents)]

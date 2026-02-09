@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::io::Write;
 use std::process::{Child, Command, Stdio};
-use std::sync::mpsc;
 use std::sync::Arc;
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -10,9 +10,8 @@ use log::{error, info, warn};
 use nannou::prelude::*;
 use nannou::wgpu;
 
-const NUM_BUFFERS: usize = 3;
-const DST_FORMAT: wgpu::TextureFormat =
-    wgpu::TextureFormat::Rgba8UnormSrgb;
+const DEFAULT_NUM_BUFFERS: usize = 6;
+const DST_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
 enum WriterMessage {
     Frame(usize),
@@ -61,9 +60,21 @@ impl FrameRecorder {
         height: u32,
         fps: f32,
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        let ffmpeg_preset = std::env::var("XTAL_RECORDING_PRESET")
+            .unwrap_or_else(|_| "veryfast".to_string());
+        let num_buffers = std::env::var("XTAL_RECORDING_NUM_BUFFERS")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .filter(|&count| count >= 2)
+            .unwrap_or(DEFAULT_NUM_BUFFERS);
+
         let mut ffmpeg = Command::new("ffmpeg")
             .args([
                 "-y",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-nostats",
                 "-f",
                 "rawvideo",
                 "-pix_fmt",
@@ -79,58 +90,49 @@ impl FrameRecorder {
                 "-crf",
                 "16",
                 "-preset",
-                "medium",
+                ffmpeg_preset.as_str(),
                 "-pix_fmt",
                 "yuv420p",
                 output_path,
             ])
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()?;
 
-        let ffmpeg_stdin = ffmpeg
-            .stdin
-            .take()
-            .ok_or("Failed to open ffmpeg stdin")?;
+        let ffmpeg_stdin =
+            ffmpeg.stdin.take().ok_or("Failed to open ffmpeg stdin")?;
 
         // Channel for writer thread to return used buffers
         let (buffer_return_tx, buffer_return_rx) = mpsc::channel();
 
         // Bounded channel for frame messages (backpressure)
         let (writer_tx, writer_rx) =
-            mpsc::sync_channel::<WriterMessage>(NUM_BUFFERS);
+            mpsc::sync_channel::<WriterMessage>(num_buffers);
 
         // Calculate row padding
         let bytes_per_pixel = 4u32;
         let unpadded_bytes_per_row = width * bytes_per_pixel;
-        let padding =
-            wgpu::compute_row_padding(unpadded_bytes_per_row);
+        let padding = wgpu::compute_row_padding(unpadded_bytes_per_row);
         let padded_bytes_per_row = unpadded_bytes_per_row + padding;
 
         // Create readback buffers
         let device = device_queue_pair.device();
-        let buffer_size =
-            (padded_bytes_per_row as u64) * (height as u64);
-        let buffers: Vec<Arc<wgpu::Buffer>> = (0..NUM_BUFFERS)
+        let buffer_size = (padded_bytes_per_row as u64) * (height as u64);
+        let buffers: Vec<Arc<wgpu::Buffer>> = (0..num_buffers)
             .map(|i| {
-                Arc::new(device.create_buffer(
-                    &wgpu::BufferDescriptor {
-                        label: Some(&format!(
-                            "recording_readback_{}",
-                            i
-                        )),
-                        size: buffer_size,
-                        usage: wgpu::BufferUsages::COPY_DST
-                            | wgpu::BufferUsages::MAP_READ,
-                        mapped_at_creation: false,
-                    },
-                ))
+                Arc::new(device.create_buffer(&wgpu::BufferDescriptor {
+                    label: Some(&format!("recording_readback_{}", i)),
+                    size: buffer_size,
+                    usage: wgpu::BufferUsages::COPY_DST
+                        | wgpu::BufferUsages::MAP_READ,
+                    mapped_at_creation: false,
+                }))
             })
             .collect();
 
-        let mut available_buffers = VecDeque::with_capacity(NUM_BUFFERS);
-        for i in 0..NUM_BUFFERS {
+        let mut available_buffers = VecDeque::with_capacity(num_buffers);
+        for i in 0..num_buffers {
             available_buffers.push_back(i);
         }
 
@@ -182,17 +184,15 @@ impl FrameRecorder {
         frame: &Frame,
     ) {
         let [w, h] = frame.texture_size();
-        if self.reshaper.is_some() && self.width == w && self.height == h
-        {
+        if self.reshaper.is_some() && self.width == w && self.height == h {
             return;
         }
 
         // Get the resolved (non-MSAA) texture view
-        let src_view: &wgpu::TextureViewHandle =
-            match frame.resolve_target() {
-                Some(view) => view,
-                None => frame.texture_view(),
-            };
+        let src_view: &wgpu::TextureViewHandle = match frame.resolve_target() {
+            Some(view) => view,
+            None => frame.texture_view(),
+        };
 
         let src_sample_type =
             wgpu::TextureSampleType::Float { filterable: true };
@@ -235,38 +235,29 @@ impl FrameRecorder {
             self.available_buffers.push_back(idx);
         }
 
-        // Get an available buffer, blocking briefly if needed
-        let buffer_index = if let Some(idx) =
-            self.available_buffers.pop_front()
+        // Get an available buffer. Block until one is free to avoid
+        // dropping frames and preserve sync with audio.
+        let buffer_index = if let Some(idx) = self.available_buffers.pop_front()
         {
             idx
         } else {
-            // All buffers in flight — block briefly waiting for one
             let start = Instant::now();
-            let timeout = Duration::from_millis(50);
-            loop {
-                match self.buffer_return_rx.recv_timeout(
-                    Duration::from_millis(1),
-                ) {
-                    Ok(idx) => break idx,
-                    Err(mpsc::RecvTimeoutError::Timeout) => {
-                        if start.elapsed() > timeout {
-                            self.frames_dropped += 1;
-                            warn!(
-                                "Recording: dropped frame \
-                                 (all buffers busy for >50ms)"
-                            );
-                            return;
-                        }
-                    }
-                    Err(mpsc::RecvTimeoutError::Disconnected) => {
-                        error!(
-                            "Recording: writer thread disconnected"
-                        );
-                        return;
-                    }
+            let idx = match self.buffer_return_rx.recv() {
+                Ok(idx) => idx,
+                Err(_) => {
+                    error!("Recording: writer thread disconnected");
+                    return;
                 }
+            };
+            let waited = start.elapsed();
+            if waited > Duration::from_millis(16) {
+                warn!(
+                    "Recording: waited {:.1}ms for free \
+                     readback buffer",
+                    waited.as_secs_f64() * 1000.0
+                );
             }
+            idx
         };
 
         let reshaper = match &self.reshaper {
@@ -279,11 +270,10 @@ impl FrameRecorder {
         };
         let buffer = &self.buffers[buffer_index];
 
-        let mut encoder = device.create_command_encoder(
-            &wgpu::CommandEncoderDescriptor {
+        let mut encoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("recording_capture"),
-            },
-        );
+            });
 
         // Reshape: Rgba16Float intermediary -> Rgba8UnormSrgb
         let dst_view = dst_texture.view().build();
@@ -314,20 +304,12 @@ impl FrameRecorder {
 
         queue.submit(std::iter::once(encoder.finish()));
 
-        // Send to writer thread
-        if let Err(e) =
-            self.writer_tx.try_send(WriterMessage::Frame(buffer_index))
+        // Send to writer thread. Block here for backpressure instead
+        // of dropping.
+        if let Err(_) = self.writer_tx.send(WriterMessage::Frame(buffer_index))
         {
-            match e {
-                mpsc::TrySendError::Full(_) => {
-                    self.available_buffers.push_back(buffer_index);
-                    self.frames_dropped += 1;
-                    warn!("Recording: dropped frame (writer backed up)");
-                }
-                mpsc::TrySendError::Disconnected(_) => {
-                    error!("Recording: writer thread disconnected");
-                }
-            }
+            self.available_buffers.push_back(buffer_index);
+            error!("Recording: writer thread disconnected");
             return;
         }
 
@@ -350,10 +332,7 @@ impl FrameRecorder {
             match process.wait() {
                 Ok(status) => {
                     if !status.success() {
-                        error!(
-                            "ffmpeg exited with status: {}",
-                            status
-                        );
+                        error!("ffmpeg exited with status: {}", status);
                     }
                 }
                 Err(e) => {
@@ -391,6 +370,8 @@ fn writer_thread_fn(
     height: u32,
 ) {
     let device = device_queue_pair.device();
+    let mut contiguous_frame = has_padding
+        .then(|| vec![0u8; (unpadded_bytes_per_row * height) as usize]);
 
     loop {
         match frame_rx.recv() {
@@ -403,20 +384,35 @@ fn writer_thread_fn(
                     let _ = map_tx.send(result);
                 });
 
-                // Poll until mapping completes
-                device.poll(wgpu::Maintain::Wait);
+                // Poll without a long blocking wait so we reduce lock
+                // contention with the render thread.
+                let map_result = loop {
+                    match map_rx.try_recv() {
+                        Ok(result) => break Some(result),
+                        Err(mpsc::TryRecvError::Empty) => {
+                            device.poll(wgpu::Maintain::Poll);
+                            thread::sleep(Duration::from_micros(250));
+                        }
+                        Err(mpsc::TryRecvError::Disconnected) => {
+                            break None;
+                        }
+                    }
+                };
 
-                match map_rx.recv() {
-                    Ok(Ok(())) => {
+                match map_result {
+                    Some(Ok(())) => {
                         let data = slice.get_mapped_range();
-                        let write_ok = if has_padding {
-                            write_padded_rows(
-                                &mut ffmpeg_stdin,
+                        let write_ok = if let Some(frame_bytes) =
+                            contiguous_frame.as_mut()
+                        {
+                            copy_padded_rows_to_contiguous(
                                 &data,
+                                frame_bytes,
                                 height,
                                 unpadded_bytes_per_row,
                                 padded_bytes_per_row,
-                            )
+                            );
+                            ffmpeg_stdin.write_all(frame_bytes).is_ok()
                         } else {
                             ffmpeg_stdin.write_all(&data).is_ok()
                         };
@@ -424,18 +420,15 @@ fn writer_thread_fn(
                         buffer.unmap();
 
                         if !write_ok {
-                            error!(
-                                "Failed to write frame to ffmpeg"
-                            );
-                            let _ =
-                                buffer_return_tx.send(buffer_index);
+                            error!("Failed to write frame to ffmpeg");
+                            let _ = buffer_return_tx.send(buffer_index);
                             return;
                         }
                     }
-                    Ok(Err(e)) => {
+                    Some(Err(e)) => {
                         error!("Buffer mapping failed: {:?}", e);
                     }
-                    Err(_) => {
+                    None => {
                         error!("Buffer map channel disconnected");
                     }
                 }
@@ -451,19 +444,23 @@ fn writer_thread_fn(
     }
 }
 
-fn write_padded_rows(
-    writer: &mut impl Write,
+fn copy_padded_rows_to_contiguous(
     data: &[u8],
+    out: &mut [u8],
     height: u32,
     unpadded_bytes_per_row: u32,
     padded_bytes_per_row: u32,
-) -> bool {
+) {
+    let unpadded_bytes_per_row = unpadded_bytes_per_row as usize;
+    let padded_bytes_per_row = padded_bytes_per_row as usize;
+    debug_assert_eq!(out.len(), unpadded_bytes_per_row * height as usize);
+
     for row in 0..height {
-        let start = (row * padded_bytes_per_row) as usize;
-        let end = start + unpadded_bytes_per_row as usize;
-        if writer.write_all(&data[start..end]).is_err() {
-            return false;
-        }
+        let row = row as usize;
+        let src_start = row * padded_bytes_per_row;
+        let src_end = src_start + unpadded_bytes_per_row;
+        let dst_start = row * unpadded_bytes_per_row;
+        let dst_end = dst_start + unpadded_bytes_per_row;
+        out[dst_start..dst_end].copy_from_slice(&data[src_start..src_end]);
     }
-    true
 }
