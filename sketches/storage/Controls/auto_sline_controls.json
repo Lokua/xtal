@@ -1,0 +1,140 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "passes",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 173.0
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 1900.0
+    },
+    {
+      "type": "Slider",
+      "name": "point_size",
+      "value": 0.0016
+    },
+    {
+      "type": "Slider",
+      "name": "harmonic_influence",
+      "value": 1.02
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "angle_variation",
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "col_freq",
+      "value": 7.17
+    },
+    {
+      "type": "Slider",
+      "name": "row_freq",
+      "value": 3.59
+    },
+    {
+      "type": "Slider",
+      "name": "width",
+      "value": 1.09
+    },
+    {
+      "type": "Slider",
+      "name": "distortion",
+      "value": 0.7
+    },
+    {
+      "type": "Slider",
+      "name": "wave_amp",
+      "value": 0.2256
+    },
+    {
+      "type": "Slider",
+      "name": "center_count",
+      "value": 9.0
+    },
+    {
+      "type": "Slider",
+      "name": "center_falloff",
+      "value": 1.3
+    },
+    {
+      "type": "Slider",
+      "name": "circle_radius",
+      "value": 0.218
+    },
+    {
+      "type": "Slider",
+      "name": "circle_force",
+      "value": 0.071
+    },
+    {
+      "type": "Slider",
+      "name": "circle_phase",
+      "value": 0.3
+    },
+    {
+      "type": "Slider",
+      "name": "clip_start",
+      "value": 0.64
+    },
+    {
+      "type": "Slider",
+      "name": "clip_grade",
+      "value": 0.3
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_amp",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_freq",
+      "value": 10.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_mix",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_step",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_min",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_max",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_phase",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}
