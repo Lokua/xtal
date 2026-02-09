@@ -52,7 +52,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let r_amp = params.c.w;
     let g_amp = params.d.x;
     let b_amp = params.d.y;
-    let color_shift = params.d.z;
     let color_invert = params.d.w;
     let wave_phase_animation = params.e.x;
     let link_axes = params.e.y;
@@ -115,37 +114,49 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         phase = 0.0;
     }
 
-    let wave1 = 
-        cos(d * wave_dist - phase) + 0.5 * 
-        cos((d * wave_dist - phase) * 3.0);
+    let wave1_phase = d * wave_dist - phase;
+    let wave1 =
+        cos(wave1_phase) + 0.5 *
+        cos(wave1_phase * 3.0);
 
-    let wave2 = 
-        cos(p.x * wave_x_freq) + 0.5 * 
-        cos((p.x * wave_x_freq) * 2.0);
+    let wave2_phase = p.x * wave_x_freq;
+    let wave2 =
+        cos(wave2_phase) + 0.5 *
+        cos(wave2_phase * 2.0);
 
     let wave3 = sin(p.y * wave_y_freq);
     
     let waves = (wave1 + wave2 + wave3);
 
     var c_val = ease(0.5 + (cos(waves) * 0.5));
+    // Single-phase color model:
+    // - color_phase controls the full hue rotation
+    // - RGB channel separation is fixed at 120 degree offsets
     let color_wave = waves * color_freq + color_phase;
-    
-    let r = c_val + r_amp * sin(color_wave) * color_amt;
-    let g = c_val + g_amp * sin(color_wave + color_shift) * color_amt;
-    let b = c_val + b_amp * sin(color_wave + color_shift * 2.0) * color_amt;
+    let wave_sin = sin(color_wave);
+    let wave_cos = cos(color_wave);
+    let triad = 0.8660254; // sqrt(3) / 2
+
+    let r_wave = wave_sin;
+    let g_wave = -0.5 * wave_sin + triad * wave_cos;
+    let b_wave = -0.5 * wave_sin - triad * wave_cos;
+
+    let r = c_val + r_amp * r_wave * color_amt;
+    let g = c_val + g_amp * g_wave * color_amt;
+    let b = c_val + b_amp * b_wave * color_amt;
 
     var color = vec3f(r, g, b);
     if color_invert == 1.0 {
         color = 1.0 - color;
     }
 
-    color = vec3f(
-        floor(color.r * color_steps) / color_steps, 
-        floor(color.g * color_steps) / color_steps, 
-        floor(color.b * color_steps) / color_steps
-    );
+    let safe_steps = max(color_steps, 1.0);
+    let inv_steps = 1.0 / safe_steps;
+    color = floor(color * safe_steps) * inv_steps;
 
-    color = film_grain(color, p, film_grain_amt);
+    if film_grain_amt > 0.0001 {
+        color = film_grain(color, p, film_grain_amt);
+    }
 
     return vec4f(color, bg_alpha);
 }
@@ -185,7 +196,8 @@ fn concentric_waves(
     frequency: f32,
     decay: f32,
 ) -> f32 {
-    let distance = sqrt(pow(x2 - x1, 2.0) + pow(y2 - y1, 2.0));
+    let delta = vec2f(x2 - x1, y2 - y1);
+    let distance = length(delta);
     return abs(sin(distance * frequency)) * exp(-distance * decay);
 }
 
@@ -224,4 +236,3 @@ fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {
     let random = random_v2(p);
     return clamp(color + (random - 0.5) * intensity, vec3f(0.0), vec3f(1.0));
 }
-

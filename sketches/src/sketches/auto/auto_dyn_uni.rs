@@ -1,5 +1,3 @@
-//! This sketch is used to test an experimental [`uniforms`] proc macro
-
 use nannou::prelude::*;
 
 use xtal::prelude::*;
