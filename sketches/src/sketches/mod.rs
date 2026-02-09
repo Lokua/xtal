@@ -29,6 +29,7 @@ pub use self::auto::auto_cloud;
 pub use self::auto::auto_dreams;
 pub use self::auto::auto_dyn_uni;
 pub use self::auto::auto_grid_splash;
+pub use self::auto::auto_rm;
 
 pub mod dev;
 pub use self::dev::animation_dev;
