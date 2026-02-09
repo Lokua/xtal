@@ -48,6 +48,10 @@ use nannou::wgpu;
 const DEFAULT_NUM_BUFFERS: usize = 6;
 const DST_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
+// Blocking Map Wait vs Sleep + Poll is essentially a tie, but Blocking Map Wait
+// is simpler to reason about.
+const USE_BLOCKING_MAP_WAIT: bool = true;
+
 enum WriterMessage {
     Frame(usize),
     Stop,
@@ -205,6 +209,7 @@ pub struct FrameRecorder {
     // GPU resources (created lazily)
     reshaper: Option<wgpu::TextureReshaper>,
     dst_texture: Option<wgpu::Texture>,
+    dst_texture_view: Option<wgpu::TextureView>,
     buffers: Vec<Arc<wgpu::Buffer>>,
 
     // Dimensions
@@ -343,6 +348,7 @@ impl FrameRecorder {
         Ok(Self {
             reshaper: None,
             dst_texture: None,
+            dst_texture_view: None,
             buffers,
             width,
             height,
@@ -402,6 +408,10 @@ impl FrameRecorder {
 
         self.reshaper = Some(reshaper);
         self.dst_texture = Some(dst_texture);
+        self.dst_texture_view = self
+            .dst_texture
+            .as_ref()
+            .map(|texture| texture.view().build());
         self.width = w;
         self.height = h;
     }
@@ -460,6 +470,10 @@ impl FrameRecorder {
             Some(t) => t,
             None => return,
         };
+        let dst_view = match &self.dst_texture_view {
+            Some(v) => v,
+            None => return,
+        };
         let buffer = &self.buffers[buffer_index];
 
         let mut encoder =
@@ -468,8 +482,7 @@ impl FrameRecorder {
             });
 
         // Reshape: Rgba16Float intermediary -> Rgba8UnormSrgb
-        let dst_view = dst_texture.view().build();
-        reshaper.encode_render_pass(&dst_view, &mut encoder);
+        reshaper.encode_render_pass(dst_view, &mut encoder);
 
         // Copy texture to readback buffer
         encoder.copy_texture_to_buffer(
@@ -539,6 +552,7 @@ impl FrameRecorder {
         // Clean up GPU resources
         self.reshaper = None;
         self.dst_texture = None;
+        self.dst_texture_view = None;
 
         #[cfg(feature = "recording-report")]
         if let Some(report) = self.report.take() {
@@ -570,22 +584,27 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                 let buffer = &args.buffers[buffer_index];
                 let slice = buffer.slice(..);
 
-                let (map_tx, map_rx) = mpsc::channel();
+                let (map_tx, map_rx) = mpsc::sync_channel(1);
                 slice.map_async(wgpu::MapMode::Read, move |result| {
                     let _ = map_tx.send(result);
                 });
 
-                // Poll without a long blocking wait so we reduce lock
-                // contention with the render thread.
-                let map_result = loop {
-                    match map_rx.try_recv() {
-                        Ok(result) => break Some(result),
-                        Err(mpsc::TryRecvError::Empty) => {
-                            device.poll(wgpu::Maintain::Poll);
-                            thread::sleep(Duration::from_micros(250));
-                        }
-                        Err(mpsc::TryRecvError::Disconnected) => {
-                            break None;
+                let map_result = if USE_BLOCKING_MAP_WAIT {
+                    // A/B option B: block until mapped callbacks are serviced.
+                    device.poll(wgpu::Maintain::Wait);
+                    map_rx.recv().ok()
+                } else {
+                    // A/B option A: poll + short sleep to avoid long blocking.
+                    loop {
+                        match map_rx.try_recv() {
+                            Ok(result) => break Some(result),
+                            Err(mpsc::TryRecvError::Empty) => {
+                                device.poll(wgpu::Maintain::Poll);
+                                thread::sleep(Duration::from_micros(250));
+                            }
+                            Err(mpsc::TryRecvError::Disconnected) => {
+                                break None;
+                            }
                         }
                     }
                 };

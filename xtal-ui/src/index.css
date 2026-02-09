@@ -565,6 +565,13 @@ input[type='range']::-webkit-slider-thumb {
       }
     }
   }
+
+  .console-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    line-height: 1.2;
+  }
 }
 
 #settings {

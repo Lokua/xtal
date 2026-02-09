@@ -792,6 +792,8 @@ export default function App() {
       <footer>
         <Console
           alertText={alertText}
+          bpm={bpm}
+          isRecordingOrEncoding={isRecording || isEncoding}
           showHelp={showHelp}
           onToggleShowHelp={setShowHelp}
         />
