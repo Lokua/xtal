@@ -363,6 +363,43 @@ you can just do steps 2 and 4):
 4. Now, pressing play in Ableton will also initiate recording in Xtal, likewise
    pressing Stop in Ableton will stop recording in Xtal.
 
+### Recording Performance Flags
+
+Xtal's ffmpeg recorder reads these environment variables at startup:
+
+- `XTAL_RECORDING_PRESET`: Sets the `libx264` preset. Default: `veryfast`.
+  Available presets (fastest to slowest): `ultrafast`, `superfast`, `veryfast`,
+  `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`, `placebo`.
+  Important: moving right in this list (toward `slow`) uses more CPU but usually
+  gives better compression efficiency (often smaller files at similar visual
+  quality for the same CRF). Typical use: `ultrafast`/`superfast` for maximum
+  realtime performance while testing; `veryfast` as the best default for 1080p60
+  realtime capture on laptops; `faster`/`fast` when your sketch has headroom and
+  you want smaller files; `medium` and slower for offline/final encodes where
+  realtime FPS does not matter. **Practical rule: use the slowest preset that
+  still records in realtime without sustained "waited ...ms for free readback
+  buffer" warnings.**
+- `XTAL_RECORDING_NUM_BUFFERS`: Number of GPU readback buffers in the capture
+  ring. Default: `6`, minimum: `2`. What this does: each buffer is one in-flight
+  captured frame. More buffers absorb short stalls from GPU mapping or ffmpeg
+  writes before the render thread must wait. Why not always max it: more buffers
+  increase memory use and only delay backpressure if encode throughput is
+  consistently below realtime. 1080p memory estimate per buffer:
+  `1920 * 1080 * 4 = 8,294,400` bytes (~7.9 MiB), so `6` buffers ~= 47 MiB, `8`
+  buffers ~= 63 MiB, `12` buffers ~= 95 MiB. Apple Silicon recommendation: start
+  with `6`, try `8` if you see occasional "waited ...ms" warnings, and only go
+  higher if waits are bursty rather than constant.
+
+Examples:
+
+```bash
+# Use slightly higher quality compression at runtime cost.
+XTAL_RECORDING_PRESET=fast cargo run -p xtal
+
+# Prioritize capture throughput and add more readback buffering.
+XTAL_RECORDING_PRESET=ultrafast XTAL_RECORDING_NUM_BUFFERS=8 cargo run -p xtal
+```
+
 # Open Sound Control (OSC)
 
 While MIDI is great for controlling parameters in the case that a MIDI
