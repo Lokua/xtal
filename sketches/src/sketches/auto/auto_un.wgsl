@@ -14,9 +14,9 @@ struct Params {
     b: vec4f,
     // c: cam_distance, cam_y_rotation, focal_len, fog_density
     c: vec4f,
-    // d: sphere_offset, sphere_radius, blend_k, reserved
+    // d: reserved, sphere_radius, blend_k, reserved
     d: vec4f,
-    // e: hue_shift, saturation, contrast, reserved
+    // e: hue_shift, saturation, contrast, debug_view
     e: vec4f,
     // f: harmonic_amp_1, harmonic_freq_1, harmonic_amp_2, harmonic_freq_2
     f: vec4f,
@@ -24,7 +24,7 @@ struct Params {
     g: vec4f,
     // h: light_x, light_y, light_z, light_intensity
     h: vec4f,
-    // i: shadow_strength, shadow_softness, reserved, reserved
+    // i: shadow_strength, shadow_softness, shadow_legacy_mode, reserved
     i: vec4f,
     // j: rim_strength, rim_power, emissive_strength, spec_power
     j: vec4f,
@@ -36,9 +36,9 @@ struct Params {
     m: vec4f,
     // n: reserved, reserved, reserved, reserved
     n: vec4f,
-    // o: bump_amp, bump_freq, bump_sharpness, twist_amount
+    // o: reserved, reserved, reserved, reserved
     o: vec4f,
-    // p: stretch_amount, reserved, reserved, reserved
+    // p: reserved, reserved, reserved, reserved
     p: vec4f,
     q: vec4f,
     r: vec4f,
@@ -81,10 +81,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let hue_shift = params.e.x;
     let saturation = max(params.e.y, 0.0);
     let contrast = max(params.e.z, 0.0);
+    let debug_view = i32(params.e.w);
     let light_pos = vec3f(params.h.x, params.h.y, params.h.z);
     let light_intensity = max(params.h.w, 0.0);
     let shadow_strength = clamp(params.i.x, 0.0, 1.0);
     let shadow_softness = max(params.i.y, 0.0001);
+    let shadow_legacy_mode = params.i.z > 0.5;
     let rim_strength = max(params.j.x, 0.0);
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
@@ -150,6 +152,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         light_dist,
         shadow_softness,
         surf_eps,
+        shadow_legacy_mode,
         beats,
     );
     let shadow_mix = mix(1.0, shadow, shadow_strength);
@@ -159,6 +162,27 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
     let fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
     let rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
+    if (debug_view == 1) {
+        return vec4f(n * 0.5 + vec3f(0.5), 1.0);
+    }
+    if (debug_view == 2) {
+        return vec4f(vec3f(shadow_mix), 1.0);
+    }
+    if (debug_view == 3) {
+        return vec4f(vec3f(ao), 1.0);
+    }
+    if (debug_view == 4) {
+        return vec4f(vec3f(diff), 1.0);
+    }
+    if (debug_view == 5) {
+        return vec4f(vec3f(spec), 1.0);
+    }
+    if (debug_view == 6) {
+        return vec4f(vec3f(rim), 1.0);
+    }
+    if (debug_view == 7) {
+        return vec4f(vec3f(fresnel), 1.0);
+    }
 
     let base = mix(vec3f(0.18, 0.72, 0.98), vec3f(0.98, 0.46, 0.22), color_mix);
     var color = base * (0.12 + 0.88 * diff);
@@ -305,10 +329,10 @@ fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
     let rel = p - center;
     let dir = safe_normalize(rel);
 
-    let stretch_amount = params.g.w + params.p.x;
+    let stretch_amount = params.g.w;
     let stretch_term = 0.45 * stretch_amount
         * (dir.y * dir.y - 0.5 * (dir.x * dir.x + dir.z * dir.z));
-    let bump = bump_field(dir, phase);
+    let bump = harmonic_field(dir, phase);
     let r_mod = sphere_radius * (
         1.0
             + stretch_term
@@ -343,7 +367,7 @@ fn safe_normalize(v: vec3f) -> vec3f {
     return v / len;
 }
 
-fn bump_field(dir: vec3f, phase: f32) -> f32 {
+fn harmonic_field(dir: vec3f, phase: f32) -> f32 {
     let amp1 = params.f.x;
     let freq1 = max(params.f.y, 0.0);
     let amp2 = params.f.z;
@@ -364,30 +388,12 @@ fn bump_field(dir: vec3f, phase: f32) -> f32 {
 
     var field = amp1 * h1 + amp2 * h2;
     field = ridge_shape(field, ridge);
-
-    let bump_amp = params.o.x;
-    let bump_freq = max(params.o.y, 0.0);
-    let bump_sharp = clamp(params.o.z, 0.0, 1.0);
-    let twist = params.o.w;
-    var bump = sin((dir.x + twist * dir.y) * bump_freq + phase)
-        * sin(
-            (dir.z - twist * dir.x) * (bump_freq * 1.37 + 1.0)
-                - phase * 0.6,
-        );
-    bump = ridge_shape(bump, bump_sharp);
-    field += bump_amp * bump;
     return field;
 }
 
 fn ridge_shape(x: f32, ridge: f32) -> f32 {
     let power = mix(1.0, 0.35, ridge);
     return sign(x) * pow(max(abs(x), 0.00001), power);
-}
-
-fn rotate2d(v: vec2f, angle: f32) -> vec2f {
-    let c = cos(angle);
-    let s = sin(angle);
-    return vec2f(c * v.x - s * v.y, s * v.x + c * v.y);
 }
 
 fn rotate_xz(v: vec3f, angle: f32) -> vec3f {
@@ -403,17 +409,34 @@ fn soft_shadow(
     max_t: f32,
     softness: f32,
     surf_eps: f32,
+    legacy_mode: bool,
     beats: f32,
 ) -> f32 {
     var result = 1.0;
     var t = min_t;
+    var prev_h = 1.0;
     for (var i = 0; i < MAX_SHADOW_STEPS; i = i + 1) {
-        let h = scene_sdf(ro + rd * t, beats);
-        if (h < surf_eps * 0.6) {
-            break;
+        if (legacy_mode) {
+            let h_raw = scene_sdf(ro + rd * t, beats);
+            if (h_raw < surf_eps * 0.4) {
+                return 0.0;
+            }
+            let h = mix(h_raw, prev_h, 0.22);
+            if (h < surf_eps * 0.6) {
+                break;
+            }
+            result = min(result, softness * h / max(t, 0.02));
+            prev_h = h;
+            t += clamp(h * 0.75, surf_eps * 0.3, 0.18);
+        } else {
+            let h = scene_sdf(ro + rd * t, beats);
+            if (h < surf_eps * 0.8) {
+                break;
+            }
+            result = min(result, softness * h / max(t, 0.02));
+            // Slightly denser stepping reduces contour-like bands on rippled SDFs.
+            t += clamp(h * 0.6, surf_eps * 0.4, 0.12);
         }
-        result = min(result, softness * h / max(t, 0.01));
-        t += clamp(h, surf_eps * 0.35, 0.22);
         if (t > max_t) {
             break;
         }
@@ -444,10 +467,8 @@ fn shape_complexity() -> f32 {
     let h2 = abs(params.f.z) * (0.15 + 0.05 * params.f.w);
     let ridge = params.g.y * 0.25;
     let warp = abs(params.g.x) * 0.08;
-    let stretch = abs(params.g.w + params.p.x) * 0.35;
-    let bump = abs(params.o.x) * (0.2 + 0.05 * params.o.y);
-    let twist = abs(params.o.w) * 0.12;
-    return clamp(h1 + h2 + ridge + warp + stretch + bump + twist, 0.0, 1.0);
+    let stretch = abs(params.g.w) * 0.35;
+    return clamp(h1 + h2 + ridge + warp + stretch, 0.0, 1.0);
 }
 
 fn tone_map_filmic(color: vec3f) -> vec3f {
