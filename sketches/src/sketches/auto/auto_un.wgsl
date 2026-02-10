@@ -12,7 +12,7 @@ struct Params {
     a: vec4f,
     // b: reserved, reserved, reserved, reserved
     b: vec4f,
-    // c: cam_distance, cam_y_rotation, focal_len, fog_density
+    // c: cam_distance, cam_y_angle, focal_len, fog_density
     c: vec4f,
     // d: reserved, sphere_radius, blend_k, reserved
     d: vec4f,
@@ -40,10 +40,11 @@ struct Params {
     o: vec4f,
     // p: flow_amount, flow_scale, reserved, reserved
     p: vec4f,
-    // q: topology_amount, topology_rate, topology_duration, topology_split
+    // q: topology_amount, reserved, reserved, topology_split
     q: vec4f,
     // r: reserved, topology_drive, reserved, reserved
     r: vec4f,
+    // s: reserved, reserved, reserved, reserved
     s: vec4f,
     t: vec4f,
     u: vec4f,
@@ -74,8 +75,8 @@ const SHADOW_SOFTNESS_FIXED: f32 = 64.0;
 const SHADOW_LEGACY_MODE_FIXED: bool = false;
 const SATELLITE_ACTIVITY_FIXED: f32 = 0.5;
 const SATELLITE_MERGE_FIXED: f32 = 1.0;
-const STRAND_STRENGTH_FIXED: f32 = 0.4;
-const STRAND_THINNESS_FIXED: f32 = 0.7;
+const STRAND_STRENGTH_FIXED: f32 = 0.7;
+const STRAND_THINNESS_FIXED: f32 = 0.4;
 
 var<private> g_beats: f32;
 var<private> g_phase: f32;
@@ -141,11 +142,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let max_steps = MARCH_STEPS_FIXED;
 
     let cam_dist = max(params.c.x, 0.1);
-    let cam_y_rotation = params.c.y;
+    let cam_y_angle = params.c.y;
     let focal_len = max(params.c.z, 0.01);
     let fog_density = max(params.c.w, 0.000001);
 
-    let cam_orbit_angle = beats * cam_y_rotation;
+    let cam_orbit_angle = cam_y_angle;
     let ro = rotate_xz(vec3f(0.0, 0.0, -cam_dist), cam_orbit_angle);
     let ta = vec3f(0.0, 0.0, 0.0);
 
@@ -300,8 +301,6 @@ fn prepare_scene_state(beats: f32) {
     g_strand_strength = STRAND_STRENGTH_FIXED;
     g_strand_thinness = STRAND_THINNESS_FIXED;
     let topology_amount = params.q.x;
-    let topology_rate = params.q.y;
-    let topology_duration = params.q.z;
     let topology_split = params.q.w;
     let topology_drive = params.r.y;
     g_topology_amount = topology_amount * topology_drive;
@@ -408,49 +407,26 @@ fn prepare_scene_state(beats: f32) {
     );
 
     if (g_topology_amount > 0.0001) {
-        // Smooth, coordinated split pulses (no random cycle jumps).
-        let topo_speed = mix(0.05, 0.42, topology_rate);
-        let topo_phase = beats * topo_speed;
-        let pulse_width = mix(0.07, 0.44, topology_duration);
-        let axis_spin = 6.283185307179586 * topo_phase;
-        let tilt = 0.18 * sin(beats * (0.37 + 0.53 * topology_rate));
-
-        let pulse1 = topology_pulse(topo_phase + 0.0, pulse_width);
-        let pulse2 = topology_pulse(topo_phase + 0.33333334, pulse_width);
-        let pulse3 = topology_pulse(topo_phase + 0.6666667, pulse_width);
-
-        g_topology_strength1 = g_topology_amount * pulse1;
-        g_topology_strength2 = g_topology_amount * pulse2;
-        g_topology_strength3 = g_topology_amount * pulse3;
+        g_topology_strength1 = g_topology_amount;
+        g_topology_strength2 = g_topology_amount;
+        g_topology_strength3 = g_topology_amount;
 
         let split_base = max(params.d.y, 0.02)
-            * mix(0.14, 1.05, topology_split);
-        let split1 = split_base * mix(0.2, 1.0, g_topology_strength1);
-        let split2 = split_base * mix(0.2, 1.0, g_topology_strength2);
-        let split3 = split_base * mix(0.2, 1.0, g_topology_strength3);
+            * mix(0.14, 3.0, topology_split);
+        let split1 = split_base * g_topology_strength1;
+        let split2 = split_base * g_topology_strength2;
+        let split3 = split_base * g_topology_strength3;
 
-        let dir1 = safe_normalize(vec3f(
-            cos(axis_spin + 0.0),
-            tilt,
-            sin(axis_spin + 0.0),
-        ));
-        let dir2 = safe_normalize(vec3f(
-            cos(axis_spin + 2.0943951),
-            tilt,
-            sin(axis_spin + 2.0943951),
-        ));
-        let dir3 = safe_normalize(vec3f(
-            cos(axis_spin + 4.1887902),
-            tilt,
-            sin(axis_spin + 4.1887902),
-        ));
+        let dir1 = safe_normalize(g_c1 + vec3f(0.0, 0.0, 0.001));
+        let dir2 = safe_normalize(g_c2 + vec3f(0.0, 0.0, 0.001));
+        let dir3 = safe_normalize(g_c3 + vec3f(0.0, 0.0, 0.001));
 
         g_topology_split1 = dir1 * split1;
         g_topology_split2 = dir2 * split2;
         g_topology_split3 = dir3 * split3;
         g_topology_blend = max(
             0.0001,
-            g_blend * mix(0.14, 0.6, topology_split),
+            g_blend * mix(0.35, 0.72, topology_split),
         );
 
         let max_strength = max(
@@ -603,12 +579,6 @@ fn scene_sdf(p: vec3f) -> f32 {
     return scene;
 }
 
-fn topology_pulse(phase: f32, width: f32) -> f32 {
-    let wave = 0.5 + 0.5 * sin(6.283185307179586 * phase);
-    let edge = width;
-    return smoothstep(1.0 - edge, 1.0, wave);
-}
-
 fn split_blob_sdf(
     p: vec3f,
     center: vec3f,
@@ -617,7 +587,7 @@ fn split_blob_sdf(
     strength: f32,
 ) -> f32 {
     let s = strength;
-    let radius_scale = mix(1.0, 0.74, s);
+    let radius_scale = mix(1.0, 0.78, s);
     let split_a = blob_sdf_scaled(
         p,
         center + split,
@@ -630,10 +600,7 @@ fn split_blob_sdf(
         phase - 0.17,
         radius_scale,
     );
-    let neck_blend = max(
-        0.0001,
-        g_topology_blend * mix(1.0, 0.34, s),
-    );
+    let neck_blend = max(0.0001, g_topology_blend * mix(1.0, 0.45, s));
     return smin(split_a, split_b, neck_blend);
 }
 

@@ -30,12 +30,12 @@ cam_distance:
   default: 3.0
   step: 0.01
 
-cam_height:
+cam_y_angle:
   var: c2
-  type: slider
-  range: [0.125, 1.0]
-  default: 0.125
-  step: 0.125
+  type: ramp
+  beats: 12
+  range: [0.0, 6.283185307179586]
+  phase: 0.0
 
 focal_len:
   var: c3
@@ -166,7 +166,7 @@ topology_events:
 topology_drive:
   var: r2
   type: random_slewed
-  beats: 4.0
+  beats: 1.0
   range: [0.0, 1.0]
   slew: 0.7
   delay: 0.0
@@ -177,20 +177,6 @@ topology_amount:
   type: slider
   range: [0.0, 1.0]
   default: 0.0
-  step: 0.001
-
-topology_rate:
-  var: q2
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.35
-  step: 0.001
-
-topology_duration:
-  var: q3
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.45
   step: 0.001
 
 topology_split:
