@@ -26,14 +26,13 @@ struct Params {
     f: vec4f,
     // g1 rate_gradient, g2 rate_spread, g3 focus_color_impact, g4 harmonic_amp
     g: vec4f,
-    // h1 sphere_projection_enabled, h2 sphere_projection_amount,
-    // h3 normal_lighting_enabled, h4 normal_lighting_strength
+    // h1 latlong_warp_enabled, h2 latlong_warp_amount,
+    // h3 latlong_warp_freq, h4 latlong_symmetry
     h: vec4f,
-    // i1 contour_isolines_enabled, i2 contour_isolines_strength,
-    // i3 contour_isolines_density, i4 latlong_warp_enabled
+    // i1 flow_field_enabled, i2 flow_field_amount, i3 flow_field_scale,
+    // i4 flow_field_rate
     i: vec4f,
-    // j1 latlong_warp_amount, j2 latlong_warp_freq, j3 flow_field_enabled,
-    // j4 flow_field_amount
+    // placeholders
     j: vec4f,
     // k1 line_hue_span, k2 flow_field_scale, k3 flow_field_rate
     k: vec4f,
@@ -82,24 +81,17 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
     let rate_spread = params.g.y;
     let focus_color_impact = params.g.z;
     let harmonic_amp = params.g.w;
-    let sphere_projection_enabled = params.h.x;
-    let sphere_projection_amount = params.h.y;
-    let normal_lighting_enabled = params.h.z;
-    let normal_lighting_strength = params.h.w;
+    let latlong_warp_enabled = params.h.x;
+    let latlong_warp_amount = params.h.y;
+    let latlong_warp_freq = params.h.z;
+    let latlong_symmetry = params.h.w;
 
-    let contour_isolines_enabled = params.i.x;
-    let contour_isolines_strength = params.i.y;
-    let contour_isolines_density = params.i.z;
-    let latlong_warp_enabled = params.i.w;
-
-    let latlong_warp_amount = params.j.x;
-    let latlong_warp_freq = params.j.y;
-    let flow_field_enabled = params.j.z;
-    let flow_field_amount = params.j.w;
+    let flow_field_enabled = params.i.x;
+    let flow_field_amount = params.i.y;
+    let flow_field_scale = params.i.z;
+    let flow_field_rate = params.i.w;
 
     let line_hue_span = params.k.x;
-    let flow_field_scale = params.k.y;
-    let flow_field_rate = params.k.z;
 
     let total_points = u32(line_count * samples_per_line);
     let point_index = (vert_index / 6u) % total_points;
@@ -117,26 +109,19 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
         line_norm * 2.0 - 1.0
     ) * domain_scale;
 
-    // Optional globe-like projection by compressing near edges.
-    let sphere_p = vec2f(pos.x / max(0.0001, aspect), pos.y);
-    let sphere_r2 = dot(sphere_p, sphere_p);
-    let sphere_z = sqrt(max(0.0, 1.0 - sphere_r2));
-    let sphere_scale = 0.55 + 0.45 * sphere_z;
-    let projected_pos = vec2f(pos.x * sphere_scale, pos.y * sphere_scale);
-    let sphere_mix = sphere_projection_enabled * sphere_projection_amount;
-    pos = mix(pos, projected_pos, sphere_mix);
-
-    // Optional map-like latitude/longitude warp.
+    // Symmetric map-like latitude/longitude warp.
     let ll_base = vec2f(pos.x / max(0.0001, aspect), pos.y);
-    let ll_lat = ll_base.y * TAU * 0.5;
-    let ll_lon = ll_base.x * TAU * 0.5;
-    let ll_phase = beats * 0.25;
-    let ll_warp = vec2f(
-        sin(ll_lon * latlong_warp_freq + ll_phase) * cos(ll_lat * (0.5 * latlong_warp_freq)),
-        sin(ll_lat * latlong_warp_freq - ll_phase) * cos(ll_lon * (0.5 * latlong_warp_freq))
-    );
+    let ll_r = max(length(ll_base), 0.0001);
+    let ll_ang = atan2(ll_base.y, ll_base.x);
+    let ll_phase = beats * 0.22;
+    let ll_sym = max(1.0, latlong_symmetry);
+    let ll_radial_wave = sin(ll_r * latlong_warp_freq * TAU - ll_phase) * cos(ll_ang * ll_sym);
+    let ll_tangent_wave = cos(ll_r * (latlong_warp_freq * 0.7) * TAU + ll_phase * 0.6) * sin(ll_ang * ll_sym);
+    let ll_radial_dir = ll_base / ll_r;
+    let ll_tangent_dir = vec2f(-ll_radial_dir.y, ll_radial_dir.x);
+    let ll_warp = ll_radial_dir * ll_radial_wave * 0.14 + ll_tangent_dir * ll_tangent_wave * 0.08;
     let ll_mix = latlong_warp_enabled * latlong_warp_amount;
-    let ll_pos = vec2f((ll_base.x + ll_warp.x * 0.18 * ll_mix) * aspect, ll_base.y + ll_warp.y * 0.18 * ll_mix);
+    let ll_pos = vec2f((ll_base.x + ll_warp.x * ll_mix) * aspect, ll_base.y + ll_warp.y * ll_mix);
     pos = mix(pos, ll_pos, latlong_warp_enabled);
 
     let line_bias = line_norm * 2.0 - 1.0;
@@ -198,37 +183,13 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
     let final_sat = 0.82 + 0.12 * blast_mask * focus_strength;
     let neon = hsv2rgb(vec3f(final_hue, final_sat, 1.0));
 
-    // Optional pseudo-normal lighting from local wave slope.
-    let eps = 0.002;
-    let left_t = t - eps;
-    let right_t = t + eps;
-    let left_base_phase = (left_t * TAU * wave_freq) + line_phase;
-    let right_base_phase = (right_t * TAU * wave_freq) + line_phase;
-    let left_harmonic_phase = left_base_phase * 1.61803398875 + line_phase * 0.17;
-    let right_harmonic_phase = right_base_phase * 1.61803398875 + line_phase * 0.17;
-    let wave_left = sin(left_base_phase) + sin(left_harmonic_phase) * harmonic_amp;
-    let wave_right = sin(right_base_phase) + sin(right_harmonic_phase) * harmonic_amp;
-    let slope = (wave_right - wave_left) / (2.0 * eps);
-    let normal = normalize(vec3f(-slope * 0.28, 0.0, 1.0));
-    let light_dir = normalize(vec3f(-0.35, 0.42, 0.84));
-    let lambert = max(0.0, dot(normal, light_dir));
-    let lit_response = 1.0 + (lambert - 0.45) * normal_lighting_strength * 0.9;
-    let lit_gain = mix(1.0, max(0.2, lit_response), normal_lighting_enabled);
-
-    // Optional contour isoline emphasis without empty dark bands.
-    let contour_field = focus_dist * contour_isolines_density + line_norm * 3.0 + wave * 1.5;
-    let contour_wave = 0.5 + 0.5 * cos(contour_field * TAU);
-    let contour_lines = smoothstep(0.82, 0.98, contour_wave);
-    let contour_gain = mix(1.0, 1.0 + contour_lines * 0.22 * contour_isolines_strength, contour_isolines_enabled);
-
-    let color = neon * shade * glow_gain * depth_gain * lit_gain * contour_gain;
+    let color = neon * shade * glow_gain * depth_gain;
 
     let quad_offset = quad_corner(corner_index, point_size);
 
     var out: VertexOutput;
     out.pos = vec4f(pos + quad_offset, 0.0, 1.0);
-    let contour_alpha = contour_lines * 0.03 * contour_isolines_enabled * contour_isolines_strength;
-    out.point_color = vec4f(color, 0.08 + glow * 0.08 + contour_alpha);
+    out.point_color = vec4f(color, 0.08 + glow * 0.08);
     out.uv = (out.pos.xy + 1.0) * 0.5;
     return out;
 }
