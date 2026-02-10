@@ -1,0 +1,265 @@
+# ------------------------------------------------------------------------------
+#  Camera
+# ------------------------------------------------------------------------------
+
+camera:
+  type: separator
+
+cam_distance:
+  var: c1
+  type: slider
+  range: [1.0, 8.0]
+  default: 3.0
+  step: 0.01
+
+cam_height:
+  var: c2
+  type: slider
+  range: [-2.0, 2.0]
+  default: 0.0
+  step: 0.01
+
+focal_len:
+  var: c3
+  type: slider
+  range: [0.4, 3.0]
+  default: 1.6
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  March
+# ------------------------------------------------------------------------------
+
+march:
+  type: separator
+
+march_steps:
+  var: b1
+  type: slider
+  range: [8, 256]
+  default: 64
+  step: 1
+
+# ------------------------------------------------------------------------------
+#  Geometry
+# ------------------------------------------------------------------------------
+
+geometry:
+  type: separator
+
+sphere_offset:
+  var: d1
+  type: slider
+  range: [0.0, 1.6]
+  default: 0.55
+  step: 0.01
+
+sphere_radius:
+  var: d2
+  type: slider
+  range: [0.2, 1.4]
+  default: 0.72
+  step: 0.01
+
+blend_k:
+  var: d3
+  type: slider
+  range: [0.01, 1.0]
+  default: 0.42
+  step: 0.01
+
+wobble_amount:
+  var: d4
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.2
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Harmonic Distortion
+# ------------------------------------------------------------------------------
+
+harmonic_distortion:
+  type: separator
+
+harmonic_amp_1:
+  var: f1
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.18
+  step: 0.001
+
+harmonic_freq_1:
+  var: f2
+  type: slider
+  range: [0.0, 24.0]
+  default: 6.0
+  step: 0.1
+
+harmonic_amp_2:
+  var: f3
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.08
+  step: 0.001
+
+harmonic_freq_2:
+  var: f4
+  type: slider
+  range: [0.0, 32.0]
+  default: 11.0
+  step: 0.1
+
+harmonic_warp:
+  var: g1
+  type: slider
+  range: [-8.0, 8.0]
+  default: 0.0
+  step: 0.01
+
+harmonic_ridge:
+  var: g2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.25
+  step: 0.01
+
+harmonic_phase:
+  var: g3
+  type: slider
+  range: [0.0, 6.283185307179586]
+  default: 0.0
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Lighting
+# ------------------------------------------------------------------------------
+
+lighting:
+  type: separator
+
+light_x:
+  var: h1
+  type: slider
+  range: [-8.0, 8.0]
+  default: 2.8
+  step: 0.01
+
+light_y:
+  var: h2
+  type: slider
+  range: [-8.0, 8.0]
+  default: 2.4
+  step: 0.01
+
+light_z:
+  var: h3
+  type: slider
+  range: [-8.0, 8.0]
+  default: -1.2
+  step: 0.01
+
+light_intensity:
+  var: h4
+  type: slider
+  range: [0.0, 3.0]
+  default: 1.0
+  step: 0.01
+
+shadow_strength:
+  var: i1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.7
+  step: 0.01
+
+shadow_softness:
+  var: i2
+  type: slider
+  range: [1.0, 64.0]
+  default: 18.0
+  step: 0.1
+
+ao_strength:
+  var: i3
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.25
+  step: 0.01
+
+ao_step:
+  var: i4
+  type: slider
+  range: [0.002, 0.08]
+  default: 0.02
+  step: 0.001
+
+rim_strength:
+  var: j1
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.6
+  step: 0.01
+
+rim_power:
+  var: j2
+  type: slider
+  range: [0.1, 12.0]
+  default: 2.0
+  step: 0.01
+
+emissive_strength:
+  var: j3
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.45
+  step: 0.01
+
+spec_power:
+  var: j4
+  type: slider
+  range: [1.0, 256.0]
+  default: 64.0
+  step: 1
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+color_mix:
+  var: a4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+hue_shift:
+  var: e1
+  type: slider
+  range: [-1.0, 1.0]
+  default: 0.0
+  step: 0.001
+
+saturation:
+  var: e2
+  type: slider
+  range: [0.0, 2.5]
+  default: 1.0
+  step: 0.01
+
+contrast:
+  var: e3
+  type: slider
+  range: [0.2, 2.5]
+  default: 1.0
+  step: 0.01
+
+fog_density:
+  var: c4
+  type: slider
+  range: [0.001, 0.2]
+  default: 0.03
+  step: 0.001

@@ -1,0 +1,75 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "cam_distance",
+      "value": 2.08
+    },
+    {
+      "type": "Slider",
+      "name": "cam_height",
+      "value": -0.76
+    },
+    {
+      "type": "Slider",
+      "name": "focal_len",
+      "value": 1.68
+    },
+    {
+      "type": "Slider",
+      "name": "march_steps",
+      "value": 50.0
+    },
+    {
+      "type": "Slider",
+      "name": "march_max_dist",
+      "value": 12.3
+    },
+    {
+      "type": "Slider",
+      "name": "march_surface_dist",
+      "value": 0.0027
+    },
+    {
+      "type": "Slider",
+      "name": "normal_epsilon",
+      "value": 0.0014
+    },
+    {
+      "type": "Slider",
+      "name": "sphere_offset",
+      "value": 0.82
+    },
+    {
+      "type": "Slider",
+      "name": "sphere_radius",
+      "value": 0.78
+    },
+    {
+      "type": "Slider",
+      "name": "blend_k",
+      "value": 0.45
+    },
+    {
+      "type": "Slider",
+      "name": "wobble_amount",
+      "value": 0.05
+    },
+    {
+      "type": "Slider",
+      "name": "color_mix",
+      "value": 0.42
+    },
+    {
+      "type": "Slider",
+      "name": "fog_density",
+      "value": 0.038
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}
