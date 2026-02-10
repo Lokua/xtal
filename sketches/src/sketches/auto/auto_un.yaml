@@ -197,8 +197,8 @@ satellite_speed:
   var: o1
   type: slider
   range: [0.0, 4.0]
-  default: 1.15
-  step: 0.001
+  default: 1.125
+  step: 0.125
 
 satellite_merge:
   var: o2
@@ -260,8 +260,8 @@ blend_pulse_freq:
   var: l4
   type: slider
   range: [0.0, 4.0]
-  default: 0.8
-  step: 0.001
+  default: 0.125
+  step: 0.125
 
 # ------------------------------------------------------------------------------
 #  Lighting

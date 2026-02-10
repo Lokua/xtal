@@ -146,16 +146,19 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let light_dist = length(light_pos - p);
     let v = normalize(ro - p);
     let h = normalize(l + v);
-    let shadow = soft_shadow(
-        p,
-        l,
-        max(shading_bias, surf_eps * 2.0),
-        light_dist,
-        shadow_softness,
-        surf_eps,
-        shadow_legacy_mode,
-        beats,
-    );
+    var shadow = 1.0;
+    if (shadow_strength > 0.0001) {
+        shadow = soft_shadow(
+            p,
+            l,
+            max(shading_bias, surf_eps * 2.0),
+            light_dist,
+            shadow_softness,
+            surf_eps,
+            shadow_legacy_mode,
+            beats,
+        );
+    }
     let shadow_mix = mix(1.0, shadow, shadow_strength);
     let ao = ambient_occlusion(p, n, surf_eps, beats);
 
@@ -263,6 +266,20 @@ fn scene_sdf(p: vec3f, beats: f32) -> f32 {
     let sat_jitter = clamp(params.o.z, 0.0, 1.0);
     let sat_breathe = clamp(params.o.w, 0.0, 1.0);
     let phase = shape_phase + beats * motion_speed;
+    let stretch_amount = params.g.w;
+    let harmonic_amp_sum = abs(params.f.x) + abs(params.f.z);
+    let ridge = clamp(params.g.y, 0.0, 1.0);
+    let harmonic_bound = pow(
+        max(harmonic_amp_sum, 0.00001),
+        mix(1.0, 0.35, ridge),
+    );
+    let blob_radius_bound = max(params.d.y, 0.02) * (
+        1.0
+            + 0.45 * abs(stretch_amount)
+            + harmonic_bound
+    );
+    let blend_max = max(params.d.z + abs(blend_pulse_amount), 0.0001);
+    let smooth_pad = 0.25 * blend_max;
     let tri_size = max(params.k.y, 0.0001);
     let tri_rot = params.k.z;
     let lift = CENTER_LIFT * motion_amount * sin(beats * 0.41);
@@ -311,6 +328,25 @@ fn scene_sdf(p: vec3f, beats: f32) -> f32 {
         0.11 * cos(phase * 1.17 + 4.1887902),
         0.12 * sin(phase * 1.31 + 4.1887902),
     );
+
+    // Conservative broad-phase bound. If far enough, return early and skip
+    // expensive harmonic/satellite evaluation while preserving visual result.
+    let d1_bound = length(p - c1) - blob_radius_bound;
+    let d2_bound = length(p - c2) - blob_radius_bound;
+    let d3_bound = length(p - c3) - blob_radius_bound;
+    var scene_bound = min(min(d1_bound, d2_bound), d3_bound) - smooth_pad;
+    if (sat_count > 0 && sat_radius > 0.0 && sat_orbit > 0.0) {
+        let sat_orbit_bound = sat_orbit * (1.0 + 0.45 * sat_jitter);
+        let sat_radius_bound = sat_radius * (1.0 + 0.35 * sat_breathe);
+        let sat_cluster_bound = sat_orbit_bound + sat_radius_bound + smooth_pad;
+        let sat1_bound = length(p - c1) - sat_cluster_bound;
+        let sat2_bound = length(p - c2) - sat_cluster_bound;
+        let sat3_bound = length(p - c3) - sat_cluster_bound;
+        scene_bound = min(scene_bound, min(min(sat1_bound, sat2_bound), sat3_bound));
+    }
+    if (scene_bound > 0.35) {
+        return scene_bound;
+    }
 
     let blend = max(
         params.d.z + blend_pulse_amount * sin(beats * blend_pulse_freq),
