@@ -159,6 +159,69 @@ triangle_rotation:
   step: 0.001
 
 # ------------------------------------------------------------------------------
+#  Satellites
+# ------------------------------------------------------------------------------
+
+satellites:
+  type: separator
+
+satellite_count:
+  var: n1
+  type: slider
+  range: [0, 9]
+  default: 4
+  step: 1
+
+satellite_radius:
+  var: n2
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.11
+  step: 0.001
+
+satellite_orbit:
+  var: n3
+  type: slider
+  range: [0.0, 1.8]
+  default: 0.42
+  step: 0.001
+
+satellite_activity:
+  var: n4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.65
+  step: 0.001
+
+satellite_speed:
+  var: o1
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.15
+  step: 0.001
+
+satellite_merge:
+  var: o2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.72
+  step: 0.001
+
+satellite_jitter:
+  var: o3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.001
+
+satellite_breathe:
+  var: o4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.25
+  step: 0.001
+
+# ------------------------------------------------------------------------------
 #  Movement
 # ------------------------------------------------------------------------------
 
