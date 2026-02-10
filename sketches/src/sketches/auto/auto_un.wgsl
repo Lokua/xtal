@@ -93,6 +93,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let energy_power = max(params.m.y, 0.0001);
     let energy_freq = max(params.m.z, 0.0);
     let chroma_strength = max(params.m.w, 0.0);
+    let complexity = shape_complexity();
+    let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
     let max_steps = i32(round(clamp(
         params.b.x,
@@ -126,28 +128,32 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         ro,
         rd,
         max_steps,
+        surf_eps,
         beats,
     );
     if (t >= MAX_DIST) {
         return vec4f(bg, 1.0);
     }
 
-    let p = ro + rd * t;
-    let n = calc_normal(p, beats);
+    let hit_p = ro + rd * t;
+    let n = calc_normal(hit_p, beats);
+    let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
+    let p = hit_p + n * shading_bias;
     let l = normalize(light_pos - p);
     let light_dist = length(light_pos - p);
     let v = normalize(ro - p);
     let h = normalize(l + v);
     let shadow = soft_shadow(
-        p + n * SURF_DIST * 3.0,
+        p,
         l,
-        0.01,
+        max(shading_bias, surf_eps * 2.0),
         light_dist,
         shadow_softness,
+        surf_eps,
         beats,
     );
     let shadow_mix = mix(1.0, shadow, shadow_strength);
-    let ao = ambient_occlusion(p, n, beats);
+    let ao = ambient_occlusion(p, n, surf_eps, beats);
 
     let diff = max(dot(n, l), 0.0) * shadow_mix;
     let spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
@@ -195,6 +201,7 @@ fn ray_march(
     ro: vec3f,
     rd: vec3f,
     max_steps: i32,
+    surf_eps: f32,
     beats: f32,
 ) -> f32 {
     var dist = 0.0;
@@ -204,7 +211,7 @@ fn ray_march(
         }
         let p = ro + rd * dist;
         let scene_dist = scene_sdf(p, beats);
-        if (scene_dist < SURF_DIST) {
+        if (scene_dist < surf_eps) {
             break;
         }
         dist += scene_dist * MARCH_SAFETY;
@@ -313,7 +320,7 @@ fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
 
 fn calc_normal(p: vec3f, beats: f32) -> vec3f {
     let complexity = shape_complexity();
-    let e = mix(NORMAL_EPS, NORMAL_EPS * 5.0, complexity);
+    let e = mix(NORMAL_EPS, NORMAL_EPS * 2.5, complexity);
     let nx = scene_sdf(p + vec3f(e, 0.0, 0.0), beats)
         - scene_sdf(p - vec3f(e, 0.0, 0.0), beats);
     let ny = scene_sdf(p + vec3f(0.0, e, 0.0), beats)
@@ -395,17 +402,18 @@ fn soft_shadow(
     min_t: f32,
     max_t: f32,
     softness: f32,
+    surf_eps: f32,
     beats: f32,
 ) -> f32 {
     var result = 1.0;
     var t = min_t;
     for (var i = 0; i < MAX_SHADOW_STEPS; i = i + 1) {
         let h = scene_sdf(ro + rd * t, beats);
-        if (h < SURF_DIST) {
-            return 0.0;
+        if (h < surf_eps * 0.6) {
+            break;
         }
-        result = min(result, softness * h / t);
-        t += clamp(h * 0.8, 0.01, 0.25);
+        result = min(result, softness * h / max(t, 0.01));
+        t += clamp(h, surf_eps * 0.35, 0.22);
         if (t > max_t) {
             break;
         }
@@ -416,17 +424,19 @@ fn soft_shadow(
 fn ambient_occlusion(
     p: vec3f,
     n: vec3f,
+    surf_eps: f32,
     beats: f32,
 ) -> f32 {
     var occ = 0.0;
     var scale = 1.0;
+    let ao_bias = surf_eps * 2.0;
     for (var i = 1; i <= MAX_AO_SAMPLES; i = i + 1) {
         let h = AO_STEP * f32(i);
-        let d = scene_sdf(p + n * h, beats);
+        let d = scene_sdf(p + n * (h + ao_bias), beats);
         occ += max(h - d, 0.0) * scale;
         scale *= 0.75;
     }
-    return clamp(1.0 - occ * AO_STRENGTH, 0.0, 1.0);
+    return clamp(exp(-occ * AO_STRENGTH * 1.1), 0.0, 1.0);
 }
 
 fn shape_complexity() -> f32 {
