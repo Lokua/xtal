@@ -296,6 +296,86 @@ random_size_slewed:
   stem: 999
 
 # ------------------------------------------------------------------------------
+#  Bias Test (random_slewed with bias)
+# ------------------------------------------------------------------------------
+
+bias_section:
+  type: separator
+
+show_bias_test:
+  type: checkbox
+  default: true
+
+bias_amount:
+  type: slider
+  range: [-1, 1]
+  default: 0
+
+bias_0:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 300
+
+bias_1:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 400
+
+bias_2:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 500
+
+bias_3:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 600
+
+bias_4:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 700
+
+bias_5:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 800
+
+bias_6:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 900
+
+bias_7:
+  type: random_slewed
+  beats: 2
+  range: [0.0, 1.0]
+  slew: 0.5
+  bias: $bias_amount
+  stem: 100
+
+# ------------------------------------------------------------------------------
 #  RM (LIMEGREEN line)
 # ------------------------------------------------------------------------------
 

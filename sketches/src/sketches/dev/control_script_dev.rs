@@ -162,6 +162,21 @@ impl Sketch for ControlScriptDev {
             }
         }
 
+        if self.hub.bool("show_bias_test") {
+            let n = 8;
+            let bar_h = wr.h() / n as f32;
+            let color = hsla(0.0, 0.7, 0.5, 0.7);
+            for i in 0..n {
+                let val = self.hub.get(&format!("bias_{i}"));
+                let bar_w = val * wr.w();
+                let y = wr.top() - (i as f32 + 0.5) * bar_h;
+                draw.rect()
+                    .color(color)
+                    .w_h(bar_w, bar_h - 2.0)
+                    .x_y(-wr.hw() + bar_w * 0.5, y);
+            }
+        }
+
         if self.hub.bool("show_round_robin") {
             let y = wr.top() - 20.0;
 

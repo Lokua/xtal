@@ -195,6 +195,7 @@ impl SetFromParam for RandomConfig {
         match name {
             "beats" => self.beats = ParamValue::Cold(value),
             "delay" => self.delay = ParamValue::Cold(value),
+            "bias" => self.bias = ParamValue::Cold(value),
             _ => warn_for("Random", name),
         }
     }
@@ -206,6 +207,7 @@ impl SetFromParam for RandomSlewedConfig {
             "beats" => self.beats = ParamValue::Cold(value),
             "delay" => self.delay = ParamValue::Cold(value),
             "slew" => self.slew = ParamValue::Cold(value),
+            "bias" => self.bias = ParamValue::Cold(value),
             _ => warn_for("RandomSlewed", name),
         }
     }

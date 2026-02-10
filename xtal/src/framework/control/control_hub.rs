@@ -437,12 +437,13 @@ impl<T: TimingSource> ControlHub<T> {
                                 name,
                                 current_frame,
                             );
-                            self.animation.random(
+                            let value = self.animation.random(
                                 conf.beats.as_float(),
                                 (conf.range[0], conf.range[1]),
                                 conf.delay.as_float(),
                                 conf.stem,
-                            )
+                            );
+                            apply_bias(value, conf.bias.as_float(), conf.range)
                         }
                         (
                             AnimationConfig::RandomSlewed(conf),
@@ -453,13 +454,14 @@ impl<T: TimingSource> ControlHub<T> {
                                 name,
                                 current_frame,
                             );
-                            self.animation.random_slewed(
+                            let value = self.animation.random_slewed(
                                 conf.beats.as_float(),
                                 (conf.range[0], conf.range[1]),
                                 conf.slew.as_float(),
                                 conf.delay.as_float(),
                                 conf.stem,
-                            )
+                            );
+                            apply_bias(value, conf.bias.as_float(), conf.range)
                         }
                         (
                             AnimationConfig::RoundRobin(conf),
@@ -1672,6 +1674,20 @@ impl<T: TimingSource> ControlHub<T> {
 
         watcher
     }
+}
+
+fn apply_bias(value: f32, bias: f32, range: [f32; 2]) -> f32 {
+    if bias == 0.0 {
+        return value;
+    }
+    let min = range[0];
+    let max = range[1];
+    if min == max {
+        return value;
+    }
+    let t = (value - min) / (max - min);
+    let curved = curve(t, bias, SUGGESTED_CURVE_MAX_EXPONENT);
+    min + curved * (max - min)
 }
 
 #[cfg(test)]
