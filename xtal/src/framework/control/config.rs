@@ -328,6 +328,7 @@ pub struct RandomConfig {
     pub beats: ParamValue,
     pub range: [f32; 2],
     pub delay: ParamValue,
+    pub bias: ParamValue,
     pub stem: u64,
 }
 
@@ -338,6 +339,7 @@ impl Default for RandomConfig {
             beats: ParamValue::Cold(1.0),
             range: [0.0, 1.0],
             delay: ParamValue::Cold(0.0),
+            bias: ParamValue::Cold(0.0),
             stem: 93473,
         }
     }
@@ -353,6 +355,7 @@ pub struct RandomSlewedConfig {
     pub range: [f32; 2],
     pub slew: ParamValue,
     pub delay: ParamValue,
+    pub bias: ParamValue,
     pub stem: u64,
 }
 
@@ -364,6 +367,7 @@ impl Default for RandomSlewedConfig {
             range: [0.0, 1.0],
             slew: ParamValue::Cold(0.65),
             delay: ParamValue::Cold(0.0),
+            bias: ParamValue::Cold(0.0),
             stem: 93472,
         }
     }
