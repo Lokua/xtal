@@ -7,8 +7,10 @@
 use nannou::rand::{Rng, thread_rng};
 use notify::{Event, RecursiveMode, Watcher};
 use std::cell::RefCell;
+use std::collections::hash_map::DefaultHasher;
 use std::error::Error;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -441,7 +443,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 conf.beats.as_float(),
                                 (conf.range[0], conf.range[1]),
                                 conf.delay.as_float(),
-                                conf.stem,
+                                conf.stem.unwrap(),
                             );
                             apply_bias(value, conf.bias.as_float(), conf.range)
                         }
@@ -459,7 +461,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 (conf.range[0], conf.range[1]),
                                 conf.slew.as_float(),
                                 conf.delay.as_float(),
-                                conf.stem,
+                                conf.stem.unwrap(),
                             );
                             apply_bias(value, conf.bias.as_float(), conf.range)
                         }
@@ -476,7 +478,7 @@ impl<T: TimingSource> ControlHub<T> {
                                 conf.beats.as_float(),
                                 &conf.values,
                                 conf.slew.as_float(),
-                                conf.stem,
+                                conf.stem.unwrap(),
                             )
                         }
                         (
@@ -1309,8 +1311,10 @@ impl<T: TimingSource> ControlHub<T> {
                     );
                 }
                 ControlType::Random => {
-                    let conf: RandomConfig =
+                    let mut conf: RandomConfig =
                         serde_yml::from_value(config.config.clone())?;
+                    conf.stem =
+                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1318,8 +1322,10 @@ impl<T: TimingSource> ControlHub<T> {
                     );
                 }
                 ControlType::RandomSlewed => {
-                    let conf: RandomSlewedConfig =
+                    let mut conf: RandomSlewedConfig =
                         serde_yml::from_value(config.config.clone())?;
+                    conf.stem =
+                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1330,8 +1336,10 @@ impl<T: TimingSource> ControlHub<T> {
                     );
                 }
                 ControlType::RoundRobin => {
-                    let conf: RoundRobinConfig =
+                    let mut conf: RoundRobinConfig =
                         serde_yml::from_value(config.config.clone())?;
+                    conf.stem =
+                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1676,6 +1684,15 @@ impl<T: TimingSource> ControlHub<T> {
     }
 }
 
+/// Produce a deterministic `u64` from a mapping name, used as the default
+/// stem when the user omits `stem` from a YAML mapping. The hash is stable
+/// across runs for the same name.
+fn hash_stem(name: &str) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    name.hash(&mut hasher);
+    hasher.finish()
+}
+
 fn apply_bias(value: f32, bias: f32, range: [f32; 2]) -> f32 {
     if bias == 0.0 {
         return value;
@@ -2003,6 +2020,89 @@ sequence:
         assert!(!ControlHub::<FrameTiming>::is_stage_crossed(
             3.9, 0.2, 2.0, epsilon
         ));
+    }
+
+    #[test]
+    #[serial]
+    fn test_auto_stem_deterministic_and_unique() {
+        // Two different names produce different stems
+        let hub = create_instance(
+            r#"
+a:
+  type: random
+  beats: 2
+  range: [0, 100]
+
+b:
+  type: random
+  beats: 2
+  range: [0, 100]
+            "#,
+        );
+
+        let stem_a = match hub.animations.get("a").unwrap().0 {
+            AnimationConfig::Random(ref conf) => conf.stem,
+            _ => panic!("Expected Random"),
+        };
+        let stem_b = match hub.animations.get("b").unwrap().0 {
+            AnimationConfig::Random(ref conf) => conf.stem,
+            _ => panic!("Expected Random"),
+        };
+
+        assert!(stem_a.is_some(), "stem should be resolved to Some");
+        assert!(stem_b.is_some(), "stem should be resolved to Some");
+        assert_ne!(
+            stem_a, stem_b,
+            "different names must produce different stems"
+        );
+
+        // Same name always produces the same stem (idempotent)
+        let hub2 = create_instance(
+            r#"
+a:
+  type: random
+  beats: 2
+  range: [0, 100]
+            "#,
+        );
+        let stem_a2 = match hub2.animations.get("a").unwrap().0 {
+            AnimationConfig::Random(ref conf) => conf.stem,
+            _ => panic!("Expected Random"),
+        };
+        assert_eq!(stem_a, stem_a2, "same name must produce same stem");
+    }
+
+    #[test]
+    #[serial]
+    fn test_explicit_stem_preserved() {
+        let hub = create_instance(
+            r#"
+a:
+  type: random_slewed
+  beats: 2
+  range: [0, 100]
+  slew: 0.5
+  stem: 42
+
+b:
+  type: round_robin
+  values: [0.0, 0.5, 1.0]
+  beats: 2
+  stem: 999
+            "#,
+        );
+
+        let stem_a = match hub.animations.get("a").unwrap().0 {
+            AnimationConfig::RandomSlewed(ref conf) => conf.stem,
+            _ => panic!("Expected RandomSlewed"),
+        };
+        let stem_b = match hub.animations.get("b").unwrap().0 {
+            AnimationConfig::RoundRobin(ref conf) => conf.stem,
+            _ => panic!("Expected RoundRobin"),
+        };
+
+        assert_eq!(stem_a, Some(42), "explicit stem must be preserved");
+        assert_eq!(stem_b, Some(999), "explicit stem must be preserved");
     }
 
     #[test]
