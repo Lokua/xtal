@@ -211,6 +211,16 @@ impl SetFromParam for RandomSlewedConfig {
     }
 }
 
+impl SetFromParam for RoundRobinConfig {
+    fn set_from_param(&mut self, name: &str, value: f32) {
+        match name {
+            "beats" => self.beats = ParamValue::Cold(value),
+            "slew" => self.slew = ParamValue::Cold(value),
+            _ => warn_for("RoundRobin", name),
+        }
+    }
+}
+
 impl SetFromParam for TriangleConfig {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {

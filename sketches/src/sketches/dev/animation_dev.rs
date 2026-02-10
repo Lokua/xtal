@@ -236,6 +236,29 @@ impl Sketch for AnimationDev {
                 .color(BLACK);
         }
 
+        // Round Robin: ORANGE stepped, PURPLE slewed
+        {
+            let values = [0.0, 0.8, 0.3];
+            let y = wr.top() - 20.0;
+
+            // Stepped (no slew)
+            let rr = self.animation.round_robin(2.0, &values, 0.0, 50);
+            draw.rect()
+                .color(ORANGE)
+                .w_h(map_range(rr, 0.0, 1.0, 10.0, wr.w()), 16.0)
+                .x_y(-wr.hw() + map_range(rr, 0.0, 1.0, 5.0, wr.hw()), y);
+
+            // Slewed
+            let rr_s = self.animation.round_robin(2.0, &values, 0.65, 51);
+            draw.rect()
+                .color(PURPLE)
+                .w_h(map_range(rr_s, 0.0, 1.0, 10.0, wr.w()), 16.0)
+                .x_y(
+                    -wr.hw() + map_range(rr_s, 0.0, 1.0, 5.0, wr.hw()),
+                    y - 20.0,
+                );
+        }
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

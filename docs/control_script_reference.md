@@ -16,7 +16,7 @@
   - [triangle](#triangle)
   - [random](#random)
   - [random_slewed](#random_slewed)
-  - [snapshot_sequence](#snapshot_sequence)
+  - [round_robin](#round_robin)
   - [automate](#automate)
     - [breakpoints](#automatebreakpoints)
     - [kind](#kind)
@@ -26,6 +26,7 @@
       - [random](#breakpoint-kind-random)
       - [random_smooth](#breakpoint-kind-randomsmooth)
       - [end](#breakpoint-kind-end)
+  - [snapshot_sequence](#snapshot_sequence)
 - [Modulation](#modulation)
   - [mod](#mod)
 - [Effects](#effects)
@@ -515,6 +516,31 @@ random_slewed_example:
   slew: 0.65
   delay: 0.0
   stem: 88
+```
+
+## round_robin
+
+Cycle through an arbitrary list of values, advancing to the next value every
+`beats` beats. The output is optionally smoothed by a slew limiter.
+
+**Params**
+
+- `type` - `round_robin`
+- `values` - required list of float values to cycle through
+- `beats` - how many beats each value is held. Defaults to `1.0`
+- `slew` - smoothing when transitioning between values. `0.0` = instant
+  (stepped), `1.0` = very slow (maximum smoothing). Defaults to `0.0`
+- `stem` - unique ID for internal slew state
+
+**Example**
+
+```yaml
+round_robin_example:
+  type: round_robin
+  values: [0.0, 0.1, 0.8, 0.4, 0.2, 0.5, 0.1]
+  beats: 2.0
+  slew: 0.65
+  stem: 500
 ```
 
 ## automate

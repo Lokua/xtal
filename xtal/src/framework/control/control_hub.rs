@@ -462,6 +462,22 @@ impl<T: TimingSource> ControlHub<T> {
                             )
                         }
                         (
+                            AnimationConfig::RoundRobin(conf),
+                            KeyframeSequence::None,
+                        ) => {
+                            let conf = self.resolve_animation_config_params(
+                                conf,
+                                name,
+                                current_frame,
+                            );
+                            self.animation.round_robin(
+                                conf.beats.as_float(),
+                                &conf.values,
+                                conf.slew.as_float(),
+                                conf.stem,
+                            )
+                        }
+                        (
                             AnimationConfig::Triangle(conf),
                             KeyframeSequence::None,
                         ) => {
@@ -1311,6 +1327,18 @@ impl<T: TimingSource> ControlHub<T> {
                         ),
                     );
                 }
+                ControlType::RoundRobin => {
+                    let conf: RoundRobinConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    self.animations.insert(
+                        id.to_string(),
+                        (
+                            AnimationConfig::RoundRobin(conf),
+                            KeyframeSequence::None,
+                        ),
+                    );
+                }
                 ControlType::Triangle => {
                     let conf: TriangleConfig =
                         serde_yml::from_value(config.config.clone())?;
@@ -1651,7 +1679,6 @@ mod tests {
     use super::*;
     use serial_test::serial;
 
-    // 1 frame = 1/16; 4 frames per beat; 16 frames per bar
     use crate::framework::motion::animation_tests::{BPM, init};
 
     fn create_instance(yaml: &str) -> ControlHub<FrameTiming> {
@@ -1676,7 +1703,7 @@ triangle:
                 "#,
         );
 
-        init(0);
+        init(0.0);
         assert_eq!(
             controls.get("triangle"),
             0.5,
@@ -1707,15 +1734,15 @@ effect:
   output_high: $slider
 
 test_mod:
-  type: mod 
-  source: triangle 
+  type: mod
+  source: triangle
   modulators:
     - effect
 
             "#,
         );
 
-        init(6);
+        init(1.5);
         assert_eq!(
             controls.get("triangle"),
             0.33,
@@ -1729,21 +1756,21 @@ test_mod:
     fn test_parameter_modulation_breakpoint() {
         let controls = create_instance(
             r#"
-slider: 
-  type: slider 
+slider:
+  type: slider
   default: 40
 
 automate:
-  type: automate 
+  type: automate
   breakpoints:
     - position: 0
       value: $slider
-      kind: step 
-      
+      kind: step
+
             "#,
         );
 
-        init(0);
+        init(0.0);
         assert_eq!(
             controls.get("automate"),
             40.0,
@@ -1757,16 +1784,16 @@ automate:
     fn test_snapshot() {
         let mut controls = create_instance(
             r#"
-a: 
-  type: slider 
+a:
+  type: slider
   default: 10
-b: 
+b:
   type: midi
   default: 20
-c: 
-  type: osc 
+c:
+  type: osc
   default: 30
-      
+
             "#,
         );
 
@@ -1778,14 +1805,14 @@ c:
         controls.osc_controls.set("c", 300.0);
         controls.take_snapshot("bar");
 
-        init(0);
+        init(0.0);
         controls.recall_snapshot("bar").unwrap();
         controls.update();
         assert_eq!(controls.get("a"), 100.0);
         assert_eq!(controls.get("b"), 200.0);
         assert_eq!(controls.get("c"), 300.0);
 
-        init(1);
+        init(0.25);
         controls.update();
         controls.recall_snapshot("foo").unwrap();
         assert_eq!(controls.get("a"), 10.0);
@@ -1845,7 +1872,7 @@ foo_animation:
             },
         );
 
-        init(1);
+        init(0.25);
         assert_eq!(hub.get("foo_animation"), 99.0);
     }
 
@@ -1893,15 +1920,15 @@ sequence:
 "#,
         );
 
-        init(0);
+        init(0.0);
         hub.update();
         assert_eq!(hub.get("a"), 0.0, "stage 1 at beat 0.0");
 
-        init(2);
+        init(0.5);
         hub.update();
         assert_eq!(hub.get("a"), 1.0, "stage 2 at beat 0.5");
 
-        init(5);
+        init(1.25);
         hub.update();
         assert_eq!(hub.get("a"), 0.0, "wrapped stage 1");
     }
