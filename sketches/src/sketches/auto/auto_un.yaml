@@ -15,9 +15,9 @@ cam_distance:
 cam_height:
   var: c2
   type: slider
-  range: [-2.0, 2.0]
-  default: 0.0
-  step: 0.01
+  range: [0.125, 1.0]
+  default: 0.125
+  step: 0.125
 
 focal_len:
   var: c3
@@ -68,12 +68,47 @@ blend_k:
   default: 0.42
   step: 0.01
 
-wobble_amount:
-  var: d4
+# ------------------------------------------------------------------------------
+#  Shape Deformation
+# ------------------------------------------------------------------------------
+
+shape_deformation:
+  type: separator
+
+bump_amp:
+  var: o1
   type: slider
-  range: [0.0, 0.5]
-  default: 0.2
+  range: [0.0, 0.3]
+  default: 0.0
+  step: 0.001
+
+bump_freq:
+  var: o2
+  type: slider
+  range: [0.0, 18.0]
+  default: 6.0
   step: 0.01
+
+bump_sharpness:
+  var: o3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+twist_amount:
+  var: o4
+  type: slider
+  range: [-2.0, 2.0]
+  default: 0.0
+  step: 0.001
+
+stretch_amount:
+  var: p1
+  type: slider
+  range: [-0.8, 0.8]
+  default: 0.0
+  step: 0.001
 
 # ------------------------------------------------------------------------------
 #  Harmonic Distortion
@@ -85,43 +120,43 @@ harmonic_distortion:
 harmonic_amp_1:
   var: f1
   type: slider
-  range: [0.0, 0.2]
-  default: 0.18
+  range: [0.0, 0.3]
+  default: 0.08
   step: 0.001
 
 harmonic_freq_1:
   var: f2
   type: slider
-  range: [0.0, 24.0]
+  range: [0.0, 18.0]
   default: 6.0
-  step: 0.1
+  step: 0.01
 
 harmonic_amp_2:
   var: f3
   type: slider
-  range: [0.0, 0.2]
-  default: 0.08
+  range: [0.0, 0.3]
+  default: 0.06
   step: 0.001
 
 harmonic_freq_2:
   var: f4
   type: slider
-  range: [0.0, 32.0]
-  default: 11.0
-  step: 0.1
+  range: [0.0, 18.0]
+  default: 8.0
+  step: 0.01
 
 harmonic_warp:
   var: g1
   type: slider
-  range: [-8.0, 8.0]
+  range: [-4.0, 4.0]
   default: 0.0
-  step: 0.01
+  step: 0.001
 
 harmonic_ridge:
   var: g2
   type: slider
   range: [0.0, 1.0]
-  default: 0.25
+  default: 0.35
   step: 0.01
 
 harmonic_phase:
@@ -129,6 +164,90 @@ harmonic_phase:
   type: slider
   range: [0.0, 6.283185307179586]
   default: 0.0
+  step: 0.001
+
+stretch_y:
+  var: g4
+  type: slider
+  range: [-0.8, 0.8]
+  default: 0.0
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Structure
+# ------------------------------------------------------------------------------
+
+structure:
+  type: separator
+
+triangle_size:
+  var: k2
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.9
+  step: 0.01
+
+triangle_rotation:
+  var: k3
+  type: slider
+  range: [0.0, 6.283185307179586]
+  default: 0.0
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Movement
+# ------------------------------------------------------------------------------
+
+movement:
+  type: separator
+
+motion_speed:
+  var: l1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.22
+  step: 0.001
+
+motion_amount:
+  var: l2
+  type: slider
+  range: [0.0, 0.6]
+  default: 0.07
+  step: 0.001
+
+orbit_amount:
+  var: n1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.2
+  step: 0.001
+
+center_lift:
+  var: n2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.12
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Blend
+# ------------------------------------------------------------------------------
+
+blend:
+  type: separator
+
+blend_pulse_amount:
+  var: l3
+  type: slider
+  range: [0.0, 0.8]
+  default: 0.08
+  step: 0.001
+
+blend_pulse_freq:
+  var: l4
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.8
   step: 0.001
 
 # ------------------------------------------------------------------------------
@@ -180,20 +299,6 @@ shadow_softness:
   default: 18.0
   step: 0.1
 
-ao_strength:
-  var: i3
-  type: slider
-  range: [0.0, 4.0]
-  default: 1.25
-  step: 0.01
-
-ao_step:
-  var: i4
-  type: slider
-  range: [0.002, 0.08]
-  default: 0.02
-  step: 0.001
-
 rim_strength:
   var: j1
   type: slider
@@ -221,6 +326,41 @@ spec_power:
   range: [1.0, 256.0]
   default: 64.0
   step: 1
+
+# ------------------------------------------------------------------------------
+#  Energy
+# ------------------------------------------------------------------------------
+
+energy:
+  type: separator
+
+energy_strength:
+  var: m1
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.55
+  step: 0.01
+
+energy_power:
+  var: m2
+  type: slider
+  range: [0.1, 12.0]
+  default: 2.8
+  step: 0.01
+
+energy_freq:
+  var: m3
+  type: slider
+  range: [0.0, 32.0]
+  default: 9.0
+  step: 0.01
+
+chroma_strength:
+  var: m4
+  type: slider
+  range: [0.0, 1.5]
+  default: 0.12
+  step: 0.01
 
 # ------------------------------------------------------------------------------
 #  Color
