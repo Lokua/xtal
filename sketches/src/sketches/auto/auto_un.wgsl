@@ -10,7 +10,7 @@ struct VertexOutput {
 struct Params {
     // a: width, height, beats, color_mix
     a: vec4f,
-    // b: march_steps, reserved, reserved, reserved
+    // b: reserved, reserved, reserved, reserved
     b: vec4f,
     // c: cam_distance, cam_y_rotation, focal_len, fog_density
     c: vec4f,
@@ -22,9 +22,9 @@ struct Params {
     f: vec4f,
     // g: harmonic_warp, harmonic_ridge, harmonic_phase, stretch_y
     g: vec4f,
-    // h: light_x, light_y, light_z, light_intensity
+    // h: reserved, reserved, reserved, light_intensity
     h: vec4f,
-    // i: shadow_strength, shadow_softness, shadow_legacy_mode, reserved
+    // i: reserved, reserved, reserved, reserved
     i: vec4f,
     // j: rim_strength, rim_power, emissive_strength, spec_power
     j: vec4f,
@@ -34,11 +34,11 @@ struct Params {
     l: vec4f,
     // m: reserved, reserved, reserved, reserved
     m: vec4f,
-    // n: satellite_count, satellite_radius, satellite_orbit, satellite_activity
+    // n: satellite_count, satellite_radius, satellite_orbit, reserved
     n: vec4f,
-    // o: satellite_speed, satellite_merge, satellite_jitter, satellite_breathe
+    // o: satellite_speed, reserved, satellite_jitter, satellite_breathe
     o: vec4f,
-    // p: flow_amount, flow_scale, strand_strength, strand_thinness
+    // p: flow_amount, flow_scale, reserved, reserved
     p: vec4f,
     // q: topology_amount, topology_rate, topology_duration, topology_split
     q: vec4f,
@@ -62,11 +62,20 @@ const MAX_DIST: f32 = 30.0;
 const SURF_DIST: f32 = 0.0012;
 const NORMAL_EPS: f32 = 0.0012;
 const MARCH_SAFETY: f32 = 0.82;
+const MARCH_STEPS_FIXED: i32 = 256;
 const ORBIT_AMOUNT: f32 = 0.2;
 const CENTER_LIFT: f32 = 0.12;
 const AO_STRENGTH: f32 = 1.25;
 const AO_STEP: f32 = 0.02;
 const SATELLITE_MAX: i32 = 9;
+const LIGHT_POS_FIXED: vec3f = vec3f(2.8, 2.4, -1.2);
+const SHADOW_STRENGTH_FIXED: f32 = 0.3;
+const SHADOW_SOFTNESS_FIXED: f32 = 64.0;
+const SHADOW_LEGACY_MODE_FIXED: bool = false;
+const SATELLITE_ACTIVITY_FIXED: f32 = 0.5;
+const SATELLITE_MERGE_FIXED: f32 = 1.0;
+const STRAND_STRENGTH_FIXED: f32 = 0.4;
+const STRAND_THINNESS_FIXED: f32 = 0.7;
 
 var<private> g_beats: f32;
 var<private> g_phase: f32;
@@ -117,11 +126,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let saturation = max(params.e.y, 0.0);
     let contrast = max(params.e.z, 0.0);
     let debug_view = i32(params.e.w);
-    let light_pos = vec3f(params.h.x, params.h.y, params.h.z);
+    let light_pos = LIGHT_POS_FIXED;
     let light_intensity = max(params.h.w, 0.0);
-    let shadow_strength = params.i.x;
-    let shadow_softness = max(params.i.y, 0.0001);
-    let shadow_legacy_mode = params.i.z > 0.5;
+    let shadow_strength = SHADOW_STRENGTH_FIXED;
+    let shadow_softness = SHADOW_SOFTNESS_FIXED;
+    let shadow_legacy_mode = SHADOW_LEGACY_MODE_FIXED;
     let rim_strength = max(params.j.x, 0.0);
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
@@ -129,7 +138,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
-    let max_steps = i32(round(params.b.x));
+    let max_steps = MARCH_STEPS_FIXED;
 
     let cam_dist = max(params.c.x, 0.1);
     let cam_y_rotation = params.c.y;
@@ -281,15 +290,15 @@ fn prepare_scene_state(beats: f32) {
     g_sat_count = i32(round(params.n.x));
     g_sat_radius = params.n.y;
     g_sat_orbit = params.n.z;
-    g_sat_activity = params.n.w;
+    g_sat_activity = SATELLITE_ACTIVITY_FIXED;
     g_sat_speed = params.o.x;
-    g_sat_merge = params.o.y;
+    g_sat_merge = SATELLITE_MERGE_FIXED;
     g_sat_jitter = params.o.z;
     g_sat_breathe = params.o.w;
     g_flow_amount = params.p.x;
     g_flow_scale = params.p.y;
-    g_strand_strength = params.p.z;
-    g_strand_thinness = params.p.w;
+    g_strand_strength = STRAND_STRENGTH_FIXED;
+    g_strand_thinness = STRAND_THINNESS_FIXED;
     let topology_amount = params.q.x;
     let topology_rate = params.q.y;
     let topology_duration = params.q.z;
@@ -823,7 +832,7 @@ fn shape_complexity() -> f32 {
     let ridge = params.g.y * 0.25;
     let warp = abs(params.g.x) * 0.08;
     let stretch = abs(params.g.w) * 0.35;
-    let strands = params.p.z * 0.18;
+    let strands = STRAND_STRENGTH_FIXED * 0.18;
     let topology = params.q.x * 0.2;
     return h1 + h2 + ridge + warp + stretch + strands + topology;
 }
