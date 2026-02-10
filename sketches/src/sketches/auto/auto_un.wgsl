@@ -34,9 +34,9 @@ struct Params {
     l: vec4f,
     // m: energy_strength, energy_power, energy_freq, chroma_strength
     m: vec4f,
-    // n: reserved, reserved, reserved, reserved
+    // n: satellite_count, satellite_radius, satellite_orbit, satellite_activity
     n: vec4f,
-    // o: reserved, reserved, reserved, reserved
+    // o: satellite_speed, satellite_merge, satellite_jitter, satellite_breathe
     o: vec4f,
     // p: reserved, reserved, reserved, reserved
     p: vec4f,
@@ -64,6 +64,7 @@ const ORBIT_AMOUNT: f32 = 0.2;
 const CENTER_LIFT: f32 = 0.12;
 const AO_STRENGTH: f32 = 1.25;
 const AO_STEP: f32 = 0.02;
+const SATELLITE_MAX: i32 = 9;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
@@ -253,6 +254,14 @@ fn scene_sdf(p: vec3f, beats: f32) -> f32 {
 
     let blend_pulse_amount = params.l.z;
     let blend_pulse_freq = params.l.w;
+    let sat_count = i32(round(clamp(params.n.x, 0.0, f32(SATELLITE_MAX))));
+    let sat_radius = max(params.n.y, 0.0);
+    let sat_orbit = max(params.n.z, 0.0);
+    let sat_activity = clamp(params.n.w, 0.0, 1.0);
+    let sat_speed = max(params.o.x, 0.0);
+    let sat_merge = clamp(params.o.y, 0.0, 1.0);
+    let sat_jitter = clamp(params.o.z, 0.0, 1.0);
+    let sat_breathe = clamp(params.o.w, 0.0, 1.0);
     let phase = shape_phase + beats * motion_speed;
     let tri_size = max(params.k.y, 0.0001);
     let tri_rot = params.k.z;
@@ -321,7 +330,44 @@ fn scene_sdf(p: vec3f, beats: f32) -> f32 {
     let d13 = smin(d1, d3, blend);
     let d23 = smin(d2, d3, blend);
     let d123 = smin(d12, d13, blend);
-    return smin(d123, d23, blend);
+    var scene = smin(d123, d23, blend);
+
+    // Satellite metaballs: orbiting droplets that periodically dive in/out.
+    if (sat_count > 0 && sat_radius > 0.0 && sat_orbit > 0.0) {
+        let sat_blend_base = max(0.0001, blend * (0.32 + 0.68 * sat_merge));
+        for (var i = 0; i < SATELLITE_MAX; i = i + 1) {
+            if (i >= sat_count) {
+                break;
+            }
+            let hub_idx = i % 3;
+            let lane = i / 3;
+            var hub = c1;
+            if (hub_idx == 1) {
+                hub = c2;
+            } else if (hub_idx == 2) {
+                hub = c3;
+            }
+
+            let sat_phase = phase * sat_speed + f32(i) * 1.947 + f32(lane) * 2.713;
+            let radial = sat_orbit * (
+                1.0 + 0.45 * sat_jitter * sin(sat_phase * 1.63 + f32(hub_idx) * 1.9)
+            );
+            let theta = sat_phase + 0.6 * sat_jitter * sin(sat_phase * 0.71 + 1.2);
+            let y_amp = radial * (0.25 + 0.45 * sat_jitter);
+            let y_off = y_amp * sin(sat_phase * 1.29 + f32(hub_idx) * 0.83);
+            let orbit_offset = vec3f(cos(theta) * radial, y_off, sin(theta) * radial);
+            let inhale = sat_activity * (0.5 + 0.5 * sin(sat_phase * 1.91 + beats * 0.37));
+            let sat_center = mix(hub + orbit_offset, hub, inhale);
+            let sat_r = sat_radius * (
+                1.0 + 0.35 * sat_breathe * sin(sat_phase * 2.07 + beats * 0.91)
+            );
+            let sat_d = length(p - sat_center) - max(sat_r, 0.01);
+            let sat_blend = sat_blend_base * (0.7 + 0.3 * inhale);
+            scene = smin(scene, sat_d, sat_blend);
+        }
+    }
+
+    return scene;
 }
 
 fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
