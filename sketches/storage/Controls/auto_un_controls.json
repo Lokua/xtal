@@ -9,27 +9,17 @@
     {
       "type": "Slider",
       "name": "cam_distance",
-      "value": 4.26
-    },
-    {
-      "type": "Slider",
-      "name": "cam_height",
-      "value": 0.375
+      "value": 5.55
     },
     {
       "type": "Slider",
       "name": "focal_len",
-      "value": 1.16
-    },
-    {
-      "type": "Slider",
-      "name": "march_steps",
-      "value": 256.0
+      "value": 1.76
     },
     {
       "type": "Slider",
       "name": "sphere_radius",
-      "value": 0.85
+      "value": 0.6
     },
     {
       "type": "Slider",
@@ -39,17 +29,17 @@
     {
       "type": "Slider",
       "name": "harmonic_amp_1",
-      "value": 0.045
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 6.61
+      "value": 12.21
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_2",
-      "value": 0.077
+      "value": 0.0
     },
     {
       "type": "Slider",
@@ -59,7 +49,7 @@
     {
       "type": "Slider",
       "name": "harmonic_warp",
-      "value": -4.028
+      "value": -1.51
     },
     {
       "type": "Slider",
@@ -79,12 +69,22 @@
     {
       "type": "Slider",
       "name": "triangle_size",
-      "value": 1.45
+      "value": 1.25
     },
     {
       "type": "Slider",
       "name": "triangle_rotation",
-      "value": 2.614
+      "value": 2.834
+    },
+    {
+      "type": "Slider",
+      "name": "topology_amount",
+      "value": 0.269
+    },
+    {
+      "type": "Slider",
+      "name": "topology_split",
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -94,7 +94,7 @@
     {
       "type": "Slider",
       "name": "satellite_radius",
-      "value": 0.278
+      "value": 0.077
     },
     {
       "type": "Slider",
@@ -103,18 +103,8 @@
     },
     {
       "type": "Slider",
-      "name": "satellite_activity",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
       "name": "satellite_speed",
-      "value": 0.5
-    },
-    {
-      "type": "Slider",
-      "name": "satellite_merge",
-      "value": 1.0
+      "value": 0.625
     },
     {
       "type": "Slider",
@@ -128,18 +118,8 @@
     },
     {
       "type": "Slider",
-      "name": "strand_strength",
-      "value": 0.297
-    },
-    {
-      "type": "Slider",
-      "name": "strand_thinness",
-      "value": 0.626
-    },
-    {
-      "type": "Slider",
       "name": "motion_speed",
-      "value": 2.0
+      "value": 1.5
     },
     {
       "type": "Slider",
@@ -154,52 +134,22 @@
     {
       "type": "Slider",
       "name": "flow_scale",
-      "value": 2.505
+      "value": 3.0
     },
     {
       "type": "Slider",
       "name": "blend_pulse_amount",
-      "value": 0.38
+      "value": 0.35
     },
     {
       "type": "Slider",
       "name": "blend_pulse_freq",
-      "value": 1.0
-    },
-    {
-      "type": "Slider",
-      "name": "light_x",
-      "value": 0.34
-    },
-    {
-      "type": "Slider",
-      "name": "light_y",
-      "value": 4.64
-    },
-    {
-      "type": "Slider",
-      "name": "light_z",
-      "value": 5.09
+      "value": 3.0
     },
     {
       "type": "Slider",
       "name": "light_intensity",
-      "value": 1.08
-    },
-    {
-      "type": "Slider",
-      "name": "shadow_strength",
-      "value": 0.08
-    },
-    {
-      "type": "Slider",
-      "name": "shadow_softness",
-      "value": 64.0
-    },
-    {
-      "type": "Checkbox",
-      "name": "shadow_legacy_mode",
-      "value": false
+      "value": 2.51
     },
     {
       "type": "Slider",
@@ -209,22 +159,22 @@
     {
       "type": "Slider",
       "name": "rim_power",
-      "value": 7.17
+      "value": 9.34
     },
     {
       "type": "Slider",
       "name": "emissive_strength",
-      "value": 2.08
+      "value": 4.0
     },
     {
       "type": "Slider",
       "name": "spec_power",
-      "value": 125.0
+      "value": 256.0
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 0.88
+      "value": 0.14
     },
     {
       "type": "Slider",
@@ -234,7 +184,7 @@
     {
       "type": "Slider",
       "name": "saturation",
-      "value": 2.28
+      "value": 2.37
     },
     {
       "type": "Slider",
