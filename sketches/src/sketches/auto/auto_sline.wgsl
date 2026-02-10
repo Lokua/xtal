@@ -24,18 +24,25 @@ struct Params {
 
     // f1 jitter, f2 hue, f3 brightness, f4 bg_lift
     f: vec4f,
+
     // g1 rate_gradient, g2 rate_spread, g3 focus_color_impact, g4 harmonic_amp
     g: vec4f,
+
     // h1 latlong_warp_enabled, h2 latlong_warp_amount,
     // h3 latlong_warp_freq, h4 latlong_symmetry
     h: vec4f,
+
     // i1 flow_field_enabled, i2 flow_field_amount, i3 flow_field_scale,
     // i4 flow_field_rate
     i: vec4f,
-    // placeholders
+
+    // ...
     j: vec4f,
-    // k1 line_hue_span, k2 flow_field_scale, k3 flow_field_rate
+
+    // k1 line_hue_span, k2 harmonic_freq, k3 harmonic_rate
     k: vec4f,
+
+    // ...
     l: vec4f,
 }
 
@@ -92,6 +99,8 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
     let flow_field_rate = params.i.w;
 
     let line_hue_span = params.k.x;
+    let harmonic_freq = max(0.0001, params.k.y);
+    let harmonic_rate = params.k.z;
 
     let total_points = u32(line_count * samples_per_line);
     let point_index = (vert_index / 6u) % total_points;
@@ -132,8 +141,8 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
 
     // Add a second harmonic with an irrational ratio for richer motion.
     let base_phase = (t * TAU * wave_freq) + line_phase;
-    let harmonic_ratio = 1.61803398875;
-    let harmonic_phase = base_phase * harmonic_ratio + line_phase * 0.17;
+    let harmonic_time_phase = beats * TAU * harmonic_rate;
+    let harmonic_phase = base_phase * harmonic_freq + line_phase * 0.17 + harmonic_time_phase;
     let wave_shape = sin(base_phase) + sin(harmonic_phase) * harmonic_amp;
     let wave = wave_shape * wave_amp_mod;
     pos.y += wave;
