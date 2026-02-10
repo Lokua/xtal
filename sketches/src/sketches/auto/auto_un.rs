@@ -19,7 +19,7 @@ pub struct AutoUn {
     gpu: gpu::GpuState<gpu::BasicPositionVertex>,
 }
 
-#[uniforms(banks = 12)]
+#[uniforms(banks = 24)]
 struct ShaderParams {}
 
 pub fn init(app: &App, ctx: &Context) -> AutoUn {
