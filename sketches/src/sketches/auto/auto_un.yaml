@@ -1,6 +1,7 @@
 # ------------------------------------------------------------------------------
-#  Camera
+#  View
 # ------------------------------------------------------------------------------
+
 view:
   var: e4
   type: select
@@ -14,6 +15,10 @@ view:
     - specular
     - rim
     - fresnel
+
+# ------------------------------------------------------------------------------
+#  Camera
+# ------------------------------------------------------------------------------
 
 camera:
   type: separator
@@ -156,6 +161,50 @@ triangle_rotation:
   type: slider
   range: [0.0, 6.283185307179586]
   default: 0.0
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Topology Events
+# ------------------------------------------------------------------------------
+
+topology_events:
+  type: separator
+
+topology_drive:
+  var: r2
+  type: random_slewed
+  beats: 4.0
+  range: [0.0, 1.0]
+  slew: 0.7
+  delay: 0.0
+  stem: 9147
+
+topology_amount:
+  var: q1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.001
+
+topology_rate:
+  var: q2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.001
+
+topology_duration:
+  var: q3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.45
+  step: 0.001
+
+topology_split:
+  var: q4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.55
   step: 0.001
 
 # ------------------------------------------------------------------------------

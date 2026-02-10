@@ -40,7 +40,9 @@ struct Params {
     o: vec4f,
     // p: flow_amount, flow_scale, strand_strength, strand_thinness
     p: vec4f,
+    // q: topology_amount, topology_rate, topology_duration, topology_split
     q: vec4f,
+    // r: reserved, topology_drive, reserved, reserved
     r: vec4f,
     s: vec4f,
     t: vec4f,
@@ -88,6 +90,15 @@ var<private> g_flow_amount: f32;
 var<private> g_flow_scale: f32;
 var<private> g_strand_strength: f32;
 var<private> g_strand_thinness: f32;
+var<private> g_topology_amount: f32;
+var<private> g_topology_strength1: f32;
+var<private> g_topology_strength2: f32;
+var<private> g_topology_strength3: f32;
+var<private> g_topology_blend: f32;
+var<private> g_topology_split1: vec3f;
+var<private> g_topology_split2: vec3f;
+var<private> g_topology_split3: vec3f;
+var<private> g_topology_bound: f32;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
@@ -101,14 +112,14 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let uv = correct_aspect(position);
     let beats = params.a.z;
-    let color_mix = clamp(params.a.w, 0.0, 1.0);
+    let color_mix = params.a.w;
     let hue_shift = params.e.x;
     let saturation = max(params.e.y, 0.0);
     let contrast = max(params.e.z, 0.0);
     let debug_view = i32(params.e.w);
     let light_pos = vec3f(params.h.x, params.h.y, params.h.z);
     let light_intensity = max(params.h.w, 0.0);
-    let shadow_strength = clamp(params.i.x, 0.0, 1.0);
+    let shadow_strength = params.i.x;
     let shadow_softness = max(params.i.y, 0.0001);
     let shadow_legacy_mode = params.i.z > 0.5;
     let rim_strength = max(params.j.x, 0.0);
@@ -118,11 +129,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
-    let max_steps = i32(round(clamp(
-        params.b.x,
-        1.0,
-        f32(MAX_MARCH_STEPS_CAP),
-    )));
+    let max_steps = i32(round(params.b.x));
 
     let cam_dist = max(params.c.x, 0.1);
     let cam_y_rotation = params.c.y;
@@ -138,8 +145,16 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let vv = cross(ww, uu);
     let rd = normalize(uv.x * uu + uv.y * vv + focal_len * ww);
 
-    let bg_bottom = mix(vec3f(0.005, 0.006, 0.010), vec3f(0.010, 0.006, 0.004), color_mix);
-    let bg_top = mix(vec3f(0.020, 0.014, 0.028), vec3f(0.024, 0.014, 0.008), color_mix);
+    let bg_bottom = mix(
+        vec3f(0.005, 0.006, 0.010),
+        vec3f(0.010, 0.006, 0.004),
+        color_mix,
+    );
+    let bg_top = mix(
+        vec3f(0.020, 0.014, 0.028),
+        vec3f(0.024, 0.014, 0.008),
+        color_mix,
+    );
     let bg = mix(
         bg_bottom,
         bg_top,
@@ -263,23 +278,37 @@ fn prepare_scene_state(beats: f32) {
 
     let blend_pulse_amount = params.l.z;
     let blend_pulse_freq = params.l.w;
-    g_sat_count = i32(round(clamp(params.n.x, 0.0, f32(SATELLITE_MAX))));
-    g_sat_radius = max(params.n.y, 0.0);
-    g_sat_orbit = max(params.n.z, 0.0);
-    g_sat_activity = clamp(params.n.w, 0.0, 1.0);
-    g_sat_speed = max(params.o.x, 0.0);
-    g_sat_merge = clamp(params.o.y, 0.0, 1.0);
-    g_sat_jitter = clamp(params.o.z, 0.0, 1.0);
-    g_sat_breathe = clamp(params.o.w, 0.0, 1.0);
-    g_flow_amount = clamp(params.p.x, 0.0, 1.0);
-    g_flow_scale = max(params.p.y, 0.05);
-    g_strand_strength = clamp(params.p.z, 0.0, 1.0);
-    g_strand_thinness = clamp(params.p.w, 0.0, 1.0);
+    g_sat_count = i32(round(params.n.x));
+    g_sat_radius = params.n.y;
+    g_sat_orbit = params.n.z;
+    g_sat_activity = params.n.w;
+    g_sat_speed = params.o.x;
+    g_sat_merge = params.o.y;
+    g_sat_jitter = params.o.z;
+    g_sat_breathe = params.o.w;
+    g_flow_amount = params.p.x;
+    g_flow_scale = params.p.y;
+    g_strand_strength = params.p.z;
+    g_strand_thinness = params.p.w;
+    let topology_amount = params.q.x;
+    let topology_rate = params.q.y;
+    let topology_duration = params.q.z;
+    let topology_split = params.q.w;
+    let topology_drive = params.r.y;
+    g_topology_amount = topology_amount * topology_drive;
+    g_topology_strength1 = 0.0;
+    g_topology_strength2 = 0.0;
+    g_topology_strength3 = 0.0;
+    g_topology_blend = 0.0001;
+    g_topology_split1 = vec3f(0.0);
+    g_topology_split2 = vec3f(0.0);
+    g_topology_split3 = vec3f(0.0);
+    g_topology_bound = 0.0;
     g_phase = shape_phase + beats * motion_speed;
 
     let stretch_amount = params.g.w;
     let harmonic_amp_sum = abs(params.f.x) + abs(params.f.z);
-    let ridge = clamp(params.g.y, 0.0, 1.0);
+    let ridge = params.g.y;
     let harmonic_bound = pow(
         max(harmonic_amp_sum, 0.00001),
         mix(1.0, 0.35, ridge),
@@ -343,9 +372,21 @@ fn prepare_scene_state(beats: f32) {
     if (g_flow_amount > 0.0001) {
         let flow_t = beats * (0.31 + motion_speed * 0.69);
         let flow_amt = 0.35 * g_flow_amount;
-        g_c1 += flow_amt * curl_advection(g_c1 + vec3f(0.7, 1.1, -0.4), flow_t, g_flow_scale);
-        g_c2 += flow_amt * curl_advection(g_c2 + vec3f(-0.9, 0.3, 0.8), flow_t + 1.7, g_flow_scale);
-        g_c3 += flow_amt * curl_advection(g_c3 + vec3f(0.2, -1.2, 1.4), flow_t + 3.1, g_flow_scale);
+        g_c1 += flow_amt * curl_advection(
+            g_c1 + vec3f(0.7, 1.1, -0.4),
+            flow_t,
+            g_flow_scale,
+        );
+        g_c2 += flow_amt * curl_advection(
+            g_c2 + vec3f(-0.9, 0.3, 0.8),
+            flow_t + 1.7,
+            g_flow_scale,
+        );
+        g_c3 += flow_amt * curl_advection(
+            g_c3 + vec3f(0.2, -1.2, 1.4),
+            flow_t + 3.1,
+            g_flow_scale,
+        );
     }
 
     g_blend = max(
@@ -354,33 +395,127 @@ fn prepare_scene_state(beats: f32) {
     );
     g_outer_blend = max(
         0.0001,
-        g_blend * (0.35 + 0.65 * clamp(g_motion_amount, 0.0, 1.0)),
+        g_blend * (0.35 + 0.65 * g_motion_amount),
     );
+
+    if (g_topology_amount > 0.0001) {
+        // Smooth, coordinated split pulses (no random cycle jumps).
+        let topo_speed = mix(0.05, 0.42, topology_rate);
+        let topo_phase = beats * topo_speed;
+        let pulse_width = mix(0.07, 0.44, topology_duration);
+        let axis_spin = 6.283185307179586 * topo_phase;
+        let tilt = 0.18 * sin(beats * (0.37 + 0.53 * topology_rate));
+
+        let pulse1 = topology_pulse(topo_phase + 0.0, pulse_width);
+        let pulse2 = topology_pulse(topo_phase + 0.33333334, pulse_width);
+        let pulse3 = topology_pulse(topo_phase + 0.6666667, pulse_width);
+
+        g_topology_strength1 = g_topology_amount * pulse1;
+        g_topology_strength2 = g_topology_amount * pulse2;
+        g_topology_strength3 = g_topology_amount * pulse3;
+
+        let split_base = max(params.d.y, 0.02)
+            * mix(0.14, 1.05, topology_split);
+        let split1 = split_base * mix(0.2, 1.0, g_topology_strength1);
+        let split2 = split_base * mix(0.2, 1.0, g_topology_strength2);
+        let split3 = split_base * mix(0.2, 1.0, g_topology_strength3);
+
+        let dir1 = safe_normalize(vec3f(
+            cos(axis_spin + 0.0),
+            tilt,
+            sin(axis_spin + 0.0),
+        ));
+        let dir2 = safe_normalize(vec3f(
+            cos(axis_spin + 2.0943951),
+            tilt,
+            sin(axis_spin + 2.0943951),
+        ));
+        let dir3 = safe_normalize(vec3f(
+            cos(axis_spin + 4.1887902),
+            tilt,
+            sin(axis_spin + 4.1887902),
+        ));
+
+        g_topology_split1 = dir1 * split1;
+        g_topology_split2 = dir2 * split2;
+        g_topology_split3 = dir3 * split3;
+        g_topology_blend = max(
+            0.0001,
+            g_blend * mix(0.14, 0.6, topology_split),
+        );
+
+        let max_strength = max(
+            g_topology_strength1,
+            max(g_topology_strength2, g_topology_strength3),
+        );
+        g_topology_bound = split_base * (0.75 + 0.5 * max_strength);
+    }
 }
 
 fn scene_sdf(p: vec3f) -> f32 {
     // Conservative broad-phase bound. If far enough, return early and skip
     // expensive harmonic/satellite evaluation while preserving visual result.
-    let d1_bound = length(p - g_c1) - g_blob_radius_bound;
-    let d2_bound = length(p - g_c2) - g_blob_radius_bound;
-    let d3_bound = length(p - g_c3) - g_blob_radius_bound;
+    let d1_bound = length(p - g_c1)
+        - (g_blob_radius_bound + g_topology_bound);
+    let d2_bound = length(p - g_c2)
+        - (g_blob_radius_bound + g_topology_bound);
+    let d3_bound = length(p - g_c3)
+        - (g_blob_radius_bound + g_topology_bound);
     var scene_bound = min(min(d1_bound, d2_bound), d3_bound) - g_smooth_pad;
     if (g_sat_count > 0 && g_sat_radius > 0.0 && g_sat_orbit > 0.0) {
         let sat_orbit_bound = g_sat_orbit * (1.0 + 0.45 * g_sat_jitter);
         let sat_radius_bound = g_sat_radius * (1.0 + 0.35 * g_sat_breathe);
-        let sat_cluster_bound = sat_orbit_bound + sat_radius_bound + g_smooth_pad;
+        let sat_cluster_bound = sat_orbit_bound
+            + sat_radius_bound
+            + g_smooth_pad;
         let sat1_bound = length(p - g_c1) - sat_cluster_bound;
         let sat2_bound = length(p - g_c2) - sat_cluster_bound;
         let sat3_bound = length(p - g_c3) - sat_cluster_bound;
-        scene_bound = min(scene_bound, min(min(sat1_bound, sat2_bound), sat3_bound));
+        scene_bound = min(
+            scene_bound,
+            min(min(sat1_bound, sat2_bound), sat3_bound),
+        );
     }
     if (scene_bound > 0.35) {
         return scene_bound;
     }
 
-    let d1 = blob_sdf(p, g_c1, g_phase + 0.0);
-    let d2 = blob_sdf(p, g_c2, g_phase + 2.1);
-    let d3 = blob_sdf(p, g_c3, g_phase + 4.2);
+    let d1_base = blob_sdf(p, g_c1, g_phase + 0.0);
+    let d2_base = blob_sdf(p, g_c2, g_phase + 2.1);
+    let d3_base = blob_sdf(p, g_c3, g_phase + 4.2);
+    var d1 = d1_base;
+    var d2 = d2_base;
+    var d3 = d3_base;
+    if (g_topology_strength1 > 0.0001) {
+        let d1_split = split_blob_sdf(
+            p,
+            g_c1,
+            g_phase + 0.0,
+            g_topology_split1,
+            g_topology_strength1,
+        );
+        d1 = mix(d1_base, d1_split, g_topology_strength1);
+    }
+    if (g_topology_strength2 > 0.0001) {
+        let d2_split = split_blob_sdf(
+            p,
+            g_c2,
+            g_phase + 2.1,
+            g_topology_split2,
+            g_topology_strength2,
+        );
+        d2 = mix(d2_base, d2_split, g_topology_strength2);
+    }
+    if (g_topology_strength3 > 0.0001) {
+        let d3_split = split_blob_sdf(
+            p,
+            g_c3,
+            g_phase + 4.2,
+            g_topology_split3,
+            g_topology_strength3,
+        );
+        d3 = mix(d3_base, d3_split, g_topology_strength3);
+    }
 
     // True 3-way smooth union so all blobs can merge as a single mass.
     let d12 = smin(d1, d2, g_outer_blend);
@@ -406,33 +541,50 @@ fn scene_sdf(p: vec3f) -> f32 {
                 hub = g_c3;
             }
 
-            let sat_phase = g_phase * g_sat_speed + f32(i) * 1.947 + f32(lane) * 2.713;
+            let sat_phase = g_phase * g_sat_speed
+                + f32(i) * 1.947
+                + f32(lane) * 2.713;
             let radial = g_sat_orbit * (
-                1.0 + 0.45 * g_sat_jitter * sin(sat_phase * 1.63 + f32(hub_idx) * 1.9)
+                1.0
+                    + 0.45
+                        * g_sat_jitter
+                        * sin(sat_phase * 1.63 + f32(hub_idx) * 1.9)
             );
-            let theta = sat_phase + 0.6 * g_sat_jitter * sin(sat_phase * 0.71 + 1.2);
+            let theta = sat_phase
+                + 0.6 * g_sat_jitter * sin(sat_phase * 0.71 + 1.2);
             let y_amp = radial * (0.25 + 0.45 * g_sat_jitter);
             let y_off = y_amp * sin(sat_phase * 1.29 + f32(hub_idx) * 0.83);
-            let orbit_offset = vec3f(cos(theta) * radial, y_off, sin(theta) * radial);
+            let orbit_offset = vec3f(
+                cos(theta) * radial,
+                y_off,
+                sin(theta) * radial,
+            );
             let inhale = g_sat_activity * (
                 0.5 + 0.5 * sin(sat_phase * 1.91 + g_beats * 0.37)
             );
             let sat_center = mix(hub + orbit_offset, hub, inhale);
-            let sat_r = g_sat_radius * (
-                1.0 + 0.35 * g_sat_breathe * sin(sat_phase * 2.07 + g_beats * 0.91)
-            );
+            let sat_r = g_sat_radius
+                * (1.0
+                    + 0.35
+                        * g_sat_breathe
+                        * sin(sat_phase * 2.07 + g_beats * 0.91));
             let sat_d = length(p - sat_center) - max(sat_r, 0.01);
             let sat_blend = sat_blend_base * (0.7 + 0.3 * inhale);
             scene = smin(scene, sat_d, sat_blend);
 
-            // Mucus-like strand: thin, sticky connection as satellites pull away.
+            // Mucus-like strand: thin sticky connection.
             if (g_strand_strength > 0.0001) {
-                let away = clamp(1.0 - inhale, 0.0, 1.0);
+                let away = 1.0 - inhale;
                 let strand_gate = smoothstep(0.05, 0.95, away);
                 let strand_r = g_sat_radius
                     * mix(0.26, 0.07, g_strand_thinness)
                     * (0.35 + 0.65 * away);
-                let strand_d = sd_capsule(p, hub, sat_center, max(strand_r, 0.002));
+                let strand_d = sd_capsule(
+                    p,
+                    hub,
+                    sat_center,
+                    max(strand_r, 0.002),
+                );
                 let strand_blend = strand_base * strand_gate;
                 scene = smin(scene, strand_d, max(0.0001, strand_blend));
             }
@@ -442,7 +594,50 @@ fn scene_sdf(p: vec3f) -> f32 {
     return scene;
 }
 
+fn topology_pulse(phase: f32, width: f32) -> f32 {
+    let wave = 0.5 + 0.5 * sin(6.283185307179586 * phase);
+    let edge = width;
+    return smoothstep(1.0 - edge, 1.0, wave);
+}
+
+fn split_blob_sdf(
+    p: vec3f,
+    center: vec3f,
+    phase: f32,
+    split: vec3f,
+    strength: f32,
+) -> f32 {
+    let s = strength;
+    let radius_scale = mix(1.0, 0.74, s);
+    let split_a = blob_sdf_scaled(
+        p,
+        center + split,
+        phase + 0.13,
+        radius_scale,
+    );
+    let split_b = blob_sdf_scaled(
+        p,
+        center - split,
+        phase - 0.17,
+        radius_scale,
+    );
+    let neck_blend = max(
+        0.0001,
+        g_topology_blend * mix(1.0, 0.34, s),
+    );
+    return smin(split_a, split_b, neck_blend);
+}
+
 fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
+    return blob_sdf_scaled(p, center, phase, 1.0);
+}
+
+fn blob_sdf_scaled(
+    p: vec3f,
+    center: vec3f,
+    phase: f32,
+    radius_scale: f32,
+) -> f32 {
     let sphere_radius = params.d.y;
     let rel = p - center;
     let dir = safe_normalize(rel);
@@ -451,7 +646,7 @@ fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
     let stretch_term = 0.45 * stretch_amount
         * (dir.y * dir.y - 0.5 * (dir.x * dir.x + dir.z * dir.z));
     let bump = harmonic_field(dir, phase);
-    let r_mod = sphere_radius * (
+    let r_mod = sphere_radius * max(radius_scale, 0.05) * (
         1.0
             + stretch_term
             + bump
@@ -491,9 +686,11 @@ fn harmonic_field(dir: vec3f, phase: f32) -> f32 {
     let amp2 = params.f.z;
     let freq2 = max(params.f.w, 0.0);
     let warp = params.g.x;
-    let ridge = clamp(params.g.y, 0.0, 1.0);
+    let ridge = params.g.y;
 
-    let h1 = sin((dir.x + 0.31 * dir.y) * (freq1 + 0.0001) + phase + warp * dir.z);
+    let h1 = sin(
+        (dir.x + 0.31 * dir.y) * (freq1 + 0.0001) + phase + warp * dir.z,
+    );
     let h2 = sin(
         (dir.y - 0.27 * dir.z) * (freq2 * 0.87 + 1.3)
             - phase * 0.7
@@ -593,7 +790,7 @@ fn soft_shadow(
                 break;
             }
             result = min(result, softness * h / max(t, 0.02));
-            // Slightly denser stepping reduces contour-like bands on rippled SDFs.
+            // Denser stepping reduces contour-like bands on rippled SDFs.
             t += clamp(h * 0.6, surf_eps * 0.4, 0.12);
         }
         if (t > max_t) {
@@ -627,12 +824,14 @@ fn shape_complexity() -> f32 {
     let warp = abs(params.g.x) * 0.08;
     let stretch = abs(params.g.w) * 0.35;
     let strands = params.p.z * 0.18;
-    return clamp(h1 + h2 + ridge + warp + stretch + strands, 0.0, 1.0);
+    let topology = params.q.x * 0.2;
+    return h1 + h2 + ridge + warp + stretch + strands + topology;
 }
 
 fn tone_map_filmic(color: vec3f) -> vec3f {
     let x = max(color - vec3f(0.004), vec3f(0.0));
-    return (x * (6.2 * x + vec3f(0.5))) / (x * (6.2 * x + vec3f(1.7)) + vec3f(0.06));
+    return (x * (6.2 * x + vec3f(0.5)))
+        / (x * (6.2 * x + vec3f(1.7)) + vec3f(0.06));
 }
 
 fn apply_color_grade(
@@ -673,5 +872,9 @@ fn rgb_to_hsv(c: vec3f) -> vec3f {
 fn hsv_to_rgb(c: vec3f) -> vec3f {
     let p = abs(fract(c.xxx + vec3f(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0
         - vec3f(3.0));
-    return c.z * mix(vec3f(1.0), clamp(p - vec3f(1.0), vec3f(0.0), vec3f(1.0)), c.y);
+    return c.z * mix(
+        vec3f(1.0),
+        clamp(p - vec3f(1.0), vec3f(0.0), vec3f(1.0)),
+        c.y,
+    );
 }
