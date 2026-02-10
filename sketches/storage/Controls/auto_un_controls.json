@@ -29,7 +29,7 @@
     {
       "type": "Slider",
       "name": "sphere_radius",
-      "value": 1.03
+      "value": 0.85
     },
     {
       "type": "Slider",
@@ -79,7 +79,7 @@
     {
       "type": "Slider",
       "name": "triangle_size",
-      "value": 1.54
+      "value": 1.45
     },
     {
       "type": "Slider",
@@ -119,12 +119,22 @@
     {
       "type": "Slider",
       "name": "satellite_jitter",
-      "value": 0.199
+      "value": 0.255
     },
     {
       "type": "Slider",
       "name": "satellite_breathe",
       "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "strand_strength",
+      "value": 0.297
+    },
+    {
+      "type": "Slider",
+      "name": "strand_thinness",
+      "value": 0.626
     },
     {
       "type": "Slider",
@@ -135,6 +145,16 @@
       "type": "Slider",
       "name": "motion_amount",
       "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "flow_amount",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "flow_scale",
+      "value": 2.505
     },
     {
       "type": "Slider",
