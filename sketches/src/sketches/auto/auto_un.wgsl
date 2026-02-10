@@ -38,7 +38,7 @@ struct Params {
     n: vec4f,
     // o: satellite_speed, satellite_merge, satellite_jitter, satellite_breathe
     o: vec4f,
-    // p: reserved, reserved, reserved, reserved
+    // p: flow_amount, flow_scale, strand_strength, strand_thinness
     p: vec4f,
     q: vec4f,
     r: vec4f,
@@ -84,6 +84,10 @@ var<private> g_sat_speed: f32;
 var<private> g_sat_merge: f32;
 var<private> g_sat_jitter: f32;
 var<private> g_sat_breathe: f32;
+var<private> g_flow_amount: f32;
+var<private> g_flow_scale: f32;
+var<private> g_strand_strength: f32;
+var<private> g_strand_thinness: f32;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
@@ -283,6 +287,10 @@ fn prepare_scene_state(beats: f32) {
     g_sat_merge = clamp(params.o.y, 0.0, 1.0);
     g_sat_jitter = clamp(params.o.z, 0.0, 1.0);
     g_sat_breathe = clamp(params.o.w, 0.0, 1.0);
+    g_flow_amount = clamp(params.p.x, 0.0, 1.0);
+    g_flow_scale = max(params.p.y, 0.05);
+    g_strand_strength = clamp(params.p.z, 0.0, 1.0);
+    g_strand_thinness = clamp(params.p.w, 0.0, 1.0);
     g_phase = shape_phase + beats * motion_speed;
 
     let stretch_amount = params.g.w;
@@ -348,6 +356,14 @@ fn prepare_scene_state(beats: f32) {
         0.12 * sin(g_phase * 1.31 + 4.1887902),
     );
 
+    if (g_flow_amount > 0.0001) {
+        let flow_t = beats * (0.31 + motion_speed * 0.69);
+        let flow_amt = 0.35 * g_flow_amount;
+        g_c1 += flow_amt * curl_advection(g_c1 + vec3f(0.7, 1.1, -0.4), flow_t, g_flow_scale);
+        g_c2 += flow_amt * curl_advection(g_c2 + vec3f(-0.9, 0.3, 0.8), flow_t + 1.7, g_flow_scale);
+        g_c3 += flow_amt * curl_advection(g_c3 + vec3f(0.2, -1.2, 1.4), flow_t + 3.1, g_flow_scale);
+    }
+
     g_blend = max(
         params.d.z + blend_pulse_amount * sin(beats * blend_pulse_freq),
         0.0001,
@@ -392,6 +408,7 @@ fn scene_sdf(p: vec3f) -> f32 {
     // Satellite metaballs: orbiting droplets that periodically dive in/out.
     if (g_sat_count > 0 && g_sat_radius > 0.0 && g_sat_orbit > 0.0) {
         let sat_blend_base = max(0.0001, g_blend * (0.32 + 0.68 * g_sat_merge));
+        let strand_base = sat_blend_base * (0.25 + 0.9 * g_strand_strength);
         for (var i = 0; i < SATELLITE_MAX; i = i + 1) {
             if (i >= g_sat_count) {
                 break;
@@ -423,6 +440,18 @@ fn scene_sdf(p: vec3f) -> f32 {
             let sat_d = length(p - sat_center) - max(sat_r, 0.01);
             let sat_blend = sat_blend_base * (0.7 + 0.3 * inhale);
             scene = smin(scene, sat_d, sat_blend);
+
+            // Mucus-like strand: thin, sticky connection as satellites pull away.
+            if (g_strand_strength > 0.0001) {
+                let away = clamp(1.0 - inhale, 0.0, 1.0);
+                let strand_gate = smoothstep(0.05, 0.95, away);
+                let strand_r = g_sat_radius
+                    * mix(0.26, 0.07, g_strand_thinness)
+                    * (0.35 + 0.65 * away);
+                let strand_d = sd_capsule(p, hub, sat_center, max(strand_r, 0.002));
+                let strand_blend = strand_base * strand_gate;
+                scene = smin(scene, strand_d, max(0.0001, strand_blend));
+            }
         }
     }
 
@@ -507,6 +536,48 @@ fn rotate_xz(v: vec3f, angle: f32) -> vec3f {
     return vec3f(c * v.x - s * v.z, v.y, s * v.x + c * v.z);
 }
 
+fn flow_field(p: vec3f, time: f32, scale: f32) -> vec3f {
+    let q = p * scale;
+    return vec3f(
+        sin(q.y + time * 0.71) - cos(q.z * 1.17 - time * 0.37),
+        sin(q.z + time * 0.53) - cos(q.x * 1.31 + time * 0.19),
+        sin(q.x + time * 0.89) - cos(q.y * 1.11 - time * 0.43),
+    );
+}
+
+fn curl_advection(p: vec3f, time: f32, scale: f32) -> vec3f {
+    let e = 0.11;
+    let ex = vec3f(e, 0.0, 0.0);
+    let ey = vec3f(0.0, e, 0.0);
+    let ez = vec3f(0.0, 0.0, e);
+    let fx1 = flow_field(p + ex, time, scale);
+    let fx2 = flow_field(p - ex, time, scale);
+    let fy1 = flow_field(p + ey, time, scale);
+    let fy2 = flow_field(p - ey, time, scale);
+    let fz1 = flow_field(p + ez, time, scale);
+    let fz2 = flow_field(p - ez, time, scale);
+    let d_fz_dy = (fy1.z - fy2.z) / (2.0 * e);
+    let d_fy_dz = (fz1.y - fz2.y) / (2.0 * e);
+    let d_fx_dz = (fz1.x - fz2.x) / (2.0 * e);
+    let d_fz_dx = (fx1.z - fx2.z) / (2.0 * e);
+    let d_fy_dx = (fx1.y - fx2.y) / (2.0 * e);
+    let d_fx_dy = (fy1.x - fy2.x) / (2.0 * e);
+    let curl = vec3f(
+        d_fz_dy - d_fy_dz,
+        d_fx_dz - d_fz_dx,
+        d_fy_dx - d_fx_dy,
+    );
+    return safe_normalize(curl);
+}
+
+fn sd_capsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
+    let ab = b - a;
+    let ap = p - a;
+    let denom = max(dot(ab, ab), 0.000001);
+    let h = clamp(dot(ap, ab) / denom, 0.0, 1.0);
+    return length(ap - ab * h) - r;
+}
+
 fn soft_shadow(
     ro: vec3f,
     rd: vec3f,
@@ -571,7 +642,8 @@ fn shape_complexity() -> f32 {
     let ridge = params.g.y * 0.25;
     let warp = abs(params.g.x) * 0.08;
     let stretch = abs(params.g.w) * 0.35;
-    return clamp(h1 + h2 + ridge + warp + stretch, 0.0, 1.0);
+    let strands = params.p.z * 0.18;
+    return clamp(h1 + h2 + ridge + warp + stretch + strands, 0.0, 1.0);
 }
 
 fn tone_map_filmic(color: vec3f) -> vec3f {

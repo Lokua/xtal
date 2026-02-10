@@ -221,6 +221,20 @@ satellite_breathe:
   default: 0.25
   step: 0.001
 
+strand_strength:
+  var: p3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.001
+
+strand_thinness:
+  var: p4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.6
+  step: 0.001
+
 # ------------------------------------------------------------------------------
 #  Movement
 # ------------------------------------------------------------------------------
@@ -240,6 +254,20 @@ motion_amount:
   type: slider
   range: [0.0, 1]
   default: 0.07
+  step: 0.001
+
+flow_amount:
+  var: p1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.08
+  step: 0.001
+
+flow_scale:
+  var: p2
+  type: slider
+  range: [0.05, 3.0]
+  default: 0.55
   step: 0.001
 
 # ------------------------------------------------------------------------------
