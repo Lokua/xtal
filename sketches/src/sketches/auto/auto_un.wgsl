@@ -44,8 +44,9 @@ struct Params {
     q: vec4f,
     // r: reserved, topology_drive, reserved, reserved
     r: vec4f,
-    // s: reserved, reserved, reserved, reserved
+    // s: use_shadow, use_ao, use_diffuse, use_specular
     s: vec4f,
+    // t: use_rim, use_fresnel, reserved, reserved
     t: vec4f,
     u: vec4f,
     v: vec4f,
@@ -136,6 +137,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
     let spec_power = max(params.j.w, 1.0);
+    let use_shadow = params.s.x > 0.5;
+    let use_ao = params.s.y > 0.5;
+    let use_diffuse = params.s.z > 0.5;
+    let use_specular = params.s.w > 0.5;
+    let use_rim = params.t.x > 0.5;
+    let use_fresnel = params.t.y > 0.5;
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
@@ -191,7 +198,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let v = normalize(ro - p);
     let h = normalize(l + v);
     var shadow = 1.0;
-    if (shadow_strength > 0.0001) {
+    if (use_shadow && shadow_strength > 0.0001) {
         shadow = soft_shadow(
             p,
             l,
@@ -202,13 +209,31 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             shadow_legacy_mode,
         );
     }
-    let shadow_mix = mix(1.0, shadow, shadow_strength);
-    let ao = ambient_occlusion(p, n, surf_eps);
+    var shadow_mix = 1.0;
+    if (use_shadow) {
+        shadow_mix = mix(1.0, shadow, shadow_strength);
+    }
+    var ao = 1.0;
+    if (use_ao) {
+        ao = ambient_occlusion(p, n, surf_eps);
+    }
 
-    let diff = max(dot(n, l), 0.0) * shadow_mix;
-    let spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
-    let fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-    let rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
+    var diff = 0.0;
+    if (use_diffuse) {
+        diff = max(dot(n, l), 0.0) * shadow_mix;
+    }
+    var spec = 0.0;
+    if (use_specular) {
+        spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
+    }
+    var fresnel = 0.0;
+    if (use_fresnel) {
+        fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+    }
+    var rim = 0.0;
+    if (use_rim) {
+        rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
+    }
     if (debug_view == 1) {
         return vec4f(n * 0.5 + vec3f(0.5), 1.0);
     }
@@ -232,13 +257,24 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     let base = mix(vec3f(0.18, 0.72, 0.98), vec3f(0.98, 0.46, 0.22), color_mix);
-    var color = base * (0.12 + 0.88 * diff);
+    var color = vec3f(0.0);
+    if (use_diffuse) {
+        color = base * (0.12 + 0.88 * diff);
+    }
     color *= ao * light_intensity;
-    color += vec3f(spec) * 0.85 * light_intensity;
-    color += vec3f(0.9, 0.3, 1.0) * fresnel * 0.35;
-    color += mix(vec3f(0.35, 0.6, 1.0), vec3f(1.0, 0.5, 0.25), color_mix)
-        * rim
-        * emissive_strength;
+    if (use_specular) {
+        color += vec3f(spec) * 0.85 * light_intensity;
+    }
+    if (use_fresnel) {
+        color += vec3f(0.9, 0.3, 1.0) * fresnel * 0.35;
+    }
+    if (use_rim) {
+        color += mix(
+            vec3f(0.35, 0.6, 1.0),
+            vec3f(1.0, 0.5, 0.25),
+            color_mix,
+        ) * rim * emissive_strength;
+    }
 
     let fog = exp(-fog_density * t * t);
     color = mix(bg, color, fog);

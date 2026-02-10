@@ -1,22 +1,4 @@
 # ------------------------------------------------------------------------------
-#  View
-# ------------------------------------------------------------------------------
-
-view:
-  var: e4
-  type: select
-  default: final
-  options:
-    - final
-    - normals
-    - shadow
-    - ao
-    - diffuse
-    - specular
-    - rim
-    - fresnel
-
-# ------------------------------------------------------------------------------
 #  Camera
 # ------------------------------------------------------------------------------
 
@@ -297,6 +279,62 @@ blend_pulse_freq:
 
 lighting:
   type: separator
+
+view:
+  var: e4
+  type: select
+  default: final
+  options:
+    - final
+    - normals
+    - shadow
+    - ao
+    - diffuse
+    - specular
+    - rim
+    - fresnel
+
+# Like a flashlight beam. Turn this off and the shape loses directional light
+# and feels flatter.
+use_shadow:
+  var: s1
+  type: checkbox
+  default: true
+
+# Soft darkening in creases and tight spaces. Look for subtle dirt-like depth
+# where parts of the blob fold into each other.
+use_ao:
+  var: s2
+  type: checkbox
+  default: true
+
+# The main "base light" on surfaces facing the light. This is the big bright
+# and dark shape read.
+use_diffuse:
+  var: s3
+  type: checkbox
+  default: true
+
+# Shiny highlights (small bright glints). If this is off, glossy sparkle goes
+# away.
+use_specular:
+  var: s4
+  type: checkbox
+  default: true
+
+# Bright edge glow around silhouettes. Easy to spot as a neon-like border on
+# the outer contour.
+use_rim:
+  var: t1
+  type: checkbox
+  default: true
+
+# Edge tint that gets stronger at grazing angles. Look for colored sheen near
+# edges, separate from specular glints.
+use_fresnel:
+  var: t2
+  type: checkbox
+  default: true
 
 light_intensity:
   var: h4

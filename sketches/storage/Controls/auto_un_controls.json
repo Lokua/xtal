@@ -2,11 +2,6 @@
   "version": "2",
   "ui_controls": [
     {
-      "type": "Select",
-      "name": "view",
-      "value": "final"
-    },
-    {
       "type": "Slider",
       "name": "cam_distance",
       "value": 5.55
@@ -19,37 +14,37 @@
     {
       "type": "Slider",
       "name": "sphere_radius",
-      "value": 0.6
+      "value": 0.9
     },
     {
       "type": "Slider",
       "name": "blend_k",
-      "value": 1.0
+      "value": 0.65
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_1",
-      "value": 0.0
+      "value": 0.037
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 12.21
+      "value": 10.7
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_2",
-      "value": 0.0
+      "value": 0.079
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_2",
-      "value": 5.16
+      "value": 4.34
     },
     {
       "type": "Slider",
       "name": "harmonic_warp",
-      "value": -1.51
+      "value": 0.0
     },
     {
       "type": "Slider",
@@ -69,17 +64,17 @@
     {
       "type": "Slider",
       "name": "triangle_size",
-      "value": 1.25
+      "value": 1.08
     },
     {
       "type": "Slider",
       "name": "triangle_rotation",
-      "value": 2.834
+      "value": 0.703
     },
     {
       "type": "Slider",
       "name": "topology_amount",
-      "value": 0.269
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -94,12 +89,12 @@
     {
       "type": "Slider",
       "name": "satellite_radius",
-      "value": 0.077
+      "value": 0.276
     },
     {
       "type": "Slider",
       "name": "satellite_orbit",
-      "value": 1.649
+      "value": 1.8
     },
     {
       "type": "Slider",
@@ -147,9 +142,44 @@
       "value": 3.0
     },
     {
+      "type": "Select",
+      "name": "view",
+      "value": "final"
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_shadow",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_ao",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_diffuse",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_specular",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_rim",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "use_fresnel",
+      "value": false
+    },
+    {
       "type": "Slider",
       "name": "light_intensity",
-      "value": 2.51
+      "value": 2.97
     },
     {
       "type": "Slider",
@@ -189,7 +219,7 @@
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 1.53
+      "value": 1.35
     },
     {
       "type": "Slider",
