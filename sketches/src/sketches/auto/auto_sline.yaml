@@ -174,18 +174,18 @@ flow_field_enabled:
 
 flow_field_amount:
   var: j4
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.28
-  step: 0.01
+  type: triangle
+  beats: 32
+  range: [0.0, 0.5]
   disabled: not flow_field_enabled
 
 flow_field_scale:
   var: k2
-  type: slider
-  range: [0.1, 8.0]
-  default: 2.2
-  step: 0.01
+  type: round_robin
+  beats: 4
+  values: [1.5, 0.5, 3, 0.5, 1.75, 8, 1, 0.2]
+  slew: 0.8
+  stem: 87234
   disabled: not flow_field_enabled
 
 flow_field_rate:

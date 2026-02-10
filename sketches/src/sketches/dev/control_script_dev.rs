@@ -162,6 +162,28 @@ impl Sketch for ControlScriptDev {
             }
         }
 
+        if self.hub.bool("show_round_robin") {
+            let y = wr.top() - 20.0;
+
+            let rr = self.hub.get("rr_stepped");
+            draw.rect()
+                .color(ORANGE)
+                .w_h(map_range(rr, 0.0, 1.0, 10.0, wr.w()), 16.0)
+                .x_y(
+                    -wr.hw() + map_range(rr, 0.0, 1.0, 5.0, wr.hw()),
+                    y,
+                );
+
+            let rr_s = self.hub.get("rr_slewed");
+            draw.rect()
+                .color(PURPLE)
+                .w_h(map_range(rr_s, 0.0, 1.0, 10.0, wr.w()), 16.0)
+                .x_y(
+                    -wr.hw() + map_range(rr_s, 0.0, 1.0, 5.0, wr.hw()),
+                    y - 20.0,
+                );
+        }
+
         draw.to_frame(app, &frame).unwrap();
     }
 }

@@ -488,3 +488,28 @@ cv_7_mod:
   source: cv_7
   modulators:
     - curve_viz_bias
+
+# ------------------------------------------------------------------------------
+#  Round Robin
+# ------------------------------------------------------------------------------
+
+round_robin_section:
+  type: separator
+
+show_round_robin:
+  type: checkbox
+  default: true
+
+rr_stepped:
+  type: round_robin
+  values: [0.0, 0.1, 0.8, 0.4, 0.2, 0.5, 0.1]
+  beats: 2.0
+  slew: 0.0
+  stem: 500
+
+rr_slewed:
+  type: round_robin
+  values: [0.0, 0.1, 0.8, 0.4, 0.2, 0.5, 0.1]
+  beats: 2.0
+  slew: 0.65
+  stem: 501
