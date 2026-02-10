@@ -32,7 +32,7 @@ struct Params {
     k: vec4f,
     // l: motion_speed, motion_amount, blend_pulse_amount, blend_pulse_freq
     l: vec4f,
-    // m: energy_strength, energy_power, energy_freq, chroma_strength
+    // m: reserved, reserved, reserved, reserved
     m: vec4f,
     // n: satellite_count, satellite_radius, satellite_orbit, satellite_activity
     n: vec4f,
@@ -115,10 +115,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
     let spec_power = max(params.j.w, 1.0);
-    let energy_strength = max(params.m.x, 0.0);
-    let energy_power = max(params.m.y, 0.0001);
-    let energy_freq = max(params.m.z, 0.0);
-    let chroma_strength = max(params.m.w, 0.0);
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
@@ -218,18 +214,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     color += mix(vec3f(0.35, 0.6, 1.0), vec3f(1.0, 0.5, 0.25), color_mix)
         * rim
         * emissive_strength;
-    let energy_edge = pow(1.0 - max(dot(n, v), 0.0), energy_power);
-    let energy_flow = 0.5 + 0.5 * sin(
-        (p.y + 0.7 * p.z) * energy_freq + beats * 0.6,
-    );
-    let energy_color = mix(
-        vec3f(0.2, 0.85, 1.0),
-        vec3f(1.0, 0.3, 0.8),
-        energy_flow,
-    );
-    color += energy_color * energy_edge * energy_strength;
-    let chroma = chroma_strength * energy_edge;
-    color += vec3f(chroma, -0.2 * chroma, 0.3 * chroma);
 
     let fog = exp(-fog_density * t * t);
     color = mix(bg, color, fog);
