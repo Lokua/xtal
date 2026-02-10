@@ -9,22 +9,27 @@
     {
       "type": "Slider",
       "name": "line_count",
-      "value": 35.0
+      "value": 48.0
     },
     {
       "type": "Slider",
       "name": "samples_per_line",
-      "value": 3994.0
+      "value": 2750.0
     },
     {
       "type": "Slider",
       "name": "point_size",
-      "value": 0.0013
+      "value": 0.0011
     },
     {
       "type": "Slider",
       "name": "domain_scale",
-      "value": 1.17
+      "value": 1.08
+    },
+    {
+      "type": "Slider",
+      "name": "jitter",
+      "value": 0.0006
     },
     {
       "type": "Slider",
@@ -53,43 +58,13 @@
     },
     {
       "type": "Slider",
-      "name": "line_hue_span",
-      "value": 0.14
-    },
-    {
-      "type": "Checkbox",
-      "name": "sphere_projection_enabled",
-      "value": false
+      "name": "harmonic_freq",
+      "value": 3.0
     },
     {
       "type": "Slider",
-      "name": "sphere_projection_amount",
-      "value": 0.0
-    },
-    {
-      "type": "Checkbox",
-      "name": "normal_lighting_enabled",
-      "value": false
-    },
-    {
-      "type": "Slider",
-      "name": "normal_lighting_strength",
-      "value": 1.56
-    },
-    {
-      "type": "Checkbox",
-      "name": "contour_isolines_enabled",
-      "value": false
-    },
-    {
-      "type": "Slider",
-      "name": "contour_isolines_strength",
-      "value": 0.28
-    },
-    {
-      "type": "Slider",
-      "name": "contour_isolines_density",
-      "value": 4.8
+      "name": "harmonic_rate",
+      "value": -1.75
     },
     {
       "type": "Checkbox",
@@ -99,27 +74,22 @@
     {
       "type": "Slider",
       "name": "latlong_warp_amount",
-      "value": 0.1
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "latlong_warp_freq",
-      "value": 3.1
+      "value": 1.6
+    },
+    {
+      "type": "Slider",
+      "name": "latlong_symmetry",
+      "value": 6.0
     },
     {
       "type": "Checkbox",
       "name": "flow_field_enabled",
       "value": true
-    },
-    {
-      "type": "Slider",
-      "name": "flow_field_amount",
-      "value": 0.44
-    },
-    {
-      "type": "Slider",
-      "name": "flow_field_scale",
-      "value": 0.93
     },
     {
       "type": "Slider",
@@ -135,16 +105,6 @@
       "type": "Slider",
       "name": "rate_spread",
       "value": 1.0
-    },
-    {
-      "type": "Slider",
-      "name": "focus_color_impact",
-      "value": 3.0
-    },
-    {
-      "type": "Slider",
-      "name": "stripe_amount",
-      "value": 0.0
     },
     {
       "type": "Slider",
@@ -164,7 +124,17 @@
     {
       "type": "Slider",
       "name": "hue",
-      "value": 0.91
+      "value": 0.67
+    },
+    {
+      "type": "Slider",
+      "name": "line_hue_span",
+      "value": 0.14
+    },
+    {
+      "type": "Slider",
+      "name": "focus_color_impact",
+      "value": 3.0
     },
     {
       "type": "Slider",
@@ -174,12 +144,7 @@
     {
       "type": "Slider",
       "name": "bg_lift",
-      "value": 0.023
-    },
-    {
-      "type": "Slider",
-      "name": "jitter",
-      "value": 0.0
+      "value": 0.014
     }
   ],
   "midi_controls": [],

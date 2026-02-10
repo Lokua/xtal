@@ -13,7 +13,7 @@ density:
   range: [1.0, 10.0]
   default: 1.0
   step: 1.0
-  bypass: 1
+  # bypass: 1
 
 line_count:
   var: b1
@@ -25,9 +25,9 @@ line_count:
 samples_per_line:
   var: b2
   type: slider
-  range: [64.0, 4000.0]
+  range: [50, 12000.0]
   default: 1200.0
-  step: 10.0
+  step: 50
 
 point_size:
   var: b3
@@ -42,6 +42,13 @@ domain_scale:
   range: [0.2, 1.8]
   default: 1.0
   step: 0.01
+
+jitter:
+  var: f1
+  type: slider
+  range: [0.0, 0.08]
+  default: 0.002
+  step: 0.0001
 
 # ------------------------------------------------------------------------------
 #  Wave Motion
@@ -85,10 +92,27 @@ harmonic_amp:
   default: 0.2
   step: 0.01
 
+harmonic_freq:
+  var: k2
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.25
+  step: 0.25
+
+harmonic_rate:
+  var: k3
+  type: slider
+  range: [-4.0, 4.0]
+  default: 0.5
+  step: 0.25
+
+  FOCUS_MIN: &FOCUS_MIN -0.8
+  FOCUS_MAX: &FOCUS_MAX 0.8
+
 focus_x:
   var: d2
   type: random_slewed
-  range: [-1.0, 1.0]
+  range: [*FOCUS_MIN, *FOCUS_MAX]
   beats: 6
   slew: 0.7
   stem: 0
@@ -96,7 +120,7 @@ focus_x:
 focus_y:
   var: d3
   type: random_slewed
-  range: [-1.0, 1.0]
+  range: [*FOCUS_MIN, *FOCUS_MAX]
   beats: 11
   slew: 0.7
   stem: 1
@@ -160,8 +184,8 @@ flow_field_enabled:
 flow_field_amount:
   var: i2
   type: triangle
+  beats: 30
   range: [0.0, 0.5]
-  beats: 16
   disabled: not flow_field_enabled
 
 # flow_field_scale:
@@ -176,9 +200,9 @@ flow_field_scale:
   var: i3
   type: round_robin
   # bypass: 5
-  beats: 4
-  values: [0.3, 1, 0.5, 5, 2, 3, 0.5, 2]
-  slew: 0.5
+  beats: 16
+  values: [0.3, 1, 0.5, 2]
+  slew: 0.7
   stem: 775536
   disabled: not flow_field_enabled
 
@@ -221,8 +245,9 @@ stripe:
 stripe_amount:
   var: e1
   type: round_robin
+  bypass: 0
   beats: 12
-  values: [0, 0, 0, 0, 0.25, 0, 0, 0, 0.5]
+  values: [0, 0, 0, 0, 0.25, 0, 0, 0]
   slew: 0.75
   stem: 8376635
 
@@ -231,6 +256,7 @@ stripe_freq:
   type: slider
   range: [0.0, 48.0]
   default: 7.0
+  disabled: true
   step: 0.01
 
 stripe_rate:
@@ -238,6 +264,7 @@ stripe_rate:
   type: slider
   range: [-4, 4]
   default: 0.25
+  disabled: true
   step: 0.25
 
 # ------------------------------------------------------------------------------
@@ -288,10 +315,3 @@ bg_lift:
   range: [0.0, 0.25]
   default: 0.05
   step: 0.001
-
-jitter:
-  var: f1
-  type: slider
-  range: [0.0, 0.08]
-  default: 0.002
-  step: 0.0001
