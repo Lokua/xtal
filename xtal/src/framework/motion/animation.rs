@@ -410,6 +410,41 @@ impl<T: TimingSource> Animation<T> {
         value
     }
 
+    /// Cycle through an arbitrary list of values, advancing to the next value
+    /// every `every` beats. The output is optionally smoothed by a slew
+    /// limiter. `slew` controls smoothing when the value changes, with 0.0
+    /// being instant and 1.0 being essentially frozen. A unique `stem` is
+    /// required for internal slew state tracking.
+    pub fn round_robin(
+        &self,
+        every: f32,
+        values: &[f32],
+        slew: f32,
+        stem: u64,
+    ) -> f32 {
+        if values.is_empty() {
+            return 0.0;
+        }
+
+        let beats = self.beats();
+        let index = (beats / every).floor() as usize % values.len();
+        let value = values[index];
+
+        if slew == 0.0 {
+            return value;
+        }
+
+        let key = stem;
+        let mut prev_values = self.random_smooth_previous_values.borrow_mut();
+        let value = prev_values.get(&key).map_or(value, |prev| {
+            SlewLimiter::slew_pure(*prev, value, slew, slew)
+        });
+
+        prev_values.insert(key, value);
+
+        value
+    }
+
     /// Creates a new [`Trigger`] with specified interval and delay;
     /// Use with [`Self::should_trigger`].
     pub fn create_trigger(&self, every: f32, delay: f32) -> Trigger {
@@ -644,19 +679,25 @@ pub mod animation_tests {
     use serial_test::serial;
     use std::sync::Once;
 
-    // this way each 1/16 = 1 frame, 4 frames per beat,
-    // less likely to deal with precision issues.
+    // With BPM=360 and FPS=24, each beat = 4 frames, each 1/16 = 1 frame.
+    // This keeps frame counts small and avoids precision issues.
     pub const FPS: f32 = 24.0;
     pub const BPM: f32 = 360.0;
+    const FRAMES_PER_BEAT: f32 = (60.0 / BPM) * FPS;
 
     static INIT: Once = Once::new();
 
-    pub fn init(frame_count: u32) {
+    /// Set the global frame counter to the frame corresponding to the
+    /// given beat position. Accepts fractional beats (e.g. 0.25 = 1/16,
+    /// 0.5 = 1/8, 1.0 = 1 beat, 4.0 = 1 bar).
+    pub fn init(beat: f32) {
         INIT.call_once(|| {
             env_logger::builder().is_test(true).init();
             frame_controller::set_fps(FPS);
         });
-        frame_controller::set_frame_count(frame_count);
+        frame_controller::set_frame_count(
+            (beat * FRAMES_PER_BEAT) as u32,
+        );
     }
 
     pub fn create_instance() -> Animation<FrameTiming> {
@@ -666,17 +707,17 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_ramp() {
-        init(0);
+        init(0.0);
         let a = create_instance();
 
         let val = a.ramp(1.0);
         assert_eq!(val, 0.0, "downbeat");
 
-        init(2);
+        init(0.5);
         let val = a.ramp(1.0);
         assert_eq!(val, 0.5, "1/8");
 
-        init(3);
+        init(0.75);
         let val = a.ramp(1.0);
         assert_eq!(val, 0.75, "3/16");
     }
@@ -684,21 +725,21 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_ramp_plus() {
-        init(0);
+        init(0.0);
         let a = create_instance();
 
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
         assert_eq!(val, 0.5);
 
-        init(1);
+        init(0.25);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
         assert_eq!(val, 0.75);
 
-        init(2);
+        init(0.5);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
         assert_eq!(val, 0.0);
 
-        init(3);
+        init(0.75);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
         assert_eq!(val, 0.25);
     }
@@ -706,59 +747,59 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_tri() {
-        init(0);
+        init(0.0);
         let a = create_instance();
 
         let val = a.tri(2.0);
-        assert_eq!(val, 0.0, "1/16");
+        assert_eq!(val, 0.0, "beat 0");
 
-        init(1);
+        init(0.25);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.25, "2/16");
+        assert_eq!(val, 0.25, "beat 0.25");
 
-        init(2);
+        init(0.5);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.5, "3/16");
+        assert_eq!(val, 0.5, "beat 0.5");
 
-        init(3);
+        init(0.75);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.75, "4/16");
+        assert_eq!(val, 0.75, "beat 0.75");
 
-        init(4);
+        init(1.0);
         let val = a.tri(2.0);
-        assert_eq!(val, 1.0, "5/16");
+        assert_eq!(val, 1.0, "beat 1.0");
 
-        init(5);
+        init(1.25);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.75, "6/16");
+        assert_eq!(val, 0.75, "beat 1.25");
 
-        init(6);
+        init(1.5);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.5, "7/16");
+        assert_eq!(val, 0.5, "beat 1.5");
 
-        init(7);
+        init(1.75);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.25, "8/16");
+        assert_eq!(val, 0.25, "beat 1.75");
 
-        init(8);
+        init(2.0);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.0, "9/16");
+        assert_eq!(val, 0.0, "beat 2.0");
     }
 
     #[test]
     #[serial]
     fn test_triangle_8beats_positive_offset() {
-        init(0);
+        init(0.0);
         let a = create_instance();
 
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
         assert_eq!(val, -0.75, "1st beat");
 
-        init(15);
+        init(3.75);
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
         assert_eq!(val, -1.0, "last beat");
 
-        init(16);
+        init(4.0);
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
         assert_eq!(val, -0.75, "1st beat - 2nd cycle");
     }
@@ -766,7 +807,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_trigger_on_beat() {
-        init(0);
+        init(0.0);
         let animation = create_instance();
         let mut trigger = animation.create_trigger(1.0, 0.0);
 
@@ -775,13 +816,13 @@ pub mod animation_tests {
             "should trigger at start"
         );
 
-        init(1);
+        init(0.25);
         assert!(
             !animation.should_trigger(&mut trigger),
             "should not trigger mid-beat"
         );
 
-        init(4);
+        init(1.0);
         assert!(
             animation.should_trigger(&mut trigger),
             "should trigger at next beat"
@@ -791,7 +832,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_trigger_with_delay() {
-        init(0);
+        init(0.0);
         let animation = create_instance();
         let mut trigger = animation.create_trigger(2.0, 0.5);
 
@@ -800,19 +841,19 @@ pub mod animation_tests {
             "should not trigger at start due to delay"
         );
 
-        init(2);
+        init(0.5);
         assert!(
             animation.should_trigger(&mut trigger),
             "should trigger at delay point"
         );
 
-        init(4);
+        init(1.0);
         assert!(
             !animation.should_trigger(&mut trigger),
             "should not trigger before next interval"
         );
 
-        init(10);
+        init(2.5);
         assert!(
             animation.should_trigger(&mut trigger),
             "should trigger at next interval after delay"
@@ -825,22 +866,22 @@ pub mod animation_tests {
         let a = create_instance();
         let r = || a.random(1.0, (0.0, 1.0), 0.0, 999);
 
-        init(0);
+        init(0.0);
         let n = r();
 
-        init(1);
+        init(0.25);
         let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
-        init(2);
+        init(0.5);
         let n3 = r();
         assert_eq!(n, n3, "should return same N for full cycle");
 
-        init(3);
+        init(0.75);
         let n4 = r();
         assert_eq!(n, n4, "should return same N for full cycle");
 
-        init(4);
+        init(1.0);
         let n5 = r();
         assert_ne!(n, n5, "should return new number on next cycle");
     }
@@ -851,21 +892,21 @@ pub mod animation_tests {
         let a = create_instance();
         let r = || a.random(1.0, (0.0, 1.0), 0.5, 999);
 
-        init(0);
+        init(0.0);
         let n = r();
 
-        init(4);
+        init(1.0);
         let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
-        init(6);
+        init(1.5);
         let n3 = r();
         assert_ne!(n, n3, "should return new number on 2nd cycle");
-        init(9);
+        init(2.25);
         let n4 = r();
         assert_eq!(n3, n4, "should stay within 2nd cycle");
 
-        init(10);
+        init(2.5);
         let n5 = r();
         assert_ne!(n4, n5, "should return new number on 3rd cycle");
     }
@@ -876,7 +917,7 @@ pub mod animation_tests {
         let a = create_instance();
         let r = |stem: u64| a.random(1.0, (0.0, 1.0), 0.0, stem);
 
-        init(0);
+        init(0.0);
         let n1 = r(99);
         let n2 = r(99);
 
@@ -892,22 +933,22 @@ pub mod animation_tests {
         let a = create_instance();
         let r = || a.random_slewed(1.0, (0.0, 1.0), 0.0, 0.0, 9);
 
-        init(0);
+        init(0.0);
         let n = r();
 
-        init(1);
+        init(0.25);
         let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
-        init(2);
+        init(0.5);
         let n3 = r();
         assert_eq!(n, n3, "should return same N for full cycle");
 
-        init(3);
+        init(0.75);
         let n4 = r();
         assert_eq!(n, n4, "should return same N for full cycle");
 
-        init(4);
+        init(1.0);
         let n5 = r();
         assert_ne!(n, n5, "should return new number on next cycle");
     }
@@ -918,21 +959,21 @@ pub mod animation_tests {
         let a = create_instance();
         let r = || a.random_slewed(1.0, (0.0, 1.0), 0.0, 0.5, 999);
 
-        init(0);
+        init(0.0);
         let n = r();
 
-        init(4);
+        init(1.0);
         let n2 = r();
         assert_eq!(n, n2, "should return same N for full cycle");
 
-        init(6);
+        init(1.5);
         let n3 = r();
         assert_ne!(n, n3, "should return new number on 2nd cycle");
-        init(9);
+        init(2.25);
         let n4 = r();
         assert_eq!(n3, n4, "should stay within 2nd cycle");
 
-        init(10);
+        init(2.5);
         let n5 = r();
         assert_ne!(n4, n5, "should return new number on 3rd cycle");
     }
@@ -940,7 +981,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_breakpoint_step_init() {
-        init(0);
+        init(0.0);
         let a = create_instance();
         let x = a.automate(&[Breakpoint::step(0.0, 44.0)], Mode::Once);
         assert_eq!(x, 44.0, "Returns initial value");
@@ -949,7 +990,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_breakpoint_step_2nd() {
-        init(4);
+        init(1.0);
         let a = create_instance();
         let x = a.automate(
             &[Breakpoint::step(0.0, 10.0), Breakpoint::step(1.0, 20.0)],
@@ -961,7 +1002,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_breakpoint_step_last() {
-        init(100);
+        init(25.0);
         let a = create_instance();
         let x = a.automate(
             &[Breakpoint::step(0.0, 10.0), Breakpoint::step(1.0, 20.0)],
@@ -972,9 +1013,8 @@ pub mod animation_tests {
 
     #[test]
     #[serial]
-
     fn test_breakpoint_step_loop_mode() {
-        init(4);
+        init(1.0);
         let breakpoints = &[
             Breakpoint::step(0.0, 10.0),
             Breakpoint::step(1.0, 20.0),
@@ -983,7 +1023,7 @@ pub mod animation_tests {
         let a = create_instance();
         let x = a.automate(breakpoints, Mode::Loop);
         assert_eq!(x, 20.0, "Returns 2nd stage");
-        init(8);
+        init(2.0);
         let x = a.automate(breakpoints, Mode::Loop);
         assert_eq!(x, 10.0, "Returns 1st stage when looping back around");
     }
@@ -991,7 +1031,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_breakpoint_step_midway() {
-        init(2);
+        init(0.5);
         let a = create_instance();
         let x = a.automate(
             &[
@@ -1006,7 +1046,7 @@ pub mod animation_tests {
     #[test]
     #[serial]
     fn test_breakpoint_step_last_16th() {
-        init(3);
+        init(0.75);
         let a = create_instance();
         let x = a.automate(
             &[
@@ -1015,13 +1055,13 @@ pub mod animation_tests {
             ],
             Mode::Once,
         );
-        assert_eq!(x, 0.75, "Returns midway point");
+        assert_eq!(x, 0.75, "Returns 3/4 point");
     }
 
     #[test]
     #[serial]
     fn test_breakpoint_step_last_16th_loop() {
-        init(7);
+        init(1.75);
         let a = create_instance();
         let x = a.automate(
             &[
@@ -1030,7 +1070,7 @@ pub mod animation_tests {
             ],
             Mode::Loop,
         );
-        assert_eq!(x, 0.75, "Returns midway point");
+        assert_eq!(x, 0.75, "Returns 3/4 point");
     }
 
     #[test]
@@ -1048,25 +1088,25 @@ pub mod animation_tests {
             )
         };
 
-        init(0);
+        init(0.0);
         assert_eq!(x(), 10.0);
-        init(1);
+        init(0.25);
         assert_eq!(x(), 10.0);
-        init(2);
+        init(0.5);
         assert_eq!(x(), 10.0);
-        init(3);
+        init(0.75);
         assert_eq!(x(), 10.0);
 
-        init(4);
+        init(1.0);
         assert_eq!(x(), 20.0);
-        init(5);
+        init(1.25);
         assert_eq!(x(), 17.5);
-        init(6);
+        init(1.5);
         assert_eq!(x(), 15.0);
-        init(7);
+        init(1.75);
         assert_eq!(x(), 12.5);
 
-        init(8);
+        init(2.0);
         assert_eq!(x(), 10.0);
     }
 
@@ -1093,24 +1133,23 @@ pub mod animation_tests {
             )
         };
 
-        // 0 beats
-        init(0);
+        init(0.0);
         assert_eq!(x(), 0.0);
 
-        // 0.25 beats, base 0.25 + wave 0.5 = 0.75
-        init(1);
+        // base 0.25 + wave 0.5 = 0.75
+        init(0.25);
         assert_eq!(x(), 0.75);
 
-        // 0.5 beats, base 0.5 + wave 0.0 = 0.5
-        init(2);
+        // base 0.5 + wave 0.0 = 0.5
+        init(0.5);
         assert_eq!(x(), 0.5);
 
-        // 0.75 beats, base 0.75 + wave -0.5 = 0.25
-        init(3);
+        // base 0.75 + wave -0.5 = 0.25
+        init(0.75);
         assert_eq!(x(), 0.25);
 
         // And back around
-        init(4);
+        init(1.0);
         assert_eq!(x(), 0.0);
     }
 
@@ -1140,7 +1179,7 @@ pub mod animation_tests {
             )
         };
 
-        init(4);
+        init(1.0);
         assert_eq!(x(), 0.5);
     }
 
@@ -1161,7 +1200,97 @@ pub mod animation_tests {
             )
         };
 
-        init(128);
+        init(32.0);
         assert_eq!(x(), 0.5);
+    }
+
+    #[test]
+    #[serial]
+    fn test_round_robin_basic() {
+        let a = create_instance();
+        let values = [0.0, 0.1, 0.8, 0.4];
+        let r = || a.round_robin(1.0, &values, 0.0, 1);
+
+        init(0.0);
+        assert_eq!(r(), 0.0, "beat 0: index 0");
+
+        init(0.25);
+        assert_eq!(r(), 0.0, "beat 0.25: still index 0");
+
+        init(1.0);
+        assert_eq!(r(), 0.1, "beat 1: index 1");
+
+        init(2.0);
+        assert_eq!(r(), 0.8, "beat 2: index 2");
+
+        init(3.0);
+        assert_eq!(r(), 0.4, "beat 3: index 3");
+
+        init(4.0);
+        assert_eq!(r(), 0.0, "beat 4: wraps to index 0");
+    }
+
+    #[test]
+    #[serial]
+    fn test_round_robin_every_2_beats() {
+        let a = create_instance();
+        let values = [0.0, 0.5, 1.0];
+        let r = || a.round_robin(2.0, &values, 0.0, 2);
+
+        init(0.0);
+        assert_eq!(r(), 0.0, "beat 0: index 0");
+
+        init(1.0);
+        assert_eq!(r(), 0.0, "beat 1: still index 0");
+
+        init(2.0);
+        assert_eq!(r(), 0.5, "beat 2: index 1");
+
+        init(4.0);
+        assert_eq!(r(), 1.0, "beat 4: index 2");
+
+        init(6.0);
+        assert_eq!(r(), 0.0, "beat 6: wraps to index 0");
+    }
+
+    #[test]
+    #[serial]
+    fn test_round_robin_empty_values() {
+        let a = create_instance();
+        init(0.0);
+        assert_eq!(a.round_robin(1.0, &[], 0.0, 3), 0.0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_round_robin_single_value() {
+        let a = create_instance();
+        let r = || a.round_robin(1.0, &[0.42], 0.0, 4);
+
+        init(0.0);
+        assert_eq!(r(), 0.42);
+
+        init(1.0);
+        assert_eq!(r(), 0.42);
+    }
+
+    #[test]
+    #[serial]
+    fn test_round_robin_with_slew() {
+        let a = create_instance();
+        let values = [0.0, 1.0];
+        let r = || a.round_robin(1.0, &values, 0.5, 5);
+
+        init(0.0);
+        let v0 = r();
+        assert_eq!(v0, 0.0, "first call returns raw value");
+
+        init(1.0);
+        let v1 = r();
+        assert!(v1 > 0.0 && v1 < 1.0, "slew should smooth: got {}", v1);
+
+        init(2.0);
+        let v2 = r();
+        assert!(v2 > 0.0, "slew should keep value above 0: got {}", v2);
     }
 }

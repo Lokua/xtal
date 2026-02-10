@@ -63,6 +63,8 @@ pub enum ControlType {
     Random,
     #[serde(rename = "random_slewed")]
     RandomSlewed,
+    #[serde(rename = "round_robin")]
+    RoundRobin,
     #[serde(rename = "triangle")]
     Triangle,
     #[serde(rename = "snapshot_sequence")]
@@ -217,6 +219,7 @@ pub enum AnimationConfig {
     Ramp(RampConfig),
     Random(RandomConfig),
     RandomSlewed(RandomSlewedConfig),
+    RoundRobin(RoundRobinConfig),
     Triangle(TriangleConfig),
 }
 
@@ -362,6 +365,30 @@ impl Default for RandomSlewedConfig {
             slew: ParamValue::Cold(0.65),
             delay: ParamValue::Cold(0.0),
             stem: 93472,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct RoundRobinConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub values: Vec<f32>,
+    pub beats: ParamValue,
+    pub slew: ParamValue,
+    pub stem: u64,
+}
+
+impl Default for RoundRobinConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            values: vec![],
+            beats: ParamValue::Cold(1.0),
+            slew: ParamValue::Cold(0.0),
+            stem: 93474,
         }
     }
 }
