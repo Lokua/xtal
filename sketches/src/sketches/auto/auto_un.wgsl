@@ -57,14 +57,13 @@ struct Params {
 @group(0) @binding(0)
 var<uniform> params: Params;
 
-const MAX_MARCH_STEPS_CAP: i32 = 256;
+const MAX_MARCH_STEPS: i32 = 64;
 const MAX_SHADOW_STEPS: i32 = 64;
 const MAX_AO_SAMPLES: i32 = 6;
 const MAX_DIST: f32 = 30.0;
 const SURF_DIST: f32 = 0.0012;
 const NORMAL_EPS: f32 = 0.0012;
 const MARCH_SAFETY: f32 = 0.82;
-const MARCH_STEPS_FIXED: i32 = 256;
 const ORBIT_AMOUNT: f32 = 0.2;
 const CENTER_LIFT: f32 = 0.12;
 const AO_STRENGTH: f32 = 1.25;
@@ -137,16 +136,14 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
     let spec_power = max(params.j.w, 1.0);
-    let use_shadow = params.s.x > 0.5;
-    let use_ao = params.s.y > 0.5;
-    let use_diffuse = params.s.z > 0.5;
-    let use_specular = params.s.w > 0.5;
-    let use_rim = params.t.x > 0.5;
-    let use_fresnel = params.t.y > 0.5;
+    let use_shadow = bool(params.s.x);
+    let use_ao = bool(params.s.y);
+    let use_diffuse = bool(params.s.z);
+    let use_specular = bool(params.s.w);
+    let use_rim = bool(params.t.x);
+    let use_fresnel = bool(params.t.y);
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
-
-    let max_steps = MARCH_STEPS_FIXED;
 
     let cam_dist = max(params.c.x, 0.1);
     let cam_y_angle = params.c.y;
@@ -179,12 +176,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     );
     prepare_scene_state(beats);
 
-    let t = ray_march(
-        ro,
-        rd,
-        max_steps,
-        surf_eps,
-    );
+    let t = ray_march(ro, rd, surf_eps);
     if (t >= MAX_DIST) {
         return vec4f(bg, 1.0);
     }
@@ -193,10 +185,22 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let n = calc_normal(hit_p);
     let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
     let p = hit_p + n * shading_bias;
-    let l = normalize(light_pos - p);
-    let light_dist = length(light_pos - p);
-    let v = normalize(ro - p);
-    let h = normalize(l + v);
+    let need_light = use_shadow || use_diffuse || use_specular;
+    let need_view = use_specular || use_rim || use_fresnel;
+    var l = vec3f(0.0, 1.0, 0.0);
+    var light_dist = 1.0;
+    if (need_light) {
+        l = normalize(light_pos - p);
+        light_dist = length(light_pos - p);
+    }
+    var v = vec3f(0.0, 0.0, 1.0);
+    if (need_view) {
+        v = normalize(ro - p);
+    }
+    var h = vec3f(0.0, 1.0, 0.0);
+    if (use_specular) {
+        h = normalize(l + v);
+    }
     var shadow = 1.0;
     if (use_shadow && shadow_strength > 0.0001) {
         shadow = soft_shadow(
@@ -295,14 +299,10 @@ fn correct_aspect(position: vec2f) -> vec2f {
 fn ray_march(
     ro: vec3f,
     rd: vec3f,
-    max_steps: i32,
     surf_eps: f32,
 ) -> f32 {
     var dist = 0.0;
-    for (var i = 0; i < MAX_MARCH_STEPS_CAP; i = i + 1) {
-        if (i >= max_steps) {
-            break;
-        }
+    for (var i = 0; i < MAX_MARCH_STEPS; i = i + 1) {
         let p = ro + rd * dist;
         let scene_dist = scene_sdf(p);
         if (scene_dist < surf_eps) {
@@ -670,13 +670,15 @@ fn blob_sdf_scaled(
 fn calc_normal(p: vec3f) -> vec3f {
     let complexity = shape_complexity();
     let e = mix(NORMAL_EPS, NORMAL_EPS * 2.5, complexity);
-    let nx = scene_sdf(p + vec3f(e, 0.0, 0.0))
-        - scene_sdf(p - vec3f(e, 0.0, 0.0));
-    let ny = scene_sdf(p + vec3f(0.0, e, 0.0))
-        - scene_sdf(p - vec3f(0.0, e, 0.0));
-    let nz = scene_sdf(p + vec3f(0.0, 0.0, e))
-        - scene_sdf(p - vec3f(0.0, 0.0, e));
-    return normalize(vec3f(nx, ny, nz));
+    let k1 = vec3f(1.0, -1.0, -1.0);
+    let k2 = vec3f(-1.0, -1.0, 1.0);
+    let k3 = vec3f(-1.0, 1.0, -1.0);
+    let k4 = vec3f(1.0, 1.0, 1.0);
+    let n = k1 * scene_sdf(p + k1 * e)
+        + k2 * scene_sdf(p + k2 * e)
+        + k3 * scene_sdf(p + k3 * e)
+        + k4 * scene_sdf(p + k4 * e);
+    return safe_normalize(n);
 }
 
 fn smin(a: f32, b: f32, k: f32) -> f32 {
@@ -700,21 +702,30 @@ fn harmonic_field(dir: vec3f, phase: f32) -> f32 {
     let warp = params.g.x;
     let ridge = params.g.y;
 
-    let h1 = sin(
-        (dir.x + 0.31 * dir.y) * (freq1 + 0.0001) + phase + warp * dir.z,
-    );
-    let h2 = sin(
-        (dir.y - 0.27 * dir.z) * (freq2 * 0.87 + 1.3)
-            - phase * 0.7
-            + warp * dir.x,
-    ) * sin(
-        (dir.z + 0.23 * dir.x) * (freq2 * 1.13 + 2.1)
-            + phase * 0.5
-            - warp * dir.y,
-    );
-
-    var field = amp1 * h1 + amp2 * h2;
-    field = ridge_shape(field, ridge);
+    var field = 0.0;
+    if (abs(amp1) > 0.00001) {
+        let h1 = sin(
+            (dir.x + 0.31 * dir.y) * (freq1 + 0.0001)
+                + phase
+                + warp * dir.z,
+        );
+        field += amp1 * h1;
+    }
+    if (abs(amp2) > 0.00001) {
+        let h2 = sin(
+            (dir.y - 0.27 * dir.z) * (freq2 * 0.87 + 1.3)
+                - phase * 0.7
+                + warp * dir.x,
+        ) * sin(
+            (dir.z + 0.23 * dir.x) * (freq2 * 1.13 + 2.1)
+                + phase * 0.5
+                - warp * dir.y,
+        );
+        field += amp2 * h2;
+    }
+    if (abs(ridge) > 0.00001) {
+        field = ridge_shape(field, ridge);
+    }
     return field;
 }
 
