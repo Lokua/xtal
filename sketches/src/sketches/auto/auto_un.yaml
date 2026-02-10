@@ -51,13 +51,6 @@ focal_len:
 march:
   type: separator
 
-march_steps:
-  var: b1
-  type: slider
-  range: [8, 256]
-  default: 64
-  step: 1
-
 # ------------------------------------------------------------------------------
 #  Geometry
 # ------------------------------------------------------------------------------
@@ -138,7 +131,7 @@ harmonic_phase:
 stretch_y:
   var: g4
   type: slider
-  range: [-3, 3]
+  range: [-0.8, 0.8]
   default: 0.0
   step: 0.001
 
@@ -235,26 +228,12 @@ satellite_orbit:
   default: 0.42
   step: 0.001
 
-satellite_activity:
-  var: n4
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.65
-  step: 0.001
-
 satellite_speed:
   var: o1
   type: slider
   range: [0.0, 4.0]
   default: 1.125
   step: 0.125
-
-satellite_merge:
-  var: o2
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.72
-  step: 0.001
 
 satellite_jitter:
   var: o3
@@ -268,20 +247,6 @@ satellite_breathe:
   type: slider
   range: [0.0, 1.0]
   default: 0.25
-  step: 0.001
-
-strand_strength:
-  var: p3
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.35
-  step: 0.001
-
-strand_thinness:
-  var: p4
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.6
   step: 0.001
 
 # ------------------------------------------------------------------------------
@@ -347,52 +312,12 @@ blend_pulse_freq:
 lighting:
   type: separator
 
-light_x:
-  var: h1
-  type: slider
-  range: [-8.0, 8.0]
-  default: 2.8
-  step: 0.01
-
-light_y:
-  var: h2
-  type: slider
-  range: [-8.0, 8.0]
-  default: 2.4
-  step: 0.01
-
-light_z:
-  var: h3
-  type: slider
-  range: [-8.0, 8.0]
-  default: -1.2
-  step: 0.01
-
 light_intensity:
   var: h4
   type: slider
   range: [0.0, 3.0]
   default: 1.0
   step: 0.01
-
-shadow_strength:
-  var: i1
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.7
-  step: 0.01
-
-shadow_softness:
-  var: i2
-  type: slider
-  range: [1.0, 64.0]
-  default: 18.0
-  step: 0.1
-
-shadow_legacy_mode:
-  var: i3
-  type: checkbox
-  default: false
 
 rim_strength:
   var: j1
