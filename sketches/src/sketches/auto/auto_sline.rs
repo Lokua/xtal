@@ -14,7 +14,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     h: HD_HEIGHT,
 };
 
-#[uniforms(banks = 8)]
+#[uniforms(banks = 12)]
 struct ShaderParams {}
 
 #[derive(SketchComponents)]
