@@ -66,6 +66,25 @@ const AO_STRENGTH: f32 = 1.25;
 const AO_STEP: f32 = 0.02;
 const SATELLITE_MAX: i32 = 9;
 
+var<private> g_beats: f32;
+var<private> g_phase: f32;
+var<private> g_motion_amount: f32;
+var<private> g_blend: f32;
+var<private> g_outer_blend: f32;
+var<private> g_c1: vec3f;
+var<private> g_c2: vec3f;
+var<private> g_c3: vec3f;
+var<private> g_blob_radius_bound: f32;
+var<private> g_smooth_pad: f32;
+var<private> g_sat_count: i32;
+var<private> g_sat_radius: f32;
+var<private> g_sat_orbit: f32;
+var<private> g_sat_activity: f32;
+var<private> g_sat_speed: f32;
+var<private> g_sat_merge: f32;
+var<private> g_sat_jitter: f32;
+var<private> g_sat_breathe: f32;
+
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
     var out: VertexOutput;
@@ -126,20 +145,20 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         bg_top,
         clamp(uv.y * 0.5 + 0.5, 0.0, 1.0),
     );
+    prepare_scene_state(beats);
 
     let t = ray_march(
         ro,
         rd,
         max_steps,
         surf_eps,
-        beats,
     );
     if (t >= MAX_DIST) {
         return vec4f(bg, 1.0);
     }
 
     let hit_p = ro + rd * t;
-    let n = calc_normal(hit_p, beats);
+    let n = calc_normal(hit_p);
     let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
     let p = hit_p + n * shading_bias;
     let l = normalize(light_pos - p);
@@ -156,11 +175,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             shadow_softness,
             surf_eps,
             shadow_legacy_mode,
-            beats,
         );
     }
     let shadow_mix = mix(1.0, shadow, shadow_strength);
-    let ao = ambient_occlusion(p, n, surf_eps, beats);
+    let ao = ambient_occlusion(p, n, surf_eps);
 
     let diff = max(dot(n, l), 0.0) * shadow_mix;
     let spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
@@ -230,7 +248,6 @@ fn ray_march(
     rd: vec3f,
     max_steps: i32,
     surf_eps: f32,
-    beats: f32,
 ) -> f32 {
     var dist = 0.0;
     for (var i = 0; i < MAX_MARCH_STEPS_CAP; i = i + 1) {
@@ -238,7 +255,7 @@ fn ray_march(
             break;
         }
         let p = ro + rd * dist;
-        let scene_dist = scene_sdf(p, beats);
+        let scene_dist = scene_sdf(p);
         if (scene_dist < surf_eps) {
             break;
         }
@@ -250,22 +267,24 @@ fn ray_march(
     return dist;
 }
 
-fn scene_sdf(p: vec3f, beats: f32) -> f32 {
+fn prepare_scene_state(beats: f32) {
+    g_beats = beats;
     let motion_speed = params.l.x;
-    let motion_amount = params.l.y;
+    g_motion_amount = params.l.y;
     let shape_phase = params.g.z;
 
     let blend_pulse_amount = params.l.z;
     let blend_pulse_freq = params.l.w;
-    let sat_count = i32(round(clamp(params.n.x, 0.0, f32(SATELLITE_MAX))));
-    let sat_radius = max(params.n.y, 0.0);
-    let sat_orbit = max(params.n.z, 0.0);
-    let sat_activity = clamp(params.n.w, 0.0, 1.0);
-    let sat_speed = max(params.o.x, 0.0);
-    let sat_merge = clamp(params.o.y, 0.0, 1.0);
-    let sat_jitter = clamp(params.o.z, 0.0, 1.0);
-    let sat_breathe = clamp(params.o.w, 0.0, 1.0);
-    let phase = shape_phase + beats * motion_speed;
+    g_sat_count = i32(round(clamp(params.n.x, 0.0, f32(SATELLITE_MAX))));
+    g_sat_radius = max(params.n.y, 0.0);
+    g_sat_orbit = max(params.n.z, 0.0);
+    g_sat_activity = clamp(params.n.w, 0.0, 1.0);
+    g_sat_speed = max(params.o.x, 0.0);
+    g_sat_merge = clamp(params.o.y, 0.0, 1.0);
+    g_sat_jitter = clamp(params.o.z, 0.0, 1.0);
+    g_sat_breathe = clamp(params.o.w, 0.0, 1.0);
+    g_phase = shape_phase + beats * motion_speed;
+
     let stretch_amount = params.g.w;
     let harmonic_amp_sum = abs(params.f.x) + abs(params.f.z);
     let ridge = clamp(params.g.y, 0.0, 1.0);
@@ -273,129 +292,133 @@ fn scene_sdf(p: vec3f, beats: f32) -> f32 {
         max(harmonic_amp_sum, 0.00001),
         mix(1.0, 0.35, ridge),
     );
-    let blob_radius_bound = max(params.d.y, 0.02) * (
+    g_blob_radius_bound = max(params.d.y, 0.02) * (
         1.0
             + 0.45 * abs(stretch_amount)
             + harmonic_bound
     );
     let blend_max = max(params.d.z + abs(blend_pulse_amount), 0.0001);
-    let smooth_pad = 0.25 * blend_max;
+    g_smooth_pad = 0.25 * blend_max;
+
     let tri_size = max(params.k.y, 0.0001);
     let tri_rot = params.k.z;
-    let lift = CENTER_LIFT * motion_amount * sin(beats * 0.41);
+    let lift = CENTER_LIFT * g_motion_amount * sin(beats * 0.41);
 
-    var c1 = vec3f(cos(tri_rot), sin(tri_rot), 0.0) * tri_size;
-    var c2 = vec3f(
+    g_c1 = vec3f(cos(tri_rot), sin(tri_rot), 0.0) * tri_size;
+    g_c2 = vec3f(
         cos(tri_rot + 2.0943951),
         sin(tri_rot + 2.0943951),
         0.0,
     ) * tri_size;
-    var c3 = vec3f(
+    g_c3 = vec3f(
         cos(tri_rot + 4.1887902),
         sin(tri_rot + 4.1887902),
         0.0,
     ) * tri_size;
 
-    let tri_breath = 1.0 + 0.12 * motion_amount * sin(phase * 0.67);
-    c1 *= tri_breath;
-    c2 *= tri_breath;
-    c3 *= tri_breath;
+    let tri_breath = 1.0 + 0.12 * g_motion_amount * sin(g_phase * 0.67);
+    g_c1 *= tri_breath;
+    g_c2 *= tri_breath;
+    g_c3 *= tri_breath;
+    g_c3.y += lift;
 
-    c3.y += lift;
+    let orbit = ORBIT_AMOUNT * g_motion_amount * sin(beats * 0.33);
+    g_c1 = rotate_xz(g_c1, orbit);
+    g_c2 = rotate_xz(g_c2, orbit);
+    g_c3 = rotate_xz(g_c3, orbit);
 
-    let orbit = ORBIT_AMOUNT * motion_amount * sin(beats * 0.33);
-    c1 = rotate_xz(c1, orbit);
-    c2 = rotate_xz(c2, orbit);
-    c3 = rotate_xz(c3, orbit);
-
-    let drift = motion_amount * vec3f(
-        0.32 * sin(phase * 0.83),
-        0.18 * cos(phase * 0.71),
-        0.26 * sin(phase * 0.57),
+    let drift = g_motion_amount * vec3f(
+        0.32 * sin(g_phase * 0.83),
+        0.18 * cos(g_phase * 0.71),
+        0.26 * sin(g_phase * 0.57),
     );
-    c1 += drift + motion_amount * vec3f(
-        0.16 * sin(phase + 0.0),
-        0.11 * cos(phase * 1.17 + 0.0),
-        0.12 * sin(phase * 1.31 + 0.0),
+    g_c1 += drift + g_motion_amount * vec3f(
+        0.16 * sin(g_phase + 0.0),
+        0.11 * cos(g_phase * 1.17 + 0.0),
+        0.12 * sin(g_phase * 1.31 + 0.0),
     );
-    c2 += drift + motion_amount * vec3f(
-        0.16 * sin(phase + 2.0943951),
-        0.11 * cos(phase * 1.17 + 2.0943951),
-        0.12 * sin(phase * 1.31 + 2.0943951),
+    g_c2 += drift + g_motion_amount * vec3f(
+        0.16 * sin(g_phase + 2.0943951),
+        0.11 * cos(g_phase * 1.17 + 2.0943951),
+        0.12 * sin(g_phase * 1.31 + 2.0943951),
     );
-    c3 += drift + motion_amount * vec3f(
-        0.16 * sin(phase + 4.1887902),
-        0.11 * cos(phase * 1.17 + 4.1887902),
-        0.12 * sin(phase * 1.31 + 4.1887902),
+    g_c3 += drift + g_motion_amount * vec3f(
+        0.16 * sin(g_phase + 4.1887902),
+        0.11 * cos(g_phase * 1.17 + 4.1887902),
+        0.12 * sin(g_phase * 1.31 + 4.1887902),
     );
 
+    g_blend = max(
+        params.d.z + blend_pulse_amount * sin(beats * blend_pulse_freq),
+        0.0001,
+    );
+    g_outer_blend = max(
+        0.0001,
+        g_blend * (0.35 + 0.65 * clamp(g_motion_amount, 0.0, 1.0)),
+    );
+}
+
+fn scene_sdf(p: vec3f) -> f32 {
     // Conservative broad-phase bound. If far enough, return early and skip
     // expensive harmonic/satellite evaluation while preserving visual result.
-    let d1_bound = length(p - c1) - blob_radius_bound;
-    let d2_bound = length(p - c2) - blob_radius_bound;
-    let d3_bound = length(p - c3) - blob_radius_bound;
-    var scene_bound = min(min(d1_bound, d2_bound), d3_bound) - smooth_pad;
-    if (sat_count > 0 && sat_radius > 0.0 && sat_orbit > 0.0) {
-        let sat_orbit_bound = sat_orbit * (1.0 + 0.45 * sat_jitter);
-        let sat_radius_bound = sat_radius * (1.0 + 0.35 * sat_breathe);
-        let sat_cluster_bound = sat_orbit_bound + sat_radius_bound + smooth_pad;
-        let sat1_bound = length(p - c1) - sat_cluster_bound;
-        let sat2_bound = length(p - c2) - sat_cluster_bound;
-        let sat3_bound = length(p - c3) - sat_cluster_bound;
+    let d1_bound = length(p - g_c1) - g_blob_radius_bound;
+    let d2_bound = length(p - g_c2) - g_blob_radius_bound;
+    let d3_bound = length(p - g_c3) - g_blob_radius_bound;
+    var scene_bound = min(min(d1_bound, d2_bound), d3_bound) - g_smooth_pad;
+    if (g_sat_count > 0 && g_sat_radius > 0.0 && g_sat_orbit > 0.0) {
+        let sat_orbit_bound = g_sat_orbit * (1.0 + 0.45 * g_sat_jitter);
+        let sat_radius_bound = g_sat_radius * (1.0 + 0.35 * g_sat_breathe);
+        let sat_cluster_bound = sat_orbit_bound + sat_radius_bound + g_smooth_pad;
+        let sat1_bound = length(p - g_c1) - sat_cluster_bound;
+        let sat2_bound = length(p - g_c2) - sat_cluster_bound;
+        let sat3_bound = length(p - g_c3) - sat_cluster_bound;
         scene_bound = min(scene_bound, min(min(sat1_bound, sat2_bound), sat3_bound));
     }
     if (scene_bound > 0.35) {
         return scene_bound;
     }
 
-    let blend = max(
-        params.d.z + blend_pulse_amount * sin(beats * blend_pulse_freq),
-        0.0001,
-    );
-
-    let d1 = blob_sdf(p, c1, phase + 0.0);
-    let d2 = blob_sdf(p, c2, phase + 2.1);
-    let d3 = blob_sdf(p, c3, phase + 4.2);
+    let d1 = blob_sdf(p, g_c1, g_phase + 0.0);
+    let d2 = blob_sdf(p, g_c2, g_phase + 2.1);
+    let d3 = blob_sdf(p, g_c3, g_phase + 4.2);
 
     // True 3-way smooth union so all blobs can merge as a single mass.
-    let outer_blend = max(
-        0.0001,
-        blend * (0.35 + 0.65 * clamp(motion_amount, 0.0, 1.0)),
-    );
-    let d12 = smin(d1, d2, outer_blend);
-    let d13 = smin(d1, d3, blend);
-    let d23 = smin(d2, d3, blend);
-    let d123 = smin(d12, d13, blend);
-    var scene = smin(d123, d23, blend);
+    let d12 = smin(d1, d2, g_outer_blend);
+    let d13 = smin(d1, d3, g_blend);
+    let d23 = smin(d2, d3, g_blend);
+    let d123 = smin(d12, d13, g_blend);
+    var scene = smin(d123, d23, g_blend);
 
     // Satellite metaballs: orbiting droplets that periodically dive in/out.
-    if (sat_count > 0 && sat_radius > 0.0 && sat_orbit > 0.0) {
-        let sat_blend_base = max(0.0001, blend * (0.32 + 0.68 * sat_merge));
+    if (g_sat_count > 0 && g_sat_radius > 0.0 && g_sat_orbit > 0.0) {
+        let sat_blend_base = max(0.0001, g_blend * (0.32 + 0.68 * g_sat_merge));
         for (var i = 0; i < SATELLITE_MAX; i = i + 1) {
-            if (i >= sat_count) {
+            if (i >= g_sat_count) {
                 break;
             }
             let hub_idx = i % 3;
             let lane = i / 3;
-            var hub = c1;
+            var hub = g_c1;
             if (hub_idx == 1) {
-                hub = c2;
+                hub = g_c2;
             } else if (hub_idx == 2) {
-                hub = c3;
+                hub = g_c3;
             }
 
-            let sat_phase = phase * sat_speed + f32(i) * 1.947 + f32(lane) * 2.713;
-            let radial = sat_orbit * (
-                1.0 + 0.45 * sat_jitter * sin(sat_phase * 1.63 + f32(hub_idx) * 1.9)
+            let sat_phase = g_phase * g_sat_speed + f32(i) * 1.947 + f32(lane) * 2.713;
+            let radial = g_sat_orbit * (
+                1.0 + 0.45 * g_sat_jitter * sin(sat_phase * 1.63 + f32(hub_idx) * 1.9)
             );
-            let theta = sat_phase + 0.6 * sat_jitter * sin(sat_phase * 0.71 + 1.2);
-            let y_amp = radial * (0.25 + 0.45 * sat_jitter);
+            let theta = sat_phase + 0.6 * g_sat_jitter * sin(sat_phase * 0.71 + 1.2);
+            let y_amp = radial * (0.25 + 0.45 * g_sat_jitter);
             let y_off = y_amp * sin(sat_phase * 1.29 + f32(hub_idx) * 0.83);
             let orbit_offset = vec3f(cos(theta) * radial, y_off, sin(theta) * radial);
-            let inhale = sat_activity * (0.5 + 0.5 * sin(sat_phase * 1.91 + beats * 0.37));
+            let inhale = g_sat_activity * (
+                0.5 + 0.5 * sin(sat_phase * 1.91 + g_beats * 0.37)
+            );
             let sat_center = mix(hub + orbit_offset, hub, inhale);
-            let sat_r = sat_radius * (
-                1.0 + 0.35 * sat_breathe * sin(sat_phase * 2.07 + beats * 0.91)
+            let sat_r = g_sat_radius * (
+                1.0 + 0.35 * g_sat_breathe * sin(sat_phase * 2.07 + g_beats * 0.91)
             );
             let sat_d = length(p - sat_center) - max(sat_r, 0.01);
             let sat_blend = sat_blend_base * (0.7 + 0.3 * inhale);
@@ -424,15 +447,15 @@ fn blob_sdf(p: vec3f, center: vec3f, phase: f32) -> f32 {
     return length(rel) - max(r_mod, 0.02);
 }
 
-fn calc_normal(p: vec3f, beats: f32) -> vec3f {
+fn calc_normal(p: vec3f) -> vec3f {
     let complexity = shape_complexity();
     let e = mix(NORMAL_EPS, NORMAL_EPS * 2.5, complexity);
-    let nx = scene_sdf(p + vec3f(e, 0.0, 0.0), beats)
-        - scene_sdf(p - vec3f(e, 0.0, 0.0), beats);
-    let ny = scene_sdf(p + vec3f(0.0, e, 0.0), beats)
-        - scene_sdf(p - vec3f(0.0, e, 0.0), beats);
-    let nz = scene_sdf(p + vec3f(0.0, 0.0, e), beats)
-        - scene_sdf(p - vec3f(0.0, 0.0, e), beats);
+    let nx = scene_sdf(p + vec3f(e, 0.0, 0.0))
+        - scene_sdf(p - vec3f(e, 0.0, 0.0));
+    let ny = scene_sdf(p + vec3f(0.0, e, 0.0))
+        - scene_sdf(p - vec3f(0.0, e, 0.0));
+    let nz = scene_sdf(p + vec3f(0.0, 0.0, e))
+        - scene_sdf(p - vec3f(0.0, 0.0, e));
     return normalize(vec3f(nx, ny, nz));
 }
 
@@ -492,14 +515,13 @@ fn soft_shadow(
     softness: f32,
     surf_eps: f32,
     legacy_mode: bool,
-    beats: f32,
 ) -> f32 {
     var result = 1.0;
     var t = min_t;
     var prev_h = 1.0;
     for (var i = 0; i < MAX_SHADOW_STEPS; i = i + 1) {
         if (legacy_mode) {
-            let h_raw = scene_sdf(ro + rd * t, beats);
+            let h_raw = scene_sdf(ro + rd * t);
             if (h_raw < surf_eps * 0.4) {
                 return 0.0;
             }
@@ -511,7 +533,7 @@ fn soft_shadow(
             prev_h = h;
             t += clamp(h * 0.75, surf_eps * 0.3, 0.18);
         } else {
-            let h = scene_sdf(ro + rd * t, beats);
+            let h = scene_sdf(ro + rd * t);
             if (h < surf_eps * 0.8) {
                 break;
             }
@@ -530,14 +552,13 @@ fn ambient_occlusion(
     p: vec3f,
     n: vec3f,
     surf_eps: f32,
-    beats: f32,
 ) -> f32 {
     var occ = 0.0;
     var scale = 1.0;
     let ao_bias = surf_eps * 2.0;
     for (var i = 1; i <= MAX_AO_SAMPLES; i = i + 1) {
         let h = AO_STEP * f32(i);
-        let d = scene_sdf(p + n * (h + ao_bias), beats);
+        let d = scene_sdf(p + n * (h + ao_bias));
         occ += max(h - d, 0.0) * scale;
         scale *= 0.75;
     }
