@@ -9,17 +9,17 @@
     {
       "type": "Slider",
       "name": "cam_distance",
-      "value": 2.79
+      "value": 4.26
     },
     {
       "type": "Slider",
       "name": "cam_height",
-      "value": 0.125
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "focal_len",
-      "value": 0.94
+      "value": 1.16
     },
     {
       "type": "Slider",
@@ -29,7 +29,7 @@
     {
       "type": "Slider",
       "name": "sphere_radius",
-      "value": 0.78
+      "value": 0.59
     },
     {
       "type": "Slider",
@@ -39,22 +39,22 @@
     {
       "type": "Slider",
       "name": "harmonic_amp_1",
-      "value": 0.089
+      "value": 0.045
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 3.46
+      "value": 7.43
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_2",
-      "value": 0.106
+      "value": 0.077
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_2",
-      "value": 10.76
+      "value": 2.52
     },
     {
       "type": "Slider",
@@ -74,17 +74,57 @@
     {
       "type": "Slider",
       "name": "stretch_y",
-      "value": -0.8
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "triangle_size",
-      "value": 1.16
+      "value": 1.54
     },
     {
       "type": "Slider",
       "name": "triangle_rotation",
+      "value": 2.614
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_count",
+      "value": 5.0
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_radius",
+      "value": 0.238
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_orbit",
+      "value": 1.8
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_activity",
       "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_speed",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_merge",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_jitter",
+      "value": 0.199
+    },
+    {
+      "type": "Slider",
+      "name": "satellite_breathe",
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -109,7 +149,7 @@
     {
       "type": "Slider",
       "name": "light_x",
-      "value": -2.74
+      "value": -1.85
     },
     {
       "type": "Slider",
@@ -124,7 +164,7 @@
     {
       "type": "Slider",
       "name": "light_intensity",
-      "value": 0.45
+      "value": 1.17
     },
     {
       "type": "Slider",
@@ -135,6 +175,11 @@
       "type": "Slider",
       "name": "shadow_softness",
       "value": 64.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "shadow_legacy_mode",
+      "value": false
     },
     {
       "type": "Slider",
@@ -159,7 +204,7 @@
     {
       "type": "Slider",
       "name": "energy_strength",
-      "value": 0.84
+      "value": 0.76
     },
     {
       "type": "Slider",
@@ -169,37 +214,37 @@
     {
       "type": "Slider",
       "name": "energy_freq",
-      "value": 4.03
+      "value": 6.38
     },
     {
       "type": "Slider",
       "name": "chroma_strength",
-      "value": 0.53
+      "value": 0.71
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 0.15
+      "value": 0.51
     },
     {
       "type": "Slider",
       "name": "hue_shift",
-      "value": -0.867
+      "value": -0.175
     },
     {
       "type": "Slider",
       "name": "saturation",
-      "value": 0.8
+      "value": 1.45
     },
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 2.03
+      "value": 1.69
     },
     {
       "type": "Slider",
       "name": "fog_density",
-      "value": 0.142
+      "value": 0.107
     }
   ],
   "midi_controls": [],
