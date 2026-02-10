@@ -14,7 +14,7 @@
     {
       "type": "Slider",
       "name": "cam_height",
-      "value": 0.5
+      "value": 0.375
     },
     {
       "type": "Slider",
@@ -29,7 +29,7 @@
     {
       "type": "Slider",
       "name": "sphere_radius",
-      "value": 0.59
+      "value": 1.03
     },
     {
       "type": "Slider",
@@ -44,7 +44,7 @@
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 7.43
+      "value": 6.61
     },
     {
       "type": "Slider",
@@ -54,7 +54,7 @@
     {
       "type": "Slider",
       "name": "harmonic_freq_2",
-      "value": 2.52
+      "value": 5.16
     },
     {
       "type": "Slider",
@@ -69,7 +69,7 @@
     {
       "type": "Slider",
       "name": "harmonic_phase",
-      "value": 3.208
+      "value": 0.0
     },
     {
       "type": "Slider",
@@ -129,22 +129,22 @@
     {
       "type": "Slider",
       "name": "motion_speed",
-      "value": 1.25
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "motion_amount",
-      "value": 0.79
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "blend_pulse_amount",
-      "value": 0.034
+      "value": 0.38
     },
     {
       "type": "Slider",
       "name": "blend_pulse_freq",
-      "value": 3.5
+      "value": 1.0
     },
     {
       "type": "Slider",

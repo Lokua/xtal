@@ -133,7 +133,7 @@ harmonic_phase:
 stretch_y:
   var: g4
   type: slider
-  range: [-0.8, 0.8]
+  range: [-3, 3]
   default: 0.0
   step: 0.001
 
