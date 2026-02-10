@@ -2,9 +2,14 @@
   "version": "2",
   "ui_controls": [
     {
+      "type": "Select",
+      "name": "view",
+      "value": "final"
+    },
+    {
       "type": "Slider",
       "name": "cam_distance",
-      "value": 2.54
+      "value": 2.79
     },
     {
       "type": "Slider",
@@ -23,68 +28,38 @@
     },
     {
       "type": "Slider",
-      "name": "sphere_offset",
-      "value": 0.98
-    },
-    {
-      "type": "Slider",
       "name": "sphere_radius",
-      "value": 0.68
+      "value": 0.78
     },
     {
       "type": "Slider",
       "name": "blend_k",
-      "value": 0.82
-    },
-    {
-      "type": "Slider",
-      "name": "bump_amp",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "bump_freq",
-      "value": 16.36
-    },
-    {
-      "type": "Slider",
-      "name": "bump_sharpness",
-      "value": 0.35
-    },
-    {
-      "type": "Slider",
-      "name": "twist_amount",
-      "value": -1.65
-    },
-    {
-      "type": "Slider",
-      "name": "stretch_amount",
-      "value": 0.548
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_1",
-      "value": 0.253
+      "value": 0.089
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 6.0
+      "value": 3.46
     },
     {
       "type": "Slider",
       "name": "harmonic_amp_2",
-      "value": 0.1
+      "value": 0.106
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_2",
-      "value": 7.8
+      "value": 10.76
     },
     {
       "type": "Slider",
       "name": "harmonic_warp",
-      "value": 0.0
+      "value": -4.028
     },
     {
       "type": "Slider",
@@ -94,17 +69,17 @@
     {
       "type": "Slider",
       "name": "harmonic_phase",
-      "value": 0.0
+      "value": 3.208
     },
     {
       "type": "Slider",
       "name": "stretch_y",
-      "value": -0.459
+      "value": -0.8
     },
     {
       "type": "Slider",
       "name": "triangle_size",
-      "value": 1.15
+      "value": 1.16
     },
     {
       "type": "Slider",
@@ -114,27 +89,17 @@
     {
       "type": "Slider",
       "name": "motion_speed",
-      "value": 2.0
+      "value": 1.25
     },
     {
       "type": "Slider",
       "name": "motion_amount",
-      "value": 0.558
-    },
-    {
-      "type": "Slider",
-      "name": "orbit_amount",
-      "value": 0.2
-    },
-    {
-      "type": "Slider",
-      "name": "center_lift",
-      "value": 0.12
+      "value": 0.79
     },
     {
       "type": "Slider",
       "name": "blend_pulse_amount",
-      "value": 0.179
+      "value": 0.034
     },
     {
       "type": "Slider",
@@ -144,7 +109,7 @@
     {
       "type": "Slider",
       "name": "light_x",
-      "value": -6.04
+      "value": -2.74
     },
     {
       "type": "Slider",
@@ -154,32 +119,32 @@
     {
       "type": "Slider",
       "name": "light_z",
-      "value": -6.1
-    },
-    {
-      "type": "Slider",
-      "name": "light_intensity",
       "value": 0.71
     },
     {
       "type": "Slider",
+      "name": "light_intensity",
+      "value": 0.45
+    },
+    {
+      "type": "Slider",
       "name": "shadow_strength",
-      "value": 1.0
+      "value": 0.08
     },
     {
       "type": "Slider",
       "name": "shadow_softness",
-      "value": 2.8
+      "value": 64.0
     },
     {
       "type": "Slider",
       "name": "rim_strength",
-      "value": 0.76
+      "value": 4.0
     },
     {
       "type": "Slider",
       "name": "rim_power",
-      "value": 8.88
+      "value": 7.17
     },
     {
       "type": "Slider",
@@ -194,32 +159,32 @@
     {
       "type": "Slider",
       "name": "energy_strength",
-      "value": 0.66
+      "value": 0.84
     },
     {
       "type": "Slider",
       "name": "energy_power",
-      "value": 7.92
+      "value": 4.3
     },
     {
       "type": "Slider",
       "name": "energy_freq",
-      "value": 7.61
+      "value": 4.03
     },
     {
       "type": "Slider",
       "name": "chroma_strength",
-      "value": 0.44
+      "value": 0.53
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 0.11
+      "value": 0.15
     },
     {
       "type": "Slider",
       "name": "hue_shift",
-      "value": 0.042
+      "value": -0.867
     },
     {
       "type": "Slider",
@@ -229,12 +194,12 @@
     {
       "type": "Slider",
       "name": "contrast",
-      "value": 1.75
+      "value": 2.03
     },
     {
       "type": "Slider",
       "name": "fog_density",
-      "value": 0.082
+      "value": 0.142
     }
   ],
   "midi_controls": [],
