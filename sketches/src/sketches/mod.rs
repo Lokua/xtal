@@ -32,6 +32,7 @@ pub use self::auto::auto_grid_splash;
 pub use self::auto::auto_rm;
 pub use self::auto::auto_sline;
 pub use self::auto::auto_un;
+pub use self::auto::auto_un2;
 
 pub mod dev;
 pub use self::dev::animation_dev;

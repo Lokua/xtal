@@ -48,7 +48,6 @@ struct Params {
     s: vec4f,
     // t: use_rim, use_fresnel, reserved, reserved
     t: vec4f,
-    // u: bg_darken, reserved, reserved, reserved
     u: vec4f,
     v: vec4f,
     w: vec4f,
@@ -58,13 +57,13 @@ struct Params {
 @group(0) @binding(0)
 var<uniform> params: Params;
 
-const MAX_MARCH_STEPS: i32 = 48;
-const MAX_SHADOW_STEPS: i32 = 32;
-const MAX_AO_SAMPLES: i32 = 5;
+const MAX_MARCH_STEPS: i32 = 64;
+const MAX_SHADOW_STEPS: i32 = 64;
+const MAX_AO_SAMPLES: i32 = 6;
 const MAX_DIST: f32 = 30.0;
 const SURF_DIST: f32 = 0.0012;
 const NORMAL_EPS: f32 = 0.0012;
-const MARCH_SAFETY: f32 = 0.90;
+const MARCH_SAFETY: f32 = 0.82;
 const ORBIT_AMOUNT: f32 = 0.2;
 const CENTER_LIFT: f32 = 0.12;
 const AO_STRENGTH: f32 = 1.25;
@@ -172,12 +171,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         vec3f(0.024, 0.014, 0.008),
         color_mix,
     );
-    let bg_darken = clamp(params.u.x, 0.0, 1.0);
     let bg = mix(
         bg_bottom,
         bg_top,
         clamp(uv.y * 0.5 + 0.5, 0.0, 1.0),
-    ) * (1.0 - bg_darken);
+    );
     prepare_scene_state(beats);
 
     let t = ray_march(ro, rd, surf_eps);
@@ -186,23 +184,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     let hit_p = ro + rd * t;
-
-    // Reject ghost surfaces from smin inflation in empty space.
-    let ghost_bound = g_blob_radius_bound + g_topology_bound
-        + g_smooth_pad + 0.1;
-    let dg1 = length(hit_p - g_c1);
-    let dg2 = length(hit_p - g_c2);
-    let dg3 = length(hit_p - g_c3);
-    var nearest_bound = min(min(dg1, dg2), dg3) - ghost_bound;
-    if (g_sat_cluster_bound > 0.0) {
-        nearest_bound = min(
-            nearest_bound,
-            min(min(dg1, dg2), dg3) - g_sat_cluster_bound,
-        );
-    }
-    if (nearest_bound > 0.0) {
-        return vec4f(bg, 1.0);
-    }
     let n = calc_normal(hit_p);
     let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
     let p = hit_p + n * shading_bias;
@@ -251,18 +232,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     if (use_specular) {
         spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
     }
-    // Gate rim/fresnel with smoothstep so only true silhouette edges
-    // fire, suppressing scattered white spots from noisy normals on
-    // harmonic-distorted surfaces.
-    let ndv = max(dot(n, v), 0.0);
-    let edge_gate = smoothstep(0.35, 0.0, ndv);
     var fresnel = 0.0;
     if (use_fresnel) {
-        fresnel = pow(1.0 - ndv, 3.0) * edge_gate;
+        fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
     }
     var rim = 0.0;
     if (use_rim) {
-        rim = pow(1.0 - ndv, rim_power) * rim_strength * edge_gate;
+        rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
     }
     if (debug_view == 1) {
         return vec4f(n * 0.5 + vec3f(0.5), 1.0);
@@ -293,7 +269,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
     color *= ao * light_intensity;
     if (use_specular) {
-        color += vec3f(spec) * 0.8 * light_intensity;
+        color += vec3f(spec) * 0.85 * light_intensity;
     }
     if (use_fresnel) {
         color += vec3f(0.9, 0.3, 1.0) * fresnel * 0.35;
@@ -593,6 +569,7 @@ fn scene_sdf(p: vec3f) -> f32 {
         d3 = mix(d3_base, d3_split, g_topology_strength3);
     }
 
+    // True 3-way smooth union so all blobs can merge as a single mass.
     let d12 = smin(d1, d2, g_outer_blend);
     let d13 = smin(d1, d3, g_blend);
     let d23 = smin(d2, d3, g_blend);
@@ -867,10 +844,8 @@ fn soft_shadow(
                 break;
             }
             result = min(result, softness * h / max(t, 0.02));
-            if (result < 0.05) {
-                break;
-            }
-            t += clamp(h * 0.7, surf_eps * 0.4, 0.18);
+            // Denser stepping reduces contour-like bands on rippled SDFs.
+            t += clamp(h * 0.6, surf_eps * 0.4, 0.12);
         }
         if (t > max_t) {
             break;
