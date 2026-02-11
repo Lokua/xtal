@@ -186,22 +186,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let hit_p = ro + rd * t;
 
-    // Reject ghost surfaces from smin inflation in empty space.
-    let ghost_bound = g_blob_radius_bound + g_topology_bound
-        + g_smooth_pad + 0.1;
-    let dg1 = length(hit_p - g_c1);
-    let dg2 = length(hit_p - g_c2);
-    let dg3 = length(hit_p - g_c3);
-    var nearest_bound = min(min(dg1, dg2), dg3) - ghost_bound;
-    if (g_sat_cluster_bound > 0.0) {
-        nearest_bound = min(
-            nearest_bound,
-            min(min(dg1, dg2), dg3) - g_sat_cluster_bound,
-        );
-    }
-    if (nearest_bound > 0.0) {
-        return vec4f(bg, 1.0);
-    }
     let n = calc_normal(hit_p);
     let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
     let p = hit_p + n * shading_bias;
