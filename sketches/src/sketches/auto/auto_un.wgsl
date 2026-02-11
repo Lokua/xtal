@@ -111,7 +111,6 @@ var<private> g_topology_split1: vec3f;
 var<private> g_topology_split2: vec3f;
 var<private> g_topology_split3: vec3f;
 var<private> g_topology_bound: f32;
-var<private> g_scene_bound_radius: f32;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
@@ -327,13 +326,7 @@ fn ray_march(
     rd: vec3f,
     surf_eps: f32,
 ) -> f32 {
-    let hit = ray_sphere_interval(ro, rd, g_scene_bound_radius);
-    if (hit.y < 0.0 || hit.x > MAX_DIST) {
-        return MAX_DIST;
-    }
-
-    var dist = max(hit.x, 0.0);
-    let march_end = min(hit.y + 0.15, MAX_DIST);
+    var dist = 0.0;
     for (var i = 0; i < MAX_MARCH_STEPS; i = i + 1) {
         let p = ro + rd * dist;
         let scene_dist = scene_sdf(p);
@@ -341,24 +334,11 @@ fn ray_march(
             break;
         }
         dist += scene_dist * MARCH_SAFETY;
-        if (dist >= march_end) {
+        if (dist >= MAX_DIST) {
             break;
         }
     }
     return dist;
-}
-
-fn ray_sphere_interval(ro: vec3f, rd: vec3f, radius: f32) -> vec2f {
-    let b = dot(ro, rd);
-    let c = dot(ro, ro) - radius * radius;
-    let h = b * b - c;
-    if (h < 0.0) {
-        return vec2f(MAX_DIST + 1.0, -1.0);
-    }
-    let s = sqrt(h);
-    let t0 = -b - s;
-    let t1 = -b + s;
-    return vec2f(t0, t1);
 }
 
 fn prepare_scene_state(beats: f32) {
@@ -518,19 +498,11 @@ fn prepare_scene_state(beats: f32) {
         g_topology_bound = split_base * (0.75 + 0.5 * max_strength);
     }
 
-    let c1_len = length(g_c1);
-    let c2_len = length(g_c2);
-    let c3_len = length(g_c3);
-    let max_center_len = max(c1_len, max(c2_len, c3_len));
-    let blob_bound = g_blob_radius_bound + g_topology_bound + g_smooth_pad;
-    var max_local_bound = blob_bound;
     if (g_sat_count > 0 && g_sat_radius > 0.0 && g_sat_orbit > 0.0) {
         let sat_orbit_bound = g_sat_orbit * (1.0 + 0.45 * g_sat_jitter);
         let sat_radius_bound = g_sat_radius * (1.0 + 0.35 * g_sat_breathe);
         g_sat_cluster_bound = sat_orbit_bound + sat_radius_bound + g_smooth_pad;
-        max_local_bound = max(max_local_bound, g_sat_cluster_bound);
     }
-    g_scene_bound_radius = max_center_len + max_local_bound + 0.25;
 }
 
 fn scene_sdf(p: vec3f) -> f32 {
