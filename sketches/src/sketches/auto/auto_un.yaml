@@ -1,3 +1,11 @@
+snapshot_sequence:
+  type: snapshot_sequence
+  beats: 16
+  # prettier-ignore
+  snapshots: [
+    1, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6, 
+    6, 6, 5, 5, 5, 5, 4, 4, 4, 3, 3, 2, 1
+  ]
 # ------------------------------------------------------------------------------
 #  Camera
 # ------------------------------------------------------------------------------
@@ -50,9 +58,9 @@ sphere_radius:
 blend_k:
   var: d3
   type: slider
-  range: [0.01, 1.0]
-  default: 0.42
-  step: 0.01
+  range: [0.6, 1.0]
+  default: 0.65
+  step: 0.001
 
 # ------------------------------------------------------------------------------
 #  Harmonic Distortion
@@ -68,12 +76,18 @@ harmonic_amp_1:
   default: 0.08
   step: 0.001
 
+# harmonic_freq_1:
+#   var: f2
+#   type: slider
+#   range: [0.0, 18.0]
+#   default: 6.0
+#   step: 0.01
+
 harmonic_freq_1:
   var: f2
-  type: slider
-  range: [0.0, 18.0]
-  default: 6.0
-  step: 0.01
+  type: triangle
+  beats: 24
+  range: [0.0, 6.0]
 
 harmonic_amp_2:
   var: f3
@@ -82,19 +96,31 @@ harmonic_amp_2:
   default: 0.06
   step: 0.001
 
+# harmonic_freq_2:
+#   var: f4
+#   type: slider
+#   range: [0.0, 18.0]
+#   default: 8.0
+#   step: 0.01
+
 harmonic_freq_2:
-  var: f4
-  type: slider
-  range: [0.0, 18.0]
-  default: 8.0
-  step: 0.01
+  var: f2
+  type: triangle
+  beats: 32
+  range: [0.0, 6.0]
+
+# harmonic_warp:
+#   var: g1
+#   type: slider
+#   range: [-24, 24]
+#   default: 0.0
+#   step: 0.001
 
 harmonic_warp:
   var: g1
-  type: slider
-  range: [-24, 24]
-  default: 0.0
-  step: 0.001
+  type: triangle
+  beats: 4
+  range: [-6, 6]
 
 harmonic_ridge:
   var: g2
