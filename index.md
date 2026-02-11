@@ -4,6 +4,18 @@ Files sorted from most to least recent. Source code available on
 
 
 
+## g26_12_boxes-89hx1.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/g26_12_boxes-89hx1.png" alt="g26_12_boxes-89hx1.png">
+
+## g26_12_boxes-rhhbt.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/g26_12_boxes-rhhbt.png" alt="g26_12_boxes-rhhbt.png">
+
+## g26_12_boxes-604z5.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/g26_12_boxes-604z5.png" alt="g26_12_boxes-604z5.png">
+
 ## rm_rep-ek5hs.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/rm_rep-ek5hs.png" alt="rm_rep-ek5hs.png">
