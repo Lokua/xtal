@@ -412,10 +412,3 @@ fog_density:
   range: [0.001, 0.2]
   default: 0.03
   step: 0.001
-
-bg_darken:
-  var: u1
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.0
-  step: 0.01
