@@ -24,12 +24,12 @@
     {
       "type": "Slider",
       "name": "harmonic_amp_1",
-      "value": 0.129
+      "value": 0.21
     },
     {
       "type": "Slider",
       "name": "harmonic_freq_1",
-      "value": 5.41
+      "value": 12.78
     },
     {
       "type": "Slider",
@@ -44,7 +44,7 @@
     {
       "type": "Slider",
       "name": "harmonic_warp",
-      "value": 4.699
+      "value": 0.0
     },
     {
       "type": "Slider",
@@ -144,7 +144,7 @@
     {
       "type": "Select",
       "name": "view",
-      "value": "final"
+      "value": "rim"
     },
     {
       "type": "Checkbox",
@@ -184,7 +184,7 @@
     {
       "type": "Slider",
       "name": "rim_strength",
-      "value": 4.0
+      "value": 3.38
     },
     {
       "type": "Slider",
@@ -234,28 +234,23 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "harmonic_freq_1",
-          "value": 5.41
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_ao",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_fresnel",
-          "value": false
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_diffuse",
-          "value": true
+          "name": "hue_shift",
+          "value": -0.021
         },
         {
           "type": "Slider",
-          "name": "harmonic_warp",
-          "value": 4.699
+          "name": "fog_density",
+          "value": 0.142
+        },
+        {
+          "type": "Slider",
+          "name": "satellite_orbit",
+          "value": 1.8
+        },
+        {
+          "type": "Slider",
+          "name": "triangle_size",
+          "value": 1.08
         },
         {
           "type": "Slider",
@@ -264,23 +259,8 @@
         },
         {
           "type": "Slider",
-          "name": "harmonic_amp_1",
-          "value": 0.129
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_shadow",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "motion_speed",
-          "value": 1.5
-        },
-        {
-          "type": "Slider",
-          "name": "triangle_size",
-          "value": 1.08
+          "name": "flow_amount",
+          "value": 1.0
         },
         {
           "type": "Checkbox",
@@ -288,29 +268,14 @@
           "value": true
         },
         {
-          "type": "Slider",
-          "name": "satellite_radius",
-          "value": 0.276
+          "type": "Checkbox",
+          "name": "use_specular",
+          "value": true
         },
         {
           "type": "Slider",
-          "name": "stretch_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "focal_len",
-          "value": 1.4
-        },
-        {
-          "type": "Slider",
-          "name": "blend_pulse_freq",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "satellite_jitter",
-          "value": 0.507
+          "name": "color_mix",
+          "value": 0.14
         },
         {
           "type": "Slider",
@@ -323,14 +288,14 @@
           "value": 4.0
         },
         {
-          "type": "Select",
-          "name": "view",
-          "value": "final"
+          "type": "Slider",
+          "name": "topology_split",
+          "value": 1.0
         },
         {
-          "type": "Slider",
-          "name": "blend_pulse_amount",
-          "value": 0.35
+          "type": "Checkbox",
+          "name": "use_fresnel",
+          "value": false
         },
         {
           "type": "Slider",
@@ -339,18 +304,28 @@
         },
         {
           "type": "Slider",
-          "name": "topology_split",
-          "value": 1.0
+          "name": "stretch_y",
+          "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 1.35
+          "name": "harmonic_freq_1",
+          "value": 5.41
         },
         {
           "type": "Slider",
-          "name": "satellite_speed",
-          "value": 0.625
+          "name": "harmonic_warp",
+          "value": 4.699
+        },
+        {
+          "type": "Slider",
+          "name": "blend_pulse_amount",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_phase",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -359,83 +334,8 @@
         },
         {
           "type": "Slider",
-          "name": "fog_density",
-          "value": 0.142
-        },
-        {
-          "type": "Checkbox",
-          "name": "use_specular",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "sphere_radius",
-          "value": 1.4
-        },
-        {
-          "type": "Slider",
-          "name": "motion_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.14
-        },
-        {
-          "type": "Slider",
-          "name": "rim_strength",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "topology_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "satellite_breathe",
           "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "spec_power",
-          "value": 256.0
-        },
-        {
-          "type": "Slider",
-          "name": "rim_power",
-          "value": 9.34
-        },
-        {
-          "type": "Slider",
-          "name": "satellite_orbit",
-          "value": 1.8
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": -0.021
-        },
-        {
-          "type": "Slider",
-          "name": "flow_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "harmonic_amp_2",
-          "value": 0.119
-        },
-        {
-          "type": "Slider",
-          "name": "harmonic_ridge",
-          "value": 0.24
-        },
-        {
-          "type": "Slider",
-          "name": "harmonic_phase",
-          "value": 0.0
         },
         {
           "type": "Slider",
@@ -449,13 +349,113 @@
         },
         {
           "type": "Slider",
+          "name": "topology_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "view",
+          "value": "final"
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_diffuse",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_shadow",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "blend_pulse_freq",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.35
+        },
+        {
+          "type": "Slider",
+          "name": "motion_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "spec_power",
+          "value": 256.0
+        },
+        {
+          "type": "Slider",
+          "name": "satellite_radius",
+          "value": 0.276
+        },
+        {
+          "type": "Slider",
+          "name": "sphere_radius",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "rim_power",
+          "value": 9.34
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_amp_1",
+          "value": 0.129
+        },
+        {
+          "type": "Slider",
+          "name": "satellite_jitter",
+          "value": 0.507
+        },
+        {
+          "type": "Slider",
+          "name": "focal_len",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_amp_2",
+          "value": 0.119
+        },
+        {
+          "type": "Checkbox",
+          "name": "use_ao",
+          "value": false
+        },
+        {
+          "type": "Slider",
           "name": "light_intensity",
           "value": 2.97
         },
         {
           "type": "Slider",
+          "name": "harmonic_ridge",
+          "value": 0.24
+        },
+        {
+          "type": "Slider",
           "name": "cam_distance",
           "value": 4.97
+        },
+        {
+          "type": "Slider",
+          "name": "satellite_speed",
+          "value": 0.625
+        },
+        {
+          "type": "Slider",
+          "name": "motion_speed",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "rim_strength",
+          "value": 4.0
         }
       ],
       "midi_controls": [],
