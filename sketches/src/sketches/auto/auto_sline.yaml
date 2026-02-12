@@ -11,13 +11,10 @@ geometry:
 line_count:
   var: b1
   type: round_robin
+  # bypass: 16
   beats: 32
-  # prettier-ignore
-  values: [
-    8, 16, 32, 64, 128,
-    56, 48, 36, 24, 12
-  ]
-  slew: 0.8
+  values: [8, 16, 32, 24]
+  slew: 0.7
 
 point_size:
   var: b3
@@ -29,6 +26,7 @@ point_size:
 jitter:
   var: f1
   type: round_robin
+  bypass: 0
   beats: 0.5
   values: [0, 0, 0, 0, 0, 0, 0, 0, 0.04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   slew: 0.6
@@ -40,18 +38,12 @@ jitter:
 wave:
   type: separator
 
-# wave_amp:
-#   var: c2
-#   type: slider
-#   range: [0.0, 0.3]
-#   default: 0.18
-#   step: 0.001
-
 wave_amp:
   var: c2
   type: round_robin
+  # bypass: 0.01
   beats: 6
-  values: [0.01, 0.01, 0.01, 0.05, 0.3, 0.01]
+  values: [0.001, 0.01, 0.06, 0.03]
   slew: 0.75
 
 wave_freq:
@@ -71,8 +63,9 @@ phase_rate:
 harmonic_amp:
   var: g4
   type: round_robin
+  bypass: 0
   beats: 3
-  values: [0, 0, 0, 0, 1]
+  values: [0, 0, 0, 0, 4]
   slew: 0.6
 
 harmonic_freq:
@@ -123,14 +116,15 @@ focus_pull:
 flow_field_amount:
   var: i2
   type: triangle
-  beats: 30
-  range: [0.0, 0.5]
+  # bypass: 0.1
+  beats: 24
+  range: [0.0, 0.2]
 
 flow_field_scale:
   var: i3
   type: round_robin
-  # bypass: 5
-  beats: 16
+  # bypass: 1
+  beats: 4
   # range: [0.1, 8.0]
   values: [0.3, 1, 0.5, 2]
   slew: 0.7
