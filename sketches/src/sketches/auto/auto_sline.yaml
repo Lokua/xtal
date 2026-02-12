@@ -8,26 +8,24 @@ _vars:
 geometry:
   type: separator
 
-density:
-  type: slider
-  range: [1.0, 10.0]
-  default: 1.0
-  step: 1.0
-  # bypass: 1
+# line_count:
+#   var: b1
+#   type: slider
+#   range: [8.0, 256.0]
+#   default: 120.0
+#   step: 1.0
 
 line_count:
   var: b1
-  type: slider
-  range: [8.0, 256.0]
-  default: 120.0
-  step: 1.0
-
-samples_per_line:
-  var: b2
-  type: slider
-  range: [50, 12000.0]
-  default: 1200.0
-  step: 50
+  type: round_robin
+  beats: 32
+  # prettier-ignore
+  values: [
+    8, 16, 32, 64, 128,
+    56, 48, 36, 24, 12
+  ]
+  slew: 0.8
+  stem: 1234567
 
 point_size:
   var: b3
@@ -35,13 +33,6 @@ point_size:
   range: [0.0002, 0.006]
   default: 0.001
   step: 0.0001
-
-domain_scale:
-  var: c1
-  type: slider
-  range: [0.2, 1.8]
-  default: 1.0
-  step: 0.01
 
 jitter:
   var: f1
@@ -60,7 +51,7 @@ wave:
 wave_amp:
   var: c2
   type: slider
-  range: [0.0, 1.2]
+  range: [0.0, 0.3]
   default: 0.18
   step: 0.001
 
@@ -77,13 +68,6 @@ phase_rate:
   range: [-4, 4]
   default: 0.25
   step: 0.25
-
-tilt:
-  var: d1
-  type: slider
-  range: [-4.0, 4.0]
-  default: 0.3
-  step: 0.01
 
 harmonic_amp:
   var: g4
@@ -106,8 +90,8 @@ harmonic_rate:
   default: 0.5
   step: 0.25
 
-  FOCUS_MIN: &FOCUS_MIN -0.8
-  FOCUS_MAX: &FOCUS_MAX 0.8
+FOCUS_MIN: &FOCUS_MIN -0.8
+FOCUS_MAX: &FOCUS_MAX 0.8
 
 focus_x:
   var: d2
@@ -134,59 +118,17 @@ focus_pull:
   stem: 2
 
 # ------------------------------------------------------------------------------
-#  Latlong Warp
-# ------------------------------------------------------------------------------
-
-latlong:
-  type: separator
-
-latlong_warp_enabled:
-  var: h1
-  type: checkbox
-  default: false
-
-latlong_warp_amount:
-  var: h2
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.35
-  step: 0.01
-  disabled: not latlong_warp_enabled
-
-latlong_warp_freq:
-  var: h3
-  type: slider
-  range: [0.1, 12.0]
-  default: 3.2
-  step: 0.01
-  disabled: not latlong_warp_enabled
-
-latlong_symmetry:
-  var: h4
-  type: slider
-  range: [1.0, 16.0]
-  default: 6.0
-  step: 1.0
-  disabled: not latlong_warp_enabled
-
-# ------------------------------------------------------------------------------
 #  Flow Field
 # ------------------------------------------------------------------------------
 
 flow:
   type: separator
 
-flow_field_enabled:
-  var: i1
-  type: checkbox
-  default: false
-
 flow_field_amount:
   var: i2
   type: triangle
   beats: 30
   range: [0.0, 0.5]
-  disabled: not flow_field_enabled
 
 # flow_field_scale:
 #   var: i3
@@ -194,7 +136,6 @@ flow_field_amount:
 #   range: [0.1, 8.0]
 #   default: 2.2
 #   step: 0.01
-#   disabled: not flow_field_enabled
 
 flow_field_scale:
   var: i3
@@ -204,36 +145,6 @@ flow_field_scale:
   values: [0.3, 1, 0.5, 2]
   slew: 0.7
   stem: 775536
-  disabled: not flow_field_enabled
-
-flow_field_rate:
-  var: i4
-  type: slider
-  range: [0.0, 4.0]
-  default: 0.45
-  step: 0.01
-  disabled: not flow_field_enabled
-
-# ------------------------------------------------------------------------------
-#  Line Rate Gradient
-# ------------------------------------------------------------------------------
-
-rate:
-  type: separator
-
-rate_gradient:
-  var: g1
-  type: slider
-  range: [-1.0, 1.0]
-  default: 0.0
-  step: 0.01
-
-rate_spread:
-  var: g2
-  type: slider
-  range: [0.0, 2.0]
-  default: 0.5
-  step: 0.25
 
 # ------------------------------------------------------------------------------
 #  Stripe Motion
@@ -274,13 +185,6 @@ stripe_rate:
 color:
   type: separator
 
-glow:
-  var: e4
-  type: slider
-  range: [0.0, 2.0]
-  default: 1.0
-  step: 0.01
-
 hue:
   var: f2
   type: slider
@@ -308,10 +212,3 @@ brightness:
   range: [0.1, 2.0]
   default: 1.0
   step: 0.01
-
-bg_lift:
-  var: f4
-  type: slider
-  range: [0.0, 0.25]
-  default: 0.05
-  step: 0.001
