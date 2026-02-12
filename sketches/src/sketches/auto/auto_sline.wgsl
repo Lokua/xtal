@@ -1,4 +1,16 @@
 const TAU: f32 = 6.283185307179586;
+// Must match what's on Rust side exactly
+const DENSITY: f32 = 1.0;
+// Must be <= what's declared on the Rust side
+const SAMPLES_PER_LINE: f32 = 2100.0;
+const DOMAIN_SCALE: f32 = 1.08;
+const TILT: f32 = -4.0;
+const FLOW_FIELD_ENABLED: f32 = 1.0;
+const FLOW_FIELD_RATE: f32 = 0.1;
+const RATE_GRADIENT: f32 = 1.0;
+const RATE_SPREAD: f32 = 1.0;
+const GLOW: f32 = 2.0;
+const BG_LIFT: f32 = 0.0;
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
@@ -10,30 +22,28 @@ struct Params {
     // a1, a2 are width/height from dynamic uniforms, a4 is beats.
     a: vec4f,
 
-    // b1 line_count, b2 samples_per_line, b3 point_size
+    // b1 line_count, b3 point_size
     b: vec4f,
 
-    // c1 domain_scale, c2 wave_amp, c3 wave_freq, c4 phase_rate
+    // c2 wave_amp, c3 wave_freq, c4 phase_rate
     c: vec4f,
 
-    // d1 tilt, d2 focus_x, d3 focus_y, d4 focus_pull
+    // d2 focus_x, d3 focus_y, d4 focus_pull
     d: vec4f,
 
-    // e1 stripe_amount, e2 stripe_freq, e3 stripe_rate, e4 glow
+    // e1 stripe_amount, e2 stripe_freq, e3 stripe_rate
     e: vec4f,
 
-    // f1 jitter, f2 hue, f3 brightness, f4 bg_lift
+    // f1 jitter, f2 hue, f3 brightness
     f: vec4f,
 
-    // g1 rate_gradient, g2 rate_spread, g3 focus_color_impact, g4 harmonic_amp
+    // g3 focus_color_impact, g4 harmonic_amp
     g: vec4f,
 
-    // h1 latlong_warp_enabled, h2 latlong_warp_amount,
-    // h3 latlong_warp_freq, h4 latlong_symmetry
+    // reserved
     h: vec4f,
 
-    // i1 flow_field_enabled, i2 flow_field_amount, i3 flow_field_scale,
-    // i4 flow_field_rate
+    // i2 flow_field_amount, i3 flow_field_scale
     i: vec4f,
 
     // ...
@@ -62,41 +72,37 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
 
     let vert_index = vidx - 3u;
 
-    let line_count = max(1.0, params.b.x);
-    let samples_per_line = max(2.0, params.b.y);
-    let point_size = max(0.00001, params.b.z);
+    let line_count = max(1.0, params.b.x * DENSITY);
+    let samples_per_line = max(2.0, SAMPLES_PER_LINE);
+    let point_size = max(0.0002, params.b.z);
 
-    let domain_scale = max(0.01, params.c.x);
+    let domain_scale = max(0.01, DOMAIN_SCALE);
     let wave_amp = params.c.y;
     let wave_freq = params.c.z;
     let phase_rate = params.c.w;
     let beats = params.a.w;
 
-    let tilt = params.d.x;
+    let tilt = TILT;
     let focus = vec2f(params.d.y, params.d.z);
     let focus_pull = params.d.w;
 
     let stripe_amount = params.e.x;
     let stripe_freq = params.e.y;
     let stripe_rate = params.e.z;
-    let glow = params.e.w;
+    let glow = GLOW;
 
     let jitter = params.f.x;
     let hue = params.f.y;
     let brightness = params.f.z;
-    let rate_gradient = params.g.x;
-    let rate_spread = params.g.y;
+    let rate_gradient = RATE_GRADIENT;
+    let rate_spread = RATE_SPREAD;
     let focus_color_impact = params.g.z;
     let harmonic_amp = params.g.w;
-    let latlong_warp_enabled = params.h.x;
-    let latlong_warp_amount = params.h.y;
-    let latlong_warp_freq = params.h.z;
-    let latlong_symmetry = params.h.w;
 
-    let flow_field_enabled = params.i.x;
+    let flow_field_enabled = FLOW_FIELD_ENABLED;
     let flow_field_amount = params.i.y;
     let flow_field_scale = params.i.z;
-    let flow_field_rate = params.i.w;
+    let flow_field_rate = FLOW_FIELD_RATE;
 
     let line_hue_span = params.k.x;
     let harmonic_freq = max(0.0001, params.k.y);
@@ -117,21 +123,6 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
         mix(-aspect, aspect, t),
         line_norm * 2.0 - 1.0
     ) * domain_scale;
-
-    // Symmetric map-like latitude/longitude warp.
-    let ll_base = vec2f(pos.x / max(0.0001, aspect), pos.y);
-    let ll_r = max(length(ll_base), 0.0001);
-    let ll_ang = atan2(ll_base.y, ll_base.x);
-    let ll_phase = beats * 0.22;
-    let ll_sym = max(1.0, latlong_symmetry);
-    let ll_radial_wave = sin(ll_r * latlong_warp_freq * TAU - ll_phase) * cos(ll_ang * ll_sym);
-    let ll_tangent_wave = cos(ll_r * (latlong_warp_freq * 0.7) * TAU + ll_phase * 0.6) * sin(ll_ang * ll_sym);
-    let ll_radial_dir = ll_base / ll_r;
-    let ll_tangent_dir = vec2f(-ll_radial_dir.y, ll_radial_dir.x);
-    let ll_warp = ll_radial_dir * ll_radial_wave * 0.14 + ll_tangent_dir * ll_tangent_wave * 0.08;
-    let ll_mix = latlong_warp_enabled * latlong_warp_amount;
-    let ll_pos = vec2f((ll_base.x + ll_warp.x * ll_mix) * aspect, ll_base.y + ll_warp.y * ll_mix);
-    pos = mix(pos, ll_pos, latlong_warp_enabled);
 
     let line_bias = line_norm * 2.0 - 1.0;
     let line_rate_scale = max(0.0, 1.0 - line_bias * rate_gradient * rate_spread);
@@ -208,7 +199,7 @@ fn fs_main(
     @location(0) point_color: vec4f,
     @location(1) _uv: vec2f,
 ) -> @location(0) vec4f {
-    let bg = hsv2rgb(vec3f(fract(params.f.y + 0.03), 0.45, params.f.w));
+    let bg = hsv2rgb(vec3f(fract(params.f.y + 0.03), 0.45, BG_LIFT));
     if (point_color.a <= 0.0) {
         return vec4f(bg, 1.0);
     }

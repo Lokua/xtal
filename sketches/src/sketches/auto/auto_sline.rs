@@ -14,6 +14,9 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     h: HD_HEIGHT,
 };
 
+const SAMPLES_PER_LINE: u32 = 2100;
+const DENSITY: u32 = 1;
+
 #[uniforms(banks = 12)]
 struct ShaderParams {}
 
@@ -54,11 +57,9 @@ impl Sketch for AutoSline {
     fn view(&self, _app: &App, frame: Frame, _ctx: &Context) {
         frame.clear(WHITE);
 
-        let points_per_line = self.hub.get("samples_per_line") as u32;
         let n_lines = self.hub.get("line_count") as u32;
-        let total_points = points_per_line * n_lines;
-        let density = self.hub.get("density") as u32;
-        let spiral_vertices = total_points * 6 * density;
+        let total_points = SAMPLES_PER_LINE * n_lines;
+        let spiral_vertices = total_points * 6 * DENSITY;
         let background_vertices = 3;
         let total_vertices = background_vertices + spiral_vertices;
 
