@@ -25,6 +25,7 @@ pub mod toxy;
 pub mod wave_fract;
 
 pub mod auto;
+pub use self::auto::auto_757;
 pub use self::auto::auto_cloud;
 pub use self::auto::auto_dreams;
 pub use self::auto::auto_dyn_uni;

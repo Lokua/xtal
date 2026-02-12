@@ -8,7 +8,7 @@ struct VertexOutput {
 };
 
 struct Params {
-    // w, h, amt, 
+    // w, h, beats, amt
     a: vec4f,
     b: vec4f,
     c: vec4f,
@@ -28,7 +28,7 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let amount = params.a.z;
+    let amount = params.a.w;
     let pos = correct_aspect(position);
     return vec4f(vec3f(length(pos) * amount), 1.0);
 }

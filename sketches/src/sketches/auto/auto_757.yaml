@@ -1,0 +1,94 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+speed:
+  var: a4
+  type: slider
+  range: [0.1, 4.0]
+  default: 1.0
+  step: 0.01
+
+box_size:
+  var: b1
+  type: slider
+  range: [0.05, 0.60]
+  default: 0.20
+  step: 0.001
+
+spacing:
+  var: b2
+  type: slider
+  range: [0.25, 1.40]
+  default: 0.80
+  step: 0.001
+
+motion_amp:
+  var: b3
+  type: slider
+  range: [0.0, 1.2]
+  default: 0.14
+  step: 0.001
+
+line_thickness:
+  var: b4
+  type: slider
+  range: [0.001, 0.06]
+  default: 0.010
+  step: 0.001
+
+rotation_amount:
+  var: c1
+  type: slider
+  range: [0.0, 3.141592653589793]
+  default: 0.45
+  step: 0.001
+
+cube_offset:
+  var: c2
+  type: slider
+  range: [0.0, 0.35]
+  default: 0.08
+  step: 0.001
+
+glow:
+  var: c3
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.8
+  step: 0.001
+
+palette_mix:
+  var: c4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.45
+  step: 0.001
+
+box_count:
+  var: d1
+  type: slider
+  range: [1, 16]
+  default: 8
+  step: 1
+
+zoom:
+  var: d2
+  type: slider
+  range: [0.5, 2.2]
+  default: 1.0
+  step: 0.001
+
+grain:
+  var: d3
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.02
+  step: 0.001
+
+pattern_morph_rate:
+  var: d4
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.08
+  step: 0.001
