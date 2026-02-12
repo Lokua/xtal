@@ -96,6 +96,9 @@ Control scripting and dynamic uniforms checklist:
 - when adding rate or rate multiplier controls, make sure the `step` parameter
   is tempo friendly: divisions of 0.25 or 0.125 depending on the granularity you
   need
+- keep controls in sections marked by a separator control with a simple title;
+  also in the yaml above the separator add a section comment (like in the
+  template file)
 
 ## UI Integration Pattern (When Exposing New Hub State)
 

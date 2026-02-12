@@ -1,0 +1,197 @@
+# ------------------------------------------------------------------------------
+#  Flow Field
+# ------------------------------------------------------------------------------
+
+_vars:
+  TAU: &TAU 6.283185307179586
+
+flow_scale:
+  var: b1
+  type: slider
+  range: [0.25, 5.0]
+  default: 1.4
+  step: 0.05
+
+flow_speed:
+  var: b2
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.55
+  step: 0.05
+
+step_size:
+  var: b3
+  type: slider
+  range: [0.002, 0.08]
+  default: 0.02
+  step: 0.001
+
+steps:
+  var: b4
+  type: slider
+  range: [8, 96]
+  default: 48
+  step: 1
+
+field_twist:
+  var: c1
+  type: slider
+  range: [0.0, 3.0]
+  default: 0.9
+  step: 0.05
+
+advection_angle:
+  var: c2
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.01
+
+advection_strength:
+  var: c3
+  type: slider
+  range: [0.0, 2.5]
+  default: 0.85
+  step: 0.05
+
+line_density:
+  var: c4
+  type: slider
+  range: [3.0, 64.0]
+  default: 22.0
+  step: 0.5
+
+line_sharpness:
+  var: d1
+  type: slider
+  range: [0.2, 4.0]
+  default: 1.4
+  step: 0.05
+
+palette:
+  var: d2
+  type: select
+  default: dune
+  options:
+    - dune
+    - glacier
+    - forest
+    - ember
+    - neon_cmy
+    - mono_ink
+
+palette_shift:
+  var: d3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+palette_contrast:
+  var: d4
+  type: slider
+  range: [0.2, 2.0]
+  default: 1.0
+  step: 0.05
+
+brightness:
+  var: e1
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.15
+  step: 0.01
+
+contrast:
+  var: e2
+  type: slider
+  range: [0.2, 2.5]
+  default: 1.25
+  step: 0.05
+
+grain:
+  var: e3
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.03
+  step: 0.005
+
+vignette:
+  var: e4
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.45
+  step: 0.05
+
+bands:
+  type: separator
+
+bands_count:
+  var: f1
+  type: slider
+  range: [2, 48]
+  default: 12
+  step: 1
+
+gradient_mix:
+  var: f2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.3
+  step: 0.01
+
+# parallax_mix:
+#   var: g1
+#   type: slider
+#   range: [0.0, 1.0]
+#   default: 0.45
+#   step: 0.01
+parallax_mix:
+  var: g1
+  type: triangle
+  bypass: 0.5
+  beats: 20
+  range: [0.0, 1.0]
+
+# warp_amount:
+#   var: g2
+#   type: slider
+#   range: [0.0, 2.0]
+#   default: 0.85
+#   step: 0.05
+warp_amount:
+  var: g2
+  type: triangle
+  bypass: 0.5
+  beats: 32
+  range: [0.0, 2.0]
+
+pools:
+  type: separator
+
+pool_strength:
+  var: h1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.9
+  step: 0.05
+
+pool_size:
+  var: h2
+  type: slider
+  range: [0.1, 2.0]
+  default: 0.75
+  step: 0.05
+
+pool_spin_rate:
+  var: h3
+  type: slider
+  range: [-4.0, 4.0]
+  default: 0.75
+  step: 0.05
+
+pool_angularity:
+  var: h4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01

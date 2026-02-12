@@ -44,6 +44,7 @@ fn main() {
         auto_cloud,
         auto_dreams,
         auto_dyn_uni,
+        auto_flow,
         auto_grid_splash,
         auto_rm,
         auto_sline,
