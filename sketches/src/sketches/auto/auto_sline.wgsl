@@ -83,7 +83,10 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
     let beats = params.a.w;
 
     let tilt = TILT;
-    let focus = vec2f(params.d.y, params.d.z);
+    let focus = vec2f(
+        params.d.y * (params.a.x / max(1.0, params.a.y)) * DOMAIN_SCALE,
+        params.d.z * DOMAIN_SCALE,
+    );
     let focus_pull = params.d.w;
 
     let stripe_amount = params.e.x;

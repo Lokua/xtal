@@ -923,8 +923,8 @@ Basic linear scaling
 
 - `type` - `effect`
 - `kind` - `map`
-- `domain` - the assumed input range, not clamped. Defaults to `[0.0, 1.0]`
-- `range` - output range, not clamped. Defaults to `[0.0, 1.0]`
+- `domain` - the assumed input range, not clamped. Required.
+- `range` - output range, not clamped. Required.
 
 **Example**
 
@@ -1006,6 +1006,7 @@ applied to the `source` field defined in a `mod` config.
   - `0.5`: outputs true ring modulation (carrier \* modulator)
   - `1.0`: outputs modulator signal
   - (defaults to `0.0`)
+- `range` - Defaults to `[0.0, 1.0]`
 - `modulator` - name of the control to use as modulator
 
 **Example**
