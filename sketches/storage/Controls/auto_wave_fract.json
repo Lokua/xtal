@@ -1,0 +1,44 @@
+{
+  "version": "2",
+  "ui_controls": [
+    { "type": "Slider", "name": "growth_speed", "value": 0.75 },
+    { "type": "Slider", "name": "flow_speed", "value": 0.625 },
+    { "type": "Slider", "name": "colony_scale", "value": 1.0 },
+    { "type": "Slider", "name": "attractor_count", "value": 18.0 },
+    { "type": "Slider", "name": "branch_thickness", "value": 0.02 },
+    { "type": "Slider", "name": "web_wobble", "value": 0.6 },
+    { "type": "Select", "name": "symmetry_mode", "value": "none" },
+    { "type": "Slider", "name": "zoom", "value": 1.05 },
+    { "type": "Slider", "name": "x_off", "value": 0.0 },
+    { "type": "Slider", "name": "y_off", "value": 0.0 },
+    { "type": "Select", "name": "palette_mode", "value": "acid" },
+    { "type": "Slider", "name": "hue_shift", "value": 0.0 },
+    { "type": "Slider", "name": "saturation", "value": 1.2 },
+    { "type": "Slider", "name": "contrast", "value": 1.2 },
+    { "type": "Slider", "name": "exposure", "value": 1.0 },
+    { "type": "Slider", "name": "accent", "value": 0.55 },
+    { "type": "Slider", "name": "bg_mix", "value": 0.45 },
+    { "type": "Slider", "name": "glow", "value": 0.75 },
+    { "type": "Slider", "name": "grain", "value": 0.015 },
+    { "type": "Slider", "name": "vignette", "value": 0.5 },
+    { "type": "Checkbox", "name": "invert", "value": false }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        { "type": "Slider", "name": "growth_speed", "value": 0.75 },
+        { "type": "Slider", "name": "flow_speed", "value": 0.625 },
+        { "type": "Slider", "name": "attractor_count", "value": 18.0 },
+        { "type": "Slider", "name": "branch_thickness", "value": 0.02 },
+        { "type": "Select", "name": "palette_mode", "value": "acid" },
+        { "type": "Slider", "name": "contrast", "value": 1.2 }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}
