@@ -3,6 +3,8 @@ use nannou::prelude::*;
 
 use xtal::prelude::*;
 
+use super::common::{HD_HEIGHT, HD_WIDTH};
+
 // Live/2025.02.19 Blob
 // Run with `osc` timing
 
@@ -12,8 +14,10 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: 700,
-    h: 1244,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
+    // w: 700,
+    // h: 1244,
 };
 
 #[derive(SketchComponents)]
@@ -43,6 +47,10 @@ struct ShaderParams {
 
     e: [f32; 4],
     f: [f32; 4],
+    g: [f32; 4],
+    h: [f32; 4],
+    i: [f32; 4],
+    j: [f32; 4],
 }
 
 pub fn init(app: &App, ctx: &Context) -> Blob {
@@ -60,6 +68,10 @@ pub fn init(app: &App, ctx: &Context) -> Blob {
         d: [0.0; 4],
         e: [0.0; 4],
         f: [0.0; 4],
+        g: [0.0; 4],
+        h: [0.0; 4],
+        i: [0.0; 4],
+        j: [0.0; 4],
     };
 
     let shader = gpu::GpuState::new_fullscreen(
@@ -123,6 +135,30 @@ impl Sketch for Blob {
                 self.hub.get("f2"),
                 self.hub.get("f3"),
                 self.hub.get("f4"),
+            ],
+            g: [
+                self.hub.get("g1"),
+                self.hub.get("g2"),
+                self.hub.get("g3"),
+                self.hub.get("g4"),
+            ],
+            h: [
+                self.hub.get("h1"),
+                self.hub.get("h2"),
+                self.hub.get("h3"),
+                self.hub.get("h4"),
+            ],
+            i: [
+                self.hub.get("i1"),
+                self.hub.get("i2"),
+                self.hub.get("i3"),
+                self.hub.get("i4"),
+            ],
+            j: [
+                self.hub.get("j1"),
+                self.hub.get("j2"),
+                self.hub.get("j3"),
+                self.hub.get("j4"),
             ],
         };
 
