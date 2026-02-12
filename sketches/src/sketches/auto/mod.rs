@@ -8,3 +8,4 @@ pub mod auto_rm;
 pub mod auto_sline;
 pub mod auto_un;
 pub mod auto_un2;
+pub mod auto_wave_fract;

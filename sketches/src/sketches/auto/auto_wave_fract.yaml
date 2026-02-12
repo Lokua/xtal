@@ -1,0 +1,223 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+n_lines:
+  var: a4
+  type: slider
+  range: [1.0, 256.0]
+  default: 64.0
+  step: 1.0
+
+segments:
+  var: b1
+  type: slider
+  range: [4.0, 512.0]
+  default: 96.0
+  step: 1.0
+
+points_per_segment:
+  var: b2
+  type: slider
+  range: [1.0, 64.0]
+  default: 12.0
+  step: 1.0
+
+passes:
+  var: b3
+  type: slider
+  range: [1.0, 24.0]
+  default: 8.0
+  step: 1.0
+
+point_size:
+  var: b4
+  type: slider
+  range: [0.1, 6.0]
+  default: 0.8
+  step: 0.1
+
+line_width:
+  var: e4
+  type: slider
+  range: [0.05, 1.0]
+  default: 1.0
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Sand
+# ------------------------------------------------------------------------------
+
+sand_separator:
+  type: separator
+
+noise_scale:
+  var: c1
+  type: slider
+  range: [0.0, 0.06]
+  default: 0.01
+  step: 0.0005
+
+angle_variation:
+  var: c2
+  type: slider
+  range: [0.0, 3.1415927]
+  default: 0.35
+  step: 0.01
+
+line_span:
+  var: c3
+  type: slider
+  range: [0.1, 0.95]
+  default: 0.82
+  step: 0.01
+
+line_jitter:
+  var: c4
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.025
+  step: 0.001
+
+noise_map_mode:
+  var: f1
+  type: select
+  default: none
+  options:
+    - none
+    - linear
+    - reversed
+    - triangle
+
+noise_map_mix:
+  var: f2
+  type: slider
+  range: [0.0, 1.0]
+  default: 1.0
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Motion
+# ------------------------------------------------------------------------------
+
+motion_separator:
+  type: separator
+
+anim_speed:
+  var: d1
+  type: slider
+  range: [0.0, 8.0]
+  default: 1.0
+  step: 0.125
+
+wave_amp:
+  var: d2
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.03
+  step: 0.001
+
+wave_freq:
+  var: d3
+  type: slider
+  range: [0.1, 30.0]
+  default: 6.0
+  step: 0.25
+
+# ------------------------------------------------------------------------------
+#  Pattern
+# ------------------------------------------------------------------------------
+
+pattern_separator:
+  type: separator
+
+stripe_freq:
+  var: g1
+  type: slider
+  range: [0.0, 24.0]
+  default: 5.0
+  step: 0.25
+
+stripe_sharpness:
+  var: g2
+  type: slider
+  range: [0.1, 24.0]
+  default: 8.0
+  step: 0.1
+
+interference_amp:
+  var: g3
+  type: slider
+  range: [0.0, 1]
+  default: 0.03
+  step: 0.001
+
+interference_freq:
+  var: g4
+  type: slider
+  range: [0.0, 40.0]
+  default: 11.0
+  step: 0.25
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_separator:
+  type: separator
+
+r:
+  var: e1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.15
+  step: 0.01
+
+g:
+  var: e2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.45
+  step: 0.01
+
+b:
+  var: e3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.95
+  step: 0.01
+
+color_variation:
+  var: h1
+  type: slider
+  range: [0.0, 12.0]
+  default: 0.25
+  step: 0.01
+
+grain:
+  var: h2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.18
+  step: 0.01
+
+color_freq:
+  var: h3
+  type: slider
+  range: [0.0, 40.0]
+  default: 12.0
+  step: 0.25
+
+alpha_variation:
+  var: h4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.2
+  step: 0.01
+
+alpha:
+  var: d4
+  type: slider
+  range: [0.005, 0.4]
+  default: 0.06
+  step: 0.001
