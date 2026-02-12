@@ -48,6 +48,39 @@ This distinction saves debugging time when behavior appears “unchanged.”
 4. For frontend changes, also verify UI build:
    - `npm --prefix /Users/lokua/code/xtal-project/xtal-ui run build`
 
+## Creating a New Sketch
+
+Use this when scaffolding a new sketch in `sketches/src/sketches/auto/`.
+
+1. Pick a template and sketch name.
+   - Example template: `sketches/src/sketches/templates/du_fs_template.*`
+   - Example target: `auto_757`
+2. Copy the template files into the auto module:
+   - `auto_757.rs`
+   - `auto_757.yaml`
+   - `auto_757.wgsl`
+3. Update the Rust sketch file:
+   - Set `SKETCH_CONFIG.name` to the module name (e.g. `"auto_757"`).
+   - Set `display_name` to the UI label you want.
+   - Rename the sketch struct (`Template` -> `Auto757`).
+   - Update YAML/WGSL paths in `ControlHub::from_path(...)` and
+     `GpuState::new_fullscreen(...)` to the new filenames.
+4. Register the sketch in module exports:
+   - Add `pub mod auto_757;` to `sketches/src/sketches/auto/mod.rs`.
+   - Add `pub use self::auto::auto_757;` to `sketches/src/sketches/mod.rs`.
+5. Register it in `sketches/src/main.rs` inside `register!(...)` under AUTO.
+6. Verify compile:
+   - `cargo check -p sketches`
+
+Control scripting and dynamic uniforms checklist:
+
+- YAML hot-reloads at runtime via `ControlHub`.
+- `ShaderParams::from((&wr, &hub))` maps script values into uniform banks.
+- Use `var` in YAML to bind friendly control names to shader uniform slots (e.g.
+  `var: a3`).
+- Add direct per-frame overrides as needed (e.g.
+  `params.set("a3", hub.animation.beats())`).
+
 ## Control Script Implementation Notes
 
 - Prefer adding schema/validation in `config.rs` when possible so invalid input
@@ -56,6 +89,13 @@ This distinction saves debugging time when behavior appears “unchanged.”
   recomputing static per-sequence/per-mapping facts each frame.
 - Expression-backed booleans (`true`/`false` and string forms) are expected to
   work where config supports disabled-style flags.
+- uniform a.w (a3 in rust/yaml) is beats - always use this in place of a
+  traditional time uniform (it's already wired up)
+- for periodic animations, use random_slewed, triangle, or round_robin - do not
+  derive from beats in wgsl
+- when adding rate or rate multiplier controls, make sure the `step` parameter
+  is tempo friendly: divisions of 0.25 or 0.125 depending on the granularity you
+  need
 
 ## UI Integration Pattern (When Exposing New Hub State)
 
