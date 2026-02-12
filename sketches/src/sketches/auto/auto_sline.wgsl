@@ -182,7 +182,6 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
     let final_hue = fract(hue + line_hue_offset + blast_hue_offset);
     let final_sat = 0.82 + 0.12 * blast_mask * focus_strength;
     let neon = hsv2rgb(vec3f(final_hue, final_sat, 1.0));
-
     let color = neon * shade * glow_gain * depth_gain;
 
     let quad_offset = quad_corner(corner_index, point_size);

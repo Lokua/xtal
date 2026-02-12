@@ -111,10 +111,10 @@ focus_y:
 focus_pull:
   var: d4
   type: random_slewed
-  range: [-12.0, 6.0]
+  # bypass: 12
   beats: 2
+  range: [-12.0, 12.0]
   slew: 0.65
-  stem: 2
 
 # ------------------------------------------------------------------------------
 #  Flow Field
