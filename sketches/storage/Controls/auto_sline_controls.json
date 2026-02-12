@@ -3,38 +3,8 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "density",
-      "value": 1.0
-    },
-    {
-      "type": "Slider",
-      "name": "line_count",
-      "value": 48.0
-    },
-    {
-      "type": "Slider",
-      "name": "samples_per_line",
-      "value": 2750.0
-    },
-    {
-      "type": "Slider",
       "name": "point_size",
       "value": 0.0011
-    },
-    {
-      "type": "Slider",
-      "name": "domain_scale",
-      "value": 1.08
-    },
-    {
-      "type": "Slider",
-      "name": "jitter",
-      "value": 0.0006
-    },
-    {
-      "type": "Slider",
-      "name": "wave_amp",
-      "value": 0.021
     },
     {
       "type": "Slider",
@@ -48,63 +18,13 @@
     },
     {
       "type": "Slider",
-      "name": "tilt",
-      "value": -4.0
-    },
-    {
-      "type": "Slider",
-      "name": "harmonic_amp",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
       "name": "harmonic_freq",
-      "value": 3.0
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "harmonic_rate",
       "value": -1.75
-    },
-    {
-      "type": "Checkbox",
-      "name": "latlong_warp_enabled",
-      "value": false
-    },
-    {
-      "type": "Slider",
-      "name": "latlong_warp_amount",
-      "value": 0.0
-    },
-    {
-      "type": "Slider",
-      "name": "latlong_warp_freq",
-      "value": 1.6
-    },
-    {
-      "type": "Slider",
-      "name": "latlong_symmetry",
-      "value": 6.0
-    },
-    {
-      "type": "Checkbox",
-      "name": "flow_field_enabled",
-      "value": true
-    },
-    {
-      "type": "Slider",
-      "name": "flow_field_rate",
-      "value": 0.1
-    },
-    {
-      "type": "Slider",
-      "name": "rate_gradient",
-      "value": 1.0
-    },
-    {
-      "type": "Slider",
-      "name": "rate_spread",
-      "value": 1.0
     },
     {
       "type": "Slider",
@@ -118,18 +38,13 @@
     },
     {
       "type": "Slider",
-      "name": "glow",
-      "value": 1.8
-    },
-    {
-      "type": "Slider",
       "name": "hue",
-      "value": 0.67
+      "value": 0.6
     },
     {
       "type": "Slider",
       "name": "line_hue_span",
-      "value": 0.14
+      "value": 0.23
     },
     {
       "type": "Slider",
@@ -140,11 +55,6 @@
       "type": "Slider",
       "name": "brightness",
       "value": 0.31
-    },
-    {
-      "type": "Slider",
-      "name": "bg_lift",
-      "value": 0.014
     }
   ],
   "midi_controls": [],
