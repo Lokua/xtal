@@ -151,10 +151,17 @@ center_y_mod:
     - center_y_slew
     - center_y_fold
 
+# center_size:
+#   var: c4
+#   type: slider
+#   range: [0.25, 5]
+
 center_size:
   var: c4
-  type: slider
-  range: [0.25, 5]
+  type: round_robin
+  beats: 12
+  values: [0.25, 0.25, 1, 5, 2, 1, 0.25]
+  slew: 0.7
 
 # ------------------------------------------------------------------------------
 #  Global Appearance
@@ -179,23 +186,75 @@ blur:
 color_mix:
   type: slider
 
+# chromatic_feedback:
+#   var: d1
+#   type: slider
+
 chromatic_feedback:
   var: d1
-  type: slider
+  type: random_slewed
+  beats: 2
+  bias: -0.5
+  slew: 0.7
+
+# chromatic_feedback_spread:
+#   var: f1
+#   type: slider
+#   range: [0.0001, 0.1]
+#   default: 0.01
 
 chromatic_feedback_spread:
   var: f1
-  type: slider
+  type: random_slewed
   range: [0.0001, 0.1]
-  default: 0.01
+  beats: 1.5
+  bias: -0.5
+  slew: 0.7
 
 edge_mix:
-  type: slider
+  type: round_robin
+  beats: 1.5
+  values: [0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0.3]
+  slew: 0.65
 
 edge_size:
   type: slider
   range: [1, 50]
   default: 1
+
+# ------------------------------------------------------------------------------
+#  CRT/Glitch FX
+# ------------------------------------------------------------------------------
+
+crt_glitch_fx:
+  type: separator
+
+crt_glitch_phase:
+  var: f3
+  type: slider
+  range: [0, 1]
+  default: 0
+
+crt_scanline:
+  var: h2
+  type: random_slewed
+  range: [0, 2]
+  beats: 1
+  slew: 0.6
+
+crt_jitter:
+  var: h3
+  type: slider
+  range: [0, 2]
+  default: 1
+
+crt_phase_mix:
+  var: i2
+  type: random_slewed
+  range: [0, 1]
+  bias: -0.5
+  beats: 2
+  slew: 0.7
 
 # ------------------------------------------------------------------------------
 #  Transforms

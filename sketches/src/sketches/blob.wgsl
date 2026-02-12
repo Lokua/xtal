@@ -31,8 +31,15 @@ struct Params {
     d: vec4f,
     // rot_angle, bd, clamp_mix, clamp_max
     e: vec4f,
-    // chromatic_feedback_spread
+    // chromatic_feedback_spread, unused, crt_glitch_phase, unused
     f: vec4f,
+    // unused
+    g: vec4f,
+    // unused, crt_scanline, crt_jitter, unused
+    h: vec4f,
+    // unused, crt_phase_mix, unused, unused
+    i: vec4f,
+    j: vec4f,
 }
 
 @group(0) @binding(0)
@@ -80,6 +87,10 @@ fn fs_main(
     let clamp_max = params.e.w;
     let feedback = params.d.x;
     let edge_mix = params.resolution.z;
+    let crt_glitch = params.f.z;
+    let crt_scanline = params.h.y;
+    let crt_jitter = params.h.z;
+    let crt_phase_mix = params.i.y;
 
     var p = correct_aspect(position);
 
@@ -112,11 +123,11 @@ fn fs_main(
     p4 = clamp_v2(p4, clamp_min, clamp_max);
 
     let angle = rot_angle * TAU;
-    p0 = rotate_point(p0, angle);
-    p1 = rotate_point(p1, angle);
-    p2 = rotate_point(p2, angle);
-    p3 = rotate_point(p3, angle);
-    p4 = rotate_point(p4, angle);
+    p0 = rotate_point(correct_aspect(p0), angle);
+    p1 = rotate_point(correct_aspect(p1), angle);
+    p2 = rotate_point(correct_aspect(p2), angle);
+    p3 = rotate_point(correct_aspect(p3), angle);
+    p4 = rotate_point(correct_aspect(p4), angle);
 
 
     let scale = 1.0;
@@ -143,17 +154,18 @@ fn fs_main(
 
     let d = final_mix * blur;
 
+    let color_p = vec2f(p.y, p.x);
     var rainbow = vec3f(
-        0.5 + 0.5 * sin(p.x * 2.0),
-        0.5 + 0.5 * cos(p.y * 2.0),
-        0.5 + 0.5 * sin((p.x + p.y) * 1.0)
+        0.5 + 0.5 * sin(color_p.x * 2.0),
+        0.5 + 0.5 * cos(color_p.y * 2.0),
+        0.5 + 0.5 * sin((color_p.x + color_p.y) * 1.0)
     );
     rainbow = vec3f(rotate_point(rainbow.xy, t_long * 0.0125), rainbow.z);
     let grid_resolution = 700.0 + t_long;
     let grid_color = vec3f(
-        0.5 + 0.5 * sin(p.x * grid_resolution),
-        0.5 + 0.5 * cos(p.y * grid_resolution),
-        0.5 + 0.5 * sin((p.x + p.y) * grid_resolution)
+        0.5 + 0.5 * sin(color_p.x * grid_resolution),
+        0.5 + 0.5 * cos(color_p.y * grid_resolution),
+        0.5 + 0.5 * sin((color_p.x + color_p.y) * grid_resolution)
     );
     
     let base_color = mix(rainbow, grid_color, color_mix);
@@ -172,6 +184,14 @@ fn fs_main(
 
     color = edge_detect(uv, color, edge_mix);
     color = chromatic_feedback(uv, color + (color * feedback), feedback);
+    color = crt_glitch_phase(
+        uv,
+        color,
+        crt_glitch,
+        crt_scanline,
+        crt_jitter,
+        crt_phase_mix
+    );
     
     return vec4f(color, 1.0);
 }
@@ -217,6 +237,52 @@ fn chromatic_feedback(uv: vec2f, color: vec3f, mix: f32) -> vec3f {
     let b = textureSample(feedback_texture, source_sampler, uv + dy).b;
     let feedback_color = vec3f(r, g, b);
     return mix(color, feedback_color, mix);
+}
+
+fn crt_glitch_phase(
+    uv: vec2f,
+    color: vec3f,
+    amount: f32,
+    scanline_mult: f32,
+    jitter_mult: f32,
+    phase_mix: f32
+) -> vec3f {
+    let t_long = params.c.x;
+    let dims = params.resolution.xy;
+
+    let centered = uv * 2.0 - 1.0;
+    let r2 = dot(centered, centered);
+    let barrel = centered;
+    var crt_uv = barrel * 0.5 + 0.5;
+
+    let row = floor(crt_uv.y * 120.0);
+    let row_noise = fract(sin(row * 12.9898 + t_long * 0.8) * 43758.5453);
+    crt_uv.x += (row_noise - 0.5) * 0.02 * amount * jitter_mult;
+    crt_uv = clamp(crt_uv, vec2f(0.001, 0.001), vec2f(0.999, 0.999));
+
+    let scan = 0.85 + 0.15 * sin(
+        crt_uv.y * dims.y * 1.2 * scanline_mult + t_long * 8.0
+    );
+    let scan_mix = mix(1.0, scan, amount);
+
+    let split = 0.001 + amount * 0.008 * 2.0;
+    let r = textureSample(
+        feedback_texture,
+        source_sampler,
+        clamp(crt_uv + vec2f(split, 0.0), vec2f(0.001), vec2f(0.999))
+    ).r;
+    let g = textureSample(feedback_texture, source_sampler, crt_uv).g;
+    let b = textureSample(
+        feedback_texture,
+        source_sampler,
+        clamp(crt_uv - vec2f(split, 0.0), vec2f(0.001), vec2f(0.999))
+    ).b;
+
+    let glitch_color = vec3f(r, g, b);
+    let vignette = 1.0;
+    let crt_color = color * scan_mix * vignette;
+    let phased = mix(crt_color, glitch_color, phase_mix * amount);
+    return mix(color, phased, amount);
 }
 
 fn edge_detect(uv: vec2f, color: vec3f, mix_factor: f32) -> vec3f {
