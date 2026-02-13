@@ -93,7 +93,7 @@ fn fs_main(
     // Raymarch
     let result = ray_march(
         ro, rd, t, rot_speed, morph,
-        noise_amp, noise_freq,
+        noise_amp, noise_freq, aspect,
     );
     let hit_dist = result.x;
     let hit_pos = ro + rd * hit_dist;
@@ -104,13 +104,13 @@ fn fs_main(
     if hit_dist < MAX_DIST {
         let n = calc_normal(
             hit_pos, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         );
         let diff = max(dot(n, light), 0.0);
         let amb = 0.15;
         let ao = calc_ao(
             hit_pos, n, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         );
         scene_brightness = (diff * 0.85 + amb) * ao;
 
@@ -126,23 +126,23 @@ fn fs_main(
         let probe = 0.02;
         let d0 = scene_sdf(
             hit_pos, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         );
         let d1 = scene_sdf(
             hit_pos + e1 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq,
+            morph, noise_amp, noise_freq, aspect,
         );
         let d2 = scene_sdf(
             hit_pos - e1 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq,
+            morph, noise_amp, noise_freq, aspect,
         );
         let d3 = scene_sdf(
             hit_pos + e2 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq,
+            morph, noise_amp, noise_freq, aspect,
         );
         let d4 = scene_sdf(
             hit_pos - e2 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq,
+            morph, noise_amp, noise_freq, aspect,
         );
         // Laplacian: how much the SDF curves locally
         let laplacian = abs(
@@ -249,6 +249,75 @@ fn fs_main(
 //  Scene SDF
 // ----------------------------------------------------------------
 
+fn smooth_min(a: f32, b: f32, k: f32) -> f32 {
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+
+fn sd_capsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
+    let pa = p - a;
+    let ba = b - a;
+    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - r;
+}
+
+fn blob_dir(i: i32) -> vec3f {
+    switch i {
+        case 0 { return normalize(vec3f(1.0, 0.2, 0.0)); }
+        case 1 { return normalize(vec3f(-1.0, -0.1, 0.1)); }
+        case 2 { return normalize(vec3f(0.2, 1.0, 0.3)); }
+        case 3 { return normalize(vec3f(-0.1, -1.0, -0.2)); }
+        case 4 { return normalize(vec3f(0.0, 0.3, 1.0)); }
+        case 5 { return normalize(vec3f(0.1, -0.2, -1.0)); }
+        case 6 { return normalize(vec3f(0.8, 0.5, 0.4)); }
+        default { return normalize(vec3f(-0.7, 0.4, -0.6)); }
+    }
+}
+
+fn exploded_cluster_sdf(
+    p: vec3f,
+    t: f32,
+    morph: f32,
+    aspect: f32,
+) -> f32 {
+    let m = smoothstep(0.0, 1.0, morph);
+    let core_radius = mix(0.8, 0.22, m);
+    var d = length(p) - core_radius;
+    let spread = mix(0.0, 1.45 + 0.55 * aspect, m);
+    let blend_k = mix(0.42, 0.12, m);
+    let strand_base = mix(0.36, 0.05, m);
+
+    for (var i = 0; i < 8; i++) {
+        let fi = f32(i);
+        let seed = hash31(vec3f(fi * 1.7, fi * 3.1, 9.1));
+        let pulse = 0.08 * m * sin(t * 0.43 + fi * 1.31);
+        let axis = blob_dir(i);
+        let axis_stretch = vec3f(
+            axis.x * (1.0 + (aspect - 1.0) * 0.75),
+            axis.y,
+            axis.z,
+        );
+        let dir = normalize(axis_stretch);
+        let dist = spread * (0.72 + 0.34 * seed) + pulse;
+        let center = dir * dist;
+        let blob_radius = 0.18 + 0.09 * seed + 0.05 * pulse;
+        let blob = length(p - center) - blob_radius;
+
+        d = smooth_min(d, blob, blend_k);
+
+        let strand_radius = strand_base * (0.8 + 0.35 * (1.0 - seed));
+        let strand = sd_capsule(
+            p,
+            vec3f(0.0),
+            center * 0.92,
+            strand_radius,
+        );
+        d = smooth_min(d, strand, blend_k * 0.8);
+    }
+
+    return d;
+}
+
 fn scene_sdf(
     p: vec3f,
     t: f32,
@@ -256,29 +325,25 @@ fn scene_sdf(
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
+    aspect: f32,
 ) -> f32 {
     let rp = rotate_y(
         rotate_x(p, t * rot_speed * 0.7),
         t * rot_speed,
     );
+    let m = smoothstep(0.0, 1.0, morph);
     let sphere = length(rp) - 0.8;
-    let box_d = sd_round_box(rp, vec3f(0.55), 0.08);
-    var d = mix(sphere, box_d, morph);
+    let cluster = exploded_cluster_sdf(rp, t, morph, aspect);
+    var d = mix(sphere, cluster, m);
 
     // Noise displacement for surface detail
     let np = rp * noise_freq;
     let n = fbm3(
         np + vec3f(t * 0.1, 0.0, t * 0.07),
     );
-    d += (n - 0.5) * noise_amp;
+    d += (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
 
     return d;
-}
-
-fn sd_round_box(p: vec3f, b: vec3f, r: f32) -> f32 {
-    let q = abs(p) - b;
-    return length(max(q, vec3f(0.0)))
-        + min(max(q.x, max(q.y, q.z)), 0.0) - r;
 }
 
 fn ray_march(
@@ -289,13 +354,14 @@ fn ray_march(
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
+    aspect: f32,
 ) -> vec2f {
     var d = 0.0;
     for (var i = 0; i < MAX_STEPS; i++) {
         let p = ro + rd * d;
         let ds = scene_sdf(
             p, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         );
         d += ds * 0.8;
         if abs(ds) < SURF_DIST || d > MAX_DIST {
@@ -312,24 +378,25 @@ fn calc_normal(
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
+    aspect: f32,
 ) -> vec3f {
     let e = vec2f(0.001, 0.0);
     let d = scene_sdf(
         p, t, rot_speed, morph,
-        noise_amp, noise_freq,
+        noise_amp, noise_freq, aspect,
     );
     let n = vec3f(
         scene_sdf(
             p + e.xyy, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         ) - d,
         scene_sdf(
             p + e.yxy, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         ) - d,
         scene_sdf(
             p + e.yyx, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         ) - d,
     );
     return normalize(n);
@@ -343,6 +410,7 @@ fn calc_ao(
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
+    aspect: f32,
 ) -> f32 {
     var occ = 0.0;
     var w = 1.0;
@@ -350,7 +418,7 @@ fn calc_ao(
         let h = 0.01 + 0.12 * f32(i) / 4.0;
         let d = scene_sdf(
             p + n * h, t, rot_speed, morph,
-            noise_amp, noise_freq,
+            noise_amp, noise_freq, aspect,
         );
         occ += (h - d) * w;
         w *= 0.85;

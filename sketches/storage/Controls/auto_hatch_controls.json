@@ -1,0 +1,90 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "morph",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "rot_speed",
+      "value": 0.3
+    },
+    {
+      "type": "Slider",
+      "name": "cam_z",
+      "value": -3.0
+    },
+    {
+      "type": "Slider",
+      "name": "light_angle",
+      "value": 3.34
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_shape",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "hatch_density",
+      "value": 0.142
+    },
+    {
+      "type": "Slider",
+      "name": "hatch_layers",
+      "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "hatch_strength",
+      "value": 2.27
+    },
+    {
+      "type": "Slider",
+      "name": "hatch_angle_spread",
+      "value": 0.105
+    },
+    {
+      "type": "Checkbox",
+      "name": "show_edges",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "edge_strength",
+      "value": 0.7
+    },
+    {
+      "type": "Slider",
+      "name": "edge_wobble",
+      "value": 0.3
+    },
+    {
+      "type": "Slider",
+      "name": "paper_grain",
+      "value": 0.159
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "noise_amp",
+      "value": 0.455
+    },
+    {
+      "type": "Slider",
+      "name": "noise_freq",
+      "value": 3.5
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

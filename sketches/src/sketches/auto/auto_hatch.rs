@@ -1,14 +1,16 @@
 use nannou::prelude::*;
 use xtal::prelude::*;
 
+use crate::sketches::common::{HD_HEIGHT, HD_WIDTH};
+
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "auto_hatch",
     display_name: "Auto Hatch",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: 700,
-    h: 700,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
 };
 
 #[derive(SketchComponents)]
