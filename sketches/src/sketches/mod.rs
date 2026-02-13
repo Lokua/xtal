@@ -32,6 +32,7 @@ pub use self::auto::auto_dreams;
 pub use self::auto::auto_dyn_uni;
 pub use self::auto::auto_flow;
 pub use self::auto::auto_grid_splash;
+pub use self::auto::auto_hatch;
 pub use self::auto::auto_rm;
 pub use self::auto::auto_sline;
 pub use self::auto::auto_un;

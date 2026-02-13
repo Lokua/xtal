@@ -47,6 +47,7 @@ fn main() {
         auto_dyn_uni,
         auto_flow,
         auto_grid_splash,
+        auto_hatch,
         auto_rm,
         auto_sline,
         auto_un,

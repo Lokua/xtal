@@ -76,4 +76,6 @@ Read `README.md` first.
   - Point `ControlHub::from_path(...)` to `<name>.yaml`.
   - Point GPU shader path to `<name>.wgsl`.
 - Verify:
-  - `cargo check -p sketches`
+  - `cargo check -p sketches` (unless we're just working on wgsl, then that's
+    pointless as they hot reload and I'll see errors immediately and provide
+    feedback)
