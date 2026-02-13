@@ -1,33 +1,15 @@
 # ------------------------------------------------------------------------------
-#  Performance
+#  Main
 # ------------------------------------------------------------------------------
+
+main:
+  type: separator
 
 bg_gray:
   var: a4
   type: slider
-  range: [0.0, 0.8]
+  range: [0.0, 0.85]
   default: 0.0
-  step: 0.01
-
-height_scale:
-  var: b1
-  type: slider
-  range: [0.1, 4.0]
-  default: 1.4
-  step: 0.01
-
-camera_height:
-  var: b2
-  type: slider
-  range: [1.0, 8.0]
-  default: 3.0
-  step: 0.01
-
-orbit_amount:
-  var: b3
-  type: slider
-  range: [0.0, 2.0]
-  default: 1.0
   step: 0.01
 
 time_scale:
@@ -38,11 +20,18 @@ time_scale:
   step: 0.125
 
 # ------------------------------------------------------------------------------
-#  Look
+#  Terrain
 # ------------------------------------------------------------------------------
 
-look_separator:
+terrain:
   type: separator
+
+height_scale:
+  var: b1
+  type: slider
+  range: [0.1, 4.0]
+  default: 1.4
+  step: 0.01
 
 voxel_size:
   var: c1
@@ -50,6 +39,48 @@ voxel_size:
   range: [0.25, 2.0]
   default: 0.75
   step: 0.01
+
+terrain_freq:
+  var: d1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.45
+  step: 0.01
+
+warp_amount:
+  var: d2
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.22
+  step: 0.01
+
+warp_freq:
+  var: d3
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.65
+  step: 0.01
+
+quantize_levels:
+  var: d4
+  type: slider
+  range: [1.0, 64]
+  default: 6.0
+  step: 1.0
+
+detail_fade_density:
+  var: e4
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.06
+  step: 0.005
+
+# ------------------------------------------------------------------------------
+#  Shading
+# ------------------------------------------------------------------------------
+
+shading:
+  type: separator
 
 step_scale:
   var: c2
@@ -72,9 +103,79 @@ side_shade:
   default: 0.82
   step: 0.01
 
-terrain_freq:
-  var: d1
+ao_amount:
+  var: e1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Atmosphere
+# ------------------------------------------------------------------------------
+
+atmosphere:
+  type: separator
+
+fog_density:
+  var: e2
+  type: slider
+  range: [0.0, 0.2]
+  default: 0.08
+  step: 0.005
+
+fog_start:
+  var: e3
+  type: slider
+  range: [0.0, 24.0]
+  default: 5.0
+  step: 0.5
+
+horizon_start:
+  var: f1
+  type: slider
+  range: [0.0, 48.0]
+  default: 16.0
+  step: 0.5
+
+horizon_end:
+  var: f2
+  type: slider
+  range: [0.0, 64.0]
+  default: 34.0
+  step: 0.5
+
+# ------------------------------------------------------------------------------
+#  Camera
+# ------------------------------------------------------------------------------
+
+camera:
+  type: separator
+
+camera_height:
+  var: b2
+  type: slider
+  range: [1.0, 8.0]
+  default: 3.0
+  step: 0.01
+
+orbit_amount:
+  var: b3
   type: slider
   range: [0.0, 2.0]
-  default: 0.45
+  default: 1.0
   step: 0.01
+
+focal_len:
+  var: f3
+  type: slider
+  range: [0.5, 3.0]
+  default: 1.0
+  step: 0.01
+
+orbit_radius:
+  var: f4
+  type: slider
+  range: [2.0, 24.0]
+  default: 10.0
+  step: 0.1
