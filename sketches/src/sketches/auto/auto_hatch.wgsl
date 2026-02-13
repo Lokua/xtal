@@ -4,7 +4,6 @@
 // Technique adapted from flockaroo (Shadertoy).
 // https://www.shadertoy.com/view/MsKfRw
 
-const TAU: f32 = 6.283185307;
 const MAX_STEPS: i32 = 80;
 const MAX_DIST: f32 = 20.0;
 const SURF_DIST: f32 = 0.001;
@@ -27,9 +26,9 @@ struct Params {
     // hatch_density, hatch_layers, hatch_strength,
     // hatch_angle_spread
     c: vec4f,
-    // edge_strength, edge_wobble, paper_grain, brightness
+    // _, _, paper_grain, brightness
     d: vec4f,
-    // show_shape, show_edges, noise_amp, noise_freq
+    // show_shape, _, noise_amp, noise_freq
     e: vec4f,
     f: vec4f,
     g: vec4f,
@@ -67,15 +66,11 @@ fn fs_main(
     let hatch_layers = i32(params.c.y);
     let hatch_strength = params.c.z;
     let angle_spread = params.c.w;
-    let edge_strength = params.d.x;
-    let edge_wobble = params.d.y;
     let paper_grain = params.d.z;
     let brightness_ctrl = params.d.w;
     let show_shape = params.e.x > 0.5;
-    let show_edges = params.e.y > 0.5;
     let noise_amp = params.e.z;
     let noise_freq = params.e.w;
-    let invert_edges = params.f.x > 0.5;
 
     let aspect = w / h;
     var uv = position * 0.5;
@@ -99,7 +94,6 @@ fn fs_main(
     let hit_pos = ro + rd * hit_dist;
 
     var scene_brightness = 1.0;
-    var edge_val = 0.0;
 
     if hit_dist < MAX_DIST {
         let n = calc_normal(
@@ -113,56 +107,6 @@ fn fs_main(
             noise_amp, noise_freq, aspect,
         );
         scene_brightness = (diff * 0.85 + amb) * ao;
-
-        // Silhouette edge: normal perpendicular to view
-        let fresnel = 1.0 - abs(dot(n, -rd));
-        let silhouette = smoothstep(0.55, 0.9, fresnel);
-
-        // SDF proximity edges: sample SDF at offsets
-        // along directions perpendicular to the normal
-        // to detect nearby surface features / creases
-        let e1 = normalize(cross(n, vec3f(0., 1., 0.)));
-        let e2 = cross(n, e1);
-        let probe = 0.02;
-        let d0 = scene_sdf(
-            hit_pos, t, rot_speed, morph,
-            noise_amp, noise_freq, aspect,
-        );
-        let d1 = scene_sdf(
-            hit_pos + e1 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq, aspect,
-        );
-        let d2 = scene_sdf(
-            hit_pos - e1 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq, aspect,
-        );
-        let d3 = scene_sdf(
-            hit_pos + e2 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq, aspect,
-        );
-        let d4 = scene_sdf(
-            hit_pos - e2 * probe, t, rot_speed,
-            morph, noise_amp, noise_freq, aspect,
-        );
-        // Laplacian: how much the SDF curves locally
-        let laplacian = abs(
-            d1 + d2 + d3 + d4 - 4.0 * d0
-        ) / (probe * probe);
-        let detail_edge = smoothstep(
-            2.0, 8.0, laplacian,
-        );
-
-        // Wobble
-        let fc_tmp = frag_coord.xy;
-        let wobble_n = (
-            hash21(fc_tmp * 0.04) - 0.5
-        ) * edge_wobble * 0.4;
-
-        edge_val = clamp(
-            silhouette + detail_edge * 0.7 + wobble_n,
-            0.0,
-            1.0,
-        );
     }
 
     scene_brightness = clamp(
@@ -220,15 +164,6 @@ fn fs_main(
             1.0,
         );
         color *= 1.0 - hatch_val * hatch_strength;
-    }
-
-    // Edges (computed from hit geometry, no re-raymarch)
-    if show_edges {
-        var ev = edge_val;
-        if invert_edges {
-            ev = 1.0 - ev;
-        }
-        color *= 1.0 - ev * edge_strength;
     }
 
     // Soften contrast
