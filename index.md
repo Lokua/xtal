@@ -4,6 +4,34 @@ Files sorted from most to least recent. Source code available on
 
 
 
+## crosshatch_dev-jbbia.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-jbbia.png" alt="crosshatch_dev-jbbia.png">
+
+## crosshatch_dev-cbclu.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-cbclu.png" alt="crosshatch_dev-cbclu.png">
+
+## crosshatch_dev-vbmae.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-vbmae.png" alt="crosshatch_dev-vbmae.png">
+
+## crosshatch_dev-g858x.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-g858x.png" alt="crosshatch_dev-g858x.png">
+
+## auto_wave_fract-68m67.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_wave_fract-68m67.png" alt="auto_wave_fract-68m67.png">
+
+## auto_wave_fract-yxd2l.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_wave_fract-yxd2l.png" alt="auto_wave_fract-yxd2l.png">
+
+## auto_flow-eso46.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_flow-eso46.png" alt="auto_flow-eso46.png">
+
 ## g26_12_boxes-89hx1.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/g26_12_boxes-89hx1.png" alt="g26_12_boxes-89hx1.png">
