@@ -1,0 +1,80 @@
+# ------------------------------------------------------------------------------
+#  Performance
+# ------------------------------------------------------------------------------
+
+bg_gray:
+  var: a4
+  type: slider
+  range: [0.0, 0.8]
+  default: 0.0
+  step: 0.01
+
+height_scale:
+  var: b1
+  type: slider
+  range: [0.1, 4.0]
+  default: 1.4
+  step: 0.01
+
+camera_height:
+  var: b2
+  type: slider
+  range: [1.0, 8.0]
+  default: 3.0
+  step: 0.01
+
+orbit_amount:
+  var: b3
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.01
+
+time_scale:
+  var: b4
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.0
+  step: 0.125
+
+# ------------------------------------------------------------------------------
+#  Look
+# ------------------------------------------------------------------------------
+
+look_separator:
+  type: separator
+
+voxel_size:
+  var: c1
+  type: slider
+  range: [0.25, 2.0]
+  default: 0.75
+  step: 0.01
+
+step_scale:
+  var: c2
+  type: slider
+  range: [0.1, 1.0]
+  default: 0.85
+  step: 0.01
+
+top_shade:
+  var: c3
+  type: slider
+  range: [0.0, 1.25]
+  default: 1.0
+  step: 0.01
+
+side_shade:
+  var: c4
+  type: slider
+  range: [0.0, 1.25]
+  default: 0.82
+  step: 0.01
+
+terrain_freq:
+  var: d1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.45
+  step: 0.01

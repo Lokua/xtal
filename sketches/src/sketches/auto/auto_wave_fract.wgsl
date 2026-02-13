@@ -24,6 +24,10 @@ struct Params {
     g: vec4f,
     // color_variation, grain, color_freq, alpha_variation
     h: vec4f,
+    // length_pattern_mode, length_pattern_amount, length_pattern_freq, length_pattern_rate
+    i: vec4f,
+    // freq_dist_mode, freq_dist_amount, freq_dist_span, freq_dist_rate
+    j: vec4f,
 }
 
 const TAU: f32 = 6.28318530718;
@@ -84,6 +88,14 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let grain = params.h.y;
     let color_freq = params.h.z;
     let alpha_variation = params.h.w;
+    let length_pattern_mode = params.i.x;
+    let length_pattern_amount = clamp(params.i.y, 0.0, 1.0);
+    let length_pattern_freq = max(params.i.z, 0.0);
+    let length_pattern_rate = params.i.w;
+    let freq_dist_mode = params.j.x;
+    let freq_dist_amount = max(params.j.y, 0.0);
+    let freq_dist_span = max(params.j.z, 0.0);
+    let freq_dist_rate = params.j.w;
 
     var line_t = 0.5;
     if (n_lines > 1u) {
@@ -96,15 +108,36 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
         noise_map = line_t;
     } else if (noise_map_mode >= 1.5 && noise_map_mode < 2.5) {
         noise_map = 1.0 - line_t;
-    } else if (noise_map_mode >= 2.5) {
+    } else if (noise_map_mode >= 2.5 && noise_map_mode < 3.5) {
         noise_map = 1.0 - abs(line_t * 2.0 - 1.0);
+    } else if (noise_map_mode >= 3.5) {
+        noise_map = abs(line_t * 2.0 - 1.0);
     }
     let mapped_noise_scale =
         noise_scale * mix(1.0, noise_map, clamp(noise_map_mix, 0.0, 1.0));
     let y_center = mix(-line_span, line_span, line_t);
+    let musical_beats = beats * 0.25;
+    let time = musical_beats * anim_speed;
 
-    let x0 = -line_width;
-    let x1 = line_width;
+    let length_time = musical_beats * length_pattern_rate;
+    let length_phase = line_t * length_pattern_freq + length_time;
+    var length_profile = 1.0;
+    if (length_pattern_mode >= 0.5 && length_pattern_mode < 1.5) {
+        length_profile = 0.5 + 0.5 * sin(length_phase * TAU);
+    } else if (length_pattern_mode >= 1.5 && length_pattern_mode < 2.5) {
+        length_profile = triangle01(fract(length_phase));
+    } else if (length_pattern_mode >= 2.5 && length_pattern_mode < 3.5) {
+        let noise_seed = line_idx * 3571u + u32(floor(abs(length_time) * 97.0));
+        length_profile = unit(noise_seed);
+    } else if (length_pattern_mode >= 3.5) {
+        let stripe = abs(sin(length_phase * TAU));
+        length_profile = 1.0 - stripe;
+    }
+    let length_mapped = mix(1.0, length_profile, length_pattern_amount);
+    let local_line_width = line_width * max(0.05, length_mapped);
+
+    let x0 = -local_line_width;
+    let x1 = local_line_width;
     let seg_t0 = f32(seg_idx) / f32(segments);
     let seg_t1 = f32(seg_idx + 1u) / f32(segments);
 
@@ -112,11 +145,26 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
     let jitter0 = signed_unit(seed_base + seg_idx * 97u) * line_jitter;
     let jitter1 = signed_unit(seed_base + (seg_idx + 1u) * 97u) * line_jitter;
 
+    let freq_time = musical_beats * freq_dist_rate;
+    let freq_phase = line_t + freq_time;
+    var freq_profile = 0.5;
+    if (freq_dist_mode >= 0.5 && freq_dist_mode < 1.5) {
+        freq_profile = clamp(freq_phase, 0.0, 1.0);
+    } else if (freq_dist_mode >= 1.5 && freq_dist_mode < 2.5) {
+        freq_profile = 1.0 - clamp(freq_phase, 0.0, 1.0);
+    } else if (freq_dist_mode >= 2.5 && freq_dist_mode < 3.5) {
+        freq_profile = triangle01(fract(freq_phase));
+    } else if (freq_dist_mode >= 3.5) {
+        let noise_seed = line_idx * 4219u + u32(floor(abs(freq_time) * 113.0));
+        freq_profile = unit(noise_seed);
+    }
+    let freq_offset = (freq_profile * 2.0 - 1.0) * freq_dist_span * freq_dist_amount;
+    let wave_freq_line = max(0.0, wave_freq + freq_offset);
+
     let px0 = mix(x0, x1, seg_t0);
     let px1 = mix(x0, x1, seg_t1);
-    let time = beats * anim_speed;
-    let wave0 = sin(px0 * wave_freq + time) * wave_amp;
-    let wave1 = sin(px1 * wave_freq + time) * wave_amp;
+    let wave0 = sin(px0 * wave_freq_line + time) * wave_amp;
+    let wave1 = sin(px1 * wave_freq_line + time) * wave_amp;
 
     let p0 = vec2f(px0, y_center + jitter0 + wave0);
     let p1 = vec2f(px1, y_center + jitter1 + wave1);
@@ -216,4 +264,8 @@ fn unit(seed: u32) -> f32 {
 
 fn signed_unit(seed: u32) -> f32 {
     return unit(seed) * 2.0 - 1.0;
+}
+
+fn triangle01(x: f32) -> f32 {
+    return 1.0 - abs(x * 2.0 - 1.0);
 }

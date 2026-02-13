@@ -40,6 +40,7 @@ fn main() {
         // ---------------------------------------------------------------------
         // AUTO
         // ---------------------------------------------------------------------
+        auto_acc,
         auto_757,
         auto_cloud,
         auto_dreams,
@@ -59,6 +60,7 @@ fn main() {
         audio_dev,
         bug_repro,
         control_script_dev,
+        crosshatch_dev,
         cv_dev,
         effects_wavefolder_dev,
         midi_dev,

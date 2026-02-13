@@ -1,0 +1,60 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "bg_gray",
+      "value": 0.04
+    },
+    {
+      "type": "Slider",
+      "name": "height_scale",
+      "value": 2.54
+    },
+    {
+      "type": "Slider",
+      "name": "camera_height",
+      "value": 6.83
+    },
+    {
+      "type": "Slider",
+      "name": "orbit_amount",
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "time_scale",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "voxel_size",
+      "value": 0.78
+    },
+    {
+      "type": "Slider",
+      "name": "step_scale",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "top_shade",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "side_shade",
+      "value": 0.6
+    },
+    {
+      "type": "Slider",
+      "name": "terrain_freq",
+      "value": 0.39
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

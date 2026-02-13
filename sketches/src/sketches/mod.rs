@@ -25,6 +25,7 @@ pub mod toxy;
 pub mod wave_fract;
 
 pub mod auto;
+pub use self::auto::auto_acc;
 pub use self::auto::auto_757;
 pub use self::auto::auto_cloud;
 pub use self::auto::auto_dreams;
@@ -43,6 +44,7 @@ pub use self::dev::audio_controls_dev;
 pub use self::dev::audio_dev;
 pub use self::dev::bug_repro;
 pub use self::dev::control_script_dev;
+pub use self::dev::crosshatch_dev;
 pub use self::dev::cv_dev;
 pub use self::dev::effects_wavefolder_dev;
 pub use self::dev::midi_dev;

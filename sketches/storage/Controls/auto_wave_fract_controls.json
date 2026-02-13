@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "n_lines",
-      "value": 62.0
+      "value": 82.0
     },
     {
       "type": "Slider",
@@ -19,12 +19,12 @@
     {
       "type": "Slider",
       "name": "passes",
-      "value": 7.0
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "point_size",
-      "value": 0.4
+      "value": 0.6
     },
     {
       "type": "Slider",
@@ -32,29 +32,49 @@
       "value": 0.82
     },
     {
+      "type": "Select",
+      "name": "length_pattern_mode",
+      "value": "triangle"
+    },
+    {
+      "type": "Slider",
+      "name": "length_pattern_amount",
+      "value": 0.86
+    },
+    {
+      "type": "Slider",
+      "name": "length_pattern_freq",
+      "value": 2.5
+    },
+    {
+      "type": "Slider",
+      "name": "length_pattern_rate",
+      "value": 0.125
+    },
+    {
       "type": "Slider",
       "name": "noise_scale",
-      "value": 0.051500004
+      "value": 0.008
     },
     {
       "type": "Slider",
       "name": "angle_variation",
-      "value": 2.8
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "line_span",
-      "value": 0.75
+      "value": 0.78
     },
     {
       "type": "Slider",
       "name": "line_jitter",
-      "value": 0.029
+      "value": 0.01
     },
     {
       "type": "Select",
       "name": "noise_map_mode",
-      "value": "none"
+      "value": "triangle"
     },
     {
       "type": "Slider",
@@ -64,82 +84,379 @@
     {
       "type": "Slider",
       "name": "anim_speed",
-      "value": 0.75
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "wave_amp",
-      "value": 0.085
+      "value": 0.2
     },
     {
       "type": "Slider",
       "name": "wave_freq",
-      "value": 9.0
+      "value": 29.85
+    },
+    {
+      "type": "Select",
+      "name": "freq_dist_mode",
+      "value": "reversed"
+    },
+    {
+      "type": "Slider",
+      "name": "freq_dist_amount",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "freq_dist_span",
+      "value": 24.0
+    },
+    {
+      "type": "Slider",
+      "name": "freq_dist_rate",
+      "value": 0.25
     },
     {
       "type": "Slider",
       "name": "stripe_freq",
-      "value": 18.0
+      "value": 6.25
     },
     {
       "type": "Slider",
       "name": "stripe_sharpness",
-      "value": 1.3
+      "value": 1.8
     },
     {
       "type": "Slider",
       "name": "interference_amp",
-      "value": 0.315
+      "value": 0.262
     },
     {
       "type": "Slider",
       "name": "interference_freq",
-      "value": 3.0
+      "value": 7.5
     },
     {
       "type": "Slider",
       "name": "r",
-      "value": 0.53
+      "value": 0.42
     },
     {
       "type": "Slider",
       "name": "g",
-      "value": 0.47
+      "value": 0.33
     },
     {
       "type": "Slider",
       "name": "b",
-      "value": 0.42999998
+      "value": 0.24
     },
     {
       "type": "Slider",
       "name": "color_variation",
-      "value": 2.28
+      "value": 2.4299998
     },
     {
       "type": "Slider",
       "name": "grain",
-      "value": 0.06
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "color_freq",
-      "value": 20.25
+      "value": 38.0
     },
     {
       "type": "Slider",
       "name": "alpha_variation",
-      "value": 0.59
+      "value": 1.0
     },
     {
       "type": "Slider",
       "name": "alpha",
-      "value": 0.19900002
+      "value": 0.384
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.42999998
+        },
+        {
+          "type": "Slider",
+          "name": "interference_freq",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.53
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 7.0
+        },
+        {
+          "type": "Slider",
+          "name": "interference_amp",
+          "value": 0.315
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 2.8
+        },
+        {
+          "type": "Slider",
+          "name": "noise_map_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "noise_map_mode",
+          "value": "none"
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.47
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 0.82
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_sharpness",
+          "value": 1.3
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "segments",
+          "value": 75.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 18.0
+        },
+        {
+          "type": "Slider",
+          "name": "alpha",
+          "value": 0.19900002
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.085
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 20.25
+        },
+        {
+          "type": "Slider",
+          "name": "anim_speed",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "line_span",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "line_jitter",
+          "value": 0.029
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.051500004
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 62.0
+        },
+        {
+          "type": "Slider",
+          "name": "alpha_variation",
+          "value": 0.59
+        },
+        {
+          "type": "Slider",
+          "name": "color_variation",
+          "value": 2.28
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "interference_amp",
+          "value": 0.03
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.76
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 12.0
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 20.8
+        },
+        {
+          "type": "Slider",
+          "name": "line_span",
+          "value": 0.95
+        },
+        {
+          "type": "Slider",
+          "name": "noise_map_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "anim_speed",
+          "value": 1.26
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.0025
+        },
+        {
+          "type": "Slider",
+          "name": "alpha",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "color_variation",
+          "value": 0.25
+        },
+        {
+          "type": "Select",
+          "name": "noise_map_mode",
+          "value": "linear"
+        },
+        {
+          "type": "Slider",
+          "name": "segments",
+          "value": 75.0
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 7.0
+        },
+        {
+          "type": "Slider",
+          "name": "alpha_variation",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 62.0
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.88
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.038
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.18
+        },
+        {
+          "type": "Slider",
+          "name": "r",
+          "value": 0.03
+        },
+        {
+          "type": "Slider",
+          "name": "line_jitter",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_sharpness",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "interference_freq",
+          "value": 11.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
     "3": {
       "ui_controls": [
         {
@@ -281,72 +598,52 @@
       "midi_controls": [],
       "osc_controls": []
     },
-    "4": {
+    "6": {
       "ui_controls": [
         {
           "type": "Slider",
           "name": "grain",
-          "value": 0.06
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_rate",
+          "value": 0.125
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.067
         },
         {
           "type": "Slider",
           "name": "b",
-          "value": 0.42999998
-        },
-        {
-          "type": "Slider",
-          "name": "interference_freq",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "r",
-          "value": 0.53
+          "value": 0.55
         },
         {
           "type": "Slider",
           "name": "passes",
-          "value": 7.0
+          "value": 2.0
         },
         {
           "type": "Slider",
-          "name": "interference_amp",
-          "value": 0.315
+          "name": "noise_scale",
+          "value": 0.0285
         },
         {
           "type": "Slider",
-          "name": "angle_variation",
-          "value": 2.8
+          "name": "line_span",
+          "value": 0.68
+        },
+        {
+          "type": "Select",
+          "name": "freq_dist_mode",
+          "value": "reversed"
         },
         {
           "type": "Slider",
           "name": "noise_map_mix",
           "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "noise_map_mode",
-          "value": "none"
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.47
-        },
-        {
-          "type": "Slider",
-          "name": "line_width",
-          "value": 0.82
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_sharpness",
-          "value": 1.3
-        },
-        {
-          "type": "Slider",
-          "name": "wave_freq",
-          "value": 9.0
         },
         {
           "type": "Slider",
@@ -355,33 +652,53 @@
         },
         {
           "type": "Slider",
-          "name": "stripe_freq",
-          "value": 18.0
+          "name": "freq_dist_amount",
+          "value": 0.5
         },
         {
           "type": "Slider",
           "name": "alpha",
-          "value": 0.19900002
-        },
-        {
-          "type": "Slider",
-          "name": "wave_amp",
-          "value": 0.085
+          "value": 0.384
         },
         {
           "type": "Slider",
           "name": "color_freq",
-          "value": 20.25
+          "value": 38.0
+        },
+        {
+          "type": "Select",
+          "name": "length_pattern_mode",
+          "value": "sine"
         },
         {
           "type": "Slider",
-          "name": "anim_speed",
-          "value": 0.75
+          "name": "point_size",
+          "value": 0.6
         },
         {
           "type": "Slider",
-          "name": "line_span",
-          "value": 0.75
+          "name": "g",
+          "value": 0.26999998
+        },
+        {
+          "type": "Slider",
+          "name": "color_variation",
+          "value": 1.85
+        },
+        {
+          "type": "Select",
+          "name": "noise_map_mode",
+          "value": "triangle"
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 0.82
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 29.85
         },
         {
           "type": "Slider",
@@ -390,33 +707,73 @@
         },
         {
           "type": "Slider",
-          "name": "point_size",
-          "value": 0.4
+          "name": "angle_variation",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_sharpness",
+          "value": 1.8
+        },
+        {
+          "type": "Slider",
+          "name": "freq_dist_rate",
+          "value": 0.25
         },
         {
           "type": "Slider",
           "name": "line_jitter",
-          "value": 0.029
+          "value": 0.01
         },
         {
           "type": "Slider",
-          "name": "noise_scale",
-          "value": 0.051500004
+          "name": "anim_speed",
+          "value": 0.125
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_freq",
+          "value": 4.25
         },
         {
           "type": "Slider",
           "name": "n_lines",
-          "value": 62.0
+          "value": 82.0
         },
         {
           "type": "Slider",
           "name": "alpha_variation",
-          "value": 0.59
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "color_variation",
-          "value": 2.28
+          "name": "r",
+          "value": 0.44
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_amount",
+          "value": 0.86
+        },
+        {
+          "type": "Slider",
+          "name": "freq_dist_span",
+          "value": 24.0
+        },
+        {
+          "type": "Slider",
+          "name": "interference_amp",
+          "value": 0.262
+        },
+        {
+          "type": "Slider",
+          "name": "interference_freq",
+          "value": 28.75
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 0.75
         }
       ],
       "midi_controls": [],
@@ -563,82 +920,32 @@
       "midi_controls": [],
       "osc_controls": []
     },
-    "1": {
+    "5": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "interference_amp",
-          "value": 0.03
-        },
-        {
-          "type": "Slider",
-          "name": "g",
-          "value": 0.76
-        },
-        {
-          "type": "Slider",
-          "name": "color_freq",
-          "value": 12.0
-        },
-        {
-          "type": "Slider",
-          "name": "points_per_segment",
-          "value": 20.0
-        },
-        {
-          "type": "Slider",
-          "name": "point_size",
-          "value": 0.4
-        },
-        {
-          "type": "Slider",
-          "name": "wave_freq",
-          "value": 20.8
-        },
-        {
-          "type": "Slider",
-          "name": "line_span",
-          "value": 0.95
-        },
-        {
-          "type": "Slider",
-          "name": "noise_map_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "anim_speed",
-          "value": 1.26
-        },
-        {
-          "type": "Slider",
-          "name": "noise_scale",
-          "value": 0.0025
-        },
-        {
-          "type": "Slider",
-          "name": "alpha",
-          "value": 0.4
+          "name": "angle_variation",
+          "value": 2.8
         },
         {
           "type": "Slider",
           "name": "color_variation",
-          "value": 0.25
+          "value": 2.28
+        },
+        {
+          "type": "Slider",
+          "name": "freq_dist_amount",
+          "value": 0.71
+        },
+        {
+          "type": "Slider",
+          "name": "line_jitter",
+          "value": 0.029
         },
         {
           "type": "Select",
-          "name": "noise_map_mode",
-          "value": "linear"
-        },
-        {
-          "type": "Slider",
-          "name": "segments",
-          "value": 75.0
-        },
-        {
-          "type": "Slider",
-          "name": "angle_variation",
-          "value": 0.0
+          "name": "length_pattern_mode",
+          "value": "triangle"
         },
         {
           "type": "Slider",
@@ -648,7 +955,77 @@
         {
           "type": "Slider",
           "name": "alpha_variation",
-          "value": 0.2
+          "value": 0.59
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.051500004
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "anim_speed",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_freq",
+          "value": 15.0
+        },
+        {
+          "type": "Slider",
+          "name": "interference_amp",
+          "value": 0.063
+        },
+        {
+          "type": "Slider",
+          "name": "color_freq",
+          "value": 20.25
+        },
+        {
+          "type": "Slider",
+          "name": "alpha",
+          "value": 0.19900002
+        },
+        {
+          "type": "Slider",
+          "name": "g",
+          "value": 0.47
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.085
+        },
+        {
+          "type": "Select",
+          "name": "freq_dist_mode",
+          "value": "linear"
+        },
+        {
+          "type": "Slider",
+          "name": "line_span",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_rate",
+          "value": 0.125
+        },
+        {
+          "type": "Slider",
+          "name": "line_width",
+          "value": 0.83
+        },
+        {
+          "type": "Slider",
+          "name": "freq_dist_span",
+          "value": 3.25
         },
         {
           "type": "Slider",
@@ -657,43 +1034,68 @@
         },
         {
           "type": "Slider",
-          "name": "b",
-          "value": 0.88
-        },
-        {
-          "type": "Slider",
-          "name": "wave_amp",
-          "value": 0.038
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_freq",
-          "value": 5.0
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.18
+          "name": "wave_freq",
+          "value": 12.35
         },
         {
           "type": "Slider",
           "name": "r",
-          "value": 0.03
-        },
-        {
-          "type": "Slider",
-          "name": "line_jitter",
-          "value": 0.02
+          "value": 0.53
         },
         {
           "type": "Slider",
           "name": "stripe_sharpness",
-          "value": 8.0
+          "value": 4.4
         },
         {
           "type": "Slider",
           "name": "interference_freq",
-          "value": 11.0
+          "value": 2.5
+        },
+        {
+          "type": "Slider",
+          "name": "noise_map_mix",
+          "value": 0.74
+        },
+        {
+          "type": "Slider",
+          "name": "length_pattern_amount",
+          "value": 0.8
+        },
+        {
+          "type": "Select",
+          "name": "noise_map_mode",
+          "value": "triangle_reversed"
+        },
+        {
+          "type": "Slider",
+          "name": "freq_dist_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 17.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "b",
+          "value": 0.42999998
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "segments",
+          "value": 75.0
         }
       ],
       "midi_controls": [],

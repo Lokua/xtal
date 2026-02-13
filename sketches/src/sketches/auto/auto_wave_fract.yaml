@@ -44,6 +44,41 @@ line_width:
   default: 1.0
   step: 0.01
 
+length_pattern_mode:
+  var: i1
+  type: select
+  default: none
+  options:
+    - none
+    - sine
+    - triangle
+    - noise
+    - stripes
+
+length_pattern_amount:
+  var: i2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+  disabled: length_pattern_mode is none
+
+length_pattern_freq:
+  var: i3
+  type: slider
+  range: [0.0, 24.0]
+  default: 4.0
+  step: 0.25
+  disabled: length_pattern_mode is none
+
+length_pattern_rate:
+  var: i4
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.0
+  step: 0.125
+  disabled: length_pattern_mode is none
+
 # ------------------------------------------------------------------------------
 #  Sand
 # ------------------------------------------------------------------------------
@@ -88,6 +123,7 @@ noise_map_mode:
     - linear
     - reversed
     - triangle
+    - triangle_reversed
 
 noise_map_mix:
   var: f2
@@ -95,6 +131,7 @@ noise_map_mix:
   range: [0.0, 1.0]
   default: 1.0
   step: 0.01
+  disabled: noise_map_mode is none
 
 # ------------------------------------------------------------------------------
 #  Motion
@@ -106,8 +143,8 @@ motion_separator:
 anim_speed:
   var: d1
   type: slider
-  range: [0.0, 8.0]
-  default: 1.0
+  range: [0.0, 2.0]
+  default: 0.25
   step: 0.125
 
 wave_amp:
@@ -124,6 +161,41 @@ wave_freq:
   default: 6.0
   step: 0.25
 
+freq_dist_mode:
+  var: j1
+  type: select
+  default: none
+  options:
+    - none
+    - linear
+    - reversed
+    - triangle
+    - noise
+
+freq_dist_amount:
+  var: j2
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.0
+  step: 0.01
+  disabled: freq_dist_mode is none
+
+freq_dist_span:
+  var: j3
+  type: slider
+  range: [0.0, 24.0]
+  default: 6.0
+  step: 0.25
+  disabled: freq_dist_mode is none
+
+freq_dist_rate:
+  var: j4
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.0
+  step: 0.125
+  disabled: freq_dist_mode is none
+
 # ------------------------------------------------------------------------------
 #  Pattern
 # ------------------------------------------------------------------------------
@@ -136,7 +208,7 @@ stripe_freq:
   type: slider
   range: [0.0, 24.0]
   default: 5.0
-  step: 0.25
+  step: 1
 
 stripe_sharpness:
   var: g2
