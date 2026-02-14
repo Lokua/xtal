@@ -1,0 +1,135 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "scroll_speed",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "terrain_scale",
+      "value": 2.25
+    },
+    {
+      "type": "Slider",
+      "name": "contour_count",
+      "value": 13.0
+    },
+    {
+      "type": "Slider",
+      "name": "line_sharpness",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "line_thickness",
+      "value": 0.08
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amount",
+      "value": 0.8
+    },
+    {
+      "type": "Slider",
+      "name": "warp_speed",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "ridge_mix",
+      "value": 0.05
+    },
+    {
+      "type": "Slider",
+      "name": "octaves",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 2.05
+    },
+    {
+      "type": "Slider",
+      "name": "contrast",
+      "value": 1.9
+    },
+    {
+      "type": "Slider",
+      "name": "sweep_speed",
+      "value": 0.36
+    },
+    {
+      "type": "Slider",
+      "name": "sweep_width",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "sweep_brightness",
+      "value": 0.75
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "grain",
+      "value": 0.055
+    },
+    {
+      "type": "Slider",
+      "name": "vignette",
+      "value": 1.45
+    },
+    {
+      "type": "Slider",
+      "name": "scroll_angle",
+      "value": 2.0
+    },
+    {
+      "type": "Select",
+      "name": "color_mode",
+      "value": "height_map"
+    },
+    {
+      "type": "Slider",
+      "name": "accent_hue",
+      "value": 0.42
+    },
+    {
+      "type": "Slider",
+      "name": "accent_sat",
+      "value": 0.8
+    },
+    {
+      "type": "Slider",
+      "name": "accent_intensity",
+      "value": 2.15
+    },
+    {
+      "type": "Slider",
+      "name": "terrain_speed",
+      "value": 0.37
+    },
+    {
+      "type": "Slider",
+      "name": "fill_mix",
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "band_count",
+      "value": 3.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

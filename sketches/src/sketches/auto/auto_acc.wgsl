@@ -22,6 +22,8 @@ struct Params {
     e: vec4f,
     // horizon_start, horizon_end, focal_len, orbit_radius
     f: vec4f,
+    // invert, tint, hue, unused
+    g: vec4f,
 }
 
 struct SceneSample {
@@ -273,6 +275,15 @@ fn ambient_occlusion(
     return clamp(vertical_ao * valley_ao, 0.0, 1.0);
 }
 
+fn hue_to_rgb(h: f32) -> vec3f {
+    let x = fract(h);
+    return clamp(
+        abs(fract(x + vec3f(0.0, 2.0, 1.0) / 3.0) * 6.0 - 3.0) - 1.0,
+        vec3f(0.0),
+        vec3f(1.0),
+    );
+}
+
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let res = vec2f(max(params.a.x, 1.0), max(params.a.y, 1.0));
@@ -304,6 +315,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let horizon_end = max(params.f.y, horizon_start + 0.001);
     let focal_len = max(params.f.z, 0.1);
     let orbit_radius = max(params.f.w, 0.5);
+    let invert = params.g.x > 0.5;
+    let tint = clamp(params.g.y, 0.0, 1.0);
+    let hue = fract(params.g.z);
 
     let time = beats * time_scale;
     let bg = vec3f(bg_gray);
@@ -357,7 +371,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     if (!hit) {
-        return vec4f(bg, 1.0);
+        var miss_color = bg;
+        if (invert) {
+            miss_color = vec3f(1.0) - miss_color;
+        }
+        return vec4f(miss_color, 1.0);
     }
 
     let hit_pos = camera_pos + ray_dir * t;
@@ -396,10 +414,27 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let fog_dist = max(t - fog_start, 0.0);
     let fog = exp(-fog_dist * fog_density);
-    let box_color = vec3f(shade * ao);
+    var box_color = vec3f(shade * ao);
+    let tint_rgb = hue_to_rgb(hue);
+    let distance_mix = 1.0 - fog;
+    let height_mix = clamp(
+        hit_sample.height / max(height_scale * 2.0 + 0.1, 0.1),
+        0.0,
+        1.0,
+    );
+    let depth_mix = clamp(
+        distance_mix * (0.45 + 0.55 * ao) * (0.5 + 0.5 * shade),
+        0.0,
+        1.0,
+    );
+    let tint_mix = tint * mix(0.2, 1.0, depth_mix) * mix(0.8, 1.0, height_mix);
+    box_color = mix(box_color, box_color * tint_rgb, tint_mix);
     var color = mix(bg, box_color, fog);
 
     let horizon = smoothstep(horizon_start, horizon_end, t);
     color = mix(color, bg, horizon);
+    if (invert) {
+        color = vec3f(1.0) - color;
+    }
     return vec4f(color, 1.0);
 }
