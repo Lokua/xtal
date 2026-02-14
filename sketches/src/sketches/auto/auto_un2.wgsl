@@ -16,17 +16,17 @@ struct Params {
     c: vec4f,
     // d: reserved, sphere_radius, blend_k, reserved
     d: vec4f,
-    // e: hue_shift, saturation, contrast, debug_view
+    // e: hue_shift, saturation, contrast, reserved
     e: vec4f,
-    // f: harmonic_amp_1, harmonic_freq_1, harmonic_amp_2, harmonic_freq_2
+    // f: reserved, reserved, reserved, reserved
     f: vec4f,
-    // g: harmonic_warp, harmonic_ridge, harmonic_phase, stretch_y
+    // g: reserved, reserved, reserved, reserved
     g: vec4f,
-    // h: reserved, reserved, reserved, light_intensity
+    // h: bg_bottom_r, bg_bottom_g, bg_bottom_b, reserved
     h: vec4f,
-    // i: reserved, reserved, reserved, reserved
+    // i: bg_top_r, bg_top_g, bg_top_b, reserved
     i: vec4f,
-    // j: rim_strength, rim_power, emissive_strength, spec_power
+    // j: rim_strength, rim_power, emissive_strength, reserved
     j: vec4f,
     // k: reserved, triangle_size, triangle_rotation, reserved
     k: vec4f,
@@ -44,9 +44,9 @@ struct Params {
     q: vec4f,
     // r: reserved, topology_drive, reserved, reserved
     r: vec4f,
-    // s: use_shadow, use_ao, use_diffuse, use_specular
+    // s: reserved, reserved, reserved, reserved
     s: vec4f,
-    // t: use_rim, use_fresnel, reserved, reserved
+    // t: reserved, reserved, reserved, reserved
     t: vec4f,
     u: vec4f,
     v: vec4f,
@@ -58,21 +58,13 @@ struct Params {
 var<uniform> params: Params;
 
 const MAX_MARCH_STEPS: i32 = 64;
-const MAX_SHADOW_STEPS: i32 = 64;
-const MAX_AO_SAMPLES: i32 = 6;
 const MAX_DIST: f32 = 30.0;
 const SURF_DIST: f32 = 0.0012;
 const NORMAL_EPS: f32 = 0.0012;
 const MARCH_SAFETY: f32 = 0.82;
 const ORBIT_AMOUNT: f32 = 0.2;
 const CENTER_LIFT: f32 = 0.12;
-const AO_STRENGTH: f32 = 1.25;
-const AO_STEP: f32 = 0.02;
 const SATELLITE_MAX: i32 = 9;
-const LIGHT_POS_FIXED: vec3f = vec3f(2.8, 2.4, -1.2);
-const SHADOW_STRENGTH_FIXED: f32 = 0.3;
-const SHADOW_SOFTNESS_FIXED: f32 = 64.0;
-const SHADOW_LEGACY_MODE_FIXED: bool = false;
 const SATELLITE_ACTIVITY_FIXED: f32 = 0.5;
 const SATELLITE_MERGE_FIXED: f32 = 1.0;
 const STRAND_STRENGTH_FIXED: f32 = 0.7;
@@ -128,22 +120,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let hue_shift = params.e.x;
     let saturation = max(params.e.y, 0.0);
     let contrast = max(params.e.z, 0.0);
-    let debug_view = i32(params.e.w);
-    let light_pos = LIGHT_POS_FIXED;
-    let light_intensity = max(params.h.w, 0.0);
-    let shadow_strength = SHADOW_STRENGTH_FIXED;
-    let shadow_softness = SHADOW_SOFTNESS_FIXED;
-    let shadow_legacy_mode = SHADOW_LEGACY_MODE_FIXED;
+    let bg_bottom = clamp(params.h.xyz, vec3f(0.0), vec3f(1.0));
+    let bg_top = clamp(params.i.xyz, vec3f(0.0), vec3f(1.0));
     let rim_strength = max(params.j.x, 0.0);
     let rim_power = max(params.j.y, 0.0001);
     let emissive_strength = max(params.j.z, 0.0);
-    let spec_power = max(params.j.w, 1.0);
-    let use_shadow = bool(params.s.x);
-    let use_ao = bool(params.s.y);
-    let use_diffuse = bool(params.s.z);
-    let use_specular = bool(params.s.w);
-    let use_rim = bool(params.t.x);
-    let use_fresnel = bool(params.t.y);
     let complexity = shape_complexity();
     let surf_eps = mix(SURF_DIST, SURF_DIST * 2.2, complexity);
 
@@ -161,16 +142,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let vv = cross(ww, uu);
     let rd = normalize(uv.x * uu + uv.y * vv + focal_len * ww);
 
-    let bg_bottom = mix(
-        vec3f(0.005, 0.006, 0.010),
-        vec3f(0.010, 0.006, 0.004),
-        color_mix,
-    );
-    let bg_top = mix(
-        vec3f(0.020, 0.014, 0.028),
-        vec3f(0.024, 0.014, 0.008),
-        color_mix,
-    );
     let bg = mix(
         bg_bottom,
         bg_top,
@@ -187,100 +158,15 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let n = calc_normal(hit_p);
     let shading_bias = surf_eps * (1.2 + 1.2 * complexity);
     let p = hit_p + n * shading_bias;
-    let need_light = use_shadow || use_diffuse || use_specular;
-    let need_view = use_specular || use_rim || use_fresnel;
-    var l = vec3f(0.0, 1.0, 0.0);
-    var light_dist = 1.0;
-    if (need_light) {
-        l = normalize(light_pos - p);
-        light_dist = length(light_pos - p);
-    }
-    var v = vec3f(0.0, 0.0, 1.0);
-    if (need_view) {
-        v = normalize(ro - p);
-    }
-    var h = vec3f(0.0, 1.0, 0.0);
-    if (use_specular) {
-        h = normalize(l + v);
-    }
-    var shadow = 1.0;
-    if (use_shadow && shadow_strength > 0.0001) {
-        shadow = soft_shadow(
-            p,
-            l,
-            max(shading_bias, surf_eps * 2.0),
-            light_dist,
-            shadow_softness,
-            surf_eps,
-            shadow_legacy_mode,
-        );
-    }
-    var shadow_mix = 1.0;
-    if (use_shadow) {
-        shadow_mix = mix(1.0, shadow, shadow_strength);
-    }
-    var ao = 1.0;
-    if (use_ao) {
-        ao = ambient_occlusion(p, n, surf_eps);
-    }
+    let v = normalize(ro - p);
+    let rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
 
-    var diff = 0.0;
-    if (use_diffuse) {
-        diff = max(dot(n, l), 0.0) * shadow_mix;
-    }
-    var spec = 0.0;
-    if (use_specular) {
-        spec = pow(max(dot(n, h), 0.0), spec_power) * shadow_mix;
-    }
-    var fresnel = 0.0;
-    if (use_fresnel) {
-        fresnel = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-    }
-    var rim = 0.0;
-    if (use_rim) {
-        rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
-    }
-    if (debug_view == 1) {
-        return vec4f(n * 0.5 + vec3f(0.5), 1.0);
-    }
-    if (debug_view == 2) {
-        return vec4f(vec3f(shadow_mix), 1.0);
-    }
-    if (debug_view == 3) {
-        return vec4f(vec3f(ao), 1.0);
-    }
-    if (debug_view == 4) {
-        return vec4f(vec3f(diff), 1.0);
-    }
-    if (debug_view == 5) {
-        return vec4f(vec3f(spec), 1.0);
-    }
-    if (debug_view == 6) {
-        return vec4f(vec3f(rim), 1.0);
-    }
-    if (debug_view == 7) {
-        return vec4f(vec3f(fresnel), 1.0);
-    }
-
-    let base = mix(vec3f(0.18, 0.72, 0.98), vec3f(0.98, 0.46, 0.22), color_mix);
     var color = vec3f(0.0);
-    if (use_diffuse) {
-        color = base * (0.12 + 0.88 * diff);
-    }
-    color *= ao * light_intensity;
-    if (use_specular) {
-        color += vec3f(spec) * 0.85 * light_intensity;
-    }
-    if (use_fresnel) {
-        color += vec3f(0.9, 0.3, 1.0) * fresnel * 0.35;
-    }
-    if (use_rim) {
-        color += mix(
-            vec3f(0.35, 0.6, 1.0),
-            vec3f(1.0, 0.5, 0.25),
-            color_mix,
-        ) * rim * emissive_strength;
-    }
+    color += mix(
+        vec3f(0.35, 0.6, 1.0),
+        vec3f(1.0, 0.5, 0.25),
+        color_mix,
+    ) * rim * emissive_strength;
 
     let fog = exp(-fog_density * t * t);
     color = mix(bg, color, fog);
@@ -310,16 +196,21 @@ fn ray_march(
 
     var dist = max(hit.x, 0.0);
     let march_end = min(hit.y + 0.15, MAX_DIST);
+    var hit_found = false;
     for (var i = 0; i < MAX_MARCH_STEPS; i = i + 1) {
         let p = ro + rd * dist;
         let scene_dist = scene_sdf(p);
         if (scene_dist < surf_eps) {
+            hit_found = true;
             break;
         }
         dist += scene_dist * MARCH_SAFETY;
         if (dist >= march_end) {
             break;
         }
+    }
+    if (!hit_found) {
+        return MAX_DIST;
     }
     return dist;
 }
@@ -341,7 +232,6 @@ fn prepare_scene_state(beats: f32) {
     g_beats = beats;
     let motion_speed = params.l.x;
     g_motion_amount = params.l.y;
-    let shape_phase = params.g.z;
 
     let blend_pulse_amount = params.l.z;
     let blend_pulse_freq = params.l.w;
@@ -370,20 +260,9 @@ fn prepare_scene_state(beats: f32) {
     g_topology_split3 = vec3f(0.0);
     g_topology_bound = 0.0;
     g_sat_cluster_bound = 0.0;
-    g_phase = shape_phase + beats * motion_speed;
+    g_phase = beats * motion_speed;
 
-    let stretch_amount = params.g.w;
-    let harmonic_amp_sum = abs(params.f.x) + abs(params.f.z);
-    let ridge = params.g.y;
-    let harmonic_bound = pow(
-        max(harmonic_amp_sum, 0.00001),
-        mix(1.0, 0.35, ridge),
-    );
-    g_blob_radius_bound = max(params.d.y, 0.02) * (
-        1.0
-            + 0.45 * abs(stretch_amount)
-            + harmonic_bound
-    );
+    g_blob_radius_bound = max(params.d.y, 0.02);
     let blend_max = max(params.d.z + abs(blend_pulse_amount), 0.0001);
     g_smooth_pad = 0.25 * blend_max;
 
@@ -683,17 +562,8 @@ fn blob_sdf_scaled(
 ) -> f32 {
     let sphere_radius = params.d.y;
     let rel = p - center;
-    let dir = safe_normalize(rel);
-
-    let stretch_amount = params.g.w;
-    let stretch_term = 0.45 * stretch_amount
-        * (dir.y * dir.y - 0.5 * (dir.x * dir.x + dir.z * dir.z));
-    let bump = harmonic_field(dir, phase);
-    let r_mod = sphere_radius * max(radius_scale, 0.05) * (
-        1.0
-            + stretch_term
-            + bump
-    );
+    let _ = phase;
+    let r_mod = sphere_radius * max(radius_scale, 0.05);
 
     return length(rel) - max(r_mod, 0.02);
 }
@@ -723,46 +593,6 @@ fn safe_normalize(v: vec3f) -> vec3f {
         return vec3f(0.0, 1.0, 0.0);
     }
     return v / len;
-}
-
-fn harmonic_field(dir: vec3f, phase: f32) -> f32 {
-    let amp1 = params.f.x;
-    let freq1 = max(params.f.y, 0.0);
-    let amp2 = params.f.z;
-    let freq2 = max(params.f.w, 0.0);
-    let warp = params.g.x;
-    let ridge = params.g.y;
-
-    var field = 0.0;
-    if (abs(amp1) > 0.00001) {
-        let h1 = sin(
-            (dir.x + 0.31 * dir.y) * (freq1 + 0.0001)
-                + phase
-                + warp * dir.z,
-        );
-        field += amp1 * h1;
-    }
-    if (abs(amp2) > 0.00001) {
-        let h2 = sin(
-            (dir.y - 0.27 * dir.z) * (freq2 * 0.87 + 1.3)
-                - phase * 0.7
-                + warp * dir.x,
-        ) * sin(
-            (dir.z + 0.23 * dir.x) * (freq2 * 1.13 + 2.1)
-                + phase * 0.5
-                - warp * dir.y,
-        );
-        field += amp2 * h2;
-    }
-    if (abs(ridge) > 0.00001) {
-        field = ridge_shape(field, ridge);
-    }
-    return field;
-}
-
-fn ridge_shape(x: f32, ridge: f32) -> f32 {
-    let power = mix(1.0, 0.35, ridge);
-    return sign(x) * pow(max(abs(x), 0.00001), power);
 }
 
 fn rotate_xz(v: vec3f, angle: f32) -> vec3f {
@@ -813,73 +643,10 @@ fn sd_capsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
     return length(ap - ab * h) - r;
 }
 
-fn soft_shadow(
-    ro: vec3f,
-    rd: vec3f,
-    min_t: f32,
-    max_t: f32,
-    softness: f32,
-    surf_eps: f32,
-    legacy_mode: bool,
-) -> f32 {
-    var result = 1.0;
-    var t = min_t;
-    var prev_h = 1.0;
-    for (var i = 0; i < MAX_SHADOW_STEPS; i = i + 1) {
-        if (legacy_mode) {
-            let h_raw = scene_sdf(ro + rd * t);
-            if (h_raw < surf_eps * 0.4) {
-                return 0.0;
-            }
-            let h = mix(h_raw, prev_h, 0.22);
-            if (h < surf_eps * 0.6) {
-                break;
-            }
-            result = min(result, softness * h / max(t, 0.02));
-            prev_h = h;
-            t += clamp(h * 0.75, surf_eps * 0.3, 0.18);
-        } else {
-            let h = scene_sdf(ro + rd * t);
-            if (h < surf_eps * 0.8) {
-                break;
-            }
-            result = min(result, softness * h / max(t, 0.02));
-            // Denser stepping reduces contour-like bands on rippled SDFs.
-            t += clamp(h * 0.6, surf_eps * 0.4, 0.12);
-        }
-        if (t > max_t) {
-            break;
-        }
-    }
-    return clamp(result, 0.0, 1.0);
-}
-
-fn ambient_occlusion(
-    p: vec3f,
-    n: vec3f,
-    surf_eps: f32,
-) -> f32 {
-    var occ = 0.0;
-    var scale = 1.0;
-    let ao_bias = surf_eps * 2.0;
-    for (var i = 1; i <= MAX_AO_SAMPLES; i = i + 1) {
-        let h = AO_STEP * f32(i);
-        let d = scene_sdf(p + n * (h + ao_bias));
-        occ += max(h - d, 0.0) * scale;
-        scale *= 0.75;
-    }
-    return clamp(exp(-occ * AO_STRENGTH * 1.1), 0.0, 1.0);
-}
-
 fn shape_complexity() -> f32 {
-    let h1 = abs(params.f.x) * (0.15 + 0.05 * params.f.y);
-    let h2 = abs(params.f.z) * (0.15 + 0.05 * params.f.w);
-    let ridge = params.g.y * 0.25;
-    let warp = abs(params.g.x) * 0.08;
-    let stretch = abs(params.g.w) * 0.35;
     let strands = STRAND_STRENGTH_FIXED * 0.18;
     let topology = params.q.x * 0.2;
-    return h1 + h2 + ridge + warp + stretch + strands + topology;
+    return strands + topology;
 }
 
 fn tone_map_filmic(color: vec3f) -> vec3f {
