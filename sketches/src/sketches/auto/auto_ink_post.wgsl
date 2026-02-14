@@ -52,35 +52,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let misregister_px = params.h.w;
 
     let center = textureSample(source_texture, source_sampler, in.uv);
-    let left = textureSample(
-        source_texture,
-        source_sampler,
-        in.uv - vec2f(texel.x, 0.0),
-    );
-    let right = textureSample(
-        source_texture,
-        source_sampler,
-        in.uv + vec2f(texel.x, 0.0),
-    );
-    let down = textureSample(
-        source_texture,
-        source_sampler,
-        in.uv - vec2f(0.0, texel.y),
-    );
-    let up = textureSample(
-        source_texture,
-        source_sampler,
-        in.uv + vec2f(0.0, texel.y),
-    );
-
     let lum_center = luminance(center.rgb);
-    let lum_l = luminance(left.rgb);
-    let lum_r = luminance(right.rgb);
-    let lum_d = luminance(down.rgb);
-    let lum_u = luminance(up.rgb);
-
-    let dx = lum_r - lum_l;
-    let dy = lum_u - lum_d;
+    let dx = dpdx(lum_center);
+    let dy = dpdy(lum_center);
     let edge = abs(dx) + abs(dy);
     let edge_mask = smoothstep(
         edge_threshold,

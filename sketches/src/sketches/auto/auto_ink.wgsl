@@ -1,9 +1,10 @@
 const TAU: f32 = 6.283185307;
 const RATE_SCALE: f32 = 0.25;
 const BOX_CORNER_ROUNDNESS: f32 = 0.08;
-const MAX_STEPS: i32 = 34;
+const MAX_STEPS: i32 = 24;
 const MAX_DIST: f32 = 12.0;
-const SURF_DIST: f32 = 0.0024;
+const SURF_DIST: f32 = 0.0032;
+const CLOSE_CHEAP_DIST: f32 = 3.2;
 const MAX_CUBES: i32 = 9;
 
 struct VertexInput {
@@ -138,49 +139,60 @@ fn fs_main(
             elongate_z_three_boxes,
         );
         let p_obj = to_object_space(hit_pos, spin);
+        let is_close = hit_dist < CLOSE_CHEAP_DIST;
 
         let edge_metric = 1.0 - abs(dot(n, -rd));
-        let edge_noise = value_noise_2d(
-            p_obj.xz * 8.0 + vec2f(4.3, 1.8),
-        );
-        let contour_threshold = mix(
-            0.56 + (edge_noise - 0.5) * 0.03,
-            0.26 + (edge_noise - 0.5) * 0.22,
-            stroke_flow_strength,
-        );
-        let contour = step(contour_threshold, edge_metric);
-
-        let edge_band = step(
-            mix(0.40, 0.16, stroke_flow_strength),
-            edge_metric,
-        ) * (1.0 - contour);
-        let swash_noise = value_noise_2d(
-            p_obj.xz * mix(2.0, 8.5, stroke_flow_strength)
-                + p_obj.yx * mix(0.8, 3.0, stroke_flow_strength)
-                + vec2f(1.4, -2.2),
-        );
-        let swash_sparse = step(
-            mix(0.97, 0.48, stroke_flow_strength),
-            swash_noise,
-        );
-        let brush_swash = swash_sparse * edge_band;
+        var contour = 0.0;
+        if is_close {
+            contour = step(
+                mix(0.52, 0.30, stroke_flow_strength),
+                edge_metric,
+            );
+        } else {
+            let edge_noise = value_noise_2d(
+                p_obj.xz * 8.0 + vec2f(4.3, 1.8),
+            );
+            let contour_threshold = mix(
+                0.56 + (edge_noise - 0.5) * 0.03,
+                0.26 + (edge_noise - 0.5) * 0.22,
+                stroke_flow_strength,
+            );
+            contour = step(contour_threshold, edge_metric);
+        }
 
         var stroke_mask = contour * contour_strength;
-        stroke_mask = max(
-            stroke_mask,
-            brush_swash * stroke_ink_strength * 0.85,
-        );
+        if !is_close {
+            let edge_band = step(
+                mix(0.40, 0.16, stroke_flow_strength),
+                edge_metric,
+            ) * (1.0 - contour);
+            let swash_noise = value_noise_2d(
+                p_obj.xz * mix(2.0, 8.5, stroke_flow_strength)
+                    + p_obj.yx * mix(0.8, 3.0, stroke_flow_strength)
+                    + vec2f(1.4, -2.2),
+            );
+            let swash_sparse = step(
+                mix(0.97, 0.48, stroke_flow_strength),
+                swash_noise,
+            );
+            let brush_swash = swash_sparse * edge_band;
+            stroke_mask = max(
+                stroke_mask,
+                brush_swash * stroke_ink_strength * 0.85,
+            );
+        }
         stroke_mask = clamp(stroke_mask, 0.0, 1.0);
 
-        let stroke_drops = stroke_drop_field(
-            p_obj,
-            stroke_drop_strength,
-        );
-
         coverage += stroke_mask;
-        coverage += stroke_drops
-            * stroke_drop_strength
-            * (0.35 + 0.65 * stroke_mask);
+        if !is_close {
+            let stroke_drops = stroke_drop_field(
+                p_obj,
+                stroke_drop_strength,
+            );
+            coverage += stroke_drops
+                * stroke_drop_strength
+                * (0.35 + 0.65 * stroke_mask);
+        }
     }
 
     let near_outer = 1.0 - step(0.050, min_dist);
@@ -239,7 +251,7 @@ fn ray_march(
             elongate_z_three_boxes,
         );
         min_dist = min(min_dist, abs(dist));
-        t += dist * 0.88;
+        t += dist * 0.94;
 
         if abs(dist) < SURF_DIST || t > MAX_DIST {
             break;
@@ -265,7 +277,7 @@ fn calc_normal(
     elongate_x_three_boxes: f32,
     elongate_z_three_boxes: f32,
 ) -> vec3f {
-    let e = 0.002;
+    let e = 0.003;
     let d = scene_sdf(
         p,
         spin,
@@ -366,6 +378,17 @@ fn scene_sdf(
     let elongate_z = clamp(elongate_z_three_boxes, 0.0, 1.0);
     let moving_count = i32(round(motion_ratio * count));
 
+    let max_elongate = max(elongate_x, max(elongate_y, elongate_z));
+    let bound_radius = spread * 1.95
+        + motion_range * 0.45
+        + max_elongate * 2.1
+        + size_offset * 0.8
+        + 0.35;
+    let bound_dist = length(p) - bound_radius;
+    if bound_dist > 0.0 {
+        return bound_dist;
+    }
+
     var dist = 9e8;
     for (var i = 0; i < MAX_CUBES; i++) {
         if f32(i) >= count {
@@ -378,17 +401,20 @@ fn scene_sdf(
             moving = 1.0;
         }
         let move_amp = 0.32 * motion_range;
-        let mov = vec3f(
-            move_amp * sin(move_phase * 1.0 + fi * 1.7),
-            move_amp * 0.78 * cos(move_phase * 1.4 + fi * 2.4),
-            move_amp * sin(move_phase * 0.8 + fi * 0.9),
-        ) * moving;
+        var mov = vec3f(0.0);
+        if moving > 0.5 && move_amp > 0.0001 {
+            mov = vec3f(
+                move_amp * sin(move_phase * 1.0 + fi * 1.7),
+                move_amp * 0.78 * cos(move_phase * 1.4 + fi * 2.4),
+                move_amp * sin(move_phase * 0.8 + fi * 0.9),
+            );
+        }
         let center = base_center(i) * spread + mov;
 
         let size_jitter = vec3f(
-            hash11(fi * 3.11 + 0.31) * 2.0 - 1.0,
-            hash11(fi * 4.57 + 1.73) * 2.0 - 1.0,
-            hash11(fi * 6.91 + 2.29) * 2.0 - 1.0,
+            base_jitter_x(i),
+            base_jitter_y(i),
+            base_jitter_z(i),
         );
         let size_scale = max(
             vec3f(0.22),
@@ -525,12 +551,15 @@ fn apply_domain_warp(
     warp_scale: f32,
 ) -> vec3f {
     let amt = clamp(warp_amount, 0.0, 1.0) * 0.10;
+    if amt <= 0.0001 {
+        return p;
+    }
     let freq = max(warp_scale, 0.001);
 
-    let wx = value_noise_2d(p.xz * freq + vec2f(1.7, -3.2));
-    let wy = value_noise_2d(p.yx * freq * 0.9 + vec2f(6.1, 2.4));
-    let wz = value_noise_2d(p.zy * freq * 1.1 + vec2f(-4.3, 5.6));
-    let warp = (vec3f(wx, wy, wz) - 0.5) * 2.0 * amt;
+    let wx = sin(p.x * freq + p.z * freq * 1.3 + 1.7);
+    let wy = cos(p.y * freq * 0.9 + p.x * freq * 1.1 + 2.3);
+    let wz = sin(p.z * freq * 1.2 + p.y * freq * 0.8 - 0.9);
+    let warp = vec3f(wx, wy, wz) * amt;
 
     return p + warp;
 }
@@ -582,6 +611,48 @@ fn hash21(p: vec2f) -> f32 {
 
 fn hash11(x: f32) -> f32 {
     return fract(sin(x * 127.1 + 311.7) * 43758.5453);
+}
+
+fn base_jitter_x(index: i32) -> f32 {
+    switch index {
+        case 0: { return -0.42; }
+        case 1: { return 0.38; }
+        case 2: { return -0.15; }
+        case 3: { return 0.54; }
+        case 4: { return -0.27; }
+        case 5: { return 0.21; }
+        case 6: { return -0.36; }
+        case 7: { return 0.46; }
+        default: { return -0.08; }
+    }
+}
+
+fn base_jitter_y(index: i32) -> f32 {
+    switch index {
+        case 0: { return 0.31; }
+        case 1: { return -0.48; }
+        case 2: { return 0.26; }
+        case 3: { return -0.11; }
+        case 4: { return 0.52; }
+        case 5: { return -0.34; }
+        case 6: { return 0.18; }
+        case 7: { return -0.44; }
+        default: { return 0.09; }
+    }
+}
+
+fn base_jitter_z(index: i32) -> f32 {
+    switch index {
+        case 0: { return -0.23; }
+        case 1: { return 0.49; }
+        case 2: { return -0.37; }
+        case 3: { return 0.29; }
+        case 4: { return -0.05; }
+        case 5: { return 0.41; }
+        case 6: { return -0.47; }
+        case 7: { return 0.16; }
+        default: { return -0.32; }
+    }
 }
 
 fn motion_rank(index: i32) -> i32 {
