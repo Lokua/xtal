@@ -2,10 +2,27 @@
 #  scene
 # ------------------------------------------------------------------------------
 
+shading_mode:
+  var: g1
+  type: select
+  default: full
+  options:
+    - full
+    - balanced
+    - fast
+    - graphic
+
 include_ao:
   var: e1
   type: checkbox
   default: false
+
+internal_resolution:
+  var: f4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
 
 rot_speed:
   var: b2
