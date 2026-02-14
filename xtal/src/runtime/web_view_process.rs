@@ -13,7 +13,7 @@ use wry::http::{Request, Response};
 use super::web_view::{self as wv};
 use crate::framework::prelude::*;
 
-const OPEN_DEVTOOLS: bool = true;
+const OPEN_DEVTOOLS: bool = false;
 
 const DEFAULT_WIDTH: i32 = 560;
 const DEFAULT_HEIGHT: i32 = 700;
