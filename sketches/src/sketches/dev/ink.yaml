@@ -114,6 +114,7 @@ elongate_z_three_boxes:
 # ------------------------------------------------------------------------------
 #  ink strokes
 # ------------------------------------------------------------------------------
+
 ink_strokes:
   type: separator
 
@@ -141,6 +142,7 @@ stroke_flow_strength:
 # ------------------------------------------------------------------------------
 #  background drops
 # ------------------------------------------------------------------------------
+
 background_drops:
   type: separator
 
@@ -161,6 +163,7 @@ background_drop_density:
 # ------------------------------------------------------------------------------
 #  stroke drops
 # ------------------------------------------------------------------------------
+
 stroke_drops:
   type: separator
 
@@ -169,4 +172,73 @@ stroke_drop_strength:
   type: slider
   range: [0.0, 1.0]
   default: 0.26
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  post chromatic bleed
+# ------------------------------------------------------------------------------
+
+post_chromatic_bleed:
+  type: separator
+
+chroma_bleed_amount:
+  var: g1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.6
+  step: 0.01
+
+chroma_bleed_px:
+  var: g2
+  type: slider
+  range: [0.0, 6.0]
+  default: 1.8
+  step: 0.01
+
+bleed_edge_threshold:
+  var: g3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.08
+  step: 0.001
+
+bleed_edge_softness:
+  var: g4
+  type: slider
+  range: [0.001, 0.5]
+  default: 0.08
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  post distressed print
+# ------------------------------------------------------------------------------
+post_distressed_print:
+  type: separator
+
+print_distress_amount:
+  var: h1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.22
+  step: 0.01
+
+print_speck_density:
+  var: h2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.28
+  step: 0.01
+
+print_dropout:
+  var: h3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.16
+  step: 0.01
+
+print_misregister_px:
+  var: h4
+  type: slider
+  range: [0.0, 3.0]
+  default: 0.55
   step: 0.01
