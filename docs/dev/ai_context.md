@@ -62,6 +62,8 @@ Read `README.md` first.
   shader.
 - Most Xtal shaders use NDC space; unlike other shaders, so keep that in mind
   when porting.
+- Always make sure there are more dynamic uniform banks in the Rust setup than
+  what is needed
 
 ## New Auto Sketch Checklist
 

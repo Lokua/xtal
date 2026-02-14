@@ -79,6 +79,7 @@
     "smin",
     "smoothmin",
     "stddev",
+    "targ",
     "termcolor",
     "themechanged",
     "thresholded",
