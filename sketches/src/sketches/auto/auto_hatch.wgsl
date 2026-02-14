@@ -27,7 +27,7 @@ struct Params {
     d: vec4f,
     // include_ao, _, noise_amp, noise_freq
     e: vec4f,
-    // morph_shape, radial_limb_rotation_rate, _, _
+    // arm_layout, radial_limb_rotation_rate, _, _
     f: vec4f,
     g: vec4f,
     h: vec4f,
@@ -57,7 +57,7 @@ fn fs_main(
     let h = params.a.y;
     let t = params.a.z;
     let morph = params.b.x;
-    let morph_shape = clamp(params.f.x, 0.0, 1.0);
+    let arm_layout = clamp(params.f.x, 0.0, 1.0);
     let rot_speed = params.b.y;
     let cam_z = params.b.z;
     let light_angle = params.b.w;
@@ -96,7 +96,7 @@ fn fs_main(
     var has_hit = false;
     if bounds.y > bounds.x {
         let result = ray_march(
-            ro, rd, t, rot_speed, morph, morph_shape,
+            ro, rd, t, rot_speed, morph, arm_layout,
             noise_amp, noise_freq, aspect,
             bounds.x, min(bounds.y, MAX_DIST),
         );
@@ -109,7 +109,7 @@ fn fs_main(
 
     if has_hit {
         let n = calc_normal(
-            hit_pos, t, rot_speed, morph, morph_shape,
+            hit_pos, t, rot_speed, morph, arm_layout,
             noise_amp, noise_freq, aspect,
         );
         let diff = max(dot(n, light), 0.0);
@@ -118,7 +118,7 @@ fn fs_main(
         if !disable_ao {
             ao = calc_ao(
                 hit_pos, n, t, rot_speed, morph,
-                morph_shape, aspect,
+                arm_layout, aspect,
             );
         }
         scene_brightness = (diff * 0.85 + amb) * ao;
@@ -261,12 +261,12 @@ fn exploded_cluster_sdf(
     p: vec3f,
     t: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     aspect: f32,
 ) -> f32 {
     let radial_limb_rotation_rate = params.f.y;
     let m = smoothstep(0.0, 1.0, morph);
-    let shape_mix = smoothstep(0.0, 1.0, morph_shape);
+    let shape_mix = smoothstep(0.0, 1.0, arm_layout);
     let core_radius = mix(0.8, mix(0.22, 0.19, shape_mix), m);
     var d = length(p) - core_radius;
     if m < 0.01 {
@@ -280,15 +280,11 @@ fn exploded_cluster_sdf(
     let blend_k = mix(0.42, mix(0.12, 0.16, shape_mix), m);
     let strand_base = mix(0.36, mix(0.05, 0.045, shape_mix), m);
 
-    // Radial limb rotation.
-    // This moves limb anchors across the sphere with one shared motion.
+    // Radial limb rotation:
+    // Rotate limb anchor directions around the core.
+    // No local arm spin is applied.
     let radial_limb_rotation = t * radial_limb_rotation_rate;
-    let radial_limb_tilt = sin(t * 0.09) * 0.22;
-    let p_radial = rotate_y(
-        rotate_x(p, radial_limb_tilt),
-        radial_limb_rotation,
-    );
-    let radial_pulse = 0.05 * m * sin(t * 0.45);
+    let root_radius = core_radius * 0.92;
 
     for (var i = 0; i < 8; i++) {
         let seed = arm_seed(i);
@@ -298,25 +294,35 @@ fn exploded_cluster_sdf(
                 mix(axis_base, blob_dir_alt(i), shape_mix),
             );
         }
-        let axis_stretch = vec3f(
-            axis_base.x * (1.0 + (aspect - 1.0) * 0.75),
+        // Per-arm surface drift avoids a rigid "mixer blade" spin.
+        let phase = fract(radial_limb_rotation + seed);
+        let tri = 1.0 - abs(phase * 2.0 - 1.0);
+        let drift_mix = smoothstep(0.0, 1.0, tri);
+        let axis_target = normalize(vec3f(
+            axis_base.x * 0.62 + axis_base.z * 0.78,
             axis_base.y,
-            axis_base.z,
+            -axis_base.x * 0.78 + axis_base.z * 0.62,
+        ));
+        let axis_rot = normalize(mix(axis_base, axis_target, drift_mix));
+        let axis_stretch = vec3f(
+            axis_rot.x * (1.0 + (aspect - 1.0) * 0.75),
+            axis_rot.y,
+            axis_rot.z,
         );
         let dir = normalize(axis_stretch);
-        let dist = spread * (0.72 + 0.34 * seed)
-            + radial_pulse;
+        let dist = spread * (0.72 + 0.34 * seed);
+        let root = dir * root_radius;
         let center = dir * dist;
         let blob_radius = mix(0.18, 0.16, shape_mix)
-            + 0.09 * seed + 0.03 * radial_pulse;
-        let blob = length(p_radial - center) - blob_radius;
+            + 0.09 * seed;
+        let blob = length(p - center) - blob_radius;
 
         d = smooth_min(d, blob, blend_k);
 
         let strand_radius = strand_base * (0.8 + 0.35 * (1.0 - seed));
         let strand = sd_capsule(
-            p_radial,
-            vec3f(0.0),
+            p,
+            root,
             center * 0.92,
             strand_radius,
         );
@@ -331,13 +337,13 @@ fn scene_sdf(
     t: f32,
     rot_speed: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
     aspect: f32,
 ) -> f32 {
     let rp = scene_space(p, t, rot_speed);
-    return scene_sdf_core(rp, t, morph, morph_shape, aspect)
+    return scene_sdf_core(rp, t, morph, arm_layout, aspect)
         + scene_noise_displacement(
             rp, t, morph, noise_amp, noise_freq,
         );
@@ -349,7 +355,7 @@ fn ray_march(
     t: f32,
     rot_speed: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
     aspect: f32,
@@ -366,7 +372,7 @@ fn ray_march(
         let p = ro + rd * d;
         let rp = scene_space(p, t, rot_speed);
         let ds_core = scene_sdf_core(
-            rp, t, morph, morph_shape, aspect,
+            rp, t, morph, arm_layout, aspect,
         );
         var ds = ds_core;
         if ds_core < near_band {
@@ -413,20 +419,20 @@ fn scene_sdf_core(
     rp: vec3f,
     t: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     aspect: f32,
 ) -> f32 {
     let m = smoothstep(0.0, 1.0, morph);
     let sphere = length(rp) - 0.8;
     let cluster = exploded_cluster_sdf(
-        rp, t, morph, morph_shape, aspect,
+        rp, t, morph, arm_layout, aspect,
     );
     return mix(sphere, cluster, m);
 }
 
 fn scene_noise_displacement(
     rp: vec3f,
-    t: f32,
+    _t: f32,
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
@@ -436,7 +442,9 @@ fn scene_noise_displacement(
     }
     let m = smoothstep(0.0, 1.0, morph);
     let np = rp * noise_freq;
-    let n = fbm3(np + vec3f(t * 0.1, 0.0, t * 0.07));
+    // Keep displacement static in object space.
+    // Time-varying noise here reads like local arm spin.
+    let n = fbm3(np);
     return (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
 }
 
@@ -445,30 +453,30 @@ fn calc_normal(
     t: f32,
     rot_speed: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
     aspect: f32,
 ) -> vec3f {
     let e = vec2f(0.001, 0.0);
     let d = scene_sdf(
-        p, t, rot_speed, morph, morph_shape,
+        p, t, rot_speed, morph, arm_layout,
         noise_amp, noise_freq, aspect,
     );
     let n = vec3f(
         scene_sdf(
             p + e.xyy, t, rot_speed, morph,
-            morph_shape,
+            arm_layout,
             noise_amp, noise_freq, aspect,
         ) - d,
         scene_sdf(
             p + e.yxy, t, rot_speed, morph,
-            morph_shape,
+            arm_layout,
             noise_amp, noise_freq, aspect,
         ) - d,
         scene_sdf(
             p + e.yyx, t, rot_speed, morph,
-            morph_shape,
+            arm_layout,
             noise_amp, noise_freq, aspect,
         ) - d,
     );
@@ -481,7 +489,7 @@ fn calc_ao(
     t: f32,
     rot_speed: f32,
     morph: f32,
-    morph_shape: f32,
+    arm_layout: f32,
     aspect: f32,
 ) -> f32 {
     var occ = 0.0;
@@ -490,7 +498,7 @@ fn calc_ao(
         let h = 0.01 + 0.12 * f32(i) / 3.0;
         let ps = scene_space(p + n * h, t, rot_speed);
         let d = scene_sdf_core(
-            ps, t, morph, morph_shape, aspect,
+            ps, t, morph, arm_layout, aspect,
         );
         occ += (h - d) * w;
         w *= 0.85;
