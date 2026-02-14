@@ -8,23 +8,18 @@
     },
     {
       "type": "Slider",
-      "name": "spread",
-      "value": 1.49
-    },
-    {
-      "type": "Slider",
       "name": "rotation_rate",
-      "value": 0.125
+      "value": 0.25
     },
     {
       "type": "Slider",
-      "name": "mold",
-      "value": 0.03
+      "name": "blend_k",
+      "value": 0.13
     },
     {
       "type": "Slider",
-      "name": "box_size_offset",
-      "value": 0.8
+      "name": "domain_warp_amount",
+      "value": 0.12
     },
     {
       "type": "Slider",
@@ -39,22 +34,7 @@
     {
       "type": "Slider",
       "name": "moving_rate",
-      "value": 0.5
-    },
-    {
-      "type": "Slider",
-      "name": "elongate_y_three_boxes",
-      "value": 0.13
-    },
-    {
-      "type": "Slider",
-      "name": "elongate_x_three_boxes",
-      "value": 0.15
-    },
-    {
-      "type": "Slider",
-      "name": "elongate_z_three_boxes",
-      "value": 0.04
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -69,12 +49,17 @@
     {
       "type": "Slider",
       "name": "stroke_flow_strength",
-      "value": 0.56
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "background_drop_strength",
       "value": 0.62
+    },
+    {
+      "type": "Slider",
+      "name": "background_drop_density",
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -84,7 +69,79 @@
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "box_count",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_ink_strength",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "domain_warp_amount",
+          "value": 0.12
+        },
+        {
+          "type": "Slider",
+          "name": "contour_strength",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "rotation_rate",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "background_drop_strength",
+          "value": 0.62
+        },
+        {
+          "type": "Slider",
+          "name": "moving_box_range",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "moving_box_ratio",
+          "value": 0.46
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_flow_strength",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "background_drop_density",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "blend_k",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "moving_rate",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_drop_strength",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": []
 }

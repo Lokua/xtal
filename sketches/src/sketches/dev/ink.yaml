@@ -1,6 +1,7 @@
 # ------------------------------------------------------------------------------
 #  pattern
 # ------------------------------------------------------------------------------
+
 pattern:
   type: separator
 
@@ -13,10 +14,10 @@ box_count:
 
 spread:
   var: b2
-  type: slider
+  type: random_slewed
   range: [0.45, 3]
-  default: 0.82
-  step: 0.01
+  beats: 4
+  slew: 0.7
 
 rotation_rate:
   var: b3
@@ -25,23 +26,46 @@ rotation_rate:
   default: 0.125
   step: 0.125
 
-mold:
+zoom:
+  var: f4
+  type: random_slewed
+  range: [0.5, 2.5]
+  beats: 8
+  slew: 0.7
+
+blend_k:
   var: b4
   type: slider
-  range: [0.03, 0.4]
+  range: [0.0, 0.5]
   default: 0.16
   step: 0.01
 
 box_size_offset:
   var: d2
-  type: slider
+  type: random_slewed
   range: [0.0, 0.8]
-  default: 0.44
+  beats: 1
+  slew: 0.6
+
+domain_warp_amount:
+  var: f2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.12
   step: 0.01
+
+domain_warp_scale:
+  var: f3
+  type: round_robin
+  range: [0.5, 6.0]
+  beats: 2
+  values: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 3]
+  slew: 0.7
 
 # ------------------------------------------------------------------------------
 #  box motion
 # ------------------------------------------------------------------------------
+
 box_motion:
   type: separator
 
@@ -68,24 +92,24 @@ moving_rate:
 
 elongate_y_three_boxes:
   var: e2
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.0
-  step: 0.01
+  type: round_robin
+  beats: 2
+  values: [1, 0, 0]
+  slew: 0.7
 
 elongate_x_three_boxes:
   var: e3
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.0
-  step: 0.01
+  type: round_robin
+  beats: 2
+  values: [0, 1, 0]
+  slew: 0.7
 
 elongate_z_three_boxes:
   var: e4
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.0
-  step: 0.01
+  type: round_robin
+  beats: 2
+  values: [0, 0, 1]
+  slew: 0.7
 
 # ------------------------------------------------------------------------------
 #  ink strokes
@@ -125,6 +149,13 @@ background_drop_strength:
   type: slider
   range: [0.0, 1.0]
   default: 0.12
+  step: 0.01
+
+background_drop_density:
+  var: f1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
   step: 0.01
 
 # ------------------------------------------------------------------------------
