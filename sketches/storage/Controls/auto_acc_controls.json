@@ -13,28 +13,13 @@
     },
     {
       "type": "Slider",
-      "name": "height_scale",
-      "value": 1.75
-    },
-    {
-      "type": "Slider",
-      "name": "voxel_size",
-      "value": 0.86
-    },
-    {
-      "type": "Slider",
       "name": "terrain_freq",
-      "value": 0.48
-    },
-    {
-      "type": "Slider",
-      "name": "warp_amount",
-      "value": 1.89
+      "value": 0.33
     },
     {
       "type": "Slider",
       "name": "warp_freq",
-      "value": 0.49
+      "value": 0.92
     },
     {
       "type": "Slider",
@@ -44,7 +29,7 @@
     {
       "type": "Slider",
       "name": "detail_fade_density",
-      "value": 0.035
+      "value": 0.2
     },
     {
       "type": "Slider",
@@ -74,12 +59,7 @@
     {
       "type": "Slider",
       "name": "tint",
-      "value": 0.61
-    },
-    {
-      "type": "Slider",
-      "name": "hue",
-      "value": 0.615
+      "value": 0.62
     },
     {
       "type": "Slider",
@@ -103,23 +83,13 @@
     },
     {
       "type": "Slider",
-      "name": "camera_height",
-      "value": 7.36
-    },
-    {
-      "type": "Slider",
       "name": "orbit_amount",
-      "value": 0.17
+      "value": 0.13
     },
     {
       "type": "Slider",
       "name": "focal_len",
-      "value": 1.38
-    },
-    {
-      "type": "Slider",
-      "name": "orbit_radius",
-      "value": 4.7
+      "value": 1.12
     }
   ],
   "midi_controls": [],

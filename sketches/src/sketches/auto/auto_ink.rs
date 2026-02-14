@@ -4,8 +4,8 @@ use xtal::prelude::*;
 use crate::sketches::common::{HD_HEIGHT, HD_WIDTH};
 
 pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "ink",
-    display_name: "Ink",
+    name: "auto_ink",
+    display_name: "Auto Ink",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -27,7 +27,7 @@ pub fn init(app: &App, ctx: &Context) -> Ink {
     let wr = ctx.window_rect();
 
     let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "ink.yaml"),
+        to_absolute_path(file!(), "auto_ink.yaml"),
         Timing::new(ctx.bpm()),
     );
 
@@ -36,7 +36,7 @@ pub fn init(app: &App, ctx: &Context) -> Ink {
     let shader_1 = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "ink.wgsl"),
+        to_absolute_path(file!(), "auto_ink.wgsl"),
         &params,
         0,
     );
@@ -44,7 +44,7 @@ pub fn init(app: &App, ctx: &Context) -> Ink {
     let shader_2 = gpu::GpuState::new_fullscreen(
         app,
         wr.resolution_u32(),
-        to_absolute_path(file!(), "ink_post.wgsl"),
+        to_absolute_path(file!(), "auto_ink_post.wgsl"),
         &params,
         1,
     );
