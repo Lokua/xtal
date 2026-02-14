@@ -57,9 +57,10 @@ domain_warp_amount:
 domain_warp_scale:
   var: f3
   type: round_robin
+  # bypass: 3
   range: [0.5, 6.0]
   beats: 2
-  values: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 3]
+  values: [0.5, 0.5, 0.5, 0.5, 0.5, 3, 3]
   slew: 0.7
 
 # ------------------------------------------------------------------------------
@@ -156,7 +157,7 @@ background_drop_strength:
 background_drop_density:
   var: f1
   type: slider
-  range: [0.0, 1.0]
+  range: [0.0, 2.0]
   default: 0.35
   step: 0.01
 
