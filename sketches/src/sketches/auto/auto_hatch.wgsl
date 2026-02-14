@@ -138,12 +138,19 @@ fn fs_main(
                 sa * fc.x + ca * fc.y,
             ) * vec2f(hatch_density, 1.0) * 1.3;
 
-            let rh = hash21(uvh);
+            let row_jitter = (hash21(vec2f(
+                floor(uvh.y * 0.35) + fi * 11.0,
+                fi * 7.0,
+            )) - 0.5) * 0.35;
+            let stripe = abs(fract(uvh.x + row_jitter) - 0.5);
+            let rh = smoothstep(0.12, 0.42, stripe);
+            let grain = abs(hash21(
+                uvh * vec2f(0.37, 0.09)
+                    + vec2f(fi * 17.0, fi * 3.0),
+            ) - 0.5);
             let h_val = 1.0
                 - smoothstep(0.5, 1.5, rh + br)
-                - 0.3 * abs(
-                    hash21(fc * 0.7) - 0.5
-                );
+                - 0.3 * grain;
             hatch += h_val;
             hatch_max = max(hatch_max, h_val);
             count += 1.0;
