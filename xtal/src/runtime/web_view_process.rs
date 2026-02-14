@@ -13,7 +13,7 @@ use wry::http::{Request, Response};
 use super::web_view::{self as wv};
 use crate::framework::prelude::*;
 
-const OPEN_DEVTOOLS: bool = false;
+const OPEN_DEVTOOLS: bool = true;
 
 const DEFAULT_WIDTH: i32 = 560;
 const DEFAULT_HEIGHT: i32 = 700;
@@ -115,8 +115,10 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             })
             .build(&window)?
     } else {
+        let ui_port = std::env::var("XTAL_UI_PORT")
+            .unwrap_or_else(|_| crate::global::DEFAULT_UI_PORT.to_string());
         web_view_builder
-            .with_url("http://localhost:3000")
+            .with_url(format!("http://localhost:{ui_port}"))
             .build(&window)?
     };
 
