@@ -44,7 +44,7 @@ Read `README.md` first.
 - Bind controls with `var` (`a1`, `b3`, etc.).
 - Use separators and section comments in YAML. Titles should be short like
   `color`, `geometry`. Comments should be header style comments above the
-  separator control as follows:
+  separator control (with an empty like between) as follows:
 
 ```yaml
 # ------------------------------------------------------------------------------
