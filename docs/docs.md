@@ -1,6 +1,39 @@
 > NOTE: this document for now will serve as a dumping ground until I figure out
 > exactly how I want to organize more formal documentation
 
+# Table of Contents
+
+- [Xtal & Nannou](#xtal--nannou)
+  - [Nannou Boilerplate](#nannou-boilerplate)
+  - [Xtal Boilerplate](#xtal-boilerplate)
+- [ControlHub](#controlhub)
+- [Animation](#animation)
+- [Control Scripting](#control-scripting)
+- [User Interface](#user-interface)
+- [Audio](#audio)
+  - [Multichannel Audio](#multichannel-audio)
+    - [Aggregate Device Setup](#aggregate-device-setup)
+  - [Single Channel, Multiband Audio (experimental)](#single-channel-multiband-audio-experimental)
+    - [Aggregate Device Setup](#aggregate-device-setup-1)
+    - [Routing Audio to Blackhole 2ch Out(3/4):In(1/2)](#routing-audio-to-blackhole-2ch-out34in12)
+- [MIDI](#midi)
+  - [Loopback (Ableton)](#loopback-ableton)
+  - [Sync Recordings](#sync-recordings)
+  - [Recording Performance Flags](#recording-performance-flags)
+- [Open Sound Control (OSC)](#open-sound-control-osc)
+  - [L.OscTransport](#losctransport)
+  - [L.OscSend](#loscsend)
+- [Timing](#timing)
+- [Running Multiple Instances](#running-multiple-instances)
+- [Tips](#tips)
+  - [Change Detection](#change-detection)
+    - [Window Resizing](#window-resizing)
+    - [Control Changes](#control-changes)
+  - [Clearing](#clearing)
+    - [Example: Resetting Data](#example-resetting-data)
+    - [Example: Clearing "Trails"](#example-clearing-trails)
+- [General Resources](#general-resources)
+
 # Xtal & Nannou
 
 Xtal is essentially one big Nannou app. The first major difference is that a
@@ -388,8 +421,7 @@ Xtal's ffmpeg recorder reads these environment variables at startup:
   `1920 * 1080 * 4 = 8,294,400` bytes (~7.9 MiB), so `6` buffers ~= 47 MiB, `8`
   buffers ~= 63 MiB, `12` buffers ~= 95 MiB. Apple Silicon recommendation: start
   with `6`, try `8` if you see occasional "waited ...ms" warnings, and only go
-  higher if waits are bursty rather than constant.
-Build-time note:
+  higher if waits are bursty rather than constant. Build-time note:
 - Reporting instrumentation is controlled by the `recording-report` cargo
   feature.
 - The feature is enabled by default for `xtal`.
@@ -451,6 +483,70 @@ A super basic OSC value sender. While there are much fancier MaxForLive devices
 that can send OSC, the "official" OSC Send device that comes with Ableton's
 Connection Kit does _not_ send high resolution data, which defeats the entire
 purpose!orLive devices designed to make integration with Ableton Live simpler.
+
+# Timing
+
+Xtal's animation system is driven by a `Timing` mechanism that determines how
+musical time (beats) is tracked. The timing mode is selected at runtime via a
+positional argument after the sketch name:
+
+```bash
+just start <sketch_name> [timing_mode]
+
+# e.g.
+just start my_sketch osc
+```
+
+The available timing modes are:
+
+- **`frame`** (default) — Uses Xtal's internal frame counter to derive beat
+  position. No external hardware or software required. Best for standalone
+  operation.
+- **`osc`** — Syncs with Ableton Live via the [L.OscTransport](#losctransport)
+  MaxForLive device. This is the most reliable syncing mechanism for Ableton
+  since Ableton does not properly send MIDI SPP messages and doesn't support MTC
+  natively.
+- **`midi`** — Uses MIDI Clock and MIDI Song Position Pointer (SPP) messages to
+  stay in sync. When the MIDI source loops or jumps to a new position,
+  animations follow accordingly. Works well with Bitwig (which sends SPP
+  correctly); Ableton does not properly support SPP.
+- **`hybrid`** — Combines MIDI Clock (for precision) with MIDI Time Code (MTC)
+  for position tracking. Useful for DAWs that don't support SPP but do support
+  MTC. Ableton doesn't natively support MTC either, but you can work around this
+  with [Live MTC][livemtc].
+
+The timing mode is parsed from the second positional argument (index 2) inside
+`Timing::new()`. Sketches that call `Timing::new(ctx.bpm())` in their `init`
+function will automatically respect this argument. Sketches can also bypass the
+command line argument by using a specific `TimingSource` variant directly if
+they are designed to always use a particular timing mechanism (e.g., a sketch
+that is only meant to be run synced to a DAW).
+
+# Running Multiple Instances
+
+To run multiple Xtal instances simultaneously (e.g., two different sketches each
+with their own UI window), set the `XTAL_UI_PORT` environment variable to give
+each instance a unique port for the Vite dev server and WebView connection:
+
+```bash
+# Terminal 1: default port (3000)
+just start sketch_a
+
+# Terminal 2: custom port
+XTAL_UI_PORT=3001 just start sketch_b
+```
+
+You'll also need to run a separate Vite dev server for each port:
+
+```bash
+# Terminal A: default port
+bun --cwd xtal-ui start
+
+# Terminal B: custom port
+XTAL_UI_PORT=3001 bun --cwd xtal-ui start -- --port 3001
+```
+
+The default port is `3000` when `XTAL_UI_PORT` is not set.
 
 # Tips
 
@@ -569,6 +665,7 @@ fn view(&self, app: &App, frame: Frame, ctx: &Context) {
 [ffmpeg]: https://ffmpeg.org/
 [insta]: https://www.instagram.com/lokua/
 [just]: https://github.com/casey/just
+[livemtc]: https://support.showsync.com/sync-tools/livemtc/introduction
 [xtal-sketches]: ../xtal-sketches/sketches
 [midi-sketch]: src/sketches/midi_test.rs
 [nannou]: https://github.com/nannou-org/nannou
