@@ -47,6 +47,7 @@ pub use self::dev::control_script_dev;
 pub use self::dev::crosshatch_dev;
 pub use self::dev::cv_dev;
 pub use self::dev::effects_wavefolder_dev;
+pub use self::dev::ink;
 pub use self::dev::midi_dev;
 pub use self::dev::non_yaml_dev;
 pub use self::dev::osc_dev;

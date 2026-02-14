@@ -63,6 +63,7 @@ fn main() {
         crosshatch_dev,
         cv_dev,
         effects_wavefolder_dev,
+        ink,
         midi_dev,
         non_yaml_dev,
         osc_dev,
