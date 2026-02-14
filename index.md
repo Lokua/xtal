@@ -4,21 +4,25 @@ Files sorted from most to least recent. Source code available on
 
 
 
+## auto_hatch-a529i.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_hatch-a529i.png" alt="auto_hatch-a529i.png">
+
+## auto_hatch-xjry1.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_hatch-xjry1.png" alt="auto_hatch-xjry1.png">
+
+## auto_acc-5s6e3.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_acc-5s6e3.png" alt="auto_acc-5s6e3.png">
+
 ## crosshatch_dev-jbbia.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-jbbia.png" alt="crosshatch_dev-jbbia.png">
 
-## crosshatch_dev-cbclu.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-cbclu.png" alt="crosshatch_dev-cbclu.png">
-
 ## crosshatch_dev-vbmae.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-vbmae.png" alt="crosshatch_dev-vbmae.png">
-
-## crosshatch_dev-g858x.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/crosshatch_dev-g858x.png" alt="crosshatch_dev-g858x.png">
 
 ## auto_wave_fract-68m67.png
 
