@@ -48,7 +48,7 @@ radial_limb_rotation_rate:
   default: 0.25
   step: 0.125
 
-morph_shape:
+arm_layout:
   var: f1
   type: slider
   range: [0.0, 1.0]
