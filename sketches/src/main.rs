@@ -41,7 +41,6 @@ fn main() {
         // AUTO
         // ---------------------------------------------------------------------
         auto_acc,
-        auto_757,
         auto_cloud,
         auto_dreams,
         auto_dyn_uni,
@@ -50,7 +49,6 @@ fn main() {
         auto_hatch,
         auto_rm,
         auto_sline,
-        auto_topo,
         auto_un,
         auto_un2,
         auto_wave_fract,

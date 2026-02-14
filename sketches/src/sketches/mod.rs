@@ -26,7 +26,6 @@ pub mod wave_fract;
 
 pub mod auto;
 pub use self::auto::auto_acc;
-pub use self::auto::auto_757;
 pub use self::auto::auto_cloud;
 pub use self::auto::auto_dreams;
 pub use self::auto::auto_dyn_uni;
@@ -35,7 +34,6 @@ pub use self::auto::auto_grid_splash;
 pub use self::auto::auto_hatch;
 pub use self::auto::auto_rm;
 pub use self::auto::auto_sline;
-pub use self::auto::auto_topo;
 pub use self::auto::auto_un;
 pub use self::auto::auto_un2;
 pub use self::auto::auto_wave_fract;
