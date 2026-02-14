@@ -30,7 +30,8 @@ Read `README.md` first.
 ## Core Workflow
 
 - Fast verify loop:
-  - `cargo check -p sketches`
+  - `cargo check -p sketches` (not needed when working solely on wgsl or yaml
+    since we have hot reload)
 - If touching UI:
   - `npm --prefix xtal-ui run build`
 - If behavior is wrong:
