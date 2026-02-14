@@ -1,13 +1,10 @@
-// crosshatch_dev.wgsl
-//
-// Pencil cross-hatching post-process over a raymarched scene.
-// Technique adapted from flockaroo (Shadertoy).
-// https://www.shadertoy.com/view/MsKfRw
+// Based on https://www.shadertoy.com/view/MsKfRw
 
-const MAX_STEPS: i32 = 80;
+const MAX_STEPS: i32 = 64;
 const MAX_DIST: f32 = 20.0;
 const SURF_DIST: f32 = 0.001;
-const NOISE_OCTAVES: i32 = 4;
+const NOISE_OCTAVES: i32 = 3;
+const AO_STEPS: i32 = 2;
 
 struct VertexInput {
     @location(0) position: vec2f,
@@ -84,14 +81,26 @@ fn fs_main(
         sin(light_angle),
     ));
 
-    // Raymarch
-    let result = ray_march(
-        ro, rd, t, rot_speed, morph,
-        noise_amp, noise_freq, aspect,
+    // Raymarch in an aspect-aware bounds sphere.
+    let morph_smooth = smoothstep(0.0, 1.0, morph);
+    let bound_radius = mix(
+        1.1,
+        2.95 + noise_amp * 0.35,
+        morph_smooth,
     );
-    let hit_dist = result.x;
+    let bounds = ray_sphere_bounds(ro, rd, bound_radius);
+    var hit_dist = MAX_DIST + 1.0;
+    var has_hit = false;
+    if bounds.y > bounds.x {
+        let result = ray_march(
+            ro, rd, t, rot_speed, morph,
+            noise_amp, noise_freq, aspect,
+            bounds.x, min(bounds.y, MAX_DIST),
+        );
+        hit_dist = result.x;
+        has_hit = result.y > 0.5;
+    }
     let hit_pos = ro + rd * hit_dist;
-    let has_hit = hit_dist < MAX_DIST;
 
     var scene_brightness = 1.0;
 
@@ -103,8 +112,7 @@ fn fs_main(
         let diff = max(dot(n, light), 0.0);
         let amb = 0.15;
         let ao = calc_ao(
-            hit_pos, n, t, rot_speed, morph,
-            noise_amp, noise_freq, aspect,
+            hit_pos, n, t, rot_speed, morph, aspect,
         );
         scene_brightness = (diff * 0.85 + amb) * ao;
     }
@@ -269,23 +277,11 @@ fn scene_sdf(
     noise_freq: f32,
     aspect: f32,
 ) -> f32 {
-    let rp = rotate_y(
-        rotate_x(p, t * rot_speed * 0.7),
-        t * rot_speed,
-    );
-    let m = smoothstep(0.0, 1.0, morph);
-    let sphere = length(rp) - 0.8;
-    let cluster = exploded_cluster_sdf(rp, t, morph, aspect);
-    var d = mix(sphere, cluster, m);
-
-    // Noise displacement for surface detail
-    let np = rp * noise_freq;
-    let n = fbm3(
-        np + vec3f(t * 0.1, 0.0, t * 0.07),
-    );
-    d += (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
-
-    return d;
+    let rp = scene_space(p, t, rot_speed);
+    return scene_sdf_core(rp, t, morph, aspect)
+        + scene_noise_displacement(
+            rp, t, morph, noise_amp, noise_freq,
+        );
 }
 
 fn ray_march(
@@ -297,20 +293,86 @@ fn ray_march(
     noise_amp: f32,
     noise_freq: f32,
     aspect: f32,
+    min_dist: f32,
+    max_dist: f32,
 ) -> vec2f {
-    var d = 0.0;
+    var d = max(min_dist, 0.0);
+    let near_band = 0.28 + noise_amp * 0.45;
+    var hit = 0.0;
     for (var i = 0; i < MAX_STEPS; i++) {
+        if d > max_dist {
+            break;
+        }
         let p = ro + rd * d;
-        let ds = scene_sdf(
-            p, t, rot_speed, morph,
-            noise_amp, noise_freq, aspect,
-        );
+        let rp = scene_space(p, t, rot_speed);
+        let ds_core = scene_sdf_core(rp, t, morph, aspect);
+        var ds = ds_core;
+        if ds_core < near_band {
+            ds += scene_noise_displacement(
+                rp, t, morph, noise_amp, noise_freq,
+            );
+        }
         d += ds * 0.8;
-        if abs(ds) < SURF_DIST || d > MAX_DIST {
+        if abs(ds) < SURF_DIST {
+            hit = 1.0;
+            break;
+        }
+        if d > MAX_DIST {
             break;
         }
     }
-    return vec2f(d, 0.0);
+    if hit < 0.5 {
+        d = MAX_DIST + 1.0;
+    }
+    return vec2f(d, hit);
+}
+
+fn ray_sphere_bounds(ro: vec3f, rd: vec3f, r: f32) -> vec2f {
+    let b = dot(ro, rd);
+    let c = dot(ro, ro) - r * r;
+    let h = b * b - c;
+    if h < 0.0 {
+        return vec2f(1.0, -1.0);
+    }
+    let s = sqrt(h);
+    let t0 = -b - s;
+    let t1 = -b + s;
+    return vec2f(max(t0, 0.0), t1);
+}
+
+fn scene_space(p: vec3f, t: f32, rot_speed: f32) -> vec3f {
+    return rotate_y(
+        rotate_x(p, t * rot_speed * 0.7),
+        t * rot_speed,
+    );
+}
+
+fn scene_sdf_core(
+    rp: vec3f,
+    t: f32,
+    morph: f32,
+    aspect: f32,
+) -> f32 {
+    let m = smoothstep(0.0, 1.0, morph);
+    let sphere = length(rp) - 0.8;
+    let cluster = exploded_cluster_sdf(rp, t, morph, aspect);
+    return mix(sphere, cluster, m);
+}
+
+fn scene_noise_displacement(
+    rp: vec3f,
+    t: f32,
+    morph: f32,
+    noise_amp: f32,
+    noise_freq: f32,
+) -> f32 {
+    if noise_amp <= 0.0001 {
+        return 0.0;
+    }
+    let m = smoothstep(0.0, 1.0, morph);
+    let np = rp * noise_freq;
+    let n = fbm3(np + vec3f(t * 0.1, 0.0, t * 0.07));
+    return (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
 }
 
 fn calc_normal(
@@ -350,18 +412,14 @@ fn calc_ao(
     t: f32,
     rot_speed: f32,
     morph: f32,
-    noise_amp: f32,
-    noise_freq: f32,
     aspect: f32,
 ) -> f32 {
     var occ = 0.0;
     var w = 1.0;
-    for (var i = 0; i < 5; i++) {
-        let h = 0.01 + 0.12 * f32(i) / 4.0;
-        let d = scene_sdf(
-            p + n * h, t, rot_speed, morph,
-            noise_amp, noise_freq, aspect,
-        );
+    for (var i = 0; i < AO_STEPS; i++) {
+        let h = 0.01 + 0.12 * f32(i) / 3.0;
+        let ps = scene_space(p + n * h, t, rot_speed);
+        let d = scene_sdf_core(ps, t, morph, aspect);
         occ += (h - d) * w;
         w *= 0.85;
     }
