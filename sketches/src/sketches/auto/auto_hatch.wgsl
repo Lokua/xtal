@@ -27,7 +27,8 @@ struct Params {
     d: vec4f,
     // include_ao, _, noise_amp, noise_freq
     e: vec4f,
-    // arm_layout, radial_limb_rotation_rate, _, _
+    // arm_layout, limb_rotation_rate,
+    // limb_spin, _
     f: vec4f,
     g: vec4f,
     h: vec4f,
@@ -264,7 +265,7 @@ fn exploded_cluster_sdf(
     arm_layout: f32,
     aspect: f32,
 ) -> f32 {
-    let radial_limb_rotation_rate = params.f.y;
+    let limb_rotation_rate = params.f.y;
     let m = smoothstep(0.0, 1.0, morph);
     let shape_mix = smoothstep(0.0, 1.0, arm_layout);
     let core_radius = mix(0.8, mix(0.22, 0.19, shape_mix), m);
@@ -280,34 +281,37 @@ fn exploded_cluster_sdf(
     let blend_k = mix(0.42, mix(0.12, 0.16, shape_mix), m);
     let strand_base = mix(0.36, mix(0.05, 0.045, shape_mix), m);
 
-    // Radial limb rotation:
-    // Rotate limb anchor directions around the core.
-    // No local arm spin is applied.
-    let radial_limb_rotation = t * radial_limb_rotation_rate;
+    // Base motion: limb anchors travel between two nearby
+    // directions A<->B on a small arc.
+    let travel_phase = t * limb_rotation_rate * 6.28318530718;
     let root_radius = core_radius * 0.92;
 
     for (var i = 0; i < 8; i++) {
         let seed = arm_seed(i);
-        var axis_base = blob_dir(i);
+        var axis_a = blob_dir(i);
         if shape_mix > 0.001 {
-            axis_base = normalize(
-                mix(axis_base, blob_dir_alt(i), shape_mix),
+            axis_a = normalize(
+                mix(axis_a, blob_dir_alt(i), shape_mix),
             );
         }
-        // Per-arm surface drift avoids a rigid "mixer blade" spin.
-        let phase = fract(radial_limb_rotation + seed);
-        let tri = 1.0 - abs(phase * 2.0 - 1.0);
-        let drift_mix = smoothstep(0.0, 1.0, tri);
-        let axis_target = normalize(vec3f(
-            axis_base.x * 0.62 + axis_base.z * 0.78,
-            axis_base.y,
-            -axis_base.x * 0.78 + axis_base.z * 0.62,
+        var up_ref = vec3f(0.0, 1.0, 0.0);
+        if abs(axis_a.y) > 0.92 {
+            up_ref = vec3f(1.0, 0.0, 0.0);
+        }
+        let tangent = normalize(cross(up_ref, axis_a));
+        let step_ang = 0.22 + 0.18 * seed;
+        let axis_b = normalize(vec3f(
+            axis_a.x * cos(step_ang) + tangent.x * sin(step_ang),
+            axis_a.y * cos(step_ang) + tangent.y * sin(step_ang),
+            axis_a.z * cos(step_ang) + tangent.z * sin(step_ang),
         ));
-        let axis_rot = normalize(mix(axis_base, axis_target, drift_mix));
+        let phase = travel_phase + seed * 6.28318530718;
+        let walk_t = 0.5 + 0.5 * sin(phase);
+        let axis_walk = normalize(mix(axis_a, axis_b, walk_t));
         let axis_stretch = vec3f(
-            axis_rot.x * (1.0 + (aspect - 1.0) * 0.75),
-            axis_rot.y,
-            axis_rot.z,
+            axis_walk.x * (1.0 + (aspect - 1.0) * 0.75),
+            axis_walk.y,
+            axis_walk.z,
         );
         let dir = normalize(axis_stretch);
         let dist = spread * (0.72 + 0.34 * seed);
@@ -442,8 +446,6 @@ fn scene_noise_displacement(
     }
     let m = smoothstep(0.0, 1.0, morph);
     let np = rp * noise_freq;
-    // Keep displacement static in object space.
-    // Time-varying noise here reads like local arm spin.
     let n = fbm3(np);
     return (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
 }
