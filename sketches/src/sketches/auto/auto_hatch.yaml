@@ -14,12 +14,20 @@ rot_speed:
   default: 0.3
   step: 0.01
 
+# cam_z:
+#   var: b3
+#   type: slider
+#   range: [-6.0, -1.5]
+#   default: -3.0
+#   step: 0.01
+
 cam_z:
   var: b3
-  type: slider
-  range: [-6.0, -1.5]
-  default: -3.0
-  step: 0.01
+  type: random_slewed
+  beats: 7
+  range: [-3, -1]
+  slew: 0.7
+  bias: -0.25
 
 light_angle:
   var: b4
@@ -38,6 +46,7 @@ morphing:
 morph:
   var: b1
   type: round_robin
+  # bypass: 1
   beats: 4
   values: [0, 1, 0.7, 0.8, 0.5, 0, 0.9, 0.7]
   slew: 0.7
@@ -134,6 +143,7 @@ surface_noise:
 noise_amp:
   var: e3
   type: random_slewed
+  # bypass: 0.3
   beats: 16
   range: [0.0, 0.3]
   slew: 0.7
@@ -142,6 +152,7 @@ noise_amp:
 noise_freq:
   var: e4
   type: random_slewed
+  # bypass: 8
   beats: 12
   range: [1.0, 8.0]
   slew: 0.7
