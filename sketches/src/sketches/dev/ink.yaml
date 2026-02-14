@@ -1,0 +1,141 @@
+# ------------------------------------------------------------------------------
+#  pattern
+# ------------------------------------------------------------------------------
+pattern:
+  type: separator
+
+box_count:
+  var: b1
+  type: slider
+  range: [1.0, 9.0]
+  default: 7.0
+  step: 1.0
+
+spread:
+  var: b2
+  type: slider
+  range: [0.45, 3]
+  default: 0.82
+  step: 0.01
+
+rotation_rate:
+  var: b3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.125
+  step: 0.125
+
+mold:
+  var: b4
+  type: slider
+  range: [0.03, 0.4]
+  default: 0.16
+  step: 0.01
+
+box_size_offset:
+  var: d2
+  type: slider
+  range: [0.0, 0.8]
+  default: 0.44
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  box motion
+# ------------------------------------------------------------------------------
+box_motion:
+  type: separator
+
+moving_box_ratio:
+  var: d3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.45
+  step: 0.01
+
+moving_box_range:
+  var: d4
+  type: slider
+  range: [0.0, 1.5]
+  default: 0.72
+  step: 0.01
+
+moving_rate:
+  var: e1
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.5
+  step: 0.125
+
+elongate_y_three_boxes:
+  var: e2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+elongate_x_three_boxes:
+  var: e3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+elongate_z_three_boxes:
+  var: e4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  ink strokes
+# ------------------------------------------------------------------------------
+ink_strokes:
+  type: separator
+
+stroke_ink_strength:
+  var: c1
+  type: slider
+  range: [0.0, 1.6]
+  default: 1.12
+  step: 0.01
+
+contour_strength:
+  var: c2
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.36
+  step: 0.01
+
+stroke_flow_strength:
+  var: c3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.26
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  background drops
+# ------------------------------------------------------------------------------
+background_drops:
+  type: separator
+
+background_drop_strength:
+  var: c4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.12
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  stroke drops
+# ------------------------------------------------------------------------------
+stroke_drops:
+  type: separator
+
+stroke_drop_strength:
+  var: d1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.26
+  step: 0.01

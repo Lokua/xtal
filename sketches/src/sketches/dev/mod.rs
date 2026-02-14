@@ -6,6 +6,7 @@ pub mod crosshatch_dev;
 pub mod control_script_dev;
 pub mod cv_dev;
 pub mod effects_wavefolder_dev;
+pub mod ink;
 pub mod midi_dev;
 pub mod non_yaml_dev;
 pub mod osc_dev;

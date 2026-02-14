@@ -1,0 +1,90 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "box_count",
+      "value": 9.0
+    },
+    {
+      "type": "Slider",
+      "name": "spread",
+      "value": 1.49
+    },
+    {
+      "type": "Slider",
+      "name": "rotation_rate",
+      "value": 0.125
+    },
+    {
+      "type": "Slider",
+      "name": "mold",
+      "value": 0.03
+    },
+    {
+      "type": "Slider",
+      "name": "box_size_offset",
+      "value": 0.8
+    },
+    {
+      "type": "Slider",
+      "name": "moving_box_ratio",
+      "value": 0.46
+    },
+    {
+      "type": "Slider",
+      "name": "moving_box_range",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "moving_rate",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "elongate_y_three_boxes",
+      "value": 0.13
+    },
+    {
+      "type": "Slider",
+      "name": "elongate_x_three_boxes",
+      "value": 0.15
+    },
+    {
+      "type": "Slider",
+      "name": "elongate_z_three_boxes",
+      "value": 0.04
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_ink_strength",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "contour_strength",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_flow_strength",
+      "value": 0.56
+    },
+    {
+      "type": "Slider",
+      "name": "background_drop_strength",
+      "value": 0.62
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_drop_strength",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}
