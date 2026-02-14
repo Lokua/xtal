@@ -28,7 +28,7 @@ struct Params {
     c: vec4f,
     // _, _, paper_grain, brightness
     d: vec4f,
-    // show_shape, _, noise_amp, noise_freq
+    // _, _, noise_amp, noise_freq
     e: vec4f,
     f: vec4f,
     g: vec4f,
@@ -68,7 +68,6 @@ fn fs_main(
     let angle_spread = params.c.w;
     let paper_grain = params.d.z;
     let brightness_ctrl = params.d.w;
-    let show_shape = params.e.x > 0.5;
     let noise_amp = params.e.z;
     let noise_freq = params.e.w;
 
@@ -92,10 +91,11 @@ fn fs_main(
     );
     let hit_dist = result.x;
     let hit_pos = ro + rd * hit_dist;
+    let has_hit = hit_dist < MAX_DIST;
 
     var scene_brightness = 1.0;
 
-    if hit_dist < MAX_DIST {
+    if has_hit {
         let n = calc_normal(
             hit_pos, t, rot_speed, morph,
             noise_amp, noise_freq, aspect,
@@ -119,7 +119,7 @@ fn fs_main(
     var color = 1.0;
 
     // Cross-hatching (responds to scene brightness)
-    if show_shape {
+    if has_hit {
         var hatch = 0.0;
         var hatch_max = 0.0;
         var count = 0.0;
@@ -176,7 +176,7 @@ fn fs_main(
     // Soften contrast
     color = 1.0 - ((1.0 - color) * 0.7);
 
-    // Paper texture (fully bypassed at grain = 0)
+    // Paper texture on the entire frame.
     if paper_grain > 0.001 {
         let paper_r = hash21(fc * 1.1)
             - hash21(fc * 1.1 + vec2f(1.5, -1.5));
