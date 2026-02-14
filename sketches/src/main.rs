@@ -50,6 +50,7 @@ fn main() {
         auto_hatch,
         auto_rm,
         auto_sline,
+        auto_topo,
         auto_un,
         auto_un2,
         auto_wave_fract,

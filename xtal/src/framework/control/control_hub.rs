@@ -1651,11 +1651,14 @@ impl<T: TimingSource> ControlHub<T> {
                 Err(_) => return,
             };
 
-            if event.kind
-                != notify::EventKind::Modify(notify::event::ModifyKind::Data(
-                    notify::event::DataChange::Content,
-                ))
-            {
+            // Accept any event that may indicate content
+            // changed: Create (atomic write via rename),
+            // Modify, or Remove-then-create sequences.
+            if !matches!(
+                event.kind,
+                notify::EventKind::Create(_)
+                    | notify::EventKind::Modify(_)
+            ) {
                 return;
             }
 
