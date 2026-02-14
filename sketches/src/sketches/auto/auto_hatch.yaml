@@ -12,11 +12,6 @@ shading_mode:
     - fast
     - graphic
 
-include_ao:
-  var: e1
-  type: checkbox
-  default: false
-
 internal_resolution:
   var: f4
   type: slider
@@ -52,6 +47,37 @@ light_angle:
   range: [0.0, 6.283]
   default: 0.8
   step: 0.01
+
+# ------------------------------------------------------------------------------
+#  shading_and_color
+# ------------------------------------------------------------------------------
+
+shading_and_color:
+  type: separator
+
+include_ao:
+  var: e1
+  type: checkbox
+  default: false
+
+invert:
+  var: e2
+  type: checkbox
+  default: false
+
+tint:
+  var: d1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+hue:
+  var: d2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.58
+  step: 0.001
 
 # ------------------------------------------------------------------------------
 #  morph
