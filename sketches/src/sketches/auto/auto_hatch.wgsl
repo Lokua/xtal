@@ -25,7 +25,7 @@ struct Params {
     c: vec4f,
     // _, _, paper_grain, brightness
     d: vec4f,
-    // _, _, noise_amp, noise_freq
+    // include_ao, _, noise_amp, noise_freq
     e: vec4f,
     f: vec4f,
     g: vec4f,
@@ -65,6 +65,7 @@ fn fs_main(
     let angle_spread = params.c.w;
     let paper_grain = params.d.z;
     let brightness_ctrl = params.d.w;
+    let disable_ao = params.e.x > 0.5;
     let noise_amp = params.e.z;
     let noise_freq = params.e.w;
 
@@ -111,9 +112,12 @@ fn fs_main(
         );
         let diff = max(dot(n, light), 0.0);
         let amb = 0.15;
-        let ao = calc_ao(
-            hit_pos, n, t, rot_speed, morph, aspect,
-        );
+        var ao = 1.0;
+        if !disable_ao {
+            ao = calc_ao(
+                hit_pos, n, t, rot_speed, morph, aspect,
+            );
+        }
         scene_brightness = (diff * 0.85 + amb) * ao;
     }
 
