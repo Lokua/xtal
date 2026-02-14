@@ -1,5 +1,6 @@
 const TAU: f32 = 6.283185307;
 const RATE_SCALE: f32 = 0.25;
+const BOX_CORNER_ROUNDNESS: f32 = 0.08;
 const MAX_STEPS: i32 = 34;
 const MAX_DIST: f32 = 12.0;
 const SURF_DIST: f32 = 0.0024;
@@ -17,7 +18,7 @@ struct VertexOutput {
 struct Params {
     // w, h, beats, _
     a: vec4f,
-    // box_count, spread, rotation_rate, mold
+    // box_count, spread, rotation_rate, blend_k
     b: vec4f,
     // stroke_ink_strength, contour_strength,
     // stroke_flow_strength, background_drop_strength
@@ -28,6 +29,8 @@ struct Params {
     // moving_rate, elongate_y_three_boxes,
     // elongate_x_three_boxes, elongate_z_three_boxes
     e: vec4f,
+    // background_drop_density, domain_warp_amount,
+    // domain_warp_scale, zoom
     f: vec4f,
     g: vec4f,
     h: vec4f,
@@ -56,7 +59,7 @@ fn fs_main(
     let box_count = params.b.x;
     let spread = params.b.y;
     let rotation_rate = params.b.z;
-    let mold = params.b.w;
+    let blend_k = params.b.w;
 
     let stroke_ink_strength = params.c.x;
     let contour_strength = params.c.y;
@@ -70,9 +73,13 @@ fn fs_main(
     let elongate_y_three_boxes = params.e.y;
     let elongate_x_three_boxes = params.e.z;
     let elongate_z_three_boxes = params.e.w;
+    let background_drop_density = params.f.x;
+    let domain_warp_amount = params.f.y;
+    let domain_warp_scale = params.f.z;
+    let zoom = max(params.f.w, 0.1);
 
     let aspect = w / h;
-    var uv = position * 0.5;
+    var uv = position * 0.5 / zoom;
     uv.x *= aspect;
 
     let cam = vec3f(0.0, 1.0, -3.5);
@@ -92,7 +99,9 @@ fn fs_main(
         move_phase,
         box_count,
         spread,
-        mold,
+        blend_k,
+        domain_warp_amount,
+        domain_warp_scale,
         box_size_offset,
         moving_box_ratio,
         moving_box_range,
@@ -118,7 +127,9 @@ fn fs_main(
             move_phase,
             box_count,
             spread,
-            mold,
+            blend_k,
+            domain_warp_amount,
+            domain_warp_scale,
             box_size_offset,
             moving_box_ratio,
             moving_box_range,
@@ -177,7 +188,10 @@ fn fs_main(
     let contour_ring = max(near_outer - near_inner, 0.0);
     coverage += contour_ring * contour_strength * 0.06;
 
-    let bg_drops = background_drop_field(frag_coord.xy);
+    let bg_drops = background_drop_field(
+        frag_coord.xy,
+        background_drop_density,
+    );
     coverage += bg_drops * background_drop_strength * outside;
 
     coverage = clamp(coverage, 0.0, 1.0);
@@ -193,7 +207,9 @@ fn ray_march(
     move_phase: f32,
     box_count: f32,
     spread: f32,
-    mold: f32,
+    blend_k: f32,
+    domain_warp_amount: f32,
+    domain_warp_scale: f32,
     box_size_offset: f32,
     moving_box_ratio: f32,
     moving_box_range: f32,
@@ -212,7 +228,9 @@ fn ray_march(
             move_phase,
             box_count,
             spread,
-            mold,
+            blend_k,
+            domain_warp_amount,
+            domain_warp_scale,
             box_size_offset,
             moving_box_ratio,
             moving_box_range,
@@ -237,7 +255,9 @@ fn calc_normal(
     move_phase: f32,
     box_count: f32,
     spread: f32,
-    mold: f32,
+    blend_k: f32,
+    domain_warp_amount: f32,
+    domain_warp_scale: f32,
     box_size_offset: f32,
     moving_box_ratio: f32,
     moving_box_range: f32,
@@ -252,7 +272,9 @@ fn calc_normal(
         move_phase,
         box_count,
         spread,
-        mold,
+        blend_k,
+        domain_warp_amount,
+        domain_warp_scale,
         box_size_offset,
         moving_box_ratio,
         moving_box_range,
@@ -266,7 +288,9 @@ fn calc_normal(
         move_phase,
         box_count,
         spread,
-        mold,
+        blend_k,
+        domain_warp_amount,
+        domain_warp_scale,
         box_size_offset,
         moving_box_ratio,
         moving_box_range,
@@ -280,7 +304,9 @@ fn calc_normal(
         move_phase,
         box_count,
         spread,
-        mold,
+        blend_k,
+        domain_warp_amount,
+        domain_warp_scale,
         box_size_offset,
         moving_box_ratio,
         moving_box_range,
@@ -294,7 +320,9 @@ fn calc_normal(
         move_phase,
         box_count,
         spread,
-        mold,
+        blend_k,
+        domain_warp_amount,
+        domain_warp_scale,
         box_size_offset,
         moving_box_ratio,
         moving_box_range,
@@ -311,7 +339,9 @@ fn scene_sdf(
     move_phase: f32,
     box_count: f32,
     spread: f32,
-    mold: f32,
+    blend_k: f32,
+    domain_warp_amount: f32,
+    domain_warp_scale: f32,
     box_size_offset: f32,
     moving_box_ratio: f32,
     moving_box_range: f32,
@@ -319,10 +349,15 @@ fn scene_sdf(
     elongate_x_three_boxes: f32,
     elongate_z_three_boxes: f32,
 ) -> f32 {
-    let p = to_object_space(p_world, spin);
+    let p_raw = to_object_space(p_world, spin);
+    let p = apply_domain_warp(
+        p_raw,
+        domain_warp_amount,
+        domain_warp_scale,
+    );
 
     let count = clamp(round(box_count), 1.0, f32(MAX_CUBES));
-    let k = max(mold, 0.001);
+    let k = max(blend_k, 0.0);
     let motion_ratio = clamp(moving_box_ratio, 0.0, 1.0);
     let motion_range = clamp(moving_box_range, 0.0, 1.5);
     let size_offset = clamp(box_size_offset, 0.0, 0.8);
@@ -371,11 +406,13 @@ fn scene_sdf(
         let box_dist = sd_round_box(
             p - center,
             box_size,
-            0.05 + k * 0.5,
+            BOX_CORNER_ROUNDNESS,
         );
 
         if i == 0 {
             dist = box_dist;
+        } else if k <= 0.0001 {
+            dist = min(dist, box_dist);
         } else {
             dist = smooth_min(dist, box_dist, k);
         }
@@ -423,10 +460,11 @@ fn smooth_min(a: f32, b: f32, k: f32) -> f32 {
     return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-fn background_drop_field(frag: vec2f) -> f32 {
+fn background_drop_field(frag: vec2f, density: f32) -> f32 {
     let grid = frag * 0.020;
     let cell = floor(grid);
     let local = fract(grid);
+    let pick_threshold = mix(0.995, 0.35, density);
     var out_drop = 0.0;
 
     for (var yi = 0; yi < 2; yi++) {
@@ -441,7 +479,10 @@ fn background_drop_field(frag: vec2f) -> f32 {
             let radius = 0.06 + 0.17 * hash21(cid + vec2f(4.6, 8.1));
             let d = length((local - offset) - center);
             let blob = 1.0 - step(radius, d);
-            out_drop = max(out_drop, blob * step(0.88, pick));
+            out_drop = max(
+                out_drop,
+                blob * step(pick_threshold, pick),
+            );
         }
     }
 
@@ -478,9 +519,26 @@ fn stroke_drop_field(p_obj: vec3f, drop_strength: f32) -> f32 {
     return out_drop;
 }
 
+fn apply_domain_warp(
+    p: vec3f,
+    warp_amount: f32,
+    warp_scale: f32,
+) -> vec3f {
+    let amt = clamp(warp_amount, 0.0, 1.0) * 0.10;
+    let freq = max(warp_scale, 0.001);
+
+    let wx = value_noise_2d(p.xz * freq + vec2f(1.7, -3.2));
+    let wy = value_noise_2d(p.yx * freq * 0.9 + vec2f(6.1, 2.4));
+    let wz = value_noise_2d(p.zy * freq * 1.1 + vec2f(-4.3, 5.6));
+    let warp = (vec3f(wx, wy, wz) - 0.5) * 2.0 * amt;
+
+    return p + warp;
+}
+
 fn to_object_space(p_world: vec3f, spin: f32) -> vec3f {
     var p = rotate_y(p_world, spin);
-    p = rotate_x(p, 0.34);
+    p = rotate_x(p, 0.34 + spin * 0.27);
+    p = rotate_z(p, spin * 0.19);
     return p;
 }
 
@@ -494,6 +552,12 @@ fn rotate_y(p: vec3f, a: f32) -> vec3f {
     let c = cos(a);
     let s = sin(a);
     return vec3f(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
+}
+
+fn rotate_z(p: vec3f, a: f32) -> vec3f {
+    let c = cos(a);
+    let s = sin(a);
+    return vec3f(p.x * c - p.y * s, p.x * s + p.y * c, p.z);
 }
 
 fn value_noise_2d(p: vec2f) -> f32 {
