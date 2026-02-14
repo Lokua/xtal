@@ -27,8 +27,7 @@ struct Params {
     d: vec4f,
     // include_ao, _, noise_amp, noise_freq
     e: vec4f,
-    // arm_layout, limb_rotation_rate,
-    // limb_spin, _
+    // arm_layout, limb_rotation_rate, limb_rotation_range, _
     f: vec4f,
     g: vec4f,
     h: vec4f,
@@ -58,7 +57,7 @@ fn fs_main(
     let h = params.a.y;
     let t = params.a.z;
     let morph = params.b.x;
-    let arm_layout = clamp(params.f.x, 0.0, 1.0);
+    let arm_layout = params.f.x;
     let rot_speed = params.b.y;
     let cam_z = params.b.z;
     let light_angle = params.b.w;
@@ -266,8 +265,9 @@ fn exploded_cluster_sdf(
     aspect: f32,
 ) -> f32 {
     let limb_rotation_rate = params.f.y;
+    let limb_rotation_range = max(params.f.z, 0.0);
     let m = smoothstep(0.0, 1.0, morph);
-    let shape_mix = smoothstep(0.0, 1.0, arm_layout);
+    let shape_mix = arm_layout;
     let core_radius = mix(0.8, mix(0.22, 0.19, shape_mix), m);
     var d = length(p) - core_radius;
     if m < 0.01 {
@@ -288,18 +288,16 @@ fn exploded_cluster_sdf(
 
     for (var i = 0; i < 8; i++) {
         let seed = arm_seed(i);
-        var axis_a = blob_dir(i);
-        if shape_mix > 0.001 {
-            axis_a = normalize(
-                mix(axis_a, blob_dir_alt(i), shape_mix),
-            );
-        }
-        var up_ref = vec3f(0.0, 1.0, 0.0);
-        if abs(axis_a.y) > 0.92 {
-            up_ref = vec3f(1.0, 0.0, 0.0);
-        }
-        let tangent = normalize(cross(up_ref, axis_a));
-        let step_ang = 0.22 + 0.18 * seed;
+        let axis_a = normalize(
+            mix(blob_dir(i), blob_dir_alt(i), shape_mix),
+        );
+        let tangent_a = cross(vec3f(0.0, 1.0, 0.0), axis_a);
+        let tangent_b = cross(vec3f(1.0, 0.0, 0.0), axis_a);
+        let tangent_mix = smoothstep(0.85, 0.98, abs(axis_a.y));
+        let tangent = normalize(
+            mix(tangent_a, tangent_b, tangent_mix),
+        );
+        let step_ang = (0.22 + 0.18 * seed) * limb_rotation_range;
         let axis_b = normalize(vec3f(
             axis_a.x * cos(step_ang) + tangent.x * sin(step_ang),
             axis_a.y * cos(step_ang) + tangent.y * sin(step_ang),
