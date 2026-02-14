@@ -4,6 +4,22 @@ Files sorted from most to least recent. Source code available on
 
 
 
+## auto_un-kap34.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_un-kap34.png" alt="auto_un-kap34.png">
+
+## auto_ink-s9v1e.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_ink-s9v1e.png" alt="auto_ink-s9v1e.png">
+
+## auto_acc-9ks1r.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_acc-9ks1r.png" alt="auto_acc-9ks1r.png">
+
+## ink-bpqsv.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/ink-bpqsv.png" alt="ink-bpqsv.png">
+
 ## auto_hatch-a529i.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/auto_hatch-a529i.png" alt="auto_hatch-a529i.png">
