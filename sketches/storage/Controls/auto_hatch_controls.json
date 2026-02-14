@@ -7,11 +7,6 @@
       "value": "full"
     },
     {
-      "type": "Checkbox",
-      "name": "include_ao",
-      "value": false
-    },
-    {
       "type": "Slider",
       "name": "internal_resolution",
       "value": 0.1
@@ -25,6 +20,26 @@
       "type": "Slider",
       "name": "light_angle",
       "value": 4.96
+    },
+    {
+      "type": "Checkbox",
+      "name": "include_ao",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "tint",
+      "value": 0.31
+    },
+    {
+      "type": "Slider",
+      "name": "hue",
+      "value": 0.423
     },
     {
       "type": "Slider",

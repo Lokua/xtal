@@ -23,9 +23,9 @@ struct Params {
     // hatch_density, hatch_layers, hatch_strength,
     // hatch_angle_spread
     c: vec4f,
-    // _, _, paper_grain, brightness
+    // tint, hue, paper_grain, brightness
     d: vec4f,
-    // include_ao, _, noise_amp, noise_freq
+    // include_ao, invert, noise_amp, noise_freq
     e: vec4f,
     // arm_layout, limb_rotation_rate,
     // limb_rotation_range, internal_resolution
@@ -69,7 +69,10 @@ fn fs_main(
     let angle_spread = params.c.w;
     let paper_grain = params.d.z;
     let brightness_ctrl = params.d.w;
+    let tint = clamp(params.d.x, 0.0, 1.0);
+    let hue = fract(params.d.y);
     let disable_ao = params.e.x > 0.5;
+    let invert = params.e.y > 0.5;
     let noise_amp = params.e.z;
     let noise_freq = params.e.w;
     let internal_resolution = clamp(params.f.w, 0.0, 1.0);
@@ -240,7 +243,23 @@ fn fs_main(
     }
 
     color = clamp(color, 0.0, 1.0);
-    return vec4f(vec3f(color), 1.0);
+
+    let tint_rgb = hue_to_rgb(hue);
+    let tint_mix = tint * 0.35;
+    var rgb = mix(vec3f(color), vec3f(color) * tint_rgb, tint_mix);
+    if (invert) {
+        rgb = vec3f(1.0) - rgb;
+    }
+    return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), 1.0);
+}
+
+fn hue_to_rgb(h: f32) -> vec3f {
+    let x = fract(h);
+    return clamp(
+        abs(fract(x + vec3f(0.0, 2.0, 1.0) / 3.0) * 6.0 - 3.0) - 1.0,
+        vec3f(0.0),
+        vec3f(1.0),
+    );
 }
 
 // ----------------------------------------------------------------
