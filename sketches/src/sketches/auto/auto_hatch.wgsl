@@ -367,6 +367,8 @@ fn ray_march(
     var d = max(min_dist, 0.0);
     let near_band = 0.22 + noise_amp * 0.35;
     var hit = 0.0;
+    var prev_ds = 1000.0;
+    var prev_d = d;
     for (var i = 0; i < MAX_STEPS; i++) {
         if d > max_dist {
             break;
@@ -382,11 +384,23 @@ fn ray_march(
                 rp, t, morph, noise_amp, noise_freq,
             );
         }
-        d += ds * 0.85;
         if abs(ds) < SURF_DIST {
             hit = 1.0;
             break;
         }
+        // Catch overstep through high-frequency noisy surfaces.
+        if ds < 0.0 && prev_ds > 0.0 {
+            let denom = prev_ds - ds;
+            if abs(denom) > 0.000001 {
+                d = prev_d + prev_ds * (d - prev_d) / denom;
+            }
+            hit = 1.0;
+            break;
+        }
+        prev_d = d;
+        prev_ds = ds;
+        let step = max(ds * 0.85, SURF_DIST * 0.35);
+        d += step;
         if d > MAX_DIST {
             break;
         }
