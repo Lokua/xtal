@@ -2,12 +2,10 @@
 #  scene
 # ------------------------------------------------------------------------------
 
-morph:
-  var: b1
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.5
-  step: 0.01
+include_ao:
+  var: e1
+  type: checkbox
+  default: false
 
 rot_speed:
   var: b2
@@ -30,10 +28,32 @@ light_angle:
   default: 0.8
   step: 0.01
 
-include_ao:
-  var: e1
-  type: checkbox
-  default: false
+# ------------------------------------------------------------------------------
+#  morph
+# ------------------------------------------------------------------------------
+
+morphing:
+  type: separator
+
+morph:
+  var: b1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+radial_limb_rotation_rate:
+  var: f2
+  type: slider
+  default: 0.25
+  step: 0.125
+
+morph_shape:
+  var: f1
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
 
 # ------------------------------------------------------------------------------
 #  hatching
