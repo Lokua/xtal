@@ -9,17 +9,17 @@
     {
       "type": "Slider",
       "name": "rot_speed",
-      "value": 0.3
+      "value": 0.07
     },
     {
       "type": "Slider",
       "name": "cam_z",
-      "value": -2.38
+      "value": -2.15
     },
     {
       "type": "Slider",
       "name": "light_angle",
-      "value": 4.86
+      "value": 5.29
     },
     {
       "type": "Checkbox",
@@ -29,7 +29,7 @@
     {
       "type": "Slider",
       "name": "hatch_density",
-      "value": 0.15
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -44,7 +44,7 @@
     {
       "type": "Slider",
       "name": "hatch_angle_spread",
-      "value": 0.027
+      "value": 0.3
     },
     {
       "type": "Slider",
@@ -54,17 +54,17 @@
     {
       "type": "Slider",
       "name": "brightness",
-      "value": 0.22
+      "value": 0.24
     },
     {
       "type": "Slider",
       "name": "noise_amp",
-      "value": 0.295
+      "value": 0.185
     },
     {
       "type": "Slider",
       "name": "noise_freq",
-      "value": 8.3
+      "value": 6.6
     }
   ],
   "midi_controls": [],
@@ -73,29 +73,9 @@
     "2": {
       "ui_controls": [
         {
-          "type": "Checkbox",
-          "name": "show_shape",
-          "value": true
-        },
-        {
           "type": "Slider",
-          "name": "cam_z",
-          "value": -2.38
-        },
-        {
-          "type": "Slider",
-          "name": "hatch_layers",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "noise_freq",
-          "value": 8.3
-        },
-        {
-          "type": "Slider",
-          "name": "morph",
-          "value": 0.0
+          "name": "hatch_angle_spread",
+          "value": 0.027
         },
         {
           "type": "Slider",
@@ -104,13 +84,8 @@
         },
         {
           "type": "Slider",
-          "name": "hatch_density",
-          "value": 0.15
-        },
-        {
-          "type": "Slider",
-          "name": "hatch_angle_spread",
-          "value": 0.027
+          "name": "rot_speed",
+          "value": 0.3
         },
         {
           "type": "Slider",
@@ -129,13 +104,38 @@
         },
         {
           "type": "Slider",
-          "name": "rot_speed",
-          "value": 0.3
+          "name": "hatch_layers",
+          "value": 8.0
         },
         {
           "type": "Slider",
           "name": "light_angle",
           "value": 4.86
+        },
+        {
+          "type": "Slider",
+          "name": "noise_freq",
+          "value": 8.3
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.38
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_density",
+          "value": 0.15
+        },
+        {
+          "type": "Checkbox",
+          "name": "show_shape",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "morph",
+          "value": 0.0
         }
       ],
       "midi_controls": [],
