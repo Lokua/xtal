@@ -48,6 +48,7 @@ struct Params {
     s: vec4f,
     // t: reserved, reserved, reserved, reserved
     t: vec4f,
+    // u: reserved, reserved, reserved, reserved
     u: vec4f,
     v: vec4f,
     w: vec4f,
@@ -162,11 +163,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let rim = pow(1.0 - max(dot(n, v), 0.0), rim_power) * rim_strength;
 
     var color = vec3f(0.0);
-    color += mix(
+    let rim_color = mix(
         vec3f(0.35, 0.6, 1.0),
         vec3f(1.0, 0.5, 0.25),
         color_mix,
-    ) * rim * emissive_strength;
+    );
+    color += rim_color * rim * emissive_strength;
 
     let fog = exp(-fog_density * t * t);
     color = mix(bg, color, fog);
