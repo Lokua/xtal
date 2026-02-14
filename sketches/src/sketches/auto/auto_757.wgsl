@@ -1,3 +1,11 @@
+// Membrane Resonance — vibrating elastic surface viewed
+// from above. Standing wave interference produces
+// Chladni-like nodal patterns over a dark field.
+
+const PI: f32 = 3.14159265359;
+const TAU: f32 = 6.283185307179586;
+const MAX_MODES: i32 = 8;
+
 struct VertexInput {
     @location(0) position: vec2f,
 };
@@ -8,20 +16,22 @@ struct VertexOutput {
 };
 
 struct Params {
-    // a: width, height, beats, speed
+    // w, h, beats, drive
     a: vec4f,
-    // b: box_size, spacing, motion_amp, line_thickness
+    // mode_count, mode_spread, decay, tension
     b: vec4f,
-    // c: rotation_amount, cube_offset, glow, palette_mix
+    // warp_amount, warp_freq, brightness, contrast
     c: vec4f,
-    // d: box_count, zoom, grain, pattern_morph_rate
+    // line_sharpness, node_glow, invert, grain
     d: vec4f,
+    // vignette, color_mode, accent_hue, accent_sat
+    e: vec4f,
+    // phase_speed, asymmetry, ring_count, ring_mix
+    f: vec4f,
 }
 
 @group(0) @binding(0)
 var<uniform> params: Params;
-
-const MAX_BOXES: i32 = 16;
 
 @vertex
 fn vs_main(vert: VertexInput) -> VertexOutput {
@@ -32,125 +42,227 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 }
 
 @fragment
-fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let pos = correct_aspect(position);
+fn fs_main(
+    @location(0) position: vec2f,
+) -> @location(0) vec4f {
     let beats = params.a.z;
-    let speed = max(params.a.w, 0.01);
-    let t = beats * speed;
-
-    let box_size = clamp(params.b.x, 0.05, 0.8);
-    let spacing = max(params.b.y, 0.15);
-    let motion_amp = max(params.b.z, 0.0);
-    let line_thickness = clamp(params.b.w, 0.001, box_size * 0.4);
-
-    let rotation_amount = max(params.c.x, 0.0);
-    let cube_offset = clamp(params.c.y, 0.0, 0.35);
-    let glow = max(params.c.z, 0.0);
-    let palette_mix = clamp(params.c.w, 0.0, 1.0);
-
-    let box_count = clamp(round(params.d.x), 1.0, f32(MAX_BOXES));
-    let zoom = max(params.d.y, 0.3);
-    let grain_amount = clamp(params.d.z, 0.0, 0.2);
-    let pattern_morph_rate = clamp(params.d.w, 0.0, 0.5);
-    let morph_t = beats * pattern_morph_rate;
-
-    let p = pos * zoom;
-    let bg_a = vec3f(0.010, 0.012, 0.020);
-    let bg_b = vec3f(0.020, 0.014, 0.034);
-    var bg = mix(bg_a, bg_b, smoothstep(-1.0, 1.0, pos.y));
-
-    var color = bg;
-    let cols: i32 = 4;
-    let rows = (i32(box_count) + cols - 1) / cols;
-    let half_cols = f32(cols - 1) * 0.5;
-    let half_rows = f32(max(rows - 1, 0)) * 0.5;
-
-    let front_col = mix(
-        vec3f(0.24, 0.28, 0.34),
-        vec3f(0.72, 0.92, 1.0),
-        palette_mix,
+    let drive = max(params.a.w, 0.01);
+    let mode_count = clamp(
+        i32(params.b.x), 1, MAX_MODES
     );
-    let back_col = mix(
-        vec3f(0.15, 0.17, 0.22),
-        vec3f(0.36, 0.72, 0.92),
-        palette_mix,
-    );
-    let link_col = mix(
-        vec3f(0.20, 0.22, 0.28),
-        vec3f(0.40, 0.95, 0.86),
-        palette_mix,
-    );
+    let mode_spread = max(params.b.y, 0.1);
+    let decay = clamp(params.b.z, 0.01, 1.0);
+    let tension = max(params.b.w, 0.1);
+    let warp_amount = params.c.x;
+    let warp_freq = max(params.c.y, 0.1);
+    let brightness = max(params.c.z, 0.0);
+    let contrast = max(params.c.w, 0.1);
+    let line_sharpness = max(params.d.x, 0.1);
+    let node_glow = max(params.d.y, 0.0);
+    let invert = params.d.z > 0.5;
+    let grain_amount = max(params.d.w, 0.0);
+    let vignette = max(params.e.x, 0.0);
+    let color_mode = i32(params.e.y);
+    let accent_hue = params.e.z;
+    let accent_sat = clamp(params.e.w, 0.0, 1.0);
+    let phase_speed = params.f.x;
+    let asymmetry = clamp(params.f.y, 0.0, 1.0);
+    let ring_count = max(params.f.z, 0.0);
+    let ring_mix = clamp(params.f.w, 0.0, 1.0);
 
-    for (var i = 0; i < MAX_BOXES; i = i + 1) {
-        if (f32(i) >= box_count) {
-            break;
-        }
+    let p = correct_aspect(position);
 
-        let fi = f32(i);
-        let col = f32(i % cols) - half_cols;
-        let row = f32(i / cols) - half_rows;
-        let base_center = vec2f(
-            col * spacing,
-            row * spacing * 0.9,
+    // Domain warping via low-freq fbm
+    var wp = p;
+    if warp_amount > 0.001 {
+        let wt = beats * 0.07;
+        let wx = fbm(
+            p * warp_freq
+                + vec2f(3.7, 1.2)
+                + vec2f(wt, -wt * 0.6),
+            3,
         );
-        let morph_a = sin(morph_t * 0.37 + fi * 0.41);
-        let morph_b = cos(morph_t * 0.29 + fi * 0.53);
-        let drift_freq_x = 0.7 + fi * 0.09 + morph_a * 0.08;
-        let drift_freq_y = 0.9 + fi * 0.11 + morph_b * 0.08;
-        let drift_phase_x = fi * 1.3 + morph_b * 0.9;
-        let drift_phase_y = fi * 0.8 + morph_a * 0.9;
-        let drift = vec2f(
-            sin(t * drift_freq_x + drift_phase_x),
-            cos(t * drift_freq_y + drift_phase_y),
-        ) * motion_amp;
-        let center = base_center + drift;
-        let angle_freq = 0.5 + fi * 0.07 + morph_a * 0.05;
-        let angle_phase = fi * 0.6 + morph_b * 0.4;
-        let angle = sin(t * angle_freq + angle_phase) * rotation_amount;
-        let q = rot(p - center, angle);
-        let q_back = q - vec2f(cube_offset, -cube_offset);
-
-        let d_front = abs(sd_box(q, vec2f(box_size))) - line_thickness;
-        let d_back = abs(sd_box(q_back, vec2f(box_size))) - line_thickness;
-        let front = 1.0 - smoothstep(0.0, line_thickness * 1.5, d_front);
-        let back = 1.0 - smoothstep(0.0, line_thickness * 1.5, d_back);
-
-        let c0 = vec2f(-box_size, -box_size);
-        let c1 = vec2f(box_size, -box_size);
-        let c2 = vec2f(box_size, box_size);
-        let c3 = vec2f(-box_size, box_size);
-        let off = vec2f(cube_offset, -cube_offset);
-        let link0 = 1.0 - smoothstep(
-            0.0,
-            line_thickness * 1.5,
-            sd_segment(q, c0, c0 + off) - line_thickness * 0.75,
+        let wy = fbm(
+            p * warp_freq
+                + vec2f(8.1, 4.3)
+                + vec2f(-wt * 0.8, wt * 0.5),
+            3,
         );
-        let link1 = 1.0 - smoothstep(
-            0.0,
-            line_thickness * 1.5,
-            sd_segment(q, c1, c1 + off) - line_thickness * 0.75,
-        );
-        let link2 = 1.0 - smoothstep(
-            0.0,
-            line_thickness * 1.5,
-            sd_segment(q, c2, c2 + off) - line_thickness * 0.75,
-        );
-        let link3 = 1.0 - smoothstep(
-            0.0,
-            line_thickness * 1.5,
-            sd_segment(q, c3, c3 + off) - line_thickness * 0.75,
-        );
-        let links = max(max(link0, link1), max(link2, link3));
-
-        color = mix(color, back_col, back * 0.8);
-        color = mix(color, link_col, links * 0.85);
-        color = mix(color, front_col, front);
-        color += front_col * (front * glow * 0.25);
+        wp = p + vec2f(wx - 0.5, wy - 0.5)
+            * warp_amount;
     }
 
-    let g = (hash12(pos * vec2f(417.0, 293.0) + t * 0.03) - 0.5) * grain_amount;
-    color += vec3f(g);
+    // Accumulate standing wave modes.
+    // Each mode is a 2D sinusoidal eigenmode of a
+    // membrane, beating at its own frequency derived
+    // from tension and mode indices.
+    var displacement = 0.0;
+    let phase_t = beats * phase_speed;
+
+    for (var i = 0; i < MAX_MODES; i++) {
+        if i >= mode_count {
+            break;
+        }
+        let fi = f32(i);
+        let seed = hash21(vec2f(fi * 17.3, fi * 7.1));
+
+        // Mode indices (m, n) for rectangular membrane
+        let m = floor(fi * 0.5) + 1.0;
+        let n = fract(fi * 0.5) * 2.0 + 1.0;
+
+        // Asymmetry shifts mode spacing
+        let mx = m + asymmetry * seed * 2.0;
+        let ny = n + asymmetry * (1.0 - seed) * 2.0;
+
+        // Eigenfrequency ~ sqrt(m^2 + n^2) * tension
+        let freq = sqrt(mx * mx + ny * ny)
+            * tension * mode_spread;
+
+        // Spatial pattern
+        let spatial = sin(mx * PI * wp.x * 0.5)
+            * sin(ny * PI * wp.y * 0.5);
+
+        // Temporal oscillation with drive
+        let amp = exp(-fi * decay * 0.5);
+        let phase = phase_t * freq * drive
+            + seed * TAU;
+        let temporal = sin(phase);
+
+        displacement += spatial * temporal * amp;
+    }
+
+    // Normalise to roughly [-1, 1]
+    displacement = displacement
+        / max(f32(mode_count) * 0.4, 1.0);
+
+    // Nodal lines: regions near zero displacement
+    let abs_disp = abs(displacement);
+    let nodal = 1.0 - smoothstep(
+        0.0,
+        0.15 / line_sharpness,
+        abs_disp,
+    );
+
+    // Radial rings (concentric interference)
+    var rings = 0.0;
+    if ring_count > 0.0 && ring_mix > 0.001 {
+        let r = length(wp);
+        let ring_phase = r * ring_count
+            - beats * phase_speed * 0.5;
+        let ring_val = sin(ring_phase * PI);
+        rings = (1.0 - smoothstep(
+            0.0,
+            0.2 / line_sharpness,
+            abs(ring_val) * 0.5,
+        )) * ring_mix;
+    }
+
+    // Combine nodal pattern and rings
+    var value = max(nodal, rings);
+
+    // Add glow around nodes proportional to
+    // displacement energy
+    let energy = abs_disp * abs_disp;
+    value += energy * node_glow;
+
+    // Brightness and contrast
+    value = value * brightness;
+    value = pow(clamp(value, 0.0, 1.0), contrast);
+
+    // Color
+    var color = vec3f(0.0);
+    if color_mode == 0 {
+        // Monochrome
+        color = vec3f(value);
+    } else if color_mode == 1 {
+        // Accent on nodal lines
+        let accent = hsv_to_rgb(
+            vec3f(accent_hue, accent_sat, 1.0),
+        );
+        let gray = vec3f(value * 0.5);
+        color = gray + accent * nodal * value;
+    } else {
+        // Displacement-mapped hue
+        let hue = fract(
+            accent_hue
+                + displacement * 0.15
+                + energy * 0.3,
+        );
+        let sat = accent_sat
+            * (0.3 + 0.7 * nodal);
+        color = hsv_to_rgb(vec3f(hue, sat, value));
+    }
+
+    if invert {
+        color = 1.0 - color;
+    }
+
+    // Vignette
+    let radial = length(position);
+    let vig = exp(-radial * radial * vignette);
+    color *= vig;
+
+    // Film grain
+    if grain_amount > 0.0001 {
+        let n = hash21(
+            position * 418.3
+                + vec2f(beats * 0.13),
+        ) - 0.5;
+        color += n * grain_amount;
+    }
+
+    color = clamp(color, vec3f(0.0), vec3f(1.0));
     return vec4f(color, 1.0);
+}
+
+// ----------------------------------------------------------------
+//  Noise
+// ----------------------------------------------------------------
+
+fn fbm(p: vec2f, octaves: i32) -> f32 {
+    var value = 0.0;
+    var amp = 0.5;
+    var freq = 1.0;
+    var q = p;
+
+    for (var i = 0; i < 6; i++) {
+        if i >= octaves {
+            break;
+        }
+        value += amp * noise2(q * freq);
+        freq *= 2.0;
+        amp *= 0.5;
+        q = vec2f(
+            q.x * 0.866 - q.y * 0.5,
+            q.x * 0.5 + q.y * 0.866,
+        );
+    }
+
+    return value;
+}
+
+fn noise2(p: vec2f) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let u = f * f * (3.0 - 2.0 * f);
+
+    let a = hash21(i + vec2f(0.0, 0.0));
+    let b = hash21(i + vec2f(1.0, 0.0));
+    let c = hash21(i + vec2f(0.0, 1.0));
+    let d = hash21(i + vec2f(1.0, 1.0));
+
+    return mix(a, b, u.x)
+        + (c - a) * u.y * (1.0 - u.x)
+        + (d - b) * u.x * u.y;
+}
+
+// ----------------------------------------------------------------
+//  Helpers
+// ----------------------------------------------------------------
+
+fn hash21(p: vec2f) -> f32 {
+    let h = dot(p, vec2f(127.1, 311.7));
+    return fract(sin(h) * 43758.5453123);
 }
 
 fn correct_aspect(position: vec2f) -> vec2f {
@@ -162,28 +274,39 @@ fn correct_aspect(position: vec2f) -> vec2f {
     return p;
 }
 
-fn sd_segment(p: vec2f, a: vec2f, b: vec2f) -> f32 {
-    let pa = p - a;
-    let ba = b - a;
-    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-    return length(pa - ba * h);
-}
+fn hsv_to_rgb(hsv: vec3f) -> vec3f {
+    let h = hsv.x;
+    let s = hsv.y;
+    let v = hsv.z;
 
-fn rot(p: vec2f, angle: f32) -> vec2f {
-    let c = cos(angle);
-    let s = sin(angle);
-    return vec2f(
-        c * p.x - s * p.y,
-        s * p.x + c * p.y,
-    );
-}
+    if s == 0.0 {
+        return vec3f(v, v, v);
+    }
 
-fn sd_box(p: vec2f, b: vec2f) -> f32 {
-    let d = abs(p) - b;
-    return length(max(d, vec2f(0.0))) + min(max(d.x, d.y), 0.0);
-}
+    let i = floor(h * 6.0);
+    let f = h * 6.0 - i;
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - f * s);
+    let t = v * (1.0 - (1.0 - f) * s);
 
-fn hash12(p: vec2f) -> f32 {
-    let h = dot(p, vec2f(127.1, 311.7));
-    return fract(sin(h) * 43758.5453123);
+    var r = 0.0;
+    var g = 0.0;
+    var b = 0.0;
+
+    let sector = i % 6.0;
+    if sector < 1.0 {
+        r = v; g = t; b = p;
+    } else if sector < 2.0 {
+        r = q; g = v; b = p;
+    } else if sector < 3.0 {
+        r = p; g = v; b = t;
+    } else if sector < 4.0 {
+        r = p; g = q; b = v;
+    } else if sector < 5.0 {
+        r = t; g = p; b = v;
+    } else {
+        r = v; g = p; b = q;
+    }
+
+    return vec3f(r, g, b);
 }
