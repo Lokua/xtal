@@ -5,6 +5,7 @@ use std::sync::{LazyLock, Mutex};
 use crate::framework::prelude::*;
 
 const DEFAULT_OSC_PORT: u16 = 2346;
+pub(crate) const DEFAULT_UI_PORT: u16 = 3000;
 
 /// Stores global state that is not easily shared via call chains
 pub static GLOBAL: LazyLock<Mutex<Global>> =
