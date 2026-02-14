@@ -2,44 +2,39 @@
   "version": "2",
   "ui_controls": [
     {
+      "type": "Select",
+      "name": "shading_mode",
+      "value": "full"
+    },
+    {
       "type": "Checkbox",
       "name": "include_ao",
       "value": false
     },
     {
       "type": "Slider",
-      "name": "rot_speed",
-      "value": 0.31
+      "name": "internal_resolution",
+      "value": 0.1
     },
     {
       "type": "Slider",
-      "name": "cam_z",
-      "value": -2.85
+      "name": "rot_speed",
+      "value": 0.25
     },
     {
       "type": "Slider",
       "name": "light_angle",
-      "value": 5.27
-    },
-    {
-      "type": "Slider",
-      "name": "morph",
-      "value": 1.0
+      "value": 4.96
     },
     {
       "type": "Slider",
       "name": "limb_rotation_rate",
-      "value": 0.25
+      "value": 0.225
     },
     {
       "type": "Slider",
       "name": "limb_rotation_range",
       "value": 1.57
-    },
-    {
-      "type": "Slider",
-      "name": "arm_layout",
-      "value": 0.0
     },
     {
       "type": "Slider",
@@ -49,7 +44,7 @@
     {
       "type": "Slider",
       "name": "hatch_layers",
-      "value": 8.0
+      "value": 7.0
     },
     {
       "type": "Slider",

@@ -27,8 +27,10 @@ struct Params {
     d: vec4f,
     // include_ao, _, noise_amp, noise_freq
     e: vec4f,
-    // arm_layout, limb_rotation_rate, limb_rotation_range, _
+    // arm_layout, limb_rotation_rate,
+    // limb_rotation_range, internal_resolution
     f: vec4f,
+    // shading_mode, _, _, _
     g: vec4f,
     h: vec4f,
     i: vec4f,
@@ -70,9 +72,20 @@ fn fs_main(
     let disable_ao = params.e.x > 0.5;
     let noise_amp = params.e.z;
     let noise_freq = params.e.w;
+    let internal_resolution = clamp(params.f.w, 0.0, 1.0);
+    let shading_mode = i32(params.g.x + 0.5);
 
     let aspect = w / h;
-    var uv = position * 0.5;
+    let pixel_block = mix(1.0, 6.0, internal_resolution);
+    let block_ndc = vec2f(
+        (pixel_block / w) * 2.0,
+        (pixel_block / h) * 2.0,
+    );
+    let posq = (
+        floor((position + vec2f(1.0)) / block_ndc + vec2f(0.5))
+            * block_ndc
+    ) - vec2f(1.0);
+    var uv = posq * 0.5;
     uv.x *= aspect;
 
     let ro = vec3f(0.0, 0.0, cam_z);
@@ -97,7 +110,8 @@ fn fs_main(
     if bounds.y > bounds.x {
         let result = ray_march(
             ro, rd, t, rot_speed, morph, arm_layout,
-            noise_amp, noise_freq, aspect,
+            noise_amp, noise_freq, internal_resolution,
+            aspect,
             bounds.x, min(bounds.y, MAX_DIST),
         );
         hit_dist = result.x;
@@ -108,20 +122,47 @@ fn fs_main(
     var scene_brightness = 1.0;
 
     if has_hit {
-        let n = calc_normal(
-            hit_pos, t, rot_speed, morph, arm_layout,
-            noise_amp, noise_freq, aspect,
-        );
-        let diff = max(dot(n, light), 0.0);
-        let amb = 0.15;
+        var n = vec3f(0.0, 0.0, 1.0);
+        var diff = 0.0;
         var ao = 1.0;
-        if !disable_ao {
-            ao = calc_ao(
-                hit_pos, n, t, rot_speed, morph,
-                arm_layout, aspect,
+        if shading_mode <= 0 {
+            n = calc_normal(
+                hit_pos, t, rot_speed, morph, arm_layout,
+                noise_amp, noise_freq, aspect,
             );
+            diff = max(dot(n, light), 0.0);
+            if !disable_ao {
+                ao = calc_ao(
+                    hit_pos, n, t, rot_speed, morph,
+                    arm_layout, aspect,
+                );
+            }
+            scene_brightness = (diff * 0.85 + 0.15) * ao;
+        } else if shading_mode == 1 {
+            n = calc_normal_core(
+                hit_pos, t, rot_speed, morph, arm_layout, aspect,
+            );
+            diff = max(dot(n, light), 0.0);
+            if !disable_ao {
+                ao = calc_ao(
+                    hit_pos, n, t, rot_speed, morph,
+                    arm_layout, aspect,
+                );
+            }
+            scene_brightness = (diff * 0.72 + 0.22) * ao;
+        } else if shading_mode == 2 {
+            n = calc_normal_core(
+                hit_pos, t, rot_speed, morph, arm_layout, aspect,
+            );
+            diff = max(dot(n, light), 0.0);
+            scene_brightness = diff * 0.62 + 0.30;
+        } else {
+            // Cheapest mode: no SDF normal eval; uses radial normal.
+            n = normalize(hit_pos + vec3f(0.0001, 0.0, 0.0));
+            diff = max(dot(n, light), 0.0);
+            let tonal = diff * 0.52 + 0.36;
+            scene_brightness = floor(tonal * 4.0) / 4.0;
         }
-        scene_brightness = (diff * 0.85 + amb) * ao;
     }
 
     scene_brightness = clamp(
@@ -360,6 +401,7 @@ fn ray_march(
     arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
+    internal_resolution: f32,
     aspect: f32,
     min_dist: f32,
     max_dist: f32,
@@ -369,7 +411,13 @@ fn ray_march(
     var hit = 0.0;
     var prev_ds = 1000.0;
     var prev_d = d;
+    let steps_limit = i32(
+        mix(f32(MAX_STEPS), 20.0, internal_resolution)
+    );
     for (var i = 0; i < MAX_STEPS; i++) {
+        if i >= steps_limit {
+            break;
+        }
         if d > max_dist {
             break;
         }
@@ -399,7 +447,8 @@ fn ray_march(
         }
         prev_d = d;
         prev_ds = ds;
-        let step = max(ds * 0.85, SURF_DIST * 0.35);
+        let step_scale = mix(0.85, 1.05, internal_resolution);
+        let step = max(ds * step_scale, SURF_DIST * 0.35);
         d += step;
         if d > MAX_DIST {
             break;
@@ -492,6 +541,31 @@ fn calc_normal(
             p + e.yyx, t, rot_speed, morph,
             arm_layout,
             noise_amp, noise_freq, aspect,
+        ) - d,
+    );
+    return normalize(n);
+}
+
+fn calc_normal_core(
+    p: vec3f,
+    t: f32,
+    rot_speed: f32,
+    morph: f32,
+    arm_layout: f32,
+    aspect: f32,
+) -> vec3f {
+    let e = vec2f(0.0012, 0.0);
+    let rp = scene_space(p, t, rot_speed);
+    let d = scene_sdf_core(rp, t, morph, arm_layout, aspect);
+    let n = vec3f(
+        scene_sdf_core(
+            rp + e.xyy, t, morph, arm_layout, aspect,
+        ) - d,
+        scene_sdf_core(
+            rp + e.yxy, t, morph, arm_layout, aspect,
+        ) - d,
+        scene_sdf_core(
+            rp + e.yyx, t, morph, arm_layout, aspect,
         ) - d,
     );
     return normalize(n);
