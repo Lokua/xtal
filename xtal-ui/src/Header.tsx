@@ -7,7 +7,9 @@ import Select from './Select'
 import Separator, { VerticalSeparator } from './Separator'
 import IconButton from './IconButton'
 
-const transitionTimes = [32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 5, 0.25]
+const transitionTimes = [
+  32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25, 0.0,
+]
 type TransitionTime = (typeof transitionTimes)[number]
 
 type HeaderProps = {
@@ -118,7 +120,7 @@ export default function Header({
           className={clsx(
             isRecording && 'is-recording',
             isEncoding && 'is-encoding',
-            isQueued && !isRecording && 'queued'
+            isQueued && !isRecording && 'queued',
           )}
           isToggle
           onClick={onRecord}
