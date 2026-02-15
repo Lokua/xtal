@@ -18,7 +18,7 @@ struct Params {
     c: vec4f,
     // d: grid_freq, tone_div, iterations_mode, cell_mix
     d: vec4f,
-    // e: color_mode, glow, palette_comp, reserved
+    // e: color_mode, glow, palette_comp, far_stability
     e: vec4f,
 }
 
@@ -54,6 +54,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let color_mode = i32(round(params.e.x));
     let glow = max(params.e.y, 0.0);
     let palette_comp = clamp(params.e.z, 0.0, 1.0);
+    let far_stability = clamp(params.e.w, 0.0, 1.0);
     let iterations = i32(iterations_f);
     let yaw = 6.0 * x;
     let pitch = 6.0 * y;
@@ -95,10 +96,14 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         let hard_mix = smoothstep(0.45, 1.0, cell_mix);
         let q_mix = mix(q_soft, q_hard, vec3f(hard_mix));
         let q_morph = mix(q, q_mix, vec3f(morph));
+        let far = smoothstep(1.5, 7.0, d);
+        let stabilize = far * far_stability;
         let cell_phase = mix(1.0, 2.8, cell_mix);
+        let local_cell_phase = mix(cell_phase, 1.35, stabilize);
+        let local_grid_freq = mix(grid_freq, grid_freq * 0.55, stabilize);
         let cell_term = abs(dot(
-            cos(q_morph * cell_phase),
-            sin(p.yzx * grid_freq),
+            cos(q_morph * local_cell_phase),
+            sin(p.yzx * local_grid_freq),
         ));
 
         let edge = abs(fract(q) - vec3f(0.5));
@@ -108,14 +113,18 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             min(edge.x, min(edge.y, edge.z)),
         );
         let edge_mix = smoothstep(0.55, 1.0, cell_mix);
-        let edge_term = edge_mix * edge_strength * 0.75;
+        let edge_gain = 0.75 * (1.0 - 0.45 * stabilize);
+        let edge_term = edge_mix * edge_strength * edge_gain;
         s -= cell_term + edge_term;
 
         let phase = time * color_shift_speed + color_phase + p.z;
         let comp_gain = mix(1.0, palette_gain(color_mode), palette_comp);
+        let far_energy_comp = mix(1.0, 1.35, stabilize);
         let wave = color_wave(color_mode, phase) * glow * comp_gain;
-        let safe_s = select(s, 0.0001, abs(s) < 0.0001);
-        out_color += wave / safe_s;
+        let eps = mix(0.0001, 0.006, stabilize);
+        let s_sign = select(-1.0, 1.0, s >= 0.0);
+        let safe_s = s_sign * max(abs(s), eps);
+        out_color += (wave * far_energy_comp) / safe_s;
     }
 
     let color = tanh(out_color * out_color / tone_div);

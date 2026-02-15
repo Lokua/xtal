@@ -14,12 +14,22 @@
     {
       "type": "Select",
       "name": "color_mode",
-      "value": "forest_moss"
+      "value": "clay_dusk"
     },
     {
       "type": "Slider",
       "name": "glow",
       "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "palette_comp",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "far_stability",
+      "value": 0.52
     },
     {
       "type": "Slider",
@@ -29,7 +39,7 @@
     {
       "type": "Slider",
       "name": "march_feedback",
-      "value": 0.283
+      "value": 0.325
     },
     {
       "type": "Slider",
@@ -44,7 +54,7 @@
     {
       "type": "Slider",
       "name": "tone_div",
-      "value": 10000000.0
+      "value": 1381000.0
     },
     {
       "type": "Slider",
