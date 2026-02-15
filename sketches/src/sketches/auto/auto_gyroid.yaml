@@ -158,3 +158,30 @@ cell_mix:
   var: d4
   type: triangle
   beats: 128
+
+# ------------------------------------------------------------------------------
+#  Post
+# ------------------------------------------------------------------------------
+
+post:
+  type: separator
+
+chroma_mix:
+  var: f3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+# chroma_px:
+#   var: g4
+#   type: slider
+#   range: [0.0, 8.0]
+#   default: 1.25
+#   step: 0.01
+chroma_px:
+  var: g4
+  type: round_robin
+  beats: 1
+  values: [0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 8, 0, 8]
+  slew: 0.6

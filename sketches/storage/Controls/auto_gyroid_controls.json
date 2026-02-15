@@ -55,11 +55,6 @@
       "type": "Slider",
       "name": "tone_div",
       "value": 1381000.0
-    },
-    {
-      "type": "Slider",
-      "name": "cell_mix",
-      "value": 0.0
     }
   ],
   "midi_controls": [],
