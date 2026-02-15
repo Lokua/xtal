@@ -29,9 +29,9 @@ use crate::framework::{frame_controller, prelude::*};
 use crate::runtime::map_mode::MapMode;
 use crate::runtime::serialization::TransitorySketchState;
 
-pub const TRANSITION_TIMES: [f32; 15] = [
+pub const TRANSITION_TIMES: [f32; 16] = [
     32.0, 24.0, 16.0, 12.0, 16.0, 8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5,
-    0.25,
+    0.25, 0.0,
 ];
 
 #[derive(Debug)]
@@ -1656,8 +1656,7 @@ impl<T: TimingSource> ControlHub<T> {
             // Modify, or Remove-then-create sequences.
             if !matches!(
                 event.kind,
-                notify::EventKind::Create(_)
-                    | notify::EventKind::Modify(_)
+                notify::EventKind::Create(_) | notify::EventKind::Modify(_)
             ) {
                 return;
             }
