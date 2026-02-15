@@ -6,6 +6,13 @@ TAU: &TAU 6.283185307179586
 #  Main
 # ------------------------------------------------------------------------------
 
+iterations:
+  var: d3
+  type: slider
+  range: [16, 96]
+  default: 64
+  step: 8
+
 # x:
 #   var: a4
 #   type: ramp
@@ -45,6 +52,37 @@ color_shift_speed:
   type: slider
   range: [0.0, 4.0]
   default: 0.75
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+color_mode:
+  var: e1
+  type: select
+  default: neon_rainbow
+  options:
+    - neon_rainbow
+    - forest_moss
+    - ocean_mist
+    - clay_dusk
+
+glow:
+  var: e2
+  type: slider
+  range: [0.25, 4.0]
+  default: 1.0
+  step: 0.01
+
+palette_comp:
+  var: e3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.8
   step: 0.01
 
 # ------------------------------------------------------------------------------
@@ -102,3 +140,10 @@ tone_div:
   range: [100000.0, 10000000.0]
   default: 3000000.0
   step: 1000.0
+
+cell_mix:
+  var: d4
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.7
+  step: 0.001
