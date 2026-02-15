@@ -3,8 +3,23 @@
   "ui_controls": [
     {
       "type": "Slider",
+      "name": "iterations",
+      "value": 48.0
+    },
+    {
+      "type": "Slider",
       "name": "color_shift_speed",
-      "value": 0.24
+      "value": 1.0
+    },
+    {
+      "type": "Select",
+      "name": "color_mode",
+      "value": "forest_moss"
+    },
+    {
+      "type": "Slider",
+      "name": "glow",
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -14,12 +29,12 @@
     {
       "type": "Slider",
       "name": "march_feedback",
-      "value": 0.184
+      "value": 0.283
     },
     {
       "type": "Slider",
       "name": "grid_cell",
-      "value": 0.186
+      "value": 0.312
     },
     {
       "type": "Slider",
@@ -30,6 +45,11 @@
       "type": "Slider",
       "name": "tone_div",
       "value": 10000000.0
+    },
+    {
+      "type": "Slider",
+      "name": "cell_mix",
+      "value": 0.0
     }
   ],
   "midi_controls": [],
