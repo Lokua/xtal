@@ -1,0 +1,40 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "color_shift_speed",
+      "value": 0.24
+    },
+    {
+      "type": "Slider",
+      "name": "march_base",
+      "value": 0.0005
+    },
+    {
+      "type": "Slider",
+      "name": "march_feedback",
+      "value": 0.184
+    },
+    {
+      "type": "Slider",
+      "name": "grid_cell",
+      "value": 0.186
+    },
+    {
+      "type": "Slider",
+      "name": "grid_freq",
+      "value": 0.027
+    },
+    {
+      "type": "Slider",
+      "name": "tone_div",
+      "value": 10000000.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

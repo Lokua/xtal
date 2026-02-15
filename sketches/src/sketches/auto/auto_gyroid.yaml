@@ -1,0 +1,104 @@
+PI: &PI 3.141592653589793
+PI_OVER_3: &PI_OVER_3 1.0471975511965976
+TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+# x:
+#   var: a4
+#   type: ramp
+#   beats: 800
+#   range: [0.0, *PI]
+#   phase: 0.0
+x:
+  var: a4
+  type: random_slewed
+  beats: 32
+  range: [0.0, *PI_OVER_3]
+  slew: 0.9
+
+# y:
+#   var: b1
+#   type: ramp
+#   beats: 700
+#   range: [0.0, *PI_OVER_3]
+#   phase: 0.5
+y:
+  var: b1
+  type: random_slewed
+  beats: 24
+  range: [0.0, *PI_OVER_3]
+  slew: 0.9
+
+color_phase:
+  var: b2
+  type: ramp
+  # bypass: 4
+  beats: 128
+  range: [0.0, *TAU]
+  phase: 0.0
+
+color_shift_speed:
+  var: b3
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.75
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Gyroid
+# ------------------------------------------------------------------------------
+
+gyroid:
+  type: separator
+
+march_base:
+  var: b4
+  type: slider
+  range: [0.0005, 0.02]
+  default: 0.003
+  step: 0.0001
+
+march_feedback:
+  var: c1
+  type: slider
+  range: [0.0, 1.5]
+  default: 0.5
+  step: 0.001
+
+gyroid_sin_scale:
+  var: c2
+  type: random_slewed
+  beats: 10
+  range: [0.05, 2.0]
+  slew: 0.7
+
+gyroid_cos_div:
+  var: c3
+  type: random_slewed
+  beats: 14
+  range: [1.0, 16.0]
+  slew: 0.7
+
+grid_cell:
+  var: c4
+  type: slider
+  range: [0.05, 1.0]
+  default: 0.3
+  step: 0.001
+
+grid_freq:
+  var: d1
+  type: slider
+  range: [0.001, 0.2]
+  default: 0.03
+  step: 0.001
+
+tone_div:
+  var: d2
+  type: slider
+  range: [100000.0, 10000000.0]
+  default: 3000000.0
+  step: 1000.0
