@@ -7,6 +7,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "auto_flow",
     display_name: "Auto Flow Field",
     play_mode: PlayMode::Loop,
+    // Needs 30 for recording
     fps: 60.0,
     bpm: 124.0,
     w: HD_WIDTH,

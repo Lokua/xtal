@@ -4,10 +4,11 @@
 
 n_lines:
   var: a4
-  type: slider
-  range: [1.0, 256.0]
-  default: 64.0
-  step: 1.0
+  type: round_robin
+  beats: 6
+  # prettier-ignore
+  values: [1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 12, 8, 7, 6, 5, 4, 3, 2, 1]
+  slew: 0
 
 segments:
   var: b1
@@ -210,19 +211,23 @@ stripe_freq:
   default: 5.0
   step: 1
 
+# stripe_sharpness:
+#   var: g2
+#   type: slider
+#   range: [0.1, 24.0]
+#   default: 8.0
+#   step: 0.1
 stripe_sharpness:
   var: g2
-  type: slider
-  range: [0.1, 24.0]
-  default: 8.0
-  step: 0.1
+  type: triangle
+  beats: 32
+  range: [1, 12]
 
 interference_amp:
   var: g3
-  type: slider
-  range: [0.0, 1]
-  default: 0.03
-  step: 0.001
+  type: triangle
+  beats: 12
+  range: [0.0, 0.25]
 
 interference_freq:
   var: g4
