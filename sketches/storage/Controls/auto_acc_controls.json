@@ -59,7 +59,7 @@
     {
       "type": "Slider",
       "name": "tint",
-      "value": 0.0
+      "value": 0.13
     },
     {
       "type": "Slider",
@@ -69,7 +69,7 @@
     {
       "type": "Slider",
       "name": "fog_start",
-      "value": 10.5
+      "value": 16.0
     },
     {
       "type": "Slider",
@@ -79,7 +79,7 @@
     {
       "type": "Slider",
       "name": "horizon_end",
-      "value": 23.0
+      "value": 64.0
     },
     {
       "type": "Slider",
