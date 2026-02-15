@@ -1,0 +1,1001 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "passes",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "n_lines",
+      "value": 256.0
+    },
+    {
+      "type": "Slider",
+      "name": "points_per_segment",
+      "value": 20000.0
+    },
+    {
+      "type": "Slider",
+      "name": "point_size",
+      "value": 0.0011
+    },
+    {
+      "type": "Slider",
+      "name": "harmonic_influence",
+      "value": 0.53
+    },
+    {
+      "type": "Slider",
+      "name": "noise_scale",
+      "value": 0.0038
+    },
+    {
+      "type": "Slider",
+      "name": "angle_variation",
+      "value": 6.2
+    },
+    {
+      "type": "Checkbox",
+      "name": "offset_mult_10",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "offset_mult",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "circle_r_min",
+      "value": 0.657
+    },
+    {
+      "type": "Slider",
+      "name": "circle_r_max",
+      "value": 0.8077
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_bg",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_angle_offset",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "bg_brightness",
+      "value": 3.86
+    },
+    {
+      "type": "Slider",
+      "name": "phase_animation_mult",
+      "value": 0.75
+    },
+    {
+      "type": "Slider",
+      "name": "spin_rate",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "wave_amp",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "wave_freq",
+      "value": 6.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_wave_phase",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_wave_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "wave_phase",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_amp",
+      "value": 0.2902
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_freq",
+      "value": 9.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_stripe_phase",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_stripe_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_phase",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "steep_amp",
+      "value": 0.2273
+    },
+    {
+      "type": "Slider",
+      "name": "steep_freq",
+      "value": 6.0
+    },
+    {
+      "type": "Slider",
+      "name": "steepness",
+      "value": 47.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_steep_phase",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_steep_phase",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "steep_phase",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "quant_amp",
+      "value": 0.4301
+    },
+    {
+      "type": "Slider",
+      "name": "quant_freq",
+      "value": 6.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "animate_quant_phase",
+      "value": true
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert_animate_quant_phase",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "quant_phase",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.53
+        },
+        {
+          "type": "Slider",
+          "name": "bg_brightness",
+          "value": 3.86
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 6.2
+        },
+        {
+          "type": "Slider",
+          "name": "steep_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_amp",
+          "value": 0.2273
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_bg",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20000.0
+        },
+        {
+          "type": "Slider",
+          "name": "quant_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "quant_amp",
+          "value": 0.4301
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "steep_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "quant_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_angle_offset",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_steep_phase",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.2902
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "steepness",
+          "value": 47.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 256.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0011
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_stripe_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "spin_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_stripe_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_min",
+          "value": 0.657
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_wave_phase",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_steep_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.0038
+        },
+        {
+          "type": "Slider",
+          "name": "phase_animation_mult",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_max",
+          "value": 0.8077
+        },
+        {
+          "type": "Checkbox",
+          "name": "offset_mult_10",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "offset_mult",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.53
+        },
+        {
+          "type": "Slider",
+          "name": "quant_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_steep_phase",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "offset_mult_10",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.2902
+        },
+        {
+          "type": "Slider",
+          "name": "quant_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_stripe_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_bg",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_min",
+          "value": 0.657
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.0038
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_angle_offset",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "steep_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "offset_mult",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 256.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20000.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_brightness",
+          "value": 3.86
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_stripe_phase",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_wave_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_steep_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_max",
+          "value": 0.8077
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0011
+        },
+        {
+          "type": "Slider",
+          "name": "steepness",
+          "value": 47.0
+        },
+        {
+          "type": "Slider",
+          "name": "phase_animation_mult",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "quant_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "spin_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 6.2
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20000.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_stripe_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.53
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_steep_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 256.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_stripe_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "phase_animation_mult",
+          "value": 0.75
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_steep_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "quant_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_angle_offset",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 6.2
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.2902
+        },
+        {
+          "type": "Slider",
+          "name": "steep_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_bg",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_min",
+          "value": 0.657
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0011
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.0038
+        },
+        {
+          "type": "Slider",
+          "name": "quant_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steepness",
+          "value": 47.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_max",
+          "value": 0.8077
+        },
+        {
+          "type": "Slider",
+          "name": "offset_mult",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "spin_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "bg_brightness",
+          "value": 3.86
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_wave_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "quant_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_amp",
+          "value": 0.2273
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "offset_mult_10",
+          "value": false
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "animate_stripe_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "wave_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "offset_mult_10",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "passes",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_angle_offset",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "steep_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_freq",
+          "value": 26.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_steep_phase",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_bg",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "bg_brightness",
+          "value": 3.86
+        },
+        {
+          "type": "Slider",
+          "name": "harmonic_influence",
+          "value": 0.53
+        },
+        {
+          "type": "Slider",
+          "name": "n_lines",
+          "value": 256.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "steep_freq",
+          "value": 19.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_freq",
+          "value": 6.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_wave_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "quant_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_quant_phase",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_quant_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "point_size",
+          "value": 0.0011
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "quant_freq",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "wave_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steepness",
+          "value": 13.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_stripe_phase",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "points_per_segment",
+          "value": 20000.0
+        },
+        {
+          "type": "Slider",
+          "name": "angle_variation",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_max",
+          "value": 0.8077
+        },
+        {
+          "type": "Slider",
+          "name": "offset_mult",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "steep_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 0.031999998
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "phase_animation_mult",
+          "value": 2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "animate_wave_phase",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "spin_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "quant_amp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "circle_r_min",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert_animate_steep_phase",
+          "value": false
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "passes",
+    "point_size",
+    "points_per_segment",
+    "n_lines",
+    "invert",
+    "animate_bg",
+    "animate_angle_offset",
+    "offset_mult_10",
+    "harmonic_influence",
+    "animate_stripe_phase",
+    "invert_animate_stripe_phase",
+    "animate_steep_phase",
+    "invert_animate_steep_phase",
+    "animate_quant_phase",
+    "invert_animate_quant_phase"
+  ]
+}
