@@ -43,13 +43,17 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let center = textureSample(source_texture, source_sampler, in.uv);
     let w = params.a.x;
     let h = params.a.y;
     let texel = vec2f(1.0 / w, 1.0 / h);
     let chroma_mix = clamp(params.f.z, 0.0, 1.0);
     let chroma_px = max(params.g.w, 0.0);
 
-    let center = textureSample(source_texture, source_sampler, in.uv);
+    if (chroma_mix <= 0.0 || chroma_px <= 0.0) {
+        return center;
+    }
+
     let to_center = in.uv - vec2f(0.5, 0.5);
     let dir = normalize(to_center + vec2f(1e-5, 0.0));
     let off = dir * texel * chroma_px;

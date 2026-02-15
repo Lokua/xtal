@@ -60,6 +60,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let pitch = 6.0 * y;
     let rot_pitch = rot_like(pitch);
     let rot_yaw = rot_like(yaw);
+    let morph = smoothstep(0.0, 1.0, cell_mix);
+    let hard_mix = smoothstep(0.45, 1.0, cell_mix);
+    let cell_phase = mix(1.0, 2.8, cell_mix);
+    let edge_mix = smoothstep(0.55, 1.0, cell_mix);
+    let comp_gain = mix(1.0, palette_gain(color_mode), palette_comp);
 
     var d = 0.0;
     var s = 0.0;
@@ -92,13 +97,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             fract(q),
         );
         let q_hard = ceil(q);
-        let morph = smoothstep(0.0, 1.0, cell_mix);
-        let hard_mix = smoothstep(0.45, 1.0, cell_mix);
         let q_mix = mix(q_soft, q_hard, vec3f(hard_mix));
         let q_morph = mix(q, q_mix, vec3f(morph));
         let far = smoothstep(1.5, 7.0, d);
         let stabilize = far * far_stability;
-        let cell_phase = mix(1.0, 2.8, cell_mix);
         let local_cell_phase = mix(cell_phase, 1.35, stabilize);
         let local_grid_freq = mix(grid_freq, grid_freq * 0.55, stabilize);
         let cell_term = abs(dot(
@@ -112,13 +114,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             0.0,
             min(edge.x, min(edge.y, edge.z)),
         );
-        let edge_mix = smoothstep(0.55, 1.0, cell_mix);
         let edge_gain = 0.75 * (1.0 - 0.45 * stabilize);
         let edge_term = edge_mix * edge_strength * edge_gain;
         s -= cell_term + edge_term;
 
         let phase = time * color_shift_speed + color_phase + p.z;
-        let comp_gain = mix(1.0, palette_gain(color_mode), palette_comp);
         let far_energy_comp = mix(1.0, 1.35, stabilize);
         let wave = color_wave(color_mode, phase) * glow * comp_gain;
         let eps = mix(0.0001, 0.006, stabilize);
