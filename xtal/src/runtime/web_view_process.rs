@@ -23,6 +23,7 @@ const HEADER_HEIGHT: i32 = 70;
 const FOOTER_HEIGHT: i32 = 96 + 27;
 // const MIN_SETTINGS_HEIGHT: i32 = 700;
 const MIN_SETTINGS_HEIGHT: i32 = 400;
+const DEFAULT_RECORDING_PRESET: &str = "veryfast";
 
 // #[cfg(feature = "prod")]
 #[derive(Embed)]
@@ -38,6 +39,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 pub fn run() -> Result<(), Box<dyn Error>> {
     init_logger();
     info!("Starting web_view_process");
+    log_recording_preset_env();
 
     let server_name = std::env::args().nth(1).unwrap();
     let (sender, receiver) = setup_ipc_connection(server_name).unwrap();
@@ -190,6 +192,24 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             _ => {}
         }
     });
+}
+
+fn log_recording_preset_env() {
+    match std::env::var("XTAL_RECORDING_PRESET") {
+        Ok(value) => {
+            info!(
+                "XTAL_RECORDING_PRESET accepted: '{}' \
+                 (ffmpeg preset for recording)",
+                value
+            );
+        }
+        Err(_) => {
+            info!(
+                "XTAL_RECORDING_PRESET not set; using default '{}'",
+                DEFAULT_RECORDING_PRESET
+            );
+        }
+    }
 }
 
 fn setup_ipc_connection(
