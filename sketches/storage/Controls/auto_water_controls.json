@@ -4,42 +4,47 @@
     {
       "type": "Slider",
       "name": "time_scale",
-      "value": 0.125
+      "value": 0.24
     },
     {
       "type": "Slider",
-      "name": "sides",
-      "value": 5.0
+      "name": "shape_anomaly",
+      "value": 0.81
+    },
+    {
+      "type": "Slider",
+      "name": "spread_anomaly",
+      "value": 1.64
     },
     {
       "type": "Slider",
       "name": "base_radius",
-      "value": 0.28
+      "value": 0.55
     },
     {
       "type": "Slider",
       "name": "zoom",
-      "value": 2.0
-    },
-    {
-      "type": "Slider",
-      "name": "rotation_rate",
-      "value": 0.875
+      "value": 0.6
     },
     {
       "type": "Slider",
       "name": "base_deform",
-      "value": 0.35
+      "value": 0.345
+    },
+    {
+      "type": "Slider",
+      "name": "detail_deform",
+      "value": 0.185
     },
     {
       "type": "Slider",
       "name": "layer_count",
-      "value": 12.0
+      "value": 27.0
     },
     {
       "type": "Slider",
       "name": "layer_alpha",
-      "value": 0.14
+      "value": 0.2
     },
     {
       "type": "Slider",
@@ -49,52 +54,57 @@
     {
       "type": "Slider",
       "name": "texture_strength",
-      "value": 0.0
+      "value": 0.04
     },
     {
       "type": "Slider",
-      "name": "texture_density",
-      "value": 32.75
+      "name": "halo_strength",
+      "value": 0.64
     },
     {
       "type": "Slider",
-      "name": "top_hue",
-      "value": 0.867
+      "name": "hue",
+      "value": 0.591
     },
     {
       "type": "Slider",
-      "name": "bottom_hue",
-      "value": 0.108
+      "name": "hue_spread",
+      "value": 0.923
     },
     {
       "type": "Slider",
-      "name": "top_sat",
-      "value": 1.0
+      "name": "blot_count",
+      "value": 6.0
     },
     {
       "type": "Slider",
-      "name": "top_val",
-      "value": 0.738
+      "name": "blot_rate",
+      "value": 0.25
     },
     {
       "type": "Slider",
-      "name": "bottom_sat",
-      "value": 1.0
+      "name": "blot_fade",
+      "value": 0.63
     },
     {
       "type": "Slider",
-      "name": "bottom_val",
-      "value": 0.808
+      "name": "blot_spread",
+      "value": 1.5
     },
     {
       "type": "Slider",
-      "name": "paper_tint",
-      "value": 0.024
+      "name": "envelope_size",
+      "value": 2.4
     },
     {
       "type": "Slider",
-      "name": "grain_strength",
-      "value": 0.071
+      "name": "envelope_softness",
+      "value": 0.02
+    },
+    {
+      "type": "Slider",
+      "name": "envelope_noise",
+      "value": 0.25
     }
   ],
   "midi_controls": [],
