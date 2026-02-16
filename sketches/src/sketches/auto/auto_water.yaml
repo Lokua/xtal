@@ -48,211 +48,134 @@ rotation_rate:
   step: 0.125
 
 # ------------------------------------------------------------------------------
-#  deformation
+#  paint
 # ------------------------------------------------------------------------------
 
-deformation:
+paint:
   type: separator
 
 base_deform:
   var: c1
   type: slider
-  range: [0.0, 0.4]
-  default: 0.1
+  range: [0.0, 0.35]
+  default: 0.09
   step: 0.001
 
 detail_deform:
   var: c2
   type: random_slewed
-  range: [0.03, 0.18]
+  range: [0.02, 0.16]
   beats: 8
   slew: 0.7
 
-base_octaves:
+layer_count:
   var: c3
   type: slider
-  range: [1.0, 8.0]
-  default: 4.0
-  step: 1.0
-
-detail_octaves:
-  var: c4
-  type: slider
-  range: [1.0, 8.0]
-  default: 6.0
-  step: 1.0
-
-# ------------------------------------------------------------------------------
-#  layers
-# ------------------------------------------------------------------------------
-
-layers:
-  type: separator
-
-layer_count:
-  var: d1
-  type: slider
-  range: [8.0, 96.0]
-  default: 44.0
+  range: [8.0, 64.0]
+  default: 54.0
   step: 1.0
 
 layer_alpha:
-  var: d2
+  var: c4
   type: slider
-  range: [0.001, 0.12]
-  default: 0.03
+  range: [0.001, 0.14]
+  default: 0.017
   step: 0.001
 
-edge_softness:
-  var: d3
-  type: slider
-  range: [0.001, 0.08]
-  default: 0.018
-  step: 0.001
-
-interleave_every:
-  var: d4
-  type: slider
-  range: [1.0, 12.0]
-  default: 4.0
-  step: 1.0
-
 # ------------------------------------------------------------------------------
-#  variance
+#  texture
 # ------------------------------------------------------------------------------
 
-variance:
+texture:
   type: separator
 
-variance_low:
-  var: e1
+variance_strength:
+  var: d1
   type: slider
   range: [0.0, 1.0]
-  default: 0.18
+  default: 1.0
   step: 0.01
-
-variance_high:
-  var: e2
-  type: slider
-  range: [0.0, 1.5]
-  default: 0.82
-  step: 0.01
-
-variance_scale:
-  var: e3
-  type: slider
-  range: [0.5, 12.0]
-  default: 4.0
-  step: 0.01
-
-variance_anim:
-  var: e4
-  type: slider
-  range: [0.0, 2.0]
-  default: 0.35
-  step: 0.01
-
-# ------------------------------------------------------------------------------
-#  texture mask
-# ------------------------------------------------------------------------------
-
-texture_mask:
-  type: separator
-
-texture_density:
-  var: f1
-  type: slider
-  range: [6.0, 40.0]
-  default: 18.0
-  step: 0.25
-
-texture_radius:
-  var: f2
-  type: slider
-  range: [0.03, 0.35]
-  default: 0.12
-  step: 0.001
 
 texture_strength:
-  var: f3
+  var: d2
   type: slider
   range: [0.0, 1.0]
-  default: 0.62
+  default: 0.9
   step: 0.01
 
-texture_softness:
-  var: f4
+texture_density:
+  var: d3
   type: slider
-  range: [0.001, 0.2]
-  default: 0.03
-  step: 0.001
+  range: [6.0, 36.0]
+  default: 9.0
+  step: 0.25
 
 # ------------------------------------------------------------------------------
-#  color a
+#  color
 # ------------------------------------------------------------------------------
 
-color_a:
+color:
   type: separator
 
-hue_a:
-  var: g1
+top_hue:
+  var: d4
   type: slider
   range: [0.0, 1.0]
   default: 0.58
   step: 0.001
 
-sat_a:
-  var: g2
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.44
-  step: 0.001
-
-val_a:
-  var: g3
-  type: slider
-  range: [0.0, 1.0]
-  default: 0.62
-  step: 0.001
-
-hue_b:
-  var: g4
+bottom_hue:
+  var: e1
   type: slider
   range: [0.0, 1.0]
   default: 0.08
   step: 0.001
 
-# ------------------------------------------------------------------------------
-#  color b + paper
-# ------------------------------------------------------------------------------
+top_sat:
+  var: e2
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.44
+  step: 0.001
 
-color_b_paper:
-  type: separator
+top_val:
+  var: e3
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.62
+  step: 0.001
 
-sat_b:
-  var: h1
+bottom_sat:
+  var: e4
   type: slider
   range: [0.0, 1.0]
   default: 0.36
   step: 0.001
 
-val_b:
-  var: h2
+bottom_val:
+  var: f1
   type: slider
   range: [0.0, 1.0]
   default: 0.8
   step: 0.001
 
+# ------------------------------------------------------------------------------
+#  paper
+# ------------------------------------------------------------------------------
+
+paper:
+  type: separator
+
 paper_tint:
-  var: h3
+  var: f2
   type: slider
   range: [0.0, 1.0]
   default: 0.2
   step: 0.001
 
 grain_strength:
-  var: h4
+  var: f3
   type: slider
   range: [0.0, 0.12]
-  default: 0.03
+  default: 0.008
   step: 0.001

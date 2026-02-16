@@ -1,0 +1,105 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "time_scale",
+      "value": 0.125
+    },
+    {
+      "type": "Slider",
+      "name": "sides",
+      "value": 5.0
+    },
+    {
+      "type": "Slider",
+      "name": "base_radius",
+      "value": 0.28
+    },
+    {
+      "type": "Slider",
+      "name": "zoom",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "rotation_rate",
+      "value": 0.875
+    },
+    {
+      "type": "Slider",
+      "name": "base_deform",
+      "value": 0.35
+    },
+    {
+      "type": "Slider",
+      "name": "layer_count",
+      "value": 12.0
+    },
+    {
+      "type": "Slider",
+      "name": "layer_alpha",
+      "value": 0.14
+    },
+    {
+      "type": "Slider",
+      "name": "variance_strength",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "texture_strength",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "texture_density",
+      "value": 32.75
+    },
+    {
+      "type": "Slider",
+      "name": "top_hue",
+      "value": 0.867
+    },
+    {
+      "type": "Slider",
+      "name": "bottom_hue",
+      "value": 0.108
+    },
+    {
+      "type": "Slider",
+      "name": "top_sat",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "top_val",
+      "value": 0.738
+    },
+    {
+      "type": "Slider",
+      "name": "bottom_sat",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "bottom_val",
+      "value": 0.808
+    },
+    {
+      "type": "Slider",
+      "name": "paper_tint",
+      "value": 0.024
+    },
+    {
+      "type": "Slider",
+      "name": "grain_strength",
+      "value": 0.071
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}
