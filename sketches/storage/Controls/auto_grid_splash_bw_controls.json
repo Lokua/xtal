@@ -1,0 +1,198 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "outer_spread",
+      "value": 0.6154
+    },
+    {
+      "type": "Checkbox",
+      "name": "ac_rotate",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "ac_rotation_speed",
+      "value": 4.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_ab_amp",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_ab_freq",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_cd_amp",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "link_cd_freq",
+      "value": false
+    },
+    {
+      "type": "Checkbox",
+      "name": "invert",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "colorize",
+      "value": 0.0035
+    },
+    {
+      "type": "Slider",
+      "name": "norm_color_disp",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "band_dist",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "red_or_cyan",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "green_or_magenta",
+      "value": 0.5874
+    },
+    {
+      "type": "Slider",
+      "name": "blue_or_yellow",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "feedback",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "dry_add",
+      "value": 0.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "dry_add",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "outer_spread",
+          "value": 0.6154
+        },
+        {
+          "type": "Slider",
+          "name": "norm_color_disp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "band_dist",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "green_or_magenta",
+          "value": 0.5874
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_amp",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_freq",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "ac_rotate",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "colorize",
+          "value": 0.0035
+        },
+        {
+          "type": "Slider",
+          "name": "blue_or_yellow",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "red_or_cyan",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "ac_rotation_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "feedback",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_ab_amp",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "link_cd_freq",
+          "value": false
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {
+    "ab_mix": [6, 65],
+    "c_amp": [6, 70],
+    "ab_cd_mix": [6, 64],
+    "c_freq": [6, 74],
+    "d_freq": [6, 75],
+    "d_amp": [6, 71],
+    "bd_exp": [6, 77],
+    "cd_mix": [6, 66],
+    "a_amp": [6, 68],
+    "b_freq": [6, 73],
+    "b_amp": [6, 69],
+    "ac_exp": [6, 76],
+    "a_freq": [6, 72]
+  },
+  "exclusions": [
+    "invert",
+    "ac_rotate",
+    "link_ab_amp",
+    "link_ab_freq",
+    "link_cd_amp",
+    "link_cd_freq"
+  ]
+}

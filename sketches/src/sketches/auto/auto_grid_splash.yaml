@@ -4,25 +4,9 @@
 
 sequence:
   type: snapshot_sequence
-  # disabled: true
-  beats: 4
-  snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
-
-RANDOM_SLEW: &RANDOM_SLEW 0.85
-
-A_AMP_BEATS: &A_AMP_BEATS 60.0
-B_AMP_BEATS: &B_AMP_BEATS 72.0
-C_AMP_BEATS: &C_AMP_BEATS 84.0
-D_AMP_BEATS: &D_AMP_BEATS 96.0
-
-A_FREQ_BEATS: &A_FREQ_BEATS 24
-B_FREQ_BEATS: &B_FREQ_BEATS 32
-C_FREQ_BEATS: &C_FREQ_BEATS 36
-D_FREQ_BEATS: &D_FREQ_BEATS 48
-
-AB_CD_MIX_BEATS: &AB_CD_MIX_BEATS 49
-AB_MIX_BEATS: &AB_MIX_BEATS 51
-CD_MIX_BEATS: &CD_MIX_BEATS 63
+  disabled: false
+  beats: 32
+  snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
 grid_size:
   var: a4
@@ -170,46 +154,6 @@ d_freq:
   range: [0, 10]
   default: 0.1
   disabled: link_cd_freq
-
-freq_curve:
-  type: effect
-  kind: math
-  operator: curve
-  operand: -0.75
-
-freq_scale:
-  type: effect
-  kind: math
-  operator: mult
-  operand: 6.0
-
-a_freq_mod:
-  type: mod
-  source: a_freq
-  modulators:
-    - freq_curve
-    - freq_scale
-
-b_freq_mod:
-  type: mod
-  source: b_freq
-  modulators:
-    - freq_curve
-    - freq_scale
-
-c_freq_mod:
-  type: mod
-  source: c_freq
-  modulators:
-    - freq_curve
-    - freq_scale
-
-d_freq_mod:
-  type: mod
-  source: d_freq
-  modulators:
-    - freq_curve
-    - freq_scale
 
 # ------------------------------------------------------------------------------
 #  Color
