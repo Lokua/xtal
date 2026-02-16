@@ -4,7 +4,7 @@ _vars:
 snapshot_sequence:
   type: snapshot_sequence
   # disabled: true
-  beats: 24
+  beats: 4
   snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
 # ------------------------------------------------------------------------------
