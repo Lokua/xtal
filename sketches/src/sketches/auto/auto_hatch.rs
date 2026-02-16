@@ -8,7 +8,7 @@ pub const SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Auto Hatch",
     play_mode: PlayMode::Loop,
     // fps: 60.0,
-    fps: 40.0,
+    fps: 30.0,
     bpm: 134.0,
     w: HD_WIDTH,
     h: HD_HEIGHT,
