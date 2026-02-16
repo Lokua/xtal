@@ -101,7 +101,7 @@ impl UniformBanks {
 
 fn parse_bank_component(input: &str) -> Result<(usize, usize), &'static str> {
     if input.len() != 2 {
-        return Err("expected exactly two chars like 'a1'");
+        return Err("expected exactly two chars like 'ax'");
     }
 
     let mut chars = input.chars();
@@ -112,12 +112,43 @@ fn parse_bank_component(input: &str) -> Result<(usize, usize), &'static str> {
         return Err("bank must be lowercase a-z");
     }
 
-    if !('1'..='4').contains(&component_char) {
-        return Err("component must be 1..4");
-    }
-
     let bank_idx = (bank_char as u8 - b'a') as usize;
-    let component_idx = (component_char as u8 - b'1') as usize;
+    let component_idx = match component_char {
+        'x' | 'X' | '1' => 0,
+        'y' | 'Y' | '2' => 1,
+        'z' | 'Z' | '3' => 2,
+        'w' | 'W' | '4' => 3,
+        _ => return Err("component must be x/y/z/w (legacy 1..4 allowed)"),
+    };
 
     Ok((bank_idx, component_idx))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_bank_component;
+
+    #[test]
+    fn parses_letter_components() {
+        assert_eq!(parse_bank_component("ax").unwrap(), (0, 0));
+        assert_eq!(parse_bank_component("ay").unwrap(), (0, 1));
+        assert_eq!(parse_bank_component("az").unwrap(), (0, 2));
+        assert_eq!(parse_bank_component("aw").unwrap(), (0, 3));
+        assert_eq!(parse_bank_component("bw").unwrap(), (1, 3));
+    }
+
+    #[test]
+    fn keeps_legacy_numeric_aliases() {
+        assert_eq!(parse_bank_component("a1").unwrap(), (0, 0));
+        assert_eq!(parse_bank_component("a2").unwrap(), (0, 1));
+        assert_eq!(parse_bank_component("a3").unwrap(), (0, 2));
+        assert_eq!(parse_bank_component("a4").unwrap(), (0, 3));
+    }
+
+    #[test]
+    fn rejects_invalid_components() {
+        assert!(parse_bank_component("a0").is_err());
+        assert!(parse_bank_component("av").is_err());
+        assert!(parse_bank_component("A1").is_err());
+    }
 }

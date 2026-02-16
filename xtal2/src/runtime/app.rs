@@ -15,13 +15,14 @@ use super::events::{
 use super::frame_clock::FrameClock;
 use super::registry::RuntimeRegistry;
 use crate::context::Context;
+use crate::control::ControlHub;
 use crate::frame::Frame;
+use crate::framework::{frame_controller, logging};
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
-use crate::sketch::{Sketch, SketchConfig};
+use crate::motion::{Bpm, Timing};
+use crate::sketch::{Sketch, SketchConfig, TimingMode};
 use crate::uniforms::UniformBanks;
-
-pub use crate::app::{run, run_fullscreen_shader, run_with_control_script};
 
 pub fn run_registry(
     registry: RuntimeRegistry,
@@ -37,7 +38,7 @@ pub fn run_registry_with_channels(
     command_rx: RuntimeCommandReceiver,
     event_tx: Option<RuntimeEventSender>,
 ) -> Result<(), String> {
-    let _ = env_logger::try_init();
+    logging::init_logger();
 
     let event_loop = EventLoop::new().map_err(|err| err.to_string())?;
     event_loop.set_control_flow(ControlFlow::Wait);
@@ -66,6 +67,7 @@ struct RegistryRunner {
     context: Option<Context>,
     uniforms: Option<UniformBanks>,
     graph: Option<CompiledGraph>,
+    control_hub: Option<ControlHub<Timing>>,
 }
 
 impl RegistryRunner {
@@ -102,6 +104,7 @@ impl RegistryRunner {
             context: None,
             uniforms: None,
             graph: None,
+            control_hub: None,
         })
     }
 
@@ -208,6 +211,8 @@ impl RegistryRunner {
         );
         self.apply_sketch_defaults(&mut uniforms);
 
+        self.control_hub = self.build_control_hub();
+
         let graph = CompiledGraph::compile(
             context.device.as_ref(),
             context.queue.as_ref(),
@@ -225,12 +230,37 @@ impl RegistryRunner {
     fn apply_sketch_defaults(&self, uniforms: &mut UniformBanks) {
         for (id, value) in self.sketch.default_uniforms() {
             if let Err(err) = uniforms.set(id, *value) {
-                warn!(
-                    "invalid sketch default uniform '{}': {}",
-                    id, err
-                );
+                warn!("invalid sketch default uniform '{}': {}", id, err);
             }
         }
+    }
+
+    fn build_control_hub(&self) -> Option<ControlHub<Timing>> {
+        let path = self.sketch.control_script()?;
+
+        if !path.exists() {
+            warn!(
+                "control script for sketch '{}' does not exist: {}",
+                self.config.name,
+                path.display()
+            );
+            return None;
+        }
+
+        let bpm = Bpm::new(self.config.bpm);
+        let timing = match self.sketch.timing_mode() {
+            TimingMode::Frame => Timing::frame(bpm),
+            TimingMode::Osc => Timing::osc(bpm),
+            TimingMode::Midi => Timing::midi(bpm),
+            TimingMode::Hybrid => Timing::hybrid(bpm),
+            TimingMode::Manual => Timing::manual(bpm),
+        };
+
+        let mut hub = ControlHub::from_path(path, timing);
+        // Until UI/state sync is wired, prefer control script defaults on
+        // reload so edits are immediately visible during sketching.
+        hub.set_preserve_values_on_reload(false);
+        Some(hub)
     }
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -276,6 +306,7 @@ impl RegistryRunner {
         self.config = config;
         self.sketch = sketch;
         self.frame_clock.set_fps(self.config.fps);
+        frame_controller::set_fps(self.config.fps);
 
         if let Some(window) = self.window.as_ref() {
             window.set_title(self.config.display_name);
@@ -313,13 +344,18 @@ impl RegistryRunner {
                 }
                 RuntimeCommand::Pause(paused) => {
                     self.frame_clock.set_paused(paused);
+                    frame_controller::set_paused(paused);
                 }
                 RuntimeCommand::Quit => {
                     self.emit_event(RuntimeEvent::Stopped);
                     event_loop.exit();
                     return;
                 }
-                RuntimeCommand::ReloadControls => {}
+                RuntimeCommand::ReloadControls => {
+                    if let Some(hub) = self.control_hub.as_ref() {
+                        hub.request_reload();
+                    }
+                }
                 RuntimeCommand::SwitchSketch(name) => {
                     if let Err(err) = self.switch_sketch(&name) {
                         error!("failed to switch sketch '{}': {}", name, err);
@@ -349,11 +385,30 @@ impl RegistryRunner {
             return;
         };
 
+        frame_controller::set_frame_count(self.frame_clock.frame_count() as u32);
+
         self.sketch.update(context);
 
         let [w, h] = context.resolution();
         uniforms.set_resolution(w, h);
-        uniforms.set_beats(context.elapsed_seconds());
+
+        if let Some(hub) = self.control_hub.as_mut() {
+            hub.update();
+
+            for (id, value) in hub.var_values() {
+                if let Err(err) = uniforms.set(&id, value) {
+                    warn!(
+                        "ignoring control var '{}' for sketch '{}': {}",
+                        id, self.config.name, err
+                    );
+                }
+            }
+
+            uniforms.set_beats(hub.beats());
+        } else {
+            uniforms.set_beats(context.elapsed_seconds());
+        }
+
         uniforms.upload(context.queue.as_ref());
 
         let Some(surface) = self.surface.as_mut() else {
@@ -420,6 +475,8 @@ impl ApplicationHandler for RegistryRunner {
         if let Some(window) = self.window.as_ref() {
             window.request_redraw();
         }
+
+        frame_controller::set_fps(self.config.fps);
     }
 
     fn window_event(

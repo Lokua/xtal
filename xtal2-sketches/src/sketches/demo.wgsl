@@ -41,7 +41,7 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let pulse = 0.55 + 0.45 * sin(beats * 4.0);
     let d = length(p);
     let ring = smoothstep(radius, radius - 0.015, d);
-    let bg = vec3f(0.04, 1.0, 0.08);
+    let bg = vec3f(0.00, 0.0, 0.8);
     let fg = vec3f(0.15, 0.85, 0.0) * pulse;
 
     let color = mix(bg, fg, ring);

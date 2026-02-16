@@ -6,6 +6,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "image",
     display_name: "Image",
     fps: 60.0,
+    bpm: 120.0,
     w: 700,
     h: 700,
     banks: 4,
@@ -14,6 +15,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
 pub struct ImageSketch {
     shader_path: PathBuf,
     image_path: PathBuf,
+    control_script_path: PathBuf,
 }
 
 impl Sketch for ImageSketch {
@@ -35,6 +37,10 @@ impl Sketch for ImageSketch {
     fn default_uniforms(&self) -> &'static [(&'static str, f32)] {
         &[("a4", 1.0), ("b1", 1.2), ("b2", 0.35)]
     }
+
+    fn control_script(&self) -> Option<PathBuf> {
+        Some(self.control_script_path.clone())
+    }
 }
 
 pub fn init() -> ImageSketch {
@@ -43,5 +49,6 @@ pub fn init() -> ImageSketch {
     ImageSketch {
         shader_path: assets.wgsl(),
         image_path: assets.path("../../assets/vor.png"),
+        control_script_path: assets.yaml(),
     }
 }
