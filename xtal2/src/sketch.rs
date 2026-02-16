@@ -16,6 +16,10 @@ pub struct SketchConfig {
 pub trait Sketch {
     fn setup(&self, graph: &mut GraphBuilder);
 
+    fn default_uniforms(&self) -> &'static [(&'static str, f32)] {
+        &[]
+    }
+
     fn update(&mut self, _ctx: &Context) {}
 
     fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}

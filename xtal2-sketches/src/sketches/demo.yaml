@@ -9,4 +9,4 @@ radius:
   type: slider
   var: a4
   range: [0.05, 2.0]
-  default: 0.5
+  default: 3.0
