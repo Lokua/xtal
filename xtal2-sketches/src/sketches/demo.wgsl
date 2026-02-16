@@ -38,7 +38,7 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let beats = params.a.z;
     let radius = max(0.05, params.a.w);
 
-    let pulse = 0.55 + 0.45 * sin(beats * 2.0);
+    let pulse = 0.55 + 0.45 * sin(beats * 4.0);
     let d = length(p);
     let ring = smoothstep(radius, radius - 0.015, d);
     let bg = vec3f(0.04, 1.0, 0.08);

@@ -130,7 +130,7 @@ switch without restarting the process.
 
 Core requirement:
 
-- the runtime owns `Box<dyn SketchAll>` and can rebuild graph/resources on
+- the runtime owns `Box<dyn Sketch>` and can rebuild graph/resources on
   switch
 
 ### UI payload compatibility
@@ -254,9 +254,9 @@ Replace Nannou references with explicit dependencies:
 
 ### Phase 0: Runtime scaffold and safety rails
 
-- [ ] Create `xtal2::runtime` modules for app, registry, frame clock, events.
-- [ ] Add integration test harness that can launch headless/skipped GPU tests.
-- [ ] Add feature flags to allow staged cutover (`legacy_runtime`, `xtal2`).
+- [x] Create `xtal2::runtime` modules for app, registry, frame clock, events.
+- [x] Add integration test harness that can launch headless/skipped GPU tests.
+- [x] Add feature flags to allow staged cutover (`legacy_runtime`, `xtal2`).
 
 Exit criteria:
 
@@ -264,10 +264,10 @@ Exit criteria:
 
 ### Phase 1: Dynamic registry and switching
 
-- [ ] Port registry concept from `xtal::runtime::registry` into `xtal2`.
-- [ ] Introduce categorized registry data structure.
-- [ ] Refactor runner to hold `Box<dyn SketchAll>`.
-- [ ] Implement `switch_sketch()` with graph/resource rebuild.
+- [x] Port registry concept from `xtal::runtime::registry` into `xtal2`.
+- [x] Introduce categorized registry data structure.
+- [x] Refactor runner to hold `Box<dyn Sketch>`.
+- [x] Implement `switch_sketch()` with graph/resource rebuild.
 
 Exit criteria:
 
@@ -275,10 +275,10 @@ Exit criteria:
 
 ### Phase 2: Replace bin-based sketch entrypoints
 
-- [ ] Add `register_sketches!` categorized macro.
-- [ ] Add `SketchAssets::from_file(file!())` helper API.
-- [ ] Move `xtal2-sketches/src/bin/*` demos into module-style sketches.
-- [ ] Remove `env!("CARGO_MANIFEST_DIR")` from sketch authoring path.
+- [x] Add `register_sketches!` categorized macro.
+- [x] Add `SketchAssets::from_file(file!())` helper API.
+- [x] Move `xtal2-sketches/src/bin/*` demos into module-style sketches.
+- [x] Remove `env!("CARGO_MANIFEST_DIR")` from sketch authoring path.
 
 Exit criteria:
 
@@ -286,10 +286,10 @@ Exit criteria:
 
 ### Phase 3: Deterministic frame clock
 
-- [ ] Implement fixed-step `FrameClock` with pause/advance modes.
-- [ ] Use `WaitUntil` scheduling in winit loop.
-- [ ] Wire FPS changes on sketch switch.
-- [ ] Add parity tests for pacing and lag behavior.
+- [x] Implement fixed-step `FrameClock` with pause/advance modes.
+- [x] Use `WaitUntil` scheduling in winit loop.
+- [x] Wire FPS changes on sketch switch.
+- [x] Add parity tests for pacing and lag behavior.
 
 Exit criteria:
 
