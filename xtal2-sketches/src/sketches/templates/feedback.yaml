@@ -1,0 +1,30 @@
+# ------------------------------------------------------------------------------
+#  Feedback Controls
+# ------------------------------------------------------------------------------
+
+feedback:
+  type: separator
+
+feedback_mix:
+  type: slider
+  var: aw
+  range: [0.7, 0.995]
+  default: 0.93
+
+zoom:
+  type: slider
+  var: bx
+  range: [0.96, 1.02]
+  default: 0.994
+
+ring_size:
+  type: slider
+  var: by
+  range: [0.05, 0.5]
+  default: 0.24
+
+hue_rate:
+  type: slider
+  var: bz
+  range: [0.1, 4.0]
+  default: 1.1
