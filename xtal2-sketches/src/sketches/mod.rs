@@ -1,4 +1,2 @@
-pub mod compute;
-pub mod demo;
-pub mod image;
-pub mod multipass;
+pub mod main;
+pub mod templates;

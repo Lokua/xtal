@@ -234,10 +234,13 @@ pub fn map_event_to_runtime_command(event: &Event) -> Option<RuntimeCommand> {
     match event {
         Event::Advance => Some(RuntimeCommand::AdvanceSingleFrame),
         Event::Paused(paused) => Some(RuntimeCommand::Pause(*paused)),
+        Event::PerfMode(enabled) => Some(RuntimeCommand::SetPerfMode(*enabled)),
         Event::Quit => Some(RuntimeCommand::Quit),
         Event::SwitchSketch(name) => {
             Some(RuntimeCommand::SwitchSketch(name.clone()))
         }
+        Event::ToggleFullScreen => Some(RuntimeCommand::ToggleFullScreen),
+        Event::ToggleMainFocus => Some(RuntimeCommand::ToggleMainFocus),
         Event::UpdateControlBool { name, value } => {
             Some(RuntimeCommand::UpdateControlBool {
                 name: name.clone(),
@@ -300,5 +303,21 @@ mod tests {
         let event = Event::SwitchSketch("image".to_string());
         let command = map_event_to_runtime_command(&event);
         assert_eq!(command, Some(RuntimeCommand::SwitchSketch("image".into())));
+    }
+
+    #[test]
+    fn maps_perf_mode_to_runtime_command() {
+        let event = Event::PerfMode(true);
+        let command = map_event_to_runtime_command(&event);
+        assert_eq!(command, Some(RuntimeCommand::SetPerfMode(true)));
+    }
+
+    #[test]
+    fn maps_window_focus_commands() {
+        let fullscreen = map_event_to_runtime_command(&Event::ToggleFullScreen);
+        assert_eq!(fullscreen, Some(RuntimeCommand::ToggleFullScreen));
+
+        let main_focus = map_event_to_runtime_command(&Event::ToggleMainFocus);
+        assert_eq!(main_focus, Some(RuntimeCommand::ToggleMainFocus));
     }
 }

@@ -43,6 +43,131 @@ user-facing behavior for:
 
 ## Active Phase Backlog
 
+### Phase 1: UI bridge parity (critical)
+
+The protocol enum is present, but command handling is incomplete.
+
+#### 1.1 Incoming UI event coverage
+
+Currently mapped to runtime commands:
+
+- `Advance`
+- `Paused(bool)`
+- `Quit`
+- `SwitchSketch(String)`
+- `UpdateControlBool`
+- `UpdateControlFloat`
+- `UpdateControlString`
+
+Still missing command mapping and runtime handling:
+
+- [x] `PerfMode(bool)`
+- [x] `ToggleFullScreen`
+- [x] `ToggleMainFocus`
+- [ ] `Tap`
+- [ ] `TapTempoEnabled(bool)`
+- [ ] `TransitionTime(f32)`
+- [ ] `Randomize(Vec<String>)`
+- [ ] `Reset`
+- [ ] `Save(Vec<String>)`
+- [ ] `SnapshotStore(String)`
+- [ ] `SnapshotRecall(String)`
+- [ ] `SnapshotDelete(String)`
+- [ ] `MappingsEnabled(bool)`
+- [ ] `Mappings(...)` receive path
+- [ ] `CurrentlyMapping(String)`
+- [ ] `CommitMappings`
+- [ ] `RemoveMapping(String)`
+- [ ] `SendMidi`
+- [ ] `Hrcc(bool)`
+- [ ] `ChangeAudioDevice(String)`
+- [ ] `ChangeMidiClockPort(String)`
+- [ ] `ChangeMidiControlInputPort(String)`
+- [ ] `ChangeMidiControlOutputPort(String)`
+- [ ] `ChangeOscPort(u16)`
+- [ ] `ChangeDir(UserDir)` + `ReceiveDir(UserDir, String)`
+- [ ] `OpenOsDir(OsDir)`
+- [ ] `CaptureFrame`
+- [ ] `QueueRecord`
+- [ ] `StartRecording`
+- [ ] `StopRecording`
+- [ ] `ClearBuffer`
+
+#### 1.2 Outgoing runtime -> UI event coverage
+
+Already emitted:
+
+- `Init`
+- `LoadSketch`
+- `Paused`
+- `HubPopulated`
+- `UpdatedControls`
+- `SnapshotSequenceEnabled`
+
+Still missing (or not yet driven by real runtime state):
+
+- [ ] `AverageFps(f32)`
+- [ ] `Bpm(f32)` updates
+- [ ] `Mappings(...)`
+- [ ] `MappingsEnabled(bool)`
+- [ ] `CurrentlyMapping(String)`
+- [ ] `Encoding(bool)`
+- [ ] `StartRecording` and `StopRecording` status events
+- [x] `PerfMode(bool)` state echo/confirmation
+- [ ] Directory update confirmations (`ReceiveDir`) from persisted state path
+
+#### 1.3 Performance mode parity (blocking issue)
+
+- [x] Add runtime perf-mode state and `RuntimeCommand::SetPerfMode(bool)`.
+  File touchpoints:
+  `xtal2/src/runtime/events.rs`, `xtal2/src/runtime/web_view.rs`,
+  `xtal2/src/runtime/app.rs`.
+- [x] Stop hardcoding `LoadSketch.perf_mode = false`; emit actual runtime state.
+  File touchpoint: `xtal2/src/runtime/app.rs`.
+- [x] Gate main window resize/reposition on sketch switch when perf mode is on.
+  File touchpoint: `xtal2/src/runtime/app.rs`.
+- [ ] Ensure webview control window placement behavior respects perf mode without
+  breaking control sizing expectations.
+  File touchpoint: `xtal2/src/bin/web_view_process.rs`.
+
+#### 1.4 UI bridge parity tests
+
+- [ ] Expand phase-1 tests beyond `SwitchSketch` to cover full mapping set.
+- [ ] Add serialization/deserialization golden tests for all UI payload types.
+- [ ] Add end-to-end smoke test for webview process message routing.
+
+Exit criteria:
+
+- xtal-ui actions drive runtime behavior equivalently to legacy xtal and all
+  expected status events round-trip.
+
+### Phase 2: MIDI, audio, map mode, and persistence
+
+- [ ] Port map-mode runtime (`currently_mapping`, commit/remove, duplicate checks).
+- [ ] Port MIDI control in/out lifecycle and hrcc behavior.
+- [ ] Port MIDI clock and OSC port runtime controls.
+- [ ] Port audio device switching and runtime restarts.
+- [ ] Port global settings serialization/restore.
+- [ ] Port sketch state serialization/restore (snapshots, mappings, exclusions).
+- [ ] Hook persistence into runtime sketch-switch lifecycle.
+
+Exit criteria:
+
+- Mappings, device settings, snapshots, and sketch/global state persist and
+  restore like legacy xtal.
+
+### Phase 3: Recording and performance tooling
+
+- [ ] Port still frame capture flow.
+- [ ] Port queued recording, start/stop recording, and encode lifecycle.
+- [ ] Port frame recorder integration with fixed frame clock.
+- [ ] Restore performance telemetry (`AverageFps`, dropped frame reporting).
+- [ ] Verify recording correctness under pause/advance/switch scenarios.
+
+Exit criteria:
+
+- Recording and capture behavior match legacy runtime and remain frame-accurate.
+
 ### Phase 4: ControlHub parity hardening
 
 - [ ] Validate xtal2 YAML behavior against representative legacy scripts.
@@ -81,132 +206,7 @@ Exit criteria:
 - `ax/ay/az/aw` is the only documented pattern and migration off numeric aliases
   is enforced by tooling.
 
-### Phase 7: UI bridge parity (critical)
-
-The protocol enum is present, but command handling is incomplete.
-
-#### 7.1 Incoming UI event coverage
-
-Currently mapped to runtime commands:
-
-- `Advance`
-- `Paused(bool)`
-- `Quit`
-- `SwitchSketch(String)`
-- `UpdateControlBool`
-- `UpdateControlFloat`
-- `UpdateControlString`
-
-Still missing command mapping and runtime handling:
-
-- [ ] `PerfMode(bool)`
-- [ ] `ToggleFullScreen`
-- [ ] `ToggleMainFocus`
-- [ ] `Tap`
-- [ ] `TapTempoEnabled(bool)`
-- [ ] `TransitionTime(f32)`
-- [ ] `Randomize(Vec<String>)`
-- [ ] `Reset`
-- [ ] `Save(Vec<String>)`
-- [ ] `SnapshotStore(String)`
-- [ ] `SnapshotRecall(String)`
-- [ ] `SnapshotDelete(String)`
-- [ ] `MappingsEnabled(bool)`
-- [ ] `Mappings(...)` receive path
-- [ ] `CurrentlyMapping(String)`
-- [ ] `CommitMappings`
-- [ ] `RemoveMapping(String)`
-- [ ] `SendMidi`
-- [ ] `Hrcc(bool)`
-- [ ] `ChangeAudioDevice(String)`
-- [ ] `ChangeMidiClockPort(String)`
-- [ ] `ChangeMidiControlInputPort(String)`
-- [ ] `ChangeMidiControlOutputPort(String)`
-- [ ] `ChangeOscPort(u16)`
-- [ ] `ChangeDir(UserDir)` + `ReceiveDir(UserDir, String)`
-- [ ] `OpenOsDir(OsDir)`
-- [ ] `CaptureFrame`
-- [ ] `QueueRecord`
-- [ ] `StartRecording`
-- [ ] `StopRecording`
-- [ ] `ClearBuffer`
-
-#### 7.2 Outgoing runtime -> UI event coverage
-
-Already emitted:
-
-- `Init`
-- `LoadSketch`
-- `Paused`
-- `HubPopulated`
-- `UpdatedControls`
-- `SnapshotSequenceEnabled`
-
-Still missing (or not yet driven by real runtime state):
-
-- [ ] `AverageFps(f32)`
-- [ ] `Bpm(f32)` updates
-- [ ] `Mappings(...)`
-- [ ] `MappingsEnabled(bool)`
-- [ ] `CurrentlyMapping(String)`
-- [ ] `Encoding(bool)`
-- [ ] `StartRecording` and `StopRecording` status events
-- [ ] `PerfMode(bool)` state echo/confirmation
-- [ ] Directory update confirmations (`ReceiveDir`) from persisted state path
-
-#### 7.3 Performance mode parity (blocking issue)
-
-- [ ] Add runtime perf-mode state and `RuntimeCommand::SetPerfMode(bool)`.
-  File touchpoints:
-  `xtal2/src/runtime/events.rs`, `xtal2/src/runtime/web_view.rs`,
-  `xtal2/src/runtime/app.rs`.
-- [ ] Stop hardcoding `LoadSketch.perf_mode = false`; emit actual runtime state.
-  File touchpoint: `xtal2/src/runtime/app.rs`.
-- [ ] Gate main window resize/reposition on sketch switch when perf mode is on.
-  File touchpoint: `xtal2/src/runtime/app.rs`.
-- [ ] Ensure webview control window placement behavior respects perf mode without
-  breaking control sizing expectations.
-  File touchpoint: `xtal2/src/bin/web_view_process.rs`.
-
-#### 7.4 UI bridge parity tests
-
-- [ ] Expand phase-7 tests beyond `SwitchSketch` to cover full mapping set.
-- [ ] Add serialization/deserialization golden tests for all UI payload types.
-- [ ] Add end-to-end smoke test for webview process message routing.
-
-Exit criteria:
-
-- xtal-ui actions drive runtime behavior equivalently to legacy xtal and all
-  expected status events round-trip.
-
-### Phase 8: MIDI, audio, map mode, and persistence
-
-- [ ] Port map-mode runtime (`currently_mapping`, commit/remove, duplicate checks).
-- [ ] Port MIDI control in/out lifecycle and hrcc behavior.
-- [ ] Port MIDI clock and OSC port runtime controls.
-- [ ] Port audio device switching and runtime restarts.
-- [ ] Port global settings serialization/restore.
-- [ ] Port sketch state serialization/restore (snapshots, mappings, exclusions).
-- [ ] Hook persistence into runtime sketch-switch lifecycle.
-
-Exit criteria:
-
-- Mappings, device settings, snapshots, and sketch/global state persist and
-  restore like legacy xtal.
-
-### Phase 9: Recording and performance tooling
-
-- [ ] Port still frame capture flow.
-- [ ] Port queued recording, start/stop recording, and encode lifecycle.
-- [ ] Port frame recorder integration with fixed frame clock.
-- [ ] Restore performance telemetry (`AverageFps`, dropped frame reporting).
-- [ ] Verify recording correctness under pause/advance/switch scenarios.
-
-Exit criteria:
-
-- Recording and capture behavior match legacy runtime and remain frame-accurate.
-
-### Phase 10: Cutover and cleanup
+### Phase 7: Cutover and cleanup
 
 - [ ] Remove or archive obsolete legacy runtime code once parity is proven.
 - [ ] Decide final crate naming (`xtal2` -> `xtal`) after parity sign-off.
@@ -218,11 +218,13 @@ Exit criteria:
 
 ## Immediate Next-Sprint Order
 
-1. Phase 7.1 + 7.3: complete perf-mode and missing UI command routing.
-2. Phase 7.2: emit missing runtime status events needed by xtal-ui.
-3. Phase 8: finish map-mode/MIDI/audio/persistence paths.
-4. Phase 9: recording + telemetry parity.
+1. Phase 1.1 + 1.3: complete perf-mode and missing UI command routing.
+2. Phase 1.2: emit missing runtime status events needed by xtal-ui.
+3. Phase 2: finish map-mode/MIDI/audio/persistence paths.
+4. Phase 3: recording + telemetry parity.
 5. Phase 4/5 parity fixtures and final behavior validation.
+6. Phase 6 deprecation tooling and docs cleanup.
+7. Phase 7 final cutover and cleanup.
 
 ## Locked API Decisions
 

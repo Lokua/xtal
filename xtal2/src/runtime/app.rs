@@ -6,7 +6,7 @@ use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{Window, WindowAttributes, WindowId};
+use winit::window::{Fullscreen, Window, WindowAttributes, WindowId};
 
 use super::events::{
     RuntimeCommand, RuntimeCommandReceiver, RuntimeEvent, RuntimeEventSender,
@@ -87,6 +87,7 @@ struct RegistryRunner {
     uniforms: Option<UniformBanks>,
     graph: Option<CompiledGraph>,
     control_hub: Option<ControlHub<Timing>>,
+    perf_mode: bool,
 }
 
 impl RegistryRunner {
@@ -124,6 +125,7 @@ impl RegistryRunner {
             uniforms: None,
             graph: None,
             control_hub: None,
+            perf_mode: false,
         })
     }
 
@@ -375,7 +377,7 @@ impl RegistryRunner {
             fps: self.config.fps,
             mappings: Default::default(),
             paused: self.frame_clock.paused(),
-            perf_mode: false,
+            perf_mode: self.perf_mode,
             sketch_name: self.active_sketch_name.clone(),
             sketch_width: self.config.w as i32,
             sketch_height: self.config.h as i32,
@@ -416,17 +418,22 @@ impl RegistryRunner {
 
         if let Some(window) = self.window.as_ref() {
             window.set_title(self.config.display_name);
-            let _ = window.request_inner_size(LogicalSize::new(
-                self.config.w,
-                self.config.h,
-            ));
+            if !self.perf_mode {
+                anchor_window_top_left(window.as_ref());
+                let _ = window.request_inner_size(LogicalSize::new(
+                    self.config.w,
+                    self.config.h,
+                ));
+            }
             window.request_redraw();
         }
 
-        self.resize(winit::dpi::PhysicalSize::new(
-            self.config.w.max(1),
-            self.config.h.max(1),
-        ));
+        if !self.perf_mode {
+            self.resize(winit::dpi::PhysicalSize::new(
+                self.config.w.max(1),
+                self.config.h.max(1),
+            ));
+        }
 
         self.rebuild_graph_state()?;
 
@@ -443,6 +450,61 @@ impl RegistryRunner {
         Ok(())
     }
 
+    fn set_perf_mode(&mut self, perf_mode: bool) {
+        if self.perf_mode == perf_mode {
+            self.emit_web_view_event(web_view::Event::PerfMode(perf_mode));
+            return;
+        }
+
+        self.perf_mode = perf_mode;
+        info!("performance mode set to {}", self.perf_mode);
+
+        if let Some(window) = self.window.as_ref() {
+            if !self.perf_mode {
+                anchor_window_top_left(window.as_ref());
+                let _ = window.request_inner_size(LogicalSize::new(
+                    self.config.w,
+                    self.config.h,
+                ));
+            }
+
+            window.request_redraw();
+        }
+
+        if !self.perf_mode {
+            self.resize(winit::dpi::PhysicalSize::new(
+                self.config.w.max(1),
+                self.config.h.max(1),
+            ));
+        }
+
+        self.emit_web_view_event(web_view::Event::PerfMode(perf_mode));
+        self.emit_web_view_load_sketch();
+    }
+
+    fn toggle_fullscreen(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+
+        if window.fullscreen().is_some() {
+            window.set_fullscreen(None);
+            return;
+        }
+
+        let monitor = window.current_monitor();
+        window.set_fullscreen(Some(Fullscreen::Borderless(monitor)));
+    }
+
+    fn focus_main_window(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+
+        window.set_visible(true);
+        window.focus_window();
+    }
+
     fn process_commands(&mut self, event_loop: &ActiveEventLoop) {
         while let Ok(command) = self.command_rx.try_recv() {
             match command {
@@ -453,6 +515,9 @@ impl RegistryRunner {
                     self.frame_clock.set_paused(paused);
                     frame_controller::set_paused(paused);
                     self.emit_web_view_event(web_view::Event::Paused(paused));
+                }
+                RuntimeCommand::SetPerfMode(perf_mode) => {
+                    self.set_perf_mode(perf_mode);
                 }
                 RuntimeCommand::Quit => {
                     self.emit_event(RuntimeEvent::Stopped);
@@ -468,6 +533,12 @@ impl RegistryRunner {
                     if let Err(err) = self.switch_sketch(&name) {
                         error!("failed to switch sketch '{}': {}", name, err);
                     }
+                }
+                RuntimeCommand::ToggleFullScreen => {
+                    self.toggle_fullscreen();
+                }
+                RuntimeCommand::ToggleMainFocus => {
+                    self.focus_main_window();
                 }
                 RuntimeCommand::UpdateControlBool { name, value } => {
                     self.apply_control_update(name, ControlValue::Bool(value));

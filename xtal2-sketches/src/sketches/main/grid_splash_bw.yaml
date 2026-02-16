@@ -1,0 +1,318 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+sequence:
+  type: snapshot_sequence
+  disabled: true
+  beats: 2
+  snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+
+RANDOM_SLEW: &RANDOM_SLEW 0.85
+
+A_AMP_BEATS: &A_AMP_BEATS 30
+B_AMP_BEATS: &B_AMP_BEATS 36
+C_AMP_BEATS: &C_AMP_BEATS 42
+D_AMP_BEATS: &D_AMP_BEATS 48
+
+A_FREQ_BEATS: &A_FREQ_BEATS 12
+B_FREQ_BEATS: &B_FREQ_BEATS 16
+C_FREQ_BEATS: &C_FREQ_BEATS 18
+D_FREQ_BEATS: &D_FREQ_BEATS 24
+
+AB_CD_MIX_BEATS: &AB_CD_MIX_BEATS 25
+AB_MIX_BEATS: &AB_MIX_BEATS 27
+CD_MIX_BEATS: &CD_MIX_BEATS 31
+
+grid_size:
+  var: a4
+  type: random
+  beats: 16.0
+  range: [4.0, 48.0]
+  delay: 0.0
+  stem: 201
+
+circle_radius:
+  var: b1
+  type: random_slewed
+  beats: 8.0
+  range: [0.2, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 202
+
+line_width:
+  var: b2
+  type: random_slewed
+  beats: 6.0
+  range: [0.1, 3.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 203
+
+outer_spread:
+  var: g1
+  type: slider
+  default: 0.01
+
+t_wave:
+  var: c2
+  type: random_slewed
+  beats: 10.0
+  range: [0, 20]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 204
+
+ab_cd_mix:
+  var: d4
+  type: random_slewed
+  beats: *AB_CD_MIX_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 205
+
+ac_exp:
+  var: c3
+  type: random_slewed
+  beats: 5.0
+  range: [0.0, 5.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 206
+
+bd_exp:
+  var: c4
+  type: random_slewed
+  beats: 7.0
+  range: [0.0, 5.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 207
+
+ac_rotate:
+  var: d1
+  type: checkbox
+
+ac_rotation_speed:
+  var: d2
+  type: slider
+  range: [2, 32]
+  step: 2
+  default: 2
+  disabled: not ac_rotate
+
+# ------------------------------------------------------------------------------
+#  a->b
+# ------------------------------------------------------------------------------
+
+ab_section:
+  type: separator
+
+ab_mix:
+  var: c1
+  type: random_slewed
+  beats: *AB_MIX_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 208
+
+link_ab_amp:
+  var: i1
+  type: checkbox
+
+link_ab_freq:
+  var: i2
+  type: checkbox
+
+a_amp:
+  var: b4
+  type: random_slewed
+  beats: *A_AMP_BEATS
+  range: [1.0, 15.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 214
+
+a_freq:
+  var: b3
+  type: random_slewed
+  beats: *A_FREQ_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 209
+
+b_amp:
+  var: h2
+  type: random_slewed
+  beats: *B_AMP_BEATS
+  range: [1.0, 15.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 215
+  disabled: link_ab_amp
+
+b_freq:
+  var: g4
+  type: random_slewed
+  beats: *B_FREQ_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 210
+  disabled: link_ab_freq
+
+# ------------------------------------------------------------------------------
+#  c->d
+# ------------------------------------------------------------------------------
+
+cd_section:
+  type: separator
+
+cd_mix:
+  var: f1
+  type: random_slewed
+  beats: *CD_MIX_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 211
+
+link_cd_amp:
+  var: i3
+  type: checkbox
+
+link_cd_freq:
+  var: i4
+  type: checkbox
+
+c_amp:
+  var: f2
+  type: random_slewed
+  beats: *C_AMP_BEATS
+  range: [1.0, 15.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 216
+
+c_freq:
+  var: f3
+  type: random_slewed
+  beats: *C_FREQ_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 212
+
+d_amp:
+  var: h3
+  type: random_slewed
+  beats: *D_AMP_BEATS
+  range: [1.0, 15.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 217
+  disabled: link_cd_amp
+
+d_freq:
+  var: h4
+  type: random_slewed
+  beats: *D_FREQ_BEATS
+  range: [0.0, 1.0]
+  slew: *RANDOM_SLEW
+  delay: 0.0
+  stem: 213
+  disabled: link_cd_freq
+
+freq_curve:
+  type: effect
+  kind: math
+  operator: curve
+  operand: -0.75
+
+freq_scale:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 6.0
+
+a_freq_mod:
+  type: mod
+  source: a_freq
+  modulators:
+    - freq_curve
+    - freq_scale
+
+b_freq_mod:
+  type: mod
+  source: b_freq
+  modulators:
+    - freq_curve
+    - freq_scale
+
+c_freq_mod:
+  type: mod
+  source: c_freq
+  modulators:
+    - freq_curve
+    - freq_scale
+
+d_freq_mod:
+  type: mod
+  source: d_freq
+  modulators:
+    - freq_curve
+    - freq_scale
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color_section:
+  type: separator
+
+invert:
+  var: d3
+  type: checkbox
+
+colorize:
+  var: e4
+  type: slider
+
+norm_color_disp:
+  var: f4
+  type: slider
+
+band_dist:
+  var: g3
+  type: slider
+
+red_or_cyan:
+  var: e1
+  type: slider
+
+green_or_magenta:
+  var: e2
+  type: slider
+
+blue_or_yellow:
+  var: e3
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Effects
+# ------------------------------------------------------------------------------
+
+effects_section:
+  type: separator
+
+feedback:
+  var: g2
+  type: slider
+
+dry_add:
+  var: h1
+  type: slider
