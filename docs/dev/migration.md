@@ -332,10 +332,17 @@ Exit criteria:
 
 ### Phase 7: UI bridge parity
 
-- [ ] Port `runtime/web_view*` IPC bridge.
-- [ ] Preserve current event schema expected by `xtal-ui`.
-- [ ] Add optional category payload to `Init` event.
+- [x] Port `runtime/web_view*` IPC bridge.
+: Added `xtal2::runtime::web_view` protocol layer with xtal-ui event schema,
+  JSON parse/serialize helpers, UI->runtime command mapping, and a wired
+  `web_view_process` bridge path (`run_registry_with_web_view`).
+- [x] Preserve current event schema expected by `xtal-ui`.
+: Runtime now emits `WebView` events for `Init`, `LoadSketch`,
+  `HubPopulated`, `UpdatedControls`, and `SnapshotSequenceEnabled`.
+- [x] Add optional category payload to `Init` event.
 - [ ] Verify sketch switching from UI selector.
+: Bridge/unit tests verify `SwitchSketch` JSON -> runtime command mapping;
+  full end-to-end webview process validation remains pending.
 
 Exit criteria:
 

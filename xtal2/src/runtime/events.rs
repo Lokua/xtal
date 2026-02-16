@@ -1,20 +1,26 @@
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+use super::web_view;
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum RuntimeCommand {
     AdvanceSingleFrame,
     Pause(bool),
     Quit,
     ReloadControls,
     SwitchSketch(String),
+    UpdateControlBool { name: String, value: bool },
+    UpdateControlFloat { name: String, value: f32 },
+    UpdateControlString { name: String, value: String },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum RuntimeEvent {
     FrameAdvanced(u64),
     FrameSkipped,
     SketchSwitched(String),
+    WebView(web_view::Event),
     Stopped,
 }
 
