@@ -10,12 +10,14 @@ use winit::window::{Window, WindowAttributes, WindowId};
 
 use super::events::{
     RuntimeCommand, RuntimeCommandReceiver, RuntimeEvent, RuntimeEventSender,
-    command_channel,
+    command_channel, event_channel,
 };
 use super::frame_clock::FrameClock;
 use super::registry::RuntimeRegistry;
+use super::web_view;
+use super::web_view_bridge::WebViewBridge;
 use crate::context::Context;
-use crate::control::ControlHub;
+use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
 use crate::framework::{frame_controller, logging};
 use crate::gpu::CompiledGraph;
@@ -30,6 +32,23 @@ pub fn run_registry(
 ) -> Result<(), String> {
     let (_, command_rx) = command_channel();
     run_registry_with_channels(registry, initial_sketch, command_rx, None)
+}
+
+pub fn run_registry_with_web_view(
+    registry: RuntimeRegistry,
+    initial_sketch: Option<&str>,
+) -> Result<(), String> {
+    let (command_tx, command_rx) = command_channel();
+    let (event_tx, event_rx) = event_channel();
+
+    let _bridge = WebViewBridge::launch(command_tx, event_rx)?;
+
+    run_registry_with_channels(
+        registry,
+        initial_sketch,
+        command_rx,
+        Some(event_tx),
+    )
 }
 
 pub fn run_registry_with_channels(
@@ -260,6 +279,7 @@ impl RegistryRunner {
         // Until UI/state sync is wired, prefer control script defaults on
         // reload so edits are immediately visible during sketching.
         hub.set_preserve_values_on_reload(false);
+        hub.mark_unchanged();
         Some(hub)
     }
 
@@ -295,11 +315,97 @@ impl RegistryRunner {
         }
     }
 
-    fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
-        if self.active_sketch_name == name {
-            return Ok(());
-        }
+    fn emit_web_view_event(&self, event: web_view::Event) {
+        self.emit_event(RuntimeEvent::WebView(event));
+    }
 
+    fn emit_web_view_init(&self) {
+        let event = web_view::Event::Init {
+            audio_device: String::new(),
+            audio_devices: vec![],
+            hrcc: false,
+            images_dir: String::new(),
+            is_light_theme: true,
+            mappings_enabled: false,
+            midi_clock_port: String::new(),
+            midi_input_port: String::new(),
+            midi_output_port: String::new(),
+            midi_input_ports: vec![],
+            midi_output_ports: vec![],
+            osc_port: 0,
+            sketch_names: self.registry.sketch_names().to_vec(),
+            sketch_catalog: Some(web_view::sketch_catalog_from_registry(
+                &self.registry,
+            )),
+            sketch_name: self.active_sketch_name.clone(),
+            transition_time: 4.0,
+            user_data_dir: String::new(),
+            videos_dir: String::new(),
+        };
+
+        self.emit_web_view_event(event);
+    }
+
+    fn emit_web_view_load_sketch(&self) {
+        let controls = self
+            .control_hub
+            .as_ref()
+            .map_or_else(Vec::new, web_view::controls_from_hub);
+
+        let bypassed = self
+            .control_hub
+            .as_ref()
+            .map_or_else(Default::default, ControlHub::bypassed);
+
+        let snapshot_slots = self
+            .control_hub
+            .as_ref()
+            .map_or_else(Vec::new, ControlHub::snapshot_keys_sorted);
+
+        let snapshot_sequence_enabled = self
+            .control_hub
+            .as_ref()
+            .is_some_and(ControlHub::snapshot_sequence_enabled);
+
+        let event = web_view::Event::LoadSketch {
+            bpm: self.config.bpm,
+            bypassed,
+            controls,
+            display_name: self.config.display_name.to_string(),
+            fps: self.config.fps,
+            mappings: Default::default(),
+            paused: self.frame_clock.paused(),
+            perf_mode: false,
+            sketch_name: self.active_sketch_name.clone(),
+            sketch_width: self.config.w as i32,
+            sketch_height: self.config.h as i32,
+            snapshot_slots,
+            snapshot_sequence_enabled,
+            tap_tempo_enabled: false,
+            exclusions: vec![],
+        };
+
+        self.emit_web_view_event(event);
+    }
+
+    fn apply_control_update(&mut self, name: String, value: ControlValue) {
+        let Some(hub) = self.control_hub.as_mut() else {
+            warn!(
+                "ignoring control update for '{}' because no control hub is active",
+                name
+            );
+            return;
+        };
+
+        hub.ui_controls.set(&name, value);
+        self.frame_clock.advance_single_frame();
+
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
+    }
+
+    fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
         let (config, sketch) = instantiate_sketch(&self.registry, name)?;
 
         self.active_sketch_name = name.to_string();
@@ -332,6 +438,7 @@ impl RegistryRunner {
         self.emit_event(RuntimeEvent::SketchSwitched(
             self.active_sketch_name.clone(),
         ));
+        self.emit_web_view_load_sketch();
 
         Ok(())
     }
@@ -345,6 +452,7 @@ impl RegistryRunner {
                 RuntimeCommand::Pause(paused) => {
                     self.frame_clock.set_paused(paused);
                     frame_controller::set_paused(paused);
+                    self.emit_web_view_event(web_view::Event::Paused(paused));
                 }
                 RuntimeCommand::Quit => {
                     self.emit_event(RuntimeEvent::Stopped);
@@ -360,6 +468,18 @@ impl RegistryRunner {
                     if let Err(err) = self.switch_sketch(&name) {
                         error!("failed to switch sketch '{}': {}", name, err);
                     }
+                }
+                RuntimeCommand::UpdateControlBool { name, value } => {
+                    self.apply_control_update(name, ControlValue::Bool(value));
+                }
+                RuntimeCommand::UpdateControlFloat { name, value } => {
+                    self.apply_control_update(name, ControlValue::Float(value));
+                }
+                RuntimeCommand::UpdateControlString { name, value } => {
+                    self.apply_control_update(
+                        name,
+                        ControlValue::String(value),
+                    );
                 }
             }
         }
@@ -392,6 +512,8 @@ impl RegistryRunner {
         let [w, h] = context.resolution();
         uniforms.set_resolution(w, h);
 
+        let mut web_view_events = Vec::new();
+
         if let Some(hub) = self.control_hub.as_mut() {
             hub.update();
 
@@ -402,6 +524,24 @@ impl RegistryRunner {
                         id, self.config.name, err
                     );
                 }
+            }
+
+            if hub.changed() {
+                let controls = web_view::controls_from_hub(hub);
+                let bypassed = hub.bypassed();
+                let snapshot_sequence_enabled = hub.snapshot_sequence_enabled();
+
+                web_view_events.push(web_view::Event::HubPopulated((
+                    controls.clone(),
+                    bypassed,
+                )));
+                web_view_events
+                    .push(web_view::Event::UpdatedControls(controls));
+                web_view_events.push(web_view::Event::SnapshotSequenceEnabled(
+                    snapshot_sequence_enabled,
+                ));
+
+                hub.mark_unchanged();
             }
 
             uniforms.set_beats(hub.beats());
@@ -457,6 +597,10 @@ impl RegistryRunner {
         self.emit_event(RuntimeEvent::FrameAdvanced(
             self.frame_clock.frame_count(),
         ));
+
+        for event in web_view_events {
+            self.emit_web_view_event(event);
+        }
     }
 }
 
@@ -477,6 +621,8 @@ impl ApplicationHandler for RegistryRunner {
         }
 
         frame_controller::set_fps(self.config.fps);
+        self.emit_web_view_init();
+        self.emit_web_view_load_sketch();
     }
 
     fn window_event(

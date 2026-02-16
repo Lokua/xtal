@@ -2,6 +2,8 @@ pub mod app;
 pub mod events;
 pub mod frame_clock;
 pub mod registry;
+pub mod web_view;
+pub mod web_view_bridge;
 
 /// True when the transitional legacy runtime path is compiled in.
 pub const LEGACY_RUNTIME_ENABLED: bool = cfg!(feature = "legacy_runtime");

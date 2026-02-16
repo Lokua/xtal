@@ -10,21 +10,32 @@ license = "MIT"
 default = ["xtal2"]
 legacy_runtime = []
 xtal2 = []
+web_view_process = ["dep:rfd", "dep:tao", "dep:wry"]
+
+[[bin]]
+name = "web_view_process"
+path = "src/bin/web_view_process.rs"
+required-features = ["web_view_process"]
 
 [dependencies]
 ahash = "0.8.11"
 bytemuck = { version = "1.25", features = ["derive"] }
 env_logger = "0.11.9"
 indexmap = { version = "2.12.1", features = ["serde"] }
+ipc-channel = "0.19.0"
 log = "0.4.29"
 naga = { version = "26", features = ["wgsl-in"] }
 notify = "8.2"
 pollster = "0.4"
 png = "0.18.0"
 rand = "0.9.2"
+rfd = { version = "0.15.3", optional = true }
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 serde_yml = "0.0.12"
+tao = { version = "0.32.8", optional = true }
 termcolor = "1.4.1"
+wry = { version = "0.50.5", features = ["devtools"], optional = true }
 yaml-merge-keys = { version = "0.8.1", features = ["serde_yml"] }
 wgpu = { version = "26", default-features = false, features = [
     "wgsl",

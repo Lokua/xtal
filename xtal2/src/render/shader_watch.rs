@@ -3,8 +3,8 @@ use std::fs;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 use log::{info, trace, warn};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
@@ -71,7 +71,9 @@ impl ShaderWatch {
                 };
 
                 if let Ok(mut guard) = last_loaded_hash.lock() {
-                    if guard.is_some_and(|existing_hash| existing_hash == file_hash) {
+                    if guard
+                        .is_some_and(|existing_hash| existing_hash == file_hash)
+                    {
                         info!(
                             "shader content unchanged; skipping reload: {}",
                             shader_path.display()
