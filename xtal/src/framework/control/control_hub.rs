@@ -48,8 +48,8 @@ struct UpdateState {
 #[derive(Debug)]
 struct SnapshotTransition {
     values: HashMap<String, (f32, f32)>,
-    start_frame: u32,
-    end_frame: u32,
+    start_beat: f32,
+    end_beat: f32,
 }
 
 struct SnapshotSequenceRuntime {
@@ -214,6 +214,7 @@ impl<T: TimingSource> ControlHub<T> {
         let start = self.instrumentation.borrow().start();
 
         let current_frame = frame_controller::frame_count();
+        let current_beat = self.animation.beats();
 
         let mut name = match self.vars.get(name) {
             Some(alias) => alias,
@@ -233,7 +234,7 @@ impl<T: TimingSource> ControlHub<T> {
         if let Some(x) = self
             .active_transition
             .as_ref()
-            .and_then(|t| self.get_transition_value(current_frame, name, t))
+            .and_then(|t| self.get_transition_value(current_beat, name, t))
         {
             return x;
         }
@@ -256,19 +257,22 @@ impl<T: TimingSource> ControlHub<T> {
 
     fn get_transition_value(
         &self,
-        current_frame: u32,
+        current_beat: f32,
         name: &str,
         transition: &SnapshotTransition,
     ) -> Option<f32> {
         let (from, to) = *transition.values.get(name)?;
-        if current_frame > transition.end_frame
-            || transition.start_frame == transition.end_frame
+        if current_beat < transition.start_beat {
+            return None;
+        }
+        if current_beat >= transition.end_beat
+            || transition.start_beat == transition.end_beat
         {
             return Some(to);
         }
-        let duration = transition.end_frame - transition.start_frame;
-        let progress = current_frame - transition.start_frame;
-        let t = progress as f32 / duration as f32;
+        let duration = transition.end_beat - transition.start_beat;
+        let progress = current_beat - transition.start_beat;
+        let t = (progress / duration).clamp(0.0, 1.0);
         Some(lerp(from, to, t))
     }
 
@@ -653,22 +657,27 @@ impl<T: TimingSource> ControlHub<T> {
         match self.snapshots.get(id) {
             Some(snapshot) => {
                 let current_frame = frame_controller::frame_count();
-                let duration =
-                    self.animation.beats_to_frames(self.transition_time) as u32;
+                let current_beat = self.animation.beats();
+                let transition_beats = self.transition_time.max(0.0);
 
                 let mut transition = SnapshotTransition {
                     values: HashMap::default(),
-                    start_frame: current_frame,
-                    end_frame: current_frame + duration,
+                    start_beat: current_beat,
+                    end_beat: current_beat + transition_beats,
                 };
 
                 for (name, value) in snapshot {
                     if self.ui_controls.has(name) {
                         match value {
                             ControlValue::Float(v) => {
+                                let from = self.current_snapshot_value(
+                                    name,
+                                    current_frame,
+                                    current_beat,
+                                );
                                 transition.values.insert(
                                     name.to_string(),
-                                    (self.get_raw(name, current_frame), *v),
+                                    (from, *v),
                                 );
                             }
                             ControlValue::Bool(_) | ControlValue::String(_) => {
@@ -685,10 +694,15 @@ impl<T: TimingSource> ControlHub<T> {
                     if self.midi_controls.has(name)
                         || self.osc_controls.has(name)
                     {
+                        let from = self.current_snapshot_value(
+                            name,
+                            current_frame,
+                            current_beat,
+                        );
                         transition.values.insert(
                             name.to_string(),
                             (
-                                self.get_raw(name, current_frame),
+                                from,
                                 value.as_float().unwrap(),
                             ),
                         );
@@ -703,6 +717,20 @@ impl<T: TimingSource> ControlHub<T> {
             }
             None => Err(format!("No snapshot \"{}\"", id)),
         }
+    }
+
+    fn current_snapshot_value(
+        &self,
+        name: &str,
+        current_frame: u32,
+        current_beat: f32,
+    ) -> f32 {
+        self.active_transition
+            .as_ref()
+            .and_then(|transition| {
+                self.get_transition_value(current_beat, name, transition)
+            })
+            .unwrap_or_else(|| self.get_raw(name, current_frame))
     }
 
     pub fn delete_snapshot(&mut self, id: &str) {
@@ -750,13 +778,13 @@ impl<T: TimingSource> ControlHub<T> {
     /// [commit]: https://github.com/Lokua/xtal/commit/bcb1328
     pub fn randomize(&mut self, exclusions: Exclusions) {
         let current_frame = frame_controller::frame_count();
-        let duration =
-            self.animation.beats_to_frames(self.transition_time) as u32;
+        let current_beat = self.animation.beats();
+        let transition_beats = self.transition_time.max(0.0);
 
         let mut transition = SnapshotTransition {
             values: HashMap::default(),
-            start_frame: current_frame,
-            end_frame: current_frame + duration,
+            start_beat: current_beat,
+            end_beat: current_beat + transition_beats,
         };
 
         for (name, value) in &self.create_snapshot(exclusions) {
@@ -847,8 +875,16 @@ impl<T: TimingSource> ControlHub<T> {
             .as_ref()
             .is_some_and(|disabled| disabled(&self.ui_controls));
 
+        let current_beat = self.animation.beats();
+        if self.active_transition.as_ref().is_some_and(|transition| {
+            current_beat < transition.start_beat
+        }) {
+            self.active_transition = None;
+            self.snapshot_sequence_runtime.last_phase = None;
+        }
+
         if let Some(transition) = &self.active_transition {
-            if frame_controller::frame_count() >= transition.end_frame {
+            if current_beat >= transition.end_beat {
                 for (name, (_from, to)) in &transition.values {
                     if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
@@ -2022,6 +2058,32 @@ sequence:
         assert!(!ControlHub::<FrameTiming>::is_stage_crossed(
             3.9, 0.2, 2.0, epsilon
         ));
+    }
+
+    #[test]
+    #[serial]
+    #[ignore = "requires audio device in test environment"]
+    fn test_update_clears_stale_transition_after_frame_reset() {
+        let mut hub = create_instance(
+            r#"
+a:
+  type: slider
+  default: 0
+"#,
+        );
+
+        let mut values = HashMap::default();
+        values.insert("a".to_string(), (0.0, 1.0));
+        hub.active_transition = Some(SnapshotTransition {
+            values,
+            start_beat: 10.0,
+            end_beat: 12.0,
+        });
+
+        init(0.0);
+        hub.update();
+
+        assert!(hub.active_transition.is_none());
     }
 
     #[test]
