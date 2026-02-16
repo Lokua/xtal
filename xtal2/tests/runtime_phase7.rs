@@ -30,6 +30,30 @@ fn web_view_json_parsing_and_command_mapping_support_switch_sketch() {
 }
 
 #[test]
+fn web_view_command_mapping_supports_perf_mode_and_window_events() {
+    let perf = web_view::parse_ui_message("{\"PerfMode\":true}")
+        .expect("parse perf mode message");
+    assert_eq!(
+        web_view::map_event_to_runtime_command(&perf),
+        Some(RuntimeCommand::SetPerfMode(true))
+    );
+
+    let fullscreen = web_view::parse_ui_message("\"ToggleFullScreen\"")
+        .expect("parse toggle fullscreen message");
+    assert_eq!(
+        web_view::map_event_to_runtime_command(&fullscreen),
+        Some(RuntimeCommand::ToggleFullScreen)
+    );
+
+    let main_focus = web_view::parse_ui_message("\"ToggleMainFocus\"")
+        .expect("parse toggle main focus message");
+    assert_eq!(
+        web_view::map_event_to_runtime_command(&main_focus),
+        Some(RuntimeCommand::ToggleMainFocus)
+    );
+}
+
+#[test]
 fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
     let event = web_view::Event::Init {
         audio_device: String::new(),

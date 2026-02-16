@@ -1,8 +1,8 @@
 use xtal2::prelude::*;
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "demo",
-    display_name: "Demo",
+    name: "basic",
+    display_name: "Basic",
     fps: 60.0,
     bpm: 120.0,
     w: 1920 / 2,

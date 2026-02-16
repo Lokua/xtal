@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use log::{error, info, warn};
 use naga::front::wgsl;
 use naga::valid::{Capabilities, ValidationFlags, Validator};
+use wgpu::util::DeviceExt;
 
 use crate::frame::Frame;
 use crate::graph::{
@@ -55,6 +56,7 @@ struct RenderPass {
     shader_path: PathBuf,
     target_format: wgpu::TextureFormat,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
     texture_bind_group_layout: Option<wgpu::BindGroupLayout>,
     sampler: Option<wgpu::Sampler>,
     watcher: Option<ShaderWatch>,
@@ -221,6 +223,10 @@ impl CompiledGraph {
                     );
 
                     render_pass.set_pipeline(&node.pass.render_pipeline);
+                    render_pass.set_vertex_buffer(
+                        0,
+                        node.pass.vertex_buffer.slice(..),
+                    );
                     render_pass.set_bind_group(0, uniforms.bind_group(), &[]);
 
                     if let Some(bind_group) = texture_bind_group.as_ref() {
@@ -402,6 +408,7 @@ impl RenderPass {
             &source,
             &node.name,
         );
+        let vertex_buffer = create_fullscreen_quad_vertex_buffer(device);
 
         let watcher = match ShaderWatch::start(shader_path.clone()) {
             Ok(watch) => Some(watch),
@@ -419,6 +426,7 @@ impl RenderPass {
             shader_path,
             target_format,
             render_pipeline,
+            vertex_buffer,
             texture_bind_group_layout,
             sampler,
             watcher,
@@ -677,6 +685,8 @@ fn create_render_pipeline(
             push_constant_ranges: &[],
         });
 
+    let vertex_buffers = [fullscreen_vertex_buffer_layout()];
+
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("xtal2-render-pipeline"),
         layout: Some(&layout),
@@ -684,7 +694,7 @@ fn create_render_pipeline(
             module: &shader,
             entry_point: Some("vs_main"),
             compilation_options: wgpu::PipelineCompilationOptions::default(),
-            buffers: &[],
+            buffers: &vertex_buffers,
         },
         fragment: Some(wgpu::FragmentState {
             module: &shader,
@@ -713,6 +723,32 @@ fn create_render_pipeline(
         },
         multiview: None,
         cache: None,
+    })
+}
+
+const FULLSCREEN_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
+    wgpu::vertex_attr_array![0 => Float32x2];
+
+fn fullscreen_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
+    wgpu::VertexBufferLayout {
+        array_stride: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+        step_mode: wgpu::VertexStepMode::Vertex,
+        attributes: &FULLSCREEN_VERTEX_ATTRIBUTES,
+    }
+}
+
+fn create_fullscreen_quad_vertex_buffer(device: &wgpu::Device) -> wgpu::Buffer {
+    let vertices: [[f32; 2]; 4] = [
+        [-1.0, -1.0],
+        [1.0, -1.0],
+        [-1.0, 1.0],
+        [1.0, 1.0],
+    ];
+
+    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("xtal2-fullscreen-quad-vertices"),
+        contents: bytemuck::cast_slice(&vertices),
+        usage: wgpu::BufferUsages::VERTEX,
     })
 }
 

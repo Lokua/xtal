@@ -7,9 +7,12 @@ use super::web_view;
 pub enum RuntimeCommand {
     AdvanceSingleFrame,
     Pause(bool),
+    SetPerfMode(bool),
     Quit,
     ReloadControls,
     SwitchSketch(String),
+    ToggleFullScreen,
+    ToggleMainFocus,
     UpdateControlBool { name: String, value: bool },
     UpdateControlFloat { name: String, value: f32 },
     UpdateControlString { name: String, value: String },
