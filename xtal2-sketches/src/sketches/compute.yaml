@@ -4,18 +4,18 @@
 
 pattern_freq:
   type: slider
-  var: a4
+  var: aw
   range: [0.2, 5.0]
   default: 4
 
 warp_speed:
   type: slider
-  var: b1
+  var: bx
   range: [0.0, 4.0]
   default: 3.0
 
 grade:
   type: slider
-  var: b2
+  var: by
   range: [0.0, 1.0]
   default: 0.2

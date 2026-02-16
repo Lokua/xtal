@@ -4,12 +4,12 @@
 
 pattern_freq:
   type: slider
-  var: a4
+  var: aw
   range: [0.25, 4.0]
   default: 0.2
 
 blur_amount:
   type: slider
-  var: b1
+  var: bx
   range: [0.0, 3.0]
   default: 3.0

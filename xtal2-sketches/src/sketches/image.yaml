@@ -4,18 +4,18 @@
 
 zoom:
   type: slider
-  var: a4
+  var: aw
   range: [0.2, 2.0]
   default: 1.0
 
 spin:
   type: slider
-  var: b1
-  range: [0.0, 4.0]
+  var: bx
+  range: [0.0, 12.0]
   default: 1.2
 
 chroma:
   type: slider
-  var: b2
+  var: by
   range: [0.0, 1.0]
   default: 0.35

@@ -1,0 +1,117 @@
+use std::sync::{Arc, Mutex};
+
+use super::control_traits::{ControlCollection, ControlConfig};
+use crate::framework::prelude::HashMap;
+
+#[derive(Clone, Debug)]
+pub struct OscControlConfig {
+    pub address: String,
+    pub min: f32,
+    pub max: f32,
+    pub value: f32,
+}
+
+impl OscControlConfig {
+    pub fn new(address: &str, range: (f32, f32), value: f32) -> Self {
+        Self {
+            address: address.to_string(),
+            min: range.0,
+            max: range.1,
+            value,
+        }
+    }
+}
+
+impl ControlConfig<f32, f32> for OscControlConfig {}
+
+#[derive(Clone, Debug, Default)]
+pub struct OscControls {
+    pub is_active: bool,
+    values: Arc<Mutex<HashMap<String, f32>>>,
+    configs: HashMap<String, OscControlConfig>,
+}
+
+impl OscControls {
+    pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.is_active = true;
+        Ok(())
+    }
+}
+
+impl
+    ControlCollection<
+        OscControlConfig,
+        f32,
+        f32,
+        HashMap<String, OscControlConfig>,
+    > for OscControls
+{
+    fn add(&mut self, name: &str, config: OscControlConfig) {
+        self.values
+            .lock()
+            .unwrap()
+            .insert(name.to_string(), config.value);
+        self.configs.insert(name.to_string(), config);
+    }
+
+    fn config(&self, name: &str) -> Option<OscControlConfig> {
+        self.configs.get(name).cloned()
+    }
+
+    fn configs(&self) -> HashMap<String, OscControlConfig> {
+        self.configs.clone()
+    }
+
+    fn get(&self, name: &str) -> f32 {
+        *self.values.lock().unwrap().get(name).unwrap_or(&0.0)
+    }
+
+    fn get_optional(&self, name: &str) -> Option<f32> {
+        self.values.lock().unwrap().get(name).copied()
+    }
+
+    fn has(&self, name: &str) -> bool {
+        self.values.lock().unwrap().contains_key(name)
+    }
+
+    fn remove(&mut self, name: &str) {
+        self.values.lock().unwrap().remove(name);
+        self.configs.remove(name);
+    }
+
+    fn set(&mut self, name: &str, value: f32) {
+        self.values.lock().unwrap().insert(name.to_string(), value);
+    }
+
+    fn values(&self) -> HashMap<String, f32> {
+        self.values.lock().unwrap().clone()
+    }
+
+    fn with_values_mut<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut HashMap<String, f32>),
+    {
+        let mut values = self.values.lock().unwrap();
+        f(&mut values);
+    }
+}
+
+#[derive(Default)]
+pub struct OscControlBuilder {
+    controls: OscControls,
+}
+
+impl OscControlBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn control(mut self, name: &str, config: OscControlConfig) -> Self {
+        self.controls.add(name, config);
+        self
+    }
+
+    pub fn build(self) -> OscControls {
+        self.controls
+    }
+}

@@ -113,6 +113,7 @@ mod tests {
         name: "test",
         display_name: "Test",
         fps: 60.0,
+        bpm: 120.0,
         w: 640,
         h: 480,
         banks: 4,

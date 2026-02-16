@@ -297,9 +297,10 @@ Exit criteria:
 
 ### Phase 4: ControlHub core parity
 
-- [ ] Port `control_hub`, config parse, dep graph, eval cache, effects.
-- [ ] Hook hot-reload watchers into new runtime update path.
-- [ ] Integrate snapshot/transition callbacks and bypass handling.
+- [x] Port `control_hub`, config parse, dep graph, eval cache, effects.
+- [x] Hook hot-reload watchers into new runtime update path.
+- [x] Integrate snapshot/transition callbacks and bypass handling.
+- [x] Restore runtime logging + watcher diagnostics for YAML/WGSL reload.
 - [ ] Validate YAML behaviors against representative legacy scripts.
 
 Exit criteria:
@@ -308,9 +309,11 @@ Exit criteria:
 
 ### Phase 5: Animation and timing parity
 
-- [ ] Port `motion::animation`, `effects`, `timing`.
-- [ ] Rewire frame-based timing to new `FrameClock`.
+- [x] Port `motion::animation`, `effects`, `timing`.
+- [x] Rewire frame-based timing to new `FrameClock`.
 - [ ] Port OSC/MIDI timing modes (`frame`, `osc`, `midi`, `hybrid`).
+: `Timing` variants are available in xtal2 runtime, but external transport
+  listeners remain deferred to Phase 8 I/O work.
 
 Exit criteria:
 
@@ -318,9 +321,9 @@ Exit criteria:
 
 ### Phase 6: `var` pattern transition
 
-- [ ] Update uniform parser and control var parser for `ax/ay/az/aw`.
-- [ ] Keep temporary legacy parser support for `a1..a4`.
-- [ ] Update templates/docs/examples to letter-components only.
+- [x] Update uniform parser and control var parser for `ax/ay/az/aw`.
+- [x] Keep temporary legacy parser support for `a1..a4`.
+- [x] Update templates/docs/examples to letter-components only.
 - [ ] Add migration note tooling (warn or lint pass).
 
 Exit criteria:
@@ -361,6 +364,9 @@ Exit criteria:
 ### Phase 10: Cutover and cleanup
 
 - [ ] Migrate sketch modules category by category.
+- [x] Remove legacy single-sketch POC runtime path (`run*` entrypoints).
+- [x] Consolidate source layout so `xtal2/src` root contains only
+  `lib.rs` and `prelude.rs`.
 - [ ] Remove or archive obsolete `xtal` runtime code.
 - [ ] Optionally rename `xtal2` back to `xtal` once parity is proven.
 

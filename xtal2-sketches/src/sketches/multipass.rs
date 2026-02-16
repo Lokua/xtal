@@ -6,6 +6,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "multipass",
     display_name: "Multipass",
     fps: 60.0,
+    bpm: 120.0,
     w: 900,
     h: 600,
     banks: 4,
@@ -14,6 +15,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
 pub struct MultiPassSketch {
     pass_a: PathBuf,
     pass_b: PathBuf,
+    control_script_path: PathBuf,
 }
 
 impl Sketch for MultiPassSketch {
@@ -38,6 +40,10 @@ impl Sketch for MultiPassSketch {
 
         graph.present("surface");
     }
+
+    fn control_script(&self) -> Option<PathBuf> {
+        Some(self.control_script_path.clone())
+    }
 }
 
 pub fn init() -> MultiPassSketch {
@@ -46,5 +52,6 @@ pub fn init() -> MultiPassSketch {
     MultiPassSketch {
         pass_a: assets.path("multipass_a.wgsl"),
         pass_b: assets.path("multipass_b.wgsl"),
+        control_script_path: assets.yaml(),
     }
 }
