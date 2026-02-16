@@ -36,8 +36,8 @@ pub use self::auto::auto_gyroid;
 pub use self::auto::auto_hatch;
 pub use self::auto::auto_ink;
 pub use self::auto::auto_rm;
-pub use self::auto::auto_spiral;
 pub use self::auto::auto_sline;
+pub use self::auto::auto_spiral;
 pub use self::auto::auto_un;
 pub use self::auto::auto_wave_fract;
 

@@ -695,9 +695,7 @@ pub mod animation_tests {
             env_logger::builder().is_test(true).init();
             frame_controller::set_fps(FPS);
         });
-        frame_controller::set_frame_count(
-            (beat * FRAMES_PER_BEAT) as u32,
-        );
+        frame_controller::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
     }
 
     pub fn create_instance() -> Animation<FrameTiming> {

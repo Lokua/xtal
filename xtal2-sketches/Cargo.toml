@@ -1,0 +1,11 @@
+[package]
+name = "xtal2-sketches"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+default-run = "demo"
+
+[workspace]
+
+[dependencies]
+xtal2 = { path = "../xtal2" }

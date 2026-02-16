@@ -675,10 +675,9 @@ impl<T: TimingSource> ControlHub<T> {
                                     current_frame,
                                     current_beat,
                                 );
-                                transition.values.insert(
-                                    name.to_string(),
-                                    (from, *v),
-                                );
+                                transition
+                                    .values
+                                    .insert(name.to_string(), (from, *v));
                             }
                             ControlValue::Bool(_) | ControlValue::String(_) => {
                                 // Just update immediately since we can't
@@ -701,10 +700,7 @@ impl<T: TimingSource> ControlHub<T> {
                         );
                         transition.values.insert(
                             name.to_string(),
-                            (
-                                from,
-                                value.as_float().unwrap(),
-                            ),
+                            (from, value.as_float().unwrap()),
                         );
                         continue;
                     }
@@ -876,9 +872,11 @@ impl<T: TimingSource> ControlHub<T> {
             .is_some_and(|disabled| disabled(&self.ui_controls));
 
         let current_beat = self.animation.beats();
-        if self.active_transition.as_ref().is_some_and(|transition| {
-            current_beat < transition.start_beat
-        }) {
+        if self
+            .active_transition
+            .as_ref()
+            .is_some_and(|transition| current_beat < transition.start_beat)
+        {
             self.active_transition = None;
             self.snapshot_sequence_runtime.last_phase = None;
         }
