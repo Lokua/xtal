@@ -54,6 +54,7 @@ fn main() {
         auto_spiral,
         auto_sline,
         auto_un,
+        auto_water,
         auto_wave_fract,
         // ---------------------------------------------------------------------
         // DEV
