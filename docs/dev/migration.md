@@ -1,419 +1,233 @@
-# xtal2 Migration: POC to Full Runtime
+# xtal2 Migration: Runtime Parity Backlog
 
 ## Goal
 
-Move `xtal2` from a shader POC into the full Xtal runtime replacement.
-
-Required parity target:
-
-- ControlHub features and control script behavior
-- animation and timing systems
-- UI integration (`xtal-ui` event flow)
-- runtime sketch switching
-- recording/runtime state features currently in `xtal`
-
-Hard constraints:
-
-- no Nannou dependency except `nannou_osc`
-- no CPU drawing support in the new runtime
-- no per-sketch `bin` entrypoints or `CARGO_MANIFEST_DIR` boilerplate
-
-## Current State (POC)
-
-What exists today in `xtal2`:
-
-- winit + wgpu surface setup
-- explicit graph (`render`, `compute`, `present`)
-- shader and YAML hot reload
-- runtime uniform banks
-- demo sketches in `xtal2-sketches/src/bin`
-
-What blocks parity:
-
-- generic `Runner<S>` prevents runtime sketch switching
-- sketch discovery is compile-target (`cargo run --bin ...`) based
-- run loop uses `ControlFlow::Poll` with no deterministic FPS pacing
-- only control defaults are applied (no full `ControlHub` runtime)
-- no UI bridge, map mode, recording, or state persistence
-- `var` parsing uses numeric components (`a1`..`a4`)
-
-## Target Architecture
-
-### Workspace direction
-
-Target structure after cutover:
-
-```text
-xtal-project-2/
-  xtal2/          # new runtime + framework (event loop, graph, control, timing)
-  sketches/       # sketch modules registered at compile time
-  xtal-ui/        # frontend, ideally unchanged initially
-```
-
-Notes:
-
-- `xtal` and `xtal-macros` can coexist during migration.
-- Remove old crates only after parity is verified.
-
-### Sketch authoring model
-
-Replace `xtal2-sketches/src/bin/*.rs` with module sketches, same style as legacy
-`sketches`, but registered with categories.
-
-Each sketch module exports:
-
-- `SKETCH_CONFIG`
-- `init(ctx: &RuntimeContext) -> SketchType`
-
-### Registration model (categorized)
-
-Introduce a categorized macro for runtime registry setup.
-
-```rust
-register_sketches! {
-    { title: "Main", enabled: true, sketches: [blob, cloud_tunnel, marcher] },
-    { title: "Auto", enabled: true, sketches: [auto_un, auto_wave_fract] },
-    { title: "Dev", enabled: false, sketches: [control_script_dev, wgpu_compute_dev] },
-    { title: "Genuary 2026", enabled: true, sketches: [g26_13_portrait, g26_14_dreams] },
-}
-```
-
-Registry should keep both:
-
-- `Vec<String>` flat names (for current `xtal-ui` compatibility)
-- structured categories for grouped selectors:
-  `{ title, enabled, sketches }`
-
-### Asset path model (no MANIFEST boilerplate)
-
-Add helper API that resolves assets relative to the sketch source file.
-
-```rust
-let assets = SketchAssets::from_file(file!());
-let wgsl = assets.wgsl();
-let yaml = assets.yaml();
-```
-
-For multipass sketches:
-
-```rust
-let assets = SketchAssets::from_file(file!());
-let pass_a = assets.path("pass_a.wgsl");
-let pass_b = assets.path("pass_b.wgsl");
-```
-
-No sketch should need `env!("CARGO_MANIFEST_DIR")`.
-
-## Runtime API Direction
-
-### SketchConfig (target)
-
-`SketchConfig` should return to full runtime semantics:
-
-- `name`, `display_name`
-- `play_mode`
-- `fps`
-- `bpm`
-- `w`, `h`
-- `banks`
-- optional `category` only if we want category at config level
-
-Recommendation:
-
-- Keep category in registration, not config.
-- Keep config focused on per-sketch runtime behavior.
-
-### Dynamic sketch runtime
-
-Replace compile-time generic runner with trait-object runtime, so sketches can
-switch without restarting the process.
-
-Core requirement:
-
-- the runtime owns `Box<dyn Sketch>` and can rebuild graph/resources on
-  switch
-
-### UI payload compatibility
-
-Keep current `xtal-ui` contract first:
-
-- continue sending `Init.sketchNames: string[]`
-- continue sending `SwitchSketch` and `LoadSketch`
-
-Add optional payload field for categories (non-breaking):
-
-- `Init.sketchCatalog` (or similar)
-
-This allows unmodified UI to keep working while enabling grouped selectors.
-
-## Frame Loop and Frame Controller
-
-### Problem
-
-`ControlFlow::Poll + request_redraw` is effectively uncapped and does not give
-stable frame pacing or deterministic frame counts.
-
-### Target behavior
-
-Implement a dedicated `FrameClock` for `winit` runtime:
-
-- fixed-step frame cadence (`fps` from current sketch)
-- `paused`, `force_render`, `advance_single_frame` behavior
-- monotonic `frame_count`
-- rolling average FPS metrics
-- deterministic beat timing for `FrameTiming`
-
-### Event loop integration
-
-Use `ControlFlow::WaitUntil(next_frame_deadline)`.
-
-Render only when:
-
-- frame clock says a frame is due
-- forced render is requested
-- single-frame advance is requested
-
-On sketch switch:
-
-- set new FPS immediately
-- reset or remap frame counter based on switch policy
-- rebuild timing providers cleanly
-
-### Required tests
-
-Port/adapt frame pacing tests from legacy `frame_controller`:
-
-- exact frame interval increments
-- lag catch-up behavior
-- pause + single-frame advance
-- FPS change during runtime
-
-## ControlHub and Animation Port Strategy
-
-Port these modules from `xtal/src/framework` first, then replace Nannou
-references:
-
-- `control/*`
-- `motion/*`
-- `frame_controller` logic (as new `frame_clock`)
-- `midi`, `audio`, `osc_receiver` (keep `nannou_osc` only)
-
-Key runtime integrations:
-
-- call `hub.update()` each frame
-- bind uniform banks from hub values
-- keep snapshots, transitions, bypass, and map mode behavior
-
-## `var` Pattern Migration (`a1` -> `ax`)
-
-### New standard
-
-Use bank + component-letter naming:
-
-- `ax`, `ay`, `az`, `aw`
-- `bx`, `by`, `bz`, `bw`
-- ...
-
-Mapping:
-
-- `x -> 0`
-- `y -> 1`
-- `z -> 2`
-- `w -> 3`
-
-### Reserved runtime defaults
-
-Bank `a` defaults:
-
-- `ax`: resolution width
-- `ay`: resolution height
-- `az`: beats
-- `aw`: reserved/free default slot (0.0 unless sketch sets it)
-
-### Compatibility recommendation
-
-During migration, accept both forms:
-
-- new: `ax`
-- legacy: `a1`
-
-Log warnings for numeric style to help phase-out.
-
-## Nannou Replacement Map
-
-Replace Nannou references with explicit dependencies:
-
-- `nannou::rand` -> `rand`
-- `nannou::math::map_range/clamp` -> local math utils
-- `nannou::winit` types -> direct `winit`
-- `nannou_egui::egui::ahash::HashSet` -> `ahash` or std collections
-- `nannou::App`/`Frame` runtime flow -> `xtal2` runtime context/frame
-- keep `nannou_osc`
-
-## Piece-Meal Implementation TODOs
-
-### Phase 0: Runtime scaffold and safety rails
-
-- [x] Create `xtal2::runtime` modules for app, registry, frame clock, events.
-- [x] Add integration test harness that can launch headless/skipped GPU tests.
-- [x] Add feature flags to allow staged cutover (`legacy_runtime`, `xtal2`).
+Ship `xtal2` as the full runtime replacement for `xtal` with the same
+user-facing behavior for:
+
+- sketch switching at runtime
+- ControlHub-driven animation/control scripts
+- xtal-ui integration and event flow
+- recording/performance tooling
+- state/mapping persistence
+
+## Hard Constraints
+
+- Keep `nannou_osc`, remove all other Nannou runtime dependencies.
+- No CPU drawing support.
+- No per-sketch `bin` entrypoint pattern.
+- Sketch asset lookup should use `SketchAssets` (no manifest boilerplate).
+
+## Current Snapshot (2026-02-16)
+
+### Foundation that is already in place
+
+- Dynamic runtime registry with categorized sketches.
+- Runtime sketch switching (`Box<dyn Sketch>` in the runner).
+- `register_sketches!` and module-based sketch startup in `xtal2-sketches`.
+- `SketchAssets::from_file(file!())` path flow.
+- `FrameClock` and `WaitUntil` scheduling.
+- ControlHub + shader/yaml hot reload integration.
+- `web_view_process` is wired and launched by `run_registry_with_web_view`.
+- `ax/ay/az/aw` var pattern is supported (legacy numeric aliases still parse).
+- Runtime source layout cleanup is done (`xtal2/src` root is minimal).
+
+### What is not complete yet
+
+- UI event parity is only partial.
+- Performance mode is not stateful in runtime and does not gate window
+  resize/position behavior.
+- MIDI/audio/map-mode/persistence paths are not ported to xtal2 runtime.
+- Recording pipeline is not ported.
+- Full behavioral parity tests against legacy runtime are missing.
+
+## Active Phase Backlog
+
+### Phase 4: ControlHub parity hardening
+
+- [ ] Validate xtal2 YAML behavior against representative legacy scripts.
+- [ ] Add parity fixtures that compare values over N frames between xtal and
+  xtal2 for the same control script.
+- [ ] Remove panic paths in hot code paths (for example remaining
+  `unimplemented!()` branches) or convert them to explicit errors.
+- [ ] Re-check snapshot and transition callback behavior against legacy UI flow.
 
 Exit criteria:
 
-- Runtime compiles with both legacy and xtal2 paths enabled.
-
-### Phase 1: Dynamic registry and switching
-
-- [x] Port registry concept from `xtal::runtime::registry` into `xtal2`.
-- [x] Introduce categorized registry data structure.
-- [x] Refactor runner to hold `Box<dyn Sketch>`.
-- [x] Implement `switch_sketch()` with graph/resource rebuild.
-
-Exit criteria:
-
-- One process can switch between at least two sketch modules at runtime.
-
-### Phase 2: Replace bin-based sketch entrypoints
-
-- [x] Add `register_sketches!` categorized macro.
-- [x] Add `SketchAssets::from_file(file!())` helper API.
-- [x] Move `xtal2-sketches/src/bin/*` demos into module-style sketches.
-- [x] Remove `env!("CARGO_MANIFEST_DIR")` from sketch authoring path.
-
-Exit criteria:
-
-- Sketch startup and switching works with only module registration.
-
-### Phase 3: Deterministic frame clock
-
-- [x] Implement fixed-step `FrameClock` with pause/advance modes.
-- [x] Use `WaitUntil` scheduling in winit loop.
-- [x] Wire FPS changes on sketch switch.
-- [x] Add parity tests for pacing and lag behavior.
-
-Exit criteria:
-
-- Frame pacing tracks requested FPS and survives runtime switching.
-
-### Phase 4: ControlHub core parity
-
-- [x] Port `control_hub`, config parse, dep graph, eval cache, effects.
-- [x] Hook hot-reload watchers into new runtime update path.
-- [x] Integrate snapshot/transition callbacks and bypass handling.
-- [x] Restore runtime logging + watcher diagnostics for YAML/WGSL reload.
-- [ ] Validate YAML behaviors against representative legacy scripts.
-
-Exit criteria:
-
-- Same control script produces matching values on legacy and xtal2 runtime.
+- Same control scripts produce matching values and lifecycle events in xtal2 and
+  xtal.
 
 ### Phase 5: Animation and timing parity
 
-- [x] Port `motion::animation`, `effects`, `timing`.
-- [x] Rewire frame-based timing to new `FrameClock`.
-- [ ] Port OSC/MIDI timing modes (`frame`, `osc`, `midi`, `hybrid`).
-: `Timing` variants are available in xtal2 runtime, but external transport
-  listeners remain deferred to Phase 8 I/O work.
+- [ ] Wire external transport timing sources fully (OSC/MIDI/hybrid runtime
+  listeners).
+- [ ] Port tap-tempo behavior and BPM update flow to runtime state.
+- [ ] Validate timing reset semantics (MIDI start/continue/stop) against legacy
+  behavior.
 
 Exit criteria:
 
-- Beat-synced animation behavior matches legacy for reference sketches.
+- Beat-synced animation and transport-driven timing match legacy behavior on
+  reference sketches.
 
-### Phase 6: `var` pattern transition
+### Phase 6: var migration completion
 
-- [x] Update uniform parser and control var parser for `ax/ay/az/aw`.
-- [x] Keep temporary legacy parser support for `a1..a4`.
-- [x] Update templates/docs/examples to letter-components only.
-- [ ] Add migration note tooling (warn or lint pass).
-
-Exit criteria:
-
-- New sketches use only `ax` style; old scripts still run with warnings.
-
-### Phase 7: UI bridge parity
-
-- [x] Port `runtime/web_view*` IPC bridge.
-: Added `xtal2::runtime::web_view` protocol layer with xtal-ui event schema,
-  JSON parse/serialize helpers, UI->runtime command mapping, and a wired
-  `web_view_process` bridge path (`run_registry_with_web_view`).
-- [x] Preserve current event schema expected by `xtal-ui`.
-: Runtime now emits `WebView` events for `Init`, `LoadSketch`,
-  `HubPopulated`, `UpdatedControls`, and `SnapshotSequenceEnabled`.
-- [x] Add optional category payload to `Init` event.
-- [ ] Verify sketch switching from UI selector.
-: Bridge/unit tests verify `SwitchSketch` JSON -> runtime command mapping;
-  full end-to-end webview process validation remains pending.
+- [ ] Add explicit deprecation warnings/tooling for numeric aliases (`a1..a4`).
+- [ ] Set and document a removal milestone for numeric aliases.
+- [ ] Keep docs/examples/templates fully on `ax/ay/az/aw` naming.
 
 Exit criteria:
 
-- `xtal-ui` runs against xtal2 backend with no required frontend edits.
+- `ax/ay/az/aw` is the only documented pattern and migration off numeric aliases
+  is enforced by tooling.
+
+### Phase 7: UI bridge parity (critical)
+
+The protocol enum is present, but command handling is incomplete.
+
+#### 7.1 Incoming UI event coverage
+
+Currently mapped to runtime commands:
+
+- `Advance`
+- `Paused(bool)`
+- `Quit`
+- `SwitchSketch(String)`
+- `UpdateControlBool`
+- `UpdateControlFloat`
+- `UpdateControlString`
+
+Still missing command mapping and runtime handling:
+
+- [ ] `PerfMode(bool)`
+- [ ] `ToggleFullScreen`
+- [ ] `ToggleMainFocus`
+- [ ] `Tap`
+- [ ] `TapTempoEnabled(bool)`
+- [ ] `TransitionTime(f32)`
+- [ ] `Randomize(Vec<String>)`
+- [ ] `Reset`
+- [ ] `Save(Vec<String>)`
+- [ ] `SnapshotStore(String)`
+- [ ] `SnapshotRecall(String)`
+- [ ] `SnapshotDelete(String)`
+- [ ] `MappingsEnabled(bool)`
+- [ ] `Mappings(...)` receive path
+- [ ] `CurrentlyMapping(String)`
+- [ ] `CommitMappings`
+- [ ] `RemoveMapping(String)`
+- [ ] `SendMidi`
+- [ ] `Hrcc(bool)`
+- [ ] `ChangeAudioDevice(String)`
+- [ ] `ChangeMidiClockPort(String)`
+- [ ] `ChangeMidiControlInputPort(String)`
+- [ ] `ChangeMidiControlOutputPort(String)`
+- [ ] `ChangeOscPort(u16)`
+- [ ] `ChangeDir(UserDir)` + `ReceiveDir(UserDir, String)`
+- [ ] `OpenOsDir(OsDir)`
+- [ ] `CaptureFrame`
+- [ ] `QueueRecord`
+- [ ] `StartRecording`
+- [ ] `StopRecording`
+- [ ] `ClearBuffer`
+
+#### 7.2 Outgoing runtime -> UI event coverage
+
+Already emitted:
+
+- `Init`
+- `LoadSketch`
+- `Paused`
+- `HubPopulated`
+- `UpdatedControls`
+- `SnapshotSequenceEnabled`
+
+Still missing (or not yet driven by real runtime state):
+
+- [ ] `AverageFps(f32)`
+- [ ] `Bpm(f32)` updates
+- [ ] `Mappings(...)`
+- [ ] `MappingsEnabled(bool)`
+- [ ] `CurrentlyMapping(String)`
+- [ ] `Encoding(bool)`
+- [ ] `StartRecording` and `StopRecording` status events
+- [ ] `PerfMode(bool)` state echo/confirmation
+- [ ] Directory update confirmations (`ReceiveDir`) from persisted state path
+
+#### 7.3 Performance mode parity (blocking issue)
+
+- [ ] Add runtime perf-mode state and `RuntimeCommand::SetPerfMode(bool)`.
+  File touchpoints:
+  `xtal2/src/runtime/events.rs`, `xtal2/src/runtime/web_view.rs`,
+  `xtal2/src/runtime/app.rs`.
+- [ ] Stop hardcoding `LoadSketch.perf_mode = false`; emit actual runtime state.
+  File touchpoint: `xtal2/src/runtime/app.rs`.
+- [ ] Gate main window resize/reposition on sketch switch when perf mode is on.
+  File touchpoint: `xtal2/src/runtime/app.rs`.
+- [ ] Ensure webview control window placement behavior respects perf mode without
+  breaking control sizing expectations.
+  File touchpoint: `xtal2/src/bin/web_view_process.rs`.
+
+#### 7.4 UI bridge parity tests
+
+- [ ] Expand phase-7 tests beyond `SwitchSketch` to cover full mapping set.
+- [ ] Add serialization/deserialization golden tests for all UI payload types.
+- [ ] Add end-to-end smoke test for webview process message routing.
+
+Exit criteria:
+
+- xtal-ui actions drive runtime behavior equivalently to legacy xtal and all
+  expected status events round-trip.
 
 ### Phase 8: MIDI, audio, map mode, and persistence
 
-- [ ] Port MIDI control in/out and map mode plumbing.
-- [ ] Port audio controls path and buffer sizing to new frame clock.
-- [ ] Port global/sketch state serialization and restore behavior.
+- [ ] Port map-mode runtime (`currently_mapping`, commit/remove, duplicate checks).
+- [ ] Port MIDI control in/out lifecycle and hrcc behavior.
+- [ ] Port MIDI clock and OSC port runtime controls.
+- [ ] Port audio device switching and runtime restarts.
+- [ ] Port global settings serialization/restore.
+- [ ] Port sketch state serialization/restore (snapshots, mappings, exclusions).
+- [ ] Hook persistence into runtime sketch-switch lifecycle.
 
 Exit criteria:
 
-- Saved controls, mappings, and runtime I/O controls behave as before.
+- Mappings, device settings, snapshots, and sketch/global state persist and
+  restore like legacy xtal.
 
 ### Phase 9: Recording and performance tooling
 
-- [ ] Port frame recorder and encode pipeline.
-- [ ] Ensure sync with fixed frame clock.
-- [ ] Restore average FPS and dropped-frame reporting.
+- [ ] Port still frame capture flow.
+- [ ] Port queued recording, start/stop recording, and encode lifecycle.
+- [ ] Port frame recorder integration with fixed frame clock.
+- [ ] Restore performance telemetry (`AverageFps`, dropped frame reporting).
+- [ ] Verify recording correctness under pause/advance/switch scenarios.
 
 Exit criteria:
 
-- Recordings complete with expected FPS and stable sync.
+- Recording and capture behavior match legacy runtime and remain frame-accurate.
 
 ### Phase 10: Cutover and cleanup
 
-- [ ] Migrate sketch modules category by category.
-- [x] Remove legacy single-sketch POC runtime path (`run*` entrypoints).
-- [x] Consolidate source layout so `xtal2/src` root contains only
-  `lib.rs` and `prelude.rs`.
-- [ ] Remove or archive obsolete `xtal` runtime code.
-- [ ] Optionally rename `xtal2` back to `xtal` once parity is proven.
+- [ ] Remove or archive obsolete legacy runtime code once parity is proven.
+- [ ] Decide final crate naming (`xtal2` -> `xtal`) after parity sign-off.
+- [ ] Add final migration notes for sketch authors and UI maintainers.
 
 Exit criteria:
 
-- xtal2 runtime is default; legacy runtime is removed or frozen.
+- xtal2 is the default and only runtime path for normal usage.
 
-## Suggested Build Order for Fastest Value
+## Immediate Next-Sprint Order
 
-1. Phase 1 (dynamic switching)
-2. Phase 2 (registration + asset API)
-3. Phase 3 (frame clock)
-4. Phase 7 (UI bridge)
-5. Phase 4 and 5 (ControlHub + animation)
-6. Remaining parity phases
+1. Phase 7.1 + 7.3: complete perf-mode and missing UI command routing.
+2. Phase 7.2: emit missing runtime status events needed by xtal-ui.
+3. Phase 8: finish map-mode/MIDI/audio/persistence paths.
+4. Phase 9: recording + telemetry parity.
+5. Phase 4/5 parity fixtures and final behavior validation.
 
-This gives a usable runtime shell early, before deep control-system porting.
+## Locked API Decisions
 
-## Open API Decisions (Locked)
-
-1. Category entry shape: `{ title, enabled, sketches }`.
-
-2. Category storage location: keep categories in registry registration, not in
-   `SketchConfig`.
-
-3. `var` compatibility window: support both `a1` and `ax` for one migration
-   cycle, then drop numeric aliases.
-
-4. UI grouping path: emit both flat `sketchNames` and structured catalog until
-   UI grouping lands.
-
-5. Crate naming: keep `xtal2` during migration; rename only after parity and
-   cleanup.
-
-## Suggestions to Improve Long-Term Quality
-
-- Add a tiny parity test suite that runs the same control script through legacy
-  and xtal2 logic and compares key values over N frames.
-- Keep runtime event payloads backward compatible and additive only.
-- Keep all Nannou replacements in thin adapter modules to reduce diff noise
-  during porting.
-- Make `SketchAssets` the only blessed asset-path mechanism.
-- Treat frame clock behavior as a tested contract, not runtime glue.
+1. Category registration shape is `{ title, enabled, sketches }`.
+2. Category lives in registry registration, not `SketchConfig`.
+3. Keep both flat `sketchNames` and structured catalog for UI compatibility.
+4. `SketchAssets` is the standard sketch asset path mechanism.
+5. `ax/ay/az/aw` is the forward var pattern.
