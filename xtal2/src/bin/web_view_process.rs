@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .nth(1)
         .ok_or("missing IPC bootstrap server name argument")?;
 
-    let (sender, receiver) = setup_ipc_connection(server_name)?;
+    let (to_parent, receiver) = setup_ipc_connection(server_name)?;
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         })
         .build(&event_loop)?;
 
+    let ipc_sender = to_parent.clone();
     let web_view_builder =
         WebViewBuilder::new().with_ipc_handler(move |message| {
             let json_string = message.body().to_string();
@@ -66,7 +67,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 wv::Event::ChangeDir(kind) => {
                     match FileDialog::new().pick_folder() {
                         Some(dir) => {
-                            let _ = sender.send(wv::Event::ReceiveDir(
+                            let _ = ipc_sender.send(wv::Event::ReceiveDir(
                                 kind,
                                 dir.to_string_lossy().into_owned(),
                             ));
@@ -77,7 +78,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
                 _ => {
-                    let _ = sender.send(event);
+                    let _ = ipc_sender.send(event);
                 }
             }
         });
@@ -97,6 +98,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         match receiver.try_recv() {
             Ok(event) => {
+                if matches!(event, wv::Event::Quit) {
+                    log::info!(
+                        "received quit from parent; shutting down web-view process"
+                    );
+                    *control_flow = ControlFlow::Exit;
+                    return;
+                }
+
                 let script = format!(
                     "window.postMessage({}, '*');",
                     serde_json::to_string(&event)
@@ -148,6 +157,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ..
         } = event
         {
+            let _ = to_parent.send(wv::Event::Quit);
             *control_flow = ControlFlow::Exit;
         }
     });
