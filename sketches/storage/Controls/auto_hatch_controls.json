@@ -38,18 +38,8 @@
     },
     {
       "type": "Slider",
-      "name": "hue",
-      "value": 0.423
-    },
-    {
-      "type": "Slider",
       "name": "limb_rotation_rate",
       "value": 0.225
-    },
-    {
-      "type": "Slider",
-      "name": "limb_rotation_range",
-      "value": 1.57
     },
     {
       "type": "Slider",
