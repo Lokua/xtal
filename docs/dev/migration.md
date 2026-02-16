@@ -1,409 +1,406 @@
-# xtal2 POC: Nannou-free shader framework
+# xtal2 Migration: POC to Full Runtime
 
-## Context
+## Goal
 
-Xtal has evolved into a live shader coding tool, but is built on Nannou 0.19.0
-which is unmaintained. The actual Nannou surface area is small (window/device/
-queue/frame), and 90% of sketches follow an identical pattern where the Rust file
-is pure boilerplate. The goal is to replace Nannou with raw winit+wgpu and
-radically reduce per-sketch ceremony so that a sketch is primarily defined by its
-**.yaml** and **.wgsl** files, with a minimal Rust config file.
+Move `xtal2` from a shader POC into the full Xtal runtime replacement.
 
-## POC Scope
+Required parity target:
 
-A single fullscreen shader running end-to-end:
-- winit window + wgpu surface (no Nannou)
-- Hot-reloading `.wgsl` shaders (port the notify watcher)
-- Uniform banks system working (hardcoded params for now, no ControlHub)
-- The new sketch definition pattern proven out
+- ControlHub features and control script behavior
+- animation and timing systems
+- UI integration (`xtal-ui` event flow)
+- runtime sketch switching
+- recording/runtime state features currently in `xtal`
 
-No ControlHub, no UI, no MIDI/OSC, no recording, no sketch switching.
+Hard constraints:
 
-## Target Sketch Definition (the north star)
+- no Nannou dependency except `nannou_osc`
+- no CPU drawing support in the new runtime
+- no per-sketch `bin` entrypoints or `CARGO_MANIFEST_DIR` boilerplate
 
-For the 90% fullscreen-shader case, the entire Rust file should be:
+## Current State (POC)
 
-```rust
-use xtal2::prelude::*;
+What exists today in `xtal2`:
 
-pub const CONFIG: SketchConfig = SketchConfig {
-    name: "my_shader",
-    display_name: "My Shader",
-    bpm: 134.0,
-    fps: 60.0,
-    w: 700,
-    h: 700,
-    banks: 4,
-};
-```
+- winit + wgpu surface setup
+- explicit graph (`render`, `compute`, `present`)
+- shader and YAML hot reload
+- runtime uniform banks
+- demo sketches in `xtal2-sketches/src/bin`
 
-That's it. The framework:
-- Finds `my_shader.yaml` and `my_shader.wgsl` co-located with the `.rs` file
-- Generates the `ShaderParams` struct with 4 banks
-- Handles init, update (populating params from hub), view (render to frame)
-- Wires up beats into `a3` automatically
+What blocks parity:
 
-For the POC, since we don't have ControlHub yet, the sketch will look slightly
-different (we'll hardcode a time/beats value). But the structure should be
-forward-compatible with the above vision.
+- generic `Runner<S>` prevents runtime sketch switching
+- sketch discovery is compile-target (`cargo run --bin ...`) based
+- run loop uses `ControlFlow::Poll` with no deterministic FPS pacing
+- only control defaults are applied (no full `ControlHub` runtime)
+- no UI bridge, map mode, recording, or state persistence
+- `var` parsing uses numeric components (`a1`..`a4`)
 
-### POC Sketch Definition
+## Target Architecture
 
-```rust
-use xtal2::prelude::*;
+### Workspace direction
 
-pub const CONFIG: SketchConfig = SketchConfig {
-    name: "demo",
-    display_name: "Demo",
-    fps: 60.0,
-    w: 700,
-    h: 700,
-    banks: 4,
-};
-```
+Target structure after cutover:
 
-The framework auto-provides resolution (a1, a2) and elapsed beats (a3). Bank a4
-onward are zeros until ControlHub is integrated later.
-
-### Non-trivial sketches (procedural, feedback, custom logic)
-
-These still need a struct + trait impl. The full `Sketch` trait remains available:
-
-```rust
-pub trait Sketch {
-    fn setup(&self, graph: &mut GraphBuilder);
-    fn update(&mut self, ctx: &Context) {}
-    fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}
-}
-```
-
-This is a future concern, not part of the POC.
-
-## Workspace Layout
-
-```
+```text
 xtal-project-2/
-  Cargo.toml              # workspace root includes xtal2 + xtal2-sketches
-  xtal2/
-    Cargo.toml
-    src/
-      lib.rs              # re-exports, prelude
-      prelude.rs          # convenience imports
-      app.rs              # winit event loop, run()
-      context.rs          # Context: device, queue, window size, timing
-      frame.rs            # Frame: wraps surface texture + command encoder
-      graph.rs            # explicit render graph + builder API
-      gpu.rs              # low-level pipeline/pass execution
-      shader_watch.rs     # notify file watcher for hot-reload
-      sketch.rs           # SketchConfig, Sketch trait
-      uniforms.rs         # runtime uniform bank generation
-  xtal2-sketches/
-    Cargo.toml
-    src/bin/
-      demo.rs             # entry point: creates config, calls xtal2::run()
-    shaders/
-      demo.wgsl           # example fullscreen shader
-    controls/
-      demo.yaml           # example control script
+  xtal2/          # new runtime + framework (event loop, graph, control, timing)
+  sketches/       # sketch modules registered at compile time
+  xtal-ui/        # frontend, ideally unchanged initially
 ```
-
-## Implementation Steps
-
-### Step 1: Cargo.toml + workspace integration
-
-Keep `xtal2` and `xtal2-sketches` as standalone crates during migration (each
-with its own local workspace root) so they can use a modern wgpu stack without
-conflicting with the legacy Nannou workspace lockfile.
-
-**xtal2/Cargo.toml dependencies:**
-- `wgpu = "26"` (latest compatible with `rustc 1.85`)
-- `winit = "0.30.12"`
-- `bytemuck = "1.25"` (Pod/Zeroable for uniform buffers)
-- `naga = "26"` (keep major aligned with `wgpu`)
-- `notify = "8.2"` (file watcher for shader hot-reload)
-- `log = "0.4.29"` + `env_logger = "0.11.9"` (logging)
-- `pollster = "0.4"` (block on async wgpu init)
 
 Notes:
-- Use latest stable versions, not Nannou-coupled versions.
-- `wgpu = "28"` requires `rustc 1.92`; upgrade toolchain before moving to 28.
-- `xtal2-sketches` depends on `xtal2` via workspace path dependency.
 
-### Step 2: sketch.rs — SketchConfig
+- `xtal` and `xtal-macros` can coexist during migration.
+- Remove old crates only after parity is verified.
+
+### Sketch authoring model
+
+Replace `xtal2-sketches/src/bin/*.rs` with module sketches, same style as legacy
+`sketches`, but registered with categories.
+
+Each sketch module exports:
+
+- `SKETCH_CONFIG`
+- `init(ctx: &RuntimeContext) -> SketchType`
+
+### Registration model (categorized)
+
+Introduce a categorized macro for runtime registry setup.
 
 ```rust
-pub struct SketchConfig {
-    pub name: &'static str,
-    pub display_name: &'static str,
-    pub fps: f32,
-    pub w: u32,
-    pub h: u32,
-    pub banks: usize,
+register_sketches! {
+    { title: "Main", enabled: true, sketches: [blob, cloud_tunnel, marcher] },
+    { title: "Auto", enabled: true, sketches: [auto_un, auto_wave_fract] },
+    { title: "Dev", enabled: false, sketches: [control_script_dev, wgpu_compute_dev] },
+    { title: "Genuary 2026", enabled: true, sketches: [g26_13_portrait, g26_14_dreams] },
 }
 ```
 
-No `bpm` or `play_mode` yet (those depend on timing/ControlHub).
+Registry should keep both:
 
-Trait definition for explicit manual pipeline wiring:
-```rust
-pub trait Sketch {
-    fn setup(&self, graph: &mut GraphBuilder);
-    fn update(&mut self, ctx: &Context) {}
-    fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}
-}
-```
+- `Vec<String>` flat names (for current `xtal-ui` compatibility)
+- structured categories for grouped selectors:
+  `{ title, enabled, sketches }`
 
-For the simple fullscreen case, provide a helper that internally builds a
-single-pass graph so boilerplate stays low.
+### Asset path model (no MANIFEST boilerplate)
 
-### Step 3: context.rs — Context
-
-Holds GPU handles and window state. Replaces `App` + `Context` from xtal.
+Add helper API that resolves assets relative to the sketch source file.
 
 ```rust
-pub struct Context {
-    pub device: Arc<wgpu::Device>,
-    pub queue: Arc<wgpu::Queue>,
-    window_size: [u32; 2],
-    scale_factor: f64,
-    frame_count: u64,
-    start_time: Instant,
-}
+let assets = SketchAssets::from_file(file!());
+let wgsl = assets.wgsl();
+let yaml = assets.yaml();
 ```
 
-Key methods:
-- `resolution() -> [f32; 2]`
-- `resolution_u32() -> [u32; 2]`
-- `elapsed_seconds() -> f32`
-- `frame_count() -> u64`
-
-### Step 4: frame.rs — Frame
-
-Wraps the wgpu surface texture for a single frame. Created by the run loop,
-passed to `view()`.
+For multipass sketches:
 
 ```rust
-pub struct Frame {
-    pub surface_view: wgpu::TextureView,
-    pub device: Arc<wgpu::Device>,
-    pub queue: Arc<wgpu::Queue>,
-    encoder: Option<wgpu::CommandEncoder>,
-    format: wgpu::TextureFormat,
-}
+let assets = SketchAssets::from_file(file!());
+let pass_a = assets.path("pass_a.wgsl");
+let pass_b = assets.path("pass_b.wgsl");
 ```
 
-Key methods:
-- `encoder(&mut self) -> &mut wgpu::CommandEncoder`
-- `submit(self)` — finishes encoder, submits to queue
+No sketch should need `env!("CARGO_MANIFEST_DIR")`.
 
-### Step 5: uniforms.rs — Runtime uniform banks (no proc macro)
+## Runtime API Direction
 
-Instead of a proc macro generating a struct, generate the uniform buffer at
-runtime from the `banks` count in SketchConfig.
+### SketchConfig (target)
 
-```rust
-pub struct UniformBanks {
-    data: Vec<[f32; 4]>,
-    buffer: wgpu::Buffer,
-    bind_group_layout: wgpu::BindGroupLayout,
-    bind_group: wgpu::BindGroup,
-}
-```
+`SketchConfig` should return to full runtime semantics:
 
-Key methods:
-- `new(device, banks: usize) -> Self`
-- `set_resolution(&mut self, w: f32, h: f32)` — sets a[0], a[1]
-- `set_beats(&mut self, beats: f32)` — sets a[2]
-- `set(&mut self, bank: &str, value: f32)` — e.g. "a4", "b1"
-- `upload(&self, queue)` — write_buffer to GPU
+- `name`, `display_name`
+- `play_mode`
+- `fps`
+- `bpm`
+- `w`, `h`
+- `banks`
+- optional `category` only if we want category at config level
 
-This is simpler than the proc macro approach and works for the convention-based
-sketches. The data layout is identical: N contiguous `[f32; 4]` arrays, matching
-the WGSL `Params { a: vec4f, b: vec4f, ... }` struct.
+Recommendation:
 
-### Step 6: graph.rs + gpu.rs — Explicit render graph runtime
+- Keep category in registration, not config.
+- Keep config focused on per-sketch runtime behavior.
 
-Port core GPU logic from `xtal/src/framework/gpu.rs`, replacing all Nannou
-types and introducing explicit graph wiring:
-- `app.main_window().device()` → `ctx.device` / `Arc<wgpu::Device>`
-- `app.main_window().queue()` → `ctx.queue` / `Arc<wgpu::Queue>`
-- `Frame::TEXTURE_FORMAT` → the surface format from configuration
-- `frame.command_encoder()` → `frame.encoder()`
-- `frame.texture_view()` → `frame.surface_view`
-- Nannou's `wgpu::TextureBuilder` → raw wgpu texture creation
-- Nannou's `wgpu::RenderPassBuilder` → raw wgpu render pass descriptors
-- Nannou's `wgpu::BindGroupBuilder` → raw wgpu bind group creation
+### Dynamic sketch runtime
 
-Graph model for POC:
-- Resources: textures, uniforms, external textures (image/video/camera later)
-- Nodes: `Render` and `Present` initially
-- Explicit `read()` / `write()` wiring per pass in Rust setup code
+Replace compile-time generic runner with trait-object runtime, so sketches can
+switch without restarting the process.
 
-For the POC, start with one fullscreen render pass + present, but use the graph
-API from day one so multipass and compute can be added without redesign.
+Core requirement:
 
-Drop `bevy_reflect` — it was only used for vertex attribute inference on custom
-vertex types. Fullscreen uses a hardcoded quad layout, procedural has no
-vertices. Can be re-added later if custom vertex types are needed.
+- the runtime owns `Box<dyn SketchAll>` and can rebuild graph/resources on
+  switch
 
-### Step 7: shader_watch.rs — Hot-reload watcher
+### UI payload compatibility
 
-Direct port from the `start_shader_watcher` + `validate_shader` logic in
-`xtal/src/framework/gpu.rs`. No Nannou dependencies in this code. Uses `notify`
-crate and `naga` for validation.
+Keep current `xtal-ui` contract first:
 
-Note: the watcher accepts `Create` and `Modify` events (not just
-`Modify(Data(Content))`) to handle atomic-write editors that rename temp files.
+- continue sending `Init.sketchNames: string[]`
+- continue sending `SwitchSketch` and `LoadSketch`
 
-### Step 8: app.rs — The run loop
+Add optional payload field for categories (non-breaking):
 
-The core event loop using winit + wgpu:
+- `Init.sketchCatalog` (or similar)
 
-```
-1. Create winit EventLoop + Window from SketchConfig (size, title)
-2. Create wgpu Instance → Surface → Adapter → Device + Queue
-3. Configure surface (format, present mode, size)
-4. Create Context (device, queue, window size, scale factor)
-5. Build graph from sketch `setup(&mut GraphBuilder)`
-6. Build `UniformBanks` from `SketchConfig.banks`
-7. Compile graph into executable GPU passes
-8. Enter event loop:
-   WindowEvent::Resized → reconfigure surface, update context
-   WindowEvent::RedrawRequested →
-     a. Update uniforms (resolution, time/beats)
-     b. Get surface texture → create Frame
-     c. Execute compiled graph (render passes + present source)
-     d. Frame submits encoder
-     e. Surface texture present
-     f. Request redraw
-   WindowEvent::CloseRequested → exit
-```
+This allows unmodified UI to keep working while enabling grouped selectors.
 
-Public API:
-```rust
-pub fn run<S: Sketch>(config: &'static SketchConfig, sketch: S)
-```
+## Frame Loop and Frame Controller
 
-Provide a convenience helper for the 90% case:
+### Problem
 
-```rust
-pub fn run_fullscreen_shader(
-    config: &'static SketchConfig,
-    shader_path: impl Into<PathBuf>,
-)
-```
+`ControlFlow::Poll + request_redraw` is effectively uncapped and does not give
+stable frame pacing or deterministic frame counts.
 
-### Step 9: lib.rs + prelude.rs
+### Target behavior
 
-```rust
-// lib.rs
-pub mod app;
-pub mod context;
-pub mod frame;
-pub mod graph;
-pub mod gpu;
-pub mod prelude;
-pub mod shader_watch;
-pub mod sketch;
-pub mod uniforms;
-```
+Implement a dedicated `FrameClock` for `winit` runtime:
 
-```rust
-// prelude.rs
-pub use crate::context::Context;
-pub use crate::frame::Frame;
-pub use crate::graph::*;
-pub use crate::sketch::*;
-```
+- fixed-step frame cadence (`fps` from current sketch)
+- `paused`, `force_render`, `advance_single_frame` behavior
+- monotonic `frame_count`
+- rolling average FPS metrics
+- deterministic beat timing for `FrameTiming`
 
-### Step 10: xtal2-sketches demo crate
+### Event loop integration
 
-**xtal2-sketches/src/bin/demo.rs:**
-```rust
-use xtal2::prelude::*;
+Use `ControlFlow::WaitUntil(next_frame_deadline)`.
 
-const CONFIG: SketchConfig = SketchConfig {
-    name: "demo",
-    display_name: "Demo",
-    fps: 60.0,
-    w: 700,
-    h: 700,
-    banks: 4,
-};
+Render only when:
 
-fn main() {
-    xtal2::run_fullscreen_shader(&CONFIG, "shaders/demo.wgsl");
-}
-```
+- frame clock says a frame is due
+- forced render is requested
+- single-frame advance is requested
 
-**xtal2-sketches/shaders/demo.wgsl:**
-A simple shader using the uniform banks pattern — circle with `params.a.w`
-controlling radius, `params.a.z` as time/beats.
+On sketch switch:
 
-The demo crate proves `xtal2` works as a standalone dependency, not as an
-examples-only layout.
+- set new FPS immediately
+- reset or remap frame counter based on switch policy
+- rebuild timing providers cleanly
 
-## Key Porting Decisions
+### Required tests
 
-### Nannou wgpu re-exports vs raw wgpu
+Port/adapt frame pacing tests from legacy `frame_controller`:
 
-Nannou re-exports wgpu with its own builder extensions (TextureBuilder,
-RenderPassBuilder, BindGroupBuilder). In xtal2, use raw wgpu APIs directly.
-The translation is straightforward:
+- exact frame interval increments
+- lag catch-up behavior
+- pause + single-frame advance
+- FPS change during runtime
 
-| Nannou pattern | Raw wgpu equivalent |
-|---|---|
-| `TextureBuilder::new().size(s).format(f).build(device)` | `device.create_texture(&TextureDescriptor { ... })` |
-| `RenderPassBuilder::new().color_attachment(view, ...).begin(&mut enc)` | `encoder.begin_render_pass(&RenderPassDescriptor { ... })` |
-| `frame.command_encoder()` | `device.create_command_encoder(...)` (owned by Frame) |
-| `texture.view().build()` | `texture.create_view(&TextureViewDescriptor::default())` |
+## ControlHub and Animation Port Strategy
 
-### No MSAA for POC
+Port these modules from `xtal/src/framework` first, then replace Nannou
+references:
 
-Nannou defaults to MSAA. For the POC, `sample_count: 1`. Can add MSAA later
-as a SketchConfig option.
+- `control/*`
+- `motion/*`
+- `frame_controller` logic (as new `frame_clock`)
+- `midi`, `audio`, `osc_receiver` (keep `nannou_osc` only)
 
-### Surface format
+Key runtime integrations:
 
-Use `surface.get_capabilities(adapter).formats[0]` or prefer `Bgra8UnormSrgb`
-if available (consistent with Nannou). Store in Context.
+- call `hub.update()` each frame
+- bind uniform banks from hub values
+- keep snapshots, transitions, bypass, and map mode behavior
 
-### Explicit render graph over implicit shader config
+## `var` Pattern Migration (`a1` -> `ax`)
 
-The pipeline should be wired explicitly in Rust (`setup(&mut GraphBuilder)`)
-instead of only naming a shader in `SketchConfig`. This keeps the simple case
-simple while supporting:
-- image/camera/video texture sources
-- multipass shader chains
-- compute passes
+### New standard
 
-`SketchConfig` remains for metadata and defaults (name, size, fps, banks), not
-for full pipeline topology.
+Use bank + component-letter naming:
 
-### No vertex type parameter
+- `ax`, `ay`, `az`, `aw`
+- `bx`, `by`, `bz`, `bw`
+- ...
 
-`GpuState<V>` had a generic vertex type. For the POC (fullscreen only), this
-is always the hardcoded quad. No generic needed. If procedural mode is added
-later, it can use `GpuState` without a vertex buffer (just draw N vertices).
+Mapping:
 
-## Verification
+- `x -> 0`
+- `y -> 1`
+- `z -> 2`
+- `w -> 3`
 
-1. `cargo check -p xtal2` compiles
-2. `cargo check -p xtal2-sketches` compiles
-3. `cargo run -p xtal2-sketches --bin demo` opens a window showing the shader
-4. Edit `shaders/demo.wgsl` while running → shader hot-reloads without restart
-5. Resize window → shader adapts (resolution uniform updates)
-6. Close window → clean exit
+### Reserved runtime defaults
 
-## Files Modified (existing)
+Bank `a` defaults:
 
-- `/Users/lokua/code/xtal-project-2/Cargo.toml` — no change required while
-  legacy Nannou workspace remains
+- `ax`: resolution width
+- `ay`: resolution height
+- `az`: beats
+- `aw`: reserved/free default slot (0.0 unless sketch sets it)
 
-## Files Referenced (for porting)
+### Compatibility recommendation
 
-- `xtal/src/framework/gpu.rs` — main port source
-- `xtal-macros/src/uniforms.rs` — bank naming scheme reference (a-x, 1-4)
-- `sketches/src/sketches/templates/du_fs_template.wgsl` — reference shader
-  structure (VertexInput, VertexOutput, Params, vs_main, fs_main,
-  correct_aspect)
+During migration, accept both forms:
+
+- new: `ax`
+- legacy: `a1`
+
+Log warnings for numeric style to help phase-out.
+
+## Nannou Replacement Map
+
+Replace Nannou references with explicit dependencies:
+
+- `nannou::rand` -> `rand`
+- `nannou::math::map_range/clamp` -> local math utils
+- `nannou::winit` types -> direct `winit`
+- `nannou_egui::egui::ahash::HashSet` -> `ahash` or std collections
+- `nannou::App`/`Frame` runtime flow -> `xtal2` runtime context/frame
+- keep `nannou_osc`
+
+## Piece-Meal Implementation TODOs
+
+### Phase 0: Runtime scaffold and safety rails
+
+- [ ] Create `xtal2::runtime` modules for app, registry, frame clock, events.
+- [ ] Add integration test harness that can launch headless/skipped GPU tests.
+- [ ] Add feature flags to allow staged cutover (`legacy_runtime`, `xtal2`).
+
+Exit criteria:
+
+- Runtime compiles with both legacy and xtal2 paths enabled.
+
+### Phase 1: Dynamic registry and switching
+
+- [ ] Port registry concept from `xtal::runtime::registry` into `xtal2`.
+- [ ] Introduce categorized registry data structure.
+- [ ] Refactor runner to hold `Box<dyn SketchAll>`.
+- [ ] Implement `switch_sketch()` with graph/resource rebuild.
+
+Exit criteria:
+
+- One process can switch between at least two sketch modules at runtime.
+
+### Phase 2: Replace bin-based sketch entrypoints
+
+- [ ] Add `register_sketches!` categorized macro.
+- [ ] Add `SketchAssets::from_file(file!())` helper API.
+- [ ] Move `xtal2-sketches/src/bin/*` demos into module-style sketches.
+- [ ] Remove `env!("CARGO_MANIFEST_DIR")` from sketch authoring path.
+
+Exit criteria:
+
+- Sketch startup and switching works with only module registration.
+
+### Phase 3: Deterministic frame clock
+
+- [ ] Implement fixed-step `FrameClock` with pause/advance modes.
+- [ ] Use `WaitUntil` scheduling in winit loop.
+- [ ] Wire FPS changes on sketch switch.
+- [ ] Add parity tests for pacing and lag behavior.
+
+Exit criteria:
+
+- Frame pacing tracks requested FPS and survives runtime switching.
+
+### Phase 4: ControlHub core parity
+
+- [ ] Port `control_hub`, config parse, dep graph, eval cache, effects.
+- [ ] Hook hot-reload watchers into new runtime update path.
+- [ ] Integrate snapshot/transition callbacks and bypass handling.
+- [ ] Validate YAML behaviors against representative legacy scripts.
+
+Exit criteria:
+
+- Same control script produces matching values on legacy and xtal2 runtime.
+
+### Phase 5: Animation and timing parity
+
+- [ ] Port `motion::animation`, `effects`, `timing`.
+- [ ] Rewire frame-based timing to new `FrameClock`.
+- [ ] Port OSC/MIDI timing modes (`frame`, `osc`, `midi`, `hybrid`).
+
+Exit criteria:
+
+- Beat-synced animation behavior matches legacy for reference sketches.
+
+### Phase 6: `var` pattern transition
+
+- [ ] Update uniform parser and control var parser for `ax/ay/az/aw`.
+- [ ] Keep temporary legacy parser support for `a1..a4`.
+- [ ] Update templates/docs/examples to letter-components only.
+- [ ] Add migration note tooling (warn or lint pass).
+
+Exit criteria:
+
+- New sketches use only `ax` style; old scripts still run with warnings.
+
+### Phase 7: UI bridge parity
+
+- [ ] Port `runtime/web_view*` IPC bridge.
+- [ ] Preserve current event schema expected by `xtal-ui`.
+- [ ] Add optional category payload to `Init` event.
+- [ ] Verify sketch switching from UI selector.
+
+Exit criteria:
+
+- `xtal-ui` runs against xtal2 backend with no required frontend edits.
+
+### Phase 8: MIDI, audio, map mode, and persistence
+
+- [ ] Port MIDI control in/out and map mode plumbing.
+- [ ] Port audio controls path and buffer sizing to new frame clock.
+- [ ] Port global/sketch state serialization and restore behavior.
+
+Exit criteria:
+
+- Saved controls, mappings, and runtime I/O controls behave as before.
+
+### Phase 9: Recording and performance tooling
+
+- [ ] Port frame recorder and encode pipeline.
+- [ ] Ensure sync with fixed frame clock.
+- [ ] Restore average FPS and dropped-frame reporting.
+
+Exit criteria:
+
+- Recordings complete with expected FPS and stable sync.
+
+### Phase 10: Cutover and cleanup
+
+- [ ] Migrate sketch modules category by category.
+- [ ] Remove or archive obsolete `xtal` runtime code.
+- [ ] Optionally rename `xtal2` back to `xtal` once parity is proven.
+
+Exit criteria:
+
+- xtal2 runtime is default; legacy runtime is removed or frozen.
+
+## Suggested Build Order for Fastest Value
+
+1. Phase 1 (dynamic switching)
+2. Phase 2 (registration + asset API)
+3. Phase 3 (frame clock)
+4. Phase 7 (UI bridge)
+5. Phase 4 and 5 (ControlHub + animation)
+6. Remaining parity phases
+
+This gives a usable runtime shell early, before deep control-system porting.
+
+## Open API Decisions (Locked)
+
+1. Category entry shape: `{ title, enabled, sketches }`.
+
+2. Category storage location: keep categories in registry registration, not in
+   `SketchConfig`.
+
+3. `var` compatibility window: support both `a1` and `ax` for one migration
+   cycle, then drop numeric aliases.
+
+4. UI grouping path: emit both flat `sketchNames` and structured catalog until
+   UI grouping lands.
+
+5. Crate naming: keep `xtal2` during migration; rename only after parity and
+   cleanup.
+
+## Suggestions to Improve Long-Term Quality
+
+- Add a tiny parity test suite that runs the same control script through legacy
+  and xtal2 logic and compares key values over N frames.
+- Keep runtime event payloads backward compatible and additive only.
+- Keep all Nannou replacements in thin adapter modules to reduce diff noise
+  during porting.
+- Make `SketchAssets` the only blessed asset-path mechanism.
+- Treat frame clock behavior as a tested contract, not runtime glue.

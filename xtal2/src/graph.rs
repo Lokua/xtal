@@ -4,6 +4,7 @@ use std::path::PathBuf;
 pub enum ResourceKind {
     Uniforms,
     Texture2d,
+    Image2d { path: PathBuf },
 }
 
 #[derive(Clone, Debug)]
@@ -63,6 +64,14 @@ impl GraphBuilder {
         self.resources.push(ResourceDecl {
             name: name.to_string(),
             kind: ResourceKind::Texture2d,
+        });
+        self
+    }
+
+    pub fn image(&mut self, name: &str, path: impl Into<PathBuf>) -> &mut Self {
+        self.resources.push(ResourceDecl {
+            name: name.to_string(),
+            kind: ResourceKind::Image2d { path: path.into() },
         });
         self
     }
