@@ -4,8 +4,8 @@ const CONFIG: SketchConfig = SketchConfig {
     name: "demo",
     display_name: "Demo",
     fps: 60.0,
-    w: 700,
-    h: 700,
+    w: 1920,
+    h: 1080,
     banks: 4,
 };
 

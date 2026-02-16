@@ -188,6 +188,7 @@ impl<S: Sketch> Runner<S> {
 
         let graph = CompiledGraph::compile(
             device.as_ref(),
+            queue.as_ref(),
             format,
             graph_spec,
             uniforms.bind_group_layout(),

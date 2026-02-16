@@ -13,6 +13,7 @@ log = "0.4.29"
 naga = { version = "26", features = ["wgsl-in"] }
 notify = "8.2"
 pollster = "0.4"
+png = "0.18.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_yml = "0.0.12"
 yaml-merge-keys = { version = "0.8.1", features = ["serde_yml"] }
