@@ -3,25 +3,23 @@ use std::path::PathBuf;
 use xtal2::prelude::*;
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "grid_splash_bw",
-    display_name: "Grid Splash B&W",
+    name: "feedback",
+    display_name: "Feedback",
     fps: 60.0,
-    bpm: 134.0,
-    w: 1920 / 2,
-    h: 1080 / 2,
-    banks: 10,
+    bpm: 120.0,
+    w: 960,
+    h: 540,
+    banks: 4,
 };
 
-pub struct GridSplashBwSketch {
+pub struct FeedbackSketch {
     shader_path: PathBuf,
     control_script_path: PathBuf,
 }
 
-impl Sketch for GridSplashBwSketch {
+impl Sketch for FeedbackSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         graph.uniforms("params");
-
-        // Feedback ping-pong textures.
         graph.texture2d("feedback_a");
         graph.texture2d("feedback_b");
 
@@ -33,8 +31,6 @@ impl Sketch for GridSplashBwSketch {
             .write("feedback_b")
             .add();
 
-        // Second feedback step writes back into `feedback_a` so the next frame
-        // samples an updated history texture.
         graph
             .render("feedback_step_b")
             .shader(self.shader_path.clone())
@@ -51,10 +47,10 @@ impl Sketch for GridSplashBwSketch {
     }
 }
 
-pub fn init() -> GridSplashBwSketch {
+pub fn init() -> FeedbackSketch {
     let assets = SketchAssets::from_file(file!());
 
-    GridSplashBwSketch {
+    FeedbackSketch {
         shader_path: assets.wgsl(),
         control_script_path: assets.yaml(),
     }

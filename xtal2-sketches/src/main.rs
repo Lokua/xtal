@@ -2,7 +2,7 @@ use xtal2::prelude::*;
 
 mod sketches;
 use sketches::main::grid_splash_bw;
-use sketches::templates::{basic, compute, image, multipass};
+use sketches::templates::{basic, compute, feedback, image, multipass};
 
 fn main() {
     let registry = xtal2::register_sketches! {
@@ -18,6 +18,7 @@ fn main() {
             enabled: true,
             sketches: [
                 basic,
+                feedback,
                 multipass,
                 compute,
                 image,
