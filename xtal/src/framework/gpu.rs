@@ -409,8 +409,7 @@ impl<V: Pod + Zeroable + Typed> GpuState<V> {
             // Modify, or Remove-then-create sequences.
             if !matches!(
                 event.kind,
-                notify::EventKind::Create(_)
-                    | notify::EventKind::Modify(_)
+                notify::EventKind::Create(_) | notify::EventKind::Modify(_)
             ) {
                 return;
             }

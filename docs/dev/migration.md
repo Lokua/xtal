@@ -71,49 +71,63 @@ These still need a struct + trait impl. The full `Sketch` trait remains availabl
 
 ```rust
 pub trait Sketch {
+    fn setup(&self, graph: &mut GraphBuilder);
     fn update(&mut self, ctx: &Context) {}
-    fn view(&mut self, frame: &mut Frame, ctx: &Context);
+    fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}
 }
 ```
 
 This is a future concern, not part of the POC.
 
-## Files to Create
+## Workspace Layout
 
 ```
-xtal-project/xtal2/
-  Cargo.toml
-  src/
-    lib.rs              # re-exports, prelude
-    prelude.rs          # convenience imports
-    app.rs              # winit event loop, run()
-    context.rs          # Context: device, queue, window size, timing
-    frame.rs            # Frame: wraps surface texture + command encoder
-    gpu.rs              # GpuState: pipeline, buffers, render (ported from xtal)
-    shader_watch.rs     # notify file watcher for hot-reload
-    sketch.rs           # SketchConfig, Sketch trait
-    uniforms.rs         # runtime uniform bank generation (no proc macro needed)
-  examples/
-    demo/
-      main.rs           # entry point: creates config, calls xtal2::run()
-      demo.wgsl         # example fullscreen shader
+xtal-project-2/
+  Cargo.toml              # workspace root includes xtal2 + xtal2-sketches
+  xtal2/
+    Cargo.toml
+    src/
+      lib.rs              # re-exports, prelude
+      prelude.rs          # convenience imports
+      app.rs              # winit event loop, run()
+      context.rs          # Context: device, queue, window size, timing
+      frame.rs            # Frame: wraps surface texture + command encoder
+      graph.rs            # explicit render graph + builder API
+      gpu.rs              # low-level pipeline/pass execution
+      shader_watch.rs     # notify file watcher for hot-reload
+      sketch.rs           # SketchConfig, Sketch trait
+      uniforms.rs         # runtime uniform bank generation
+  xtal2-sketches/
+    Cargo.toml
+    src/bin/
+      demo.rs             # entry point: creates config, calls xtal2::run()
+    shaders/
+      demo.wgsl           # example fullscreen shader
+    controls/
+      demo.yaml           # example control script
 ```
 
 ## Implementation Steps
 
 ### Step 1: Cargo.toml + workspace integration
 
-Add `xtal2` to the workspace members in
-`/Users/lokua/code/xtal-project/Cargo.toml`.
+Keep `xtal2` and `xtal2-sketches` as standalone crates during migration (each
+with its own local workspace root) so they can use a modern wgpu stack without
+conflicting with the legacy Nannou workspace lockfile.
 
 **xtal2/Cargo.toml dependencies:**
-- `wgpu` (same version as nannou uses, or latest stable)
-- `winit` (latest 0.29.x or 0.30.x — check what wgpu expects)
-- `bytemuck` (Pod/Zeroable for uniform buffers)
-- `naga` (shader validation before hot-reload)
-- `notify` (file watcher for shader hot-reload)
-- `log` + `env_logger` (logging)
-- `pollster` (block on async wgpu init)
+- `wgpu = "26"` (latest compatible with `rustc 1.85`)
+- `winit = "0.30.12"`
+- `bytemuck = "1.25"` (Pod/Zeroable for uniform buffers)
+- `naga = "26"` (keep major aligned with `wgpu`)
+- `notify = "8.2"` (file watcher for shader hot-reload)
+- `log = "0.4.29"` + `env_logger = "0.11.9"` (logging)
+- `pollster = "0.4"` (block on async wgpu init)
+
+Notes:
+- Use latest stable versions, not Nannou-coupled versions.
+- `wgpu = "28"` requires `rustc 1.92`; upgrade toolchain before moving to 28.
+- `xtal2-sketches` depends on `xtal2` via workspace path dependency.
 
 ### Step 2: sketch.rs — SketchConfig
 
@@ -130,13 +144,17 @@ pub struct SketchConfig {
 
 No `bpm` or `play_mode` yet (those depend on timing/ControlHub).
 
-Trait definition:
+Trait definition for explicit manual pipeline wiring:
 ```rust
 pub trait Sketch {
+    fn setup(&self, graph: &mut GraphBuilder);
     fn update(&mut self, ctx: &Context) {}
-    fn view(&mut self, frame: &mut Frame, ctx: &Context);
+    fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}
 }
 ```
+
+For the simple fullscreen case, provide a helper that internally builds a
+single-pass graph so boilerplate stays low.
 
 ### Step 3: context.rs — Context
 
@@ -203,9 +221,10 @@ This is simpler than the proc macro approach and works for the convention-based
 sketches. The data layout is identical: N contiguous `[f32; 4]` arrays, matching
 the WGSL `Params { a: vec4f, b: vec4f, ... }` struct.
 
-### Step 6: gpu.rs — GpuState (ported, simplified)
+### Step 6: graph.rs + gpu.rs — Explicit render graph runtime
 
-Port from `xtal/src/framework/gpu.rs`, replacing all Nannou types:
+Port core GPU logic from `xtal/src/framework/gpu.rs`, replacing all Nannou
+types and introducing explicit graph wiring:
 - `app.main_window().device()` → `ctx.device` / `Arc<wgpu::Device>`
 - `app.main_window().queue()` → `ctx.queue` / `Arc<wgpu::Queue>`
 - `Frame::TEXTURE_FORMAT` → the surface format from configuration
@@ -215,8 +234,13 @@ Port from `xtal/src/framework/gpu.rs`, replacing all Nannou types:
 - Nannou's `wgpu::RenderPassBuilder` → raw wgpu render pass descriptors
 - Nannou's `wgpu::BindGroupBuilder` → raw wgpu bind group creation
 
-For the POC, only implement fullscreen mode. Keep the structure extensible for
-procedural/texture modes later.
+Graph model for POC:
+- Resources: textures, uniforms, external textures (image/video/camera later)
+- Nodes: `Render` and `Present` initially
+- Explicit `read()` / `write()` wiring per pass in Rust setup code
+
+For the POC, start with one fullscreen render pass + present, but use the graph
+API from day one so multipass and compute can be added without redesign.
 
 Drop `bevy_reflect` — it was only used for vertex attribute inference on custom
 vertex types. Fullscreen uses a hardcoded quad layout, procedural has no
@@ -240,14 +264,15 @@ The core event loop using winit + wgpu:
 2. Create wgpu Instance → Surface → Adapter → Device + Queue
 3. Configure surface (format, present mode, size)
 4. Create Context (device, queue, window size, scale factor)
-5. Create GpuState for fullscreen shader (from SketchConfig.name → .wgsl path)
-6. Create UniformBanks (from SketchConfig.banks)
-7. Enter event loop:
+5. Build graph from sketch `setup(&mut GraphBuilder)`
+6. Build `UniformBanks` from `SketchConfig.banks`
+7. Compile graph into executable GPU passes
+8. Enter event loop:
    WindowEvent::Resized → reconfigure surface, update context
    WindowEvent::RedrawRequested →
      a. Update uniforms (resolution, time/beats)
      b. Get surface texture → create Frame
-     c. GpuState renders fullscreen quad with uniforms
+     c. Execute compiled graph (render passes + present source)
      d. Frame submits encoder
      e. Surface texture present
      f. Request redraw
@@ -256,25 +281,17 @@ The core event loop using winit + wgpu:
 
 Public API:
 ```rust
-pub fn run(config: &'static SketchConfig, shader_dir: PathBuf)
+pub fn run<S: Sketch>(config: &'static SketchConfig, sketch: S)
 ```
 
-The `shader_dir` is derived from `file!()` at the call site. We'll provide a
-convenience macro:
+Provide a convenience helper for the 90% case:
 
 ```rust
-#[macro_export]
-macro_rules! run {
-    ($config:expr) => {
-        xtal2::app::run(
-            &$config,
-            xtal2::shader_dir!(file!()),
-        )
-    };
-}
+pub fn run_fullscreen_shader(
+    config: &'static SketchConfig,
+    shader_path: impl Into<PathBuf>,
+)
 ```
-
-Where `shader_dir!` extracts the parent directory from `file!()`.
 
 ### Step 9: lib.rs + prelude.rs
 
@@ -283,6 +300,7 @@ Where `shader_dir!` extracts the parent directory from `file!()`.
 pub mod app;
 pub mod context;
 pub mod frame;
+pub mod graph;
 pub mod gpu;
 pub mod prelude;
 pub mod shader_watch;
@@ -292,14 +310,15 @@ pub mod uniforms;
 
 ```rust
 // prelude.rs
-pub use crate::sketch::*;
 pub use crate::context::Context;
 pub use crate::frame::Frame;
+pub use crate::graph::*;
+pub use crate::sketch::*;
 ```
 
-### Step 10: Example sketch
+### Step 10: xtal2-sketches demo crate
 
-**examples/demo/main.rs:**
+**xtal2-sketches/src/bin/demo.rs:**
 ```rust
 use xtal2::prelude::*;
 
@@ -313,13 +332,16 @@ const CONFIG: SketchConfig = SketchConfig {
 };
 
 fn main() {
-    xtal2::run!(&CONFIG);
+    xtal2::run_fullscreen_shader(&CONFIG, "shaders/demo.wgsl");
 }
 ```
 
-**examples/demo/demo.wgsl:**
+**xtal2-sketches/shaders/demo.wgsl:**
 A simple shader using the uniform banks pattern — circle with `params.a.w`
 controlling radius, `params.a.z` as time/beats.
+
+The demo crate proves `xtal2` works as a standalone dependency, not as an
+examples-only layout.
 
 ## Key Porting Decisions
 
@@ -346,6 +368,18 @@ as a SketchConfig option.
 Use `surface.get_capabilities(adapter).formats[0]` or prefer `Bgra8UnormSrgb`
 if available (consistent with Nannou). Store in Context.
 
+### Explicit render graph over implicit shader config
+
+The pipeline should be wired explicitly in Rust (`setup(&mut GraphBuilder)`)
+instead of only naming a shader in `SketchConfig`. This keeps the simple case
+simple while supporting:
+- image/camera/video texture sources
+- multipass shader chains
+- compute passes
+
+`SketchConfig` remains for metadata and defaults (name, size, fps, banks), not
+for full pipeline topology.
+
 ### No vertex type parameter
 
 `GpuState<V>` had a generic vertex type. For the POC (fullscreen only), this
@@ -355,15 +389,16 @@ later, it can use `GpuState` without a vertex buffer (just draw N vertices).
 ## Verification
 
 1. `cargo check -p xtal2` compiles
-2. `cargo run -p xtal2 --example demo` opens a window showing the shader
-3. Edit `demo.wgsl` while running → shader hot-reloads without restart
-4. Resize window → shader adapts (resolution uniform updates)
-5. Close window → clean exit
+2. `cargo check -p xtal2-sketches` compiles
+3. `cargo run -p xtal2-sketches --bin demo` opens a window showing the shader
+4. Edit `shaders/demo.wgsl` while running → shader hot-reloads without restart
+5. Resize window → shader adapts (resolution uniform updates)
+6. Close window → clean exit
 
 ## Files Modified (existing)
 
-- `/Users/lokua/code/xtal-project/Cargo.toml` — add `"xtal2"` to workspace
-  members
+- `/Users/lokua/code/xtal-project-2/Cargo.toml` — no change required while
+  legacy Nannou workspace remains
 
 ## Files Referenced (for porting)
 

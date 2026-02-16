@@ -184,10 +184,7 @@ impl Sketch for ControlScriptDev {
             draw.rect()
                 .color(ORANGE)
                 .w_h(map_range(rr, 0.0, 1.0, 10.0, wr.w()), 16.0)
-                .x_y(
-                    -wr.hw() + map_range(rr, 0.0, 1.0, 5.0, wr.hw()),
-                    y,
-                );
+                .x_y(-wr.hw() + map_range(rr, 0.0, 1.0, 5.0, wr.hw()), y);
 
             let rr_s = self.hub.get("rr_slewed");
             draw.rect()
