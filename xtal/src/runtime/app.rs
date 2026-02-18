@@ -777,12 +777,6 @@ impl AppModel {
                     let controls = self.web_view_controls();
                     self.wv_tx.emit(wv::Event::UpdatedControls(controls));
                 }
-
-                let sequence_enabled = self
-                    .hub()
-                    .is_some_and(|hub| hub.snapshot_sequence_enabled());
-                self.wv_tx
-                    .emit(wv::Event::SnapshotSequenceEnabled(sequence_enabled));
             }
             AppEvent::WebViewReady => {
                 self.wv_ready = true;
