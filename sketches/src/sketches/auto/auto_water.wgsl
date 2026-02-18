@@ -58,6 +58,8 @@ struct Params {
     e: vec4f,
     // blot_spread, envelope_size, envelope_softness, envelope_noise
     f: vec4f,
+    // blot_darken, blot_contrast, unused, unused
+    g: vec4f,
 }
 
 @group(0) @binding(0)
@@ -103,15 +105,15 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let envelope_size = max(params.f.y, 0.05);
     let envelope_softness = max(params.f.z, 0.001);
     let envelope_noise_strength = params.f.w;
+    let blot_darken = params.g.x;
+    let blot_contrast = params.g.y;
 
     let warm_paper = vec3f(0.985, 0.973, 0.952);
     let cool_paper = vec3f(0.95, 0.957, 0.985);
     let paper_color = mix(warm_paper, cool_paper, PAPER_TINT);
 
-    let top_hue = fract(hue + hue_spread * 0.5);
-    let bottom_hue = fract(hue - hue_spread * 0.5);
-    let top_color = hsv_to_rgb(vec3f(top_hue, 0.7, 0.92));
-    let bottom_color = hsv_to_rgb(vec3f(bottom_hue, 0.64, 0.86));
+    let top_hue = hue;
+    let bottom_hue = fract(hue + hue_spread);
 
     let aspect = w / max(h, 0.0001);
     var uv = position / zoom;
@@ -158,9 +160,6 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         );
         let drop_angle = hash11(cycle_seed * 3.13) * TAU;
         let base_p = rotate_2d(uv - center, drop_angle);
-        if length(base_p) > drop_radius * 3.4 {
-            continue;
-        }
 
         let envelope_scale = envelope_size * (1.1 + spread_anomaly * 0.35);
         let envelope_shape = 0.7 + shape_anomaly * 0.18;
@@ -192,7 +191,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             0.92,
         ));
         let drop_bottom = hsv_to_rgb(vec3f(
-            fract(bottom_hue + drop_hue_shift * 0.7),
+            fract(bottom_hue + drop_hue_shift),
             0.64,
             0.86,
         ));
@@ -348,7 +347,11 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                 (block % 2) == 0,
             );
             let layer_color = mix(gradient_color, alt_color, ALT_COLOR_MIX);
-            out_color = mix(out_color, layer_color, alpha);
+            let darkened = layer_color * (1.0 - blot_darken);
+            let contrasted = (darkened - vec3f(0.5)) * blot_contrast
+                + vec3f(0.5);
+            let tone_color = clamp(contrasted, vec3f(0.0), vec3f(1.0));
+            out_color = mix(out_color, tone_color, alpha);
         }
     }
 
@@ -406,8 +409,7 @@ fn blot_field(
         field += smoothstep(r * 1.5, r * 0.12, d);
     }
 
-    let core = smoothstep(base_radius * 1.45, base_radius * 0.2, length(p));
-    return max(field / f32(BLOT_COUNT), core * 0.42);
+    return field / f32(BLOT_COUNT);
 }
 
 fn circle_mask_fast(

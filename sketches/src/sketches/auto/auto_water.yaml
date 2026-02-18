@@ -22,7 +22,7 @@ shape:
 shape_anomaly:
   var: b1
   type: slider
-  range: [0.0, 2.0]
+  range: [0.0, 1.5]
   default: 0.9
   step: 0.01
 
@@ -78,7 +78,8 @@ layer_count:
 layer_alpha:
   var: c4
   type: slider
-  range: [0.001, 0.2]
+  # range: [0.001, 0.2]
+  range: [0.001, 1]
   default: 0.022
   step: 0.001
 
@@ -193,3 +194,24 @@ envelope_noise:
   range: [0.0, 0.25]
   default: 0.08
   step: 0.005
+
+# ------------------------------------------------------------------------------
+#  tone
+# ------------------------------------------------------------------------------
+
+tone:
+  type: separator
+
+blot_darken:
+  var: g1
+  type: slider
+  range: [0.0, 0.8]
+  default: 0.0
+  step: 0.01
+
+blot_contrast:
+  var: g2
+  type: slider
+  range: [0.5, 2.4]
+  default: 1.0
+  step: 0.01
