@@ -18,8 +18,6 @@ const EDGE_SOFTNESS: f32 = 0.014;
 const LAYER_DECAY_END: f32 = 0.72;
 const ALT_BLOCK_SIZE: i32 = 4;
 const ALT_COLOR_MIX: f32 = 0.26;
-const MASK_RADIUS: f32 = 0.115;
-const MASK_SOFTNESS: f32 = 0.028;
 const TEXTURE_DENSITY: f32 = 10.0;
 const GRAIN_SCALE: vec2f = vec2f(430.0, 330.0);
 const HALO_WIDTH: f32 = 0.045;
@@ -52,13 +50,13 @@ struct Params {
     b: vec4f,
     // base_deform, detail_deform, layer_count, layer_alpha
     c: vec4f,
-    // variance_strength, texture_strength, halo_strength, hue
+    // variance_strength, texture_gate_mix, halo_strength, hue
     d: vec4f,
     // hue_spread, blot_count, blot_rate, blot_fade
     e: vec4f,
     // blot_spread, envelope_size, envelope_softness, envelope_noise
     f: vec4f,
-    // blot_darken, blot_contrast, unused, unused
+    // blot_darken, blot_contrast, pool_strength, granulation_strength
     g: vec4f,
 }
 
@@ -92,7 +90,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let layer_alpha = clamp(params.c.w, 0.0, 1.0);
 
     let variance_strength = clamp(params.d.x, 0.0, 1.0);
-    let texture_strength = clamp(params.d.y, 0.0, 1.0);
+    let texture_gate_mix = clamp(params.d.y, 0.0, 1.0);
     let halo_strength = clamp(params.d.z, 0.0, 1.0);
     let hue = fract(params.d.w);
 
@@ -107,6 +105,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let envelope_noise_strength = params.f.w;
     let blot_darken = params.g.x;
     let blot_contrast = params.g.y;
+    let pool_strength = params.g.z;
+    let granulation_strength = params.g.w;
 
     let warm_paper = vec3f(0.985, 0.973, 0.952);
     let cool_paper = vec3f(0.95, 0.957, 0.985);
@@ -314,20 +314,49 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                 continue;
             }
 
-            let mask_uv = paper_uv + vec2f(
-                hash11(virtual_layer_f * 1.21 + cycle_seed),
-                hash11(virtual_layer_f * 2.73 + cycle_seed),
+            let qn = q / max(drop_radius, 0.001);
+            let edge_dist = abs(field - threshold_rough)
+                / max(EDGE_SOFTNESS * 7.0, 0.0001);
+            let edge_band = 1.0 - clamp(edge_dist, 0.0, 1.0);
+            let edge_pool = smoothstep(0.18, 0.92, edge_band);
+
+            let flow_space = rotate_2d(qn, splash_angle * 0.35);
+            let flow_noise = value_noise_2d(
+                flow_space * (TEXTURE_DENSITY * 0.4)
+                    + vec2f(layer_seed * 0.13, cycle_seed * 0.07),
             );
-            let texture_mask = circle_mask_fast(
-                mask_uv,
-                TEXTURE_DENSITY,
-                layer_seed,
+            let flow_streak = smoothstep(0.36, 0.9, flow_noise);
+
+            let grain_noise = value_noise_2d(
+                qn * (TEXTURE_DENSITY * 1.05)
+                    + vec2f(layer_seed * 0.31, -cycle_seed * 0.17),
             );
-            let texture_gate = smoothstep(0.2, 0.92, texture_mask);
+            let granulation = smoothstep(0.2, 0.85, grain_noise);
+
+            let interior = smoothstep(
+                threshold_rough + 0.04,
+                threshold_rough + 0.32,
+                field,
+            );
+            let fiber = value_noise_2d(
+                paper_uv * vec2f(210.0, 170.0)
+                    + vec2f(layer_seed * 0.09, cycle_seed * 0.03),
+            );
+            let fiber_break = smoothstep(0.18, 0.94, fiber);
+
+            let texture_field = clamp(
+                edge_pool * pool_strength
+                    + flow_streak * (0.22 + 0.24 * interior)
+                    + granulation * granulation_strength
+                    + fiber_break * 0.16,
+                0.0,
+                1.0,
+            );
+            let texture_gate = smoothstep(0.2, 0.96, texture_field);
 
             let alpha = clamp(
                 base_alpha
-                    * mix(1.0, texture_gate, texture_strength)
+                    * mix(1.0, texture_gate, texture_gate_mix)
                     * paint_envelope
                     * drop_life
                     * alpha_boost
@@ -410,20 +439,6 @@ fn blot_field(
     }
 
     return field / f32(BLOT_COUNT);
-}
-
-fn circle_mask_fast(
-    uv: vec2f,
-    density: f32,
-    seed: f32,
-) -> f32 {
-    let scaled = uv * density;
-    let cell = floor(scaled);
-    let local = fract(scaled) - vec2f(0.5);
-    let jitter = hash22(cell + vec2f(seed, seed * 1.23)) - vec2f(0.5);
-    let d = length(local - jitter);
-    let radius = MASK_RADIUS * (0.7 + 0.6 * (jitter.x + 0.5));
-    return 1.0 - smoothstep(radius, radius + MASK_SOFTNESS, d);
 }
 
 fn fbm2(p: vec2f, octaves: i32) -> f32 {
