@@ -588,4 +588,185 @@ mod tests {
             None
         );
     }
+
+    #[test]
+    fn serializes_and_parses_round_trip_for_payload_events() {
+        let events = vec![
+            Event::Randomize(vec!["foo".into(), "bar".into()]),
+            Event::Save(vec!["foo".into()]),
+            Event::SnapshotStore("1".into()),
+            Event::SnapshotRecall("2".into()),
+            Event::SnapshotDelete("3".into()),
+            Event::ReceiveDir(UserDir::Images, "/tmp/images".into()),
+            Event::ChangeAudioDevice("Built-in".into()),
+            Event::ChangeOscPort(9000),
+            Event::TransitionTime(2.5),
+            Event::Paused(true),
+            Event::PerfMode(true),
+            Event::MappingsEnabled(false),
+            Event::Exclusions(vec!["foo".into()]),
+            Event::UpdateControlBool {
+                name: "enabled".into(),
+                value: true,
+            },
+            Event::UpdateControlFloat {
+                name: "amount".into(),
+                value: 0.75,
+            },
+            Event::UpdateControlString {
+                name: "mode".into(),
+                value: "fast".into(),
+            },
+        ];
+
+        for event in events {
+            let encoded =
+                to_ui_message(&event).expect("serialize payload event");
+            let decoded =
+                parse_ui_message(&encoded).expect("parse payload event");
+            assert_eq!(decoded, event);
+        }
+    }
+
+    #[test]
+    fn serializes_and_parses_round_trip_for_unit_events() {
+        let events = vec![
+            Event::Advance,
+            Event::CaptureFrame,
+            Event::ClearBuffer,
+            Event::CommitMappings,
+            Event::QueueRecord,
+            Event::Quit,
+            Event::Ready,
+            Event::Reset,
+            Event::SendMidi,
+            Event::StartRecording,
+            Event::StopRecording,
+            Event::Tap,
+            Event::ToggleFullScreen,
+            Event::ToggleGuiFocus,
+            Event::ToggleMainFocus,
+        ];
+
+        for event in events {
+            let encoded = to_ui_message(&event).expect("serialize unit event");
+            let decoded = parse_ui_message(&encoded).expect("parse unit event");
+            assert_eq!(decoded, event);
+        }
+    }
+
+    #[test]
+    fn ui_bridge_smoke_inbound_and_outbound_flow() {
+        // Inbound UI JSON -> Event -> RuntimeEvent.
+        let paused_json = "{\"Paused\":true}";
+        let paused_event = parse_ui_message(paused_json).expect("parse paused");
+        assert_eq!(paused_event, Event::Paused(true));
+        assert_eq!(
+            map_event_to_runtime_event(&paused_event),
+            Some(RuntimeEvent::Pause(true))
+        );
+
+        let update_json =
+            "{\"UpdateControlFloat\":{\"name\":\"foo\",\"value\":0.7}}";
+        let update_event =
+            parse_ui_message(update_json).expect("parse float control update");
+        assert_eq!(
+            update_event,
+            Event::UpdateControlFloat {
+                name: "foo".into(),
+                value: 0.7,
+            }
+        );
+        assert_eq!(
+            map_event_to_runtime_event(&update_event),
+            Some(RuntimeEvent::UpdateUiControl((
+                "foo".into(),
+                ControlValue::Float(0.7),
+            )))
+        );
+
+        let capture_event =
+            parse_ui_message("\"CaptureFrame\"").expect("parse capture");
+        assert_eq!(capture_event, Event::CaptureFrame);
+        assert_eq!(
+            map_event_to_runtime_event(&capture_event),
+            Some(RuntimeEvent::CaptureFrame)
+        );
+
+        let start_event = parse_ui_message("\"StartRecording\"")
+            .expect("parse start recording");
+        assert_eq!(
+            map_event_to_runtime_event(&start_event),
+            Some(RuntimeEvent::StartRecording)
+        );
+
+        let stop_event = parse_ui_message("\"StopRecording\"")
+            .expect("parse stop recording");
+        assert_eq!(
+            map_event_to_runtime_event(&stop_event),
+            Some(RuntimeEvent::StopRecording)
+        );
+
+        // Outbound runtime events -> JSON shape/casing expected by xtal-ui.
+        let load = Event::LoadSketch {
+            bpm: 120.0,
+            bypassed: HashMap::default(),
+            controls: vec![],
+            display_name: "Smoke".into(),
+            fps: 60.0,
+            mappings: HashMap::default(),
+            paused: false,
+            perf_mode: false,
+            sketch_name: "smoke".into(),
+            sketch_width: 640,
+            sketch_height: 480,
+            snapshot_slots: vec!["1".into()],
+            snapshot_sequence_enabled: false,
+            tap_tempo_enabled: false,
+            exclusions: vec!["foo".into()],
+        };
+        let load_json = to_ui_message(&load).expect("serialize load sketch");
+        assert!(load_json.contains("\"LoadSketch\""));
+        assert!(load_json.contains("\"displayName\""));
+        assert!(load_json.contains("\"snapshotSlots\""));
+        assert!(load_json.contains("\"snapshotSequenceEnabled\""));
+
+        let updated = Event::UpdatedControls(vec![Control {
+            kind: ControlKind::Slider,
+            name: "foo".into(),
+            value: "0.7".into(),
+            disabled: false,
+            options: vec![],
+            min: 0.0,
+            max: 1.0,
+            step: 0.001,
+        }]);
+        let updated_json =
+            to_ui_message(&updated).expect("serialize updated controls");
+        assert!(updated_json.contains("\"UpdatedControls\""));
+        assert!(updated_json.contains("\"foo\""));
+
+        let encoding_json = to_ui_message(&Event::Encoding(true))
+            .expect("serialize encoding event");
+        assert_eq!(encoding_json, "{\"Encoding\":true}");
+
+        let start_json = to_ui_message(&Event::StartRecording)
+            .expect("serialize start event");
+        assert_eq!(start_json, "\"StartRecording\"");
+
+        let stop_json = to_ui_message(&Event::StopRecording)
+            .expect("serialize stop event");
+        assert_eq!(stop_json, "\"StopRecording\"");
+
+        // Duplicate guard at mapping boundary: outbound-only events never map
+        // back into runtime commands.
+        assert_eq!(map_event_to_runtime_event(&updated), None);
+        assert_eq!(
+            map_event_to_runtime_event(&Event::HubPopulated((
+                vec![],
+                HashMap::default(),
+            ))),
+            None
+        );
+    }
 }
