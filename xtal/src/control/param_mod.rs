@@ -25,7 +25,7 @@ use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
 use super::config::*;
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 use crate::warn_once;
 
 #[derive(Clone, Debug)]

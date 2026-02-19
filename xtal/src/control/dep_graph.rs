@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use log::warn;
 
 use super::param_mod::ParamValue;
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 use crate::ternary;
 
 pub type Node = HashMap<String, ParamValue>;

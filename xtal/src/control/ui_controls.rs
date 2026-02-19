@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 use crate::warn_once;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

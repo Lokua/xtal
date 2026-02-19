@@ -6,8 +6,8 @@ use std::thread;
 use std::time::Duration;
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::framework::frame_controller;
-use crate::framework::prelude::*;
+use crate::time::frame_clock;
+use crate::core::prelude::*;
 use crate::motion::SlewLimiter;
 use crate::warn_once;
 
@@ -155,7 +155,7 @@ impl AudioControls {
         {
             let mut state = self.state.lock().unwrap();
             let buffer_size =
-                stream_config.sample_rate.0 as f32 / frame_controller::fps();
+                stream_config.sample_rate.0 as f32 / frame_clock::fps();
             let buffer_size = buffer_size.ceil() as usize;
             let channels = stream_config.channels as usize;
             state.processor =

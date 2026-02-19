@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::events::RuntimeEvent;
 use super::registry::RuntimeRegistry;
 use crate::control::{ControlHub, ControlValue, UiControlConfig};
-use crate::framework::util::HashMap;
+use crate::core::util::HashMap;
 use crate::motion::TimingSource;
 
 pub type Sender = ipc_channel::ipc::IpcSender<Event>;

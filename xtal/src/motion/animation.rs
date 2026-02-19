@@ -5,8 +5,8 @@ use rand::{Rng, SeedableRng};
 use std::cell::RefCell;
 use std::str::FromStr;
 
-use crate::framework::frame_controller;
-use crate::framework::prelude::*;
+use crate::time::frame_clock;
+use crate::core::prelude::*;
 use crate::{ternary, warn_once};
 
 struct PerlinNoise {
@@ -333,7 +333,7 @@ impl<T: TimingSource> Animation<T> {
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
         let seconds_per_beat = 60.0 / self.timing.bpm();
         let total_seconds = beats * seconds_per_beat;
-        total_seconds * frame_controller::fps()
+        total_seconds * frame_clock::fps()
     }
 
     /// Return a relative phase position from [0, 1] within
@@ -713,10 +713,10 @@ pub mod animation_tests {
             env_logger::builder().is_test(true).init();
         });
         // Re-apply global frame state every test step because other serial
-        // tests mutate frame_controller FPS.
-        frame_controller::set_fps(FPS);
-        frame_controller::set_paused(false);
-        frame_controller::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
+        // tests mutate frame_clock FPS.
+        frame_clock::set_fps(FPS);
+        frame_clock::set_paused(false);
+        frame_clock::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
     }
 
     pub fn create_instance() -> Animation<FrameTiming> {

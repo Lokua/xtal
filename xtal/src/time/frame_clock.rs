@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
-use crate::framework::util::AtomicF32;
+use crate::core::util::AtomicF32;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TickResult {

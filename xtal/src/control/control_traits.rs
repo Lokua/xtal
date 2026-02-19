@@ -1,4 +1,4 @@
-use crate::framework::util::HashMap;
+use crate::core::util::HashMap;
 
 pub trait ControlConfig<VWrapper, V> {}
 

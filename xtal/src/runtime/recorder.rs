@@ -160,7 +160,7 @@ fn rolling_fps_stats(intervals_ms: &VecDeque<f64>) -> (f64, f64, f64) {
     (avg, min, max)
 }
 
-pub struct FrameRecorder {
+pub struct Recorder {
     buffers: Vec<Arc<wgpu::Buffer>>,
     width: u32,
     height: u32,
@@ -178,7 +178,7 @@ pub struct FrameRecorder {
     report: Option<RecordingReport>,
 }
 
-impl FrameRecorder {
+impl Recorder {
     pub fn new(
         device: Arc<wgpu::Device>,
         output_path: &str,

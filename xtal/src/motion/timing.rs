@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
-use crate::framework::frame_controller;
-use crate::framework::util::AtomicF32;
+use crate::time::frame_clock;
+use crate::core::util::AtomicF32;
 
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
@@ -103,8 +103,8 @@ impl FrameTiming {
 impl TimingSource for FrameTiming {
     fn beats(&self) -> f32 {
         let seconds_per_beat = 60.0 / self.bpm.get();
-        let frames_per_beat = seconds_per_beat * frame_controller::fps();
-        frame_controller::frame_count() as f32 / frames_per_beat.max(1.0)
+        let frames_per_beat = seconds_per_beat * frame_clock::fps();
+        frame_clock::frame_count() as f32 / frames_per_beat.max(1.0)
     }
 
     fn bpm(&self) -> f32 {

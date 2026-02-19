@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use super::param_mod::ParamValue;
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 
 //------------------------------------------------------------------------------
 // Top-level Types

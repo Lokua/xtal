@@ -25,7 +25,8 @@ use super::eval_cache::EvalCache;
 use super::map_mode::MapMode;
 use super::param_mod::{FromColdParams, ParamValue, SetFromParam};
 
-use crate::framework::{frame_controller, prelude::*};
+use crate::time::frame_clock;
+use crate::core::prelude::*;
 use crate::{ternary, warn_once};
 
 pub const TRANSITION_TIMES: [f32; 16] = [
@@ -211,7 +212,7 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     pub fn get(&self, name: &str) -> f32 {
-        let current_frame = frame_controller::frame_count();
+        let current_frame = frame_clock::frame_count();
         let current_beat = self.animation.beats();
 
         let original_name = match self.vars.get(name) {
@@ -699,7 +700,7 @@ impl<T: TimingSource> ControlHub<T> {
     pub fn recall_snapshot(&mut self, id: &str) -> Result<(), String> {
         match self.snapshots.get(id) {
             Some(snapshot) => {
-                let current_frame = frame_controller::frame_count();
+                let current_frame = frame_clock::frame_count();
                 let current_beat = self.animation.beats();
                 let transition_beats = self.transition_time.max(0.0);
 
@@ -816,7 +817,7 @@ impl<T: TimingSource> ControlHub<T> {
     ///
     /// [commit]: https://github.com/Lokua/xtal/commit/bcb1328
     pub fn randomize(&mut self, exclusions: Exclusions) {
-        let current_frame = frame_controller::frame_count();
+        let current_frame = frame_clock::frame_count();
         let current_beat = self.animation.beats();
         let transition_beats = self.transition_time.max(0.0);
 

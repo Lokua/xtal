@@ -7,7 +7,7 @@ use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoop};
 use tao::window::{WindowBuilder, WindowSizeConstraints};
 use wry::WebViewBuilder;
-use xtal::framework::logging::init_logger;
+use xtal::core::logging::init_logger;
 use xtal::runtime::web_view as wv;
 
 const OPEN_DEVTOOLS: bool = true;

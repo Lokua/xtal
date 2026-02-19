@@ -4,7 +4,7 @@ use super::web_view::Mappings;
 use crate::control::control_hub::Snapshots;
 use crate::control::map_mode::MapMode;
 use crate::control::*;
-use crate::framework::util::HashMap;
+use crate::core::util::HashMap;
 use crate::motion::TimingSource;
 use crate::runtime::storage;
 use log::error;

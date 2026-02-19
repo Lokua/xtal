@@ -5,7 +5,7 @@ use std::thread;
 
 use nannou_osc as osc;
 
-use super::prelude::*;
+use crate::core::prelude::*;
 
 pub static SHARED_OSC_RECEIVER: LazyLock<Arc<Receiver>> =
     LazyLock::new(Receiver::new);

@@ -2,18 +2,18 @@ mod support;
 
 use std::time::Instant;
 
-use xtal::framework::frame_controller;
+use xtal::time::frame_clock;
 
 #[test]
 fn frame_clock_scaffold_ticks() {
     let start = Instant::now();
-    frame_controller::set_fps(60.0);
-    frame_controller::set_paused(false);
-    frame_controller::set_frame_count(0);
-    frame_controller::reset_timing(start);
-    let now = start + frame_controller::frame_duration();
+    frame_clock::set_fps(60.0);
+    frame_clock::set_paused(false);
+    frame_clock::set_frame_count(0);
+    frame_clock::reset_timing(start);
+    let now = start + frame_clock::frame_duration();
 
-    let tick = frame_controller::tick(now);
+    let tick = frame_clock::tick(now);
     assert!(tick.should_render);
     assert_eq!(tick.frames_advanced, 1);
 }
