@@ -215,3 +215,15 @@ blot_contrast:
   range: [0.5, 2.4]
   default: 1.0
   step: 0.01
+
+# ------------------------------------------------------------------------------
+#  performance
+# ------------------------------------------------------------------------------
+
+performance:
+  type: separator
+
+fast_mode:
+  var: g3
+  type: checkbox
+  default: false
