@@ -5,6 +5,7 @@ use xtal2::prelude::*;
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "image",
     display_name: "Image",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 120.0,
     w: 700,

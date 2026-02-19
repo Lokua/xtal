@@ -10,6 +10,7 @@ impl Sketch for TestSketch {
 static TEST_CONFIG: SketchConfig = SketchConfig {
     name: "phase7_test",
     display_name: "Phase 7 Test",
+    play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 120.0,
     w: 640,

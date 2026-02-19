@@ -34,7 +34,7 @@ use crate::framework::{frame_controller, logging};
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
 use crate::motion::{Bpm, Timing};
-use crate::sketch::{Sketch, SketchConfig, TimingMode};
+use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
 use crate::uniforms::UniformBanks;
 
 #[derive(Clone, Default)]
@@ -1419,8 +1419,10 @@ impl XtalRuntime {
 
         hub.ui_controls.set(&name, value);
 
-        if let Some(window) = self.window.as_ref() {
-            window.request_redraw();
+        if self.config.play_mode == PlayMode::Advance && frame_controller::paused()
+        {
+            frame_controller::advance_single_frame();
+            self.request_render_now();
         }
     }
 
@@ -1434,6 +1436,7 @@ impl XtalRuntime {
         self.bpm.set(self.config.bpm);
         self.tap_tempo = TapTempo::new(self.config.bpm);
         frame_controller::set_fps(self.config.fps);
+        self.apply_play_mode();
 
         if let Some(window) = self.window.as_ref() {
             window.set_title(self.config.display_name);
@@ -1444,7 +1447,6 @@ impl XtalRuntime {
                     self.config.h,
                 ));
             }
-            window.request_redraw();
         }
 
         if !self.perf_mode {
@@ -1466,8 +1468,25 @@ impl XtalRuntime {
         ));
         self.emit_web_view_load_sketch();
         self.alert(format!("Switched to {}", self.config.display_name));
+        // Ensure frame 0 is visible even when play mode starts paused.
+        self.request_render_now();
 
         Ok(())
+    }
+
+    fn request_render_now(&mut self) {
+        self.render_requested = true;
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
+    }
+
+    fn apply_play_mode(&self) {
+        let paused = match self.config.play_mode {
+            PlayMode::Loop => false,
+            PlayMode::Pause | PlayMode::Advance => true,
+        };
+        frame_controller::set_paused(paused);
     }
 
     // Toggles performance-mode window policy.
@@ -1634,11 +1653,10 @@ impl ApplicationHandler for XtalRuntime {
             return;
         }
 
-        if let Some(window) = self.window.as_ref() {
-            window.request_redraw();
-        }
-
         frame_controller::set_fps(self.config.fps);
+        self.apply_play_mode();
+        // Always draw the first frame, even in Pause/Advance modes.
+        self.request_render_now();
         self.emit_web_view_init();
         self.emit_web_view_load_sketch();
     }

@@ -7,6 +7,7 @@ mod demo {
     pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
         name: "demo_p2",
         display_name: "Demo P2",
+        play_mode: PlayMode::Loop,
         fps: 60.0,
         bpm: 120.0,
         w: 640,
@@ -31,6 +32,7 @@ mod image {
     pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
         name: "image_p2",
         display_name: "Image P2",
+        play_mode: PlayMode::Loop,
         fps: 60.0,
         bpm: 120.0,
         w: 640,
