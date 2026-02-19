@@ -64,6 +64,13 @@ Read `README.md` first.
   when porting.
 - Always make sure there are more dynamic uniform banks in the Rust setup than
   what is needed
+- In rust, follow this ordering:
+  1. Imports/uses (grouped and ordered)
+  2. Constants and static definitions
+  3. Public type aliases
+  4. Main public struct(s) and their implementations
+  5. Public API functions
+  6. Private implementation details
 
 ## New Auto Sketch Checklist
 

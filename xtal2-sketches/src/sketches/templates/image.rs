@@ -34,10 +34,6 @@ impl Sketch for ImageSketch {
         graph.present("surface");
     }
 
-    fn default_uniforms(&self) -> &'static [(&'static str, f32)] {
-        &[("a4", 1.0), ("b1", 1.2), ("b2", 0.35)]
-    }
-
     fn control_script(&self) -> Option<PathBuf> {
         Some(self.control_script_path.clone())
     }

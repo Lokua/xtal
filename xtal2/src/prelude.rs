@@ -9,7 +9,6 @@ pub use crate::graph::*;
 pub use crate::motion::*;
 pub use crate::register_sketches;
 pub use crate::run_registry;
-pub use crate::run_registry_with_web_view;
 pub use crate::runtime::events::{
     RuntimeCommand, RuntimeCommandReceiver, RuntimeCommandSender, RuntimeEvent,
     RuntimeEventReceiver, RuntimeEventSender, command_channel, event_channel,

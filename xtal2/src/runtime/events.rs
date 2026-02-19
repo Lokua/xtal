@@ -46,7 +46,6 @@ pub enum RuntimeEvent {
     UpdateUiControl((String, ControlValue)),
     HubPopulated,
     SnapshotEnded,
-    FrameAdvanced(u64),
     FrameSkipped,
     SketchSwitched(String),
     WebView(web_view::Event),
