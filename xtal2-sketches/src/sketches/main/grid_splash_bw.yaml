@@ -173,9 +173,17 @@ d_amp:
   default: 8.0
   disabled: link_cd_amp
 
+# d_freq:
+#   var: h4
+#   type: slider
+#   range: [0.0, 1.0]
+#   default: 0.5
+#   disabled: link_cd_freq
 d_freq:
   var: h4
-  type: slider
+  type: midi
+  channel: 0
+  cc: 0
   range: [0.0, 1.0]
   default: 0.5
   disabled: link_cd_freq
