@@ -53,7 +53,7 @@ pub enum RuntimeEvent {
     SnapshotEnded,
     FrameSkipped,
     SketchSwitched(String),
-    WebView(web_view::Event),
+    WebView(Box<web_view::Event>),
     Stopped,
 }
 

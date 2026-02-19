@@ -1997,7 +1997,7 @@ impl XtalRuntime {
 
     // Convenience wrapper for runtime -> webview events.
     fn emit_web_view_event(&self, event: web_view::Event) {
-        self.emit_event(RuntimeEvent::WebView(event));
+        self.emit_event(RuntimeEvent::WebView(Box::new(event)));
     }
 
     // Returns cached per-sketch UI state.
@@ -2364,7 +2364,7 @@ impl XtalRuntime {
         }
 
         self.shutdown_signaled = true;
-        self.emit_event(RuntimeEvent::WebView(web_view::Event::Quit));
+        self.emit_event(RuntimeEvent::WebView(Box::new(web_view::Event::Quit)));
         self.emit_event(RuntimeEvent::Stopped);
     }
 
@@ -2418,9 +2418,7 @@ impl ApplicationHandler for XtalRuntime {
                 self.modifiers = modifiers.state();
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                if self.handle_main_window_shortcut(event_loop, &event) {
-                    return;
-                }
+                self.handle_main_window_shortcut(event_loop, &event);
             }
             WindowEvent::Resized(new_size) => self.resize(new_size),
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
@@ -2664,7 +2662,7 @@ fn queue_png_capture_save(
                 info!("{}", message);
                 if let Some(tx) = event_tx.as_ref() {
                     let _ = tx.send(RuntimeEvent::WebView(
-                        web_view::Event::Alert(message),
+                        Box::new(web_view::Event::Alert(message)),
                     ));
                 }
             }
@@ -2673,7 +2671,7 @@ fn queue_png_capture_save(
                 error!("{}", message);
                 if let Some(tx) = event_tx.as_ref() {
                     let _ = tx.send(RuntimeEvent::WebView(
-                        web_view::Event::Alert(message),
+                        Box::new(web_view::Event::Alert(message)),
                     ));
                 }
             }

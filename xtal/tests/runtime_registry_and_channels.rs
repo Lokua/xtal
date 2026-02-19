@@ -63,7 +63,9 @@ fn runtime_command_and_event_channels_round_trip() {
         .send(RuntimeEvent::SketchSwitched("phase1_test".to_string()))
         .expect("send event");
     event_tx
-        .send(RuntimeEvent::WebView(web_view::Event::AverageFps(58.5)))
+        .send(RuntimeEvent::WebView(Box::new(
+            web_view::Event::AverageFps(58.5),
+        )))
         .expect("send average fps event");
 
     assert_eq!(
@@ -77,6 +79,6 @@ fn runtime_command_and_event_channels_round_trip() {
     );
     assert_eq!(
         event_rx.recv().expect("recv average fps event"),
-        RuntimeEvent::WebView(web_view::Event::AverageFps(58.5))
+        RuntimeEvent::WebView(Box::new(web_view::Event::AverageFps(58.5)))
     );
 }

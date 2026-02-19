@@ -1,5 +1,6 @@
 use cpal::{Device, Stream, StreamConfig, traits::*};
 use std::error::Error;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -79,7 +80,7 @@ pub struct AudioControls {
     buffer_processor: BufferProcessor,
     state: Arc<Mutex<State>>,
     device_name: Option<String>,
-    stream: Option<Arc<Stream>>,
+    stream: Option<Rc<Stream>>,
 }
 
 impl Default for AudioControls {
@@ -206,7 +207,7 @@ impl AudioControls {
         )?;
 
         stream.play()?;
-        self.stream = Some(Arc::new(stream));
+        self.stream = Some(Rc::new(stream));
         self.is_active = true;
         info!("AudioControls connected to device: {:?}", device.name()?);
         Ok(())
