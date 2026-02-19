@@ -5,8 +5,8 @@ use rand::{Rng, SeedableRng};
 use std::cell::RefCell;
 use std::str::FromStr;
 
-use crate::time::frame_clock;
 use crate::core::prelude::*;
+use crate::time::frame_clock;
 use crate::{ternary, warn_once};
 
 struct PerlinNoise {

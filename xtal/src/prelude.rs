@@ -1,10 +1,10 @@
 pub use crate::context::Context;
 pub use crate::control::*;
+pub use crate::core::logging::init_logger;
+pub use crate::core::logging::{debug, error, info, trace, warn};
 pub use crate::debug_once;
 pub use crate::debug_throttled;
 pub use crate::frame::Frame;
-pub use crate::core::logging::init_logger;
-pub use crate::core::logging::{debug, error, info, trace, warn};
 pub use crate::graph::*;
 pub use crate::motion::*;
 pub use crate::register_sketches;

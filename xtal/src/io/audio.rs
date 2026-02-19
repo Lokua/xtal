@@ -7,8 +7,8 @@ use std::cmp::Ordering;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-use crate::time::frame_clock;
 use crate::core::prelude::*;
+use crate::time::frame_clock;
 
 #[derive(Debug, Clone, Copy)]
 struct SlewConfig {

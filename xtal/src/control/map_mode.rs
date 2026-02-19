@@ -3,8 +3,8 @@ use std::error::Error;
 use std::fmt;
 use std::sync::{Arc, Mutex};
 
-use crate::io::midi;
 use crate::core::prelude::*;
+use crate::io::midi;
 
 pub type ChannelAndController = (usize, usize);
 pub type Mappings = HashMap<String, ChannelAndController>;
@@ -36,22 +36,6 @@ impl Default for MapMode {
 }
 
 impl MapMode {
-    const PROXY_NAME_SUFFIX: &str = "__slider_proxy";
-
-    pub fn proxy_name(name: &str) -> String {
-        format!("{}{}", name, Self::PROXY_NAME_SUFFIX)
-    }
-
-    pub fn unproxied_name(proxy_name: &str) -> Option<String> {
-        proxy_name
-            .strip_suffix(Self::PROXY_NAME_SUFFIX)
-            .map(|s| s.to_string())
-    }
-
-    pub fn is_proxy_name(name: &str) -> bool {
-        name.ends_with(Self::PROXY_NAME_SUFFIX)
-    }
-
     pub fn mappings(&self) -> Mappings {
         let state = self.state.lock().unwrap();
         state.mappings.clone()
@@ -227,13 +211,6 @@ impl std::error::Error for MappingError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn proxy_name_round_trip() {
-        let proxy = MapMode::proxy_name("ax");
-        assert!(MapMode::is_proxy_name(&proxy));
-        assert_eq!(MapMode::unproxied_name(&proxy), Some("ax".to_string()));
-    }
 
     #[test]
     fn remove_conflicts_keeps_last_mapping() {

@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use super::web_view::Mappings;
 use crate::control::control_hub::Snapshots;
-use crate::control::map_mode::MapMode;
 use crate::control::*;
 use crate::core::util::HashMap;
 use crate::motion::TimingSource;
@@ -99,6 +98,12 @@ impl From<&TransitorySketchState> for SerializableSketchState {
                 name: name.clone(),
                 value: *value,
             })
+            .chain(state.midi_overrides.iter().map(|(name, value)| {
+                BasicNameValueConfig {
+                    name: name.clone(),
+                    value: *value,
+                }
+            }))
             .collect();
 
         let osc_controls = state
@@ -242,6 +247,8 @@ impl SerializableSnapshot {
 pub struct TransitorySketchState {
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
+    pub midi_overrides: HashMap<String, f32>,
+    pub midi_override_configs: HashMap<String, MidiControlConfig>,
     pub osc_controls: OscControls,
     pub snapshots: Snapshots,
     pub mappings: Mappings,
@@ -253,6 +260,8 @@ impl Default for TransitorySketchState {
         Self {
             ui_controls: UiControlBuilder::new().build(),
             midi_controls: MidiControlBuilder::new().build(),
+            midi_overrides: HashMap::default(),
+            midi_override_configs: HashMap::default(),
             osc_controls: OscControlBuilder::new().build(),
             snapshots: HashMap::default(),
             mappings: HashMap::default(),
@@ -270,6 +279,8 @@ impl TransitorySketchState {
         Self {
             ui_controls: hub.ui_controls.clone(),
             midi_controls: hub.midi_controls.clone(),
+            midi_overrides: hub.midi_overrides.lock().unwrap().clone(),
+            midi_override_configs: hub.midi_override_configs.clone(),
             osc_controls: hub.osc_controls.clone(),
             snapshots: hub.snapshots.clone(),
             mappings,
@@ -291,14 +302,18 @@ impl TransitorySketchState {
     fn setup_midi_mappings(&mut self) {
         self.mappings.iter().for_each(|(name, (ch, cc))| {
             if let Some((min, max)) = self.ui_controls.slider_range(name) {
-                self.midi_controls.add(
-                    &MapMode::proxy_name(name),
+                self.midi_override_configs.insert(
+                    name.clone(),
                     MidiControlConfig {
                         channel: *ch as u8,
                         cc: *cc as u8,
                         min,
                         max,
-                        value: 0.0,
+                        value: self
+                            .midi_overrides
+                            .get(name)
+                            .copied()
+                            .unwrap_or(0.0),
                     },
                 );
             } else {
@@ -350,12 +365,17 @@ impl TransitorySketchState {
         &mut self,
         serialized_state: &SerializableSketchState,
     ) {
-        Self::merge_controls(
-            &mut self.midi_controls,
-            &serialized_state.midi_controls,
-            |s| &s.name,
-            |s| Some(s.value),
-        );
+        for control in &serialized_state.midi_controls {
+            if self.midi_controls.has(&control.name) {
+                self.midi_controls.set(&control.name, control.value);
+                continue;
+            }
+
+            if self.midi_override_configs.contains_key(&control.name) {
+                self.midi_overrides
+                    .insert(control.name.clone(), control.value);
+            }
+        }
     }
 
     fn merge_osc_controls(

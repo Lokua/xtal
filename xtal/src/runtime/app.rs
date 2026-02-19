@@ -3,9 +3,9 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Arc;
 use std::sync::Once;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use log::{debug, error, info, trace, warn};
@@ -30,19 +30,19 @@ use super::web_view_bridge::WebViewBridge;
 use crate::context::Context;
 use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
-use crate::frame::Frame;
-use crate::io::audio::list_audio_devices;
-use crate::io::osc::SHARED_OSC_RECEIVER;
-use crate::core::util::{HashMap, uuid_5};
-use crate::time::frame_clock;
-use crate::time::tap_tempo::TapTempo;
 use crate::core::logging;
-use crate::io::midi;
-use crate::gpu::compute_row_padding;
+use crate::core::util::{HashMap, uuid_5};
+use crate::frame::Frame;
 use crate::gpu::CompiledGraph;
+use crate::gpu::compute_row_padding;
 use crate::graph::GraphBuilder;
+use crate::io::audio::list_audio_devices;
+use crate::io::midi;
+use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::motion::{Bpm, Timing};
 use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
+use crate::time::frame_clock;
+use crate::time::tap_tempo::TapTempo;
 use crate::uniforms::UniformBanks;
 
 const MIDI_START: u8 = 0xFA;
@@ -380,30 +380,14 @@ impl XtalRuntime {
                         return false;
                     };
 
-                    for (name, _) in hub.midi_controls.configs() {
-                        if MapMode::is_proxy_name(&name)
-                            && !hub
-                                .ui_controls
-                                .has(&MapMode::unproxied_name(&name).unwrap())
-                        {
-                            debug!("Removing orphaned proxy: {}", name);
-                            hub.midi_controls.remove(&name);
-                        }
-                    }
+                    hub.midi_override_configs.retain(|name, _| {
+                        mappings.contains_key(name) && hub.ui_controls.has(name)
+                    });
+                    hub.midi_overrides.lock().unwrap().retain(|name, _| {
+                        hub.midi_override_configs.contains_key(name)
+                    });
 
                     for (name, (ch, cc)) in mappings {
-                        let proxy_name = &MapMode::proxy_name(&name);
-
-                        if let Some(config) =
-                            hub.midi_controls.config(proxy_name)
-                        {
-                            if config.channel == ch as u8
-                                && config.cc == cc as u8
-                            {
-                                continue;
-                            }
-                        }
-
                         let slider_range =
                             match hub.ui_controls.slider_range(&name) {
                                 Some(range) => range,
@@ -413,15 +397,27 @@ impl XtalRuntime {
                                 }
                             };
 
-                        hub.midi_controls.add(
-                            proxy_name,
+                        let existing_value = hub
+                            .midi_overrides
+                            .lock()
+                            .unwrap()
+                            .get(&name)
+                            .copied()
+                            .unwrap_or(0.0);
+
+                        hub.midi_override_configs.insert(
+                            name,
                             crate::control::MidiControlConfig::new(
                                 (ch as u8, cc as u8),
                                 slider_range,
-                                0.0,
+                                existing_value,
                             ),
                         );
                     }
+
+                    hub.midi_controls.set_override_configs(
+                        hub.midi_override_configs.clone(),
+                    );
 
                     if let Err(err) = hub.midi_controls.restart() {
                         error!("{}", err);
@@ -445,7 +441,11 @@ impl XtalRuntime {
 
                 self.map_mode.remove(&name);
                 if let Some(hub) = self.control_hub.as_mut() {
-                    hub.midi_controls.remove(&MapMode::proxy_name(&name));
+                    hub.midi_override_configs.remove(&name);
+                    hub.midi_overrides.lock().unwrap().remove(&name);
+                    hub.midi_controls.set_override_configs(
+                        hub.midi_override_configs.clone(),
+                    );
                 }
 
                 self.map_mode.currently_mapping = Some(name.clone());
@@ -599,7 +599,11 @@ impl XtalRuntime {
                 self.map_mode.currently_mapping = None;
 
                 if let Some(hub) = self.control_hub.as_mut() {
-                    hub.midi_controls.remove(&MapMode::proxy_name(&name));
+                    hub.midi_override_configs.remove(&name);
+                    hub.midi_overrides.lock().unwrap().remove(&name);
+                    hub.midi_controls.set_override_configs(
+                        hub.midi_override_configs.clone(),
+                    );
                 }
 
                 let mappings = self.map_mode.mappings();
@@ -725,7 +729,7 @@ impl XtalRuntime {
                 info!("Setting mappings_enabled to {}", enabled);
                 self.mappings_enabled = enabled;
                 if let Some(hub) = self.control_hub.as_mut() {
-                    hub.midi_proxies_enabled = enabled;
+                    hub.midi_overrides_enabled = enabled;
                 }
                 self.save_global_state();
             }
@@ -1100,9 +1104,7 @@ impl XtalRuntime {
 
             // 6) Recording readback copy is encoded pre-submit.
             if self.recording_state.is_recording {
-                if let Some(recorder) =
-                    self.recording_state.recorder.as_mut()
-                {
+                if let Some(recorder) = self.recording_state.recorder.as_mut() {
                     if let Some(source_texture) =
                         graph.recording_source_texture()
                     {
@@ -1184,9 +1186,7 @@ impl XtalRuntime {
             let submission_index = frame.submit();
 
             if self.recording_state.is_recording {
-                if let Some(recorder) =
-                    self.recording_state.recorder.as_mut()
-                {
+                if let Some(recorder) = self.recording_state.recorder.as_mut() {
                     recorder.on_submitted();
                 }
             }
@@ -1507,9 +1507,13 @@ impl XtalRuntime {
 
         let mut hub = ControlHub::from_path(path, timing);
         hub.set_transition_time(self.transition_time);
-        hub.midi_proxies_enabled = self.mappings_enabled;
+        hub.midi_overrides_enabled = self.mappings_enabled;
         hub.midi_controls.hrcc = self.hrcc;
         hub.midi_controls.set_port(self.midi_input_port.clone());
+        hub.midi_controls
+            .set_override_state(hub.midi_overrides.clone());
+        hub.midi_controls
+            .set_override_configs(hub.midi_override_configs.clone());
         hub.audio_controls
             .set_device_name(self.audio_device.clone());
         info!(
@@ -1828,8 +1832,7 @@ impl XtalRuntime {
                 if !previous.is_empty() {
                     warn!(
                         "Persisted MIDI input port '{}' not found; using '{}' for this session",
-                        previous,
-                        self.midi_input_port
+                        previous, self.midi_input_port
                     );
                 }
                 info!(
@@ -1854,8 +1857,7 @@ impl XtalRuntime {
                 if !previous.is_empty() {
                     warn!(
                         "Persisted MIDI clock port '{}' not found; using '{}' for this session",
-                        previous,
-                        self.midi_clock_port
+                        previous, self.midi_clock_port
                     );
                 }
                 info!(
@@ -1882,8 +1884,7 @@ impl XtalRuntime {
                 if !previous.is_empty() {
                     warn!(
                         "Persisted MIDI output port '{}' not found; using '{}' for this session",
-                        previous,
-                        self.midi_output_port
+                        previous, self.midi_output_port
                     );
                 }
                 info!(
@@ -2042,7 +2043,7 @@ impl XtalRuntime {
             .or_default()
     }
 
-    // Derives UI mapping payload from hub MIDI proxy configs.
+    // Derives UI mapping payload from hub MIDI override configs.
     fn mappings_from_hub(&self) -> web_view::Mappings {
         let Some(hub) = self.control_hub.as_ref() else {
             return HashMap::default();
@@ -2050,13 +2051,9 @@ impl XtalRuntime {
 
         let mut mappings = HashMap::default();
 
-        for (name, config) in hub.midi_controls.configs() {
-            let Some(unproxied) = MapMode::unproxied_name(&name) else {
-                continue;
-            };
-
+        for (name, config) in &hub.midi_override_configs {
             mappings.insert(
-                unproxied,
+                name.to_string(),
                 (config.channel as usize, config.cc as usize),
             );
         }
@@ -2160,9 +2157,7 @@ impl XtalRuntime {
 
         hub.ui_controls.set(&name, value);
 
-        if self.config.play_mode == PlayMode::Advance
-            && frame_clock::paused()
-        {
+        if self.config.play_mode == PlayMode::Advance && frame_clock::paused() {
             frame_clock::advance_single_frame();
             self.request_render_now();
         }
@@ -2248,7 +2243,6 @@ impl XtalRuntime {
 
             window.request_redraw();
         }
-
     }
 
     // Sends a UI alert message.
@@ -2343,6 +2337,13 @@ impl XtalRuntime {
                 hub.midi_controls = state.midi_controls.clone();
                 hub.midi_controls.hrcc = self.hrcc;
                 hub.midi_controls.set_port(self.midi_input_port.clone());
+                hub.midi_overrides =
+                    Arc::new(Mutex::new(state.midi_overrides.clone()));
+                hub.midi_override_configs = state.midi_override_configs.clone();
+                hub.midi_controls
+                    .set_override_state(hub.midi_overrides.clone());
+                hub.midi_controls
+                    .set_override_configs(hub.midi_override_configs.clone());
                 hub.osc_controls = state.osc_controls.clone();
                 hub.snapshots = state.snapshots.clone();
                 hub.midi_controls
@@ -2674,18 +2675,18 @@ fn queue_png_capture_save(
                 let message = format!("Image saved to {:?}", path);
                 info!("{}", message);
                 if let Some(tx) = event_tx.as_ref() {
-                    let _ = tx.send(RuntimeEvent::WebView(
-                        Box::new(web_view::Event::Alert(message)),
-                    ));
+                    let _ = tx.send(RuntimeEvent::WebView(Box::new(
+                        web_view::Event::Alert(message),
+                    )));
                 }
             }
             Err(err) => {
                 let message = format!("Failed to save image capture: {}", err);
                 error!("{}", message);
                 if let Some(tx) = event_tx.as_ref() {
-                    let _ = tx.send(RuntimeEvent::WebView(
-                        Box::new(web_view::Event::Alert(message)),
-                    ));
+                    let _ = tx.send(RuntimeEvent::WebView(Box::new(
+                        web_view::Event::Alert(message),
+                    )));
                 }
             }
         }

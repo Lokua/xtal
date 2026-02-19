@@ -22,11 +22,10 @@ use yaml_merge_keys::merge_keys_serde_yml;
 use super::config::*;
 use super::dep_graph::{DepGraph, Node};
 use super::eval_cache::EvalCache;
-use super::map_mode::MapMode;
 use super::param_mod::{FromColdParams, ParamValue, SetFromParam};
 
-use crate::time::frame_clock;
 use crate::core::prelude::*;
+use crate::time::frame_clock;
 use crate::{ternary, warn_once};
 
 pub const TRANSITION_TIMES: [f32; 16] = [
@@ -106,10 +105,12 @@ pub struct ControlHub<T: TimingSource> {
     pub animation: Animation<T>,
     pub ui_controls: UiControls,
     pub midi_controls: MidiControls,
+    pub midi_overrides: Arc<Mutex<HashMap<String, f32>>>,
+    pub midi_override_configs: HashMap<String, MidiControlConfig>,
     pub osc_controls: OscControls,
     pub audio_controls: AudioControls,
     pub snapshots: Snapshots,
-    pub midi_proxies_enabled: bool,
+    pub midi_overrides_enabled: bool,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
@@ -136,6 +137,8 @@ impl<T: TimingSource> ControlHub<T> {
         let mut script = Self {
             ui_controls: UiControls::default(),
             midi_controls: MidiControls::default(),
+            midi_overrides: Arc::new(Mutex::new(HashMap::default())),
+            midi_override_configs: HashMap::default(),
             osc_controls: OscControls::default(),
             audio_controls: AudioControls::default(),
             animation: Animation::new(timing),
@@ -154,9 +157,13 @@ impl<T: TimingSource> ControlHub<T> {
             snapshot_sequence_runtime: SnapshotSequenceRuntime::default(),
             snapshot_ended_callbacks: vec![],
             populated_callbacks: vec![],
-            midi_proxies_enabled: true,
+            midi_overrides_enabled: true,
             preserve_values_on_reload: true,
         };
+
+        script
+            .midi_controls
+            .set_override_state(script.midi_overrides.clone());
 
         if let Some(yaml) = yaml_str {
             let config =
@@ -220,42 +227,41 @@ impl<T: TimingSource> ControlHub<T> {
             None => name,
         };
 
-        let mut value_key = original_name;
-        let midi_proxy_name = MapMode::proxy_name(original_name);
-        if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
-        {
-            value_key = &midi_proxy_name;
-        }
-
-        if let Some(Some(bypass)) = self.bypassed.get(value_key) {
+        if let Some(Some(bypass)) = self.bypassed.get(original_name) {
             return *bypass;
         }
 
-        self.run_dependencies(value_key, current_frame);
+        self.run_dependencies(original_name, current_frame);
 
-        let value =
-            if let Some(value) = self.active_transition.as_ref().and_then(|t| {
-                self.get_transition_value(current_beat, value_key, t)
-            }) {
-                value
-            } else {
-                self.get_raw(value_key, current_frame)
-            };
-
-        // Use the original control key for modulation/effect chain lookup.
-        // Mapped proxy controls are value sources, not independent chain roots.
-        let chain_key = if self.modulations.contains_key(original_name) {
-            original_name
+        let midi_override_value = if self.midi_overrides_enabled {
+            self.midi_overrides
+                .lock()
+                .unwrap()
+                .get(original_name)
+                .copied()
         } else {
-            value_key
+            None
+        };
+
+        let value = if let Some(value) =
+            self.active_transition.as_ref().and_then(|t| {
+                self.get_transition_value(current_beat, original_name, t)
+            }) {
+            value
+        } else if let Some(value) = midi_override_value {
+            value
+        } else {
+            self.get_raw(original_name, current_frame)
         };
 
         let result =
-            self.modulations.get(chain_key).map_or(value, |modulators| {
-                modulators.iter().fold(value, |v, modulator| {
-                    self.apply_modulator(v, modulator, current_frame)
-                })
-            });
+            self.modulations
+                .get(original_name)
+                .map_or(value, |modulators| {
+                    modulators.iter().fold(value, |v, modulator| {
+                        self.apply_modulator(v, modulator, current_frame)
+                    })
+                });
 
         result
     }
@@ -284,16 +290,6 @@ impl<T: TimingSource> ControlHub<T> {
     fn run_dependencies(&self, target_name: &str, current_frame: u32) {
         if let Some(order) = &self.dep_graph.order() {
             for name in order.iter() {
-                let midi_proxy_name = MapMode::proxy_name(name);
-
-                let name = if self.midi_proxies_enabled
-                    && self.midi_controls.has(&midi_proxy_name)
-                {
-                    &midi_proxy_name
-                } else {
-                    name
-                };
-
                 if name == target_name {
                     break;
                 }
@@ -419,17 +415,21 @@ impl<T: TimingSource> ControlHub<T> {
     }
 
     fn get_raw(&self, name: &str, current_frame: u32) -> f32 {
-        let is_proxy = MapMode::is_proxy_name(name);
-        let unproxied_name = &MapMode::unproxied_name(name).unwrap_or_default();
-
-        let is_dep = self.dep_graph.is_prerequisite(if is_proxy {
-            unproxied_name
-        } else {
-            name
-        });
+        let is_dep = self.dep_graph.is_prerequisite(name);
 
         if is_dep {
             if let Some(value) = self.eval_cache.get(name, current_frame) {
+                return value;
+            }
+        }
+
+        if self.midi_overrides_enabled {
+            if let Some(value) =
+                self.midi_overrides.lock().unwrap().get(name).copied()
+            {
+                if is_dep {
+                    self.eval_cache.store(name, current_frame, value);
+                }
                 return value;
             }
         }
@@ -552,7 +552,6 @@ impl<T: TimingSource> ControlHub<T> {
         match value {
             Some(value) => {
                 if is_dep {
-                    let name = ternary!(is_proxy, unproxied_name, name);
                     self.eval_cache.store(name, current_frame, value);
                 }
                 value
@@ -664,13 +663,19 @@ impl<T: TimingSource> ControlHub<T> {
             },
         ));
 
+        snapshot.extend(self.midi_overrides.lock().unwrap().iter().filter_map(
+            |(name, value)| {
+                if exclusions.contains(name) {
+                    None
+                } else {
+                    Some((name.clone(), ControlValue::from(*value)))
+                }
+            },
+        ));
+
         snapshot.extend(self.midi_controls.values().iter().filter_map(
             |(name, value)| {
-                if exclusions.contains(&name.to_string())
-                    || exclusions.contains(
-                        &MapMode::unproxied_name(name).unwrap_or_default(),
-                    )
-                {
+                if exclusions.contains(name) {
                     None
                 } else {
                     Some((name.clone(), ControlValue::from(*value)))
@@ -711,6 +716,19 @@ impl<T: TimingSource> ControlHub<T> {
                 };
 
                 for (name, value) in snapshot {
+                    if self.midi_override_configs.contains_key(name) {
+                        let from = self.current_snapshot_value(
+                            name,
+                            current_frame,
+                            current_beat,
+                        );
+                        transition.values.insert(
+                            name.to_string(),
+                            (from, value.as_float().unwrap_or(0.0)),
+                        );
+                        continue;
+                    }
+
                     if self.ui_controls.has(name) {
                         match value {
                             ControlValue::Float(v) => {
@@ -828,7 +846,19 @@ impl<T: TimingSource> ControlHub<T> {
         };
 
         for (name, value) in &self.create_snapshot(exclusions) {
-            if self.ui_controls.has(name) {
+            if let Some(config) = self.midi_override_configs.get(name) {
+                transition.values.insert(
+                    name.to_string(),
+                    (
+                        self.current_snapshot_value(
+                            name,
+                            current_frame,
+                            current_beat,
+                        ),
+                        rand::rng().random_range(config.min..=config.max),
+                    ),
+                );
+            } else if self.ui_controls.has(name) {
                 match value {
                     ControlValue::Float(_) => {
                         if let UiControlConfig::Slider {
@@ -928,7 +958,13 @@ impl<T: TimingSource> ControlHub<T> {
         if let Some(transition) = &self.active_transition {
             if current_beat >= transition.end_beat {
                 for (name, (_from, to)) in &transition.values {
-                    if self.ui_controls.has(name) {
+                    if self.midi_override_configs.contains_key(name) {
+                        self.midi_overrides
+                            .lock()
+                            .unwrap()
+                            .insert(name.to_string(), *to);
+                        continue;
+                    } else if self.ui_controls.has(name) {
                         let value = ControlValue::Float(*to);
                         self.ui_controls.set(name, value);
                         continue;
@@ -1226,6 +1262,8 @@ impl<T: TimingSource> ControlHub<T> {
         self.dep_graph.clear();
         self.eval_cache.clear();
         self.active_transition = None;
+        self.midi_override_configs.clear();
+        self.midi_overrides.lock().unwrap().clear();
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
@@ -1554,6 +1592,8 @@ impl<T: TimingSource> ControlHub<T> {
 
         self.dep_graph.build_graph();
         trace!("node_graph: {:#?}", self.dep_graph);
+        self.midi_controls
+            .set_override_configs(self.midi_override_configs.clone());
 
         if !self.osc_controls.is_active {
             self.osc_controls
@@ -2337,7 +2377,7 @@ baz:
 
     #[test]
     #[serial]
-    fn test_proxied_pmod_bug() {
+    fn test_midi_override_pmod_bug() {
         let mut hub = create_instance(
             r#"
 foo: 
@@ -2352,8 +2392,8 @@ foo_animation:
             "#,
         );
 
-        hub.midi_controls.add(
-            &MapMode::proxy_name("foo"),
+        hub.midi_override_configs.insert(
+            "foo".to_string(),
             MidiControlConfig {
                 channel: 0,
                 cc: 0,
@@ -2362,6 +2402,10 @@ foo_animation:
                 value: 99.0,
             },
         );
+        hub.midi_overrides
+            .lock()
+            .unwrap()
+            .insert("foo".to_string(), 99.0);
 
         init(0.25);
         assert_eq!(hub.get("foo_animation"), 99.0);
@@ -2369,7 +2413,7 @@ foo_animation:
 
     #[test]
     #[serial]
-    fn test_proxied_source_uses_original_modulation_chain() {
+    fn test_midi_override_source_uses_original_modulation_chain() {
         let mut hub = create_instance(
             r#"
 foo:
@@ -2390,8 +2434,8 @@ foo_mod:
             "#,
         );
 
-        hub.midi_controls.add(
-            &MapMode::proxy_name("foo"),
+        hub.midi_override_configs.insert(
+            "foo".to_string(),
             MidiControlConfig {
                 channel: 0,
                 cc: 0,
@@ -2400,6 +2444,10 @@ foo_mod:
                 value: 0.25,
             },
         );
+        hub.midi_overrides
+            .lock()
+            .unwrap()
+            .insert("foo".to_string(), 0.25);
 
         init(0.0);
         assert_eq!(hub.get("foo"), 0.5);
