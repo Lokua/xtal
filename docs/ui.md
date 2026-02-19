@@ -1,11 +1,10 @@
 # Keyboard Shortcuts
 
-Xtal uses keyboard shortcuts that work regardless of whether the control panel
-(web view) or the main sketch window (OS window) is focused. Some shortcuts are
-context-specific or have slightly different behaviors depending on which window
-is active.
+Xtal supports keyboard shortcuts in both the control panel (web view) and the
+main sketch window (OS window). Some shortcuts are context-specific, and some
+keys intentionally do different things depending on which window is active.
 
-> **Note:** On macOS, use `Cmd`. On Windows/Linux, use `Ctrl`.
+> **Note:** `Mod` means `Cmd` on macOS and `Ctrl` on Windows/Linux.
 
 ## Playback & Animation
 
@@ -24,28 +23,28 @@ Snapshots allow you to store and recall up to 10 parameter configurations.
 | ------------------ | --------------- | ------------------------------------------------------------------------------ |
 | `S`                | Snapshot Editor | Open the Snapshot Editor to store and recall snapshots. _(Control panel only)_ |
 | `Shift` + `0-9`    | Store Snapshot  | Save the current UI control states to the specified slot.                      |
-| `Cmd/Ctrl` + `0-9` | Recall Snapshot | Load a previously saved snapshot from the specified slot.                      |
+| `Mod` + `0-9`      | Recall Snapshot | Load a previously saved snapshot from the specified slot.                      |
 
 ## Randomization & Exclusions
 
 | Shortcut         | Action     | Description                                                                                        |
 | ---------------- | ---------- | -------------------------------------------------------------------------------------------------- |
-| `Cmd/Ctrl` + `R` | Randomize  | Randomize all UI controls (respects exclusions).                                                   |
+| `Mod` + `R`      | Randomize  | Randomize all UI controls (respects exclusions).                                                   |
 | `E`              | Exclusions | Open the Exclusions panel to select controls to exclude from randomization. _(Control panel only)_ |
 
 ## Saving & Loading
 
 | Shortcut                   | Action | Description                                                       |
 | -------------------------- | ------ | ----------------------------------------------------------------- |
-| `Cmd/Ctrl` + `S`           | Save   | Save UI control states and MIDI mappings for this sketch to disk. |
-| `Shift` + `Cmd/Ctrl` + `R` | Reload | Reload the current sketch back to its last saved state.           |
+| `Mod` + `S`         | Save   | Save UI control states and MIDI mappings for this sketch to disk. |
+| `Shift` + `S`       | Save   | Save UI control states and MIDI mappings for this sketch to disk. |
+| `Shift` + `Mod` + `R` | Reload | Reload the current sketch back to its last saved state.           |
 
 ## Image Capture
 
 | Shortcut         | Action        | Description                                                               |
 | ---------------- | ------------- | ------------------------------------------------------------------------- |
-| `Cmd/Ctrl` + `I` | Capture Image | Capture a PNG screenshot to disk. _(Control panel)_                       |
-| `S`              | Capture Image | Capture a PNG screenshot to disk. _(Main window only, when no modifiers)_ |
+| `I`              | Capture Image | Capture a PNG screenshot to disk.                                         |
 
 ## Window Management
 
@@ -60,7 +59,7 @@ Snapshots allow you to store and recall up to 10 parameter configurations.
 
 | Shortcut         | Action      | Description                                           |
 | ---------------- | ----------- | ----------------------------------------------------- |
-| `Cmd/Ctrl` + `Q` | Quit        | Exit the application.                                 |
+| `Mod` + `Q`      | Quit        | Exit the application.                                 |
 | `/`              | Toggle Help | Show or hide the help overlay. _(Control panel only)_ |
 
 ## UI Control Interactions
@@ -70,12 +69,16 @@ These interactions apply to sliders and number boxes in the control panel:
 | Interaction               | Action                                   |
 | ------------------------- | ---------------------------------------- |
 | Click label               | Randomize that single parameter          |
-| `Cmd/Ctrl` + Click label  | Revert parameter to its last saved value |
+| `Mod` + Click label       | Revert parameter to its last saved value |
 | Drag number box           | Coarse adjustment                        |
 | `Shift` + Drag number box | Fine adjustment                          |
 | Double-click number box   | Enable manual keyboard entry             |
 
 ## Notes
+
+- Context-specific `S` behavior:
+  - `S` toggles Snapshot Editor.
+  - `Mod+S` and `Shift+S` save.
 
 - **Performance Mode:** When enabled, prevents Xtal from applying a sketch's
   default width and height and disables automatic window repositioning.

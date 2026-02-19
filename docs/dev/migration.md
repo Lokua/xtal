@@ -18,7 +18,14 @@ user-facing behavior for:
 - No per-sketch `bin` entrypoint pattern.
 - Sketch asset lookup should use `SketchAssets` (no manifest boilerplate).
 
-## Current Snapshot (2026-02-16)
+## Rendering Policy (MSAA/Capture)
+
+- Keep MSAA off by default for fullscreen shader passes.
+- Add optional per-sketch/per-pass MSAA later if geometry-heavy passes are introduced.
+- Prioritize nannou-style capture backpressure + async worker model +
+  consistent color/format handling.
+
+## Current Snapshot (2026-02-19)
 
 ### Foundation that is already in place
 
@@ -26,7 +33,7 @@ user-facing behavior for:
 - Runtime sketch switching (`Box<dyn Sketch>` in the runner).
 - `register_sketches!` and module-based sketch startup in `xtal2-sketches`.
 - `SketchAssets::from_file(file!())` path flow.
-- `FrameClock` and `WaitUntil` scheduling.
+- `frame_controller` + `WaitUntil` scheduling.
 - Unified runtime event model in the runner (`RuntimeEvent` as source of truth,
   no internal `AppEvent` mirror).
 - Runtime handler parity sweep started: `alert` / `alert_and_log` restored and
@@ -44,15 +51,19 @@ user-facing behavior for:
 - `web_view_process` is wired and launched by default via `run_registry`.
 - `ax/ay/az/aw` var pattern is supported (legacy numeric aliases still parse).
 - Runtime source layout cleanup is done (`xtal2/src` root is minimal).
+- Main-window keyboard shortcut handling is implemented in runtime and aligned
+  with xtal-ui command behavior.
+- Shortcut docs/tooltips have been updated to match the current implementation.
+- Recording pipeline is ported (queue/start/stop/encode lifecycle) and frame
+  capture to video runs through async readback/encode workers.
+- Still image capture (`CaptureFrame`) is ported with GPU readback and PNG save.
 
 ### What is not complete yet
 
-- UI event parity is still partial (several handlers remain scaffolds).
-- Performance mode is not stateful in runtime and does not gate window
-  resize/position behavior.
+- UI parity is close but not complete: webview placement behavior in perf mode
+  still needs final lock-in.
 - MIDI/audio/map-mode/persistence paths are not ported to xtal2 runtime.
-- Recording pipeline is not ported.
-- Full behavioral parity tests against legacy runtime are missing.
+- Full behavioral parity fixtures vs legacy xtal are still missing.
 
 ## Active Phase Backlog
 
@@ -106,8 +117,7 @@ Still missing command mapping and runtime handling:
 - [x] `StopRecording`
 - [x] `ClearBuffer`
 
-Status note: command routing is now complete; some handlers are still
-stateful scaffolds pending full backend parity in phases 2/3.
+Status note: command routing is complete.
 
 #### 1.2 Outgoing runtime -> UI event coverage
 
@@ -131,6 +141,8 @@ Still missing (or not yet driven by real runtime state):
 - [x] `StartRecording` and `StopRecording` status events
 - [x] `PerfMode(bool)` state echo/confirmation
 - [x] Directory update confirmations (`ReceiveDir`) from persisted state path
+- [x] Main-window shortcut-triggered state updates are reflected to UI for
+  runtime actions (e.g. pause toggle).
 
 #### 1.3 Performance mode parity (blocking issue)
 
@@ -158,7 +170,7 @@ Still missing (or not yet driven by real runtime state):
   runtime update variant (`UpdateUiControl`).
 - [x] Add callback guard test to ensure populated emissions are single-shot per
   population cycle.
-- [ ] Add serialization/deserialization golden tests for all UI payload types.
+- [x] Add serialization/deserialization round-trip tests for core UI unit and payload event types.
 - [ ] Add end-to-end smoke test for webview process message routing.
 
 Exit criteria:
@@ -188,8 +200,9 @@ Exit criteria:
 - [x] Port still frame capture flow (lossless PNG from GPU readback of graph present source).
 - [x] Port queued recording, start/stop recording, and encode lifecycle.
 - [x] Port frame recorder integration with fixed frame clock.
-- [ ] Restore performance telemetry (`AverageFps`, dropped frame reporting).
-- [ ] Verify recording correctness under pause/advance/switch scenarios.
+- [ ] Add dropped-frame/recording-backpressure telemetry parity.
+- [ ] Add capture/recording reliability tests (single-trigger capture,
+  lifecycle event ordering, duplicate emission guards).
 
 Exit criteria:
 
@@ -251,9 +264,8 @@ Exit criteria:
 1. Phase 2: port map-mode + persistence backend and tests first (highest
    leverage for runtime correctness).
 2. Phase 1.3: finish perf-mode behavior parity for the webview control window.
-3. Phase 1.2: finish remaining runtime status events (`AverageFps`,
-   `Encoding`) with real backend state.
-4. Phase 3: recording parity verification (capture-frame parity + pause/advance/switch validation).
+3. Phase 1.4: add webview-process end-to-end smoke routing test.
+4. Phase 3: add recording/capture reliability tests and dropped-frame telemetry.
 5. Phase 4/5 parity fixtures and final behavior validation.
 6. Phase 6 deprecation tooling and docs cleanup.
 7. Phase 7 final cutover and cleanup.

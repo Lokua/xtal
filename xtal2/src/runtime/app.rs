@@ -776,10 +776,8 @@ impl RegistryRunner {
                 self.emit_web_view_event(web_view::Event::ToggleGuiFocus);
             }
             KeyCode::KeyI => {
-                if platform_mod_pressed || has_no_modifiers {
-                    return self
-                        .on_runtime_event(event_loop, RuntimeEvent::CaptureFrame);
-                }
+                return self
+                    .on_runtime_event(event_loop, RuntimeEvent::CaptureFrame);
             }
             KeyCode::KeyM => {
                 if !platform_mod_pressed {
@@ -824,10 +822,6 @@ impl RegistryRunner {
                         event_loop,
                         RuntimeEvent::Save(exclusions),
                     );
-                }
-                if has_no_modifiers {
-                    return self
-                        .on_runtime_event(event_loop, RuntimeEvent::CaptureFrame);
                 }
             }
             KeyCode::Space => {

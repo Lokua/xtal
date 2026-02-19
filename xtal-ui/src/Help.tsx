@@ -5,7 +5,7 @@ const mod = isMac ? 'Cmd' : 'Ctrl'
 export const Help = {
   Advance: format(
     `When the [Play/Pause] toggle is set to [Pause], allows manually advancing 
-    frames (Shortcut: [${mod} A])`
+    frames (Shortcut: [A])`
   ),
   Audio: 'The Audio input device used for audio controls',
   Clear: format(
@@ -26,7 +26,7 @@ export const Help = {
     Enable high resolution (14bit) MIDI for CCs 0-31 (requires support 
     from your MIDI device)
   `),
-  Image: `Capture PNG to disk (Shortcut: [${mod} I])`,
+  Image: `Capture PNG to disk (Shortcut: [I])`,
   ImagesDir: `The directory where image captures will be saved`,
   Mappings: format(`
     Mappings: allows mapping of external MIDI CCs to UI sliders, aka
@@ -73,7 +73,7 @@ export const Help = {
   TransitionTime: 'Snapshot and Randomization transition time (in beats)',
   Save: format(`
     Save UI control states and MIDI mappings for this sketch to disk 
-    (Shortcut: [${mod} S])
+    (Shortcut: [${mod} S] or [Shift S])
   `),
   Send: 'Sends the state of all CCs to the MIDI output port',
   Settings: 'Global settings and MIDI mappings',
