@@ -30,6 +30,7 @@ use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
 use crate::framework::util::{HashMap, uuid_5};
+use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::{frame_controller, logging, midi};
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
@@ -40,6 +41,7 @@ use crate::uniforms::UniformBanks;
 const MIDI_START: u8 = 0xFA;
 const MIDI_CONTINUE: u8 = 0xFB;
 const MIDI_STOP: u8 = 0xFC;
+const DEFAULT_OSC_PORT: u16 = 2346;
 
 #[derive(Clone, Default)]
 struct SketchUiState {
@@ -151,6 +153,9 @@ impl XtalRuntime {
         {
             global_settings = saved;
         }
+        if global_settings.osc_port == 0 {
+            global_settings.osc_port = DEFAULT_OSC_PORT;
+        }
 
         let mut sketch_ui_state = HashMap::default();
         sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
@@ -203,10 +208,12 @@ impl XtalRuntime {
         };
 
         let midi_ports_updated = runtime.normalize_midi_port_selections();
+        let osc_port_updated = runtime.normalize_osc_port_selection();
+        runtime.start_osc_receiver();
         runtime.start_midi_clock_listener();
         runtime.connect_midi_out();
         runtime.log_midi_startup_state();
-        if midi_ports_updated {
+        if midi_ports_updated || osc_port_updated {
             runtime.save_global_state();
         }
 
@@ -298,7 +305,9 @@ impl XtalRuntime {
                 self.save_global_state();
             }
             RuntimeEvent::ChangeOscPort(port) => {
+                info!("Changing OSC port to {}", port);
                 self.osc_port = port;
+                self.restart_osc_receiver();
                 self.save_global_state();
             }
             RuntimeEvent::ClearBuffer => {
@@ -1533,10 +1542,11 @@ impl XtalRuntime {
 
     fn log_midi_startup_state(&self) {
         info!(
-            "MIDI startup state: input_port='{}', output_port='{}', clock_port='{}', hrcc={}, mappings_enabled={}",
+            "MIDI/OSC startup state: input_port='{}', output_port='{}', clock_port='{}', osc_port={}, hrcc={}, mappings_enabled={}",
             self.midi_input_port,
             self.midi_output_port,
             self.midi_clock_port,
+            self.osc_port,
             self.hrcc,
             self.mappings_enabled
         );
@@ -1597,6 +1607,27 @@ impl XtalRuntime {
         }
 
         changed
+    }
+
+    fn normalize_osc_port_selection(&mut self) -> bool {
+        if self.osc_port == 0 {
+            self.osc_port = DEFAULT_OSC_PORT;
+            info!("Resolved OSC port from 0 to {}", self.osc_port);
+            return true;
+        }
+        false
+    }
+
+    fn start_osc_receiver(&self) {
+        if let Err(err) = SHARED_OSC_RECEIVER.restart(self.osc_port) {
+            error!("Failed to restart OSC receiver: {}", err);
+        }
+    }
+
+    fn restart_osc_receiver(&self) {
+        if let Err(err) = SHARED_OSC_RECEIVER.restart(self.osc_port) {
+            error!("Failed to restart OSC receiver: {}", err);
+        }
     }
 
     // Applies resize to surface config and runtime context resolution.
