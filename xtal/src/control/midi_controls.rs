@@ -2,8 +2,8 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::io::midi::{self, is_control_change};
 use crate::core::prelude::*;
+use crate::io::midi::{self, is_control_change};
 
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {
@@ -32,7 +32,9 @@ impl ControlConfig<f32, f32> for MidiControlConfig {}
 pub struct MidiControls {
     pub hrcc: bool,
     configs: HashMap<String, MidiControlConfig>,
+    override_configs: HashMap<String, MidiControlConfig>,
     state: Arc<Mutex<State>>,
+    override_state: Option<Arc<Mutex<HashMap<String, f32>>>>,
     port: Option<String>,
     is_active: bool,
 }
@@ -46,6 +48,20 @@ impl MidiControls {
         self.port = if port.is_empty() { None } else { Some(port) };
     }
 
+    pub fn set_override_configs(
+        &mut self,
+        configs: HashMap<String, MidiControlConfig>,
+    ) {
+        self.override_configs = configs;
+    }
+
+    pub fn set_override_state(
+        &mut self,
+        override_state: Arc<Mutex<HashMap<String, f32>>>,
+    ) {
+        self.override_state = Some(override_state);
+    }
+
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let Some(midi_control_in_port) = self.port.clone() else {
             warn!(
@@ -57,6 +73,8 @@ impl MidiControls {
 
         let state = self.state.clone();
         let config_lookup = self.configs_by_channel_and_cc();
+        let override_lookup = self.override_configs_by_channel_and_cc();
+        let override_state = self.override_state.clone();
         let hrcc = self.hrcc;
 
         trace!("config_lookup: {:#?}", config_lookup);
@@ -89,6 +107,18 @@ impl MidiControls {
                             value * (config.max - config.min) + config.min;
 
                         state.lock().unwrap().set(name, mapped_value);
+                    }
+
+                    if let (Some(override_state), Some((name, config))) =
+                        (override_state.as_ref(), override_lookup.get(&ch_cc))
+                    {
+                        let value = value as f32 / 127.0;
+                        let mapped_value =
+                            value * (config.max - config.min) + config.min;
+                        override_state
+                            .lock()
+                            .unwrap()
+                            .insert(name.clone(), mapped_value);
 
                         trace!("Storing regular 7bit (!hrcc || cc > 63 block)");
                     }
@@ -128,9 +158,21 @@ impl MidiControls {
                             value * (config.max - config.min) + config.min;
 
                         state.set(name, mapped_value);
-
-                        trace!("Storing regular 7bit (32-63 block)");
                     }
+
+                    if let (Some(override_state), Some((name, config))) =
+                        (override_state.as_ref(), override_lookup.get(&ch_cc))
+                    {
+                        let value = message[2] as f32 / 127.0;
+                        let mapped_value =
+                            value * (config.max - config.min) + config.min;
+                        override_state
+                            .lock()
+                            .unwrap()
+                            .insert(name.clone(), mapped_value);
+                    }
+
+                    trace!("Storing regular 7bit (32-63 block)");
 
                     return;
                 }
@@ -149,6 +191,23 @@ impl MidiControls {
                     normalized_value * (config.max - config.min) + config.min;
 
                 state.set(name, mapped_value);
+
+                if let (
+                    Some(override_state),
+                    Some((override_name, override_config)),
+                ) = (
+                    override_state.as_ref(),
+                    override_lookup.get(&(channel, msb_cc)),
+                ) {
+                    let override_mapped = normalized_value
+                        * (override_config.max - override_config.min)
+                        + override_config.min;
+                    override_state
+                        .lock()
+                        .unwrap()
+                        .insert(override_name.clone(), override_mapped);
+                }
+
                 state.remove_last((channel, msb_cc));
 
                 trace!(
@@ -233,6 +292,17 @@ impl MidiControls {
         &self,
     ) -> HashMap<ChannelAndController, (String, MidiControlConfig)> {
         self.configs
+            .iter()
+            .map(|(name, config)| {
+                ((config.channel, config.cc), (name.clone(), config.clone()))
+            })
+            .collect()
+    }
+
+    fn override_configs_by_channel_and_cc(
+        &self,
+    ) -> HashMap<ChannelAndController, (String, MidiControlConfig)> {
+        self.override_configs
             .iter()
             .map(|(name, config)| {
                 ((config.channel, config.cc), (name.clone(), config.clone()))

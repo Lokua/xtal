@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
-use crate::time::frame_clock;
 use crate::core::util::AtomicF32;
+use crate::time::frame_clock;
 
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);

@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use xtal::control::{ControlCollection, ControlHub, ControlValue};
-use xtal::time::frame_clock;
 use xtal::motion::{Bpm, Timing};
+use xtal::time::frame_clock;
 
 fn hub_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

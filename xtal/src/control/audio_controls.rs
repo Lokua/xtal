@@ -6,9 +6,9 @@ use std::thread;
 use std::time::Duration;
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::time::frame_clock;
 use crate::core::prelude::*;
 use crate::motion::SlewLimiter;
+use crate::time::frame_clock;
 use crate::warn_once;
 
 #[derive(Clone, Debug)]

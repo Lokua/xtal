@@ -1,8 +1,8 @@
 use std::sync::{Arc, Mutex};
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::core::prelude::*;
+use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::warn_once;
 use nannou_osc as osc;
 
