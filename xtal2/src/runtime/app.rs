@@ -1,8 +1,10 @@
+use std::env;
+use std::fs;
 use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
-use std::{env, fs, path::{Path, PathBuf}, process::Command};
 
 use log::{debug, error, info, trace, warn};
 use winit::application::ApplicationHandler;
@@ -13,11 +15,11 @@ use winit::keyboard::{KeyCode, ModifiersState, PhysicalKey};
 use winit::window::{Fullscreen, Window, WindowAttributes, WindowId};
 
 use super::events::{
-    RuntimeCommandReceiver, RuntimeEvent, RuntimeEventSender, command_channel,
-    event_channel,
+    RuntimeCommandReceiver, RuntimeCommandSender, RuntimeEvent,
+    RuntimeEventSender, command_channel, event_channel,
 };
-use super::registry::RuntimeRegistry;
 use super::recording::{self, RecordingState};
+use super::registry::RuntimeRegistry;
 use super::serialization::{GlobalSettings, TransitorySketchState};
 use super::storage;
 use super::tap_tempo::TapTempo;
@@ -27,14 +29,13 @@ use crate::context::Context;
 use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
-use crate::framework::util::HashMap;
+use crate::framework::util::{HashMap, uuid_5};
 use crate::framework::{frame_controller, logging};
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
 use crate::motion::{Bpm, Timing};
 use crate::sketch::{Sketch, SketchConfig, TimingMode};
 use crate::uniforms::UniformBanks;
-use crate::framework::util::uuid_5;
 
 #[derive(Clone, Default)]
 struct SketchUiState {
@@ -51,55 +52,18 @@ struct PendingPngCapture {
     source_format: wgpu::TextureFormat,
 }
 
-pub fn run_registry(
-    registry: RuntimeRegistry,
-    initial_sketch: Option<&str>,
-) -> Result<(), String> {
-    run_registry_with_web_view(registry, initial_sketch)
-}
-
-pub fn run_registry_with_web_view(
-    registry: RuntimeRegistry,
-    initial_sketch: Option<&str>,
-) -> Result<(), String> {
-    let (command_tx, command_rx) = command_channel();
-    let (event_tx, event_rx) = event_channel();
-
-    let _bridge = WebViewBridge::launch(command_tx, event_rx)?;
-
-    run_registry_with_channels(
-        registry,
-        initial_sketch,
-        command_rx,
-        Some(event_tx),
-    )
-}
-
-fn run_registry_with_channels(
-    registry: RuntimeRegistry,
-    initial_sketch: Option<&str>,
-    command_rx: RuntimeCommandReceiver,
-    event_tx: Option<RuntimeEventSender>,
-) -> Result<(), String> {
-    logging::init_logger();
-
-    let event_loop = EventLoop::new().map_err(|err| err.to_string())?;
-    event_loop.set_control_flow(ControlFlow::Wait);
-
-    let mut runner =
-        RegistryRunner::new(registry, initial_sketch, command_rx, event_tx)?;
-
-    event_loop
-        .run_app(&mut runner)
-        .map_err(|err| err.to_string())
-}
-
-struct RegistryRunner {
+struct XtalRuntime {
     registry: RuntimeRegistry,
     active_sketch_name: String,
     config: &'static SketchConfig,
     sketch: Box<dyn Sketch>,
     render_requested: bool,
+    // Runtime command ingress used for cross-component async handoff.
+    // Best practice:
+    // - Use direct helper calls for immediate local state changes.
+    // - Use command enqueue when callbacks/watchers/background paths need to
+    //   hand work back to the main runtime dispatcher.
+    command_tx: RuntimeCommandSender,
     command_rx: RuntimeCommandReceiver,
     event_tx: Option<RuntimeEventSender>,
     window: Option<Arc<Window>>,
@@ -111,8 +75,6 @@ struct RegistryRunner {
     uniforms: Option<UniformBanks>,
     graph: Option<CompiledGraph>,
     control_hub: Option<ControlHub<Timing>>,
-    hub_populated_pending: Arc<AtomicBool>,
-    snapshot_ended_pending: Arc<AtomicBool>,
     bpm: Bpm,
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
@@ -140,7 +102,100 @@ struct RegistryRunner {
     modifiers: ModifiersState,
 }
 
-impl RegistryRunner {
+impl XtalRuntime {
+    // Builds runtime state from registry + persisted settings before window/GPU
+    // init.
+    fn new(
+        registry: RuntimeRegistry,
+        initial_sketch: Option<&str>,
+        command_tx: RuntimeCommandSender,
+        command_rx: RuntimeCommandReceiver,
+        event_tx: Option<RuntimeEventSender>,
+    ) -> Result<Self, String> {
+        let active_name =
+            select_initial_sketch_name(&registry, initial_sketch)?;
+
+        let (config, sketch) = instantiate_sketch(&registry, &active_name)
+            .map_err(|err| {
+                format!(
+                    "failed to initialize sketch '{}': {}",
+                    active_name, err
+                )
+            })?;
+
+        let bpm = Bpm::new(config.bpm);
+
+        let sketch_storage_dir = default_user_data_dir_for_sketch(
+            sketch.as_ref(),
+        )
+        .unwrap_or_else(|| {
+            env::current_dir()
+                .unwrap_or_default()
+                .join("storage")
+                .display()
+                .to_string()
+        });
+
+        let mut global_settings = GlobalSettings {
+            user_data_dir: sketch_storage_dir.clone(),
+            ..GlobalSettings::default()
+        };
+        if let Ok(Some(saved)) =
+            storage::load_global_state_if_exists(&sketch_storage_dir)
+        {
+            global_settings = saved;
+        }
+
+        let mut sketch_ui_state = HashMap::default();
+        sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
+
+        Ok(Self {
+            registry,
+            active_sketch_name: active_name,
+            config,
+            sketch,
+            render_requested: false,
+            command_tx,
+            command_rx,
+            event_tx,
+            window: None,
+            window_id: None,
+            windowed_size_before_fullscreen: None,
+            surface: None,
+            surface_config: None,
+            context: None,
+            uniforms: None,
+            graph: None,
+            control_hub: None,
+            bpm: bpm.clone(),
+            tap_tempo: TapTempo::new(config.bpm),
+            tap_tempo_enabled: false,
+            perf_mode: false,
+            transition_time: global_settings.transition_time,
+            mappings_enabled: global_settings.mappings_enabled,
+            currently_mapping: None,
+            sketch_ui_state,
+            recording_state: RecordingState::default(),
+            session_id: recording::generate_session_id(),
+            audio_device: global_settings.audio_device_name,
+            audio_devices: vec![],
+            midi_clock_port: global_settings.midi_clock_port,
+            midi_input_port: global_settings.midi_control_in_port,
+            midi_output_port: global_settings.midi_control_out_port,
+            midi_input_ports: vec![],
+            midi_output_ports: vec![],
+            osc_port: global_settings.osc_port,
+            images_dir: global_settings.images_dir,
+            user_data_dir: global_settings.user_data_dir,
+            videos_dir: global_settings.videos_dir,
+            last_average_fps_emit: Instant::now(),
+            shutdown_signaled: false,
+            pending_png_capture_path: None,
+            modifiers: ModifiersState::default(),
+        })
+    }
+
+    // Single command/event dispatcher for runtime behavior changes.
     fn on_runtime_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -246,12 +301,15 @@ impl RegistryRunner {
             RuntimeEvent::OpenOsDir(kind) => {
                 let path = self.os_dir_path(&kind);
                 if let Err(err) = fs::create_dir_all(&path) {
-                    self.alert_and_log(format!(
-                        "Failed to create {:?} directory '{}': {}",
-                        kind,
-                        path.display(),
-                        err
-                    ), log::Level::Error);
+                    self.alert_and_log(
+                        format!(
+                            "Failed to create {:?} directory '{}': {}",
+                            kind,
+                            path.display(),
+                            err
+                        ),
+                        log::Level::Error,
+                    );
                     return false;
                 }
 
@@ -264,19 +322,23 @@ impl RegistryRunner {
                 };
 
                 if let Err(err) = result {
-                    self.alert_and_log(format!(
-                        "Failed to open {:?} directory '{}': {}",
-                        kind,
-                        path.display(),
-                        err
-                    ), log::Level::Error);
+                    self.alert_and_log(
+                        format!(
+                            "Failed to open {:?} directory '{}': {}",
+                            kind,
+                            path.display(),
+                            err
+                        ),
+                        log::Level::Error,
+                    );
                 }
             }
             RuntimeEvent::Pause(paused) => {
                 frame_controller::set_paused(paused);
             }
             RuntimeEvent::QueueRecord => {
-                self.recording_state.is_queued = !self.recording_state.is_queued;
+                self.recording_state.is_queued =
+                    !self.recording_state.is_queued;
                 if self.recording_state.is_queued {
                     self.alert_and_log(
                         "Recording queued. Awaiting MIDI start message.",
@@ -377,9 +439,7 @@ impl RegistryRunner {
                 }
             }
             RuntimeEvent::SendMidi => {
-                self.alert(
-                    "SendMidi is not yet implemented in xtal2 runtime.",
-                );
+                self.alert("SendMidi is not yet implemented in xtal2 runtime.");
             }
             RuntimeEvent::SetHrcc(enabled) => {
                 if let Some(hub) = self.control_hub.as_mut() {
@@ -464,7 +524,8 @@ impl RegistryRunner {
                     );
                     return false;
                 };
-                let Some(source_format) = graph.recording_source_format() else {
+                let Some(source_format) = graph.recording_source_format()
+                else {
                     self.alert_and_log(
                         "Failed to start recording: graph presents directly to surface; recording source unavailable",
                         log::Level::Error,
@@ -503,7 +564,9 @@ impl RegistryRunner {
                     Ok(message) => {
                         self.recording_state.is_queued = false;
                         self.alert(message);
-                        self.emit_web_view_event(web_view::Event::StartRecording);
+                        self.emit_web_view_event(
+                            web_view::Event::StartRecording,
+                        );
                     }
                     Err(err) => {
                         self.alert_and_log(
@@ -519,8 +582,12 @@ impl RegistryRunner {
                 {
                     match self.recording_state.stop_recording() {
                         Ok(()) => {
-                            self.emit_web_view_event(web_view::Event::StopRecording);
-                            self.emit_web_view_event(web_view::Event::Encoding(true));
+                            self.emit_web_view_event(
+                                web_view::Event::StopRecording,
+                            );
+                            self.emit_web_view_event(
+                                web_view::Event::Encoding(true),
+                            );
                         }
                         Err(err) => {
                             self.alert_and_log(
@@ -613,12 +680,13 @@ impl RegistryRunner {
                     .control_hub
                     .as_ref()
                     .is_some_and(|hub| hub.snapshot_sequence_enabled());
-                self.emit_web_view_event(web_view::Event::SnapshotSequenceEnabled(
-                    snapshot_sequence_enabled,
-                ));
+                self.emit_web_view_event(
+                    web_view::Event::SnapshotSequenceEnabled(
+                        snapshot_sequence_enabled,
+                    ),
+                );
             }
-            RuntimeEvent::FrameAdvanced(_)
-            | RuntimeEvent::FrameSkipped
+            RuntimeEvent::FrameSkipped
             | RuntimeEvent::SketchSwitched(_)
             | RuntimeEvent::Stopped
             | RuntimeEvent::WebView(_) => {}
@@ -627,93 +695,273 @@ impl RegistryRunner {
         false
     }
 
-    fn new(
-        registry: RuntimeRegistry,
-        initial_sketch: Option<&str>,
-        command_rx: RuntimeCommandReceiver,
-        event_tx: Option<RuntimeEventSender>,
-    ) -> Result<Self, String> {
-        let active_name =
-            select_initial_sketch_name(&registry, initial_sketch)?;
-
-        let (config, sketch) = instantiate_sketch(&registry, &active_name)
-            .map_err(|err| {
-                format!(
-                    "failed to initialize sketch '{}': {}",
-                    active_name, err
-                )
-            })?;
-
-        let bpm = Bpm::new(config.bpm);
-
-        let sketch_storage_dir =
-            default_user_data_dir_for_sketch(sketch.as_ref())
-                .unwrap_or_else(|| {
-                    env::current_dir().unwrap_or_default().join("storage")
-                        .display()
-                        .to_string()
-                });
-
-        let mut global_settings = GlobalSettings {
-            user_data_dir: sketch_storage_dir.clone(),
-            ..GlobalSettings::default()
-        };
-        if let Ok(Some(saved)) =
-            storage::load_global_state_if_exists(&sketch_storage_dir)
-        {
-            global_settings = saved;
+    // Drains inbound command channel and routes events through the central
+    // dispatcher.
+    fn process_commands(&mut self, event_loop: &ActiveEventLoop) {
+        while let Ok(event) = self.command_rx.try_recv() {
+            if self.on_runtime_event(event_loop, event) {
+                return;
+            }
         }
-
-        let mut sketch_ui_state = HashMap::default();
-        sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
-
-        Ok(Self {
-            registry,
-            active_sketch_name: active_name,
-            config,
-            sketch,
-            render_requested: false,
-            command_rx,
-            event_tx,
-            window: None,
-            window_id: None,
-            windowed_size_before_fullscreen: None,
-            surface: None,
-            surface_config: None,
-            context: None,
-            uniforms: None,
-            graph: None,
-            control_hub: None,
-            hub_populated_pending: Arc::new(AtomicBool::new(false)),
-            snapshot_ended_pending: Arc::new(AtomicBool::new(false)),
-            bpm: bpm.clone(),
-            tap_tempo: TapTempo::new(config.bpm),
-            tap_tempo_enabled: false,
-            perf_mode: false,
-            transition_time: global_settings.transition_time,
-            mappings_enabled: global_settings.mappings_enabled,
-            currently_mapping: None,
-            sketch_ui_state,
-            recording_state: RecordingState::default(),
-            session_id: recording::generate_session_id(),
-            audio_device: global_settings.audio_device_name,
-            audio_devices: vec![],
-            midi_clock_port: global_settings.midi_clock_port,
-            midi_input_port: global_settings.midi_control_in_port,
-            midi_output_port: global_settings.midi_control_out_port,
-            midi_input_ports: vec![],
-            midi_output_ports: vec![],
-            osc_port: global_settings.osc_port,
-            images_dir: global_settings.images_dir,
-            user_data_dir: global_settings.user_data_dir,
-            videos_dir: global_settings.videos_dir,
-            last_average_fps_emit: Instant::now(),
-            shutdown_signaled: false,
-            pending_png_capture_path: None,
-            modifiers: ModifiersState::default(),
-        })
     }
 
+    // Throttled FPS broadcast to UI (once per second).
+    fn emit_average_fps_if_due(&mut self, now: Instant) {
+        if now.duration_since(self.last_average_fps_emit)
+            < Duration::from_secs(1)
+        {
+            return;
+        }
+
+        self.last_average_fps_emit = now;
+        self.emit_web_view_event(web_view::Event::AverageFps(
+            frame_controller::average_fps(),
+        ));
+    }
+
+    // Main render/update pipeline.
+    //
+    // Order matters:
+    // 1) Update sketch + hub, write uniforms.
+    // 2) Acquire surface frame, run sketch view + graph execution.
+    // 3) Encode recording/capture readback copies before submit.
+    // 4) Submit once, then run post-submit host-side work.
+    fn render(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.render_requested {
+            return;
+        }
+
+        self.render_requested = false;
+
+        let (
+            pending_png_capture,
+            pending_png_capture_error,
+            capture_device,
+            capture_submission_index,
+        ) = {
+            // 1) Resolve runtime resources for this frame.
+            let Some(context) = self.context.as_mut() else {
+                return;
+            };
+            let Some(uniforms) = self.uniforms.as_mut() else {
+                return;
+            };
+            let Some(graph) = self.graph.as_mut() else {
+                return;
+            };
+            let Some(surface_config) = self.surface_config.as_ref() else {
+                return;
+            };
+
+            // 2) Let sketch mutate runtime state before uniform upload.
+            self.sketch.update(context);
+
+            // 3) Runtime-owned uniforms: resolution + beat source + hub vars.
+            let [w, h] = context.resolution();
+            uniforms.set_resolution(w, h);
+
+            if let Some(hub) = self.control_hub.as_mut() {
+                hub.update();
+
+                for (id, value) in hub.var_values() {
+                    if let Err(err) = uniforms.set(&id, value) {
+                        warn!(
+                            "ignoring control var '{}' for sketch '{}': {}",
+                            id, self.config.name, err
+                        );
+                    }
+                }
+
+                uniforms.set_beats(hub.beats());
+            } else {
+                uniforms.set_beats(context.elapsed_seconds());
+            }
+
+            uniforms.upload(context.queue.as_ref());
+
+            // 4) Acquire current presentation surface texture.
+            let Some(surface) = self.surface.as_mut() else {
+                return;
+            };
+
+            let output = match surface.get_current_texture() {
+                Ok(output) => output,
+                Err(
+                    wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
+                ) => {
+                    surface.configure(context.device.as_ref(), surface_config);
+                    return;
+                }
+                Err(wgpu::SurfaceError::Timeout) => {
+                    warn!("surface timeout while acquiring frame");
+                    return;
+                }
+                Err(wgpu::SurfaceError::OutOfMemory) => {
+                    error!("surface out of memory; exiting");
+                    self.shutdown(event_loop);
+                    return;
+                }
+                Err(wgpu::SurfaceError::Other) => {
+                    warn!("surface error while acquiring frame");
+                    return;
+                }
+            };
+
+            // 5) Build frame command context and execute graph.
+            let mut frame = Frame::new(
+                context.device.as_ref(),
+                context.queue.clone(),
+                output,
+            );
+
+            self.sketch.view(&mut frame, context);
+
+            if let Err(err) = graph.execute(
+                context.device.as_ref(),
+                &mut frame,
+                uniforms,
+                context.resolution_u32(),
+            ) {
+                error!("graph execution error: {}", err);
+                event_loop.exit();
+                return;
+            }
+
+            // 6) Recording readback copy is encoded pre-submit.
+            if self.recording_state.is_recording {
+                if let Some(recorder) =
+                    self.recording_state.frame_recorder.as_mut()
+                {
+                    if let Some(source_texture) =
+                        graph.recording_source_texture()
+                    {
+                        let encoder = frame.encoder();
+                        let _ = recorder
+                            .capture_surface_frame(encoder, source_texture);
+                    }
+                }
+            }
+
+            // 7) Optional still-image capture readback copy is also pre-submit.
+            let mut pending_png_capture_error = None;
+            let pending_png_capture = if let Some(path) =
+                self.pending_png_capture_path.take()
+            {
+                let source_texture = graph.recording_source_texture();
+                let source_format = graph.recording_source_format();
+                match (source_texture, source_format) {
+                    (Some(source_texture), Some(source_format)) => {
+                        let width = source_texture.size().width.max(1);
+                        let height = source_texture.size().height.max(1);
+                        let bytes_per_pixel = 4u32;
+                        let unpadded_bytes_per_row = width * bytes_per_pixel;
+                        let padded_bytes_per_row = unpadded_bytes_per_row
+                            + compute_row_padding(unpadded_bytes_per_row);
+                        let buffer_size =
+                            (padded_bytes_per_row as u64) * (height as u64);
+                        let buffer = context.device.create_buffer(
+                            &wgpu::BufferDescriptor {
+                                label: Some("xtal2-capture-readback"),
+                                size: buffer_size,
+                                usage: wgpu::BufferUsages::COPY_DST
+                                    | wgpu::BufferUsages::MAP_READ,
+                                mapped_at_creation: false,
+                            },
+                        );
+
+                        frame.encoder().copy_texture_to_buffer(
+                            wgpu::TexelCopyTextureInfo {
+                                texture: source_texture,
+                                mip_level: 0,
+                                origin: wgpu::Origin3d::ZERO,
+                                aspect: wgpu::TextureAspect::All,
+                            },
+                            wgpu::TexelCopyBufferInfo {
+                                buffer: &buffer,
+                                layout: wgpu::TexelCopyBufferLayout {
+                                    offset: 0,
+                                    bytes_per_row: Some(padded_bytes_per_row),
+                                    rows_per_image: Some(height),
+                                },
+                            },
+                            wgpu::Extent3d {
+                                width,
+                                height,
+                                depth_or_array_layers: 1,
+                            },
+                        );
+
+                        Some(PendingPngCapture {
+                            path,
+                            buffer,
+                            width,
+                            height,
+                            padded_bytes_per_row,
+                            source_format,
+                        })
+                    }
+                    _ => {
+                        pending_png_capture_error = Some("Failed to capture frame: graph presents directly to surface; no capture source texture".to_string());
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            // 8) Submit all encoded GPU work once.
+            let submission_index = frame.submit();
+
+            if self.recording_state.is_recording {
+                if let Some(recorder) =
+                    self.recording_state.frame_recorder.as_mut()
+                {
+                    recorder.on_submitted();
+                }
+            }
+
+            // 9) Advance local frame-time state after successful submit.
+            context.next_frame();
+
+            (
+                pending_png_capture,
+                pending_png_capture_error,
+                context.device.clone(),
+                submission_index,
+            )
+        };
+
+        // 10) Post-submit host-side effects/events.
+        if let Some(message) = pending_png_capture_error {
+            self.alert_and_log(message, log::Level::Error);
+        }
+
+        if self.recording_state.is_encoding {
+            if let Some(outcome) =
+                self.recording_state.poll_finalize(&mut self.session_id)
+            {
+                if outcome.is_error {
+                    self.alert_and_log(outcome.message, log::Level::Error);
+                } else {
+                    self.alert(outcome.message);
+                }
+                self.emit_web_view_event(web_view::Event::Encoding(
+                    self.recording_state.is_encoding,
+                ));
+            }
+        }
+
+        if let Some(capture) = pending_png_capture {
+            queue_png_capture_save(
+                capture_device,
+                capture_submission_index,
+                capture,
+                self.event_tx.clone(),
+            );
+        }
+    }
+
+    // Main-window keyboard handling mirroring UI shortcut semantics.
     fn handle_main_window_shortcut(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -769,8 +1017,10 @@ impl RegistryRunner {
                 }
             }
             KeyCode::KeyF => {
-                return self
-                    .on_runtime_event(event_loop, RuntimeEvent::ToggleFullScreen);
+                return self.on_runtime_event(
+                    event_loop,
+                    RuntimeEvent::ToggleFullScreen,
+                );
             }
             KeyCode::KeyG => {
                 self.emit_web_view_event(web_view::Event::ToggleGuiFocus);
@@ -781,18 +1031,22 @@ impl RegistryRunner {
             }
             KeyCode::KeyM => {
                 if !platform_mod_pressed {
-                    return self
-                        .on_runtime_event(event_loop, RuntimeEvent::ToggleMainFocus);
+                    return self.on_runtime_event(
+                        event_loop,
+                        RuntimeEvent::ToggleMainFocus,
+                    );
                 }
             }
             KeyCode::KeyP => {
                 let paused = !frame_controller::paused();
-                let _ = self.on_runtime_event(event_loop, RuntimeEvent::Pause(paused));
+                let _ = self
+                    .on_runtime_event(event_loop, RuntimeEvent::Pause(paused));
                 self.emit_web_view_event(web_view::Event::Paused(paused));
             }
             KeyCode::KeyQ => {
                 if platform_mod_pressed {
-                    return self.on_runtime_event(event_loop, RuntimeEvent::Quit);
+                    return self
+                        .on_runtime_event(event_loop, RuntimeEvent::Quit);
                 }
             }
             KeyCode::KeyR => {
@@ -812,7 +1066,8 @@ impl RegistryRunner {
                     );
                 }
                 if has_no_modifiers {
-                    return self.on_runtime_event(event_loop, RuntimeEvent::Reset);
+                    return self
+                        .on_runtime_event(event_loop, RuntimeEvent::Reset);
                 }
             }
             KeyCode::KeyS => {
@@ -826,7 +1081,8 @@ impl RegistryRunner {
             }
             KeyCode::Space => {
                 if self.tap_tempo_enabled {
-                    return self.on_runtime_event(event_loop, RuntimeEvent::Tap);
+                    return self
+                        .on_runtime_event(event_loop, RuntimeEvent::Tap);
                 }
             }
             _ => {}
@@ -835,6 +1091,7 @@ impl RegistryRunner {
         false
     }
 
+    // Creates window/surface/device/context then compiles sketch graph state.
     fn init_runtime(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -919,6 +1176,7 @@ impl RegistryRunner {
         Ok(())
     }
 
+    // Rebuilds graph + uniforms + control hub for startup/switch/reload.
     fn rebuild_graph_state(&mut self) -> Result<(), String> {
         let mut graph_builder = GraphBuilder::new();
         self.sketch.setup(&mut graph_builder);
@@ -927,11 +1185,10 @@ impl RegistryRunner {
         let Some(context) = self.context.as_ref() else {
             return Err("runtime context not initialized".to_string());
         };
-        let mut uniforms = UniformBanks::new(
+        let uniforms = UniformBanks::new(
             context.device.as_ref(),
             self.config.banks.max(1),
         );
-        self.apply_sketch_defaults(&mut uniforms);
 
         self.control_hub = self.build_control_hub();
         self.restore_sketch_state_from_disk();
@@ -956,14 +1213,7 @@ impl RegistryRunner {
         Ok(())
     }
 
-    fn apply_sketch_defaults(&self, uniforms: &mut UniformBanks) {
-        for (id, value) in self.sketch.default_uniforms() {
-            if let Err(err) = uniforms.set(id, *value) {
-                warn!("invalid sketch default uniform '{}': {}", id, err);
-            }
-        }
-    }
-
+    // Builds hub from sketch control script and wires callback bridges.
     fn build_control_hub(&self) -> Option<ControlHub<Timing>> {
         let path = self.sketch.control_script()?;
 
@@ -986,18 +1236,19 @@ impl RegistryRunner {
 
         let mut hub = ControlHub::from_path(path, timing);
         hub.set_transition_time(self.transition_time);
-        let populated_pending = self.hub_populated_pending.clone();
+        let populated_tx = self.command_tx.clone();
         hub.register_populated_callback(move || {
-            populated_pending.store(true, Ordering::Release);
+            let _ = populated_tx.send(RuntimeEvent::HubPopulated);
         });
-        let snapshot_ended_pending = self.snapshot_ended_pending.clone();
+        let snapshot_ended_tx = self.command_tx.clone();
         hub.register_snapshot_ended_callback(move || {
-            snapshot_ended_pending.store(true, Ordering::Release);
+            let _ = snapshot_ended_tx.send(RuntimeEvent::SnapshotEnded);
         });
         hub.mark_unchanged();
         Some(hub)
     }
 
+    // Applies resize to surface config and runtime context resolution.
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width == 0 || new_size.height == 0 {
             return;
@@ -1020,6 +1271,7 @@ impl RegistryRunner {
         context.set_window_size([new_size.width, new_size.height]);
     }
 
+    // Internal runtime event emitter.
     fn emit_event(&self, event: RuntimeEvent) {
         let Some(event_tx) = self.event_tx.as_ref() else {
             return;
@@ -1030,10 +1282,12 @@ impl RegistryRunner {
         }
     }
 
+    // Convenience wrapper for runtime -> webview events.
     fn emit_web_view_event(&self, event: web_view::Event) {
         self.emit_event(RuntimeEvent::WebView(event));
     }
 
+    // Returns cached per-sketch UI state.
     fn current_sketch_ui_state(&self) -> SketchUiState {
         self.sketch_ui_state
             .get(&self.active_sketch_name)
@@ -1041,12 +1295,14 @@ impl RegistryRunner {
             .unwrap_or_default()
     }
 
+    // Returns mutable per-sketch UI state, creating default if needed.
     fn current_sketch_ui_state_mut(&mut self) -> &mut SketchUiState {
         self.sketch_ui_state
             .entry(self.active_sketch_name.clone())
             .or_default()
     }
 
+    // Derives UI mapping payload from hub MIDI proxy configs.
     fn mappings_from_hub(&self) -> web_view::Mappings {
         let Some(hub) = self.control_hub.as_ref() else {
             return HashMap::default();
@@ -1068,6 +1324,7 @@ impl RegistryRunner {
         mappings
     }
 
+    // Sends one-time UI bootstrap payload.
     fn emit_web_view_init(&self) {
         let hrcc = self
             .control_hub
@@ -1100,6 +1357,7 @@ impl RegistryRunner {
         self.emit_web_view_event(event);
     }
 
+    // Sends active sketch payload (controls/snapshots/mappings/toggles).
     fn emit_web_view_load_sketch(&mut self) {
         let controls = self
             .control_hub
@@ -1149,6 +1407,7 @@ impl RegistryRunner {
         self.emit_web_view_event(event);
     }
 
+    // Applies one UI control mutation into the hub and requests redraw.
     fn apply_control_update(&mut self, name: String, value: ControlValue) {
         let Some(hub) = self.control_hub.as_mut() else {
             warn!(
@@ -1165,6 +1424,7 @@ impl RegistryRunner {
         }
     }
 
+    // Swaps sketch instance/config, rebuilds runtime graph state, updates UI.
     fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
         let (config, sketch) = instantiate_sketch(&self.registry, name)?;
 
@@ -1210,6 +1470,7 @@ impl RegistryRunner {
         Ok(())
     }
 
+    // Toggles performance-mode window policy.
     fn set_perf_mode(&mut self, perf_mode: bool) {
         if self.perf_mode == perf_mode {
             return;
@@ -1238,10 +1499,12 @@ impl RegistryRunner {
         }
     }
 
+    // Sends a UI alert message.
     fn alert(&self, message: impl Into<String>) {
         self.emit_web_view_event(web_view::Event::Alert(message.into()));
     }
 
+    // Sends UI alert and emits log entry with matching level.
     fn alert_and_log(&self, message: impl Into<String>, level: log::Level) {
         let message = message.into();
         self.alert(message.clone());
@@ -1254,6 +1517,7 @@ impl RegistryRunner {
         }
     }
 
+    // Resolves requested OS directory kind to an absolute path.
     fn os_dir_path(&self, kind: &web_view::OsDir) -> PathBuf {
         match kind {
             web_view::OsDir::Cache => storage::cache_dir()
@@ -1262,10 +1526,12 @@ impl RegistryRunner {
         }
     }
 
+    // Updates cached randomize/save exclusions for active sketch.
     fn set_exclusions(&mut self, exclusions: web_view::Exclusions) {
         self.current_sketch_ui_state_mut().exclusions = exclusions;
     }
 
+    // Persists global runtime settings.
     fn save_global_state(&self) {
         let settings = GlobalSettings {
             version: super::serialization::GLOBAL_SETTINGS_VERSION.to_string(),
@@ -1281,7 +1547,9 @@ impl RegistryRunner {
             videos_dir: self.videos_dir.clone(),
         };
 
-        if let Err(err) = storage::save_global_state(&self.user_data_dir, settings) {
+        if let Err(err) =
+            storage::save_global_state(&self.user_data_dir, settings)
+        {
             self.alert_and_log(
                 format!("Failed to persist global settings: {}", err),
                 log::Level::Error,
@@ -1289,6 +1557,7 @@ impl RegistryRunner {
         }
     }
 
+    // Loads per-sketch controls/snapshots/mappings/exclusions into runtime + hub.
     fn restore_sketch_state_from_disk(&mut self) {
         let current = self.current_sketch_ui_state();
         let Some(hub) = self.control_hub.as_mut() else {
@@ -1334,6 +1603,7 @@ impl RegistryRunner {
         }
     }
 
+    // Emits one-time shutdown events to peers.
     fn signal_shutdown(&mut self) {
         if self.shutdown_signaled {
             return;
@@ -1344,271 +1614,15 @@ impl RegistryRunner {
         self.emit_event(RuntimeEvent::Stopped);
     }
 
+    // Requests graceful exit of the event loop.
     fn shutdown(&mut self, event_loop: &ActiveEventLoop) {
         self.signal_shutdown();
         event_loop.exit();
     }
-
-    fn process_commands(&mut self, event_loop: &ActiveEventLoop) {
-        while let Ok(event) = self.command_rx.try_recv() {
-            if self.on_runtime_event(event_loop, event) {
-                return;
-            }
-        }
-    }
-
-    fn emit_average_fps_if_due(&mut self, now: Instant) {
-        if now.duration_since(self.last_average_fps_emit)
-            < Duration::from_secs(1)
-        {
-            return;
-        }
-
-        self.last_average_fps_emit = now;
-        self.emit_web_view_event(web_view::Event::AverageFps(
-            frame_controller::average_fps(),
-        ));
-    }
-
-    fn render(&mut self, event_loop: &ActiveEventLoop) {
-        if !self.render_requested {
-            return;
-        }
-
-        self.render_requested = false;
-
-        let (
-            pending_png_capture,
-            pending_png_capture_error,
-            capture_device,
-            capture_submission_index,
-        ) = {
-            let Some(context) = self.context.as_mut() else {
-                return;
-            };
-            let Some(uniforms) = self.uniforms.as_mut() else {
-                return;
-            };
-            let Some(graph) = self.graph.as_mut() else {
-                return;
-            };
-            let Some(surface_config) = self.surface_config.as_ref() else {
-                return;
-            };
-
-            self.sketch.update(context);
-
-            let [w, h] = context.resolution();
-            uniforms.set_resolution(w, h);
-
-            if let Some(hub) = self.control_hub.as_mut() {
-                hub.update();
-
-                for (id, value) in hub.var_values() {
-                    if let Err(err) = uniforms.set(&id, value) {
-                        warn!(
-                            "ignoring control var '{}' for sketch '{}': {}",
-                            id, self.config.name, err
-                        );
-                    }
-                }
-
-                uniforms.set_beats(hub.beats());
-            } else {
-                uniforms.set_beats(context.elapsed_seconds());
-            }
-
-            uniforms.upload(context.queue.as_ref());
-
-            let Some(surface) = self.surface.as_mut() else {
-                return;
-            };
-
-            let output = match surface.get_current_texture() {
-                Ok(output) => output,
-                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                    surface.configure(context.device.as_ref(), surface_config);
-                    return;
-                }
-                Err(wgpu::SurfaceError::Timeout) => {
-                    warn!("surface timeout while acquiring frame");
-                    return;
-                }
-                Err(wgpu::SurfaceError::OutOfMemory) => {
-                    error!("surface out of memory; exiting");
-                    event_loop.exit();
-                    return;
-                }
-                Err(wgpu::SurfaceError::Other) => {
-                    warn!("surface error while acquiring frame");
-                    return;
-                }
-            };
-
-            let mut frame = Frame::new(
-                context.device.as_ref(),
-                context.queue.clone(),
-                output,
-            );
-
-            self.sketch.view(&mut frame, context);
-
-            if let Err(err) = graph.execute(
-                context.device.as_ref(),
-                &mut frame,
-                uniforms,
-                context.resolution_u32(),
-            ) {
-                error!("graph execution error: {}", err);
-                event_loop.exit();
-                return;
-            }
-
-            if self.recording_state.is_recording {
-                if let Some(recorder) = self.recording_state.frame_recorder.as_mut()
-                {
-                    if let Some(source_texture) =
-                        graph.recording_source_texture()
-                    {
-                        let encoder = frame.encoder();
-                        let _ = recorder
-                            .capture_surface_frame(encoder, source_texture);
-                    }
-                }
-            }
-
-            let mut pending_png_capture_error = None;
-            let pending_png_capture = if let Some(path) =
-                self.pending_png_capture_path.take()
-            {
-                let source_texture = graph.recording_source_texture();
-                let source_format = graph.recording_source_format();
-                match (source_texture, source_format) {
-                    (Some(source_texture), Some(source_format)) => {
-                        let width = source_texture.size().width.max(1);
-                        let height = source_texture.size().height.max(1);
-                        let bytes_per_pixel = 4u32;
-                        let unpadded_bytes_per_row = width * bytes_per_pixel;
-                        let padded_bytes_per_row =
-                            unpadded_bytes_per_row
-                                + compute_row_padding(unpadded_bytes_per_row);
-                        let buffer_size =
-                            (padded_bytes_per_row as u64) * (height as u64);
-                        let buffer = context.device.create_buffer(
-                            &wgpu::BufferDescriptor {
-                                label: Some("xtal2-capture-readback"),
-                                size: buffer_size,
-                                usage: wgpu::BufferUsages::COPY_DST
-                                    | wgpu::BufferUsages::MAP_READ,
-                                mapped_at_creation: false,
-                            },
-                        );
-
-                        frame.encoder().copy_texture_to_buffer(
-                            wgpu::TexelCopyTextureInfo {
-                                texture: source_texture,
-                                mip_level: 0,
-                                origin: wgpu::Origin3d::ZERO,
-                                aspect: wgpu::TextureAspect::All,
-                            },
-                            wgpu::TexelCopyBufferInfo {
-                                buffer: &buffer,
-                                layout: wgpu::TexelCopyBufferLayout {
-                                    offset: 0,
-                                    bytes_per_row: Some(padded_bytes_per_row),
-                                    rows_per_image: Some(height),
-                                },
-                            },
-                            wgpu::Extent3d {
-                                width,
-                                height,
-                                depth_or_array_layers: 1,
-                            },
-                        );
-
-                        Some(PendingPngCapture {
-                            path,
-                            buffer,
-                            width,
-                            height,
-                            padded_bytes_per_row,
-                            source_format,
-                        })
-                    }
-                    _ => {
-                        pending_png_capture_error = Some("Failed to capture frame: graph presents directly to surface; no capture source texture".to_string());
-                        None
-                    }
-                }
-            } else {
-                None
-            };
-
-            let submission_index = frame.submit();
-
-            if self.recording_state.is_recording {
-                if let Some(recorder) = self.recording_state.frame_recorder.as_mut()
-                {
-                    recorder.on_submitted();
-                }
-            }
-
-            context.next_frame();
-
-            (
-                pending_png_capture,
-                pending_png_capture_error,
-                context.device.clone(),
-                submission_index,
-            )
-        };
-
-        if let Some(message) = pending_png_capture_error {
-            self.alert_and_log(message, log::Level::Error);
-        }
-
-        self.emit_event(RuntimeEvent::FrameAdvanced(
-            frame_controller::frame_count() as u64,
-        ));
-
-        if self.recording_state.is_encoding {
-            if let Some(outcome) = self
-                .recording_state
-                .poll_finalize(&mut self.session_id)
-            {
-                if outcome.is_error {
-                    self.alert_and_log(outcome.message, log::Level::Error);
-                } else {
-                    self.alert(outcome.message);
-                }
-                self.emit_web_view_event(web_view::Event::Encoding(
-                    self.recording_state.is_encoding,
-                ));
-            }
-        }
-
-        if self.hub_populated_pending.swap(false, Ordering::AcqRel) {
-            let _ =
-                self.on_runtime_event(event_loop, RuntimeEvent::HubPopulated);
-        }
-
-        if self.snapshot_ended_pending.swap(false, Ordering::AcqRel) {
-            let _ =
-                self.on_runtime_event(event_loop, RuntimeEvent::SnapshotEnded);
-        }
-
-        if let Some(capture) = pending_png_capture {
-            queue_png_capture_save(
-                capture_device,
-                capture_submission_index,
-                capture,
-                self.event_tx.clone(),
-            );
-        }
-    }
 }
 
-impl ApplicationHandler for RegistryRunner {
+impl ApplicationHandler for XtalRuntime {
+    // Winit lifecycle hook: initialize runtime resources once.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.window.is_some() {
             return;
@@ -1629,6 +1643,7 @@ impl ApplicationHandler for RegistryRunner {
         self.emit_web_view_load_sketch();
     }
 
+    // Main window event router for input, resize, redraw, and close.
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -1667,6 +1682,7 @@ impl ApplicationHandler for RegistryRunner {
         }
     }
 
+    // Tick hook: drain commands and schedule frames via frame controller.
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         self.process_commands(event_loop);
         let now = Instant::now();
@@ -1695,9 +1711,53 @@ impl ApplicationHandler for RegistryRunner {
         ));
     }
 
+    // Final lifecycle hook.
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
         self.signal_shutdown();
     }
+}
+
+pub fn run_registry(
+    registry: RuntimeRegistry,
+    initial_sketch: Option<&str>,
+) -> Result<(), String> {
+    let (command_tx, command_rx) = command_channel();
+    let (event_tx, event_rx) = event_channel();
+
+    let _bridge = WebViewBridge::launch(command_tx.clone(), event_rx)?;
+
+    run_registry_with_channels(
+        registry,
+        initial_sketch,
+        command_tx,
+        command_rx,
+        Some(event_tx),
+    )
+}
+
+fn run_registry_with_channels(
+    registry: RuntimeRegistry,
+    initial_sketch: Option<&str>,
+    command_tx: RuntimeCommandSender,
+    command_rx: RuntimeCommandReceiver,
+    event_tx: Option<RuntimeEventSender>,
+) -> Result<(), String> {
+    logging::init_logger();
+
+    let event_loop = EventLoop::new().map_err(|err| err.to_string())?;
+    event_loop.set_control_flow(ControlFlow::Wait);
+
+    let mut runner = XtalRuntime::new(
+        registry,
+        initial_sketch,
+        command_tx,
+        command_rx,
+        event_tx,
+    )?;
+
+    event_loop
+        .run_app(&mut runner)
+        .map_err(|err| err.to_string())
 }
 
 fn select_initial_sketch_name(
@@ -1782,9 +1842,8 @@ fn save_png_capture(
     slice.map_async(wgpu::MapMode::Read, move |result| {
         let _ = tx.send(result);
     });
-    let _ = device.poll(wgpu::PollType::WaitForSubmissionIndex(
-        submission_index,
-    ));
+    let _ =
+        device.poll(wgpu::PollType::WaitForSubmissionIndex(submission_index));
     let map_result = rx
         .recv()
         .map_err(|err| format!("map channel recv failed: {}", err))?;
@@ -1815,8 +1874,9 @@ fn save_png_capture(
         }
     }
 
-    let file = fs::File::create(&path)
-        .map_err(|err| format!("failed to create '{}': {}", path.display(), err))?;
+    let file = fs::File::create(&path).map_err(|err| {
+        format!("failed to create '{}': {}", path.display(), err)
+    })?;
     let mut writer = std::io::BufWriter::new(file);
     let mut encoder = png::Encoder::new(&mut writer, width, height);
     encoder.set_color(png::ColorType::Rgba);

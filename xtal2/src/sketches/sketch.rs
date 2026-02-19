@@ -26,10 +26,6 @@ pub enum TimingMode {
 pub trait Sketch {
     fn setup(&self, graph: &mut GraphBuilder);
 
-    fn default_uniforms(&self) -> &'static [(&'static str, f32)] {
-        &[]
-    }
-
     fn control_script(&self) -> Option<PathBuf> {
         None
     }

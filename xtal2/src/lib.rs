@@ -22,4 +22,4 @@ pub mod sketch_assets;
 #[path = "render/uniforms.rs"]
 pub mod uniforms;
 
-pub use runtime::app::{run_registry, run_registry_with_web_view};
+pub use runtime::app::run_registry;

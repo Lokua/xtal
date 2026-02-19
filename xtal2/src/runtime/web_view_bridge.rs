@@ -70,8 +70,7 @@ impl WebViewBridge {
                             let _ = to_child.send(Event::Quit);
                             break;
                         }
-                        RuntimeEvent::FrameAdvanced(_)
-                        | RuntimeEvent::FrameSkipped
+                        RuntimeEvent::FrameSkipped
                         | RuntimeEvent::SketchSwitched(_) => {}
                         _ => {}
                     }
