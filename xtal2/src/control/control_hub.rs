@@ -4,7 +4,7 @@
 //!
 //! [ref]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 
-use log::{error, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 use notify::{Event, RecursiveMode, Watcher};
 use rand::Rng;
 use std::cell::RefCell;
@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use yaml_merge_keys::merge_keys_serde_yml;
 
 use super::config::*;
@@ -31,6 +32,8 @@ pub const TRANSITION_TIMES: [f32; 16] = [
     32.0, 24.0, 16.0, 12.0, 16.0, 8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5,
     0.25, 0.0,
 ];
+
+const WATCHER_CHANGE_INFO_DEBOUNCE: Duration = Duration::from_millis(150);
 
 #[derive(Debug)]
 struct UpdateState {
@@ -1725,6 +1728,8 @@ impl<T: TimingSource> ControlHub<T> {
             .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("."));
         let last_loaded_hash = Arc::new(Mutex::new(initial_content_hash));
+        let last_change_info_log_at = Arc::new(Mutex::new(None::<Instant>));
+        let last_unchanged_info_log_at = Arc::new(Mutex::new(None::<Instant>));
         info!(
             "watching control config '{}' via directory '{}'",
             path_to_watch.display(),
@@ -1754,7 +1759,7 @@ impl<T: TimingSource> ControlHub<T> {
             if !config_file_changed(&event, &path) {
                 return;
             }
-            info!(
+            debug!(
                 "control config fs event matched '{}': {:?}",
                 path.display(),
                 event.kind
@@ -1776,10 +1781,31 @@ impl<T: TimingSource> ControlHub<T> {
             if let Ok(mut guard) = last_loaded_hash.lock() {
                 if guard.is_some_and(|existing_hash| existing_hash == new_hash)
                 {
-                    info!(
+                    debug!(
                         "control config content unchanged; skipping reload: {}",
                         path.display()
                     );
+                    let should_log_info = if let Ok(mut guard) =
+                        last_unchanged_info_log_at.lock()
+                    {
+                        let now = Instant::now();
+                        let suppressed = guard.is_some_and(|last| {
+                            now.duration_since(last)
+                                < WATCHER_CHANGE_INFO_DEBOUNCE
+                        });
+                        if !suppressed {
+                            *guard = Some(now);
+                        }
+                        !suppressed
+                    } else {
+                        true
+                    };
+                    if should_log_info {
+                        info!(
+                            "control config unchanged; skipped reload: {}",
+                            path.display()
+                        );
+                    }
                     return;
                 }
                 *guard = Some(new_hash);
@@ -1791,11 +1817,42 @@ impl<T: TimingSource> ControlHub<T> {
                         *guard = Some(new_config);
                         let already_pending =
                             has_changes.swap(true, Ordering::AcqRel);
-                        info!(
-                            "loaded new control configuration: {} (pending_before={})",
-                            path.display(),
-                            already_pending
-                        );
+
+                        if already_pending {
+                            debug!(
+                                "loaded new control configuration while pending: {}",
+                                path.display()
+                            );
+                            return;
+                        }
+
+                        let should_log_info = if let Ok(mut guard) =
+                            last_change_info_log_at.lock()
+                        {
+                            let now = Instant::now();
+                            let suppressed = guard.is_some_and(|last| {
+                                now.duration_since(last)
+                                    < WATCHER_CHANGE_INFO_DEBOUNCE
+                            });
+                            if !suppressed {
+                                *guard = Some(now);
+                            }
+                            !suppressed
+                        } else {
+                            true
+                        };
+
+                        if should_log_info {
+                            info!(
+                                "control config changed: {}",
+                                path.display()
+                            );
+                        } else {
+                            debug!(
+                                "control config change suppressed by debounce: {}",
+                                path.display()
+                            );
+                        }
                     }
                 }
                 Err(e) => {
