@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::framework::prelude::HashMap;
+use crate::framework::prelude::{HashMap, info};
 use crate::motion::SlewLimiter;
 
 #[derive(Clone, Debug)]
@@ -41,8 +43,23 @@ impl ControlConfig<f32, f32> for AudioControlConfig {}
 
 #[derive(Clone, Debug, Default)]
 pub struct AudioControls {
+    pub is_active: bool,
     values: Arc<Mutex<HashMap<String, f32>>>,
     configs: HashMap<String, AudioControlConfig>,
+}
+
+impl AudioControls {
+    pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.is_active = true;
+        Ok(())
+    }
+
+    pub fn restart(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.is_active = false;
+        info!("Restarting audio controls");
+        thread::sleep(Duration::from_millis(10));
+        self.start()
+    }
 }
 
 impl

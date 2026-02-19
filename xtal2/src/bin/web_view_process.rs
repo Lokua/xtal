@@ -93,6 +93,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         web_view.open_devtools();
     }
 
+    let mut last_sketch_width = DEFAULT_WIDTH;
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
@@ -120,10 +122,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                     wv::Event::LoadSketch {
                         display_name,
                         controls,
-                        perf_mode,
+                        perf_mode: sketch_perf_mode,
                         sketch_width,
                         ..
                     } => {
+                        last_sketch_width = sketch_width;
+
                         window.set_title(&format!("{} Controls", display_name));
                         window.set_inner_size(LogicalSize::new(
                             DEFAULT_WIDTH,
@@ -131,9 +135,17 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 .max(MIN_SETTINGS_HEIGHT),
                         ));
 
-                        if !perf_mode {
+                        if !sketch_perf_mode {
                             window.set_outer_position(LogicalPosition::new(
                                 sketch_width,
+                                0,
+                            ));
+                        }
+                    }
+                    wv::Event::PerfMode(enabled) => {
+                        if !enabled {
+                            window.set_outer_position(LogicalPosition::new(
+                                last_sketch_width,
                                 0,
                             ));
                         }

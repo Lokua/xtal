@@ -390,7 +390,13 @@ impl<T: TimingSource> ControlHub<T> {
                     );
                     m.apply(value)
                 }
-                Effect::RingModulator(_) => panic!(),
+                Effect::RingModulator(_) => {
+                    warn_once!(
+                        "Unexpected RingModulator branch for '{}'; bypassing effect",
+                        modulator
+                    );
+                    value
+                }
             }
         }
     }
@@ -535,7 +541,13 @@ impl<T: TimingSource> ControlHub<T> {
                                 conf.phase.as_float(),
                             )
                         }
-                        _ => unimplemented!(),
+                        _ => {
+                            warn_once!(
+                                "Unsupported animation sequence for '{}'; defaulting to 0.0",
+                                name
+                            );
+                            0.0
+                        }
                     }
                 })
             });

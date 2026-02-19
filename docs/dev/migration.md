@@ -60,8 +60,8 @@ user-facing behavior for:
 
 ### What is not complete yet
 
-- UI parity is close but not complete: webview placement behavior in perf mode
-  still needs final lock-in.
+- UI bridge parity is mostly complete; remaining item is an end-to-end
+  webview-process routing smoke test.
 - Audio paths are not ported to xtal2 runtime.
 - Full behavioral parity fixtures vs legacy xtal are still missing.
 
@@ -156,7 +156,7 @@ Still missing (or not yet driven by real runtime state):
   File touchpoint: `xtal2/src/runtime/app.rs`.
 - [x] Restore main-window size when leaving fullscreen/focus flows.
   File touchpoint: `xtal2/src/runtime/app.rs`.
-- [ ] Ensure webview control window placement behavior respects perf mode without
+- [x] Ensure webview control window placement behavior respects perf mode without
   breaking control sizing expectations.
   File touchpoint: `xtal2/src/bin/web_view_process.rs`.
 
@@ -185,7 +185,7 @@ Exit criteria:
 - [x] Port MIDI control in/out lifecycle and hrcc behavior.
 - [x] Port MIDI clock start/continue/stop runtime controls.
 - [x] Port OSC port runtime controls.
-- [ ] Port audio device switching and runtime restarts.
+- [x] Port audio device switching and runtime restarts.
 - [x] Port global settings serialization/restore.
 - [x] Port sketch state serialization/restore (snapshots, mappings, exclusions).
 - [x] Hook persistence into runtime sketch-switch lifecycle (load on init/switch
@@ -241,7 +241,7 @@ Exit criteria:
 
 ### Phase 6: var migration completion
 
-- [ ] Add explicit deprecation warnings/tooling for numeric aliases (`a1..a4`).
+- [x] Add explicit deprecation warnings/tooling for numeric aliases (`a1..a4`).
 - [ ] Set and document a removal milestone for numeric aliases.
 - [ ] Keep docs/examples/templates fully on `ax/ay/az/aw` naming.
 
