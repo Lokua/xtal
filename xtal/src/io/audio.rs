@@ -7,8 +7,8 @@ use std::cmp::Ordering;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-use crate::framework::frame_controller;
-use crate::framework::prelude::*;
+use crate::time::frame_clock;
+use crate::core::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
 struct SlewConfig {
@@ -188,7 +188,7 @@ impl Default for AudioProcessor {
 impl AudioProcessor {
     pub fn initialize(&mut self, sample_rate: usize) {
         self.sample_rate = sample_rate;
-        let frame_rate = frame_controller::fps();
+        let frame_rate = frame_clock::fps();
         self.buffer_size = (sample_rate as f32 / frame_rate).ceil() as usize;
         self.buffer = vec![0.0; self.buffer_size];
         let mut planner = FftPlanner::new();

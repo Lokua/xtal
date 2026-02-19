@@ -3,8 +3,8 @@ use std::error::Error;
 use std::fmt;
 use std::sync::{Arc, Mutex};
 
-use crate::framework::midi;
-use crate::framework::prelude::*;
+use crate::io::midi;
+use crate::core::prelude::*;
 
 pub type ChannelAndController = (usize, usize);
 pub type Mappings = HashMap<String, ChannelAndController>;

@@ -2,8 +2,8 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use super::control_traits::{ControlCollection, ControlConfig};
-use crate::framework::midi::{self, is_control_change};
-use crate::framework::prelude::*;
+use crate::io::midi::{self, is_control_change};
+use crate::core::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {

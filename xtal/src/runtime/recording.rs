@@ -4,15 +4,15 @@ use std::sync::Arc;
 use std::sync::mpsc;
 use std::thread;
 
-use crate::framework::util::uuid_5;
-use crate::runtime::frame_recorder::FrameRecorder;
+use crate::core::util::uuid_5;
+use crate::runtime::recorder::Recorder;
 
 #[derive(Default)]
 pub struct RecordingState {
     pub is_recording: bool,
     pub is_encoding: bool,
     pub is_queued: bool,
-    pub frame_recorder: Option<FrameRecorder>,
+    pub recorder: Option<Recorder>,
     finalize_rx: Option<mpsc::Receiver<FinalizeMessage>>,
 }
 
@@ -37,7 +37,7 @@ impl RecordingState {
         fps: f32,
         source_format: wgpu::TextureFormat,
     ) -> Result<String, Box<dyn Error>> {
-        let recorder = FrameRecorder::new(
+        let recorder = Recorder::new(
             device,
             output_path,
             width,
@@ -45,7 +45,7 @@ impl RecordingState {
             fps,
             source_format,
         )?;
-        self.frame_recorder = Some(recorder);
+        self.recorder = Some(recorder);
         self.is_recording = true;
         let message = format!("Recording to {}", output_path);
         log::info!("{}", message);
@@ -57,7 +57,7 @@ impl RecordingState {
         self.is_queued = false;
 
         let recorder =
-            self.frame_recorder.take().ok_or("No active recorder")?;
+            self.recorder.take().ok_or("No active recorder")?;
 
         self.is_encoding = true;
 

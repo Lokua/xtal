@@ -7,7 +7,7 @@ use midir::{
     Ignore, MidiInput, MidiInputConnection, MidiOutput, MidiOutputConnection,
 };
 
-use super::prelude::*;
+use crate::core::prelude::*;
 
 static THREADS: LazyLock<
     Mutex<HashMap<ConnectionType, thread::JoinHandle<()>>>,

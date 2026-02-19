@@ -25,17 +25,19 @@ use super::recording::{self, RecordingState};
 use super::registry::RuntimeRegistry;
 use super::serialization::{GlobalSettings, TransitorySketchState};
 use super::storage;
-use super::tap_tempo::TapTempo;
 use super::web_view;
 use super::web_view_bridge::WebViewBridge;
 use crate::context::Context;
 use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
-use crate::framework::audio::list_audio_devices;
-use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
-use crate::framework::util::{HashMap, uuid_5};
-use crate::framework::{frame_controller, logging, midi};
+use crate::io::audio::list_audio_devices;
+use crate::io::osc::SHARED_OSC_RECEIVER;
+use crate::core::util::{HashMap, uuid_5};
+use crate::time::frame_clock;
+use crate::time::tap_tempo::TapTempo;
+use crate::core::logging;
+use crate::io::midi;
 use crate::gpu::compute_row_padding;
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
@@ -271,7 +273,7 @@ impl XtalRuntime {
     ) -> bool {
         match event {
             RuntimeEvent::AdvanceSingleFrame => {
-                frame_controller::advance_single_frame();
+                frame_clock::advance_single_frame();
             }
             RuntimeEvent::CaptureFrame => {
                 if let Err(err) = fs::create_dir_all(&self.images_dir) {
@@ -496,7 +498,7 @@ impl XtalRuntime {
             RuntimeEvent::MidiContinue | RuntimeEvent::MidiStart => {
                 info!("Received MIDI Start/Continue. Resetting frame count.");
 
-                frame_controller::reset_frame_count();
+                frame_clock::reset_frame_count();
 
                 if self.recording_state.is_queued {
                     let _ = self.on_runtime_event(
@@ -545,7 +547,7 @@ impl XtalRuntime {
                 }
             }
             RuntimeEvent::Pause(paused) => {
-                frame_controller::set_paused(paused);
+                frame_clock::set_paused(paused);
             }
             RuntimeEvent::QueueRecord => {
                 self.recording_state.is_queued =
@@ -605,7 +607,7 @@ impl XtalRuntime {
                 self.emit_web_view_event(web_view::Event::Mappings(mappings));
             }
             RuntimeEvent::Reset => {
-                frame_controller::reset();
+                frame_clock::reset();
                 self.alert("Reset");
             }
             RuntimeEvent::Save(exclusions) => {
@@ -980,7 +982,7 @@ impl XtalRuntime {
 
         self.last_average_fps_emit = now;
         self.emit_web_view_event(web_view::Event::AverageFps(
-            frame_controller::average_fps(),
+            frame_clock::average_fps(),
         ));
     }
 
@@ -1099,7 +1101,7 @@ impl XtalRuntime {
             // 6) Recording readback copy is encoded pre-submit.
             if self.recording_state.is_recording {
                 if let Some(recorder) =
-                    self.recording_state.frame_recorder.as_mut()
+                    self.recording_state.recorder.as_mut()
                 {
                     if let Some(source_texture) =
                         graph.recording_source_texture()
@@ -1183,7 +1185,7 @@ impl XtalRuntime {
 
             if self.recording_state.is_recording {
                 if let Some(recorder) =
-                    self.recording_state.frame_recorder.as_mut()
+                    self.recording_state.recorder.as_mut()
                 {
                     recorder.on_submitted();
                 }
@@ -1278,7 +1280,7 @@ impl XtalRuntime {
 
         match code {
             KeyCode::KeyA => {
-                if frame_controller::paused() {
+                if frame_clock::paused() {
                     return self.on_runtime_event(
                         event_loop,
                         RuntimeEvent::AdvanceSingleFrame,
@@ -1307,7 +1309,7 @@ impl XtalRuntime {
                 }
             }
             KeyCode::KeyP => {
-                let paused = !frame_controller::paused();
+                let paused = !frame_clock::paused();
                 let _ = self
                     .on_runtime_event(event_loop, RuntimeEvent::Pause(paused));
                 self.emit_web_view_event(web_view::Event::Paused(paused));
@@ -2132,7 +2134,7 @@ impl XtalRuntime {
             display_name: self.config.display_name.to_string(),
             fps: self.config.fps,
             mappings,
-            paused: frame_controller::paused(),
+            paused: frame_clock::paused(),
             perf_mode: self.perf_mode,
             sketch_name: self.active_sketch_name.clone(),
             sketch_width: self.config.w as i32,
@@ -2159,9 +2161,9 @@ impl XtalRuntime {
         hub.ui_controls.set(&name, value);
 
         if self.config.play_mode == PlayMode::Advance
-            && frame_controller::paused()
+            && frame_clock::paused()
         {
-            frame_controller::advance_single_frame();
+            frame_clock::advance_single_frame();
             self.request_render_now();
         }
     }
@@ -2178,8 +2180,8 @@ impl XtalRuntime {
         self.update_timing_mode_flags();
         self.bpm.set(self.config.bpm);
         self.tap_tempo = TapTempo::new(self.config.bpm);
-        frame_controller::set_fps(self.config.fps);
-        frame_controller::reset_timing(Instant::now());
+        frame_clock::set_fps(self.config.fps);
+        frame_clock::reset_timing(Instant::now());
         self.apply_play_mode();
 
         if let Some(window) = self.window.as_ref() {
@@ -2223,7 +2225,7 @@ impl XtalRuntime {
             PlayMode::Loop => false,
             PlayMode::Pause | PlayMode::Advance => true,
         };
-        frame_controller::set_paused(paused);
+        frame_clock::set_paused(paused);
     }
 
     // Toggles performance-mode window policy.
@@ -2404,7 +2406,7 @@ impl ApplicationHandler for XtalRuntime {
             return;
         }
 
-        frame_controller::set_fps(self.config.fps);
+        frame_clock::set_fps(self.config.fps);
         self.apply_play_mode();
         // Always draw the first frame, even in Pause/Advance modes.
         self.request_render_now();
@@ -2457,12 +2459,12 @@ impl ApplicationHandler for XtalRuntime {
 
         if self.render_requested {
             event_loop.set_control_flow(ControlFlow::WaitUntil(
-                frame_controller::next_deadline(),
+                frame_clock::next_deadline(),
             ));
             return;
         }
 
-        let tick = frame_controller::tick(now);
+        let tick = frame_clock::tick(now);
 
         if tick.should_render {
             self.render_requested = true;
@@ -2474,7 +2476,7 @@ impl ApplicationHandler for XtalRuntime {
         }
 
         event_loop.set_control_flow(ControlFlow::WaitUntil(
-            frame_controller::next_deadline(),
+            frame_clock::next_deadline(),
         ));
     }
 

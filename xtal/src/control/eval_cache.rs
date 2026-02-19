@@ -16,16 +16,16 @@
 //! whether `a` or `b` is requested first, there will 100% be a second request
 //! for `a` from the UI, hence this cache.
 //!
-//! [pmod]: crate::framework::control::param_mod
+//! [pmod]: crate::control::param_mod
 use std::cell::RefCell;
 
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 
 type NodeName = String;
 type Frame = u32;
 type CachedValue = f32;
 
-/// See [`crate:framework::control::eval_cache`]
+/// See [`crate::control::eval_cache`]
 #[derive(Debug, Default)]
 pub struct EvalCache {
     cache: RefCell<HashMap<NodeName, (Frame, CachedValue)>>,

@@ -1,13 +1,13 @@
 //! Signal processing effects designed to operate on the results of
 //! [`Animation`][animation] methods but may be suitable for other domains.
 //!
-//! [animation]: crate::framework::motion::animation
+//! [animation]: crate::motion::animation
 
 use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
 use std::str::FromStr;
 
-use crate::framework::prelude::*;
+use crate::core::prelude::*;
 use crate::ternary;
 
 #[derive(Debug)]

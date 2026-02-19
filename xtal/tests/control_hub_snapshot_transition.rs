@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use xtal::control::{ControlCollection, ControlHub, ControlValue};
-use xtal::framework::frame_controller;
+use xtal::time::frame_clock;
 use xtal::motion::{Bpm, Timing};
 
 fn hub_path() -> PathBuf {
@@ -14,9 +14,9 @@ fn debug_snapshot_grid_transition_progression() {
     let path = hub_path();
     assert!(path.exists(), "missing test yaml at {}", path.display());
 
-    frame_controller::set_fps(60.0);
-    frame_controller::set_paused(false);
-    frame_controller::set_frame_count(0);
+    frame_clock::set_fps(60.0);
+    frame_clock::set_paused(false);
+    frame_clock::set_frame_count(0);
 
     let timing = Timing::frame(Bpm::new(134.0));
     let mut hub = ControlHub::from_path(path, timing);
@@ -39,7 +39,7 @@ fn debug_snapshot_grid_transition_progression() {
     hub.recall_snapshot("b").unwrap();
 
     let sample = |hub: &ControlHub<Timing>, frame: u32| -> (f32, f32, f32) {
-        frame_controller::set_frame_count(frame);
+        frame_clock::set_frame_count(frame);
         (hub.get("ab_mix"), hub.get("a_freq"), hub.get("feedback"))
     };
 
@@ -50,7 +50,7 @@ fn debug_snapshot_grid_transition_progression() {
     let f119 = sample(&hub, 119);
 
     // End transition and apply terminal values.
-    frame_controller::set_frame_count(120);
+    frame_clock::set_frame_count(120);
     hub.update();
     let fend = sample(&hub, 120);
 
