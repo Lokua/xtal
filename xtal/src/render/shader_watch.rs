@@ -108,7 +108,7 @@ fn file_content_hash(path: &Path) -> Result<u64, std::io::Error> {
     Ok(hasher.finish())
 }
 
-fn shader_changed(event: &Event, shader_path: &PathBuf) -> bool {
+fn shader_changed(event: &Event, shader_path: &Path) -> bool {
     if !matches!(
         event.kind,
         EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)

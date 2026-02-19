@@ -7,6 +7,7 @@ use std::thread;
 use crate::framework::util::uuid_5;
 use crate::runtime::frame_recorder::FrameRecorder;
 
+#[derive(Default)]
 pub struct RecordingState {
     pub is_recording: bool,
     pub is_encoding: bool,
@@ -26,18 +27,6 @@ enum FinalizeMessage {
 pub struct FinalizeOutcome {
     pub is_error: bool,
     pub message: String,
-}
-
-impl Default for RecordingState {
-    fn default() -> Self {
-        Self {
-            is_recording: false,
-            is_encoding: false,
-            is_queued: false,
-            frame_recorder: None,
-            finalize_rx: None,
-        }
-    }
 }
 
 impl RecordingState {

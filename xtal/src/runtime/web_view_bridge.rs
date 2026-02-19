@@ -54,6 +54,7 @@ impl WebViewBridge {
                 while let Ok(runtime_event) = runtime_events.recv() {
                     match runtime_event {
                         RuntimeEvent::WebView(event) => {
+                            let event = *event;
                             if ready.load(Ordering::Acquire) {
                                 if let Err(err) = to_child.send(event) {
                                     warn!(

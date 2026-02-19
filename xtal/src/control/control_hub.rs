@@ -448,7 +448,7 @@ impl<T: TimingSource> ControlHub<T> {
                         ) => {
                             let breakpoints = self.resolve_breakpoint_params(
                                 name,
-                                &breakpoints,
+                                breakpoints,
                                 current_frame,
                             );
                             self.animation.automate(

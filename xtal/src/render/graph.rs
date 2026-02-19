@@ -118,7 +118,7 @@ pub struct RenderNodeBuilder<'a> {
     write: Option<String>,
 }
 
-impl<'a> RenderNodeBuilder<'a> {
+impl RenderNodeBuilder<'_> {
     pub fn shader(mut self, shader_path: impl Into<PathBuf>) -> Self {
         self.shader_path = Some(shader_path.into());
         self
@@ -159,7 +159,7 @@ pub struct ComputeNodeBuilder<'a> {
     read_write: Option<String>,
 }
 
-impl<'a> ComputeNodeBuilder<'a> {
+impl ComputeNodeBuilder<'_> {
     pub fn shader(mut self, shader_path: impl Into<PathBuf>) -> Self {
         self.shader_path = Some(shader_path.into());
         self
