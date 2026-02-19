@@ -805,10 +805,12 @@ impl XtalRuntime {
                     );
                     return false;
                 };
-                let Some(source_format) = graph.recording_source_format()
-                else {
+                let source_format = graph.recording_source_format().or_else(|| {
+                    self.surface_config.as_ref().map(|config| config.format)
+                });
+                let Some(source_format) = source_format else {
                     self.alert_and_log(
-                        "Failed to start recording: graph presents directly to surface; recording source unavailable",
+                        "Failed to start recording: no capture source format available",
                         log::Level::Error,
                     );
                     return false;
@@ -1105,10 +1107,14 @@ impl XtalRuntime {
             // 6) Recording readback copy is encoded pre-submit.
             if self.recording_state.is_recording {
                 if let Some(recorder) = self.recording_state.recorder.as_mut() {
-                    if let Some(source_texture) =
-                        graph.recording_source_texture()
+                    if let Some(source_texture) = graph.recording_source_texture()
                     {
                         let encoder = frame.encoder();
+                        let _ = recorder
+                            .capture_surface_frame(encoder, source_texture);
+                    } else {
+                        let (encoder, source_texture) =
+                            frame.encoder_and_output_texture();
                         let _ = recorder
                             .capture_surface_frame(encoder, source_texture);
                     }
@@ -1121,7 +1127,9 @@ impl XtalRuntime {
                 self.pending_png_capture_path.take()
             {
                 let source_texture = graph.recording_source_texture();
-                let source_format = graph.recording_source_format();
+                let source_format = graph.recording_source_format().or_else(|| {
+                    self.surface_config.as_ref().map(|config| config.format)
+                });
                 match (source_texture, source_format) {
                     (Some(source_texture), Some(source_format)) => {
                         let width = source_texture.size().width.max(1);
@@ -1173,8 +1181,62 @@ impl XtalRuntime {
                             source_format,
                         })
                     }
+                    (None, Some(source_format)) => {
+                        let (encoder, source_texture) =
+                            frame.encoder_and_output_texture();
+                        let width = source_texture.size().width.max(1);
+                        let height = source_texture.size().height.max(1);
+                        let bytes_per_pixel = 4u32;
+                        let unpadded_bytes_per_row = width * bytes_per_pixel;
+                        let padded_bytes_per_row = unpadded_bytes_per_row
+                            + compute_row_padding(unpadded_bytes_per_row);
+                        let buffer_size =
+                            (padded_bytes_per_row as u64) * (height as u64);
+                        let buffer = context.device.create_buffer(
+                            &wgpu::BufferDescriptor {
+                                label: Some("xtal-capture-readback"),
+                                size: buffer_size,
+                                usage: wgpu::BufferUsages::COPY_DST
+                                    | wgpu::BufferUsages::MAP_READ,
+                                mapped_at_creation: false,
+                            },
+                        );
+
+                        encoder.copy_texture_to_buffer(
+                            wgpu::TexelCopyTextureInfo {
+                                texture: source_texture,
+                                mip_level: 0,
+                                origin: wgpu::Origin3d::ZERO,
+                                aspect: wgpu::TextureAspect::All,
+                            },
+                            wgpu::TexelCopyBufferInfo {
+                                buffer: &buffer,
+                                layout: wgpu::TexelCopyBufferLayout {
+                                    offset: 0,
+                                    bytes_per_row: Some(padded_bytes_per_row),
+                                    rows_per_image: Some(height),
+                                },
+                            },
+                            wgpu::Extent3d {
+                                width,
+                                height,
+                                depth_or_array_layers: 1,
+                            },
+                        );
+
+                        Some(PendingPngCapture {
+                            path,
+                            buffer,
+                            width,
+                            height,
+                            padded_bytes_per_row,
+                            source_format,
+                        })
+                    }
                     _ => {
-                        pending_png_capture_error = Some("Failed to capture frame: graph presents directly to surface; no capture source texture".to_string());
+                        pending_png_capture_error = Some(
+                            "Failed to capture frame: no capture source texture".to_string(),
+                        );
                         None
                     }
                 }
@@ -1414,7 +1476,8 @@ impl XtalRuntime {
             .ok_or_else(|| "surface has no supported formats".to_string())?;
 
         let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::COPY_SRC,
             format,
             width,
             height,
