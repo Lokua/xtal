@@ -1,19 +1,12 @@
 use ahash::RandomState;
-use nannou::prelude::*;
-use nannou::rand::Rng;
-use nannou::rand::rand;
-use nannou::rand::thread_rng;
-use serde::Deserialize;
+use rand::Rng;
 use std::collections::{HashMap as StdHashMap, HashSet as StdHashSet};
-use std::path::PathBuf;
+use std::f32::consts::PI;
 use std::sync::atomic::{AtomicU32, Ordering};
-
-use super::prelude::*;
-
-pub const TWO_PI: f32 = PI * 2.0;
 
 pub type HashMap<K, V> = StdHashMap<K, V, RandomState>;
 pub type HashSet<K> = StdHashSet<K, RandomState>;
+pub const TWO_PI: f32 = PI * 2.0;
 
 #[derive(Debug)]
 pub struct AtomicF32 {
@@ -36,27 +29,125 @@ impl AtomicF32 {
     }
 }
 
-/// `ternary!(cond, true_case, false_case)`
 #[macro_export]
 macro_rules! ternary {
-    ($condition: expr, $_true: expr, $_false: expr) => {
-        if $condition { $_true } else { $_false }
+    ($condition:expr, $if_true:expr, $if_false:expr) => {
+        if $condition { $if_true } else { $if_false }
     };
 }
 
-pub fn bool_to_f32(cond: bool) -> f32 {
-    ternary!(cond, 1.0, 0.0)
+#[macro_export]
+macro_rules! warn_once {
+    ($($arg:tt)+) => {{
+        use std::collections::HashSet;
+        use std::sync::{LazyLock, Mutex};
+
+        static SEEN: LazyLock<Mutex<HashSet<String>>> =
+            LazyLock::new(|| Mutex::new(HashSet::new()));
+
+        let message = format!($($arg)+);
+        let mut set = SEEN.lock().expect("warn_once mutex poisoned");
+
+        if set.insert(message.clone()) {
+            log::warn!("{}", message);
+        }
+    }};
 }
 
-/// Utilities to contain a value within a range
+#[macro_export]
+macro_rules! debug_once {
+    ($($arg:tt)+) => {{
+        use std::collections::HashSet;
+        use std::sync::{LazyLock, Mutex};
+
+        static SEEN: LazyLock<Mutex<HashSet<String>>> =
+            LazyLock::new(|| Mutex::new(HashSet::new()));
+
+        let message = format!($($arg)+);
+        let mut set = SEEN.lock().expect("debug_once mutex poisoned");
+
+        if set.insert(message.clone()) {
+            log::debug!("{}", message);
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! debug_throttled {
+    ($interval_ms:expr, $($arg:tt)*) => {{
+        use std::collections::HashMap;
+        use std::sync::{LazyLock, Mutex};
+        use std::time::{Duration, Instant};
+
+        static DEBUG_THROTTLE: LazyLock<Mutex<HashMap<&'static str, Instant>>> =
+            LazyLock::new(|| Mutex::new(HashMap::new()));
+
+        let key = stringify!($($arg)*);
+        let interval = Duration::from_millis($interval_ms as u64);
+        let mut throttle_map =
+            DEBUG_THROTTLE.lock().expect("debug_throttled mutex poisoned");
+        let now = Instant::now();
+
+        let should_log = throttle_map
+            .get(key)
+            .map(|last| now.duration_since(*last) >= interval)
+            .unwrap_or(true);
+
+        if should_log {
+            throttle_map.insert(key, now);
+            log::debug!($($arg)*);
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! assert_approx_eq {
+    ($a:expr, $b:expr) => {
+        assert!(
+            ($a - $b).abs() < 0.001,
+            "Values not approximately equal: {} and {}, difference: {}",
+            $a,
+            $b,
+            ($a - $b).abs()
+        );
+    };
+    ($a:expr, $b:expr, $epsilon:expr) => {
+        assert!(
+            ($a - $b).abs() < $epsilon,
+            "Values not approximately equal:
+                {} and {}, difference: {}, tolerance: {}",
+            $a,
+            $b,
+            ($a - $b).abs(),
+            $epsilon
+        );
+    };
+}
+
+pub fn bool_to_f32(value: bool) -> f32 {
+    if value { 1.0 } else { 0.0 }
+}
+
+pub fn map_range(
+    value: f32,
+    in_min: f32,
+    in_max: f32,
+    out_min: f32,
+    out_max: f32,
+) -> f32 {
+    let input_span = in_max - in_min;
+    if input_span.abs() <= f32::EPSILON {
+        return out_min;
+    }
+    let t = (value - in_min) / input_span;
+    out_min + t * (out_max - out_min)
+}
+
 pub mod constrain {
-    /// Clamp a value between min and max
     pub fn clamp(value: f32, min: f32, max: f32) -> f32 {
-        nannou::prelude::clamp(value, min, max)
+        value.clamp(min, max)
     }
 
-    /// Clamp a value between min and max such that values that overshoot are
-    /// mirrored back in, e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.8`
     pub fn fold(value: f32, min: f32, max: f32) -> f32 {
         if min == max {
             return min;
@@ -68,7 +159,6 @@ pub mod constrain {
         let range = max - min;
         let value = value - min;
         let distance = value.abs();
-
         let cycles = (distance / range).floor();
         let remainder = distance % range;
 
@@ -85,8 +175,6 @@ pub mod constrain {
         }
     }
 
-    /// Clamp a value between min and max such that values that overshoot enter
-    /// from the opposite bound  e.g. `constrain::fold(1.2, 0.0, 1.0) // => 0.2`
     pub fn wrap(value: f32, min: f32, max: f32) -> f32 {
         if min == max {
             return min;
@@ -97,32 +185,26 @@ pub mod constrain {
 
         let range = max - min;
         let value = value - min;
-
         let wrapped = value - (value / range).floor() * range;
         min + wrapped
     }
 }
 
-/// Linear interpolation between two values. Returns a value between `start` and
-/// `end` based on the interpolation parameter `t` (typically 0.0 to 1.0).
 pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
     start + (end - start) * t
 }
 
 pub fn random_bool() -> bool {
-    random()
+    rand::random()
 }
 
 pub fn random_within_range_stepped(min: f32, max: f32, step: f32) -> f32 {
-    let mut rng = rand::thread_rng();
-    let random_value = min + rng.gen_range(0.0..1.0) * (max - min);
+    let mut rng = rand::rng();
+    let random_value = min + rng.random_range(0.0..1.0) * (max - min);
     let quantized_value = (random_value / step).round() * step;
-    f32::max(min, f32::min(max, quantized_value))
+    quantized_value.clamp(min, max)
 }
 
-/// A helper to avoid [`std::ops::Range`] errors when min > max by swapping min
-/// if min is greater or adding an epsilon to whichever is greater to avoid the
-/// error.
 pub fn safe_range(min: f32, max: f32) -> (f32, f32) {
     let a = if max < min { max } else { min };
     let mut b = if min > max { min } else { max };
@@ -132,149 +214,26 @@ pub fn safe_range(min: f32, max: f32) -> (f32, f32) {
     (a, b)
 }
 
-pub(crate) fn set_window_position(
-    app: &App,
-    window_id: window::Id,
-    x: i32,
-    y: i32,
-) {
-    app.window(window_id)
-        .unwrap()
-        .winit_window()
-        .set_outer_position(nannou::winit::dpi::PhysicalPosition::new(x, y));
-}
-
-pub(crate) fn set_window_size(
-    window: &nannou::winit::window::Window,
-    w: i32,
-    h: i32,
-) {
-    let logical_size = nannou::winit::dpi::LogicalSize::new(w, h);
-    window.set_inner_size(logical_size);
-}
-
-/// Helper to find a file that is adjacent to your sketch
-///
-/// # Example
-///
-/// ```rust
-/// // in ./my/sketches/foo.rs
-///
-/// to_absolute_path(file!(), "bar.rs")
-/// // => <absolute_path_to>/my/sketches/bar.rs
-/// ```
-pub fn to_absolute_path(
-    caller_file: &str,
-    relative_path: impl AsRef<std::path::Path>,
-) -> PathBuf {
-    PathBuf::from(caller_file)
-        .parent()
-        .expect("Failed to get parent directory")
-        .join(relative_path.as_ref())
-}
-
-/// Naive uuid generator
 pub fn uuid(length: usize) -> String {
-    const LETTERS: &str = "abcdefghijklmnopqrstuvwxyz";
-    const NUMBERS: &str = "0123456789";
+    const LETTERS: &[u8] = b"abcdefghijklmnopqrstuvwxyz";
+    const NUMBERS: &[u8] = b"0123456789";
 
-    let mut rng = thread_rng();
-    (0..length)
-        .map(|_| {
-            if random_bool() {
-                LETTERS
-                    .chars()
-                    .nth(rng.gen_range(0..LETTERS.len()))
-                    .unwrap()
-            } else {
-                NUMBERS
-                    .chars()
-                    .nth(rng.gen_range(0..NUMBERS.len()))
-                    .unwrap()
-            }
-        })
-        .collect()
+    let mut rng = rand::rng();
+    let mut out = String::with_capacity(length);
+
+    for _ in 0..length {
+        if random_bool() {
+            let idx = rng.random_range(0..LETTERS.len());
+            out.push(LETTERS[idx] as char);
+        } else {
+            let idx = rng.random_range(0..NUMBERS.len());
+            out.push(NUMBERS[idx] as char);
+        }
+    }
+
+    out
 }
 
-pub(crate) fn uuid_5() -> String {
+pub fn uuid_5() -> String {
     uuid(5)
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ImageData {
-    pub resolution: usize,
-    pub width: usize,
-    pub height: usize,
-    pub grayscale: bool,
-    #[serde(rename = "brightnessFlat")]
-    pub brightness_flat: Option<Vec<f32>>,
-    #[serde(rename = "brightnessGrid")]
-    pub brightness_grid: Option<Vec<Vec<f32>>>,
-    #[serde(rename = "rgbFlat")]
-    pub rgb_flat: Option<Vec<[f32; 3]>>,
-    #[serde(rename = "rgbGrid")]
-    pub rgb_grid: Option<Vec<Vec<[f32; 3]>>>,
-}
-
-impl ImageData {
-    pub fn from_json_file(
-        path: impl AsRef<std::path::Path>,
-    ) -> Result<Self, String> {
-        let contents = std::fs::read_to_string(path)
-            .map_err(|e| format!("Failed to read JSON file: {}", e))?;
-
-        serde_json::from_str(&contents)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))
-    }
-
-    pub fn brightness_flat(&self) -> Result<&Vec<f32>, String> {
-        self.brightness_flat
-            .as_ref()
-            .ok_or_else(|| "Image data does not contain brightness_flat (use grayscale mode)".to_string())
-    }
-
-    pub fn brightness_grid(&self) -> Result<&Vec<Vec<f32>>, String> {
-        self.brightness_grid
-            .as_ref()
-            .ok_or_else(|| "Image data does not contain brightness_grid (use grayscale mode)".to_string())
-    }
-
-    pub fn rgb_flat(&self) -> Result<&Vec<[f32; 3]>, String> {
-        self.rgb_flat
-            .as_ref()
-            .ok_or_else(|| "Image data does not contain rgb_flat (don't use grayscale mode)".to_string())
-    }
-
-    pub fn rgb_grid(&self) -> Result<&Vec<Vec<[f32; 3]>>, String> {
-        self.rgb_grid
-            .as_ref()
-            .ok_or_else(|| "Image data does not contain rgb_grid (don't use grayscale mode)".to_string())
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    #[macro_export]
-    macro_rules! assert_approx_eq {
-        ($a:expr, $b:expr) => {
-            assert!(
-                ($a - $b).abs() < 0.001,
-                "Values not approximately equal: {} and {}, difference: {}",
-                $a,
-                $b,
-                ($a - $b).abs()
-            );
-        };
-        ($a:expr, $b:expr, $epsilon:expr) => {
-            assert!(
-                ($a - $b).abs() < $epsilon,
-                "Values not approximately equal:
-                    {} and {}, difference: {}, tolerance: {}",
-                $a,
-                $b,
-                ($a - $b).abs(),
-                $epsilon
-            );
-        };
-    }
 }

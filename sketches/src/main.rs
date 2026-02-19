@@ -1,134 +1,39 @@
 use xtal::prelude::*;
 
 mod sketches;
-pub use sketches::common::util;
-use sketches::*;
+use sketches::main::grid_splash_bw;
+use sketches::templates::{basic, compute, feedback, image, multipass};
 
 fn main() {
-    init_logger();
+    let registry = xtal::register_sketches! {
+        {
+            title: "Main",
+            enabled: true,
+            sketches: [
+                grid_splash_bw,
+            ]
+        },
+        {
+            title: "Templates",
+            enabled: true,
+            sketches: [
+                basic,
+                feedback,
+                multipass,
+                compute,
+                image,
+            ]
+        },
+    }
+    .unwrap_or_else(|err| {
+        eprintln!("xtal sketch registry failed: {}", err);
+        std::process::exit(1);
+    });
 
-    register!(
-        // ---------------------------------------------------------------------
-        // MAIN
-        // ---------------------------------------------------------------------
-        blob,
-        cloud_tunnel,
-        d_warp,
-        displacement_2a,
-        drop,
-        drop_tines,
-        drop_walk,
-        dynamic_uniforms,
-        g_warp,
-        grid_splash,
-        heat_mask,
-        interference,
-        kalos,
-        kalos_2,
-        marcher,
-        neon,
-        neural,
-        ray_marching,
-        sand_lines,
-        shaxper,
-        spiral,
-        spiral_lines,
-        swirl,
-        symmetry,
-        toxy,
-        wave_fract,
-        // ---------------------------------------------------------------------
-        // AUTO
-        // ---------------------------------------------------------------------
-        auto_acc,
-        auto_cloud,
-        auto_dreams,
-        auto_dyn_uni,
-        auto_flow,
-        auto_grid_splash,
-        auto_grid_splash_bw,
-        auto_gyroid,
-        auto_hatch,
-        auto_ink,
-        auto_rm,
-        auto_spiral,
-        auto_sline,
-        auto_un,
-        auto_wave_fract,
-        // ---------------------------------------------------------------------
-        // DEV
-        // ---------------------------------------------------------------------
-        animation_dev,
-        audio_controls_dev,
-        audio_dev,
-        bug_repro,
-        control_script_dev,
-        crosshatch_dev,
-        cv_dev,
-        effects_wavefolder_dev,
-        midi_dev,
-        non_yaml_dev,
-        osc_dev,
-        osc_transport_dev,
-        recording_dev,
-        responsive_dev,
-        shader_to_texture_dev,
-        wgpu_compute_dev,
-        // ---------------------------------------------------------------------
-        // GENUARY 2025
-        // ---------------------------------------------------------------------
-        g25_1_horiz_vert,
-        g25_2_layers,
-        g25_5_isometric,
-        g25_10_11_12,
-        g25_13_triangle,
-        g25_14_black_and_white,
-        g25_18_wind,
-        g25_19_op_art,
-        g25_20_23_brutal_arch,
-        g25_22_gradients_only,
-        // ---------------------------------------------------------------------
-        // GENUARY 2026
-        // ---------------------------------------------------------------------
-        g26_11_quine,
-        g26_12_boxes,
-        g26_13_portrait,
-        g26_14_dreams,
-        g26_15,
-        // ---------------------------------------------------------------------
-        // SCRATCH
-        // ---------------------------------------------------------------------
-        basics,
-        bos,
-        breakpoints_2,
-        brutalism,
-        chromatic_aberration,
-        displacement_1,
-        displacement_1a,
-        displacement_2,
-        easing_vis,
-        fb,
-        flow_field_basic,
-        lines,
-        noise,
-        perlin_loop,
-        rm_rep,
-        sand_line,
-        sand_lines,
-        sierpinski_triangle,
-        unt,
-        vertical,
-        vertical_2,
-        z_sim,
-        // ---------------------------------------------------------------------
-        // TEMPLATES
-        // ---------------------------------------------------------------------
-        template,
-        basic_cube_shader_template,
-        du_fs_template,
-        du_fs_texture_template,
-        fullscreen_shader_template
-    );
+    let initial_sketch = std::env::args().nth(1);
 
-    run();
+    if let Err(err) = run_registry(registry, initial_sketch.as_deref()) {
+        eprintln!("xtal runtime failed: {}", err);
+        std::process::exit(1);
+    }
 }

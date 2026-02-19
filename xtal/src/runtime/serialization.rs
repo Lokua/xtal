@@ -1,11 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use super::map_mode::{MapMode, Mappings};
-use crate::framework::control::control_hub::Snapshots;
-use crate::framework::prelude::*;
-use crate::runtime::global;
+use super::web_view::Mappings;
+use crate::control::control_hub::Snapshots;
+use crate::control::map_mode::MapMode;
+use crate::control::*;
+use crate::framework::util::HashMap;
+use log::error;
+use crate::motion::TimingSource;
+use crate::runtime::storage;
 
 pub const GLOBAL_SETTINGS_VERSION: &str = "1";
+const DEFAULT_OSC_PORT: u16 = 2346;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
@@ -28,38 +33,33 @@ impl Default for GlobalSettings {
     fn default() -> Self {
         Self {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
-            audio_device_name: global::audio_device_name().unwrap_or_default(),
+            audio_device_name: String::new(),
             hrcc: false,
-            images_dir: global::images_dir(),
+            images_dir: storage::default_images_dir(),
             mappings_enabled: true,
-            midi_clock_port: global::midi_clock_port().unwrap_or_default(),
-            midi_control_in_port: global::midi_control_in_port()
-                .unwrap_or_default(),
-            midi_control_out_port: global::midi_control_out_port()
-                .unwrap_or_default(),
-            osc_port: global::osc_port(),
+            midi_clock_port: String::new(),
+            midi_control_in_port: String::new(),
+            midi_control_out_port: String::new(),
+            osc_port: DEFAULT_OSC_PORT,
             transition_time: 4.0,
-            user_data_dir: global::user_data_dir(),
-            videos_dir: global::videos_dir(),
+            user_data_dir: storage::default_user_data_dir(),
+            videos_dir: storage::default_videos_dir(),
         }
     }
 }
 
 pub const PROGRAM_STATE_VERSION: &str = "2";
 
-/// Everything needed to recall a patch
 #[derive(Deserialize, Serialize)]
 pub struct SerializableSketchState {
     pub version: String,
 
-    // Backwards compat files before "ui_controls" rename
     #[serde(rename = "ui_controls", alias = "controls")]
     pub ui_controls: Vec<ControlConfig>,
 
     pub midi_controls: Vec<BasicNameValueConfig>,
     pub osc_controls: Vec<BasicNameValueConfig>,
 
-    // Backwards compat files that don't have snapshots field
     #[serde(default)]
     pub snapshots: HashMap<String, SerializableSnapshot>,
 
@@ -72,7 +72,7 @@ pub struct SerializableSketchState {
 
 impl From<&TransitorySketchState> for SerializableSketchState {
     fn from(state: &TransitorySketchState) -> Self {
-        let controls = state
+        let ui_controls = state
             .ui_controls
             .configs()
             .iter()
@@ -119,17 +119,14 @@ impl From<&TransitorySketchState> for SerializableSketchState {
             })
             .collect();
 
-        let mappings = state.mappings.clone();
-        let exclusions = state.exclusions.clone();
-
         Self {
             version: PROGRAM_STATE_VERSION.to_string(),
-            ui_controls: controls,
+            ui_controls,
             midi_controls,
             osc_controls,
             snapshots,
-            mappings,
-            exclusions,
+            mappings: state.mappings.clone(),
+            exclusions: state.exclusions.clone(),
         }
     }
 }
@@ -223,17 +220,17 @@ impl SerializableSnapshot {
             } else if state.midi_controls.has(name) {
                 midi_controls.push(BasicNameValueConfig {
                     name: name.clone(),
-                    value: value.as_float().unwrap(),
+                    value: value.as_float().unwrap_or(0.0),
                 });
             } else if state.osc_controls.has(name) {
                 osc_controls.push(BasicNameValueConfig {
                     name: name.clone(),
-                    value: value.as_float().unwrap(),
+                    value: value.as_float().unwrap_or(0.0),
                 });
             }
         }
 
-        SerializableSnapshot {
+        Self {
             ui_controls,
             midi_controls,
             osc_controls,
@@ -241,8 +238,6 @@ impl SerializableSnapshot {
     }
 }
 
-/// Intermediary structure used to transfer program state to and from
-/// program/serialization contexts
 #[derive(Debug)]
 pub struct TransitorySketchState {
     pub ui_controls: UiControls,
@@ -267,21 +262,29 @@ impl Default for TransitorySketchState {
 }
 
 impl TransitorySketchState {
-    /// Merge incoming serialized data into self
+    pub fn from_hub<T: TimingSource>(
+        hub: &ControlHub<T>,
+        mappings: Mappings,
+        exclusions: Exclusions,
+    ) -> Self {
+        Self {
+            ui_controls: hub.ui_controls.clone(),
+            midi_controls: hub.midi_controls.clone(),
+            osc_controls: hub.osc_controls.clone(),
+            snapshots: hub.snapshots.clone(),
+            mappings,
+            exclusions,
+        }
+    }
+
     pub fn merge(&mut self, serialized_state: SerializableSketchState) {
         self.merge_ui_controls(&serialized_state);
         self.mappings = serialized_state.mappings.clone();
         self.exclusions = serialized_state.exclusions.clone();
 
-        // Must happen before merging MIDI controls otherwise there will be no
-        // MIDI proxy configs to merge the saved MIDI proxy values into
         self.setup_midi_mappings();
         self.merge_midi_controls(&serialized_state);
-
         self.merge_osc_controls(&serialized_state);
-
-        // Note: this consumes serialized_state due to snapshots ownership
-        // transfer so it must come last
         self.merge_snapshots(serialized_state);
     }
 
@@ -291,8 +294,8 @@ impl TransitorySketchState {
                 self.midi_controls.add(
                     &MapMode::proxy_name(name),
                     MidiControlConfig {
-                        channel: *ch,
-                        cc: *cc,
+                        channel: *ch as u8,
+                        cc: *cc as u8,
                         min,
                         max,
                         value: 0.0,
@@ -300,12 +303,7 @@ impl TransitorySketchState {
                 );
             } else {
                 error!(
-                    "Unable to find a ui_control::Control definition for Slider \
-                    {}. Bypassing this MIDI mapping as we cannot reliably \
-                    map its range. This can happen when you change a control's \
-                    name after saving program state to disk. Either change the \
-                    control back to the original name, delete the saved file, \
-                    or remap and resave.",
+                    "Unable to find slider config for '{}'; bypassing MIDI mapping",
                     name
                 );
             }
@@ -336,10 +334,7 @@ impl TransitorySketchState {
         });
     }
 
-    fn merge_ui_controls(
-        &mut self,
-        serialized_state: &SerializableSketchState,
-    ) {
+    fn merge_ui_controls(&mut self, serialized_state: &SerializableSketchState) {
         Self::merge_controls(
             &mut self.ui_controls,
             &serialized_state.ui_controls,

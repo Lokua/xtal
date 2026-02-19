@@ -1,38 +1,3 @@
-//! Realtime frame recording pipeline for Xtal.
-//!
-//! # Recording Report Guide
-//!
-//! When the `recording-report` feature is enabled (default), the recorder logs a
-//! multi-line summary after recording stops:
-//!
-//! ```text
-//! Recording report:
-//! frames(...)
-//! duration(...)
-//! fps_rolling90(...)
-//! waits(...)
-//! ```
-//!
-//! Read it top-to-bottom:
-//!
-//! - `frames(captured, dropped)`: number of frames successfully enqueued for
-//!   encoding, and dropped frames. For sync-sensitive capture, `dropped=0` is
-//!   the goal.
-//! - `duration(wall, expected, slowdown)`: real elapsed time vs ideal time
-//!   (`captured / target_fps`). `slowdown=1.00x` is perfect realtime; values
-//!   above `1.00x` mean recording fell behind.
-//! - `fps_rolling90(avg, min, max)`: FPS stats over the last 90 captured frame
-//!   intervals. This matches the smoothing horizon used in frame controller
-//!   style monitoring and avoids misleading whole-run min/max outliers.
-//! - `waits(count, total_ms, max_ms)`: times the render thread had to wait for
-//!   a free readback buffer. Non-zero waits indicate capture backpressure.
-//!
-//! Practical rule of thumb:
-//!
-//! - Stable recording: `slowdown` near `1.00x`, `dropped=0`, and `waits=0`.
-//! - If waits rise or slowdown drifts upward, use a faster preset, reduce
-//!   resolution/fps, or increase `XTAL_RECORDING_NUM_BUFFERS` for bursty loads.
-//!
 use std::collections::VecDeque;
 use std::io::Write;
 use std::process::{Child, Command, Stdio};
@@ -42,14 +7,8 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use log::{error, info, warn};
-use nannou::prelude::*;
-use nannou::wgpu;
 
 const DEFAULT_NUM_BUFFERS: usize = 6;
-const DST_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
-
-// Blocking Map Wait vs Sleep + Poll is essentially a tie, but Blocking Map Wait
-// is simpler to reason about.
 const USE_BLOCKING_MAP_WAIT: bool = true;
 
 enum WriterMessage {
@@ -64,7 +23,7 @@ pub struct RecordingStats {
 }
 
 struct WriterThreadArgs {
-    device_queue_pair: Arc<wgpu::DeviceQueuePair>,
+    device: Arc<wgpu::Device>,
     buffers: Vec<Arc<wgpu::Buffer>>,
     ffmpeg_stdin: std::process::ChildStdin,
     frame_rx: mpsc::Receiver<WriterMessage>,
@@ -79,12 +38,8 @@ struct WriterThreadArgs {
 struct RecordingReport {
     recording_start: Instant,
     target_fps: f32,
-
-    // Per-frame intervals (main thread) — used for rolling-90 FPS stats
     last_capture_time: Option<Instant>,
     frame_intervals_ms: VecDeque<f64>,
-
-    // Buffer wait times (main thread) — when all buffers are in-flight
     buffer_wait_count: u32,
     buffer_wait_total_ms: f64,
     buffer_wait_max_ms: f64,
@@ -93,6 +48,7 @@ struct RecordingReport {
 #[cfg(feature = "recording-report")]
 impl RecordingReport {
     const ROLLING_WINDOW: usize = 90;
+
     fn new(target_fps: f32) -> Self {
         Self {
             recording_start: Instant::now(),
@@ -126,10 +82,8 @@ impl RecordingReport {
     fn print(self, frames_captured: u32, frames_dropped: u32) {
         let wall_clock_s = self.recording_start.elapsed().as_secs_f64();
         let expected_s = frames_captured as f64 / self.target_fps as f64;
-
         let (rolling_avg_fps, rolling_min_fps, rolling_max_fps) =
             rolling_fps_stats(&self.frame_intervals_ms);
-
         let slowdown = if expected_s > 0.0 {
             wall_clock_s / expected_s
         } else {
@@ -195,7 +149,6 @@ fn rolling_fps_stats(intervals_ms: &VecDeque<f64>) -> (f64, f64, f64) {
     if intervals_ms.is_empty() {
         return (0.0, 0.0, 0.0);
     }
-
     let fps_values: Vec<f64> =
         intervals_ms.iter().map(|ms| 1000.0 / ms).collect();
     let sum: f64 = fps_values.iter().sum();
@@ -206,45 +159,40 @@ fn rolling_fps_stats(intervals_ms: &VecDeque<f64>) -> (f64, f64, f64) {
 }
 
 pub struct FrameRecorder {
-    // GPU resources (created lazily)
-    reshaper: Option<wgpu::TextureReshaper>,
-    dst_texture: Option<wgpu::Texture>,
-    dst_texture_view: Option<wgpu::TextureView>,
     buffers: Vec<Arc<wgpu::Buffer>>,
-
-    // Dimensions
     width: u32,
     height: u32,
     padded_bytes_per_row: u32,
-
-    // Buffer rotation
     available_buffers: VecDeque<usize>,
     buffer_return_rx: mpsc::Receiver<usize>,
-
-    // Writer thread communication
     writer_tx: mpsc::SyncSender<WriterMessage>,
     writer_thread: Option<thread::JoinHandle<()>>,
-
-    // ffmpeg process (for waiting on exit)
+    pending_submit_buffers: VecDeque<usize>,
     ffmpeg_process: Option<Child>,
-
-    // Stats
     frames_captured: u32,
     frames_dropped: u32,
     output_path: String,
-
     #[cfg(feature = "recording-report")]
     report: Option<RecordingReport>,
 }
 
 impl FrameRecorder {
     pub fn new(
-        device_queue_pair: &Arc<wgpu::DeviceQueuePair>,
+        device: Arc<wgpu::Device>,
         output_path: &str,
         width: u32,
         height: u32,
         fps: f32,
+        source_format: wgpu::TextureFormat,
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        let ffmpeg_pix_fmt = ffmpeg_input_pixel_format(source_format)
+            .ok_or_else(|| {
+                format!(
+                    "unsupported recording source format: {:?}",
+                    source_format
+                )
+            })?;
+
         let ffmpeg_preset = std::env::var("XTAL_RECORDING_PRESET")
             .unwrap_or_else(|_| "veryfast".to_string());
         let num_buffers = std::env::var("XTAL_RECORDING_NUM_BUFFERS")
@@ -263,7 +211,7 @@ impl FrameRecorder {
                 "-f",
                 "rawvideo",
                 "-pix_fmt",
-                "rgba",
+                ffmpeg_pix_fmt,
                 "-s",
                 &format!("{}x{}", width, height),
                 "-r",
@@ -288,21 +236,15 @@ impl FrameRecorder {
         let ffmpeg_stdin =
             ffmpeg.stdin.take().ok_or("Failed to open ffmpeg stdin")?;
 
-        // Channel for writer thread to return used buffers
         let (buffer_return_tx, buffer_return_rx) = mpsc::channel();
-
-        // Bounded channel for frame messages (backpressure)
         let (writer_tx, writer_rx) =
             mpsc::sync_channel::<WriterMessage>(num_buffers);
 
-        // Calculate row padding
         let bytes_per_pixel = 4u32;
         let unpadded_bytes_per_row = width * bytes_per_pixel;
-        let padding = wgpu::compute_row_padding(unpadded_bytes_per_row);
-        let padded_bytes_per_row = unpadded_bytes_per_row + padding;
+        let padded_bytes_per_row =
+            unpadded_bytes_per_row + compute_row_padding(unpadded_bytes_per_row);
 
-        // Create readback buffers
-        let device = device_queue_pair.device();
         let buffer_size = (padded_bytes_per_row as u64) * (height as u64);
         let buffers: Vec<Arc<wgpu::Buffer>> = (0..num_buffers)
             .map(|i| {
@@ -321,16 +263,15 @@ impl FrameRecorder {
             available_buffers.push_back(i);
         }
 
-        // Spawn writer thread
         let writer_buffers = buffers.clone();
-        let writer_dqp = device_queue_pair.clone();
-        let has_padding = padding > 0;
+        let writer_device = device.clone();
+        let has_padding = padded_bytes_per_row != unpadded_bytes_per_row;
         let w_unpadded = unpadded_bytes_per_row;
         let w_padded = padded_bytes_per_row;
         let h = height;
 
         let writer_thread_args = WriterThreadArgs {
-            device_queue_pair: writer_dqp,
+            device: writer_device,
             buffers: writer_buffers,
             ffmpeg_stdin,
             frame_rx: writer_rx,
@@ -346,9 +287,6 @@ impl FrameRecorder {
         });
 
         Ok(Self {
-            reshaper: None,
-            dst_texture: None,
-            dst_texture_view: None,
             buffers,
             width,
             height,
@@ -357,6 +295,7 @@ impl FrameRecorder {
             buffer_return_rx,
             writer_tx,
             writer_thread: Some(writer_thread),
+            pending_submit_buffers: VecDeque::new(),
             ffmpeg_process: Some(ffmpeg),
             frames_captured: 0,
             frames_dropped: 0,
@@ -366,76 +305,20 @@ impl FrameRecorder {
         })
     }
 
-    /// Must be called while the Frame is still alive so we can
-    /// access the resolved texture view for the reshaper bind group.
-    pub fn ensure_gpu_resources(
+    pub fn capture_surface_frame(
         &mut self,
-        device: &wgpu::Device,
-        frame: &Frame,
-    ) {
-        let [w, h] = frame.texture_size();
-        if self.reshaper.is_some() && self.width == w && self.height == h {
-            return;
-        }
-
-        // Get the resolved (non-MSAA) texture view
-        let src_view: &wgpu::TextureViewHandle = match frame.resolve_target() {
-            Some(view) => view,
-            None => frame.texture_view(),
-        };
-
-        let src_sample_type =
-            wgpu::TextureSampleType::Float { filterable: true };
-
-        let reshaper = wgpu::TextureReshaper::new(
-            device,
-            src_view,
-            1, // resolved, not multisampled
-            src_sample_type,
-            1,
-            DST_FORMAT,
-        );
-
-        let dst_texture = wgpu::TextureBuilder::new()
-            .size([w, h])
-            .format(DST_FORMAT)
-            .usage(
-                wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::COPY_SRC,
-            )
-            .sample_count(1)
-            .build(device);
-
-        self.reshaper = Some(reshaper);
-        self.dst_texture = Some(dst_texture);
-        self.dst_texture_view = self
-            .dst_texture
-            .as_ref()
-            .map(|texture| texture.view().build());
-        self.width = w;
-        self.height = h;
-    }
-
-    /// Called after the Frame has been dropped (GPU commands
-    /// submitted). Encodes a reshape + copy in a new submission and
-    /// sends the buffer to the writer thread.
-    pub fn capture_frame(
-        &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-    ) {
+        encoder: &mut wgpu::CommandEncoder,
+        source_texture: &wgpu::Texture,
+    ) -> bool {
         #[cfg(feature = "recording-report")]
         if let Some(report) = &mut self.report {
             report.on_capture();
         }
 
-        // Reclaim returned buffers
         while let Ok(idx) = self.buffer_return_rx.try_recv() {
             self.available_buffers.push_back(idx);
         }
 
-        // Get an available buffer. Block until one is free to avoid
-        // dropping frames and preserve sync with audio.
         let buffer_index = if let Some(idx) = self.available_buffers.pop_front()
         {
             idx
@@ -445,7 +328,7 @@ impl FrameRecorder {
                 Ok(idx) => idx,
                 Err(_) => {
                     error!("Recording: writer thread disconnected");
-                    return;
+                    return false;
                 }
             };
             let waited_ms = start.elapsed().as_secs_f64() * 1000.0;
@@ -462,39 +345,28 @@ impl FrameRecorder {
             idx
         };
 
-        let reshaper = match &self.reshaper {
-            Some(r) => r,
-            None => return,
-        };
-        let dst_texture = match &self.dst_texture {
-            Some(t) => t,
-            None => return,
-        };
-        let dst_view = match &self.dst_texture_view {
-            Some(v) => v,
-            None => return,
-        };
+        let src_size = source_texture.size();
+        if src_size.width != self.width || src_size.height != self.height {
+            self.frames_dropped += 1;
+            self.available_buffers.push_back(buffer_index);
+            warn!(
+                "Recording: skipping frame due to size mismatch source={}x{} recorder={}x{}",
+                src_size.width, src_size.height, self.width, self.height
+            );
+            return false;
+        }
+
         let buffer = &self.buffers[buffer_index];
-
-        let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("recording_capture"),
-            });
-
-        // Reshape: Rgba16Float intermediary -> Rgba8UnormSrgb
-        reshaper.encode_render_pass(dst_view, &mut encoder);
-
-        // Copy texture to readback buffer
         encoder.copy_texture_to_buffer(
-            wgpu::ImageCopyTexture {
-                texture: dst_texture,
+            wgpu::TexelCopyTextureInfo {
+                texture: source_texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            wgpu::ImageCopyBuffer {
+            wgpu::TexelCopyBufferInfo {
                 buffer,
-                layout: wgpu::ImageDataLayout {
+                layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(self.padded_bytes_per_row),
                     rows_per_image: Some(self.height),
@@ -507,35 +379,35 @@ impl FrameRecorder {
             },
         );
 
-        queue.submit(std::iter::once(encoder.finish()));
-
-        // Send to writer thread. Block here for backpressure instead
-        // of dropping.
-        if self
-            .writer_tx
-            .send(WriterMessage::Frame(buffer_index))
-            .is_err()
-        {
-            self.available_buffers.push_back(buffer_index);
-            error!("Recording: writer thread disconnected");
-            return;
-        }
+        self.pending_submit_buffers.push_back(buffer_index);
 
         self.frames_captured += 1;
+        true
+    }
+
+    pub fn on_submitted(&mut self) {
+        while let Some(buffer_index) = self.pending_submit_buffers.pop_front() {
+            if self
+                .writer_tx
+                .send(WriterMessage::Frame(buffer_index))
+                .is_err()
+            {
+                self.available_buffers.push_back(buffer_index);
+                error!("Recording: writer thread disconnected");
+                break;
+            }
+        }
     }
 
     pub fn stop(mut self) -> RecordingStats {
-        // Signal writer to stop
         let _ = self.writer_tx.send(WriterMessage::Stop);
 
-        // Wait for writer thread to finish
         if let Some(handle) = self.writer_thread.take() {
-            if let Err(e) = handle.join() {
-                error!("Writer thread panicked: {:?}", e);
+            if let Err(err) = handle.join() {
+                error!("Writer thread panicked: {:?}", err);
             }
         }
 
-        // Wait for ffmpeg to finish
         if let Some(mut process) = self.ffmpeg_process.take() {
             match process.wait() {
                 Ok(status) => {
@@ -543,16 +415,11 @@ impl FrameRecorder {
                         error!("ffmpeg exited with status: {}", status);
                     }
                 }
-                Err(e) => {
-                    error!("Failed to wait for ffmpeg: {}", e);
+                Err(err) => {
+                    error!("Failed to wait for ffmpeg: {}", err);
                 }
             }
         }
-
-        // Clean up GPU resources
-        self.reshaper = None;
-        self.dst_texture = None;
-        self.dst_texture_view = None;
 
         #[cfg(feature = "recording-report")]
         if let Some(report) = self.report.take() {
@@ -573,7 +440,6 @@ impl FrameRecorder {
 }
 
 fn writer_thread_fn(mut args: WriterThreadArgs) {
-    let device = args.device_queue_pair.device();
     let mut contiguous_frame = args.has_padding.then(|| {
         vec![0u8; (args.unpadded_bytes_per_row * args.height) as usize]
     });
@@ -590,16 +456,15 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                 });
 
                 let map_result = if USE_BLOCKING_MAP_WAIT {
-                    // A/B option B: block until mapped callbacks are serviced.
-                    device.poll(wgpu::Maintain::Wait);
+                    let _ = args.device.poll(wgpu::PollType::Wait);
                     map_rx.recv().ok()
                 } else {
-                    // A/B option A: poll + short sleep to avoid long blocking.
                     loop {
                         match map_rx.try_recv() {
                             Ok(result) => break Some(result),
                             Err(mpsc::TryRecvError::Empty) => {
-                                device.poll(wgpu::Maintain::Poll);
+                                let _ =
+                                    args.device.poll(wgpu::PollType::Poll);
                                 thread::sleep(Duration::from_micros(250));
                             }
                             Err(mpsc::TryRecvError::Disconnected) => {
@@ -637,8 +502,8 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                             return;
                         }
                     }
-                    Some(Err(e)) => {
-                        error!("Buffer mapping failed: {:?}", e);
+                    Some(Err(err)) => {
+                        error!("Buffer mapping failed: {:?}", err);
                     }
                     None => {
                         error!("Buffer map channel disconnected");
@@ -648,7 +513,6 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                 let _ = args.buffer_return_tx.send(buffer_index);
             }
             Ok(WriterMessage::Stop) | Err(_) => {
-                // Close stdin to signal EOF to ffmpeg
                 drop(args.ffmpeg_stdin);
                 return;
             }
@@ -674,5 +538,23 @@ fn copy_padded_rows_to_contiguous(
         let dst_start = row * unpadded_bytes_per_row;
         let dst_end = dst_start + unpadded_bytes_per_row;
         out[dst_start..dst_end].copy_from_slice(&data[src_start..src_end]);
+    }
+}
+
+fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
+    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
+    let rem = unpadded_bytes_per_row % align;
+    if rem == 0 { 0 } else { align - rem }
+}
+
+fn ffmpeg_input_pixel_format(
+    format: wgpu::TextureFormat,
+) -> Option<&'static str> {
+    match format {
+        wgpu::TextureFormat::Bgra8Unorm
+        | wgpu::TextureFormat::Bgra8UnormSrgb => Some("bgra"),
+        wgpu::TextureFormat::Rgba8Unorm
+        | wgpu::TextureFormat::Rgba8UnormSrgb => Some("rgba"),
+        _ => None,
     }
 }
