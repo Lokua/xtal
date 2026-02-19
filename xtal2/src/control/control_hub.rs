@@ -136,7 +136,7 @@ impl<T: TimingSource> ControlHub<T> {
             ui_controls: UiControls::default(),
             midi_controls: MidiControls::default(),
             osc_controls: OscControls::default(),
-            audio_controls: AudioControlBuilder::new().build(),
+            audio_controls: AudioControls::default(),
             animation: Animation::new(timing),
             animations: HashMap::default(),
             modulations: HashMap::default(),
@@ -1564,7 +1564,7 @@ impl<T: TimingSource> ControlHub<T> {
                 .expect("Unable to start OSC receiver");
         }
 
-        if !self.midi_controls.is_active() {
+        if self.midi_controls.has_port() && !self.midi_controls.is_active() {
             if let Err(e) = self.midi_controls.start() {
                 warn!("Unable to start MIDI receiver. {}", e);
             }

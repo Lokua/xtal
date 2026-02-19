@@ -38,6 +38,10 @@ pub struct MidiControls {
 }
 
 impl MidiControls {
+    pub fn has_port(&self) -> bool {
+        self.port.is_some()
+    }
+
     pub fn set_port(&mut self, port: String) {
         self.port = if port.is_empty() { None } else { Some(port) };
     }

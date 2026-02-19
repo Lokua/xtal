@@ -261,6 +261,8 @@ impl XtalRuntime {
                 }
                 if let Some(hub) = self.control_hub.as_mut() {
                     hub.audio_controls
+                        .set_device_name(self.audio_device.clone());
+                    hub.audio_controls
                         .restart()
                         .inspect_err(|err| {
                             error!("Error in ChangeAudioDevice: {}", err)
@@ -1460,6 +1462,8 @@ impl XtalRuntime {
         hub.midi_proxies_enabled = self.mappings_enabled;
         hub.midi_controls.hrcc = self.hrcc;
         hub.midi_controls.set_port(self.midi_input_port.clone());
+        hub.audio_controls
+            .set_device_name(self.audio_device.clone());
         info!(
             "Configuring sketch MIDI controls: input_port='{}', hrcc={}, mappings_enabled={}",
             self.midi_input_port, self.hrcc, self.mappings_enabled
@@ -1470,6 +1474,21 @@ impl XtalRuntime {
                 error!("Error in build_control_hub MIDI setup: {}", err)
             })
             .ok();
+        info!(
+            "Configuring sketch audio controls: device='{}'",
+            self.audio_device
+        );
+        hub.audio_controls
+            .restart()
+            .inspect_err(|err| {
+                error!("Error in build_control_hub audio setup: {}", err)
+            })
+            .ok();
+        info!(
+            "Audio startup state: device='{}', active={}",
+            self.audio_device,
+            hub.audio_controls.is_active()
+        );
         let populated_tx = self.command_tx.clone();
         hub.register_populated_callback(move || {
             let _ = populated_tx.send(RuntimeEvent::HubPopulated);

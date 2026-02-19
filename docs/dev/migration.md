@@ -62,7 +62,8 @@ user-facing behavior for:
 
 - UI bridge parity is mostly complete; remaining item is an end-to-end
   webview-process routing smoke test.
-- Audio paths are not ported to xtal2 runtime.
+- Audio runtime paths are now ported (`framework::audio` and
+  `control::audio_controls` with CPAL stream processing).
 - Full behavioral parity fixtures vs legacy xtal are still missing.
 
 ## Active Phase Backlog
@@ -186,6 +187,8 @@ Exit criteria:
 - [x] Port MIDI clock start/continue/stop runtime controls.
 - [x] Port OSC port runtime controls.
 - [x] Port audio device switching and runtime restarts.
+- [x] Port `audio.rs` + `audio_controls` signal-processing path (CPAL input,
+  per-channel control processing, slew/detect/pre-emphasis mapping).
 - [x] Port global settings serialization/restore.
 - [x] Port sketch state serialization/restore (snapshots, mappings, exclusions).
 - [x] Hook persistence into runtime sketch-switch lifecycle (load on init/switch
