@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::mesh::Mesh;
+
 #[derive(Clone, Debug)]
 pub enum ResourceKind {
     Uniforms,
@@ -17,6 +19,7 @@ pub struct ResourceDecl {
 pub struct RenderNodeSpec {
     pub name: String,
     pub shader_path: PathBuf,
+    pub meshes: Vec<Mesh>,
     pub reads: Vec<String>,
     pub write: String,
 }
@@ -81,6 +84,7 @@ impl GraphBuilder {
             builder: self,
             name: name.to_string(),
             shader_path: None,
+            meshes: Vec::new(),
             reads: Vec::new(),
             write: None,
         }
@@ -114,6 +118,7 @@ pub struct RenderNodeBuilder<'a> {
     builder: &'a mut GraphBuilder,
     name: String,
     shader_path: Option<PathBuf>,
+    meshes: Vec<Mesh>,
     reads: Vec<String>,
     write: Option<String>,
 }
@@ -129,6 +134,11 @@ impl RenderNodeBuilder<'_> {
         self
     }
 
+    pub fn mesh(mut self, mesh: Mesh) -> Self {
+        self.meshes.push(mesh);
+        self
+    }
+
     pub fn write(mut self, resource: &str) -> Self {
         self.write = Some(resource.to_string());
         self
@@ -138,6 +148,9 @@ impl RenderNodeBuilder<'_> {
         let shader_path = self.shader_path.unwrap_or_else(|| {
             panic!("render node '{}' missing shader", self.name)
         });
+        if self.meshes.is_empty() {
+            panic!("render node '{}' missing mesh", self.name);
+        }
 
         let write = self.write.unwrap_or_else(|| {
             panic!("render node '{}' missing write target", self.name)
@@ -146,6 +159,7 @@ impl RenderNodeBuilder<'_> {
         self.builder.nodes.push(NodeSpec::Render(RenderNodeSpec {
             name: self.name,
             shader_path,
+            meshes: self.meshes,
             reads: self.reads,
             write,
         }));

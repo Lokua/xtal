@@ -27,6 +27,7 @@ impl Sketch for MultiPassSketch {
         graph
             .render("pass_a")
             .shader(self.pass_a.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .write("rt0")
             .add();
@@ -34,6 +35,7 @@ impl Sketch for MultiPassSketch {
         graph
             .render("pass_b")
             .shader(self.pass_b.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .read("rt0")
             .write("surface")
@@ -48,7 +50,7 @@ impl Sketch for MultiPassSketch {
 }
 
 pub fn init() -> MultiPassSketch {
-    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
+    let assets = SketchAssets::from_file(file!());
 
     MultiPassSketch {
         pass_a: assets.path("multipass_a.wgsl"),

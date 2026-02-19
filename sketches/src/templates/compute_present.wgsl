@@ -19,17 +19,13 @@ struct VsOut {
     @location(0) uv: vec2f,
 }
 
+struct VertexInput {
+    @location(0) position: vec2f,
+}
+
 @vertex
-fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VsOut {
-    var positions = array<vec2f, 4>(
-        vec2f(-1.0, -1.0),
-        vec2f(1.0, -1.0),
-        vec2f(-1.0, 1.0),
-        vec2f(1.0, 1.0),
-    );
-
-    let p = positions[vertex_index];
-
+fn vs_main(vert: VertexInput) -> VsOut {
+    let p = vert.position;
     var out: VsOut;
     out.position = vec4f(p, 0.0, 1.0);
     out.uv = p * 0.5 + vec2f(0.5, 0.5);

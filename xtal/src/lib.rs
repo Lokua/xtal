@@ -12,6 +12,7 @@ pub mod time;
 pub use render::frame;
 pub use render::gpu;
 pub use render::graph;
+pub use render::mesh;
 pub use render::shader_watch;
 pub use render::uniforms;
 pub use runtime::app::run_registry;

@@ -13,6 +13,7 @@ use crate::graph::{
     ComputeNodeSpec, GraphSpec, NodeSpec, RenderNodeSpec, ResourceDecl,
     ResourceKind,
 };
+use crate::mesh::{Mesh, MeshVertexKind};
 use crate::shader_watch::ShaderWatch;
 use crate::uniforms::UniformBanks;
 
@@ -62,11 +63,17 @@ struct ComputeNode {
 struct RenderPass {
     shader_path: PathBuf,
     target_format: wgpu::TextureFormat,
+    mesh_kind: MeshVertexKind,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
+    meshes: Vec<MeshDraw>,
     texture_bind_group_layout: Option<wgpu::BindGroupLayout>,
     sampler: Option<wgpu::Sampler>,
     watcher: Option<ShaderWatch>,
+}
+
+struct MeshDraw {
+    vertex_buffer: wgpu::Buffer,
+    vertex_count: u32,
 }
 
 struct ComputePass {
@@ -230,17 +237,17 @@ impl CompiledGraph {
                     );
 
                     render_pass.set_pipeline(&node.pass.render_pipeline);
-                    render_pass.set_vertex_buffer(
-                        0,
-                        node.pass.vertex_buffer.slice(..),
-                    );
                     render_pass.set_bind_group(0, uniforms.bind_group(), &[]);
 
                     if let Some(bind_group) = texture_bind_group.as_ref() {
                         render_pass.set_bind_group(1, bind_group, &[]);
                     }
 
-                    render_pass.draw(0..4, 0..1);
+                    for mesh in &node.pass.meshes {
+                        render_pass
+                            .set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                        render_pass.draw(0..mesh.vertex_count, 0..1);
+                    }
                 }
                 CompiledNode::Compute(node) => {
                     node.pass.update_if_changed(
@@ -439,15 +446,21 @@ impl RenderPass {
             (Some(layout), Some(sampler))
         };
 
+        let mesh_kind = infer_mesh_kind_for_node(node)?;
         let render_pipeline = create_render_pipeline(
             device,
             target_format,
+            mesh_kind,
             uniform_layout,
             texture_bind_group_layout.as_ref(),
             &source,
             &node.name,
         );
-        let vertex_buffer = create_fullscreen_quad_vertex_buffer(device);
+        let meshes = node
+            .meshes
+            .iter()
+            .map(|mesh| create_mesh_draw(device, mesh))
+            .collect::<Vec<_>>();
 
         let watcher = match ShaderWatch::start(shader_path.clone()) {
             Ok(watch) => Some(watch),
@@ -464,8 +477,9 @@ impl RenderPass {
         Ok(Self {
             shader_path,
             target_format,
+            mesh_kind,
             render_pipeline,
-            vertex_buffer,
+            meshes,
             texture_bind_group_layout,
             sampler,
             watcher,
@@ -555,6 +569,7 @@ impl RenderPass {
         self.render_pipeline = create_render_pipeline(
             device,
             self.target_format,
+            self.mesh_kind,
             uniform_layout,
             self.texture_bind_group_layout.as_ref(),
             &source,
@@ -701,6 +716,7 @@ impl ComputePass {
 fn create_render_pipeline(
     device: &wgpu::Device,
     format: wgpu::TextureFormat,
+    mesh_kind: MeshVertexKind,
     uniform_layout: &wgpu::BindGroupLayout,
     texture_layout: Option<&wgpu::BindGroupLayout>,
     source: &str,
@@ -724,7 +740,7 @@ fn create_render_pipeline(
             push_constant_ranges: &[],
         });
 
-    let vertex_buffers = [fullscreen_vertex_buffer_layout()];
+    let vertex_buffers = [vertex_buffer_layout_for_kind(mesh_kind)];
 
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("xtal-render-pipeline"),
@@ -746,7 +762,7 @@ fn create_render_pipeline(
             })],
         }),
         primitive: wgpu::PrimitiveState {
-            topology: wgpu::PrimitiveTopology::TriangleStrip,
+            topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
             cull_mode: None,
@@ -765,26 +781,78 @@ fn create_render_pipeline(
     })
 }
 
-const FULLSCREEN_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
+const POSITION_2D_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
     wgpu::vertex_attr_array![0 => Float32x2];
+const POSITION_3D_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
+    wgpu::vertex_attr_array![0 => Float32x3];
 
-fn fullscreen_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
-    wgpu::VertexBufferLayout {
-        array_stride: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-        step_mode: wgpu::VertexStepMode::Vertex,
-        attributes: &FULLSCREEN_VERTEX_ATTRIBUTES,
+fn vertex_buffer_layout_for_kind(
+    mesh_kind: MeshVertexKind,
+) -> wgpu::VertexBufferLayout<'static> {
+    match mesh_kind {
+        MeshVertexKind::Position2D => wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &POSITION_2D_VERTEX_ATTRIBUTES,
+        },
+        MeshVertexKind::Position3D => wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &POSITION_3D_VERTEX_ATTRIBUTES,
+        },
     }
 }
 
-fn create_fullscreen_quad_vertex_buffer(device: &wgpu::Device) -> wgpu::Buffer {
-    let vertices: [[f32; 2]; 4] =
-        [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]];
+fn create_mesh_draw(
+    device: &wgpu::Device,
+    mesh: &Mesh,
+) -> MeshDraw {
+    match mesh {
+        Mesh::Positions2D(vertices) => {
+            let buffer =
+                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("xtal-mesh-2d-vertices"),
+                    contents: bytemuck::cast_slice(vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+            MeshDraw {
+                vertex_buffer: buffer,
+                vertex_count: mesh.vertex_count(),
+            }
+        }
+        Mesh::Positions3D(vertices) => {
+            let buffer =
+                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("xtal-mesh-3d-vertices"),
+                    contents: bytemuck::cast_slice(vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+            MeshDraw {
+                vertex_buffer: buffer,
+                vertex_count: mesh.vertex_count(),
+            }
+        }
+    }
+}
 
-    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("xtal-fullscreen-quad-vertices"),
-        contents: bytemuck::cast_slice(&vertices),
-        usage: wgpu::BufferUsages::VERTEX,
-    })
+fn infer_mesh_kind_for_node(
+    node: &RenderNodeSpec,
+) -> Result<MeshVertexKind, String> {
+    let Some(first_mesh) = node.meshes.first() else {
+        return Err(format!("render node '{}' has no meshes", node.name));
+    };
+
+    let mesh_kind = first_mesh.vertex_kind();
+    for (index, mesh) in node.meshes.iter().enumerate() {
+        if mesh.vertex_kind() != mesh_kind {
+            return Err(format!(
+                "render node '{}' has mixed mesh vertex kinds; mesh {} differs from first mesh",
+                node.name, index
+            ));
+        }
+    }
+
+    Ok(mesh_kind)
 }
 
 fn create_compute_pipeline(

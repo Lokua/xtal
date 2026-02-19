@@ -6,6 +6,7 @@ pub use crate::debug_once;
 pub use crate::debug_throttled;
 pub use crate::frame::Frame;
 pub use crate::graph::*;
+pub use crate::mesh::*;
 pub use crate::motion::*;
 pub use crate::register_sketches;
 pub use crate::run_registry;
