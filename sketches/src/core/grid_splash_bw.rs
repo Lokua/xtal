@@ -2,14 +2,16 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
+use crate::constants::{HD_HEIGHT, HD_WIDTH};
+
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "grid_splash_bw",
     display_name: "Grid Splash B&W",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: 1920 / 2,
-    h: 1080 / 2,
+    w: HD_WIDTH as u32,
+    h: HD_HEIGHT as u32,
     banks: 10,
 };
 
@@ -53,7 +55,7 @@ impl Sketch for GridSplashBwSketch {
 }
 
 pub fn init() -> GridSplashBwSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
 
     GridSplashBwSketch {
         shader_path: assets.wgsl(),

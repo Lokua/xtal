@@ -48,7 +48,7 @@ impl Sketch for MultiPassSketch {
 }
 
 pub fn init() -> MultiPassSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
 
     MultiPassSketch {
         pass_a: assets.path("multipass_a.wgsl"),

@@ -1134,7 +1134,7 @@ impl XtalRuntime {
                             (padded_bytes_per_row as u64) * (height as u64);
                         let buffer = context.device.create_buffer(
                             &wgpu::BufferDescriptor {
-                                label: Some("xtal2-capture-readback"),
+                                label: Some("xtal-capture-readback"),
                                 size: buffer_size,
                                 usage: wgpu::BufferUsages::COPY_DST
                                     | wgpu::BufferUsages::MAP_READ,
@@ -1396,7 +1396,7 @@ impl XtalRuntime {
 
         let (device, queue) = pollster::block_on(adapter.request_device(
             &wgpu::DeviceDescriptor {
-                label: Some("xtal2-device"),
+                label: Some("xtal-device"),
                 required_features: wgpu::Features::empty(),
                 required_limits: wgpu::Limits::default(),
                 memory_hints: wgpu::MemoryHints::Performance,

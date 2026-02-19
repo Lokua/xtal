@@ -49,7 +49,7 @@ impl Sketch for FeedbackSketch {
 }
 
 pub fn init() -> FeedbackSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
 
     FeedbackSketch {
         shader_path: assets.wgsl(),

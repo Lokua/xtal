@@ -19,7 +19,7 @@ impl Frame {
 
         let encoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("xtal2-frame-encoder"),
+                label: Some("xtal-frame-encoder"),
             });
 
         Self {

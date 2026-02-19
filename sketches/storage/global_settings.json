@@ -8,7 +8,7 @@
   "midi_control_in_port": "IAC Driver Lattice In",
   "midi_control_out_port": "IAC Driver Lattice In",
   "osc_port": 2346,
-  "transition_time": 4.0,
-  "user_data_dir": "/Users/lokua/code/xtal-project-2/xtal2-sketches/storage",
+  "transition_time": 0.0,
+  "user_data_dir": "/Users/lokua/code/xtal-project-2/sketches/storage",
   "videos_dir": "/Users/lokua/Movies/Xtal"
 }

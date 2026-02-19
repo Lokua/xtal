@@ -16,7 +16,7 @@ impl UniformBanks {
 
         let bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("xtal2-uniform-banks-layout"),
+                label: Some("xtal-uniform-banks-layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX
@@ -36,14 +36,14 @@ impl UniformBanks {
 
         let buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("xtal2-uniform-banks-buffer"),
+                label: Some("xtal-uniform-banks-buffer"),
                 contents: bytemuck::cast_slice(&data),
                 usage: wgpu::BufferUsages::UNIFORM
                     | wgpu::BufferUsages::COPY_DST,
             });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("xtal2-uniform-banks-bind-group"),
+            label: Some("xtal-uniform-banks-bind-group"),
             layout: &bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,

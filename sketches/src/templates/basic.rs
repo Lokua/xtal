@@ -12,7 +12,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
 };
 
 pub fn init() -> FullscreenShaderSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
     FullscreenShaderSketch::new(assets.wgsl())
         .with_control_script(assets.yaml())
 }
