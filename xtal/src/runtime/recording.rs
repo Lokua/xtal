@@ -16,12 +16,10 @@ pub struct RecordingState {
     finalize_rx: Option<mpsc::Receiver<FinalizeMessage>>,
 }
 
-enum FinalizeMessage {
-    Complete {
-        frames_captured: u32,
-        frames_dropped: u32,
-        output_path: String,
-    },
+struct FinalizeMessage {
+    frames_captured: u32,
+    frames_dropped: u32,
+    output_path: String,
 }
 
 pub struct FinalizeOutcome {
@@ -68,7 +66,7 @@ impl RecordingState {
 
         thread::spawn(move || {
             let stats = recorder.stop();
-            let _ = finalize_tx.send(FinalizeMessage::Complete {
+            let _ = finalize_tx.send(FinalizeMessage {
                 frames_captured: stats.frames_captured,
                 frames_dropped: stats.frames_dropped,
                 output_path: stats.output_path,
@@ -89,7 +87,7 @@ impl RecordingState {
         };
 
         match message {
-            Some(FinalizeMessage::Complete {
+            Some(FinalizeMessage {
                 frames_captured,
                 frames_dropped,
                 output_path,

@@ -19,6 +19,12 @@ use crate::uniforms::UniformBanks;
 const OFFSCREEN_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 const IMAGE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
+pub fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
+    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
+    let rem = unpadded_bytes_per_row % align;
+    if rem == 0 { 0 } else { align - rem }
+}
+
 pub struct CompiledGraph {
     surface_format: wgpu::TextureFormat,
     present_source: String,

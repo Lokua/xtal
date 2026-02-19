@@ -8,6 +8,8 @@ use std::time::{Duration, Instant};
 
 use log::{error, info, warn};
 
+use crate::gpu::compute_row_padding;
+
 const DEFAULT_NUM_BUFFERS: usize = 6;
 const USE_BLOCKING_MAP_WAIT: bool = true;
 
@@ -240,6 +242,7 @@ impl FrameRecorder {
         let (writer_tx, writer_rx) =
             mpsc::sync_channel::<WriterMessage>(num_buffers);
 
+        // Recording source formats are constrained to 8-bit RGBA/BGRA.
         let bytes_per_pixel = 4u32;
         let unpadded_bytes_per_row = width * bytes_per_pixel;
         let padded_bytes_per_row = unpadded_bytes_per_row
@@ -538,12 +541,6 @@ fn copy_padded_rows_to_contiguous(
         let dst_end = dst_start + unpadded_bytes_per_row;
         out[dst_start..dst_end].copy_from_slice(&data[src_start..src_end]);
     }
-}
-
-fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
-    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    let rem = unpadded_bytes_per_row % align;
-    if rem == 0 { 0 } else { align - rem }
 }
 
 fn ffmpeg_input_pixel_format(
