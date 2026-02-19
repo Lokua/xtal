@@ -200,7 +200,7 @@ Exit criteria:
 - [x] Port still frame capture flow (lossless PNG from GPU readback of graph present source).
 - [x] Port queued recording, start/stop recording, and encode lifecycle.
 - [x] Port frame recorder integration with fixed frame clock.
-- [ ] Add dropped-frame/recording-backpressure telemetry parity.
+- [x] Add dropped-frame/recording-backpressure telemetry parity (`recording-report` v1-style summary: frames/duration/fps_rolling90/waits).
 - [ ] Add capture/recording reliability tests (single-trigger capture,
   lifecycle event ordering, duplicate emission guards).
 
