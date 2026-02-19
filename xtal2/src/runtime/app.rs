@@ -29,6 +29,7 @@ use crate::context::Context;
 use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
+use crate::framework::audio::list_audio_devices;
 use crate::framework::util::{HashMap, uuid_5};
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::{frame_controller, logging, midi};
@@ -189,7 +190,7 @@ impl XtalRuntime {
             recording_state: RecordingState::default(),
             session_id: recording::generate_session_id(),
             audio_device: global_settings.audio_device_name,
-            audio_devices: vec![],
+            audio_devices: list_audio_devices().unwrap_or_default(),
             hrcc: global_settings.hrcc,
             midi_out: None,
             midi_clock_port: global_settings.midi_clock_port,
@@ -207,13 +208,14 @@ impl XtalRuntime {
             modifiers: ModifiersState::default(),
         };
 
+        let audio_device_updated = runtime.normalize_audio_device_selection();
         let midi_ports_updated = runtime.normalize_midi_port_selections();
         let osc_port_updated = runtime.normalize_osc_port_selection();
         runtime.start_osc_receiver();
         runtime.start_midi_clock_listener();
         runtime.connect_midi_out();
         runtime.log_midi_startup_state();
-        if midi_ports_updated || osc_port_updated {
+        if audio_device_updated || midi_ports_updated || osc_port_updated {
             runtime.save_global_state();
         }
 
@@ -256,6 +258,14 @@ impl XtalRuntime {
                 self.audio_device = name.clone();
                 if !self.audio_devices.contains(&name) {
                     self.audio_devices.push(name);
+                }
+                if let Some(hub) = self.control_hub.as_mut() {
+                    hub.audio_controls
+                        .restart()
+                        .inspect_err(|err| {
+                            error!("Error in ChangeAudioDevice: {}", err)
+                        })
+                        .ok();
                 }
                 self.save_global_state();
             }
@@ -1607,6 +1617,25 @@ impl XtalRuntime {
         }
 
         changed
+    }
+
+    fn normalize_audio_device_selection(&mut self) -> bool {
+        if self.audio_devices.is_empty() {
+            return false;
+        }
+
+        if self.audio_devices.iter().any(|d| d == &self.audio_device) {
+            return false;
+        }
+
+        let previous = self.audio_device.clone();
+        self.audio_device = self.audio_devices[0].clone();
+        info!(
+            "Resolved audio device from '{}' to '{}'",
+            if previous.is_empty() { "<empty>" } else { &previous },
+            self.audio_device
+        );
+        true
     }
 
     fn normalize_osc_port_selection(&mut self) -> bool {

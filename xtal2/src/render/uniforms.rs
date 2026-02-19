@@ -1,4 +1,5 @@
 use wgpu::util::DeviceExt;
+use crate::warn_once;
 
 pub struct UniformBanks {
     data: Vec<[f32; 4]>,
@@ -114,10 +115,42 @@ fn parse_bank_component(input: &str) -> Result<(usize, usize), &'static str> {
 
     let bank_idx = (bank_char as u8 - b'a') as usize;
     let component_idx = match component_char {
-        'x' | 'X' | '1' => 0,
-        'y' | 'Y' | '2' => 1,
-        'z' | 'Z' | '3' => 2,
-        'w' | 'W' | '4' => 3,
+        'x' | 'X' => 0,
+        'y' | 'Y' => 1,
+        'z' | 'Z' => 2,
+        'w' | 'W' => 3,
+        '1' => {
+            warn_once!(
+                "Deprecated uniform alias '{}': use '{}x' instead",
+                input,
+                bank_char
+            );
+            0
+        }
+        '2' => {
+            warn_once!(
+                "Deprecated uniform alias '{}': use '{}y' instead",
+                input,
+                bank_char
+            );
+            1
+        }
+        '3' => {
+            warn_once!(
+                "Deprecated uniform alias '{}': use '{}z' instead",
+                input,
+                bank_char
+            );
+            2
+        }
+        '4' => {
+            warn_once!(
+                "Deprecated uniform alias '{}': use '{}w' instead",
+                input,
+                bank_char
+            );
+            3
+        }
         _ => return Err("component must be x/y/z/w (legacy 1..4 allowed)"),
     };
 

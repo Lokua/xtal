@@ -1,3 +1,4 @@
+pub mod audio;
 pub mod frame_controller;
 pub mod logging;
 pub mod midi;

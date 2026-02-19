@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use super::control_traits::{ControlCollection, ControlConfig};
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::prelude::*;
+use crate::warn_once;
 use nannou_osc as osc;
 
 #[derive(Clone, Debug)]
@@ -176,6 +177,9 @@ impl State {
 
 fn check_address(address: &str) {
     if address.starts_with('/') {
-        panic!("Unsupported address format. Remove leading `/`.");
+        warn_once!(
+            "OSC address '{}' should not start with '/'; use bare address key",
+            address
+        );
     }
 }
