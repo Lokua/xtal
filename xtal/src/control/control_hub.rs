@@ -221,8 +221,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         let mut value_key = original_name;
         let midi_proxy_name = MapMode::proxy_name(original_name);
-        if self.midi_proxies_enabled
-            && self.midi_controls.has(&midi_proxy_name)
+        if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
         {
             value_key = &midi_proxy_name;
         }
@@ -233,17 +232,14 @@ impl<T: TimingSource> ControlHub<T> {
 
         self.run_dependencies(value_key, current_frame);
 
-        let value = if let Some(value) = self
-            .active_transition
-            .as_ref()
-            .and_then(|t| {
+        let value =
+            if let Some(value) = self.active_transition.as_ref().and_then(|t| {
                 self.get_transition_value(current_beat, value_key, t)
-            })
-        {
-            value
-        } else {
-            self.get_raw(value_key, current_frame)
-        };
+            }) {
+                value
+            } else {
+                self.get_raw(value_key, current_frame)
+            };
 
         // Use the original control key for modulation/effect chain lookup.
         // Mapped proxy controls are value sources, not independent chain roots.

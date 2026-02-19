@@ -93,7 +93,10 @@ where
         }
     });
 
-    THREADS.lock().unwrap().insert(connection_type_clone, handle);
+    THREADS
+        .lock()
+        .unwrap()
+        .insert(connection_type_clone, handle);
 
     Ok(())
 }

@@ -236,6 +236,9 @@ fn web_view_command_mapping_supports_remaining_phase1_actions() {
 
 #[test]
 fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
+    let mut sketches_by_category = web_view::SketchesByCategory::new();
+    sketches_by_category.insert("Main".to_string(), vec!["demo".to_string()]);
+
     let event = web_view::Event::Init {
         audio_device: String::new(),
         audio_devices: vec![],
@@ -249,7 +252,7 @@ fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
         midi_input_ports: vec![],
         midi_output_ports: vec![],
         osc_port: 0,
-        sketch_names: vec!["demo".to_string()],
+        sketches_by_category,
         sketch_catalog: Some(vec![web_view::SketchCatalogCategory {
             title: "Main".to_string(),
             enabled: true,
@@ -262,12 +265,13 @@ fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
     };
 
     let json = web_view::to_ui_message(&event).expect("serialize init event");
+    assert!(json.contains("\"sketchesByCategory\""));
     assert!(json.contains("\"sketchCatalog\""));
     assert!(json.contains("\"title\":\"Main\""));
 }
 
 #[test]
-fn web_view_catalog_helper_uses_registry_categories() {
+fn web_view_helpers_use_registry_categories() {
     let mut registry = RuntimeRegistry::new();
     registry
         .register(&TEST_CONFIG, || Box::new(TestSketch))
@@ -275,10 +279,23 @@ fn web_view_catalog_helper_uses_registry_categories() {
     registry
         .define_category("Main", true, vec![TEST_CONFIG.name.to_string()])
         .expect("define category");
+    registry
+        .define_category("Hidden", false, vec![TEST_CONFIG.name.to_string()])
+        .expect("define category");
 
     let catalog = web_view::sketch_catalog_from_registry(&registry);
-    assert_eq!(catalog.len(), 1);
+    assert_eq!(catalog.len(), 2);
     assert_eq!(catalog[0].title, "Main");
     assert!(catalog[0].enabled);
     assert_eq!(catalog[0].sketches, vec!["phase7_test"]);
+    assert_eq!(catalog[1].title, "Hidden");
+    assert!(!catalog[1].enabled);
+
+    let sketches_by_category = web_view::sketches_by_category(&registry);
+    assert_eq!(sketches_by_category.len(), 1);
+    assert_eq!(
+        sketches_by_category.get("Main"),
+        Some(&vec!["phase7_test".to_string()])
+    );
+    assert!(!sketches_by_category.contains_key("Hidden"));
 }

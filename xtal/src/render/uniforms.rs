@@ -1,5 +1,5 @@
-use wgpu::util::DeviceExt;
 use crate::warn_once;
+use wgpu::util::DeviceExt;
 
 pub struct UniformBanks {
     data: Vec<[f32; 4]>,

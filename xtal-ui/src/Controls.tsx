@@ -133,11 +133,13 @@ export default function Controls({
       )}
       <main>
         {controls.map((c, index) => {
+          const rowKey = `${c.kind}:${c.name}:${index}`
+
           if (c.kind === 'Checkbox') {
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className={controlClass(c.name, excluded)}>
+              <div key={rowKey} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
                 <fieldset>
                   <CheckboxInput
@@ -165,9 +167,9 @@ export default function Controls({
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className={controlClass(c.name, excluded)}>
+              <div key={rowKey} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
-                <fieldset key={c.name}>
+                <fieldset>
                   <input
                     id={c.name}
                     type="range"
@@ -240,9 +242,9 @@ export default function Controls({
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
-              <div key={c.name} className={controlClass(c.name, excluded)}>
+              <div key={rowKey} className={controlClass(c.name, excluded)}>
                 {nodeWithCheckbox}
-                <fieldset key={c.name}>
+                <fieldset>
                   <Select
                     id={c.name}
                     value={c.value as string}
@@ -270,9 +272,9 @@ export default function Controls({
 
           if (c.kind === 'Separator') {
             return (
-              <div className="separator-control-container">
+              <div key={rowKey} className="separator-control-container">
                 <small>{c.name}</small>
-                <Separator key={c.name || index} />
+                <Separator />
               </div>
             )
           }

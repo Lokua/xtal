@@ -2052,7 +2052,9 @@ impl XtalRuntime {
             midi_input_ports: self.midi_input_ports.clone(),
             midi_output_ports: self.midi_output_ports.clone(),
             osc_port: self.osc_port,
-            sketch_names: self.registry.sketch_names().to_vec(),
+            sketches_by_category: web_view::sketches_by_category(
+                &self.registry,
+            ),
             sketch_catalog: Some(web_view::sketch_catalog_from_registry(
                 &self.registry,
             )),

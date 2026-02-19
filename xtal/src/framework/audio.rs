@@ -52,7 +52,8 @@ impl Audio {
             return Ok(());
         };
 
-        let (device, stream_config) = Self::device_and_stream_config(&device_name)?;
+        let (device, stream_config) =
+            Self::device_and_stream_config(&device_name)?;
 
         {
             let mut processor = self.audio_processor.lock().unwrap();

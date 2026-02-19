@@ -323,7 +323,8 @@ mod tests {
     #[test]
     fn messages_encode_standard_7bit_cc() {
         let mut controls = MidiControls::default();
-        controls.add("cutoff", MidiControlConfig::new((0, 74), (0.0, 1.0), 0.0));
+        controls
+            .add("cutoff", MidiControlConfig::new((0, 74), (0.0, 1.0), 0.0));
         controls.set("cutoff", 1.0);
 
         let messages = controls.messages();
@@ -335,7 +336,8 @@ mod tests {
     fn messages_hrcc_encode_msb_lsb_for_cc_under_32() {
         let mut controls = MidiControls::default();
         controls.add("fine", MidiControlConfig::new((1, 10), (0.0, 1.0), 0.0));
-        controls.add("coarse", MidiControlConfig::new((1, 40), (0.0, 1.0), 0.0));
+        controls
+            .add("coarse", MidiControlConfig::new((1, 40), (0.0, 1.0), 0.0));
 
         controls.set("fine", 1.0);
         controls.set("coarse", 1.0);

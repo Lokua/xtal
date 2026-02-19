@@ -11,6 +11,10 @@ const transitionTimes = [
   32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25, 0.0,
 ]
 type TransitionTime = (typeof transitionTimes)[number]
+type OptionGroup = {
+  label: string
+  options: string[]
+}
 
 type HeaderProps = {
   bpm: number
@@ -23,7 +27,7 @@ type HeaderProps = {
   showExclusions: boolean
   showSnapshots: boolean
   sketchName: string
-  sketchNames: string[]
+  sketchOptionGroups: OptionGroup[]
   tapTempoEnabled: boolean
   transitionTime: TransitionTime
   view: View
@@ -57,7 +61,7 @@ export default function Header({
   showExclusions,
   showSnapshots,
   sketchName,
-  sketchNames,
+  sketchOptionGroups,
   tapTempoEnabled,
   transitionTime,
   view,
@@ -150,7 +154,7 @@ export default function Header({
         <Select
           data-help-id="Sketch"
           value={sketchName}
-          options={sketchNames}
+          optionGroups={sketchOptionGroups}
           onChange={onSwitchSketch}
           style={{ maxWidth: '164px' }}
         />
