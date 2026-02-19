@@ -16,6 +16,7 @@ pub const GLOBAL_SETTINGS_VERSION: &str = "1";
 pub struct GlobalSettings {
     pub version: String,
     pub audio_device_name: String,
+    pub hrcc: bool,
     pub images_dir: String,
     pub mappings_enabled: bool,
     pub midi_clock_port: String,
@@ -32,6 +33,7 @@ impl Default for GlobalSettings {
         Self {
             version: GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: String::new(),
+            hrcc: false,
             images_dir: storage::default_images_dir(),
             mappings_enabled: false,
             midi_clock_port: String::new(),

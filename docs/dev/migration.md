@@ -62,7 +62,7 @@ user-facing behavior for:
 
 - UI parity is close but not complete: webview placement behavior in perf mode
   still needs final lock-in.
-- MIDI/audio/map-mode/persistence paths are not ported to xtal2 runtime.
+- Audio/OSC/map-mode paths are not ported to xtal2 runtime.
 - Full behavioral parity fixtures vs legacy xtal are still missing.
 
 ## Active Phase Backlog
@@ -182,8 +182,9 @@ Exit criteria:
 
 - [ ] Port map-mode runtime (`currently_mapping`, commit/remove, duplicate checks).
 - [ ] Add v1-parity tests for map-mode event flow (commit/remove/send mappings).
-- [ ] Port MIDI control in/out lifecycle and hrcc behavior.
-- [ ] Port MIDI clock and OSC port runtime controls.
+- [x] Port MIDI control in/out lifecycle and hrcc behavior.
+- [x] Port MIDI clock start/continue/stop runtime controls.
+- [ ] Port OSC port runtime controls.
 - [ ] Port audio device switching and runtime restarts.
 - [x] Port global settings serialization/restore.
 - [x] Port sketch state serialization/restore (snapshots, mappings, exclusions).

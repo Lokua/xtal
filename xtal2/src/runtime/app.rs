@@ -30,12 +30,16 @@ use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::frame::Frame;
 use crate::framework::util::{HashMap, uuid_5};
-use crate::framework::{frame_controller, logging};
+use crate::framework::{frame_controller, logging, midi};
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
 use crate::motion::{Bpm, Timing};
 use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
 use crate::uniforms::UniformBanks;
+
+const MIDI_START: u8 = 0xFA;
+const MIDI_CONTINUE: u8 = 0xFB;
+const MIDI_STOP: u8 = 0xFC;
 
 #[derive(Clone, Default)]
 struct SketchUiState {
@@ -87,6 +91,8 @@ struct XtalRuntime {
     session_id: String,
     audio_device: String,
     audio_devices: Vec<String>,
+    hrcc: bool,
+    midi_out: Option<midi::MidiOut>,
     midi_clock_port: String,
     midi_input_port: String,
     midi_output_port: String,
@@ -149,7 +155,7 @@ impl XtalRuntime {
         let mut sketch_ui_state = HashMap::default();
         sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
 
-        Ok(Self {
+        let mut runtime = Self {
             registry,
             active_sketch_name: active_name,
             config,
@@ -179,11 +185,13 @@ impl XtalRuntime {
             session_id: recording::generate_session_id(),
             audio_device: global_settings.audio_device_name,
             audio_devices: vec![],
+            hrcc: global_settings.hrcc,
+            midi_out: None,
             midi_clock_port: global_settings.midi_clock_port,
             midi_input_port: global_settings.midi_control_in_port,
             midi_output_port: global_settings.midi_control_out_port,
-            midi_input_ports: vec![],
-            midi_output_ports: vec![],
+            midi_input_ports: midi::list_input_ports().unwrap_or_default(),
+            midi_output_ports: midi::list_output_ports().unwrap_or_default(),
             osc_port: global_settings.osc_port,
             images_dir: global_settings.images_dir,
             user_data_dir: global_settings.user_data_dir,
@@ -192,7 +200,17 @@ impl XtalRuntime {
             shutdown_signaled: false,
             pending_png_capture_path: None,
             modifiers: ModifiersState::default(),
-        })
+        };
+
+        let midi_ports_updated = runtime.normalize_midi_port_selections();
+        runtime.start_midi_clock_listener();
+        runtime.connect_midi_out();
+        runtime.log_midi_startup_state();
+        if midi_ports_updated {
+            runtime.save_global_state();
+        }
+
+        Ok(runtime)
     }
 
     // Single command/event dispatcher for runtime behavior changes.
@@ -235,10 +253,13 @@ impl XtalRuntime {
                 self.save_global_state();
             }
             RuntimeEvent::ChangeMidiClockPort(port) => {
+                info!("Changing MIDI clock port to '{}'", port);
                 self.midi_clock_port = port;
+                self.start_midi_clock_listener();
                 self.save_global_state();
             }
             RuntimeEvent::ChangeMidiControlInputPort(port) => {
+                info!("Changing MIDI control input port to '{}'", port);
                 self.midi_input_port = port.clone();
                 if !self
                     .midi_input_ports
@@ -248,9 +269,22 @@ impl XtalRuntime {
                     let idx = self.midi_input_ports.len();
                     self.midi_input_ports.push((idx, port));
                 }
+                if let Some(hub) = self.control_hub.as_mut() {
+                    hub.midi_controls.set_port(self.midi_input_port.clone());
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|err| {
+                            error!(
+                                "Error in ChangeMidiControlInputPort: {}",
+                                err
+                            );
+                        })
+                        .ok();
+                }
                 self.save_global_state();
             }
             RuntimeEvent::ChangeMidiControlOutputPort(port) => {
+                info!("Changing MIDI control output port to '{}'", port);
                 self.midi_output_port = port.clone();
                 if !self
                     .midi_output_ports
@@ -260,6 +294,7 @@ impl XtalRuntime {
                     let idx = self.midi_output_ports.len();
                     self.midi_output_ports.push((idx, port));
                 }
+                self.connect_midi_out();
                 self.save_global_state();
             }
             RuntimeEvent::ChangeOscPort(port) => {
@@ -297,6 +332,20 @@ impl XtalRuntime {
                     ),
                 );
                 self.alert("Hub repopulated");
+            }
+            RuntimeEvent::MidiContinue | RuntimeEvent::MidiStart => {
+                info!("Received MIDI Start/Continue. Resetting frame count.");
+
+                frame_controller::reset_frame_count();
+
+                if self.recording_state.is_queued {
+                    let _ =
+                        self.on_runtime_event(event_loop, RuntimeEvent::StartRecording);
+                }
+            }
+            RuntimeEvent::MidiStop => {
+                let _ = self
+                    .on_runtime_event(event_loop, RuntimeEvent::StopRecording);
             }
             RuntimeEvent::OpenOsDir(kind) => {
                 let path = self.os_dir_path(&kind);
@@ -439,12 +488,68 @@ impl XtalRuntime {
                 }
             }
             RuntimeEvent::SendMidi => {
-                self.alert("SendMidi is not yet implemented in xtal2 runtime.");
+                let messages = self
+                    .control_hub
+                    .as_ref()
+                    .map(|hub| {
+                        if self.hrcc {
+                            hub.midi_controls.messages_hrcc()
+                        } else {
+                            hub.midi_controls.messages()
+                        }
+                    })
+                    .unwrap_or_default();
+
+                if messages.is_empty() {
+                    return false;
+                }
+
+                let Some(midi_out) = &mut self.midi_out else {
+                    self.alert_and_log(
+                        "Unable to send MIDI; no MIDI out connection",
+                        log::Level::Warn,
+                    );
+                    return false;
+                };
+
+                let mut any_sent = false;
+                for message in messages {
+                    if let Err(err) = midi_out.send(&message) {
+                        self.alert_and_log(
+                            format!(
+                                "Error sending MIDI message: {:?}; error: {}",
+                                message, err
+                            ),
+                            log::Level::Error,
+                        );
+                        return false;
+                    }
+                    any_sent = true;
+                }
+
+                if any_sent {
+                    self.alert_and_log("MIDI Sent", log::Level::Debug);
+                }
             }
             RuntimeEvent::SetHrcc(enabled) => {
+                self.hrcc = enabled;
+                info!("Setting HRCC mode to {}", self.hrcc);
                 if let Some(hub) = self.control_hub.as_mut() {
-                    hub.hrcc(enabled);
+                    hub.midi_controls.hrcc = self.hrcc;
+                    hub.midi_controls
+                        .restart()
+                        .inspect_err(|err| error!("Error in Hrcc: {}", err))
+                        .ok();
                 }
+                self.save_global_state();
+                self.alert_and_log(
+                    if self.hrcc {
+                        "Expecting 14bit MIDI CCs for channels 0-31"
+                    } else {
+                        "Expecting standard 7bit MIDI messages for all CCs"
+                    },
+                    log::Level::Info,
+                );
             }
             RuntimeEvent::SetMappingsEnabled(enabled) => {
                 self.mappings_enabled = enabled;
@@ -482,6 +587,7 @@ impl XtalRuntime {
                     "Snapshot/Transition ended",
                     log::Level::Debug,
                 );
+                let _ = self.command_tx.send(RuntimeEvent::SendMidi);
             }
             RuntimeEvent::SnapshotRecall(id) => {
                 if let Some(hub) = self.control_hub.as_mut() {
@@ -1236,6 +1342,18 @@ impl XtalRuntime {
 
         let mut hub = ControlHub::from_path(path, timing);
         hub.set_transition_time(self.transition_time);
+        hub.midi_controls.hrcc = self.hrcc;
+        hub.midi_controls.set_port(self.midi_input_port.clone());
+        info!(
+            "Configuring sketch MIDI controls: input_port='{}', hrcc={}",
+            self.midi_input_port, self.hrcc
+        );
+        hub.midi_controls
+            .restart()
+            .inspect_err(|err| {
+                error!("Error in build_control_hub MIDI setup: {}", err)
+            })
+            .ok();
         let populated_tx = self.command_tx.clone();
         hub.register_populated_callback(move || {
             let _ = populated_tx.send(RuntimeEvent::HubPopulated);
@@ -1246,6 +1364,138 @@ impl XtalRuntime {
         });
         hub.mark_unchanged();
         Some(hub)
+    }
+
+    fn start_midi_clock_listener(&self) {
+        if self.midi_clock_port.is_empty() {
+            info!("Skipping MIDI clock listener setup; no MIDI clock port.");
+            return;
+        }
+
+        info!(
+            "Starting MIDI clock listener on port '{}'",
+            self.midi_clock_port
+        );
+
+        let command_tx = self.command_tx.clone();
+        let midi_handler_result = midi::on_message(
+            midi::ConnectionType::GlobalStartStop,
+            &self.midi_clock_port,
+            move |_stamp, message| {
+                if message.is_empty() {
+                    return;
+                }
+
+                let event = match message[0] {
+                    MIDI_START => RuntimeEvent::MidiStart,
+                    MIDI_CONTINUE => RuntimeEvent::MidiContinue,
+                    MIDI_STOP => RuntimeEvent::MidiStop,
+                    _ => return,
+                };
+
+                let _ = command_tx.send(event);
+            },
+        );
+
+        if let Err(err) = midi_handler_result {
+            warn!(
+                "Failed to initialize {:?} MIDI connection. Error: {}",
+                midi::ConnectionType::GlobalStartStop,
+                err
+            );
+        }
+    }
+
+    fn connect_midi_out(&mut self) {
+        if self.midi_output_port.is_empty() {
+            info!("Skipping MIDI output connection; no MIDI output port.");
+            self.midi_out = None;
+            return;
+        }
+
+        info!(
+            "Connecting MIDI output on port '{}'",
+            self.midi_output_port
+        );
+
+        let mut midi_out = midi::MidiOut::new(&self.midi_output_port);
+        self.midi_out = match midi_out.connect() {
+            Ok(_) => {
+                info!(
+                    "Connected MIDI output on '{}'",
+                    self.midi_output_port
+                );
+                Some(midi_out)
+            }
+            Err(err) => {
+                error!("{}", err);
+                None
+            }
+        };
+    }
+
+    fn log_midi_startup_state(&self) {
+        info!(
+            "MIDI startup state: input_port='{}', output_port='{}', clock_port='{}', hrcc={}",
+            self.midi_input_port, self.midi_output_port, self.midi_clock_port, self.hrcc
+        );
+        debug!("MIDI input ports: {:?}", self.midi_input_ports);
+        debug!("MIDI output ports: {:?}", self.midi_output_ports);
+    }
+
+    fn normalize_midi_port_selections(&mut self) -> bool {
+        let mut changed = false;
+
+        if !self.midi_input_ports.is_empty() {
+            let has_input = self
+                .midi_input_ports
+                .iter()
+                .any(|(_, name)| *name == self.midi_input_port);
+            if !has_input {
+                let previous = self.midi_input_port.clone();
+                self.midi_input_port = self.midi_input_ports[0].1.clone();
+                info!(
+                    "Resolved MIDI input port from '{}' to '{}'",
+                    if previous.is_empty() { "<empty>" } else { &previous },
+                    self.midi_input_port
+                );
+                changed = true;
+            }
+
+            let has_clock = self
+                .midi_input_ports
+                .iter()
+                .any(|(_, name)| *name == self.midi_clock_port);
+            if !has_clock {
+                let previous = self.midi_clock_port.clone();
+                self.midi_clock_port = self.midi_input_ports[0].1.clone();
+                info!(
+                    "Resolved MIDI clock port from '{}' to '{}'",
+                    if previous.is_empty() { "<empty>" } else { &previous },
+                    self.midi_clock_port
+                );
+                changed = true;
+            }
+        }
+
+        if !self.midi_output_ports.is_empty() {
+            let has_output = self
+                .midi_output_ports
+                .iter()
+                .any(|(_, name)| *name == self.midi_output_port);
+            if !has_output {
+                let previous = self.midi_output_port.clone();
+                self.midi_output_port = self.midi_output_ports[0].1.clone();
+                info!(
+                    "Resolved MIDI output port from '{}' to '{}'",
+                    if previous.is_empty() { "<empty>" } else { &previous },
+                    self.midi_output_port
+                );
+                changed = true;
+            }
+        }
+
+        changed
     }
 
     // Applies resize to surface config and runtime context resolution.
@@ -1326,15 +1576,10 @@ impl XtalRuntime {
 
     // Sends one-time UI bootstrap payload.
     fn emit_web_view_init(&self) {
-        let hrcc = self
-            .control_hub
-            .as_ref()
-            .is_some_and(|hub| hub.midi_controls.hrcc);
-
         let event = web_view::Event::Init {
             audio_device: self.audio_device.clone(),
             audio_devices: self.audio_devices.clone(),
-            hrcc,
+            hrcc: self.hrcc,
             images_dir: self.images_dir.clone(),
             is_light_theme: true,
             mappings_enabled: self.mappings_enabled,
@@ -1555,6 +1800,7 @@ impl XtalRuntime {
         let settings = GlobalSettings {
             version: super::serialization::GLOBAL_SETTINGS_VERSION.to_string(),
             audio_device_name: self.audio_device.clone(),
+            hrcc: self.hrcc,
             images_dir: self.images_dir.clone(),
             mappings_enabled: self.mappings_enabled,
             midi_clock_port: self.midi_clock_port.clone(),
@@ -1566,13 +1812,18 @@ impl XtalRuntime {
             videos_dir: self.videos_dir.clone(),
         };
 
-        if let Err(err) =
-            storage::save_global_state(&self.user_data_dir, settings)
-        {
-            self.alert_and_log(
-                format!("Failed to persist global settings: {}", err),
-                log::Level::Error,
-            );
+        match storage::save_global_state(&self.user_data_dir, settings) {
+            Ok(()) => {
+                let path =
+                    PathBuf::from(&self.user_data_dir).join("global_settings.json");
+                info!("Global settings saved to {}", path.display());
+            }
+            Err(err) => {
+                self.alert_and_log(
+                    format!("Failed to persist global settings: {}", err),
+                    log::Level::Error,
+                );
+            }
         }
     }
 
@@ -1597,14 +1848,22 @@ impl XtalRuntime {
 
         match result {
             Ok(state) => {
+                let mappings = state.mappings.clone();
+                let exclusions = state.exclusions.clone();
                 hub.ui_controls = state.ui_controls.clone();
                 hub.midi_controls = state.midi_controls.clone();
+                hub.midi_controls.hrcc = self.hrcc;
+                hub.midi_controls.set_port(self.midi_input_port.clone());
                 hub.osc_controls = state.osc_controls.clone();
                 hub.snapshots = state.snapshots.clone();
-                self.current_sketch_ui_state_mut().mappings =
-                    state.mappings.clone();
-                self.current_sketch_ui_state_mut().exclusions =
-                    state.exclusions.clone();
+                hub.midi_controls
+                    .restart()
+                    .inspect_err(|err| {
+                        error!("Error in restore_sketch_state_from_disk: {}", err)
+                    })
+                    .ok();
+                self.current_sketch_ui_state_mut().mappings = mappings;
+                self.current_sketch_ui_state_mut().exclusions = exclusions;
                 self.alert_and_log("Controls restored", log::Level::Info);
             }
             Err(err) => {
