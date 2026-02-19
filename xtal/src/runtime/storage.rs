@@ -10,8 +10,8 @@ use super::serialization::{
     GlobalSettings, SerializableSketchState, TransitorySketchState,
 };
 use super::web_view::Mappings;
-use crate::control::Exclusions;
 use crate::control::ControlHub;
+use crate::control::Exclusions;
 use crate::motion::TimingSource;
 
 pub fn config_dir() -> Option<PathBuf> {
@@ -68,7 +68,9 @@ pub fn save_global_state(
     Ok(())
 }
 
-pub fn load_global_state(storage_dir: &str) -> Result<GlobalSettings, Box<dyn Error>> {
+pub fn load_global_state(
+    storage_dir: &str,
+) -> Result<GlobalSettings, Box<dyn Error>> {
     let path = global_state_storage_path(storage_dir);
     let bytes = fs::read(path)?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
@@ -94,7 +96,10 @@ pub fn load_global_state_if_exists(
     }
 }
 
-fn sketch_state_storage_path(user_data_dir: &str, sketch_name: &str) -> PathBuf {
+fn sketch_state_storage_path(
+    user_data_dir: &str,
+    sketch_name: &str,
+) -> PathBuf {
     PathBuf::from(user_data_dir)
         .join("Controls")
         .join(format!("{}_controls.json", sketch_name))

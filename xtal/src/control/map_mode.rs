@@ -109,8 +109,11 @@ impl MapMode {
                 let cc = msg[1] as usize;
 
                 if !hrcc || cc > 63 {
-                    let removed_mappings =
-                        Self::remove_conflicts(&mut state.mappings, &name, (ch, cc));
+                    let removed_mappings = Self::remove_conflicts(
+                        &mut state.mappings,
+                        &name,
+                        (ch, cc),
+                    );
                     state.mappings.insert(name.clone(), (ch, cc));
                     if removed_mappings.is_empty() {
                         callback(Ok(()));
@@ -139,8 +142,11 @@ impl MapMode {
                 let msb_key = (ch, msb_cc);
 
                 if !state.msb_ccs.contains(&msb_key) {
-                    let removed_mappings =
-                        Self::remove_conflicts(&mut state.mappings, &name, (ch, cc));
+                    let removed_mappings = Self::remove_conflicts(
+                        &mut state.mappings,
+                        &name,
+                        (ch, cc),
+                    );
                     state.mappings.insert(name.clone(), (ch, cc));
                     if removed_mappings.is_empty() {
                         callback(Ok(()));
@@ -236,8 +242,7 @@ mod tests {
         mappings.insert("b".to_string(), (0, 1));
         mappings.insert("c".to_string(), (0, 2));
 
-        let removed =
-            MapMode::remove_conflicts(&mut mappings, "c", (0, 1));
+        let removed = MapMode::remove_conflicts(&mut mappings, "c", (0, 1));
 
         assert_eq!(removed.len(), 2);
         assert!(!mappings.contains_key("a"));

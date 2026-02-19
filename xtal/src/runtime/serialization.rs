@@ -5,9 +5,9 @@ use crate::control::control_hub::Snapshots;
 use crate::control::map_mode::MapMode;
 use crate::control::*;
 use crate::framework::util::HashMap;
-use log::error;
 use crate::motion::TimingSource;
 use crate::runtime::storage;
+use log::error;
 
 pub const GLOBAL_SETTINGS_VERSION: &str = "1";
 const DEFAULT_OSC_PORT: u16 = 2346;
@@ -334,7 +334,10 @@ impl TransitorySketchState {
         });
     }
 
-    fn merge_ui_controls(&mut self, serialized_state: &SerializableSketchState) {
+    fn merge_ui_controls(
+        &mut self,
+        serialized_state: &SerializableSketchState,
+    ) {
         Self::merge_controls(
             &mut self.ui_controls,
             &serialized_state.ui_controls,

@@ -2,9 +2,9 @@
 pub use crate::control::*;
 pub use crate::debug_once;
 pub use crate::debug_throttled;
+pub use crate::framework::audio::*;
 pub use crate::framework::logging::init_logger;
 pub use crate::framework::logging::{debug, error, info, trace, warn};
-pub use crate::framework::audio::*;
 pub use crate::framework::util::AtomicF32;
 pub use crate::framework::util::HashMap;
 pub use crate::framework::util::HashSet;

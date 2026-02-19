@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 use super::events::RuntimeEvent;
@@ -13,6 +14,7 @@ pub type Bypassed = HashMap<String, f32>;
 pub type Exclusions = Vec<String>;
 pub type ChannelAndController = (usize, usize);
 pub type Mappings = HashMap<String, ChannelAndController>;
+pub type SketchesByCategory = IndexMap<String, Vec<String>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum UserDir {
@@ -149,7 +151,7 @@ pub enum Event {
         midi_input_ports: Vec<(usize, String)>,
         midi_output_ports: Vec<(usize, String)>,
         osc_port: u16,
-        sketch_names: Vec<String>,
+        sketches_by_category: SketchesByCategory,
         #[serde(default)]
         sketch_catalog: Option<Vec<SketchCatalogCategory>>,
         sketch_name: String,
@@ -348,6 +350,15 @@ pub fn sketch_catalog_from_registry(
             enabled: category.enabled,
             sketches: category.sketches.clone(),
         })
+        .collect()
+}
+
+pub fn sketches_by_category(registry: &RuntimeRegistry) -> SketchesByCategory {
+    registry
+        .categories()
+        .iter()
+        .filter(|category| category.enabled)
+        .map(|category| (category.title.clone(), category.sketches.clone()))
         .collect()
 }
 
@@ -754,8 +765,8 @@ mod tests {
             .expect("serialize start event");
         assert_eq!(start_json, "\"StartRecording\"");
 
-        let stop_json = to_ui_message(&Event::StopRecording)
-            .expect("serialize stop event");
+        let stop_json =
+            to_ui_message(&Event::StopRecording).expect("serialize stop event");
         assert_eq!(stop_json, "\"StopRecording\"");
 
         // Duplicate guard at mapping boundary: outbound-only events never map

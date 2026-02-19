@@ -242,8 +242,8 @@ impl FrameRecorder {
 
         let bytes_per_pixel = 4u32;
         let unpadded_bytes_per_row = width * bytes_per_pixel;
-        let padded_bytes_per_row =
-            unpadded_bytes_per_row + compute_row_padding(unpadded_bytes_per_row);
+        let padded_bytes_per_row = unpadded_bytes_per_row
+            + compute_row_padding(unpadded_bytes_per_row);
 
         let buffer_size = (padded_bytes_per_row as u64) * (height as u64);
         let buffers: Vec<Arc<wgpu::Buffer>> = (0..num_buffers)
@@ -463,8 +463,7 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                         match map_rx.try_recv() {
                             Ok(result) => break Some(result),
                             Err(mpsc::TryRecvError::Empty) => {
-                                let _ =
-                                    args.device.poll(wgpu::PollType::Poll);
+                                let _ = args.device.poll(wgpu::PollType::Poll);
                                 thread::sleep(Duration::from_micros(250));
                             }
                             Err(mpsc::TryRecvError::Disconnected) => {

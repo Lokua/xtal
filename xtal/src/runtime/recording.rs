@@ -69,10 +69,8 @@ impl RecordingState {
         self.is_recording = false;
         self.is_queued = false;
 
-        let recorder = self
-            .frame_recorder
-            .take()
-            .ok_or("No active recorder")?;
+        let recorder =
+            self.frame_recorder.take().ok_or("No active recorder")?;
 
         self.is_encoding = true;
 

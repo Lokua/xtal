@@ -53,7 +53,7 @@ type EventMap = {
     midiInputPorts: [number, string][]
     midiOutputPorts: [number, string][]
     oscPort: number
-    sketchNames: string[]
+    sketchesByCategory: Record<string, string[]>
     sketchName: string
     transitionTime: number
     userDataDir: string
@@ -111,6 +111,11 @@ type EventMap = {
     value: string
   }
   UpdatedControls: RawControl[]
+}
+
+type OptionGroup = {
+  label: string
+  options: string[]
 }
 
 function subscribe<K extends keyof EventMap>(
@@ -210,7 +215,9 @@ export default function App() {
   const [singleTransitionControlName, setSingleTransitionControlName] =
     useState('')
   const [sketchName, setSketchName] = useState('')
-  const [sketchNames, setSketchNames] = useState<string[]>([])
+  const [sketchOptionGroups, setSketchOptionGroups] = useState<OptionGroup[]>(
+    [],
+  )
   const [snapshots, setSnapshots] = useState<string[]>([])
   const [snapshotSequenceEnabled, setSnapshotSequenceEnabled] = useState(false)
   const [tapTempoEnabled, setTapTempoEnabled] = useState(false)
@@ -276,7 +283,14 @@ export default function App() {
           setOscPort(d.oscPort)
           setUserDataDir(d.userDataDir)
           setSketchName(d.sketchName)
-          setSketchNames(d.sketchNames)
+          setSketchOptionGroups(
+            Object.entries(d.sketchesByCategory).map(
+              ([label, options]) => ({
+                label,
+                options,
+              }),
+            ),
+          )
           setTransitionTime(d.transitionTime)
           setVideosDir(d.videosDir)
           break
@@ -708,7 +722,7 @@ export default function App() {
         showExclusions={showExclusions}
         showSnapshots={showSnapshots}
         sketchName={sketchName}
-        sketchNames={sketchNames}
+        sketchOptionGroups={sketchOptionGroups}
         tapTempoEnabled={tapTempoEnabled}
         transitionTime={transitionTime}
         view={view}

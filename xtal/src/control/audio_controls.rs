@@ -148,7 +148,8 @@ impl AudioControls {
         };
 
         let buffer_processor = self.buffer_processor;
-        let (device, stream_config) = Self::device_and_stream_config(&device_name)?;
+        let (device, stream_config) =
+            Self::device_and_stream_config(&device_name)?;
 
         {
             let mut state = self.state.lock().unwrap();
@@ -281,7 +282,11 @@ impl
     }
 
     fn set(&mut self, name: &str, value: f32) {
-        self.state.lock().unwrap().values.insert(name.to_string(), value);
+        self.state
+            .lock()
+            .unwrap()
+            .values
+            .insert(name.to_string(), value);
     }
 
     fn values(&self) -> HashMap<String, f32> {
