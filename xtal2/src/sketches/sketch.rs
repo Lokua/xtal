@@ -7,11 +7,19 @@ use crate::graph::GraphBuilder;
 pub struct SketchConfig {
     pub name: &'static str,
     pub display_name: &'static str,
+    pub play_mode: PlayMode,
     pub fps: f32,
     pub bpm: f32,
     pub w: u32,
     pub h: u32,
     pub banks: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PlayMode {
+    Loop,
+    Pause,
+    Advance,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -5,6 +5,7 @@ use xtal2::prelude::*;
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "grid_splash_bw",
     display_name: "Grid Splash B&W",
+    play_mode: PlayMode::Advance,
     fps: 60.0,
     bpm: 134.0,
     w: 1920 / 2,

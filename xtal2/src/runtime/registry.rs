@@ -112,6 +112,7 @@ mod tests {
     static CONFIG: SketchConfig = SketchConfig {
         name: "test",
         display_name: "Test",
+        play_mode: crate::sketch::PlayMode::Loop,
         fps: 60.0,
         bpm: 120.0,
         w: 640,
