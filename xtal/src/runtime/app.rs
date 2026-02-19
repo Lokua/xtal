@@ -36,6 +36,7 @@ use crate::framework::audio::list_audio_devices;
 use crate::framework::osc_receiver::SHARED_OSC_RECEIVER;
 use crate::framework::util::{HashMap, uuid_5};
 use crate::framework::{frame_controller, logging, midi};
+use crate::gpu::compute_row_padding;
 use crate::gpu::CompiledGraph;
 use crate::graph::GraphBuilder;
 use crate::motion::{Bpm, Timing};
@@ -52,6 +53,8 @@ const DEFAULT_OSC_PORT: u16 = 2346;
 const PULSES_PER_QUARTER_NOTE: u32 = 24;
 const TICKS_PER_QUARTER_NOTE: u32 = 960;
 const HYBRID_SYNC_THRESHOLD_BEATS: f32 = 0.5;
+const CONTINUE_HANDLING: bool = false;
+const QUIT_REQUESTED: bool = true;
 
 static OSC_TRANSPORT_CALLBACK_REGISTER: Once = Once::new();
 
@@ -260,6 +263,7 @@ impl XtalRuntime {
     }
 
     // Single command/event dispatcher for runtime behavior changes.
+    // Returns `QUIT_REQUESTED` when handling should terminate early.
     fn on_runtime_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -555,7 +559,7 @@ impl XtalRuntime {
             }
             RuntimeEvent::Quit => {
                 self.shutdown(event_loop);
-                return true;
+                return QUIT_REQUESTED;
             }
             RuntimeEvent::Randomize(exclusions) => {
                 self.alert_and_log("Transition started", log::Level::Info);
@@ -953,14 +957,14 @@ impl XtalRuntime {
             | RuntimeEvent::WebView(_) => {}
         }
 
-        false
+        CONTINUE_HANDLING
     }
 
     // Drains inbound command channel and routes events through the central
     // dispatcher.
     fn process_commands(&mut self, event_loop: &ActiveEventLoop) {
         while let Ok(event) = self.command_rx.try_recv() {
-            if self.on_runtime_event(event_loop, event) {
+            if self.on_runtime_event(event_loop, event) == QUIT_REQUESTED {
                 return;
             }
         }
@@ -1819,6 +1823,13 @@ impl XtalRuntime {
             if !has_input {
                 let previous = self.midi_input_port.clone();
                 self.midi_input_port = self.midi_input_ports[0].1.clone();
+                if !previous.is_empty() {
+                    warn!(
+                        "Persisted MIDI input port '{}' not found; using '{}' for this session",
+                        previous,
+                        self.midi_input_port
+                    );
+                }
                 info!(
                     "Resolved MIDI input port from '{}' to '{}'",
                     if previous.is_empty() {
@@ -1838,6 +1849,13 @@ impl XtalRuntime {
             if !has_clock {
                 let previous = self.midi_clock_port.clone();
                 self.midi_clock_port = self.midi_input_ports[0].1.clone();
+                if !previous.is_empty() {
+                    warn!(
+                        "Persisted MIDI clock port '{}' not found; using '{}' for this session",
+                        previous,
+                        self.midi_clock_port
+                    );
+                }
                 info!(
                     "Resolved MIDI clock port from '{}' to '{}'",
                     if previous.is_empty() {
@@ -1859,6 +1877,13 @@ impl XtalRuntime {
             if !has_output {
                 let previous = self.midi_output_port.clone();
                 self.midi_output_port = self.midi_output_ports[0].1.clone();
+                if !previous.is_empty() {
+                    warn!(
+                        "Persisted MIDI output port '{}' not found; using '{}' for this session",
+                        previous,
+                        self.midi_output_port
+                    );
+                }
                 info!(
                     "Resolved MIDI output port from '{}' to '{}'",
                     if previous.is_empty() {
@@ -2089,13 +2114,16 @@ impl XtalRuntime {
             .as_ref()
             .is_some_and(ControlHub::snapshot_sequence_enabled);
 
-        let mut sketch_state = self.current_sketch_ui_state();
-        if sketch_state.mappings.is_empty() {
-            sketch_state.mappings = self.mappings_from_hub();
-            self.current_sketch_ui_state_mut().mappings =
-                sketch_state.mappings.clone();
-        }
-        self.map_mode.set_mappings(sketch_state.mappings.clone());
+        let mappings = {
+            let inferred_mappings = self.mappings_from_hub();
+            let sketch_state = self.current_sketch_ui_state_mut();
+            if sketch_state.mappings.is_empty() {
+                sketch_state.mappings = inferred_mappings;
+            }
+            sketch_state.mappings.clone()
+        };
+        self.map_mode.set_mappings(mappings.clone());
+        let exclusions = self.current_sketch_ui_state().exclusions;
 
         let event = web_view::Event::LoadSketch {
             bpm: self.bpm.get(),
@@ -2103,7 +2131,7 @@ impl XtalRuntime {
             controls,
             display_name: self.config.display_name.to_string(),
             fps: self.config.fps,
-            mappings: sketch_state.mappings,
+            mappings,
             paused: frame_controller::paused(),
             perf_mode: self.perf_mode,
             sketch_name: self.active_sketch_name.clone(),
@@ -2112,7 +2140,7 @@ impl XtalRuntime {
             snapshot_slots,
             snapshot_sequence_enabled,
             tap_tempo_enabled: self.tap_tempo_enabled,
-            exclusions: sketch_state.exclusions,
+            exclusions,
         };
 
         self.emit_web_view_event(event);
@@ -2151,6 +2179,7 @@ impl XtalRuntime {
         self.bpm.set(self.config.bpm);
         self.tap_tempo = TapTempo::new(self.config.bpm);
         frame_controller::set_fps(self.config.fps);
+        frame_controller::reset_timing(Instant::now());
         self.apply_play_mode();
 
         if let Some(window) = self.window.as_ref() {
@@ -2162,13 +2191,6 @@ impl XtalRuntime {
                     self.config.h,
                 ));
             }
-        }
-
-        if !self.perf_mode {
-            self.resize(winit::dpi::PhysicalSize::new(
-                self.config.w.max(1),
-                self.config.h.max(1),
-            ));
         }
 
         self.rebuild_graph_state()?;
@@ -2225,12 +2247,6 @@ impl XtalRuntime {
             window.request_redraw();
         }
 
-        if !self.perf_mode {
-            self.resize(winit::dpi::PhysicalSize::new(
-                self.config.w.max(1),
-                self.config.h.max(1),
-            ));
-        }
     }
 
     // Sends a UI alert message.
@@ -2568,12 +2584,6 @@ fn anchor_window_top_left(window: &Window) {
     window.set_outer_position(winit::dpi::PhysicalPosition::new(x, y));
 }
 
-fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
-    let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    let rem = unpadded_bytes_per_row % align;
-    if rem == 0 { 0 } else { align - rem }
-}
-
 fn save_png_capture(
     device: &wgpu::Device,
     submission_index: wgpu::SubmissionIndex,
@@ -2601,6 +2611,7 @@ fn save_png_capture(
     map_result.map_err(|err| format!("map failed: {:?}", err))?;
 
     let data = slice.get_mapped_range();
+    // Recording/capture source formats are 8-bit RGBA/BGRA, so 4 bytes/pixel.
     let unpadded_bytes_per_row = (width * 4) as usize;
     let padded_bytes_per_row = padded_bytes_per_row as usize;
     let mut rgba = vec![0u8; unpadded_bytes_per_row * (height as usize)];
