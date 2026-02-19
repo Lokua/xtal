@@ -85,7 +85,7 @@ struct XtalRuntime {
     perf_mode: bool,
     transition_time: f32,
     mappings_enabled: bool,
-    currently_mapping: Option<String>,
+    map_mode: MapMode,
     sketch_ui_state: HashMap<String, SketchUiState>,
     recording_state: RecordingState,
     session_id: String,
@@ -179,7 +179,7 @@ impl XtalRuntime {
             perf_mode: false,
             transition_time: global_settings.transition_time,
             mappings_enabled: global_settings.mappings_enabled,
-            currently_mapping: None,
+            map_mode: MapMode::default(),
             sketch_ui_state,
             recording_state: RecordingState::default(),
             session_id: recording::generate_session_id(),
@@ -307,12 +307,102 @@ impl XtalRuntime {
                 );
             }
             RuntimeEvent::CommitMappings => {
-                self.currently_mapping = None;
+                self.map_mode.currently_mapping = None;
+                let mappings = self.map_mode.mappings();
+                let mut missing_slider_ranges = Vec::new();
+
+                {
+                    let Some(hub) = self.control_hub.as_mut() else {
+                        return false;
+                    };
+
+                    for (name, _) in hub.midi_controls.configs() {
+                        if MapMode::is_proxy_name(&name)
+                            && !hub
+                                .ui_controls
+                                .has(&MapMode::unproxied_name(&name).unwrap())
+                        {
+                            debug!("Removing orphaned proxy: {}", name);
+                            hub.midi_controls.remove(&name);
+                        }
+                    }
+
+                    for (name, (ch, cc)) in mappings {
+                        let proxy_name = &MapMode::proxy_name(&name);
+
+                        if let Some(config) =
+                            hub.midi_controls.config(proxy_name)
+                        {
+                            if config.channel == ch as u8
+                                && config.cc == cc as u8
+                            {
+                                continue;
+                            }
+                        }
+
+                        let slider_range =
+                            match hub.ui_controls.slider_range(&name) {
+                                Some(range) => range,
+                                None => {
+                                    missing_slider_ranges.push(name.clone());
+                                    continue;
+                                }
+                            };
+
+                        hub.midi_controls.add(
+                            proxy_name,
+                            crate::control::MidiControlConfig::new(
+                                (ch as u8, cc as u8),
+                                slider_range,
+                                0.0,
+                            ),
+                        );
+                    }
+
+                    if let Err(err) = hub.midi_controls.restart() {
+                        error!("{}", err);
+                    }
+                }
+
+                self.current_sketch_ui_state_mut().mappings =
+                    self.map_mode.mappings();
+                for name in missing_slider_ranges {
+                    self.alert_and_log(
+                        format!("No slider range for {}", name),
+                        log::Level::Error,
+                    );
+                }
             }
             RuntimeEvent::CurrentlyMapping(name) => {
-                let currently_mapping =
-                    if name.is_empty() { None } else { Some(name) };
-                self.currently_mapping = currently_mapping.clone();
+                if name.is_empty() {
+                    self.map_mode.stop();
+                    return false;
+                }
+
+                self.map_mode.remove(&name);
+                if let Some(hub) = self.control_hub.as_mut() {
+                    hub.midi_controls.remove(&MapMode::proxy_name(&name));
+                }
+
+                self.map_mode.currently_mapping = Some(name.clone());
+
+                let command_tx = self.command_tx.clone();
+                self.map_mode
+                    .start(&name, &self.midi_input_port, self.hrcc, move |result| {
+                        if let Err(err) = result {
+                            let _ = command_tx.send(RuntimeEvent::MapModeError(
+                                format!("Error: {}", err),
+                            ));
+                        }
+                        let _ = command_tx.send(RuntimeEvent::SendMappings);
+                    })
+                    .inspect_err(|err| {
+                        error!("Error in CurrentlyMapping: {}", err)
+                    })
+                    .ok();
+            }
+            RuntimeEvent::MapModeError(message) => {
+                self.alert_and_log(message, log::Level::Error);
             }
             RuntimeEvent::HubPopulated => {
                 let Some(hub) = self.control_hub.as_ref() else {
@@ -422,6 +512,7 @@ impl XtalRuntime {
                 self.save_global_state();
             }
             RuntimeEvent::ReceiveMappings(mappings) => {
+                self.map_mode.set_mappings(mappings.clone());
                 self.current_sketch_ui_state_mut().mappings = mappings.clone();
             }
             RuntimeEvent::ReloadControls => {
@@ -430,17 +521,15 @@ impl XtalRuntime {
                 }
             }
             RuntimeEvent::RemoveMapping(name) => {
-                let mappings = {
-                    let state = self.current_sketch_ui_state_mut();
-                    state.mappings.remove(&name);
-                    state.mappings.clone()
-                };
+                self.map_mode.remove(&name);
+                self.map_mode.currently_mapping = None;
 
                 if let Some(hub) = self.control_hub.as_mut() {
                     hub.midi_controls.remove(&MapMode::proxy_name(&name));
                 }
 
-                self.currently_mapping = None;
+                let mappings = self.map_mode.mappings();
+                self.current_sketch_ui_state_mut().mappings = mappings.clone();
                 self.emit_web_view_event(web_view::Event::Mappings(mappings));
             }
             RuntimeEvent::Reset => {
@@ -455,9 +544,10 @@ impl XtalRuntime {
                     stored
                 };
                 self.set_exclusions(next);
-                let exclusions_to_save =
-                    self.current_sketch_ui_state().exclusions;
-                let mappings_to_save = self.current_sketch_ui_state().mappings;
+                let exclusions_to_save = self.current_sketch_ui_state().exclusions;
+                let mappings_to_save = self.map_mode.mappings();
+                self.current_sketch_ui_state_mut().mappings =
+                    mappings_to_save.clone();
                 let Some(hub) = self.control_hub.as_ref() else {
                     self.alert_and_log(
                         "Unable to save controls (no hub)",
@@ -486,6 +576,11 @@ impl XtalRuntime {
                         );
                     }
                 }
+            }
+            RuntimeEvent::SendMappings => {
+                let mappings = self.map_mode.mappings();
+                self.current_sketch_ui_state_mut().mappings = mappings.clone();
+                self.emit_web_view_event(web_view::Event::Mappings(mappings));
             }
             RuntimeEvent::SendMidi => {
                 let messages = self
@@ -552,6 +647,7 @@ impl XtalRuntime {
                 );
             }
             RuntimeEvent::SetMappingsEnabled(enabled) => {
+                info!("Setting mappings_enabled to {}", enabled);
                 self.mappings_enabled = enabled;
                 if let Some(hub) = self.control_hub.as_mut() {
                     hub.midi_proxies_enabled = enabled;
@@ -1342,11 +1438,12 @@ impl XtalRuntime {
 
         let mut hub = ControlHub::from_path(path, timing);
         hub.set_transition_time(self.transition_time);
+        hub.midi_proxies_enabled = self.mappings_enabled;
         hub.midi_controls.hrcc = self.hrcc;
         hub.midi_controls.set_port(self.midi_input_port.clone());
         info!(
-            "Configuring sketch MIDI controls: input_port='{}', hrcc={}",
-            self.midi_input_port, self.hrcc
+            "Configuring sketch MIDI controls: input_port='{}', hrcc={}, mappings_enabled={}",
+            self.midi_input_port, self.hrcc, self.mappings_enabled
         );
         hub.midi_controls
             .restart()
@@ -1436,8 +1533,12 @@ impl XtalRuntime {
 
     fn log_midi_startup_state(&self) {
         info!(
-            "MIDI startup state: input_port='{}', output_port='{}', clock_port='{}', hrcc={}",
-            self.midi_input_port, self.midi_output_port, self.midi_clock_port, self.hrcc
+            "MIDI startup state: input_port='{}', output_port='{}', clock_port='{}', hrcc={}, mappings_enabled={}",
+            self.midi_input_port,
+            self.midi_output_port,
+            self.midi_clock_port,
+            self.hrcc,
+            self.mappings_enabled
         );
         debug!("MIDI input ports: {:?}", self.midi_input_ports);
         debug!("MIDI output ports: {:?}", self.midi_output_ports);
@@ -1630,6 +1731,7 @@ impl XtalRuntime {
             self.current_sketch_ui_state_mut().mappings =
                 sketch_state.mappings.clone();
         }
+        self.map_mode.set_mappings(sketch_state.mappings.clone());
 
         let event = web_view::Event::LoadSketch {
             bpm: self.bpm.get(),
@@ -1673,6 +1775,8 @@ impl XtalRuntime {
 
     // Swaps sketch instance/config, rebuilds runtime graph state, updates UI.
     fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
+        self.map_mode.stop();
+
         let (config, sketch) = instantiate_sketch(&self.registry, name)?;
 
         self.active_sketch_name = name.to_string();
@@ -1830,6 +1934,7 @@ impl XtalRuntime {
     // Loads per-sketch controls/snapshots/mappings/exclusions into runtime + hub.
     fn restore_sketch_state_from_disk(&mut self) {
         let current = self.current_sketch_ui_state();
+        self.map_mode.set_mappings(current.mappings.clone());
         let Some(hub) = self.control_hub.as_mut() else {
             return;
         };
@@ -1864,6 +1969,8 @@ impl XtalRuntime {
                     .ok();
                 self.current_sketch_ui_state_mut().mappings = mappings;
                 self.current_sketch_ui_state_mut().exclusions = exclusions;
+                self.map_mode
+                    .set_mappings(self.current_sketch_ui_state().mappings);
                 self.alert_and_log("Controls restored", log::Level::Info);
             }
             Err(err) => {

@@ -35,7 +35,7 @@ impl Default for GlobalSettings {
             audio_device_name: String::new(),
             hrcc: false,
             images_dir: storage::default_images_dir(),
-            mappings_enabled: false,
+            mappings_enabled: true,
             midi_clock_port: String::new(),
             midi_control_in_port: String::new(),
             midi_control_out_port: String::new(),

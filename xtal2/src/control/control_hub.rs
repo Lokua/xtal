@@ -214,38 +214,51 @@ impl<T: TimingSource> ControlHub<T> {
         let current_frame = frame_controller::frame_count();
         let current_beat = self.animation.beats();
 
-        let mut name = match self.vars.get(name) {
+        let original_name = match self.vars.get(name) {
             Some(alias) => alias,
             None => name,
         };
 
-        let midi_proxy_name = MapMode::proxy_name(name);
-        if self.midi_proxies_enabled && self.midi_controls.has(&midi_proxy_name)
+        let mut value_key = original_name;
+        let midi_proxy_name = MapMode::proxy_name(original_name);
+        if self.midi_proxies_enabled
+            && self.midi_controls.has(&midi_proxy_name)
         {
-            name = &midi_proxy_name;
+            value_key = &midi_proxy_name;
         }
 
-        if let Some(Some(bypass)) = self.bypassed.get(name) {
+        if let Some(Some(bypass)) = self.bypassed.get(value_key) {
             return *bypass;
         }
 
-        self.run_dependencies(name, current_frame);
+        self.run_dependencies(value_key, current_frame);
 
         let value = if let Some(value) = self
             .active_transition
             .as_ref()
-            .and_then(|t| self.get_transition_value(current_beat, name, t))
+            .and_then(|t| {
+                self.get_transition_value(current_beat, value_key, t)
+            })
         {
             value
         } else {
-            self.get_raw(name, current_frame)
+            self.get_raw(value_key, current_frame)
         };
 
-        let result = self.modulations.get(name).map_or(value, |modulators| {
-            modulators.iter().fold(value, |v, modulator| {
-                self.apply_modulator(v, modulator, current_frame)
-            })
-        });
+        // Use the original control key for modulation/effect chain lookup.
+        // Mapped proxy controls are value sources, not independent chain roots.
+        let chain_key = if self.modulations.contains_key(original_name) {
+            original_name
+        } else {
+            value_key
+        };
+
+        let result =
+            self.modulations.get(chain_key).map_or(value, |modulators| {
+                modulators.iter().fold(value, |v, modulator| {
+                    self.apply_modulator(v, modulator, current_frame)
+                })
+            });
 
         result
     }
@@ -2343,6 +2356,44 @@ foo_animation:
 
         init(0.25);
         assert_eq!(hub.get("foo_animation"), 99.0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_proxied_source_uses_original_modulation_chain() {
+        let mut hub = create_instance(
+            r#"
+foo:
+  type: slider
+  default: 0.0
+
+double:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 2.0
+
+foo_mod:
+  type: mod
+  source: foo
+  modulators:
+    - double
+            "#,
+        );
+
+        hub.midi_controls.add(
+            &MapMode::proxy_name("foo"),
+            MidiControlConfig {
+                channel: 0,
+                cc: 0,
+                min: 0.0,
+                max: 1.0,
+                value: 0.25,
+            },
+        );
+
+        init(0.0);
+        assert_eq!(hub.get("foo"), 0.5);
     }
 
     fn create_snapshot_sequence_hub(
