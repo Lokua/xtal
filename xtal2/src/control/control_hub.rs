@@ -226,17 +226,17 @@ impl<T: TimingSource> ControlHub<T> {
             return *bypass;
         }
 
-        if let Some(x) = self
+        self.run_dependencies(name, current_frame);
+
+        let value = if let Some(value) = self
             .active_transition
             .as_ref()
             .and_then(|t| self.get_transition_value(current_beat, name, t))
         {
-            return x;
-        }
-
-        self.run_dependencies(name, current_frame);
-
-        let value = self.get_raw(name, current_frame);
+            value
+        } else {
+            self.get_raw(name, current_frame)
+        };
 
         let result = self.modulations.get(name).map_or(value, |modulators| {
             modulators.iter().fold(value, |v, modulator| {
@@ -1200,6 +1200,7 @@ impl<T: TimingSource> ControlHub<T> {
         self.bypassed.clear();
         self.dep_graph.clear();
         self.eval_cache.clear();
+        self.active_transition = None;
 
         for (id, maybe_config) in control_configs {
             let config = match maybe_config {
@@ -1889,9 +1890,22 @@ mod tests {
 
     use crate::motion::animation::animation_tests::{BPM, init};
     use serial_test::serial;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     fn create_instance(yaml: &str) -> ControlHub<FrameTiming> {
         ControlHub::new(Some(yaml), FrameTiming::new(Bpm::new(BPM)))
+    }
+
+    fn assert_close(actual: f32, expected: f32, label: &str) {
+        let epsilon = 0.000_1;
+        assert!(
+            (actual - expected).abs() <= epsilon,
+            "{}: expected {}, got {}",
+            label,
+            expected,
+            actual
+        );
     }
 
     #[test]
@@ -2023,6 +2037,200 @@ c:
         assert_eq!(controls.get("a"), 10.0);
         assert_eq!(controls.get("b"), 20.0);
         assert_eq!(controls.get("c"), 30.0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_snapshot_recall_interpolates_and_lands_on_saved_values() {
+        let mut controls = create_instance(
+            r#"
+x:
+  type: slider
+  default: 0
+y:
+  type: slider
+  default: 10
+"#,
+        );
+
+        controls.set_transition_time(4.0);
+
+        controls.take_snapshot("a");
+        controls.ui_controls.set("x", ControlValue::Float(100.0));
+        controls.ui_controls.set("y", ControlValue::Float(90.0));
+        controls.take_snapshot("b");
+
+        controls.ui_controls.set("x", ControlValue::Float(0.0));
+        controls.ui_controls.set("y", ControlValue::Float(10.0));
+
+        init(0.0);
+        controls.recall_snapshot("b").unwrap();
+
+        let transition = controls.active_transition.as_ref().unwrap();
+        let (x_from, x_to) = transition.values["x"];
+        let (y_from, y_to) = transition.values["y"];
+
+        assert_close(controls.get("x"), x_from, "x at transition start");
+        assert_close(controls.get("y"), y_from, "y at transition start");
+
+        init(2.0);
+        assert_close(
+            controls.get("x"),
+            lerp(x_from, x_to, 0.5),
+            "x at transition midpoint",
+        );
+        assert_close(
+            controls.get("y"),
+            lerp(y_from, y_to, 0.5),
+            "y at transition midpoint",
+        );
+
+        init(4.1);
+        controls.update();
+        assert_close(controls.get("x"), x_to, "x at transition end");
+        assert_close(controls.get("y"), y_to, "y at transition end");
+    }
+
+    #[test]
+    #[serial]
+    fn test_randomize_all_transitions_and_lands_on_end_values() {
+        let mut controls = create_instance(
+            r#"
+x:
+  type: slider
+  min: 0
+  max: 100
+  step: 1
+  default: 20
+y:
+  type: slider
+  min: 0
+  max: 100
+  step: 1
+  default: 80
+"#,
+        );
+
+        controls.set_transition_time(2.0);
+        init(0.0);
+        controls.randomize(vec![]);
+
+        let transition = controls.active_transition.as_ref().unwrap();
+        assert!(transition.values.contains_key("x"));
+        assert!(transition.values.contains_key("y"));
+        let (x_from, x_to) = transition.values["x"];
+        let (y_from, y_to) = transition.values["y"];
+
+        assert_close(controls.get("x"), x_from, "x randomize start");
+        assert_close(controls.get("y"), y_from, "y randomize start");
+
+        init(1.0);
+        assert_close(
+            controls.get("x"),
+            lerp(x_from, x_to, 0.5),
+            "x randomize midpoint",
+        );
+        assert_close(
+            controls.get("y"),
+            lerp(y_from, y_to, 0.5),
+            "y randomize midpoint",
+        );
+
+        init(2.1);
+        controls.update();
+        assert_close(controls.get("x"), x_to, "x randomize end");
+        assert_close(controls.get("y"), y_to, "y randomize end");
+    }
+
+    #[test]
+    #[serial]
+    fn test_randomize_single_respects_exclusions() {
+        let mut controls = create_instance(
+            r#"
+x:
+  type: slider
+  min: 0
+  max: 100
+  step: 1
+  default: 20
+y:
+  type: slider
+  min: 0
+  max: 100
+  step: 1
+  default: 80
+"#,
+        );
+
+        controls.set_transition_time(2.0);
+        let y_before = controls.get("y");
+
+        init(0.0);
+        controls.randomize(vec!["y".into()]);
+
+        let transition = controls.active_transition.as_ref().unwrap();
+        assert!(transition.values.contains_key("x"));
+        assert!(!transition.values.contains_key("y"));
+
+        init(1.0);
+        assert_close(controls.get("y"), y_before, "y midpoint excluded");
+
+        init(2.1);
+        controls.update();
+        assert_close(controls.get("y"), y_before, "y end excluded");
+    }
+
+    #[test]
+    #[serial]
+    fn test_exclusions_apply_consistently_to_snapshot_and_randomize() {
+        let mut controls = create_instance(
+            r#"
+x:
+  type: slider
+  min: 0
+  max: 1
+  default: 0.2
+y:
+  type: slider
+  min: 0
+  max: 1
+  default: 0.8
+"#,
+        );
+
+        let snapshot = controls.create_snapshot(vec!["y".into()]);
+        assert!(snapshot.contains_key("x"));
+        assert!(!snapshot.contains_key("y"));
+
+        controls.randomize(vec!["y".into()]);
+        let transition = controls.active_transition.as_ref().unwrap();
+        assert!(transition.values.contains_key("x"));
+        assert!(!transition.values.contains_key("y"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_populated_callback_emits_once_per_population() {
+        let yaml = r#"
+x:
+  type: slider
+  default: 0.5
+"#;
+
+        let mut controls = create_instance(yaml);
+        let populated_count = Arc::new(AtomicUsize::new(0));
+        let populated_count_clone = populated_count.clone();
+        controls.register_populated_callback(move || {
+            populated_count_clone.fetch_add(1, Ordering::SeqCst);
+        });
+
+        let config = ControlHub::<FrameTiming>::parse_from_str(yaml).unwrap();
+        controls.populate_controls(&config).unwrap();
+        assert_eq!(populated_count.load(Ordering::SeqCst), 1);
+
+        controls.ui_controls.set("x", ControlValue::Float(0.75));
+        controls.update();
+        assert_eq!(populated_count.load(Ordering::SeqCst), 1);
     }
 
     #[test]

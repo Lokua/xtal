@@ -44,6 +44,24 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let bg = vec3f(0.00, 0.0, 0.8);
     let fg = vec3f(0.15, 0.85, 0.0) * pulse;
 
-    let color = mix(bg, fg, ring);
+    var color = mix(bg, fg, ring);
+
+    // Adjustable fragment stress test to validate FPS/perf telemetry.
+    let stress = u32(clamp(params.b.x, 0.0, 300.0));
+    var p2 = p;
+    var accum = vec3f(0.0);
+    for (var i: u32 = 0u; i < stress; i = i + 1u) {
+        let t = f32(i) * 0.021 + beats * 0.35;
+        let c = cos(t);
+        let s = sin(t);
+        p2 = vec2f(p2.x * c - p2.y * s, p2.x * s + p2.y * c);
+        accum += 0.5 + 0.5 * cos(vec3f(t, t * 1.31, t * 1.73) + vec3f(p2, p2.x + p2.y));
+    }
+
+    if (stress > 0u) {
+        let noisy = accum / f32(stress);
+        color = mix(color, noisy, 0.25);
+    }
+
     return vec4f(color, 1.0);
 }

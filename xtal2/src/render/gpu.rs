@@ -29,9 +29,10 @@ pub struct CompiledGraph {
 }
 
 struct GpuTexture {
-    _texture: wgpu::Texture,
+    texture: wgpu::Texture,
     view: wgpu::TextureView,
     size: [u32; 2],
+    format: wgpu::TextureFormat,
 }
 
 enum CompiledNode {
@@ -330,7 +331,8 @@ impl CompiledGraph {
                 format: OFFSCREEN_FORMAT,
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                     | wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::STORAGE_BINDING,
+                    | wgpu::TextureUsages::STORAGE_BINDING
+                    | wgpu::TextureUsages::COPY_SRC,
                 view_formats: &[],
             });
 
@@ -340,12 +342,43 @@ impl CompiledGraph {
             self.offscreen_textures.insert(
                 name.clone(),
                 GpuTexture {
-                    _texture: texture,
+                    texture,
                     view,
                     size: [width, height],
+                    format: OFFSCREEN_FORMAT,
                 },
             );
         }
+    }
+
+    pub fn recording_source_texture(&self) -> Option<&wgpu::Texture> {
+        if self.present_source == "surface" {
+            return None;
+        }
+
+        self.offscreen_textures
+            .get(&self.present_source)
+            .map(|texture| &texture.texture)
+            .or_else(|| {
+                self.image_textures
+                    .get(&self.present_source)
+                    .map(|texture| &texture.texture)
+            })
+    }
+
+    pub fn recording_source_format(&self) -> Option<wgpu::TextureFormat> {
+        if self.present_source == "surface" {
+            return None;
+        }
+
+        self.offscreen_textures
+            .get(&self.present_source)
+            .map(|texture| texture.format)
+            .or_else(|| {
+                self.image_textures
+                    .get(&self.present_source)
+                    .map(|texture| texture.format)
+            })
     }
 }
 
@@ -738,12 +771,8 @@ fn fullscreen_vertex_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
 }
 
 fn create_fullscreen_quad_vertex_buffer(device: &wgpu::Device) -> wgpu::Buffer {
-    let vertices: [[f32; 2]; 4] = [
-        [-1.0, -1.0],
-        [1.0, -1.0],
-        [-1.0, 1.0],
-        [1.0, 1.0],
-    ];
+    let vertices: [[f32; 2]; 4] =
+        [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]];
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("xtal2-fullscreen-quad-vertices"),
@@ -1078,9 +1107,10 @@ fn load_image_texture(
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
     Ok(GpuTexture {
-        _texture: texture,
+        texture,
         view,
         size: [width, height],
+        format: IMAGE_FORMAT,
     })
 }
 

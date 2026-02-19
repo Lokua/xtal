@@ -10,3 +10,9 @@ radius:
   var: aw
   range: [0.05, 0.5]
   default: 0.5
+
+stress:
+  type: slider
+  var: bx
+  range: [0, 300]
+  default: 0

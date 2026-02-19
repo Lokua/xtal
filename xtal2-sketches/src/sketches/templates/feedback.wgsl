@@ -38,7 +38,7 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
     let resolution = vec2f(max(params.a.x, 1.0), max(params.a.y, 1.0));
     let beats = params.a.z;
 
-    let feedback_mix = clamp(params.a.w, 0.0, 0.999);
+    let feedback_mix = params.a.w;
     let zoom = params.b.x;
     let ring_size = params.b.y;
     let hue_rate = params.b.z;
