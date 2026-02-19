@@ -41,7 +41,7 @@ impl Sketch for ImageSketch {
 }
 
 pub fn init() -> ImageSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
 
     ImageSketch {
         shader_path: assets.wgsl(),

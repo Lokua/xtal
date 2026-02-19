@@ -427,7 +427,7 @@ impl RenderPass {
             let layout =
                 create_texture_bind_group_layout(device, sampled_reads.len());
             let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-                label: Some("xtal2-texture-sampler"),
+                label: Some("xtal-texture-sampler"),
                 address_mode_u: wgpu::AddressMode::ClampToEdge,
                 address_mode_v: wgpu::AddressMode::ClampToEdge,
                 address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -513,7 +513,7 @@ impl RenderPass {
         }
 
         Ok(device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("xtal2-texture-bind-group"),
+            label: Some("xtal-texture-bind-group"),
             layout,
             entries: &entries,
         }))
@@ -558,7 +558,7 @@ impl RenderPass {
             uniform_layout,
             self.texture_bind_group_layout.as_ref(),
             &source,
-            "xtal2-hot-reloaded",
+            "xtal-hot-reloaded",
         );
 
         if !sampled_reads.is_empty() && self.texture_bind_group_layout.is_none()
@@ -642,7 +642,7 @@ impl ComputePass {
         })?;
 
         Ok(device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("xtal2-compute-storage-bind-group"),
+            label: Some("xtal-compute-storage-bind-group"),
             layout: &self.storage_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
@@ -688,7 +688,7 @@ impl ComputePass {
             uniform_layout,
             &self.storage_bind_group_layout,
             &source,
-            "xtal2-hot-reloaded-compute",
+            "xtal-hot-reloaded-compute",
         );
 
         info!(
@@ -719,7 +719,7 @@ fn create_render_pipeline(
 
     let layout =
         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("xtal2-pipeline-layout"),
+            label: Some("xtal-pipeline-layout"),
             bind_group_layouts: &bind_group_layouts,
             push_constant_ranges: &[],
         });
@@ -727,7 +727,7 @@ fn create_render_pipeline(
     let vertex_buffers = [fullscreen_vertex_buffer_layout()];
 
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some("xtal2-render-pipeline"),
+        label: Some("xtal-render-pipeline"),
         layout: Some(&layout),
         vertex: wgpu::VertexState {
             module: &shader,
@@ -781,7 +781,7 @@ fn create_fullscreen_quad_vertex_buffer(device: &wgpu::Device) -> wgpu::Buffer {
         [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]];
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("xtal2-fullscreen-quad-vertices"),
+        label: Some("xtal-fullscreen-quad-vertices"),
         contents: bytemuck::cast_slice(&vertices),
         usage: wgpu::BufferUsages::VERTEX,
     })
@@ -801,13 +801,13 @@ fn create_compute_pipeline(
 
     let layout =
         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("xtal2-compute-pipeline-layout"),
+            label: Some("xtal-compute-pipeline-layout"),
             bind_group_layouts: &[uniform_layout, storage_layout],
             push_constant_ranges: &[],
         });
 
     device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-        label: Some("xtal2-compute-pipeline"),
+        label: Some("xtal-compute-pipeline"),
         layout: Some(&layout),
         module: &shader,
         entry_point: Some("cs_main"),
@@ -845,7 +845,7 @@ fn create_texture_bind_group_layout(
     }
 
     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("xtal2-texture-bind-group-layout"),
+        label: Some("xtal-texture-bind-group-layout"),
         entries: &entries,
     })
 }
@@ -854,7 +854,7 @@ fn create_storage_bind_group_layout(
     device: &wgpu::Device,
 ) -> wgpu::BindGroupLayout {
     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("xtal2-compute-storage-bind-group-layout"),
+        label: Some("xtal-compute-storage-bind-group-layout"),
         entries: &[wgpu::BindGroupLayoutEntry {
             binding: 0,
             visibility: wgpu::ShaderStages::COMPUTE,
@@ -875,7 +875,7 @@ fn blit_texture_to_surface(
     surface_format: wgpu::TextureFormat,
 ) {
     let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-        label: Some("xtal2-present-sampler"),
+        label: Some("xtal-present-sampler"),
         address_mode_u: wgpu::AddressMode::ClampToEdge,
         address_mode_v: wgpu::AddressMode::ClampToEdge,
         address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -887,7 +887,7 @@ fn blit_texture_to_surface(
 
     let bind_group_layout = create_texture_bind_group_layout(device, 1);
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("xtal2-present-bind-group"),
+        label: Some("xtal-present-bind-group"),
         layout: &bind_group_layout,
         entries: &[
             wgpu::BindGroupEntry {
@@ -902,20 +902,20 @@ fn blit_texture_to_surface(
     });
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: Some("xtal2-present-shader"),
+        label: Some("xtal-present-shader"),
         source: wgpu::ShaderSource::Wgsl(PRESENT_BLIT_WGSL.into()),
     });
 
     let pipeline_layout =
         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("xtal2-present-pipeline-layout"),
+            label: Some("xtal-present-pipeline-layout"),
             bind_group_layouts: &[&bind_group_layout],
             push_constant_ranges: &[],
         });
 
     let pipeline =
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("xtal2-present-pipeline"),
+            label: Some("xtal-present-pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -955,7 +955,7 @@ fn blit_texture_to_surface(
         frame
             .encoder()
             .begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("xtal2-present-pass"),
+                label: Some("xtal-present-pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &surface_view,
                     resolve_target: None,

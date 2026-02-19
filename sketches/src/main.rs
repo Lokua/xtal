@@ -1,8 +1,10 @@
 use xtal::prelude::*;
 
-mod sketches;
-use sketches::main::grid_splash_bw;
-use sketches::templates::{basic, compute, feedback, image, multipass};
+mod constants;
+mod core;
+mod templates;
+use core::*;
+use templates::*;
 
 fn main() {
     let registry = xtal::register_sketches! {
@@ -11,6 +13,7 @@ fn main() {
             enabled: true,
             sketches: [
                 grid_splash_bw,
+                watercolor,
             ]
         },
         {

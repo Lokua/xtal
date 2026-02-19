@@ -47,7 +47,7 @@ impl Sketch for ComputeSketch {
 }
 
 pub fn init() -> ComputeSketch {
-    let assets = SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
 
     ComputeSketch {
         compute_shader: assets.wgsl(),

@@ -22,7 +22,7 @@ fn frame_clock_scaffold_ticks() {
 fn gpu_probe_is_opt_in() {
     if !support::gpu_tests_enabled() {
         eprintln!(
-            "Skipping GPU smoke probe. Set XTAL2_RUN_GPU_TESTS=1 to run."
+            "Skipping GPU smoke probe. Set XTAL_RUN_GPU_TESTS=1 to run."
         );
         return;
     }

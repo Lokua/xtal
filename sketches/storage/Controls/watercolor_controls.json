@@ -1,0 +1,390 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "time_scale",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "shape_anomaly",
+      "value": 1.5
+    },
+    {
+      "type": "Slider",
+      "name": "spread_anomaly",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "base_radius",
+      "value": 0.54
+    },
+    {
+      "type": "Slider",
+      "name": "zoom",
+      "value": 0.95
+    },
+    {
+      "type": "Slider",
+      "name": "base_deform",
+      "value": 0.35
+    },
+    {
+      "type": "Slider",
+      "name": "detail_deform",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "layer_count",
+      "value": 56.0
+    },
+    {
+      "type": "Slider",
+      "name": "layer_alpha",
+      "value": 0.326
+    },
+    {
+      "type": "Slider",
+      "name": "variance_strength",
+      "value": 0.31
+    },
+    {
+      "type": "Slider",
+      "name": "texture_strength",
+      "value": 0.13
+    },
+    {
+      "type": "Slider",
+      "name": "halo_strength",
+      "value": 0.15
+    },
+    {
+      "type": "Slider",
+      "name": "hue",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "hue_spread",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "blot_count",
+      "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "blot_rate",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "blot_fade",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "blot_spread",
+      "value": 0.69
+    },
+    {
+      "type": "Slider",
+      "name": "envelope_size",
+      "value": 1.28
+    },
+    {
+      "type": "Slider",
+      "name": "envelope_softness",
+      "value": 0.305
+    },
+    {
+      "type": "Slider",
+      "name": "envelope_noise",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "blot_darken",
+      "value": 0.8
+    },
+    {
+      "type": "Slider",
+      "name": "blot_contrast",
+      "value": 2.4
+    },
+    {
+      "type": "Checkbox",
+      "name": "fast_mode",
+      "value": true
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "shape_anomaly",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "blot_spread",
+          "value": 0.69
+        },
+        {
+          "type": "Slider",
+          "name": "blot_rate",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.95
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_size",
+          "value": 1.28
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_softness",
+          "value": 0.305
+        },
+        {
+          "type": "Slider",
+          "name": "layer_count",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_noise",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "base_radius",
+          "value": 0.54
+        },
+        {
+          "type": "Slider",
+          "name": "spread_anomaly",
+          "value": 2.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "fast_mode",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "base_deform",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "time_scale",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "blot_fade",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "hue_spread",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_contrast",
+          "value": 2.4
+        },
+        {
+          "type": "Slider",
+          "name": "layer_alpha",
+          "value": 0.326
+        },
+        {
+          "type": "Slider",
+          "name": "variance_strength",
+          "value": 0.31
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "detail_deform",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "texture_strength",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "blot_darken",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "halo_strength",
+          "value": 0.15
+        },
+        {
+          "type": "Slider",
+          "name": "blot_count",
+          "value": 8.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "blot_count",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_size",
+          "value": 1.83
+        },
+        {
+          "type": "Slider",
+          "name": "blot_spread",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "base_radius",
+          "value": 0.22
+        },
+        {
+          "type": "Slider",
+          "name": "halo_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "layer_alpha",
+          "value": 0.102
+        },
+        {
+          "type": "Slider",
+          "name": "blot_fade",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_softness",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "variance_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_contrast",
+          "value": 2.25
+        },
+        {
+          "type": "Slider",
+          "name": "base_deform",
+          "value": 0.338
+        },
+        {
+          "type": "Slider",
+          "name": "blot_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "hue_spread",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_noise",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "spread_anomaly",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "detail_deform",
+          "value": 0.166
+        },
+        {
+          "type": "Slider",
+          "name": "shape_anomaly",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "fast_mode",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "time_scale",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "texture_strength",
+          "value": 0.09
+        },
+        {
+          "type": "Slider",
+          "name": "layer_count",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_darken",
+          "value": 0.1
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "time_scale",
+    "blot_rate",
+    "envelope_size",
+    "envelope_softness",
+    "envelope_noise",
+    "fast_mode"
+  ]
+}

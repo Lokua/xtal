@@ -10,7 +10,7 @@ use wry::WebViewBuilder;
 use xtal::core::logging::init_logger;
 use xtal::runtime::web_view as wv;
 
-const OPEN_DEVTOOLS: bool = true;
+const OPEN_DEVTOOLS: bool = false;
 const DEFAULT_UI_PORT: u16 = 3000;
 
 const DEFAULT_WIDTH: i32 = 560;

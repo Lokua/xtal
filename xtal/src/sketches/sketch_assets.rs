@@ -7,6 +7,28 @@ pub struct SketchAssets {
 }
 
 impl SketchAssets {
+    pub fn from_manifest_file(
+        manifest_dir: &str,
+        caller_file: &str,
+    ) -> Self {
+        let caller_path = resolve_caller_path_from_manifest(
+            manifest_dir,
+            caller_file,
+        );
+        let base_dir = caller_path
+            .parent()
+            .expect("sketch source file has no parent directory")
+            .to_path_buf();
+
+        let stem = caller_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .expect("sketch source file has no valid UTF-8 stem")
+            .to_string();
+
+        Self { base_dir, stem }
+    }
+
     pub fn from_file(caller_file: &str) -> Self {
         let caller_path = resolve_caller_path(caller_file);
         let base_dir = caller_path
@@ -58,9 +80,39 @@ fn resolve_caller_path(caller_file: &str) -> PathBuf {
     cwd.join(path)
 }
 
+fn resolve_caller_path_from_manifest(
+    manifest_dir: &str,
+    caller_file: &str,
+) -> PathBuf {
+    let path = PathBuf::from(caller_file);
+    if path.is_absolute() {
+        return path;
+    }
+
+    let manifest_path = PathBuf::from(manifest_dir);
+    let direct = manifest_path.join(&path);
+    if direct.exists() {
+        return direct;
+    }
+
+    // In some workspace builds, `file!()` includes the crate dir prefix
+    // (e.g. "sketches/src/foo.rs"). In that case, resolve from workspace root.
+    let workspace_relative = manifest_path
+        .parent()
+        .map(|p| p.join(&path))
+        .filter(|p| p.exists());
+    if let Some(path) = workspace_relative {
+        return path;
+    }
+
+    direct
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn derives_stem_and_default_paths() {
@@ -78,5 +130,47 @@ mod tests {
         );
 
         assert!(assets.wgsl().ends_with("src/sketches/compute_present.wgsl"));
+    }
+
+    #[test]
+    fn from_manifest_file_resolves_src_relative_paths() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("xtal_assets_{nonce}"));
+        let manifest_dir = root.join("sketches");
+        let src_dir = manifest_dir.join("src/core");
+        fs::create_dir_all(&src_dir).unwrap();
+        let src_file = src_dir.join("demo.rs");
+        fs::write(&src_file, "").unwrap();
+
+        let assets = SketchAssets::from_manifest_file(
+            manifest_dir.to_str().unwrap(),
+            "src/core/demo.rs",
+        );
+
+        assert_eq!(assets.base_dir(), src_dir.as_path());
+    }
+
+    #[test]
+    fn from_manifest_file_resolves_workspace_prefixed_paths() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("xtal_assets_{nonce}"));
+        let manifest_dir = root.join("sketches");
+        let src_dir = manifest_dir.join("src/core");
+        fs::create_dir_all(&src_dir).unwrap();
+        let src_file = src_dir.join("demo.rs");
+        fs::write(&src_file, "").unwrap();
+
+        let assets = SketchAssets::from_manifest_file(
+            manifest_dir.to_str().unwrap(),
+            "sketches/src/core/demo.rs",
+        );
+
+        assert_eq!(assets.base_dir(), src_dir.as_path());
     }
 }
