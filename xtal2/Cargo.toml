@@ -7,9 +7,10 @@ license = "MIT"
 [workspace]
 
 [features]
-default = ["xtal2"]
+default = ["xtal2", "recording-report"]
 legacy_runtime = []
 xtal2 = []
+recording-report = []
 web_view_process = ["dep:rfd", "dep:tao", "dep:wry"]
 
 [[bin]]

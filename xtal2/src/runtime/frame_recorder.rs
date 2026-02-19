@@ -4,7 +4,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::sync::mpsc;
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use log::{error, info, warn};
 
@@ -34,6 +34,130 @@ struct WriterThreadArgs {
     height: u32,
 }
 
+#[cfg(feature = "recording-report")]
+struct RecordingReport {
+    recording_start: Instant,
+    target_fps: f32,
+    last_capture_time: Option<Instant>,
+    frame_intervals_ms: VecDeque<f64>,
+    buffer_wait_count: u32,
+    buffer_wait_total_ms: f64,
+    buffer_wait_max_ms: f64,
+}
+
+#[cfg(feature = "recording-report")]
+impl RecordingReport {
+    const ROLLING_WINDOW: usize = 90;
+
+    fn new(target_fps: f32) -> Self {
+        Self {
+            recording_start: Instant::now(),
+            target_fps,
+            last_capture_time: None,
+            frame_intervals_ms: VecDeque::with_capacity(Self::ROLLING_WINDOW),
+            buffer_wait_count: 0,
+            buffer_wait_total_ms: 0.0,
+            buffer_wait_max_ms: 0.0,
+        }
+    }
+
+    fn on_capture(&mut self) {
+        let now = Instant::now();
+        if let Some(last) = self.last_capture_time {
+            self.frame_intervals_ms
+                .push_back(now.duration_since(last).as_secs_f64() * 1000.0);
+            if self.frame_intervals_ms.len() > Self::ROLLING_WINDOW {
+                self.frame_intervals_ms.pop_front();
+            }
+        }
+        self.last_capture_time = Some(now);
+    }
+
+    fn on_buffer_wait(&mut self, waited_ms: f64) {
+        self.buffer_wait_count += 1;
+        self.buffer_wait_total_ms += waited_ms;
+        self.buffer_wait_max_ms = self.buffer_wait_max_ms.max(waited_ms);
+    }
+
+    fn print(self, frames_captured: u32, frames_dropped: u32) {
+        let wall_clock_s = self.recording_start.elapsed().as_secs_f64();
+        let expected_s = frames_captured as f64 / self.target_fps as f64;
+        let (rolling_avg_fps, rolling_min_fps, rolling_max_fps) =
+            rolling_fps_stats(&self.frame_intervals_ms);
+        let slowdown = if expected_s > 0.0 {
+            wall_clock_s / expected_s
+        } else {
+            0.0
+        };
+
+        let frames_status = if frames_dropped == 0 { "PASS" } else { "FAIL" };
+        let duration_status = if slowdown <= 1.02 {
+            "PASS"
+        } else if slowdown <= 1.05 {
+            "WARN"
+        } else {
+            "FAIL"
+        };
+
+        let fps_avg_target = self.target_fps as f64 - 1.0;
+        let fps_min_target = self.target_fps as f64 * 0.92;
+        let fps_status = if rolling_avg_fps >= fps_avg_target
+            && rolling_min_fps >= fps_min_target
+        {
+            "PASS"
+        } else {
+            "FAIL"
+        };
+
+        let waits_status = if self.buffer_wait_count == 0 {
+            "PASS"
+        } else if self.buffer_wait_max_ms <= 16.67 {
+            "WARN"
+        } else {
+            "FAIL"
+        };
+
+        info!(
+            "Recording report:\n\
+             frames(captured={}, dropped={}) target(dropped=0) status({})\n\
+             duration(wall={:.2}s, expected={:.2}s, slowdown={:.2}x) target(pass<=1.02x, warn<=1.05x) status({})\n\
+             fps_rolling90(avg={:.1}, min={:.1}, max={:.1}) target(avg>={:.1}, min>={:.1}) status({})\n\
+             waits(count={}, total_ms={:.1}, max_ms={:.2}) target(count=0) status({})",
+            frames_captured,
+            frames_dropped,
+            frames_status,
+            wall_clock_s,
+            expected_s,
+            slowdown,
+            duration_status,
+            rolling_avg_fps,
+            rolling_min_fps,
+            rolling_max_fps,
+            fps_avg_target,
+            fps_min_target,
+            fps_status,
+            self.buffer_wait_count,
+            self.buffer_wait_total_ms,
+            self.buffer_wait_max_ms,
+            waits_status,
+        );
+    }
+}
+
+#[cfg(feature = "recording-report")]
+fn rolling_fps_stats(intervals_ms: &VecDeque<f64>) -> (f64, f64, f64) {
+    if intervals_ms.is_empty() {
+        return (0.0, 0.0, 0.0);
+    }
+    let fps_values: Vec<f64> =
+        intervals_ms.iter().map(|ms| 1000.0 / ms).collect();
+    let sum: f64 = fps_values.iter().sum();
+    let avg = sum / fps_values.len() as f64;
+    let min = fps_values.iter().copied().fold(f64::INFINITY, f64::min);
+    let max = fps_values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    (avg, min, max)
+}
+
 pub struct FrameRecorder {
     buffers: Vec<Arc<wgpu::Buffer>>,
     width: u32,
@@ -48,6 +172,8 @@ pub struct FrameRecorder {
     frames_captured: u32,
     frames_dropped: u32,
     output_path: String,
+    #[cfg(feature = "recording-report")]
+    report: Option<RecordingReport>,
 }
 
 impl FrameRecorder {
@@ -174,6 +300,8 @@ impl FrameRecorder {
             frames_captured: 0,
             frames_dropped: 0,
             output_path: output_path.to_string(),
+            #[cfg(feature = "recording-report")]
+            report: Some(RecordingReport::new(fps)),
         })
     }
 
@@ -182,6 +310,11 @@ impl FrameRecorder {
         encoder: &mut wgpu::CommandEncoder,
         source_texture: &wgpu::Texture,
     ) -> bool {
+        #[cfg(feature = "recording-report")]
+        if let Some(report) = &mut self.report {
+            report.on_capture();
+        }
+
         while let Ok(idx) = self.buffer_return_rx.try_recv() {
             self.available_buffers.push_back(idx);
         }
@@ -204,6 +337,10 @@ impl FrameRecorder {
                     "Recording: waited {:.1}ms for free readback buffer",
                     waited_ms
                 );
+            }
+            #[cfg(feature = "recording-report")]
+            if let Some(report) = &mut self.report {
+                report.on_buffer_wait(waited_ms);
             }
             idx
         };
@@ -284,6 +421,11 @@ impl FrameRecorder {
             }
         }
 
+        #[cfg(feature = "recording-report")]
+        if let Some(report) = self.report.take() {
+            report.print(self.frames_captured, self.frames_dropped);
+        }
+
         info!(
             "Recording complete: {} frames captured, {} dropped",
             self.frames_captured, self.frames_dropped
@@ -323,9 +465,7 @@ fn writer_thread_fn(mut args: WriterThreadArgs) {
                             Err(mpsc::TryRecvError::Empty) => {
                                 let _ =
                                     args.device.poll(wgpu::PollType::Poll);
-                                thread::sleep(std::time::Duration::from_micros(
-                                    250,
-                                ));
+                                thread::sleep(Duration::from_micros(250));
                             }
                             Err(mpsc::TryRecvError::Disconnected) => {
                                 break None;
