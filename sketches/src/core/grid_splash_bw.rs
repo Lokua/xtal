@@ -10,8 +10,8 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
-    w: HD_WIDTH as u32,
-    h: HD_HEIGHT as u32,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
     banks: 10,
 };
 
@@ -31,6 +31,7 @@ impl Sketch for GridSplashBwSketch {
         graph
             .render("feedback_step_a")
             .shader(self.shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .read("feedback_a")
             .write("feedback_b")
@@ -41,6 +42,7 @@ impl Sketch for GridSplashBwSketch {
         graph
             .render("feedback_step_b")
             .shader(self.shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .read("feedback_b")
             .write("feedback_a")
@@ -55,7 +57,8 @@ impl Sketch for GridSplashBwSketch {
 }
 
 pub fn init() -> GridSplashBwSketch {
-    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
+    let assets =
+        SketchAssets::from_file(file!());
 
     GridSplashBwSketch {
         shader_path: assets.wgsl(),

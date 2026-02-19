@@ -33,6 +33,7 @@ impl Sketch for ComputeSketch {
         graph
             .render("present")
             .shader(self.present_shader.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .read("field")
             .write("surface")
@@ -47,7 +48,7 @@ impl Sketch for ComputeSketch {
 }
 
 pub fn init() -> ComputeSketch {
-    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
+    let assets = SketchAssets::from_file(file!());
 
     ComputeSketch {
         compute_shader: assets.wgsl(),

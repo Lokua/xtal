@@ -27,6 +27,7 @@ impl Sketch for ImageSketch {
         graph
             .render("image_pass")
             .shader(self.shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .read("img0")
             .write("surface")
@@ -41,7 +42,7 @@ impl Sketch for ImageSketch {
 }
 
 pub fn init() -> ImageSketch {
-    let assets = SketchAssets::from_manifest_file(env!("CARGO_MANIFEST_DIR"), file!());
+    let assets = SketchAssets::from_file(file!());
 
     ImageSketch {
         shader_path: assets.wgsl(),

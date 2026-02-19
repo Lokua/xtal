@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::context::Context;
 use crate::frame::Frame;
 use crate::graph::GraphBuilder;
+use crate::mesh::Mesh;
 
 pub struct SketchConfig {
     pub name: &'static str,
@@ -83,6 +84,7 @@ impl Sketch for FullscreenShaderSketch {
         graph
             .render("main")
             .shader(self.shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
             .read("params")
             .write("surface")
             .add();
