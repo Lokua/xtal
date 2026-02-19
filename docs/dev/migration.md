@@ -222,7 +222,7 @@ Exit criteria:
   xtal2 for the same control script.
 - [ ] Remove panic paths in hot code paths (for example remaining
   `unimplemented!()` branches) or convert them to explicit errors.
-- [ ] Re-check snapshot and transition callback behavior against legacy UI flow.
+- [x] Re-check snapshot and transition callback behavior against legacy UI flow.
 
 Exit criteria:
 
@@ -231,10 +231,10 @@ Exit criteria:
 
 ### Phase 5: Animation and timing parity
 
-- [ ] Wire external transport timing sources fully (OSC/MIDI/hybrid runtime
-  listeners).
-- [ ] Port tap-tempo behavior and BPM update flow to runtime state.
-- [ ] Validate timing reset semantics (MIDI start/continue/stop) against legacy
+- [x] Wire external transport timing sources fully (OSC `/transport`,
+  MIDI clock/SPP, and hybrid MTC+clock resync).
+- [x] Port tap-tempo behavior and BPM update flow to runtime state.
+- [x] Validate timing reset semantics (MIDI start/continue/stop) against legacy
   behavior.
 
 Exit criteria:
