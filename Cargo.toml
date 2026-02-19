@@ -1,5 +1,5 @@
 [workspace]
-members = ["xtal", "xtal-macros", "sketches"]
+members = ["xtal", "sketches"]
 resolver = "3"
 default-members = ["sketches"]
 

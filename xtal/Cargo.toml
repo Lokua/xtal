@@ -1,70 +1,62 @@
 [package]
 name = "xtal"
-version = "0.16.0"
-description = "A creative coding framework build on top of Nannou"
-authors = ["Lokua <dev@lokua.net>"]
-homepage = "https://github.com/Lokua/xtal"
+version = "0.1.0"
 edition = "2024"
-default-run = "xtal"
 license = "MIT"
-readme = "../README.md"
-include = ["src/**", "static/**", "Cargo.toml", "README.md"]
-
-[package.metadata.docs.rs]
-features = ["docsrs"]
-rustc-args = ["--cfg", "docsrs"]
-all-features = true
-
-[lib]
-doctest = false
 
 [features]
-default = ["recording-report"]
-instrumentation = []
-logging = []
-prod = []
-docsrs = []
+default = ["xtal", "recording-report"]
+legacy_runtime = []
+xtal = []
 recording-report = []
+web_view_process = ["dep:rfd", "dep:tao", "dep:wry"]
 
-[dev-dependencies]
-criterion = "0.5.1"
+[[bin]]
+name = "web_view_process"
+path = "src/bin/web_view_process.rs"
+required-features = ["web_view_process"]
 
 [dependencies]
 ahash = "0.8.11"
-arboard = "3.4.1"
-# glam feature added as a hail-mary to deal with occasional
-# linking errors coming from bevy_reflect. This for some reason works?
-bevy_reflect = { version = "0.15.1", features = ["glam"] }
-bytemuck = "1.21.0"
-chrono = "0.4.38"
-clap = { version = "4.5.28", features = ["derive"] }
+bytemuck = { version = "1.25", features = ["derive"] }
 cpal = "0.15.3"
-dark-light = "1.1.1"
 directories-next = "2.0.0"
-env_logger = "0.11.5"
-indexmap = { version = "2.7.1", features = ["serde"] }
+env_logger = "0.11.9"
+indexmap = { version = "2.12.1", features = ["serde"] }
 ipc-channel = "0.19.0"
-xtal-macros = { version = "0.1.0", path = "../xtal-macros" }
-log = "0.4.22"
+log = "0.4.29"
 midir = "0.10.1"
-naga = "0.13.0"
-nannou = "0.19.0"
-nannou_egui = "0.19.0"
 nannou_osc = "0.19.0"
-notify = "8.0.0"
-open = "5.3.2"
-parking_lot = "0.12.3"
-rayon = "1.10.0"
-rfd = "0.15.3"
-rust-embed = "8.7.0"
-rustc-hash = "2.1.1"
-rustfft = "6.2.0"
-serde = "1.0.215"
-serde_json = "1.0.133"
+naga = { version = "26", features = ["wgsl-in"] }
+notify = "8.2"
+pollster = "0.4"
+png = "0.18.0"
+rand = "0.9.2"
+rfd = { version = "0.15.3", optional = true }
+rustfft = "6.4.1"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 serde_yml = "0.0.12"
-serial_test = "3.2.0"
-tao = "0.32.8"
+tao = { version = "0.32.8", optional = true }
 termcolor = "1.4.1"
-wgpu-types = "=0.17.0"
-wry = { version = "0.50.5", features = ["devtools"] }
+wry = { version = "0.50.5", features = ["devtools"], optional = true }
 yaml-merge-keys = { version = "0.8.1", features = ["serde_yml"] }
+wgpu = { version = "26", default-features = false, features = [
+    "wgsl",
+    "dx12",
+    "metal",
+    "vulkan",
+    "gles",
+] }
+winit = "0.30.12"
+
+[dev-dependencies]
+pollster = "0.4"
+serial_test = "3.2.0"
+wgpu = { version = "26", default-features = false, features = [
+    "wgsl",
+    "dx12",
+    "metal",
+    "vulkan",
+    "gles",
+] }

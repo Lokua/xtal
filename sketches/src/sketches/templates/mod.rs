@@ -1,5 +1,5 @@
-pub mod basic_cube_shader_template;
-pub mod du_fs_template;
-pub mod du_fs_texture_template;
-pub mod fullscreen_shader_template;
-pub mod template;
+pub mod basic;
+pub mod compute;
+pub mod feedback;
+pub mod image;
+pub mod multipass;

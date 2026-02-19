@@ -1,14 +1,11 @@
-use midir::Ignore;
-use midir::MidiInput;
-use midir::MidiInputConnection;
-use midir::MidiOutput;
-use midir::MidiOutputConnection;
 use std::error::Error;
 use std::fmt;
-use std::sync::Arc;
-use std::sync::LazyLock;
-use std::sync::Mutex;
+use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
+
+use midir::{
+    Ignore, MidiInput, MidiInputConnection, MidiOutput, MidiOutputConnection,
+};
 
 use super::prelude::*;
 
@@ -82,14 +79,12 @@ where
 
         *connection_clone.lock().unwrap() = Some(conn_in);
 
-        {
-            info!(
-                "Connected: {} ({}); connection count: {}",
-                connection_type,
-                port,
-                THREADS.lock().unwrap().len()
-            );
-        }
+        info!(
+            "Connected: {} ({}); connection count: {}",
+            connection_type,
+            port,
+            THREADS.lock().unwrap().len()
+        );
 
         thread::park();
 
@@ -98,16 +93,12 @@ where
         }
     });
 
-    {
-        THREADS
-            .lock()
-            .unwrap()
-            .insert(connection_type_clone, handle);
-    }
+    THREADS.lock().unwrap().insert(connection_type_clone, handle);
 
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn disconnect(connection_type: ConnectionType) {
     let mut threads = THREADS.lock().unwrap();
     if let Some(handle) = threads.remove(&connection_type) {
@@ -116,7 +107,6 @@ pub fn disconnect(connection_type: ConnectionType) {
     }
 }
 
-#[allow(dead_code)]
 pub struct MidiOut {
     port: String,
     connection: Option<MidiOutputConnection>,
@@ -146,7 +136,7 @@ impl MidiOut {
 
     pub fn send(&mut self, message: &[u8; 3]) -> Result<(), Box<dyn Error>> {
         if let Some(connection) = &mut self.connection {
-            connection.send(message)?
+            connection.send(message)?;
         } else {
             warn!("Midi ControlOut connection has not been established");
         }
@@ -161,7 +151,7 @@ pub fn list_input_ports() -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
     midi_in.ignore(Ignore::None);
     let mut ports = vec![];
     for (i, p) in midi_in.ports().iter().enumerate() {
-        ports.push((i, midi_in.port_name(p)?))
+        ports.push((i, midi_in.port_name(p)?));
     }
     Ok(ports)
 }
@@ -170,11 +160,12 @@ pub fn list_output_ports() -> Result<Vec<PortIndexAndName>, Box<dyn Error>> {
     let midi_out = MidiOutput::new("midir_test_output")?;
     let mut ports = vec![];
     for (i, p) in midi_out.ports().iter().enumerate() {
-        ports.push((i, midi_out.port_name(p)?))
+        ports.push((i, midi_out.port_name(p)?));
     }
     Ok(ports)
 }
 
+#[allow(dead_code)]
 pub fn print_ports() -> Result<(), Box<dyn Error>> {
     println!("\nAvailable input ports:");
     for (index, port_name) in list_input_ports()? {

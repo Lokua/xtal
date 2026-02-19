@@ -1,20 +1,14 @@
-use nannou_osc as osc;
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 
-use crate::runtime::global;
+use nannou_osc as osc;
 
 use super::prelude::*;
 
-pub static SHARED_OSC_RECEIVER: LazyLock<Arc<Receiver>> = LazyLock::new(|| {
-    let receiver = Receiver::new();
-    if let Err(e) = receiver.start() {
-        warn!("Failed to start shared OSC receiver: {}", e);
-    }
-    receiver
-});
+pub static SHARED_OSC_RECEIVER: LazyLock<Arc<Receiver>> =
+    LazyLock::new(Receiver::new);
 
 type OscCallback = Box<dyn Fn(&osc::Message) + Send + Sync>;
 
@@ -44,18 +38,16 @@ impl Receiver {
         F: Fn(&osc::Message) + Send + Sync + 'static,
     {
         let mut callbacks = self.callbacks.lock().unwrap();
-        let address_callbacks =
-            callbacks.entry(address.to_string()).or_default();
-        address_callbacks.push(Box::new(callback));
+        let handlers = callbacks.entry(address.to_string()).or_default();
+        handlers.push(Box::new(callback));
     }
 
-    pub fn start(&self) -> Result<(), Box<dyn Error>> {
-        let receiver = osc::Receiver::bind(global::osc_port())?;
+    pub fn start(&self, port: u16) -> Result<(), Box<dyn Error>> {
+        let receiver = osc::Receiver::bind(port)?;
         let callbacks = self.callbacks.clone();
-
-        self.thread_running.store(true, Ordering::SeqCst);
         let running = self.thread_running.clone();
-        let port_at_this_time = global::osc_port();
+
+        running.store(true, Ordering::SeqCst);
 
         let handle = thread::spawn(move || {
             while running.load(Ordering::SeqCst) {
@@ -64,7 +56,6 @@ impl Receiver {
                     processed = true;
                     if let osc::Packet::Message(msg) = packet {
                         let callbacks = callbacks.lock().unwrap();
-
                         if let Some(handlers) = callbacks.get(&msg.addr) {
                             for handler in handlers {
                                 handler(&msg);
@@ -76,20 +67,19 @@ impl Receiver {
                         }
                     }
                 }
+
                 if !processed {
                     thread::yield_now();
                 }
             }
-            info!(
-                "OSC receiver thread on port {} is exiting",
-                port_at_this_time
-            );
+
+            info!("OSC receiver thread on port {} is exiting", port);
         });
 
         let mut thread_handle = self.thread_handle.lock().unwrap();
         *thread_handle = Some(handle);
 
-        info!("OSC receiver listening on port {}", global::osc_port());
+        info!("OSC receiver listening on port {}", port);
 
         Ok(())
     }
@@ -103,9 +93,9 @@ impl Receiver {
         Ok(())
     }
 
-    pub fn restart(&self) -> Result<(), Box<dyn Error>> {
+    pub fn restart(&self, port: u16) -> Result<(), Box<dyn Error>> {
         self.stop()?;
-        info!("Restarting...");
-        self.start()
+        info!("Restarting OSC receiver on {}", port);
+        self.start(port)
     }
 }
