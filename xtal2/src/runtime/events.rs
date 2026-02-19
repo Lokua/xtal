@@ -2,24 +2,50 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
 use super::web_view;
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum RuntimeCommand {
-    AdvanceSingleFrame,
-    Pause(bool),
-    SetPerfMode(bool),
-    Quit,
-    ReloadControls,
-    SwitchSketch(String),
-    ToggleFullScreen,
-    ToggleMainFocus,
-    UpdateControlBool { name: String, value: bool },
-    UpdateControlFloat { name: String, value: f32 },
-    UpdateControlString { name: String, value: String },
-}
+use crate::control::ControlValue;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RuntimeEvent {
+    AdvanceSingleFrame,
+    CaptureFrame,
+    ChangeAudioDevice(String),
+    ChangeMidiClockPort(String),
+    ChangeMidiControlInputPort(String),
+    ChangeMidiControlOutputPort(String),
+    ChangeOscPort(u16),
+    ClearBuffer,
+    CommitMappings,
+    CurrentlyMapping(String),
+    UpdateExclusions(Vec<String>),
+    OpenOsDir(web_view::OsDir),
+    Pause(bool),
+    QueueRecord,
+    ReceiveDir(web_view::UserDir, String),
+    ReceiveMappings(web_view::Mappings),
+    RemoveMapping(String),
+    Save(Vec<String>),
+    SendMidi,
+    SetHrcc(bool),
+    SetMappingsEnabled(bool),
+    SetPerfMode(bool),
+    SetTransitionTime(f32),
+    StartRecording,
+    StopRecording,
+    Quit,
+    Randomize(Vec<String>),
+    ReloadControls,
+    Reset,
+    SnapshotDelete(String),
+    SnapshotRecall(String),
+    SnapshotStore(String),
+    SwitchSketch(String),
+    Tap,
+    TapTempoEnabled(bool),
+    ToggleFullScreen,
+    ToggleMainFocus,
+    UpdateUiControl((String, ControlValue)),
+    HubPopulated,
+    SnapshotEnded,
     FrameAdvanced(u64),
     FrameSkipped,
     SketchSwitched(String),
@@ -27,6 +53,7 @@ pub enum RuntimeEvent {
     Stopped,
 }
 
+pub type RuntimeCommand = RuntimeEvent;
 pub type RuntimeCommandSender = Sender<RuntimeCommand>;
 pub type RuntimeCommandReceiver = Receiver<RuntimeCommand>;
 pub type RuntimeEventSender = Sender<RuntimeEvent>;

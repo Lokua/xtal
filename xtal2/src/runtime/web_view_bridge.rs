@@ -73,6 +73,7 @@ impl WebViewBridge {
                         RuntimeEvent::FrameAdvanced(_)
                         | RuntimeEvent::FrameSkipped
                         | RuntimeEvent::SketchSwitched(_) => {}
+                        _ => {}
                     }
                 }
             })
@@ -95,7 +96,7 @@ impl WebViewBridge {
                     }
 
                     if let Some(command) =
-                        web_view::map_event_to_runtime_command(&event)
+                        web_view::map_event_to_runtime_event(&event)
                     {
                         if let Err(err) = command_tx.send(command) {
                             warn!(

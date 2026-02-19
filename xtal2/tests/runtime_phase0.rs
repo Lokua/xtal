@@ -2,8 +2,8 @@ mod support;
 
 use std::time::Instant;
 
+use xtal2::framework::frame_controller;
 use xtal2::runtime;
-use xtal2::runtime::frame_clock::FrameClock;
 
 #[test]
 fn runtime_flavor_includes_xtal2() {
@@ -22,10 +22,13 @@ fn runtime_flavor_can_include_legacy_and_xtal2() {
 #[test]
 fn frame_clock_scaffold_ticks() {
     let start = Instant::now();
-    let mut clock = FrameClock::with_start(60.0, start);
-    let now = start + clock.frame_duration();
+    frame_controller::set_fps(60.0);
+    frame_controller::set_paused(false);
+    frame_controller::set_frame_count(0);
+    frame_controller::reset_timing(start);
+    let now = start + frame_controller::frame_duration();
 
-    let tick = clock.tick(now);
+    let tick = frame_controller::tick(now);
     assert!(tick.should_render);
     assert_eq!(tick.frames_advanced, 1);
 }

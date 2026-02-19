@@ -27,14 +27,27 @@ user-facing behavior for:
 - `register_sketches!` and module-based sketch startup in `xtal2-sketches`.
 - `SketchAssets::from_file(file!())` path flow.
 - `FrameClock` and `WaitUntil` scheduling.
+- Unified runtime event model in the runner (`RuntimeEvent` as source of truth,
+  no internal `AppEvent` mirror).
+- Runtime handler parity sweep started: `alert` / `alert_and_log` restored and
+  randomize/snapshot flows aligned closer to xtal v1.
+- One-way UI command flow enforced in runtime handlers (avoid rebroadcasting
+  inbound UI commands as outbound UI events).
+- OS-conventional directories restored (`config`/`cache` via `directories-next`,
+  default images/videos/user-data via user folders + `Xtal` fallback).
+- Runtime persistence scaffolding is now on disk (global settings and
+  per-sketch controls/snapshots/mappings/exclusions).
+- Sketch-state persistence root now defaults to the active sketch crate's
+  `storage` directory (source-control-friendly):
+  `storage/Controls/*` and `storage/global_settings.json`.
 - ControlHub + shader/yaml hot reload integration.
-- `web_view_process` is wired and launched by `run_registry_with_web_view`.
+- `web_view_process` is wired and launched by default via `run_registry`.
 - `ax/ay/az/aw` var pattern is supported (legacy numeric aliases still parse).
 - Runtime source layout cleanup is done (`xtal2/src` root is minimal).
 
 ### What is not complete yet
 
-- UI event parity is only partial.
+- UI event parity is still partial (several handlers remain scaffolds).
 - Performance mode is not stateful in runtime and does not gate window
   resize/position behavior.
 - MIDI/audio/map-mode/persistence paths are not ported to xtal2 runtime.
@@ -64,34 +77,37 @@ Still missing command mapping and runtime handling:
 - [x] `PerfMode(bool)`
 - [x] `ToggleFullScreen`
 - [x] `ToggleMainFocus`
-- [ ] `Tap`
-- [ ] `TapTempoEnabled(bool)`
-- [ ] `TransitionTime(f32)`
-- [ ] `Randomize(Vec<String>)`
-- [ ] `Reset`
-- [ ] `Save(Vec<String>)`
-- [ ] `SnapshotStore(String)`
-- [ ] `SnapshotRecall(String)`
-- [ ] `SnapshotDelete(String)`
-- [ ] `MappingsEnabled(bool)`
-- [ ] `Mappings(...)` receive path
-- [ ] `CurrentlyMapping(String)`
-- [ ] `CommitMappings`
-- [ ] `RemoveMapping(String)`
-- [ ] `SendMidi`
-- [ ] `Hrcc(bool)`
-- [ ] `ChangeAudioDevice(String)`
-- [ ] `ChangeMidiClockPort(String)`
-- [ ] `ChangeMidiControlInputPort(String)`
-- [ ] `ChangeMidiControlOutputPort(String)`
-- [ ] `ChangeOscPort(u16)`
-- [ ] `ChangeDir(UserDir)` + `ReceiveDir(UserDir, String)`
-- [ ] `OpenOsDir(OsDir)`
-- [ ] `CaptureFrame`
-- [ ] `QueueRecord`
-- [ ] `StartRecording`
-- [ ] `StopRecording`
-- [ ] `ClearBuffer`
+- [x] `Tap`
+- [x] `TapTempoEnabled(bool)`
+- [x] `TransitionTime(f32)`
+- [x] `Randomize(Vec<String>)`
+- [x] `Reset`
+- [x] `Save(Vec<String>)`
+- [x] `SnapshotStore(String)`
+- [x] `SnapshotRecall(String)`
+- [x] `SnapshotDelete(String)`
+- [x] `MappingsEnabled(bool)`
+- [x] `Mappings(...)` receive path
+- [x] `CurrentlyMapping(String)`
+- [x] `CommitMappings`
+- [x] `RemoveMapping(String)`
+- [x] `SendMidi`
+- [x] `Hrcc(bool)`
+- [x] `ChangeAudioDevice(String)`
+- [x] `ChangeMidiClockPort(String)`
+- [x] `ChangeMidiControlInputPort(String)`
+- [x] `ChangeMidiControlOutputPort(String)`
+- [x] `ChangeOscPort(u16)`
+- [x] `ChangeDir(UserDir)` + `ReceiveDir(UserDir, String)`
+- [x] `OpenOsDir(OsDir)`
+- [x] `CaptureFrame`
+- [x] `QueueRecord`
+- [x] `StartRecording`
+- [x] `StopRecording`
+- [x] `ClearBuffer`
+
+Status note: command routing is now complete; some handlers are still
+stateful scaffolds pending full backend parity in phases 2/3.
 
 #### 1.2 Outgoing runtime -> UI event coverage
 
@@ -106,15 +122,15 @@ Already emitted:
 
 Still missing (or not yet driven by real runtime state):
 
-- [ ] `AverageFps(f32)`
-- [ ] `Bpm(f32)` updates
-- [ ] `Mappings(...)`
-- [ ] `MappingsEnabled(bool)`
-- [ ] `CurrentlyMapping(String)`
-- [ ] `Encoding(bool)`
-- [ ] `StartRecording` and `StopRecording` status events
+- [x] `AverageFps(f32)` (emitted once per second from runtime loop)
+- [x] `Bpm(f32)` updates
+- [x] `Mappings(...)`
+- [x] `MappingsEnabled(bool)`
+- [x] `CurrentlyMapping(String)`
+- [x] `Encoding(bool)` (driven by real recorder start/finalize lifecycle)
+- [x] `StartRecording` and `StopRecording` status events
 - [x] `PerfMode(bool)` state echo/confirmation
-- [ ] Directory update confirmations (`ReceiveDir`) from persisted state path
+- [x] Directory update confirmations (`ReceiveDir`) from persisted state path
 
 #### 1.3 Performance mode parity (blocking issue)
 
@@ -126,13 +142,22 @@ Still missing (or not yet driven by real runtime state):
   File touchpoint: `xtal2/src/runtime/app.rs`.
 - [x] Gate main window resize/reposition on sketch switch when perf mode is on.
   File touchpoint: `xtal2/src/runtime/app.rs`.
+- [x] Restore main-window size when leaving fullscreen/focus flows.
+  File touchpoint: `xtal2/src/runtime/app.rs`.
 - [ ] Ensure webview control window placement behavior respects perf mode without
   breaking control sizing expectations.
   File touchpoint: `xtal2/src/bin/web_view_process.rs`.
 
 #### 1.4 UI bridge parity tests
 
-- [ ] Expand phase-1 tests beyond `SwitchSketch` to cover full mapping set.
+- [x] Expand phase-1 tests beyond `SwitchSketch` to cover full mapping set.
+- [x] Add one-way event-flow assertions so outbound UI events (`HubPopulated`,
+  `UpdatedControls`, `SnapshotEnded`) are never remapped into inbound runtime
+  commands.
+- [x] Add parity assertions that bool/float/string UI updates map to one
+  runtime update variant (`UpdateUiControl`).
+- [x] Add callback guard test to ensure populated emissions are single-shot per
+  population cycle.
 - [ ] Add serialization/deserialization golden tests for all UI payload types.
 - [ ] Add end-to-end smoke test for webview process message routing.
 
@@ -144,12 +169,14 @@ Exit criteria:
 ### Phase 2: MIDI, audio, map mode, and persistence
 
 - [ ] Port map-mode runtime (`currently_mapping`, commit/remove, duplicate checks).
+- [ ] Add v1-parity tests for map-mode event flow (commit/remove/send mappings).
 - [ ] Port MIDI control in/out lifecycle and hrcc behavior.
 - [ ] Port MIDI clock and OSC port runtime controls.
 - [ ] Port audio device switching and runtime restarts.
-- [ ] Port global settings serialization/restore.
-- [ ] Port sketch state serialization/restore (snapshots, mappings, exclusions).
-- [ ] Hook persistence into runtime sketch-switch lifecycle.
+- [x] Port global settings serialization/restore.
+- [x] Port sketch state serialization/restore (snapshots, mappings, exclusions).
+- [x] Hook persistence into runtime sketch-switch lifecycle (load on init/switch
+  and save on explicit `Save` event).
 
 Exit criteria:
 
@@ -158,9 +185,9 @@ Exit criteria:
 
 ### Phase 3: Recording and performance tooling
 
-- [ ] Port still frame capture flow.
-- [ ] Port queued recording, start/stop recording, and encode lifecycle.
-- [ ] Port frame recorder integration with fixed frame clock.
+- [x] Port still frame capture flow (lossless PNG from GPU readback of graph present source).
+- [x] Port queued recording, start/stop recording, and encode lifecycle.
+- [x] Port frame recorder integration with fixed frame clock.
 - [ ] Restore performance telemetry (`AverageFps`, dropped frame reporting).
 - [ ] Verify recording correctness under pause/advance/switch scenarios.
 
@@ -170,6 +197,9 @@ Exit criteria:
 
 ### Phase 4: ControlHub parity hardening
 
+- [x] Add parity guards for snapshot recall interpolation end-state.
+- [x] Add parity guards for randomize(all/single) transition behavior.
+- [x] Add parity guards for exclusions application in snapshot/randomize paths.
 - [ ] Validate xtal2 YAML behavior against representative legacy scripts.
 - [ ] Add parity fixtures that compare values over N frames between xtal and
   xtal2 for the same control script.
@@ -218,10 +248,12 @@ Exit criteria:
 
 ## Immediate Next-Sprint Order
 
-1. Phase 1.1 + 1.3: complete perf-mode and missing UI command routing.
-2. Phase 1.2: emit missing runtime status events needed by xtal-ui.
-3. Phase 2: finish map-mode/MIDI/audio/persistence paths.
-4. Phase 3: recording + telemetry parity.
+1. Phase 2: port map-mode + persistence backend and tests first (highest
+   leverage for runtime correctness).
+2. Phase 1.3: finish perf-mode behavior parity for the webview control window.
+3. Phase 1.2: finish remaining runtime status events (`AverageFps`,
+   `Encoding`) with real backend state.
+4. Phase 3: recording parity verification (capture-frame parity + pause/advance/switch validation).
 5. Phase 4/5 parity fixtures and final behavior validation.
 6. Phase 6 deprecation tooling and docs cleanup.
 7. Phase 7 final cutover and cleanup.

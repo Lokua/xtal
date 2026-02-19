@@ -36,16 +36,41 @@ impl Frame {
             .expect("frame command encoder already submitted")
     }
 
-    pub fn submit(mut self) {
+    pub fn output_texture(&self) -> &wgpu::Texture {
+        &self
+            .output
+            .as_ref()
+            .expect("frame output texture already presented")
+            .texture
+    }
+
+    pub fn encoder_and_output_texture(
+        &mut self,
+    ) -> (&mut wgpu::CommandEncoder, &wgpu::Texture) {
+        let encoder = self
+            .encoder
+            .as_mut()
+            .expect("frame command encoder already submitted");
+        let texture = &self
+            .output
+            .as_ref()
+            .expect("frame output texture already presented")
+            .texture;
+        (encoder, texture)
+    }
+
+    pub fn submit(mut self) -> wgpu::SubmissionIndex {
         let encoder = self
             .encoder
             .take()
             .expect("frame command encoder already submitted");
 
-        self.queue.submit(Some(encoder.finish()));
+        let submission_index = self.queue.submit(Some(encoder.finish()));
 
         if let Some(output) = self.output.take() {
             output.present();
         }
+
+        submission_index
     }
 }

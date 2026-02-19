@@ -1,5 +1,6 @@
 const PI: f32 = 3.14159265359;
 const TAU: f32 = 6.283185307179586;
+const MAX_STRESS_ITERS: i32 = 512;
 
 const STANDARD_LUMINANCE: vec3f = vec3f(0.2126, 0.7152, 0.0722);
 
@@ -87,6 +88,7 @@ fn fs_main(
     let outer_spread = params.g.x;
     let feedback = params.g.y;
     let dry_add = params.h.x;
+    let stress = params.j.x;
     let band_dist = params.g.z;
     let link_ab_amp = params.i.x == 1.0;
     let link_ab_freq = params.i.y == 1.0;
@@ -164,6 +166,36 @@ fn fs_main(
 
     let fb_color = apply_feedback(color, p, uv, feedback) ;
     color = mix(color, fb_color, mask) + (color * dry_add);
+
+    // Optional fragment stress loop for frame-rate testing.
+    // Intentionally expensive: texture fetches + trig per-iteration.
+    let stress_iters = clamp(i32(stress), 0, MAX_STRESS_ITERS);
+    var stress_accum = 0.0;
+    for (var i = 0; i < MAX_STRESS_ITERS; i++) {
+        if (i >= stress_iters) {
+            break;
+        }
+        let fi = f32(i) + 1.0;
+        let wobble = vec2f(
+            sin(fi * 0.11 + t),
+            cos(fi * 0.13 - t)
+        ) * (0.0008 + fi * 0.000003);
+        let sample_a = textureSample(
+            source_texture,
+            source_sampler,
+            fract(uv + wobble)
+        ).rgb;
+        let sample_b = textureSample(
+            source_texture,
+            source_sampler,
+            fract(uv - wobble)
+        ).rgb;
+        let sampled_energy = dot(sample_a + sample_b, vec3f(0.299, 0.587, 0.114));
+        stress_accum += sin(sampled_energy * fi + t)
+            + cos((p.x - p.y) * fi * 0.07 + sampled_energy);
+    }
+    let stress_mix = f32(stress_iters) / f32(MAX_STRESS_ITERS);
+    color += vec3f(stress_accum * 0.00015 * stress_mix);
 
     return vec4f(color, 1.0);
 }
@@ -355,6 +387,4 @@ fn hsv_to_rgb(hsv: vec3f) -> vec3f {
     
     return vec3f(r, g, b);
 }
-
-
 
