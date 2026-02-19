@@ -4,7 +4,7 @@ const TAU: f32 = 6.283185307;
 const MAX_LAYERS: i32 = 56;
 const MAX_RENDER_LAYERS: i32 = 8;
 const MAX_DROPS: i32 = 8;
-const MAX_OCTAVES: i32 = 4;
+const MAX_OCTAVES: i32 = 2;
 const BLOT_COUNT: i32 = 3;
 
 // Performance + look constants.
@@ -58,7 +58,7 @@ struct Params {
     e: vec4f,
     // blot_spread, envelope_size, envelope_softness, envelope_noise
     f: vec4f,
-    // blot_darken, blot_contrast, unused, unused
+    // blot_darken, blot_contrast, fast_mode, unused
     g: vec4f,
 }
 
@@ -107,6 +107,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let envelope_noise_strength = params.f.w;
     let blot_darken = params.g.x;
     let blot_contrast = params.g.y;
+    let fast_mode = params.g.z > 0.5;
 
     let warm_paper = vec3f(0.985, 0.973, 0.952);
     let cool_paper = vec3f(0.95, 0.957, 0.985);
@@ -122,7 +123,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let paper_uv = position * 0.5 + vec2f(0.5);
     var out_color = paper_color;
     let target_layers = layer_count;
-    let rendered_layers = min(target_layers, MAX_RENDER_LAYERS);
+    let layer_limit = select(MAX_RENDER_LAYERS, 6, fast_mode);
+    let rendered_layers = min(target_layers, layer_limit);
     let target_span = max(f32(target_layers - 1), 1.0);
     let rendered_span = max(f32(rendered_layers - 1), 1.0);
     let layer_ratio = max(
@@ -130,9 +132,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         1.0,
     );
     let alpha_boost = pow(layer_ratio, 0.55);
+    let target_drops = blot_count;
+    let drop_limit = select(MAX_DROPS, 6, fast_mode);
+    let rendered_drops = min(target_drops, drop_limit);
+    let drop_ratio = max(
+        f32(target_drops) / max(f32(rendered_drops), 1.0),
+        1.0,
+    );
+    let drop_alpha_boost = pow(drop_ratio, 0.45);
 
     for (var drop = 0; drop < MAX_DROPS; drop++) {
-        if drop >= blot_count {
+        if drop >= rendered_drops {
             break;
         }
 
@@ -160,6 +170,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         );
         let drop_angle = hash11(cycle_seed * 3.13) * TAU;
         let base_p = rotate_2d(uv - center, drop_angle);
+        let quick_extent = drop_radius
+            * (2.6 + envelope_size * 1.7 + spread_anomaly * 0.5);
+        if max(abs(base_p.x), abs(base_p.y)) > quick_extent {
+            continue;
+        }
+        let inv_drop_radius = 1.0 / max(drop_radius, 0.001);
 
         let envelope_scale = envelope_size * (1.1 + spread_anomaly * 0.35);
         let envelope_shape = 0.7 + shape_anomaly * 0.18;
@@ -245,20 +261,24 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                 spread_anomaly,
             );
             let base_noise = fbm2(
-                q * FIELD_BASE_SCALE / max(drop_radius, 0.001)
+                q * FIELD_BASE_SCALE * inv_drop_radius
                     + vec2f(layer_seed * 0.11, 5.0),
                 BASE_OCTAVES,
             ) - 0.5;
-            let detail_noise = fbm2(
-                q * FIELD_DETAIL_SCALE / max(drop_radius, 0.001)
-                    + vec2f(layer_seed * 0.37, -3.0),
-                DETAIL_OCTAVES,
-            ) - 0.5;
+            let detail_noise = select(
+                0.0,
+                fbm2(
+                    q * FIELD_DETAIL_SCALE * inv_drop_radius
+                        + vec2f(layer_seed * 0.37, -3.0),
+                    DETAIL_OCTAVES,
+                ) - 0.5,
+                detail_deform > 0.0001,
+            );
             let chaos = mix(0.25, 1.0, shape_anomaly);
 
             let splash_angle = hash11(layer_seed * 1.31) * TAU;
             let splash_dir = rotate_2d(
-                q / max(drop_radius, 0.001),
+                q * inv_drop_radius,
                 splash_angle,
             );
             let splash_space = vec2f(
@@ -281,7 +301,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                     * (0.22 + spread)
                     * drop_radius;
             let edge_breakup = value_noise_2d(
-                q * EDGE_BREAKUP_SCALE / max(drop_radius, 0.001)
+                q * EDGE_BREAKUP_SCALE * inv_drop_radius
                     + vec2f(layer_seed * 0.41, -6.0),
             ) - 0.5;
             let threshold = mix(0.62, 0.34, spread)
@@ -304,26 +324,37 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                 field,
             );
             let halo_band = halo_outer * (1.0 - halo_inner);
-            let halo_alpha = halo_band
-                * halo_strength
-                * HALO_STRENGTH_MAX
-                * (0.15 + spread * 0.75)
-                * (1.0 - shape_alpha);
+            let halo_alpha = select(
+                0.0,
+                halo_band
+                    * halo_strength
+                    * HALO_STRENGTH_MAX
+                    * (0.15 + spread * 0.75)
+                    * (1.0 - shape_alpha),
+                halo_strength > 0.0001,
+            );
             let base_alpha = max(shape_alpha, halo_alpha);
             if base_alpha <= 0.0001 {
                 continue;
             }
 
-            let mask_uv = paper_uv + vec2f(
-                hash11(virtual_layer_f * 1.21 + cycle_seed),
-                hash11(virtual_layer_f * 2.73 + cycle_seed),
+            let texture_gate = select(
+                1.0,
+                smoothstep(
+                    0.2,
+                    0.92,
+                    circle_mask_fast(
+                        paper_uv
+                            + vec2f(
+                                hash11(virtual_layer_f * 1.21 + cycle_seed),
+                                hash11(virtual_layer_f * 2.73 + cycle_seed),
+                            ),
+                        TEXTURE_DENSITY,
+                        layer_seed,
+                    ),
+                ),
+                texture_strength > 0.0001,
             );
-            let texture_mask = circle_mask_fast(
-                mask_uv,
-                TEXTURE_DENSITY,
-                layer_seed,
-            );
-            let texture_gate = smoothstep(0.2, 0.92, texture_mask);
 
             let alpha = clamp(
                 base_alpha
@@ -331,6 +362,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
                     * paint_envelope
                     * drop_life
                     * alpha_boost
+                    * drop_alpha_boost
                     * layer_alpha,
                 0.0,
                 1.0,
