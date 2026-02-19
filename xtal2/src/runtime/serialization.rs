@@ -10,6 +10,7 @@ use crate::motion::TimingSource;
 use crate::runtime::storage;
 
 pub const GLOBAL_SETTINGS_VERSION: &str = "1";
+const DEFAULT_OSC_PORT: u16 = 2346;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
@@ -39,7 +40,7 @@ impl Default for GlobalSettings {
             midi_clock_port: String::new(),
             midi_control_in_port: String::new(),
             midi_control_out_port: String::new(),
-            osc_port: 0,
+            osc_port: DEFAULT_OSC_PORT,
             transition_time: 4.0,
             user_data_dir: storage::default_user_data_dir(),
             videos_dir: storage::default_videos_dir(),
