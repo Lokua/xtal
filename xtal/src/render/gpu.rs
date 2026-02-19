@@ -10,8 +10,8 @@ use wgpu::util::DeviceExt;
 
 use crate::frame::Frame;
 use crate::graph::{
-    ComputeNodeSpec, GraphSpec, NodeSpec, RenderNodeSpec, ResourceDecl,
-    ResourceKind,
+    ComputeNodeSpec, GraphSpec, NodeSpec, RenderNodeSpec, RenderRead,
+    RenderTarget, ResourceDecl, ResourceHandle, ResourceKind, TextureHandle,
 };
 use crate::mesh::{Mesh, MeshVertexKind};
 use crate::shader_watch::ShaderWatch;
@@ -28,11 +28,12 @@ pub fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
 
 pub struct CompiledGraph {
     surface_format: wgpu::TextureFormat,
-    present_source: String,
+    present_source: PresentSource,
     nodes: Vec<CompiledNode>,
-    offscreen_resource_names: Vec<String>,
-    offscreen_textures: HashMap<String, GpuTexture>,
-    image_textures: HashMap<String, GpuTexture>,
+    offscreen_resource_ids: Vec<TextureHandle>,
+    offscreen_textures: HashMap<TextureHandle, GpuTexture>,
+    image_textures: HashMap<TextureHandle, GpuTexture>,
+    texture_labels: HashMap<TextureHandle, String>,
 }
 
 struct GpuTexture {
@@ -49,15 +50,21 @@ enum CompiledNode {
 
 struct RenderNode {
     name: String,
-    target: String,
-    sampled_reads: Vec<String>,
+    target: RenderTarget,
+    sampled_reads: Vec<TextureHandle>,
     pass: RenderPass,
 }
 
 struct ComputeNode {
     name: String,
-    target: String,
+    target: TextureHandle,
     pass: ComputePass,
+}
+
+#[derive(Clone, Copy)]
+enum PresentSource {
+    Surface,
+    Texture(TextureHandle),
 }
 
 struct RenderPass {
@@ -91,15 +98,15 @@ impl CompiledGraph {
         graph: GraphSpec,
         uniform_layout: &wgpu::BindGroupLayout,
     ) -> Result<Self, String> {
-        let present_source = find_present_source(&graph)?;
-        let (offscreen_resource_names, image_resources) =
+        let present_source_handle = find_present_source(&graph)?;
+        let (offscreen_resource_ids, image_resources, texture_labels) =
             collect_texture_resources(&graph.resources);
 
         validate_graph_resources(
             &graph,
-            &offscreen_resource_names,
+            &offscreen_resource_ids,
             &image_resources,
-            &present_source,
+            present_source_handle,
         )?;
 
         let mut nodes = Vec::new();
@@ -110,14 +117,15 @@ impl CompiledGraph {
                     let sampled_reads = render
                         .reads
                         .iter()
-                        .filter(|resource| resource.as_str() != "params")
-                        .cloned()
+                        .filter_map(|resource| match resource {
+                            RenderRead::Texture(texture) => Some(*texture),
+                            RenderRead::Uniform(_) => None,
+                        })
                         .collect::<Vec<_>>();
 
-                    let target_format = if render.write == "surface" {
-                        surface_format
-                    } else {
-                        OFFSCREEN_FORMAT
+                    let target_format = match render.write {
+                        RenderTarget::Surface => surface_format,
+                        RenderTarget::Texture(_) => OFFSCREEN_FORMAT,
                     };
 
                     let pass = RenderPass::new(
@@ -155,18 +163,27 @@ impl CompiledGraph {
 
         let mut image_textures = HashMap::new();
 
-        for (name, path) in image_resources {
-            let texture = load_image_texture(device, queue, &name, &path)?;
-            image_textures.insert(name, texture);
+        for (handle, path) in image_resources {
+            let label = texture_labels
+                .get(&handle)
+                .map(|name| name.as_str())
+                .unwrap_or("xtal-image-texture");
+            let texture = load_image_texture(device, queue, label, &path)?;
+            image_textures.insert(handle, texture);
         }
 
         Ok(Self {
             surface_format,
-            present_source,
+            present_source: if let Some(source) = present_source_handle {
+                PresentSource::Texture(source)
+            } else {
+                PresentSource::Surface
+            },
             nodes,
-            offscreen_resource_names,
+            offscreen_resource_ids,
             offscreen_textures: HashMap::new(),
             image_textures,
+            texture_labels,
         })
     }
 
@@ -199,19 +216,19 @@ impl CompiledGraph {
                         None
                     };
 
-                    let target_view = if node.target == "surface" {
-                        frame.surface_view.clone()
-                    } else {
-                        self.offscreen_textures
-                            .get(&node.target)
+                    let target_view = match node.target {
+                        RenderTarget::Surface => frame.surface_view.clone(),
+                        RenderTarget::Texture(texture) => self
+                            .offscreen_textures
+                            .get(&texture)
                             .ok_or_else(|| {
                                 format!(
                                     "render target '{}' was not declared as texture2d",
-                                    node.target
+                                    texture_label(texture, &self.texture_labels)
                                 )
                             })?
                             .view
-                            .clone()
+                            .clone(),
                     };
 
                     let mut render_pass = frame.encoder().begin_render_pass(
@@ -286,19 +303,17 @@ impl CompiledGraph {
             }
         }
 
-        if self.present_source != "surface" {
+        if let PresentSource::Texture(source) = self.present_source {
             let source_view = if let Some(texture) =
-                self.offscreen_textures.get(&self.present_source)
+                self.offscreen_textures.get(&source)
             {
                 texture.view.clone()
-            } else if let Some(texture) =
-                self.image_textures.get(&self.present_source)
-            {
+            } else if let Some(texture) = self.image_textures.get(&source) {
                 texture.view.clone()
             } else {
                 return Err(format!(
                     "present source '{}' is not a known texture resource",
-                    self.present_source
+                    texture_label(source, &self.texture_labels)
                 ));
             };
 
@@ -321,10 +336,10 @@ impl CompiledGraph {
         let width = size[0].max(1);
         let height = size[1].max(1);
 
-        for name in &self.offscreen_resource_names {
+        for handle in &self.offscreen_resource_ids {
             let needs_new = self
                 .offscreen_textures
-                .get(name)
+                .get(handle)
                 .is_none_or(|texture| texture.size != [width, height]);
 
             if !needs_new {
@@ -332,7 +347,7 @@ impl CompiledGraph {
             }
 
             let texture = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some(name),
+                label: Some(texture_label(*handle, &self.texture_labels)),
                 size: wgpu::Extent3d {
                     width,
                     height,
@@ -353,7 +368,7 @@ impl CompiledGraph {
                 texture.create_view(&wgpu::TextureViewDescriptor::default());
 
             self.offscreen_textures.insert(
-                name.clone(),
+                *handle,
                 GpuTexture {
                     texture,
                     view,
@@ -365,33 +380,33 @@ impl CompiledGraph {
     }
 
     pub fn recording_source_texture(&self) -> Option<&wgpu::Texture> {
-        if self.present_source == "surface" {
-            return None;
+        match self.present_source {
+            PresentSource::Surface => None,
+            PresentSource::Texture(source) => self
+                .offscreen_textures
+                .get(&source)
+                .map(|texture| &texture.texture)
+                .or_else(|| {
+                    self.image_textures
+                        .get(&source)
+                        .map(|texture| &texture.texture)
+                }),
         }
-
-        self.offscreen_textures
-            .get(&self.present_source)
-            .map(|texture| &texture.texture)
-            .or_else(|| {
-                self.image_textures
-                    .get(&self.present_source)
-                    .map(|texture| &texture.texture)
-            })
     }
 
     pub fn recording_source_format(&self) -> Option<wgpu::TextureFormat> {
-        if self.present_source == "surface" {
-            return None;
+        match self.present_source {
+            PresentSource::Surface => None,
+            PresentSource::Texture(source) => self
+                .offscreen_textures
+                .get(&source)
+                .map(|texture| texture.format)
+                .or_else(|| {
+                    self.image_textures
+                        .get(&source)
+                        .map(|texture| texture.format)
+                }),
         }
-
-        self.offscreen_textures
-            .get(&self.present_source)
-            .map(|texture| texture.format)
-            .or_else(|| {
-                self.image_textures
-                    .get(&self.present_source)
-                    .map(|texture| texture.format)
-            })
     }
 }
 
@@ -400,12 +415,16 @@ impl RenderPass {
         device: &wgpu::Device,
         target_format: wgpu::TextureFormat,
         node: &RenderNodeSpec,
-        sampled_reads: &[String],
+        sampled_reads: &[TextureHandle],
         uniform_layout: &wgpu::BindGroupLayout,
     ) -> Result<Self, String> {
         let shader_path = normalize_shader_path(&node.shader_path)?;
 
-        if !node.reads.iter().any(|resource| resource == "params") {
+        if !node
+            .reads
+            .iter()
+            .any(|resource| matches!(resource, RenderRead::Uniform(_)))
+        {
             return Err(format!(
                 "render node '{}' must read 'params'",
                 node.name
@@ -489,9 +508,9 @@ impl RenderPass {
     fn create_texture_bind_group(
         &self,
         device: &wgpu::Device,
-        offscreen_textures: &HashMap<String, GpuTexture>,
-        image_textures: &HashMap<String, GpuTexture>,
-        sampled_reads: &[String],
+        offscreen_textures: &HashMap<TextureHandle, GpuTexture>,
+        image_textures: &HashMap<TextureHandle, GpuTexture>,
+        sampled_reads: &[TextureHandle],
     ) -> Result<wgpu::BindGroup, String> {
         let layout =
             self.texture_bind_group_layout.as_ref().ok_or_else(|| {
@@ -508,15 +527,15 @@ impl RenderPass {
             resource: wgpu::BindingResource::Sampler(sampler),
         }];
 
-        for (index, name) in sampled_reads.iter().enumerate() {
-            let view = if let Some(texture) = offscreen_textures.get(name) {
+        for (index, handle) in sampled_reads.iter().enumerate() {
+            let view = if let Some(texture) = offscreen_textures.get(handle) {
                 &texture.view
-            } else if let Some(texture) = image_textures.get(name) {
+            } else if let Some(texture) = image_textures.get(handle) {
                 &texture.view
             } else {
                 return Err(format!(
                     "texture resource '{}' is not available",
-                    name
+                    handle.index()
                 ));
             };
 
@@ -536,7 +555,7 @@ impl RenderPass {
     fn update_if_changed(
         &mut self,
         device: &wgpu::Device,
-        sampled_reads: &[String],
+        sampled_reads: &[TextureHandle],
         uniform_layout: &wgpu::BindGroupLayout,
     ) {
         if !self.watcher.as_ref().is_some_and(ShaderWatch::take_changed) {
@@ -646,13 +665,13 @@ impl ComputePass {
     fn create_storage_bind_group(
         &self,
         device: &wgpu::Device,
-        textures: &HashMap<String, GpuTexture>,
-        target: &str,
+        textures: &HashMap<TextureHandle, GpuTexture>,
+        target: &TextureHandle,
     ) -> Result<wgpu::BindGroup, String> {
         let texture = textures.get(target).ok_or_else(|| {
             format!(
                 "compute target '{}' is not a declared offscreen texture",
-                target
+                target.index()
             )
         })?;
 
@@ -1211,7 +1230,9 @@ fn normalize_shader_path(path: &Path) -> Result<PathBuf, String> {
     Ok(cwd.join(path))
 }
 
-fn find_present_source(graph: &GraphSpec) -> Result<String, String> {
+fn find_present_source(
+    graph: &GraphSpec,
+) -> Result<Option<TextureHandle>, String> {
     let mut source = None;
 
     for node in &graph.nodes {
@@ -1219,86 +1240,97 @@ fn find_present_source(graph: &GraphSpec) -> Result<String, String> {
             if source.is_some() {
                 return Err("graph can only have one Present node".to_string());
             }
-            source = Some(candidate.clone());
+            source = Some(*candidate);
         }
     }
 
-    source.ok_or_else(|| "graph is missing Present node".to_string())
+    Ok(source)
 }
 
 fn collect_texture_resources(
     resources: &[ResourceDecl],
-) -> (Vec<String>, HashMap<String, PathBuf>) {
+) -> (
+    Vec<TextureHandle>,
+    HashMap<TextureHandle, PathBuf>,
+    HashMap<TextureHandle, String>,
+) {
     let mut offscreen = Vec::new();
     let mut images = HashMap::new();
+    let mut labels = HashMap::new();
 
     for resource in resources {
+        let ResourceHandle::Texture(handle) = resource.handle else {
+            continue;
+        };
+
+        labels.insert(handle, resource.name.clone());
+
         match &resource.kind {
-            ResourceKind::Texture2d => offscreen.push(resource.name.clone()),
+            ResourceKind::Texture2d => offscreen.push(handle),
             ResourceKind::Image2d { path } => {
-                images.insert(resource.name.clone(), path.clone());
+                images.insert(handle, path.clone());
             }
-            ResourceKind::Uniforms => {}
+            ResourceKind::Uniforms => unreachable!(),
         }
     }
 
-    (offscreen, images)
+    (offscreen, images, labels)
 }
 
 fn validate_graph_resources(
     graph: &GraphSpec,
-    offscreen_resource_names: &[String],
-    image_resources: &HashMap<String, PathBuf>,
-    present_source: &str,
+    offscreen_resource_ids: &[TextureHandle],
+    image_resources: &HashMap<TextureHandle, PathBuf>,
+    present_source: Option<TextureHandle>,
 ) -> Result<(), String> {
-    let offscreen_names = offscreen_resource_names
+    let offscreen_ids = offscreen_resource_ids
         .iter()
-        .cloned()
+        .copied()
         .collect::<HashSet<_>>();
-    let image_names = image_resources.keys().cloned().collect::<HashSet<_>>();
+    let image_ids = image_resources.keys().copied().collect::<HashSet<_>>();
 
-    if present_source != "surface"
-        && !offscreen_names.contains(present_source)
-        && !image_names.contains(present_source)
-    {
-        return Err(format!(
-            "present source '{}' is not a declared offscreen/image texture resource",
-            present_source
-        ));
+    if let Some(source) = present_source {
+        if !offscreen_ids.contains(&source) && !image_ids.contains(&source) {
+            return Err(format!(
+                "present source texture {} is not a declared offscreen/image texture resource",
+                source.index()
+            ));
+        }
     }
 
     for node in &graph.nodes {
         match node {
             NodeSpec::Render(render) => {
-                if render.write != "surface"
-                    && !offscreen_names.contains(&render.write)
-                {
-                    return Err(format!(
-                        "render node '{}' writes '{}' which is not a declared texture2d resource",
-                        render.name, render.write
-                    ));
+                if let RenderTarget::Texture(target) = render.write {
+                    if !offscreen_ids.contains(&target) {
+                        return Err(format!(
+                            "render node '{}' writes texture {} which is not a declared texture2d resource",
+                            render.name,
+                            target.index()
+                        ));
+                    }
                 }
 
                 for read in &render.reads {
-                    if read == "params" {
-                        continue;
-                    }
-
-                    if !offscreen_names.contains(read)
-                        && !image_names.contains(read)
-                    {
-                        return Err(format!(
-                            "render node '{}' reads '{}' which is not a declared texture2d/image resource",
-                            render.name, read
-                        ));
+                    if let RenderRead::Texture(texture) = read {
+                        if !offscreen_ids.contains(texture)
+                            && !image_ids.contains(texture)
+                        {
+                            return Err(format!(
+                                "render node '{}' reads texture {} which is not a declared texture2d/image resource",
+                                render.name,
+                                texture.index()
+                            ));
+                        }
                     }
                 }
             }
             NodeSpec::Compute(compute) => {
-                if !offscreen_names.contains(&compute.read_write) {
+                if !offscreen_ids.contains(&compute.read_write) {
                     return Err(format!(
                         "compute node '{}' read_write target '{}' is not a declared texture2d resource",
-                        compute.name, compute.read_write
+                        compute.name,
+                        compute.read_write.index()
                     ));
                 }
             }
@@ -1307,4 +1339,14 @@ fn validate_graph_resources(
     }
 
     Ok(())
+}
+
+fn texture_label(
+    handle: TextureHandle,
+    labels: &HashMap<TextureHandle, String>,
+) -> &str {
+    labels
+        .get(&handle)
+        .map(String::as_str)
+        .unwrap_or("texture")
 }

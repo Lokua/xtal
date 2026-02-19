@@ -21,19 +21,16 @@ pub struct ImageSketch {
 
 impl Sketch for ImageSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
-        graph.image("img0", self.image_path.clone());
+        let params = graph.uniforms();
+        let img0 = graph.image(self.image_path.clone());
 
         graph
-            .render("image_pass")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("img0")
-            .write("surface")
-            .add();
-
-        graph.present("surface");
+            .read(params)
+            .read(img0)
+            .to_surface();
     }
 
     fn control_script(&self) -> Option<PathBuf> {

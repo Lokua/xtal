@@ -21,27 +21,23 @@ pub struct MultiPassSketch {
 
 impl Sketch for MultiPassSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
-        graph.texture2d("rt0");
+        let params = graph.uniforms();
+        let rt0 = graph.texture2d();
 
         graph
-            .render("pass_a")
+            .render()
             .shader(self.pass_a.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .write("rt0")
-            .add();
+            .read(params)
+            .to(rt0);
 
         graph
-            .render("pass_b")
+            .render()
             .shader(self.pass_b.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("rt0")
-            .write("surface")
-            .add();
-
-        graph.present("surface");
+            .read(params)
+            .read(rt0)
+            .to_surface();
     }
 
     fn control_script(&self) -> Option<PathBuf> {

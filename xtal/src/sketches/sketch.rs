@@ -79,17 +79,14 @@ impl FullscreenShaderSketch {
 
 impl Sketch for FullscreenShaderSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
+        let params = graph.uniforms();
 
         graph
-            .render("main")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .write("surface")
-            .add();
-
-        graph.present("surface");
+            .read(params)
+            .to_surface();
     }
 
     fn control_script(&self) -> Option<PathBuf> {

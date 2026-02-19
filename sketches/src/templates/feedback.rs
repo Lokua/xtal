@@ -20,29 +20,26 @@ pub struct FeedbackSketch {
 
 impl Sketch for FeedbackSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
-        graph.texture2d("feedback_a");
-        graph.texture2d("feedback_b");
+        let params = graph.uniforms();
+        let (feedback_a, feedback_b) = graph.feedback();
 
         graph
-            .render("feedback_step_a")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("feedback_a")
-            .write("feedback_b")
-            .add();
+            .read(params)
+            .read(feedback_a)
+            .to(feedback_b);
 
         graph
-            .render("feedback_step_b")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("feedback_b")
-            .write("feedback_a")
-            .add();
+            .read(params)
+            .read(feedback_b)
+            .to(feedback_a);
 
-        graph.present("feedback_a");
+        graph.present(feedback_a);
     }
 
     fn control_script(&self) -> Option<PathBuf> {

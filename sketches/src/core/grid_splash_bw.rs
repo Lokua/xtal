@@ -22,33 +22,30 @@ pub struct GridSplashBwSketch {
 
 impl Sketch for GridSplashBwSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
+        let params = graph.uniforms();
 
         // Feedback ping-pong textures.
-        graph.texture2d("feedback_a");
-        graph.texture2d("feedback_b");
+        let (ping, pong) = graph.feedback();
 
         graph
-            .render("feedback_step_a")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("feedback_a")
-            .write("feedback_b")
-            .add();
+            .read(params)
+            .read(ping)
+            .to(pong);
 
-        // Second feedback step writes back into `feedback_a` so the next frame
+        // Second feedback step writes back into `ping` so the next frame
         // samples an updated history texture.
         graph
-            .render("feedback_step_b")
+            .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("feedback_b")
-            .write("feedback_a")
-            .add();
+            .read(params)
+            .read(pong)
+            .to(ping);
 
-        graph.present("feedback_a");
+        graph.present(ping);
     }
 
     fn control_script(&self) -> Option<PathBuf> {
@@ -57,8 +54,7 @@ impl Sketch for GridSplashBwSketch {
 }
 
 pub fn init() -> GridSplashBwSketch {
-    let assets =
-        SketchAssets::from_file(file!());
+    let assets = SketchAssets::from_file(file!());
 
     GridSplashBwSketch {
         shader_path: assets.wgsl(),

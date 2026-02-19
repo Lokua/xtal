@@ -21,25 +21,22 @@ pub struct ComputeSketch {
 
 impl Sketch for ComputeSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
-        graph.uniforms("params");
-        graph.texture2d("field");
+        let params = graph.uniforms();
+        let field = graph.texture2d();
 
         graph
-            .compute("field_compute")
+            .compute()
             .shader(self.compute_shader.clone())
-            .read_write("field")
-            .add();
+            .read_write(field)
+            .dispatch();
 
         graph
-            .render("present")
+            .render()
             .shader(self.present_shader.clone())
             .mesh(Mesh::fullscreen_quad())
-            .read("params")
-            .read("field")
-            .write("surface")
-            .add();
-
-        graph.present("surface");
+            .read(params)
+            .read(field)
+            .to_surface();
     }
 
     fn control_script(&self) -> Option<PathBuf> {

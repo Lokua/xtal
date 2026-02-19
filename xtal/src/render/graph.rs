@@ -2,6 +2,54 @@ use std::path::PathBuf;
 
 use crate::mesh::Mesh;
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct UniformHandle(usize);
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct TextureHandle(usize);
+
+impl UniformHandle {
+    pub fn index(self) -> usize {
+        self.0
+    }
+}
+
+impl TextureHandle {
+    pub fn index(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum ResourceHandle {
+    Uniform(UniformHandle),
+    Texture(TextureHandle),
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum RenderRead {
+    Uniform(UniformHandle),
+    Texture(TextureHandle),
+}
+
+impl From<UniformHandle> for RenderRead {
+    fn from(value: UniformHandle) -> Self {
+        Self::Uniform(value)
+    }
+}
+
+impl From<TextureHandle> for RenderRead {
+    fn from(value: TextureHandle) -> Self {
+        Self::Texture(value)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum RenderTarget {
+    Surface,
+    Texture(TextureHandle),
+}
+
 #[derive(Clone, Debug)]
 pub enum ResourceKind {
     Uniforms,
@@ -11,6 +59,7 @@ pub enum ResourceKind {
 
 #[derive(Clone, Debug)]
 pub struct ResourceDecl {
+    pub handle: ResourceHandle,
     pub name: String,
     pub kind: ResourceKind,
 }
@@ -20,22 +69,22 @@ pub struct RenderNodeSpec {
     pub name: String,
     pub shader_path: PathBuf,
     pub meshes: Vec<Mesh>,
-    pub reads: Vec<String>,
-    pub write: String,
+    pub reads: Vec<RenderRead>,
+    pub write: RenderTarget,
 }
 
 #[derive(Clone, Debug)]
 pub struct ComputeNodeSpec {
     pub name: String,
     pub shader_path: PathBuf,
-    pub read_write: String,
+    pub read_write: TextureHandle,
 }
 
 #[derive(Clone, Debug)]
 pub enum NodeSpec {
     Render(RenderNodeSpec),
     Compute(ComputeNodeSpec),
-    Present { source: String },
+    Present { source: TextureHandle },
 }
 
 #[derive(Clone, Debug)]
@@ -48,6 +97,10 @@ pub struct GraphSpec {
 pub struct GraphBuilder {
     resources: Vec<ResourceDecl>,
     nodes: Vec<NodeSpec>,
+    uniform_handle: Option<UniformHandle>,
+    next_texture_index: usize,
+    next_render_node_index: usize,
+    next_compute_node_index: usize,
 }
 
 impl GraphBuilder {
@@ -55,54 +108,78 @@ impl GraphBuilder {
         Self::default()
     }
 
-    pub fn uniforms(&mut self, name: &str) -> &mut Self {
+    pub fn uniforms(&mut self) -> UniformHandle {
+        if let Some(handle) = self.uniform_handle {
+            return handle;
+        }
+
+        let handle = UniformHandle(0);
         self.resources.push(ResourceDecl {
-            name: name.to_string(),
+            handle: ResourceHandle::Uniform(handle),
+            name: "params".to_string(),
             kind: ResourceKind::Uniforms,
         });
-        self
+        self.uniform_handle = Some(handle);
+        handle
     }
 
-    pub fn texture2d(&mut self, name: &str) -> &mut Self {
+    pub fn texture2d(&mut self) -> TextureHandle {
+        let handle = TextureHandle(self.next_texture_index);
+        self.next_texture_index += 1;
+
         self.resources.push(ResourceDecl {
-            name: name.to_string(),
+            handle: ResourceHandle::Texture(handle),
+            name: format!("tex{}", handle.0),
             kind: ResourceKind::Texture2d,
         });
-        self
+
+        handle
     }
 
-    pub fn image(&mut self, name: &str, path: impl Into<PathBuf>) -> &mut Self {
+    pub fn image(&mut self, path: impl Into<PathBuf>) -> TextureHandle {
+        let handle = TextureHandle(self.next_texture_index);
+        self.next_texture_index += 1;
+
         self.resources.push(ResourceDecl {
-            name: name.to_string(),
+            handle: ResourceHandle::Texture(handle),
+            name: format!("img{}", handle.0),
             kind: ResourceKind::Image2d { path: path.into() },
         });
-        self
+
+        handle
     }
 
-    pub fn render(&mut self, name: &str) -> RenderNodeBuilder<'_> {
+    pub fn feedback(&mut self) -> (TextureHandle, TextureHandle) {
+        (self.texture2d(), self.texture2d())
+    }
+
+    pub fn render(&mut self) -> RenderNodeBuilder<'_> {
+        let index = self.next_render_node_index;
+        self.next_render_node_index += 1;
+
         RenderNodeBuilder {
             builder: self,
-            name: name.to_string(),
+            name: format!("render_{}", index),
             shader_path: None,
             meshes: Vec::new(),
             reads: Vec::new(),
-            write: None,
         }
     }
 
-    pub fn compute(&mut self, name: &str) -> ComputeNodeBuilder<'_> {
+    pub fn compute(&mut self) -> ComputeNodeBuilder<'_> {
+        let index = self.next_compute_node_index;
+        self.next_compute_node_index += 1;
+
         ComputeNodeBuilder {
             builder: self,
-            name: name.to_string(),
+            name: format!("compute_{}", index),
             shader_path: None,
             read_write: None,
         }
     }
 
-    pub fn present(&mut self, source: &str) -> &mut Self {
-        self.nodes.push(NodeSpec::Present {
-            source: source.to_string(),
-        });
+    pub fn present(&mut self, source: TextureHandle) -> &mut Self {
+        self.nodes.push(NodeSpec::Present { source });
         self
     }
 
@@ -119,8 +196,7 @@ pub struct RenderNodeBuilder<'a> {
     name: String,
     shader_path: Option<PathBuf>,
     meshes: Vec<Mesh>,
-    reads: Vec<String>,
-    write: Option<String>,
+    reads: Vec<RenderRead>,
 }
 
 impl RenderNodeBuilder<'_> {
@@ -129,8 +205,8 @@ impl RenderNodeBuilder<'_> {
         self
     }
 
-    pub fn read(mut self, resource: &str) -> Self {
-        self.reads.push(resource.to_string());
+    pub fn read(mut self, resource: impl Into<RenderRead>) -> Self {
+        self.reads.push(resource.into());
         self
     }
 
@@ -139,22 +215,21 @@ impl RenderNodeBuilder<'_> {
         self
     }
 
-    pub fn write(mut self, resource: &str) -> Self {
-        self.write = Some(resource.to_string());
-        self
+    pub fn to(self, target: TextureHandle) {
+        self.finish(RenderTarget::Texture(target));
     }
 
-    pub fn add(self) {
+    pub fn to_surface(self) {
+        self.finish(RenderTarget::Surface);
+    }
+
+    fn finish(self, write: RenderTarget) {
         let shader_path = self.shader_path.unwrap_or_else(|| {
             panic!("render node '{}' missing shader", self.name)
         });
         if self.meshes.is_empty() {
             panic!("render node '{}' missing mesh", self.name);
         }
-
-        let write = self.write.unwrap_or_else(|| {
-            panic!("render node '{}' missing write target", self.name)
-        });
 
         self.builder.nodes.push(NodeSpec::Render(RenderNodeSpec {
             name: self.name,
@@ -170,7 +245,7 @@ pub struct ComputeNodeBuilder<'a> {
     builder: &'a mut GraphBuilder,
     name: String,
     shader_path: Option<PathBuf>,
-    read_write: Option<String>,
+    read_write: Option<TextureHandle>,
 }
 
 impl ComputeNodeBuilder<'_> {
@@ -179,12 +254,12 @@ impl ComputeNodeBuilder<'_> {
         self
     }
 
-    pub fn read_write(mut self, resource: &str) -> Self {
-        self.read_write = Some(resource.to_string());
+    pub fn read_write(mut self, resource: TextureHandle) -> Self {
+        self.read_write = Some(resource);
         self
     }
 
-    pub fn add(self) {
+    pub fn dispatch(self) {
         let shader_path = self.shader_path.unwrap_or_else(|| {
             panic!("compute node '{}' missing shader", self.name)
         });
