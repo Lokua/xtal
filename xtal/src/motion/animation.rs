@@ -716,6 +716,7 @@ pub mod animation_tests {
         // tests mutate frame_clock FPS.
         frame_clock::set_fps(FPS);
         frame_clock::set_paused(false);
+        frame_clock::set_elapsed_seconds(beat * (60.0 / BPM));
         frame_clock::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
     }
 
@@ -798,7 +799,7 @@ pub mod animation_tests {
 
         init(1.75);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.25, "beat 1.75");
+        assert!((val - 0.25).abs() < 0.000_1, "beat 1.75");
 
         init(2.0);
         let val = a.tri(2.0);
@@ -1089,7 +1090,7 @@ pub mod animation_tests {
             ],
             Mode::Loop,
         );
-        assert_eq!(x, 0.75, "Returns 3/4 point");
+        assert!((x - 0.75).abs() < 0.000_1, "Returns 3/4 point");
     }
 
     #[test]
@@ -1123,7 +1124,7 @@ pub mod animation_tests {
         init(1.5);
         assert_eq!(x(), 15.0);
         init(1.75);
-        assert_eq!(x(), 12.5);
+        assert!((x() - 12.5).abs() < 0.000_1);
 
         init(2.0);
         assert_eq!(x(), 10.0);

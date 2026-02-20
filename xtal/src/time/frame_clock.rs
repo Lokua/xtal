@@ -14,6 +14,7 @@ pub struct TickResult {
 struct Pacer {
     last_tick: Instant,
     accumulator: Duration,
+    transport_elapsed: Duration,
     frame_intervals: VecDeque<Duration>,
     last_render_at: Option<Instant>,
     max_intervals: usize,
@@ -25,6 +26,7 @@ impl Pacer {
         Self {
             last_tick: now,
             accumulator: Duration::ZERO,
+            transport_elapsed: Duration::ZERO,
             frame_intervals: VecDeque::new(),
             last_render_at: None,
             max_intervals: 90,
@@ -44,9 +46,19 @@ impl Pacer {
         let elapsed = now.saturating_duration_since(self.last_tick);
         self.last_tick = now;
         self.accumulator += elapsed;
+        let is_paused = paused();
+
+        if !is_paused {
+            self.transport_elapsed += elapsed;
+            self.publish_transport_elapsed();
+        }
 
         if self.force_render {
             self.force_render = false;
+            if is_paused {
+                self.transport_elapsed += frame_duration();
+                self.publish_transport_elapsed();
+            }
             advance_frames(1);
             self.record_render(now);
             return TickResult {
@@ -55,7 +67,7 @@ impl Pacer {
             };
         }
 
-        if paused() {
+        if is_paused {
             // While paused we do not accumulate debt.
             self.accumulator = Duration::ZERO;
             return TickResult::default();
@@ -116,11 +128,17 @@ impl Pacer {
             self.frame_intervals.pop_front();
         }
     }
+
+    fn publish_transport_elapsed(&self) {
+        TRANSPORT_ELAPSED_SECONDS
+            .store(self.transport_elapsed.as_secs_f32(), Ordering::Release);
+    }
 }
 
 static FRAME_COUNT: AtomicU32 = AtomicU32::new(0);
 static FPS: AtomicF32 = AtomicF32::new(60.0);
 static PAUSED: AtomicBool = AtomicBool::new(false);
+static TRANSPORT_ELAPSED_SECONDS: AtomicF32 = AtomicF32::new(0.0);
 static PACER: LazyLock<Mutex<Pacer>> =
     LazyLock::new(|| Mutex::new(Pacer::new(Instant::now())));
 
@@ -149,6 +167,7 @@ pub fn reset_frame_count() {
 
 pub fn reset() {
     reset_frame_count();
+    set_elapsed_seconds(0.0);
     reset_timing(Instant::now());
 }
 
@@ -174,6 +193,18 @@ pub fn frame_duration() -> Duration {
 
 pub fn average_fps() -> f32 {
     with_pacer(|pacer| pacer.average_fps())
+}
+
+pub fn elapsed_seconds() -> f32 {
+    TRANSPORT_ELAPSED_SECONDS.load(Ordering::Acquire)
+}
+
+pub fn set_elapsed_seconds(seconds: f32) {
+    let seconds = seconds.max(0.0);
+    with_pacer(|pacer| {
+        pacer.transport_elapsed = Duration::from_secs_f32(seconds);
+        TRANSPORT_ELAPSED_SECONDS.store(seconds, Ordering::Release);
+    });
 }
 
 pub fn advance_single_frame() {
@@ -205,6 +236,7 @@ mod tests {
         set_fps(fps_value);
         set_paused(false);
         set_frame_count(0);
+        set_elapsed_seconds(0.0);
         reset_timing(now);
     }
 
@@ -253,6 +285,7 @@ mod tests {
         assert!(t.should_render);
         assert_eq!(t.frames_advanced, 1);
         assert_eq!(frame_count(), 1);
+        assert!(elapsed_seconds() > 0.0);
     }
 
     #[test]
@@ -277,5 +310,29 @@ mod tests {
         assert!(t.should_render);
         assert_eq!(t.frames_advanced, 1);
         assert_eq!(frame_count(), 2);
+    }
+
+    #[test]
+    #[serial]
+    fn transport_elapsed_tracks_monotonic_time_when_running() {
+        let start = Instant::now();
+        init(start, 60.0);
+
+        let later = start + Duration::from_millis(150);
+        let _ = tick(later);
+        assert!((elapsed_seconds() - 0.15).abs() < 0.000_1);
+    }
+
+    #[test]
+    #[serial]
+    fn transport_elapsed_does_not_advance_while_paused() {
+        let start = Instant::now();
+        init(start, 60.0);
+
+        let _ = tick(start + Duration::from_millis(100));
+        let before_pause = elapsed_seconds();
+        set_paused(true);
+        let _ = tick(start + Duration::from_millis(600));
+        assert!((elapsed_seconds() - before_pause).abs() < 0.000_1);
     }
 }

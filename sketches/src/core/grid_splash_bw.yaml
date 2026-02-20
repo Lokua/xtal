@@ -13,7 +13,7 @@ RANDOM_SLEW: &RANDOM_SLEW 0.85
 grid_size:
   var: a4
   type: random
-  beats: 16.0
+  beats: 4
   range: [4.0, 48.0]
   delay: 0.0
   stem: 201
