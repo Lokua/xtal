@@ -19,11 +19,24 @@ fn frame_clock_scaffold_ticks() {
 }
 
 #[test]
+fn frame_clock_reset_clears_transport_and_frame_state() {
+    let start = Instant::now();
+    frame_clock::set_fps(60.0);
+    frame_clock::set_paused(false);
+    frame_clock::set_frame_count(10);
+    frame_clock::set_elapsed_seconds(3.5);
+    frame_clock::reset_timing(start);
+
+    frame_clock::reset();
+
+    assert_eq!(frame_clock::frame_count(), 0);
+    assert!((frame_clock::elapsed_seconds() - 0.0).abs() < 0.000_1);
+}
+
+#[test]
 fn gpu_probe_is_opt_in() {
     if !support::gpu_tests_enabled() {
-        eprintln!(
-            "Skipping GPU smoke probe. Set XTAL_RUN_GPU_TESTS=1 to run."
-        );
+        eprintln!("Skipping GPU smoke probe. Set XTAL_RUN_GPU_TESTS=1 to run.");
         return;
     }
 

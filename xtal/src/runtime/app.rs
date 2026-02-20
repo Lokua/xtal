@@ -496,9 +496,8 @@ impl XtalRuntime {
                 self.alert("Hub repopulated");
             }
             RuntimeEvent::MidiContinue | RuntimeEvent::MidiStart => {
-                info!("Received MIDI Start/Continue. Resetting frame count.");
-
-                frame_clock::reset_frame_count();
+                info!("Received MIDI Start/Continue. Resetting transport.");
+                frame_clock::reset();
 
                 if self.recording_state.is_queued {
                     let _ = self.on_runtime_event(

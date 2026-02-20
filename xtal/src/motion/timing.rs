@@ -102,9 +102,7 @@ impl FrameTiming {
 
 impl TimingSource for FrameTiming {
     fn beats(&self) -> f32 {
-        let seconds_per_beat = 60.0 / self.bpm.get();
-        let frames_per_beat = seconds_per_beat * frame_clock::fps();
-        frame_clock::frame_count() as f32 / frames_per_beat.max(1.0)
+        frame_clock::elapsed_seconds() * self.bpm.get() / 60.0
     }
 
     fn bpm(&self) -> f32 {
