@@ -1,0 +1,46 @@
+# ------------------------------------------------------------------------------
+#  Animation Dev
+# ------------------------------------------------------------------------------
+
+top_ball_x:
+  type: triangle
+  var: aw
+  beats: 4.0
+  range: [0.1, 0.9]
+
+mid_ball_x:
+  type: ramp
+  var: bx
+  beats: 4.0
+  range: [0.1, 0.9]
+
+bottom_ball_x:
+  type: random_slewed
+  var: cx
+  beats: 2.0
+  slew: 0.8
+  range: [0.1, 0.9]
+
+random_ball_x:
+  type: random
+  var: dx
+  beats: 2.0
+  range: [0.1, 0.9]
+
+automate_ball_x:
+  type: automate
+  var: dy
+  mode: loop
+  breakpoints:
+    - kind: ramp
+      position: 0.0
+      value: 0.1
+    - kind: ramp
+      position: 2.0
+      value: 0.9
+    - kind: ramp
+      position: 4.0
+      value: 0.2
+    - kind: end
+      position: 6.0
+      value: 0.1

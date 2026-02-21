@@ -1,3 +1,12 @@
+struct VertexInput {
+    @location(0) position: vec2f,
+}
+
+struct VsOut {
+    @builtin(position) position: vec4f,
+    @location(0) uv: vec2f,
+}
+
 struct Params {
     a: vec4f,
     b: vec4f,
@@ -13,15 +22,6 @@ var tex_sampler: sampler;
 
 @group(1) @binding(1)
 var tex: texture_2d<f32>;
-
-struct VsOut {
-    @builtin(position) position: vec4f,
-    @location(0) uv: vec2f,
-}
-
-struct VertexInput {
-    @location(0) position: vec2f,
-}
 
 @vertex
 fn vs_main(vert: VertexInput) -> VsOut {
