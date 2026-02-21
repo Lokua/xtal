@@ -1,32 +1,17 @@
 # Xtal
 
-A framework build around [Nannou][nannou] with a feature-packed control UI for
-creating stuff like this:
+XTAL is a Rust creative coding framework for building real-time visual sketches
+with WGSL shaders, with a strong emphasis on musically timed animation.  
+It includes declarative control scripting for defining parameters, mappings, and
+performance behavior, plus a lightweight sketch runtime, a composable
+render/compute graph, and live control via MIDI, OSC, and a web UI.  
+Built-in image/video capture supports recording output, and the overall goal is
+fast iteration with minimal boilerplate while still giving direct access to
+GPU-powered workflows when needed.
 
-<!-- TODO: add a gif! -->
-
-<img 
-  src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/displacement_2-627iz.png" 
-  alt="displacement_2-627iz" 
-  width="90%"
-/>
-
-You can see more screenshots here on github by looking at the auto generated
-[image index](https://lokua.github.io/xtal/) or checkout audio-visual
-compositions on [Instagram][insta].
-
-## Intro
-
-Xtal is a hybrid Rust application and library build on top of the
-[Nannou](nannou) creative coding framework. It is essentially one big Nannou app
-packed with tons of features to aid in live performance with a strong emphasis
-on interaction and musically-aware synchronization.
-
-If you are already familiar with Rust and Nannou you should have no problem
-getting Xtal up and running quickly. If you are not familiar with Rust or Nannou
-but have experience with creative coding then I highly recommend you get
-comfortable building Nannou sketches first, starting with
-[their guide](https://guide.nannou.cc/).
+You can see screenshots of some sketches authored with Xtal here on github by
+looking at the auto generated [image index](https://lokua.github.io/xtal/) or
+checkout audio-visual compositions on [Instagram][insta].
 
 ## Features
 

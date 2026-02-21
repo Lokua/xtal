@@ -1,0 +1,12 @@
+sweep_x:
+  type: triangle
+  var: aw
+  beats: 1.0
+  range: [0.08, 0.92]
+
+stres:
+  var: bx
+  type: slider
+  range: [1.0, 2048.0]
+  default: 128.0
+  step: 1.0
