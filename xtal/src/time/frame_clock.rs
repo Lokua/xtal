@@ -14,7 +14,10 @@ pub struct TickResult {
 struct Pacer {
     last_tick: Instant,
     accumulator: Duration,
-    transport_elapsed: Duration,
+    transport_origin: Instant,
+    transport_offset: Duration,
+    transport_paused_at: Option<Instant>,
+    transport_paused_total: Duration,
     frame_intervals: VecDeque<Duration>,
     last_render_at: Option<Instant>,
     max_intervals: usize,
@@ -26,7 +29,10 @@ impl Pacer {
         Self {
             last_tick: now,
             accumulator: Duration::ZERO,
-            transport_elapsed: Duration::ZERO,
+            transport_origin: now,
+            transport_offset: Duration::ZERO,
+            transport_paused_at: None,
+            transport_paused_total: Duration::ZERO,
             frame_intervals: VecDeque::new(),
             last_render_at: None,
             max_intervals: 90,
@@ -40,6 +46,14 @@ impl Pacer {
         self.frame_intervals.clear();
         self.last_render_at = None;
         self.force_render = false;
+        // Re-anchor to avoid very large monotonic deltas while preserving
+        // current elapsed transport time exactly.
+        let elapsed = self.transport_elapsed(now);
+        self.transport_origin = now;
+        self.transport_offset = elapsed;
+        self.transport_paused_total = Duration::ZERO;
+        self.transport_paused_at = if paused() { Some(now) } else { None };
+        self.publish_transport_elapsed_at(now);
     }
 
     fn tick(&mut self, now: Instant) -> TickResult {
@@ -47,17 +61,13 @@ impl Pacer {
         self.last_tick = now;
         self.accumulator += elapsed;
         let is_paused = paused();
-
-        if !is_paused {
-            self.transport_elapsed += elapsed;
-            self.publish_transport_elapsed();
-        }
+        self.publish_transport_elapsed_at(now);
 
         if self.force_render {
             self.force_render = false;
             if is_paused {
-                self.transport_elapsed += frame_duration();
-                self.publish_transport_elapsed();
+                self.transport_offset += frame_duration();
+                self.publish_transport_elapsed_at(now);
             }
             advance_frames(1);
             self.record_render(now);
@@ -129,9 +139,40 @@ impl Pacer {
         }
     }
 
-    fn publish_transport_elapsed(&self) {
+    fn set_paused(&mut self, paused: bool, now: Instant) {
+        match (self.transport_paused_at, paused) {
+            (None, true) => {
+                self.transport_paused_at = Some(now);
+            }
+            (Some(started_at), false) => {
+                self.transport_paused_total +=
+                    now.saturating_duration_since(started_at);
+                self.transport_paused_at = None;
+            }
+            _ => {}
+        }
+        self.publish_transport_elapsed_at(now);
+    }
+
+    fn set_transport_elapsed(&mut self, now: Instant, elapsed: Duration) {
+        self.transport_origin = now;
+        self.transport_offset = elapsed;
+        self.transport_paused_total = Duration::ZERO;
+        self.transport_paused_at = if paused() { Some(now) } else { None };
+        self.publish_transport_elapsed_at(now);
+    }
+
+    fn transport_elapsed(&self, now: Instant) -> Duration {
+        let effective_now = self.transport_paused_at.unwrap_or(now);
+        let since_origin =
+            effective_now.saturating_duration_since(self.transport_origin);
+        let running = since_origin.saturating_sub(self.transport_paused_total);
+        self.transport_offset + running
+    }
+
+    fn publish_transport_elapsed_at(&self, now: Instant) {
         TRANSPORT_ELAPSED_SECONDS
-            .store(self.transport_elapsed.as_secs_f32(), Ordering::Release);
+            .store(self.transport_elapsed(now).as_secs_f32(), Ordering::Release);
     }
 }
 
@@ -179,8 +220,13 @@ pub fn set_fps(fps: f32) {
     FPS.store(fps.max(1.0), Ordering::Release);
 }
 
-pub fn set_paused(paused: bool) {
+fn set_paused_at(paused: bool, now: Instant) {
     PAUSED.store(paused, Ordering::Release);
+    with_pacer(|pacer| pacer.set_paused(paused, now));
+}
+
+pub fn set_paused(paused: bool) {
+    set_paused_at(paused, Instant::now());
 }
 
 pub fn paused() -> bool {
@@ -196,15 +242,27 @@ pub fn average_fps() -> f32 {
 }
 
 pub fn elapsed_seconds() -> f32 {
-    TRANSPORT_ELAPSED_SECONDS.load(Ordering::Acquire)
+    with_pacer(|pacer| {
+        let now = Instant::now();
+        let elapsed = pacer.transport_elapsed(now).as_secs_f32();
+        TRANSPORT_ELAPSED_SECONDS.store(elapsed, Ordering::Release);
+        elapsed
+    })
 }
 
 pub fn set_elapsed_seconds(seconds: f32) {
     let seconds = seconds.max(0.0);
     with_pacer(|pacer| {
-        pacer.transport_elapsed = Duration::from_secs_f32(seconds);
-        TRANSPORT_ELAPSED_SECONDS.store(seconds, Ordering::Release);
+        pacer.set_transport_elapsed(
+            Instant::now(),
+            Duration::from_secs_f32(seconds),
+        );
     });
+}
+
+#[cfg(test)]
+fn elapsed_seconds_at(now: Instant) -> f32 {
+    with_pacer(|pacer| pacer.transport_elapsed(now).as_secs_f32())
 }
 
 pub fn advance_single_frame() {
@@ -234,7 +292,7 @@ mod tests {
 
     fn init(now: Instant, fps_value: f32) {
         set_fps(fps_value);
-        set_paused(false);
+        set_paused_at(false, now);
         set_frame_count(0);
         set_elapsed_seconds(0.0);
         reset_timing(now);
@@ -274,7 +332,7 @@ mod tests {
     fn pause_and_advance_single_frame() {
         let start = Instant::now();
         init(start, 60.0);
-        set_paused(true);
+        set_paused_at(true, start);
 
         let later = start + Duration::from_secs(1);
         assert_eq!(tick(later), TickResult::default());
@@ -285,7 +343,7 @@ mod tests {
         assert!(t.should_render);
         assert_eq!(t.frames_advanced, 1);
         assert_eq!(frame_count(), 1);
-        assert!(elapsed_seconds() > 0.0);
+        assert!(elapsed_seconds_at(later + Duration::from_millis(1)) > 0.0);
     }
 
     #[test]
@@ -320,7 +378,7 @@ mod tests {
 
         let later = start + Duration::from_millis(150);
         let _ = tick(later);
-        assert!((elapsed_seconds() - 0.15).abs() < 0.000_1);
+        assert!((elapsed_seconds_at(later) - 0.15).abs() < 0.000_1);
     }
 
     #[test]
@@ -329,10 +387,16 @@ mod tests {
         let start = Instant::now();
         init(start, 60.0);
 
-        let _ = tick(start + Duration::from_millis(100));
-        let before_pause = elapsed_seconds();
-        set_paused(true);
+        let paused_at = start + Duration::from_millis(100);
+        let _ = tick(paused_at);
+        let before_pause = elapsed_seconds_at(paused_at);
+        set_paused_at(true, paused_at);
         let _ = tick(start + Duration::from_millis(600));
-        assert!((elapsed_seconds() - before_pause).abs() < 0.000_1);
+        assert!(
+            (elapsed_seconds_at(start + Duration::from_millis(600))
+                - before_pause)
+                .abs()
+                < 0.000_1
+        );
     }
 }

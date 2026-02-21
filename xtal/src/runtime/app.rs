@@ -1032,6 +1032,7 @@ impl XtalRuntime {
             // 3) Runtime-owned uniforms: resolution + beat source + hub vars.
             let [w, h] = context.resolution();
             uniforms.set_resolution(w, h);
+            let current_beats;
 
             if let Some(hub) = self.control_hub.as_mut() {
                 if let Some(beats) = external_beats_for_frame {
@@ -1048,11 +1049,12 @@ impl XtalRuntime {
                     }
                 }
 
-                uniforms.set_beats(hub.beats());
+                current_beats = hub.beats();
             } else {
-                uniforms.set_beats(context.elapsed_seconds());
+                current_beats = context.elapsed_seconds();
             }
 
+            uniforms.set_beats(current_beats);
             uniforms.upload(context.queue.as_ref());
 
             // 4) Acquire current presentation surface texture.
@@ -1483,7 +1485,8 @@ impl XtalRuntime {
             present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: caps.alpha_modes[0],
             view_formats: vec![],
-            desired_maximum_frame_latency: 2,
+            // Keep swapchain queue shallow to reduce visual beat latency under load.
+            desired_maximum_frame_latency: 1,
         };
 
         surface.configure(&device, &surface_config);

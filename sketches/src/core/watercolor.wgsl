@@ -177,7 +177,18 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         );
         let life_phase = clamp(age_beats / life_beats, 0.0, 1.0);
         let drop_life_curved = 1.0 - pow(life_phase, BLOT_DECAY_GAMMA);
-        let drop_life = select(0.0, drop_life_curved, slot_started);
+        // Hold fresh attacks briefly so low frame rates don't make onsets feel late.
+        let attack_hold_beats = max(blot_beats * 0.22, 0.05);
+        let attack_hold = 1.0 - smoothstep(
+            attack_hold_beats,
+            attack_hold_beats * 1.35,
+            age_beats,
+        );
+        let drop_life = select(
+            0.0,
+            max(drop_life_curved, attack_hold),
+            slot_started,
+        );
         if drop_life <= 0.0001 {
             continue;
         }

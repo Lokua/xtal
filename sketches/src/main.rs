@@ -34,6 +34,7 @@ fn main() {
             enabled: true,
             sketches: [
                 animation_dev,
+                clock_dev,
             ]
         },
     }
