@@ -1,12 +1,3 @@
-struct VertexInput {
-    @location(0) position: vec2f,
-};
-
-struct VertexOutput {
-    @builtin(position) position: vec4f,
-    @location(0) uv: vec2f,
-};
-
 struct Params {
     // ax, ay, az, aw
     a: vec4f,
@@ -14,6 +5,15 @@ struct Params {
     b: vec4f,
     c: vec4f,
     d: vec4f,
+};
+
+struct VertexInput {
+    @location(0) position: vec2f,
+};
+
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) uv: vec2f,
 };
 
 @group(0) @binding(0)

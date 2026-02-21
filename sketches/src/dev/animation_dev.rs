@@ -3,8 +3,8 @@ use xtal::prelude::*;
 use crate::constants::{HD_HEIGHT, HD_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "basic",
-    display_name: "Basic",
+    name: "animation_dev",
+    display_name: "Animation Dev",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,

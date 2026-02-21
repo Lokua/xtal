@@ -2,8 +2,10 @@ use xtal::prelude::*;
 
 mod constants;
 mod core;
+mod dev;
 mod templates;
 use core::*;
+use dev::*;
 use templates::*;
 
 fn main() {
@@ -25,6 +27,13 @@ fn main() {
                 multipass,
                 compute,
                 image,
+            ]
+        },
+        {
+            title: "Dev",
+            enabled: true,
+            sketches: [
+                animation_dev,
             ]
         },
     }
