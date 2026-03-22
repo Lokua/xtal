@@ -35,6 +35,8 @@ const EDGE_BREAKUP_STRENGTH: f32 = 0.09;
 const MIN_VISIBLE_ALPHA: f32 = 0.004;
 const PAPER_TINT: f32 = 0.0;
 const GRAIN_STRENGTH: f32 = 0.06;
+const SLOT_PHASE_STEPS: f32 = 16.0;
+const BLOT_DECAY_GAMMA: f32 = 2.2;
 
 struct VertexInput {
     @location(0) position: vec2f,
@@ -46,7 +48,7 @@ struct VertexOutput {
 }
 
 struct Params {
-    // w, h, beats, time_scale
+    // w, h, beats, unused
     a: vec4f,
     // shape_anomaly, spread_anomaly, base_radius, zoom
     b: vec4f,
@@ -54,11 +56,11 @@ struct Params {
     c: vec4f,
     // variance_strength, texture_strength, halo_strength, hue
     d: vec4f,
-    // hue_spread, blot_count, blot_rate, blot_fade
+    // hue_spread, blot_count, blot_beats, blot_fade
     e: vec4f,
     // blot_spread, envelope_size, envelope_softness, envelope_noise
     f: vec4f,
-    // blot_darken, blot_contrast, fast_mode, unused
+    // blot_darken, blot_contrast, fast_mode, sequencer_timing
     g: vec4f,
 }
 
@@ -78,36 +80,35 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let w = params.a.x;
     let h = params.a.y;
     let beats = params.a.z;
-    let time_scale = max(params.a.w, 0.0);
-    let time = beats * time_scale;
 
     let shape_anomaly = params.b.x;
     let spread_anomaly = params.b.y;
-    let base_radius = max(params.b.z, 0.02);
-    let zoom = max(params.b.w, 0.05);
+    let base_radius = params.b.z;
+    let zoom = params.b.w;
 
-    let base_deform = max(params.c.x, 0.0);
-    let detail_deform = max(params.c.y, 0.0);
-    let layer_count = clamp(i32(params.c.z), 1, MAX_LAYERS);
-    let layer_alpha = clamp(params.c.w, 0.0, 1.0);
+    let base_deform = params.c.x;
+    let detail_deform = params.c.y;
+    let layer_count = i32(params.c.z);
+    let layer_alpha = params.c.w;
 
-    let variance_strength = clamp(params.d.x, 0.0, 1.0);
-    let texture_strength = clamp(params.d.y, 0.0, 1.0);
-    let halo_strength = clamp(params.d.z, 0.0, 1.0);
+    let variance_strength = params.d.x;
+    let texture_strength = params.d.y;
+    let halo_strength = params.d.z;
     let hue = fract(params.d.w);
 
     let hue_spread = params.e.x;
-    let blot_count = clamp(i32(params.e.y), 1, MAX_DROPS);
-    let blot_rate = max(params.e.z, 0.01);
+    let blot_count = i32(params.e.y);
+    let blot_beats = params.e.z;
     let blot_fade = params.e.w;
 
     let blot_spread = params.f.x;
-    let envelope_size = max(params.f.y, 0.05);
-    let envelope_softness = max(params.f.z, 0.001);
+    let envelope_size = params.f.y;
+    let envelope_softness = params.f.z;
     let envelope_noise_strength = params.f.w;
     let blot_darken = params.g.x;
     let blot_contrast = params.g.y;
     let fast_mode = params.g.z > 0.5;
+    let sequencer_timing = params.g.w > 0.5;
 
     let warm_paper = vec3f(0.985, 0.973, 0.952);
     let cool_paper = vec3f(0.95, 0.957, 0.985);
@@ -148,12 +149,35 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
         let drop_f = f32(drop);
         let slot_seed = drop_f * 53.17 + 29.1;
-        let slot_clock = time * blot_rate + hash11(slot_seed * 0.37) * 11.0;
-        let cycle = floor(slot_clock);
-        let phase = fract(slot_clock);
-        let fade_in = smoothstep(0.0, 0.12, phase);
-        let fade_out = 1.0 - smoothstep(blot_fade, 1.0, phase);
-        let drop_life = fade_in * fade_out;
+        // Sequencer model:
+        // - one trigger every `blot_beats`
+        // - slots advance 0,1,2,... so only one new blot lands per trigger
+        // - each slot remains visible for multiple triggers (overlap tail)
+        let trigger_steps = beats / blot_beats;
+        let slot_count = max(f32(rendered_drops), 1.0);
+        let slot_phase_raw = hash11(slot_seed * 0.37);
+        let slot_phase = floor(slot_phase_raw * SLOT_PHASE_STEPS)
+            / SLOT_PHASE_STEPS;
+        let slot_progress = select(
+            trigger_steps + slot_phase,
+            (trigger_steps - drop_f) / slot_count,
+            sequencer_timing,
+        );
+        let cycle = floor(slot_progress);
+        let steps_since_trigger = select(
+            fract(slot_progress),
+            fract(slot_progress) * slot_count,
+            sequencer_timing,
+        );
+        let slot_started = select(true, trigger_steps >= drop_f, sequencer_timing);
+        let age_beats = steps_since_trigger * blot_beats;
+        let life_beats = max(
+            blot_beats * 0.25,
+            mix(blot_beats * 0.75, blot_beats * 4.0, blot_fade),
+        );
+        let life_phase = clamp(age_beats / life_beats, 0.0, 1.0);
+        let drop_life_curved = 1.0 - pow(life_phase, BLOT_DECAY_GAMMA);
+        let drop_life = select(0.0, drop_life_curved, slot_started);
         if drop_life <= 0.0001 {
             continue;
         }

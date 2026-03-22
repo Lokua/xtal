@@ -3,28 +3,23 @@
   "ui_controls": [
     {
       "type": "Slider",
-      "name": "time_scale",
-      "value": 0.125
-    },
-    {
-      "type": "Slider",
       "name": "shape_anomaly",
-      "value": 0.53
+      "value": 1.5
     },
     {
       "type": "Slider",
       "name": "spread_anomaly",
-      "value": 1.84
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "base_radius",
-      "value": 0.32
+      "value": 0.19
     },
     {
       "type": "Slider",
       "name": "zoom",
-      "value": 0.6
+      "value": 0.95
     },
     {
       "type": "Slider",
@@ -34,42 +29,47 @@
     {
       "type": "Slider",
       "name": "detail_deform",
-      "value": 0.172
+      "value": 0.2
     },
     {
       "type": "Slider",
       "name": "layer_count",
-      "value": 22.0
+      "value": 56.0
     },
     {
       "type": "Slider",
       "name": "layer_alpha",
-      "value": 0.169
+      "value": 0.221
     },
     {
       "type": "Slider",
       "name": "variance_strength",
-      "value": 0.89
+      "value": 0.31
     },
     {
       "type": "Slider",
       "name": "texture_strength",
-      "value": 0.0
+      "value": 0.13
     },
     {
       "type": "Slider",
       "name": "halo_strength",
-      "value": 1.0
+      "value": 0.15
     },
     {
       "type": "Slider",
       "name": "hue",
-      "value": 1.0
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "hue_spread",
-      "value": 0.126
+      "value": 1.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "sequencer_timing",
+      "value": true
     },
     {
       "type": "Slider",
@@ -78,28 +78,28 @@
     },
     {
       "type": "Slider",
-      "name": "blot_rate",
-      "value": 0.625
+      "name": "blot_beats",
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "blot_fade",
-      "value": 0.2
+      "value": 2.0
     },
     {
       "type": "Slider",
       "name": "blot_spread",
-      "value": 0.78
+      "value": 0.98
     },
     {
       "type": "Slider",
       "name": "envelope_size",
-      "value": 2.28
+      "value": 2.26
     },
     {
       "type": "Slider",
       "name": "envelope_softness",
-      "value": 0.02
+      "value": 0.13
     },
     {
       "type": "Slider",
@@ -109,7 +109,7 @@
     {
       "type": "Slider",
       "name": "blot_darken",
-      "value": 0.03
+      "value": 0.8
     },
     {
       "type": "Slider",
@@ -125,32 +125,42 @@
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "6": {
+    "3": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "envelope_noise",
-          "value": 0.25
+          "name": "variance_strength",
+          "value": 0.31
         },
         {
           "type": "Slider",
-          "name": "envelope_size",
-          "value": 2.28
+          "name": "texture_strength",
+          "value": 0.13
         },
         {
           "type": "Slider",
-          "name": "base_deform",
-          "value": 0.35
+          "name": "base_radius",
+          "value": 0.19
+        },
+        {
+          "type": "Slider",
+          "name": "layer_count",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.95
         },
         {
           "type": "Slider",
           "name": "blot_darken",
-          "value": 0.03
+          "value": 0.8
         },
         {
           "type": "Slider",
-          "name": "spread_anomaly",
-          "value": 1.84
+          "name": "blot_beats",
+          "value": 2.0
         },
         {
           "type": "Checkbox",
@@ -159,143 +169,57 @@
         },
         {
           "type": "Slider",
-          "name": "shape_anomaly",
-          "value": 0.53
-        },
-        {
-          "type": "Slider",
-          "name": "time_scale",
-          "value": 0.125
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.6
-        },
-        {
-          "type": "Slider",
-          "name": "base_radius",
-          "value": 0.32
-        },
-        {
-          "type": "Slider",
-          "name": "hue",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "blot_contrast",
-          "value": 2.4
-        },
-        {
-          "type": "Slider",
-          "name": "blot_fade",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "texture_strength",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "envelope_softness",
-          "value": 0.02
-        },
-        {
-          "type": "Slider",
-          "name": "blot_rate",
-          "value": 0.625
-        },
-        {
-          "type": "Slider",
-          "name": "halo_strength",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "blot_spread",
-          "value": 0.78
-        },
-        {
-          "type": "Slider",
-          "name": "blot_count",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "detail_deform",
-          "value": 0.172
-        },
-        {
-          "type": "Slider",
-          "name": "variance_strength",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "layer_count",
-          "value": 22.0
-        },
-        {
-          "type": "Slider",
-          "name": "layer_alpha",
-          "value": 0.169
-        },
-        {
-          "type": "Slider",
-          "name": "hue_spread",
-          "value": 0.126
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "detail_deform",
-          "value": 0.172
-        },
-        {
-          "type": "Slider",
-          "name": "hue_spread",
-          "value": 0.126
-        },
-        {
-          "type": "Slider",
           "name": "spread_anomaly",
           "value": 2.0
         },
         {
           "type": "Slider",
-          "name": "time_scale",
-          "value": 0.125
+          "name": "shape_anomaly",
+          "value": 1.5
         },
         {
           "type": "Slider",
-          "name": "halo_strength",
+          "name": "hue_spread",
           "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "variance_strength",
-          "value": 0.88
-        },
-        {
-          "type": "Slider",
-          "name": "blot_spread",
-          "value": 0.78
         },
         {
           "type": "Slider",
           "name": "hue",
-          "value": 1.0
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_noise",
+          "value": 0.25
+        },
+        {
+          "type": "Checkbox",
+          "name": "sequencer_timing",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "blot_spread",
+          "value": 0.98
+        },
+        {
+          "type": "Slider",
+          "name": "layer_alpha",
+          "value": 0.221
         },
         {
           "type": "Slider",
           "name": "blot_fade",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "halo_strength",
+          "value": 0.15
+        },
+        {
+          "type": "Slider",
+          "name": "detail_deform",
           "value": 0.2
         },
         {
@@ -307,21 +231,6 @@
           "type": "Slider",
           "name": "blot_contrast",
           "value": 2.4
-        },
-        {
-          "type": "Slider",
-          "name": "layer_alpha",
-          "value": 0.169
-        },
-        {
-          "type": "Slider",
-          "name": "blot_rate",
-          "value": 0.625
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.6
         },
         {
           "type": "Slider",
@@ -330,28 +239,119 @@
         },
         {
           "type": "Slider",
-          "name": "shape_anomaly",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "blot_darken",
-          "value": 0.03
-        },
-        {
-          "type": "Slider",
-          "name": "base_radius",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "layer_count",
-          "value": 22.0
+          "name": "envelope_size",
+          "value": 2.26
         },
         {
           "type": "Slider",
           "name": "envelope_softness",
-          "value": 0.02
+          "value": 0.13
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "sequencer_timing",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "blot_fade",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "variance_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_spread",
+          "value": 1.33
+        },
+        {
+          "type": "Slider",
+          "name": "envelope_softness",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "base_deform",
+          "value": 0.338
+        },
+        {
+          "type": "Slider",
+          "name": "texture_strength",
+          "value": 0.09
+        },
+        {
+          "type": "Slider",
+          "name": "base_radius",
+          "value": 0.22
+        },
+        {
+          "type": "Slider",
+          "name": "hue_spread",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "shape_anomaly",
+          "value": 1.03
+        },
+        {
+          "type": "Slider",
+          "name": "layer_count",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_count",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "blot_darken",
+          "value": 0.1
+        },
+        {
+          "type": "Slider",
+          "name": "detail_deform",
+          "value": 0.166
+        },
+        {
+          "type": "Slider",
+          "name": "halo_strength",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "spread_anomaly",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "layer_alpha",
+          "value": 0.102
+        },
+        {
+          "type": "Slider",
+          "name": "blot_contrast",
+          "value": 2.25
         },
         {
           "type": "Slider",
@@ -361,123 +361,17 @@
         {
           "type": "Slider",
           "name": "envelope_size",
-          "value": 2.4
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "blot_count",
-          "value": 6.0
+          "value": 1.83
         },
         {
           "type": "Slider",
-          "name": "blot_rate",
-          "value": 2.02
+          "name": "blot_beats",
+          "value": 2.0
         },
         {
-          "type": "Slider",
-          "name": "envelope_noise",
-          "value": 0.185
-        },
-        {
-          "type": "Slider",
-          "name": "halo_strength",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "layer_count",
-          "value": 38.0
-        },
-        {
-          "type": "Slider",
-          "name": "variance_strength",
-          "value": 0.78999996
-        },
-        {
-          "type": "Slider",
-          "name": "detail_deform",
-          "value": 0.18
-        },
-        {
-          "type": "Slider",
-          "name": "envelope_softness",
-          "value": 0.089999996
-        },
-        {
-          "type": "Slider",
-          "name": "shape_anomaly",
-          "value": 1.7199999
-        },
-        {
-          "type": "Slider",
-          "name": "spread_anomaly",
-          "value": 1.13
-        },
-        {
-          "type": "Slider",
-          "name": "layer_alpha",
-          "value": 0.13100001
-        },
-        {
-          "type": "Slider",
-          "name": "base_radius",
-          "value": 0.35
-        },
-        {
-          "type": "Slider",
-          "name": "hue_spread",
-          "value": 0.472
-        },
-        {
-          "type": "Slider",
-          "name": "blot_darken",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "envelope_size",
-          "value": 1.67
-        },
-        {
-          "type": "Slider",
-          "name": "hue",
-          "value": 0.16600001
-        },
-        {
-          "type": "Slider",
-          "name": "blot_fade",
-          "value": 0.22999999
-        },
-        {
-          "type": "Slider",
-          "name": "blot_contrast",
-          "value": 2.4
-        },
-        {
-          "type": "Slider",
-          "name": "blot_spread",
-          "value": 0.12
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.91999996
-        },
-        {
-          "type": "Slider",
-          "name": "time_scale",
-          "value": 0.34
-        },
-        {
-          "type": "Slider",
-          "name": "base_deform",
-          "value": 0.19700001
+          "type": "Checkbox",
+          "name": "fast_mode",
+          "value": true
         }
       ],
       "midi_controls": [],
@@ -487,33 +381,23 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "hue",
-          "value": 1.0
+          "name": "halo_strength",
+          "value": 0.15
         },
         {
           "type": "Slider",
-          "name": "layer_count",
-          "value": 51.0
-        },
-        {
-          "type": "Slider",
-          "name": "envelope_softness",
-          "value": 0.8
-        },
-        {
-          "type": "Slider",
-          "name": "blot_spread",
-          "value": 1.22
+          "name": "detail_deform",
+          "value": 0.2
         },
         {
           "type": "Slider",
           "name": "layer_alpha",
-          "value": 0.18
+          "value": 0.221
         },
         {
           "type": "Slider",
-          "name": "zoom",
-          "value": 0.96999997
+          "name": "envelope_softness",
+          "value": 0.13
         },
         {
           "type": "Slider",
@@ -522,63 +406,48 @@
         },
         {
           "type": "Slider",
-          "name": "base_radius",
-          "value": 1.19
-        },
-        {
-          "type": "Slider",
-          "name": "blot_contrast",
-          "value": 2.1499999
-        },
-        {
-          "type": "Slider",
-          "name": "detail_deform",
-          "value": 0.120000005
-        },
-        {
-          "type": "Slider",
-          "name": "envelope_noise",
-          "value": 0.19999999
-        },
-        {
-          "type": "Slider",
-          "name": "base_deform",
-          "value": 0.148
-        },
-        {
-          "type": "Slider",
-          "name": "blot_fade",
-          "value": 0.24
-        },
-        {
-          "type": "Slider",
-          "name": "spread_anomaly",
-          "value": 2.0
+          "name": "zoom",
+          "value": 0.95
         },
         {
           "type": "Slider",
           "name": "variance_strength",
-          "value": 0.0
+          "value": 0.31
         },
         {
           "type": "Slider",
-          "name": "blot_darken",
-          "value": 0.65999997
+          "name": "blot_spread",
+          "value": 0.98
         },
         {
           "type": "Slider",
-          "name": "blot_rate",
-          "value": 0.5
+          "name": "blot_beats",
+          "value": 2.0
         },
         {
           "type": "Slider",
-          "name": "time_scale",
+          "name": "envelope_noise",
           "value": 0.25
         },
         {
           "type": "Slider",
-          "name": "blot_count",
-          "value": 7.0
+          "name": "layer_count",
+          "value": 56.0
+        },
+        {
+          "type": "Slider",
+          "name": "base_deform",
+          "value": 0.35
+        },
+        {
+          "type": "Checkbox",
+          "name": "fast_mode",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "blot_darken",
+          "value": 0.8
         },
         {
           "type": "Slider",
@@ -587,13 +456,48 @@
         },
         {
           "type": "Slider",
-          "name": "envelope_size",
+          "name": "blot_contrast",
           "value": 2.4
         },
         {
           "type": "Slider",
-          "name": "halo_strength",
-          "value": 1.0
+          "name": "envelope_size",
+          "value": 2.26
+        },
+        {
+          "type": "Slider",
+          "name": "spread_anomaly",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "texture_strength",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "blot_count",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "base_radius",
+          "value": 0.54
+        },
+        {
+          "type": "Checkbox",
+          "name": "sequencer_timing",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "blot_fade",
+          "value": 2.0
         }
       ],
       "midi_controls": [],
@@ -601,5 +505,12 @@
     }
   },
   "mappings": {},
-  "exclusions": []
+  "exclusions": [
+    "time_scale",
+    "blot_rate",
+    "envelope_size",
+    "envelope_softness",
+    "envelope_noise",
+    "fast_mode"
+  ]
 }
