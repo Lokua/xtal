@@ -1,5 +1,6 @@
 pub mod app;
 pub mod events;
+pub mod monitor_preview;
 pub mod recorder;
 pub mod recording;
 pub mod registry;

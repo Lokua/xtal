@@ -150,6 +150,7 @@ pub enum Event {
         midi_output_port: String,
         midi_input_ports: Vec<(usize, String)>,
         midi_output_ports: Vec<(usize, String)>,
+        monitor_preview_enabled: bool,
         osc_port: u16,
         sketches_by_category: SketchesByCategory,
         #[serde(default)]
@@ -182,6 +183,7 @@ pub enum Event {
 
     Mappings(Mappings),
     MappingsEnabled(bool),
+    MonitorPreview(bool),
     OpenOsDir(OsDir),
     Paused(bool),
     PerfMode(bool),
@@ -264,6 +266,9 @@ pub fn map_event_to_runtime_event(event: &Event) -> Option<RuntimeEvent> {
         }
         Event::MappingsEnabled(enabled) => {
             Some(RuntimeEvent::SetMappingsEnabled(*enabled))
+        }
+        Event::MonitorPreview(enabled) => {
+            Some(RuntimeEvent::SetMonitorPreview(*enabled))
         }
         Event::OpenOsDir(kind) => Some(RuntimeEvent::OpenOsDir(kind.clone())),
         Event::Paused(paused) => Some(RuntimeEvent::Pause(*paused)),
@@ -396,6 +401,13 @@ mod tests {
         assert_eq!(
             mappings_enabled,
             Some(RuntimeEvent::SetMappingsEnabled(false))
+        );
+
+        let monitor_preview =
+            map_event_to_runtime_event(&Event::MonitorPreview(true));
+        assert_eq!(
+            monitor_preview,
+            Some(RuntimeEvent::SetMonitorPreview(true))
         );
     }
 
@@ -614,6 +626,7 @@ mod tests {
             Event::TransitionTime(2.5),
             Event::Paused(true),
             Event::PerfMode(true),
+            Event::MonitorPreview(true),
             Event::MappingsEnabled(false),
             Event::Exclusions(vec!["foo".into()]),
             Event::UpdateControlBool {

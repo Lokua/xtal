@@ -52,6 +52,7 @@ type EventMap = {
     midiOutputPort: string
     midiInputPorts: [number, string][]
     midiOutputPorts: [number, string][]
+    monitorPreviewEnabled: boolean
     oscPort: number
     sketchesByCategory: Record<string, string[]>
     sketchName: string
@@ -74,6 +75,7 @@ type EventMap = {
   }
   Mappings: Mappings
   MappingsEnabled: boolean
+  MonitorPreview: boolean
   OpenOsDir: OsDir
   Paused: boolean
   PerfMode: boolean
@@ -201,6 +203,7 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [mappings, setMappings] = useState<Mappings>({})
   const [mappingsEnabled, setMappingsEnabled] = useState(true)
+  const [monitorPreviewEnabled, setMonitorPreviewEnabled] = useState(false)
   const [midiClockPort, setMidiClockPort] = useState('')
   const [midiInputPort, setMidiInputPort] = useState('')
   const [midiInputPorts, setMidiInputPorts] = useState<string[]>([])
@@ -280,6 +283,7 @@ export default function App() {
           const getPort = ([, port]: [number, string]) => port
           setMidiInputPorts(d.midiInputPorts.map(getPort))
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
+          setMonitorPreviewEnabled(d.monitorPreviewEnabled)
           setOscPort(d.oscPort)
           setUserDataDir(d.userDataDir)
           setSketchName(d.sketchName)
@@ -315,6 +319,10 @@ export default function App() {
         }
         case 'Mappings': {
           setMappings(data as EventMap['Mappings'])
+          break
+        }
+        case 'MonitorPreview': {
+          setMonitorPreviewEnabled(data as EventMap['MonitorPreview'])
           break
         }
         case 'ReceiveDir': {
@@ -567,6 +575,12 @@ export default function App() {
     post('TapTempoEnabled', enabled)
   }
 
+  function onChangeMonitorPreview() {
+    const enabled = !monitorPreviewEnabled
+    setMonitorPreviewEnabled(enabled)
+    post('MonitorPreview', enabled)
+  }
+
   function onChangeTransitionTime(time: number) {
     setTransitionTime(time)
     post('TransitionTime', time)
@@ -717,6 +731,7 @@ export default function App() {
         isEncoding={isEncoding}
         isQueued={isQueued}
         isRecording={isRecording}
+        monitorPreviewEnabled={monitorPreviewEnabled}
         paused={paused}
         perfMode={perfMode}
         showExclusions={showExclusions}
@@ -728,6 +743,7 @@ export default function App() {
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
+        onChangeMonitorPreview={onChangeMonitorPreview}
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}
         onChangeTransitionTime={onChangeTransitionTime}

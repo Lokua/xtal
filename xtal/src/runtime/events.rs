@@ -32,6 +32,7 @@ pub enum RuntimeEvent {
     SendMidi,
     SetHrcc(bool),
     SetMappingsEnabled(bool),
+    SetMonitorPreview(bool),
     SetPerfMode(bool),
     SetTransitionTime(f32),
     StartRecording,

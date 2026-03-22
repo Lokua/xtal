@@ -39,6 +39,13 @@ fn web_view_command_mapping_supports_perf_mode_and_window_events() {
         Some(RuntimeEvent::SetPerfMode(true))
     );
 
+    let monitor = web_view::parse_ui_message("{\"MonitorPreview\":true}")
+        .expect("parse monitor preview message");
+    assert_eq!(
+        web_view::map_event_to_runtime_event(&monitor),
+        Some(RuntimeEvent::SetMonitorPreview(true))
+    );
+
     let fullscreen = web_view::parse_ui_message("\"ToggleFullScreen\"")
         .expect("parse toggle fullscreen message");
     assert_eq!(
@@ -251,6 +258,7 @@ fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
         midi_output_port: String::new(),
         midi_input_ports: vec![],
         midi_output_ports: vec![],
+        monitor_preview_enabled: false,
         osc_port: 0,
         sketches_by_category,
         sketch_catalog: Some(vec![web_view::SketchCatalogCategory {
