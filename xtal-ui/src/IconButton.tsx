@@ -10,6 +10,7 @@ import Image from '@material-symbols/svg-400/outlined/image.svg?react'
 import Info from '@material-symbols/svg-400/outlined/info.svg?react'
 import Pause from '@material-symbols/svg-400/outlined/pause.svg?react'
 import Perf from '@material-symbols/svg-400/outlined/lock.svg?react'
+import Monitor from '@material-symbols/svg-400/outlined/picture_in_picture_alt.svg?react'
 import Play from '@material-symbols/svg-400/outlined/play_arrow.svg?react'
 import Queue from '@material-symbols/svg-400/outlined/timer_play.svg?react'
 import Queued from '@material-symbols/svg-400/outlined/timer_play.svg?react'
@@ -42,6 +43,7 @@ const icons = {
   Info,
   Pause,
   Perf,
+  Monitor,
   Play,
   Queue,
   Queued,

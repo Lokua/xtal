@@ -22,6 +22,7 @@ type HeaderProps = {
   isEncoding: boolean
   isQueued: boolean
   isRecording: boolean
+  monitorPreviewEnabled: boolean
   paused: boolean
   perfMode: boolean
   showExclusions: boolean
@@ -33,6 +34,7 @@ type HeaderProps = {
   view: View
   onAdvance: noop
   onCaptureFrame: noop
+  onChangeMonitorPreview: noop
   onChangePerfMode: noop
   onChangeTapTempoEnabled: noop
   onChangeTransitionTime: (transitionTime: TransitionTime) => void
@@ -56,6 +58,7 @@ export default function Header({
   isEncoding,
   isQueued,
   isRecording,
+  monitorPreviewEnabled,
   paused,
   perfMode,
   showExclusions,
@@ -67,6 +70,7 @@ export default function Header({
   view,
   onAdvance,
   onCaptureFrame,
+  onChangeMonitorPreview,
   onChangePerfMode,
   onChangeTapTempoEnabled,
   onChangeTransitionTime,
@@ -139,6 +143,13 @@ export default function Header({
         <VerticalSeparator />
 
         <IconButton data-help-id="Save" name="Save" onClick={onSave} />
+        <IconButton
+          data-help-id="Monitor"
+          name="Monitor"
+          isToggle
+          on={monitorPreviewEnabled}
+          onClick={onChangeMonitorPreview}
+        />
         <IconButton
           data-help-id="Settings"
           name="Settings"

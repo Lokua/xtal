@@ -21,6 +21,9 @@ use super::events::{
     RuntimeCommandReceiver, RuntimeCommandSender, RuntimeEvent,
     RuntimeEventSender, command_channel, event_channel,
 };
+use super::monitor_preview::{
+    MonitorPreview, RenderResult as MonitorRenderResult, preview_size_for_main,
+};
 use super::recording::{self, RecordingState};
 use super::registry::RuntimeRegistry;
 use super::serialization::{GlobalSettings, TransitorySketchState};
@@ -89,8 +92,12 @@ struct XtalRuntime {
     command_tx: RuntimeCommandSender,
     command_rx: RuntimeCommandReceiver,
     event_tx: Option<RuntimeEventSender>,
+    instance: Option<wgpu::Instance>,
+    adapter: Option<wgpu::Adapter>,
     window: Option<Arc<Window>>,
     window_id: Option<WindowId>,
+    monitor_preview: Option<MonitorPreview>,
+    monitor_preview_size_hint: Option<winit::dpi::PhysicalSize<u32>>,
     windowed_size_before_fullscreen: Option<winit::dpi::PhysicalSize<u32>>,
     surface: Option<wgpu::Surface<'static>>,
     surface_config: Option<wgpu::SurfaceConfiguration>,
@@ -198,8 +205,12 @@ impl XtalRuntime {
             command_tx,
             command_rx,
             event_tx,
+            instance: None,
+            adapter: None,
             window: None,
             window_id: None,
+            monitor_preview: None,
+            monitor_preview_size_hint: None,
             windowed_size_before_fullscreen: None,
             surface: None,
             surface_config: None,
@@ -732,6 +743,9 @@ impl XtalRuntime {
                 }
                 self.save_global_state();
             }
+            RuntimeEvent::SetMonitorPreview(enabled) => {
+                self.set_monitor_preview_enabled(event_loop, enabled);
+            }
             RuntimeEvent::SetPerfMode(perf_mode) => {
                 self.set_perf_mode(perf_mode);
             }
@@ -1011,6 +1025,7 @@ impl XtalRuntime {
             pending_png_capture_error,
             capture_device,
             capture_submission_index,
+            monitor_render_result,
         ) = {
             // 1) Resolve runtime resources for this frame.
             let Some(context) = self.context.as_mut() else {
@@ -1245,8 +1260,69 @@ impl XtalRuntime {
                 None
             };
 
+            let mut monitor_fallback_texture = None;
+            if self.monitor_preview.is_some()
+                && graph.recording_source_texture().is_none()
+            {
+                let (encoder, source_texture) =
+                    frame.encoder_and_output_texture();
+                let size = source_texture.size();
+                let fallback = context.device.create_texture(
+                    &wgpu::TextureDescriptor {
+                        label: Some("xtal-monitor-preview-fallback"),
+                        size: wgpu::Extent3d {
+                            width: size.width.max(1),
+                            height: size.height.max(1),
+                            depth_or_array_layers: 1,
+                        },
+                        mip_level_count: 1,
+                        sample_count: 1,
+                        dimension: wgpu::TextureDimension::D2,
+                        format: surface_config.format,
+                        usage: wgpu::TextureUsages::TEXTURE_BINDING
+                            | wgpu::TextureUsages::COPY_DST,
+                        view_formats: &[],
+                    },
+                );
+
+                encoder.copy_texture_to_texture(
+                    wgpu::TexelCopyTextureInfo {
+                        texture: source_texture,
+                        mip_level: 0,
+                        origin: wgpu::Origin3d::ZERO,
+                        aspect: wgpu::TextureAspect::All,
+                    },
+                    wgpu::TexelCopyTextureInfo {
+                        texture: &fallback,
+                        mip_level: 0,
+                        origin: wgpu::Origin3d::ZERO,
+                        aspect: wgpu::TextureAspect::All,
+                    },
+                    wgpu::Extent3d {
+                        width: size.width.max(1),
+                        height: size.height.max(1),
+                        depth_or_array_layers: 1,
+                    },
+                );
+                monitor_fallback_texture = Some(fallback);
+            }
+
             // 8) Submit all encoded GPU work once.
             let submission_index = frame.submit();
+
+            // 9) Mirror to optional monitor preview from the finalized graph
+            // source texture. Do not sample from surface output textures.
+            let monitor_render_result =
+                if let Some(preview) = self.monitor_preview.as_mut() {
+                    let source_texture = graph
+                        .recording_source_texture()
+                        .or(monitor_fallback_texture.as_ref());
+                    source_texture.map(|texture| {
+                        preview.render_if_due(context, texture, Instant::now())
+                    })
+                } else {
+                    None
+                };
 
             if self.recording_state.is_recording {
                 if let Some(recorder) = self.recording_state.recorder.as_mut() {
@@ -1254,7 +1330,7 @@ impl XtalRuntime {
                 }
             }
 
-            // 9) Advance local frame-time state after successful submit.
+            // 10) Advance local frame-time state after successful submits.
             context.next_frame();
 
             (
@@ -1262,10 +1338,18 @@ impl XtalRuntime {
                 pending_png_capture_error,
                 context.device.clone(),
                 submission_index,
+                monitor_render_result,
             )
         };
 
-        // 10) Post-submit host-side effects/events.
+        // 11) Post-submit host-side effects/events.
+        if matches!(monitor_render_result, Some(MonitorRenderResult::OutOfMemory))
+        {
+            error!("monitor preview surface out of memory; exiting");
+            self.shutdown(event_loop);
+            return;
+        }
+
         if let Some(message) = pending_png_capture_error {
             self.alert_and_log(message, log::Level::Error);
         }
@@ -1503,6 +1587,8 @@ impl XtalRuntime {
 
         self.window_id = Some(window.id());
         self.window = Some(window);
+        self.instance = Some(instance);
+        self.adapter = Some(adapter);
         self.surface = Some(surface);
         self.surface_config = Some(surface_config);
         self.context = Some(context);
@@ -2075,6 +2161,9 @@ impl XtalRuntime {
 
         surface.configure(context.device.as_ref(), surface_config);
         context.set_window_size([new_size.width, new_size.height]);
+        if let Some(preview) = self.monitor_preview.as_ref() {
+            self.monitor_preview_size_hint = Some(preview.window().inner_size());
+        }
     }
 
     // Internal runtime event emitter.
@@ -2140,6 +2229,7 @@ impl XtalRuntime {
             midi_output_port: self.midi_output_port.clone(),
             midi_input_ports: self.midi_input_ports.clone(),
             midi_output_ports: self.midi_output_ports.clone(),
+            monitor_preview_enabled: self.monitor_preview.is_some(),
             osc_port: self.osc_port,
             sketches_by_category: web_view::sketches_by_category(
                 &self.registry,
@@ -2260,7 +2350,6 @@ impl XtalRuntime {
                 ));
             }
         }
-
         self.rebuild_graph_state()?;
 
         info!(
@@ -2314,6 +2403,85 @@ impl XtalRuntime {
 
             window.request_redraw();
         }
+
+        if let Some(preview) = self.monitor_preview.as_ref() {
+            self.monitor_preview_size_hint = Some(preview.window().inner_size());
+        }
+    }
+
+    fn set_monitor_preview_enabled(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        enabled: bool,
+    ) {
+        if self.monitor_preview.is_some() == enabled {
+            return;
+        }
+
+        if enabled {
+            if let Err(err) = self.create_monitor_preview(event_loop) {
+                self.alert_and_log(
+                    format!("Failed to open monitor preview: {}", err),
+                    log::Level::Error,
+                );
+                self.emit_web_view_event(web_view::Event::MonitorPreview(
+                    false,
+                ));
+                return;
+            }
+            self.request_render_now();
+        } else {
+            if let Some(preview) = self.monitor_preview.as_ref() {
+                self.monitor_preview_size_hint = Some(preview.window().inner_size());
+            }
+            self.monitor_preview = None;
+        }
+
+        self.emit_web_view_event(web_view::Event::MonitorPreview(enabled));
+    }
+
+    fn create_monitor_preview(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+    ) -> Result<(), String> {
+        let Some(instance) = self.instance.as_ref() else {
+            return Err("wgpu instance is not initialized".to_string());
+        };
+        let Some(adapter) = self.adapter.as_ref() else {
+            return Err("wgpu adapter is not initialized".to_string());
+        };
+        let Some(context) = self.context.as_ref() else {
+            return Err("runtime context is not initialized".to_string());
+        };
+        let Some(surface_config) = self.surface_config.as_ref() else {
+            return Err("surface config is not initialized".to_string());
+        };
+
+        let initial_size = if self.perf_mode {
+            self.monitor_preview_size_hint.unwrap_or_else(|| {
+                preview_size_for_main(
+                    surface_config.width,
+                    surface_config.height,
+                )
+            })
+        } else {
+            preview_size_for_main(surface_config.width, surface_config.height)
+        };
+
+        let preview = MonitorPreview::create(
+            event_loop,
+            instance,
+            adapter,
+            context.device.as_ref(),
+            initial_size,
+        )?;
+
+        preview.window().focus_window();
+        preview.window().request_redraw();
+        self.monitor_preview_size_hint = Some(preview.window().inner_size());
+        self.monitor_preview = Some(preview);
+
+        Ok(())
     }
 
     // Sends a UI alert message.
@@ -2493,6 +2661,34 @@ impl ApplicationHandler for XtalRuntime {
         window_id: WindowId,
         event: WindowEvent,
     ) {
+        if self
+            .monitor_preview
+            .as_ref()
+            .is_some_and(|preview| preview.window_id() == window_id)
+        {
+            match event {
+                WindowEvent::CloseRequested => {
+                    self.set_monitor_preview_enabled(event_loop, false);
+                }
+                WindowEvent::Resized(new_size) => {
+                    let Some(context) = self.context.as_ref() else {
+                        return;
+                    };
+                    if let Some(preview) = self.monitor_preview.as_mut() {
+                        preview.on_window_resized(
+                            context.device.as_ref(),
+                            new_size,
+                        );
+                        self.monitor_preview_size_hint =
+                            Some(preview.window().inner_size());
+                    }
+                }
+                WindowEvent::RedrawRequested => {}
+                _ => {}
+            }
+            return;
+        }
+
         if self.window_id != Some(window_id) {
             return;
         }
