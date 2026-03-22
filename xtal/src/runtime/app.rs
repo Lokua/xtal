@@ -2232,14 +2232,20 @@ impl XtalRuntime {
     fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
         self.map_mode.stop();
 
+        let preserved_bpm = self.bpm.get();
         let (config, sketch) = instantiate_sketch(&self.registry, name)?;
 
         self.active_sketch_name = name.to_string();
         self.config = config;
         self.sketch = sketch;
         self.update_timing_mode_flags();
-        self.bpm.set(self.config.bpm);
-        self.tap_tempo = TapTempo::new(self.config.bpm);
+        let next_bpm = if self.tap_tempo_enabled {
+            preserved_bpm
+        } else {
+            self.config.bpm
+        };
+        self.bpm.set(next_bpm);
+        self.tap_tempo = TapTempo::new(next_bpm);
         frame_clock::set_fps(self.config.fps);
         frame_clock::reset_timing(Instant::now());
         self.apply_play_mode();
