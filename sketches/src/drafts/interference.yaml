@@ -1,0 +1,143 @@
+# ------------------------------------------------------------------------------
+#  Interference
+# ------------------------------------------------------------------------------
+
+wave1_frequency:
+  var: aw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.02
+  step: 0.001
+
+wave1_angle:
+  var: bx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.125
+
+wave1_amp:
+  var: bw
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.001
+
+wave1_phase:
+  var: cy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.0001
+
+wave1_phase_auto:
+  var: cz
+  type: random_slewed
+  beats: 2.0
+  range: [0.0, 1.0]
+  slew: 0.6
+
+animate_wave1_phase:
+  var: cx
+  type: checkbox
+  default: false
+
+wave1_y_influence:
+  var: cw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.001
+
+wave_2:
+  type: separator
+
+wave2_frequency:
+  var: by
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.02
+  step: 0.001
+
+wave2_angle:
+  var: bz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.125
+
+wave2_amp:
+  var: ex
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.001
+
+wave2_phase:
+  var: dy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.0001
+
+wave2_phase_auto:
+  var: dz
+  type: random_slewed
+  beats: 2.0
+  range: [0.0, 1.0]
+  slew: 0.6
+
+animate_wave2_phase:
+  var: dx
+  type: checkbox
+  default: false
+
+wave2_y_influence:
+  var: dw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.001
+
+shape:
+  type: separator
+
+checkerboard:
+  var: ey
+  type: checkbox
+  default: false
+
+type_mix:
+  var: ez
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.001
+
+curve_freq_x:
+  var: ew
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.3
+  step: 0.001
+
+curve_freq_y:
+  var: fx
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.3
+  step: 0.001
+
+wave_distort:
+  var: fy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.4
+  step: 0.001
+
+smoothing:
+  var: fz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.001

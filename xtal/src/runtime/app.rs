@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use chrono::Utc;
 use log::{debug, error, info, trace, warn};
 use nannou_osc as osc;
 use winit::application::ApplicationHandler;
@@ -128,6 +129,7 @@ struct XtalRuntime {
     images_dir: String,
     user_data_dir: String,
     videos_dir: String,
+    image_index: Option<storage::ImageIndex>,
     last_average_fps_emit: Instant,
     shutdown_signaled: bool,
     pending_png_capture_path: Option<PathBuf>,
@@ -193,6 +195,10 @@ impl XtalRuntime {
             global_settings.osc_port = DEFAULT_OSC_PORT;
         }
 
+        let image_index = storage::load_image_index(&global_settings.user_data_dir)
+            .inspect_err(|e| error!("Error in runtime init: {}", e))
+            .ok();
+
         let mut sketch_ui_state = HashMap::default();
         sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
 
@@ -241,6 +247,7 @@ impl XtalRuntime {
             images_dir: global_settings.images_dir,
             user_data_dir: global_settings.user_data_dir,
             videos_dir: global_settings.videos_dir,
+            image_index,
             last_average_fps_emit: Instant::now(),
             shutdown_signaled: false,
             pending_png_capture_path: None,
@@ -300,12 +307,25 @@ impl XtalRuntime {
 
                 let filename =
                     format!("{}-{}.png", self.active_sketch_name, uuid_5());
-                let file_path = PathBuf::from(&self.images_dir).join(filename);
+                let file_path = PathBuf::from(&self.images_dir).join(&filename);
                 self.pending_png_capture_path = Some(file_path);
                 self.render_requested = true;
 
                 if let Some(window) = self.window.as_ref() {
                     window.request_redraw();
+                }
+
+                if let Some(image_index) = &mut self.image_index {
+                    image_index.items.push(storage::ImageIndexItem {
+                        filename,
+                        created_at: Utc::now().to_rfc3339().to_string(),
+                    });
+                    if let Err(e) = storage::save_image_index(
+                        &self.user_data_dir,
+                        image_index,
+                    ) {
+                        error!("{}", e);
+                    }
                 }
             }
             RuntimeEvent::ChangeAudioDevice(name) => {
@@ -590,6 +610,20 @@ impl XtalRuntime {
                     web_view::UserDir::Images => self.images_dir = dir.clone(),
                     web_view::UserDir::UserData => {
                         self.user_data_dir = dir.clone();
+                        if let Some(image_index) = &self.image_index {
+                            if !storage::image_metadata_exists(&self.user_data_dir)
+                                && !image_index.items.is_empty()
+                            {
+                                storage::save_image_index(
+                                    &self.user_data_dir,
+                                    image_index,
+                                )
+                                .inspect_err(|e| {
+                                    error!("Error saving image index: {}", e)
+                                })
+                                .ok();
+                            }
+                        }
                     }
                     web_view::UserDir::Videos => self.videos_dir = dir.clone(),
                 }

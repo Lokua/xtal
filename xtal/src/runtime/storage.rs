@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::str;
 
 use directories_next::{BaseDirs, UserDirs};
+use serde::{Deserialize, Serialize};
 
 use super::serialization::{
     GlobalSettings, SerializableSketchState, TransitorySketchState,
@@ -136,4 +137,47 @@ pub fn load_sketch_state<'a>(
     let serialized = serde_json::from_str::<SerializableSketchState>(&json)?;
     state.merge(serialized);
     Ok(state)
+}
+
+// -----------------------------------------------------------------------------
+// Image Index
+// -----------------------------------------------------------------------------
+
+/// The image index is used because OSs and online services are really bad at
+/// maintaining the date_created field and this is important to me
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndex {
+    pub items: Vec<ImageIndexItem>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ImageIndexItem {
+    pub filename: String,
+    pub created_at: String,
+}
+
+fn image_index_path(user_data_dir: &str) -> PathBuf {
+    PathBuf::from(user_data_dir).join("images_metadata.json")
+}
+
+pub fn image_metadata_exists(user_data_dir: &str) -> bool {
+    image_index_path(user_data_dir)
+        .try_exists()
+        .unwrap_or(false)
+}
+
+pub fn load_image_index(user_data_dir: &str) -> Result<ImageIndex, Box<dyn Error>> {
+    let bytes = fs::read(image_index_path(user_data_dir))?;
+    let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
+    let image_index_file: ImageIndex = serde_json::from_str(&json)?;
+    Ok(image_index_file)
+}
+
+pub fn save_image_index(
+    user_data_dir: &str,
+    image_index: &ImageIndex,
+) -> Result<(), Box<dyn Error>> {
+    let json = serde_json::to_string_pretty(image_index)?;
+    fs::write(image_index_path(user_data_dir), json)?;
+    Ok(())
 }

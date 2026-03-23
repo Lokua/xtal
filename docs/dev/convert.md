@@ -23,20 +23,60 @@ Find the sketch triplet:
 - `<name>.yaml`
 - `<name>.wgsl`
 
-Typical source location in old repo:
+Decide two names up front:
 
-- `sketches/src/sketches/auto/`
+- `<source_name>`: source sketch base name as it exists now
+- `<target_name>`: destination sketch base name in this repo
+
+Examples:
+
+- `source_name=auto_flow`, `target_name=flow`
+- `source_name=blob`, `target_name=blob`
+
+If porting from `main` in this same repo (common flow for `v2`), use:
+
+```bash
+git ls-tree -r --name-only main | rg "<source_name>"
+```
+
+Typical `main` source locations:
+
+- `sketches/src/sketches/<folder>/<source_name>.{rs,yaml,wgsl}`
+- `sketches/src/sketches/<source_name>.{rs,yaml,wgsl}`
 
 ## 2. Copy assets into target module
 
 Copy YAML + WGSL into target location:
 
-- `sketches/src/core/<new_name>.yaml`
-- `sketches/src/core/<new_name>.wgsl`
+- `sketches/src/core/<target_name>.yaml`
+- `sketches/src/core/<target_name>.wgsl`
 
 Create/port Rust file:
 
-- `sketches/src/core/<new_name>.rs`
+- `sketches/src/core/<target_name>.rs`
+
+If source is `main`, copy using the resolved source path:
+
+```bash
+git show main:<source_path>/<source_name>.wgsl > sketches/src/core/<target_name>.wgsl
+git show main:<source_path>/<source_name>.yaml > sketches/src/core/<target_name>.yaml
+```
+
+Example `source_path` values:
+
+- `sketches/src/sketches/auto`
+- `sketches/src/sketches`
+- `sketches/src/sketches/<another_folder>`
+
+Copy any additional shader assets used by the sketch (for example
+`*_post.wgsl`, multipass shaders) into `sketches/src/core` and update Rust to
+reference them.
+
+Also copy controls preset when present:
+
+```bash
+git show main:sketches/storage/Controls/<source_name>_controls.json > sketches/storage/Controls/<target_name>_controls.json
+```
 
 ## 3. Adapt to this repo's sketch API
 
@@ -49,7 +89,7 @@ Preferred default for fullscreen shader sketches:
 use xtal::prelude::*;
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "<new_name>",
+    name: "<target_name>",
     display_name: "<Display Name>",
     play_mode: PlayMode::Loop,
     fps: 60.0,
@@ -66,6 +106,12 @@ pub fn init() -> FullscreenShaderSketch {
         .with_control_script(assets.yaml())
 }
 ```
+
+Notes:
+
+- Set `banks` to cover the highest bank used by shader/YAML (`a..h` => `8`).
+- If legacy sketch used feedback or multipass, port with explicit graph setup
+  instead of `FullscreenShaderSketch`.
 
 ## 4. Register module + sketch
 
@@ -144,7 +190,7 @@ cargo check -p sketches
 If runtime validation is needed:
 
 ```bash
-RUST_LOG=xtal=info,sketches=info cargo run --release <new_name>
+RUST_LOG=xtal=info,sketches=info cargo run --release <target_name>
 ```
 
 ## 9. Optional cleanup pass
@@ -155,8 +201,11 @@ After migration, do targeted naming cleanup if needed (for example `xtal2` ->
 ## Fast checklist
 
 - [ ] Copied `.rs/.yaml/.wgsl`
+- [ ] Copied any extra shader assets required by the sketch
+- [ ] Copied `storage/Controls/<target_name>_controls.json` when available
 - [ ] Renamed sketch (`name`, `display_name`, file names)
 - [ ] Converted to current sketch API
+- [ ] `banks` matches highest used bank
 - [ ] Registered in `core/mod.rs`
 - [ ] Added to registry in `main.rs`
 - [ ] Applied var naming conversion (`1..4` -> `x..w`) if requested

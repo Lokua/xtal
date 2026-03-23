@@ -3,9 +3,11 @@ use xtal::prelude::*;
 mod constants;
 mod core;
 mod dev;
+mod drafts;
 mod templates;
 use core::*;
 use dev::*;
+use drafts::*;
 use templates::*;
 
 fn main() {
@@ -37,14 +39,11 @@ fn main() {
             ]
         },
         {
-            title: "Templates",
+            title: "Drafts",
             enabled: true,
             sketches: [
-                basic,
-                feedback,
-                multipass,
-                compute,
-                image,
+                interference,
+                layers,
             ]
         },
         {
@@ -53,6 +52,17 @@ fn main() {
             sketches: [
                 animation_dev,
                 clock_dev,
+            ]
+        },
+        {
+            title: "Templates",
+            enabled: true,
+            sketches: [
+                basic,
+                feedback,
+                multipass,
+                compute,
+                image,
             ]
         },
     }
