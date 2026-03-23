@@ -1,0 +1,20 @@
+use xtal::prelude::*;
+
+use crate::constants::{HD_HEIGHT, HD_WIDTH};
+
+pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
+    name: "layers",
+    display_name: "Layers",
+    play_mode: PlayMode::Loop,
+    fps: 60.0,
+    bpm: 134.0,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
+    banks: 5,
+};
+
+pub fn init() -> FullscreenShaderSketch {
+    let assets = SketchAssets::from_file(file!());
+    FullscreenShaderSketch::new(assets.wgsl())
+        .with_control_script(assets.yaml())
+}

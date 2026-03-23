@@ -1,0 +1,111 @@
+# ------------------------------------------------------------------------------
+#  Layers
+# ------------------------------------------------------------------------------
+
+smooth_mix:
+  var: bx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+contrast:
+  var: aw
+  type: slider
+  range: [0.1, 5.0]
+  default: 1.5
+  step: 0.1
+
+g1:
+  var: dz
+  type: slider
+  range: [2.0, 32.0]
+  default: 2.0
+  step: 1.0
+
+g2:
+  var: dw
+  type: slider
+  range: [2.0, 32.0]
+  default: 4.0
+  step: 1.0
+
+g3:
+  var: ex
+  type: slider
+  range: [2.0, 32.0]
+  default: 8.0
+  step: 1.0
+
+post_mix:
+  var: bw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+time:
+  var: by
+  type: triangle
+  beats: 8.0
+  range: [0.0, 1.0]
+
+time_2:
+  var: bz
+  type: triangle
+  beats: 12.0
+  range: [0.0, 1.0]
+
+t1:
+  var: cx
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.0
+  slew: 0.8
+  stem: 887353
+
+t2:
+  var: cy
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.5
+  slew: 0.8
+  stem: 9886262
+
+t3:
+  var: cz
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.1
+  slew: 0.8
+  stem: 3907823
+
+r1:
+  var: cw
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.0
+  slew: 0.8
+  stem: 2837461
+
+r2:
+  var: dx
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.5
+  slew: 0.8
+  stem: 12383
+
+r3:
+  var: dy
+  type: random_slewed
+  beats: 8.0
+  range: [0.0, 1.0]
+  delay: 0.1
+  slew: 0.8
+  stem: 12344

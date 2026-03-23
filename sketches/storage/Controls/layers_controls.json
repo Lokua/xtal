@@ -1,0 +1,40 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "contrast",
+      "value": 2.3
+    },
+    {
+      "type": "Slider",
+      "name": "g3",
+      "value": 8.0
+    },
+    {
+      "type": "Slider",
+      "name": "g1",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "post_mix",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "smooth_mix",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "g2",
+      "value": 4.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

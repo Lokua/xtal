@@ -45,20 +45,13 @@
 
 # General
 
-Xtal provides various interfaces for controlling parameters including `Controls`
-for UI (sliders, checkboxes, and selects), `MidiControls` and `OscControls` for
-controlling parameters from an external source, `AudioControls` for controlling
-parameters with audio or CV, and a comprehensive `Animation` module that can
-tween or generate random values and ramp to/from them at musical intervals.
-While these parameters are simple to setup, it's a bit of pain to have to
-restart the rust sketch every time you want to change an animation or control
-configuration. For this reason Xtal provides a scripting mechanism via the
-`ControlHub` struct that uses yaml for configuration and adds these controls
-dynamically and _self-updates at runtime when the yaml file is changed_, quite
-similar to live coding. You still have to take care to setup the routings in
-your sketch (e.g. `let radius = model.hub.get("radius")`), but once these
-routings are in place you are free to edit their ranges, values, timing, etc.
-Here's an example that covers the overall capabilities:
+Xtal provides several YAML-driven control types: UI controls (sliders,
+checkboxes, selects), external controls (MIDI/OSC/audio), animations, and
+modulation/effects routing. The control script reloads at runtime when the YAML
+file changes.
+
+This reference is intentionally YAML-first for v2 and documents mapping
+behavior only. Here's an example that covers the overall capabilities:
 
 ```yaml
 radius:
@@ -129,42 +122,6 @@ imagination_mod:
     - imagination_folder
 ```
 
-In your sketch, the above controls can be accessed as follows:
-
-```rust
-use crate::framework::prelude::*;
-
-#[derive(SketchComponents)]
-pub struct Model {
-    // must be called "hub" or "controls"
-    hub: ControlHub<Timing>,
-}
-
-pub fn init(_app: &App, ctx: &XtalContext) -> Model {
-    let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "controls.yaml"),
-        Timing::new(ctx.bpm()),
-    );
-
-    Model { hub }
-}
-
-impl Sketch for Model {
-    fn update(&mut self, _app: &App, _update: Update, _ctx: &XtalContext) {
-        // ...
-    }
-
-    fn view(app: &App, m: &Model, frame: Frame, ctx: &XtalContext) {
-        let draw = app.draw();
-
-        let radius = m.controls.get("radius");
-        let pos_x = m.controls.get("pos_x");
-
-        // ...
-    }
-}
-```
-
 The above example contains a bunch of YAML objects that we will refer to
 henceforth as _mappings_. All mappings in general are 1:1 mappings to their Rust
 structs. Some notes about mappings to keep in mind:
@@ -172,10 +129,9 @@ structs. Some notes about mappings to keep in mind:
 - All mappings require a `type` e.g. `slider`, `osc` or `automate`.
 - Most, but not all, parameters can be omitted from a mapping except in cases
   where it makes no logical sense to omit them
-- All mappings except UI controls support a `bypass` field. When this field is a
-  number, that number will be used as a static value. This is useful for pausing
-  animations or muting OSC streams. Any other value besides a number can be used
-  to bypass the bypass.
+- Most non-UI mappings support a `bypass` field. `bypass` is numeric-only in
+  v2. If it is a number, that number is used as a static override. Non-numeric
+  `bypass` values are treated as unset.
 - All controls support an optional `var` field. This is very useful for
   pre-loading shader uniforms before you know what the actual role or name of a
   control will be. See the [Using `var` section](#using-var).
@@ -194,8 +150,8 @@ All UI controls are added to the UI in the order they are declared.
 
 - `type` - `slider`
 - `range` - defaults to `[0.0, 1.0]`
-- `default` - defaults to `0.5`
-- `step` - defaults to `1.0`
+- `default` - defaults to `0.0`
+- `step` - defaults to `0.0001`
 
 **Example**
 
@@ -203,8 +159,23 @@ All UI controls are added to the UI in the order they are declared.
 slider_example:
   type: slider
   range: [0.0, 1.0]
-  default: 0.5
-  step: 1.0
+  default: 0.0
+  step: 0.0001
+```
+
+## Separator
+
+Use this for visual grouping in the UI.
+
+**Params**
+
+- `type` - `separator`
+
+**Example**
+
+```yaml
+group_divider:
+  type: separator
 ```
 
 ## Checkbox
@@ -323,22 +294,8 @@ origin_offset:
   disabled: origin is center
 ```
 
-Note this feature only disables the controls in the UI as a UX nicety - it is
-still on you to make use of this in code. The code for the first example might
-look like this:
-
-```rust
-let phase = if hub.bool("animate_phase") {
-  hub.get("phase_animation");
-} else {
-  hub.get("phase");
-};
-
-// Since the above pattern is so common, hub provides a helper to
-// make this a bit more readable:
-
-let phase = hub.select("animate_phase", "phase_animation", "phase");
-```
+Note this feature controls UI interactivity only. It does not change mapping
+definitions themselves.
 
 # OSC
 
@@ -353,7 +310,7 @@ name (`osc_example` in the example below - forward slash is handled internally).
 - `type` - `osc`
 - `range` - defaults to `[0.0, 1.0]`
 - `default` - a default to use in the case an OSC message hasn't arrived at
-  address since the program start. Defaults to `0.5`
+  address since the program start. Defaults to `0.0`
 
 **Example**
 
@@ -361,7 +318,7 @@ name (`osc_example` in the example below - forward slash is handled internally).
 osc_example:
   type: osc
   range: [0.0, 1.0]
-  default: 0.5
+  default: 0.0
 ```
 
 # MIDI
@@ -406,6 +363,7 @@ automation/modulation.
 - `detect` - Linearly mix between 0=peak detection and 1=RMS peak detection.
   Peak is snappier, RMS is smoother but limits amplitude more. Defaults to
   `0.0`.
+- `pre` - pre-emphasis amount. Defaults to `0.0`.
 - `range` - defaults to `[0.0, 1.0]`
 
 **Example**
@@ -416,6 +374,7 @@ animation_example:
   channel: 0
   slew: [0.3, 0.9]
   detect: 0.0
+  pre: 0.0
   range: [0.0, 100.0]
 ```
 
@@ -423,7 +382,8 @@ animation_example:
 
 ## ramp
 
-An that linearly ramps from min to max over the specified number of beats.
+Animation that linearly ramps from min to max over the specified number of
+beats.
 
 **Params**
 
@@ -789,19 +749,16 @@ running.
 ## Mod
 
 Takes any declared control as a source and modifies its output using one or more
-modulators. A modulator can be an [effect](#effects), [animation](#animation),
-or the output of a [slider](#slider) (TODO: validate if Osc/Midi/Audio can be
-modulators).
+modulators. A modulator can be an [effect](#effects) or any mapping that
+evaluates to a float (UI, MIDI, OSC, audio, or animation).
 
-`mod` mutates the value of its `source` mapping at runtime. In sketches, read
-the `source` name with `hub.get("source_name")`. Do not read the name of the
-`mod` mapping itself.
+`mod` mutates the value of its `source` mapping at runtime.
 
 **Params**
 
 - `type` - `mod`
 - `source` - name of the control to modulate
-- `modulators` - list of effect names to apply to the source
+- `modulators` - list of modulator mapping names to apply to the source
 
 **Example**
 
@@ -815,38 +772,6 @@ mod_example:
     - some_slider
 ```
 
-**DO**
-
-```yaml
-curve_input:
-  type: random_slewed
-  range: [0.0, 1.0]
-
-curve_fx:
-  type: effect
-  kind: math
-  operator: curve
-  operand: $curve_amount
-
-curve_route:
-  type: mod
-  source: curve_input
-  modulators:
-    - curve_fx
-```
-
-```rust
-// Correct: read the source. `mod` has already mutated this value.
-let v = self.hub.get("curve_input");
-```
-
-**DO NOT**
-
-```rust
-// Incorrect: `curve_route` is a routing declaration, not the value to read.
-let v = self.hub.get("curve_route");
-```
-
 # Effects
 
 Effects can only be used as modulators within a `mod` configuration and cannot
@@ -854,9 +779,7 @@ be used as sources. A single effect can be used more than once, for example you
 might have several animations that use stepped randomness and may want to smooth
 them all out with a single slew_limiter.
 
-Effects follow the same access rule as `mod`: they are processing steps in a
-route, not values to read directly from sketches. Read the `mod` source mapping
-with `hub.get("source_name")`, not the `effect` mapping name.
+Effects are processing steps used by `mod` routes.
 
 ## constrain
 
@@ -944,9 +867,9 @@ Basic addition or multiplication
 
 - `type` - `effect`
 - `kind` - `math`
-- `operator` - `add`, `mult`, or `curve`. Defaults to `add`
-- `operand` - the number to add or multiply with the input or the shape of the
-  curve to apply. Defaults to `1.0`
+- `operator` - required; one of `add`, `mult`, or `curve`
+- `operand` - required; the number to add/multiply, or the shape of the curve
+  to apply
 
 When `operator` is `curve` this functions as an exponential easing function that
 expects the input to be in range of [0.0, 1.0]. A curve of 0.0 produces linear
@@ -1224,121 +1147,35 @@ active control state remains in effect.
 
 # Using `var`
 
+`var` provides an alternate alias for a mapping name.
+
 ```yaml
 radius:
-  var: a1
+  var: ax
   type: slider
 ```
 
-In your sketch this control will be accessed via `m.controls.get("a1")`. This is
-especially useful for sketches that primarily rely on shaders - since like
-control scripts - shaders in Xtal support live reloading. Often creative coding
-is an experimental process and you may not know what controls you'll need up
-front and it's a huge pain to have to restart the Rust program every time you
-want to change a variable name or add a new one. To work around this, you can
-setup "banks":
+In v2, use `ax`, `ay`, `az`, `aw` for A-bank aliases.
 
-```rust
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct ShaderParams {
-    // Add a bunch of 4 member arrays that will be unpacked in your shader
-    a: [f32; 4],
-    b: [f32; 4],
-    c: [f32; 4],
-    d: [f32; 4],
-    e: [f32; 4],
-    f: [f32; 4],
-}
+```yaml
+radius:
+  type: slider
+  var: ax
 
-pub fn init(app: &App, ctx: &Context) -> Model {
-    let hub = ControlHub::from_path(
-        to_absolute_path(file!(), "example.yaml"),
-        Timing::new(ctx.bpm()),
-    );
+pos_x:
+  type: slider
+  var: ay
 
-    // No point in initializing this to anything other than zero
-    // as they will just get overwritten in the update function
-    let params = ShaderParams {
-        a: [0.0; 4],
-        b: [0.0; 4],
-        c: [0.0; 4],
-        d: [0.0; 4],
-        e: [0.0; 4],
-        f: [0.0; 4],
-    };
+pos_y:
+  type: slider
+  var: az
 
-    let shader = gpu::GpuState::new_fullscreen(
-        app,
-        wr.resolution_u32(),
-        to_absolute_path(file!(), "example.wgsl"),
-        &params,
-        0,
-        true,
-    );
-
-    Model { hub, wr, shader }
-}
-
-impl Sketch for Model {
-    fn update(&mut self, app: &App, _update: Update, _ctx. &XtalContext) {
-        let params = ShaderParams {
-            a: [
-                // Allows us to use `var: a1` in our script
-                // while still showing a friendly name in the UI
-                m.controls.get("a1"),
-                m.controls.get("a2"),
-                m.controls.get("a3"),
-                m.controls.get("a4"),
-            ],
-            b: [
-                m.controls.get("b1"),
-                m.controls.get("b2"),
-                m.controls.get("b3"),
-                m.controls.get("b4"),
-            ],
-            c: [
-                m.controls.get("c1"),
-                m.controls.get("c2"),
-                m.controls.get("c3"),
-                m.controls.get("c4"),
-            ],
-            // ...
-        };
-
-        self.shader.update_params(
-          app,
-          ctx.window_rect().resolution_u32(),
-          &params
-        );
-    }
-
-  // ...
-}
+intensity:
+  type: slider
+  var: aw
 ```
 
-Then in your shader:
+Legacy numeric aliases such as `a1`..`a4` may still exist in older files, but
+new v2 mappings should use `ax`..`aw`.
 
-```wgsl
-struct Params {
-    a: vec4f,
-    b: vec4f,
-    // ...
-
-@fragment
-fn fs_main(vout: VertexOutput) -> @location(0) vec4f {
-    let radius = params.a.x;
-    let pos_x = params.a.y;
-    // etc.
-```
-
-The above is admittedly a decent amount of boilerplate, but with this setup you
-are now free to live code in your script and shaders for hours uninterrupted
-without having to stop, recompile, wait... it's worth it.
-
-> NEW! Xtal now comes with a `uniforms` procedural macro to make all of the
-> above unnecessary. See [dynamic_uniforms.rs][dyn-uni-example] for an example.
-
-[easings]: ../xtal/src/framework/motion/easing.rs
-[dyn-uni-example]:
-  https://github.com/Lokua/xtal/blob/main/sketches/src/sketches/dynamic_uniforms.rs
+[easings]: ../xtal/src/motion/easing.rs
