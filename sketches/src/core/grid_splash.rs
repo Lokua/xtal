@@ -5,8 +5,8 @@ use xtal::prelude::*;
 use crate::constants::{HD_HEIGHT, HD_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "grid_splash_bw",
-    display_name: "Grid Splash B&W",
+    name: "grid_splash",
+    display_name: "Grid Splash",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
@@ -15,12 +15,12 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     banks: 10,
 };
 
-pub struct GridSplashBwSketch {
+pub struct GridSplashSketch {
     shader_path: PathBuf,
     control_script_path: PathBuf,
 }
 
-impl Sketch for GridSplashBwSketch {
+impl Sketch for GridSplashSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
         let (ping, pong) = graph.feedback();
@@ -49,10 +49,10 @@ impl Sketch for GridSplashBwSketch {
     }
 }
 
-pub fn init() -> GridSplashBwSketch {
+pub fn init() -> GridSplashSketch {
     let assets = SketchAssets::from_file(file!());
 
-    GridSplashBwSketch {
+    GridSplashSketch {
         shader_path: assets.wgsl(),
         control_script_path: assets.yaml(),
     }

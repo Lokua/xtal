@@ -429,6 +429,7 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VsOut {
 
 @fragment
 fn fs_main(in: VsOut) -> @location(0) vec4f {
-    return textureSample(tex, tex_sampler, in.uv);
+    let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+    return textureSample(tex, tex_sampler, uv);
 }
 "#;

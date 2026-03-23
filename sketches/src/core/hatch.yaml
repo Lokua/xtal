@@ -1,0 +1,202 @@
+# ------------------------------------------------------------------------------
+#  scene
+# ------------------------------------------------------------------------------
+
+shading_mode:
+  var: gx
+  type: select
+  default: full
+  options:
+    - full
+    - balanced
+    - fast
+    - graphic
+
+internal_resolution:
+  var: fw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+rot_speed:
+  var: by
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.3
+  step: 0.01
+
+# cam_z:
+#   var: bz
+#   type: slider
+#   range: [-6.0, -1.5]
+#   default: -3.0
+#   step: 0.01
+
+cam_z:
+  var: bz
+  type: random_slewed
+  beats: 7
+  range: [-3, -1]
+  slew: 0.7
+  bias: -0.25
+
+light_angle:
+  var: bw
+  type: slider
+  range: [0.0, 6.283]
+  default: 0.8
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  shading_and_color
+# ------------------------------------------------------------------------------
+
+shading_and_color:
+  type: separator
+
+include_ao:
+  var: ex
+  type: checkbox
+  default: false
+
+invert:
+  var: ey
+  type: checkbox
+  default: false
+
+tint:
+  var: dx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+hue:
+  var: dy
+  type: ramp
+  beats: 128
+  range: [0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+#  morph
+# ------------------------------------------------------------------------------
+
+morphing:
+  type: separator
+
+morph:
+  var: bx
+  type: round_robin
+  # bypass: 1
+  beats: 4
+  values: [0, 1, 0.7, 0.8, 0.5, 0, 0, 0.9, 0.7, 0.9, 0]
+  slew: 0.7
+
+limb_rotation_rate:
+  var: fy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.25
+  step: 0.025
+
+# > 8.0 starts to place them all on one side
+limb_rotation_range:
+  var: fz
+  type: random_slewed
+  beats: 11
+  range: [0.0, 10.0]
+  slew: 0.7
+  bias: -0.33
+
+arm_layout:
+  var: fx
+  type: round_robin
+  beats: 1
+  # prettier-ignore
+  range: [
+    0,0,0,0,  2,2,2,2,  0,0,0,0,  0,0,0,0,
+    2,0,0,3,  0,4,0,12,  5,0,3,0
+  ]
+  default: 0.0
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  hatching
+# ------------------------------------------------------------------------------
+
+hatching:
+  type: separator
+
+hatch_density:
+  var: cx
+  type: slider
+  range: [1, 10]
+  default: 1
+  step: 1
+
+hatch_layers:
+  var: cy
+  type: slider
+  range: [1.0, 8.0]
+  default: 5.0
+  step: 1.0
+
+hatch_strength:
+  var: cz
+  type: slider
+  range: [0.0, 4]
+  default: 0.7
+  step: 0.01
+
+hatch_angle_spread:
+  var: cw
+  type: slider
+  range: [0.01, 0.3]
+  default: 0.08
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  background
+# ------------------------------------------------------------------------------
+
+background:
+  type: separator
+
+paper_grain:
+  var: dz
+  type: slider
+  range: [0.0, 1]
+  default: 0.06
+  step: 0.001
+
+brightness:
+  var: dw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.7
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  noise
+# ------------------------------------------------------------------------------
+
+surface_noise:
+  type: separator
+
+noise_amp:
+  var: ez
+  type: random_slewed
+  # bypass: 0.3
+  beats: 16
+  range: [0.0, 0.25]
+  slew: 0.7
+
+noise_freq:
+  var: ew
+  type: random_slewed
+  # bypass: 8
+  beats: 12
+  range: [1.0, 7.0]
+  slew: 0.7
+  # bias: 0.25

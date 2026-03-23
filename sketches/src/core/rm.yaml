@@ -1,0 +1,207 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+a1:
+  var: cz
+  type: triangle
+  beats: 8
+
+a2:
+  var: cw
+  type: triangle
+  beats: 12
+
+a3:
+  var: dx
+  type: triangle
+  beats: 20
+
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+cam_z:
+  var: hy
+  type: random_slewed
+  beats: 11
+  range: [-5, 0]
+  slew: 0.8
+  stem: 99
+
+radius:
+  var: bx
+  type: random_slewed
+  beats: 7
+  range: [2.5, 3.0]
+  slew: 0.6
+  stem: 1
+
+warp_amt:
+  var: cx
+  type: random_slewed
+  beats: 5
+  range: [0, 0.7]
+  slew: 0.6
+  stem: 0
+
+disp_freq:
+  var: by
+  type: triangle
+  range: [0, 3]
+  beats: 24
+
+map_mode:
+  var: aw
+  type: select
+  default: default
+  options:
+    - default
+    - max
+    - smax
+
+softness:
+  var: cy
+  type: random_slewed
+  beats: 9
+  slew: 0.7
+  stem: 45
+  disabled: map_mode is not smax
+
+segment:
+  var: gy
+  type: checkbox
+
+segment_size:
+  var: gz
+  type: random_slewed
+  beats: 13
+  default: 12
+  range: [1, 12]
+  slew: 0.6
+  stem: 44
+  disabled: not segment
+
+segment_edge:
+  var: hz
+  type: slider
+  range: [0.0, 0.45]
+
+# ------------------------------------------------------------------------------
+#  Rotation
+# ------------------------------------------------------------------------------
+
+rotation:
+  type: separator
+
+rotate:
+  var: bz
+  type: checkbox
+
+rot_t:
+  var: gw
+  type: slider
+  default: 0.0375
+  range: [0.025, 1]
+  step: 0.025
+  disabled: not rotate
+
+twist_x:
+  var: bw
+  type: slider
+  range: [0, 7]
+  disabled: not rotate
+
+twist_y:
+  var: dy
+  type: slider
+  range: [0, 7]
+  disabled: not rotate
+
+auto_rot_x:
+  var: dz
+  type: checkbox
+  disabled: not rotate
+
+rot_x:
+  var: ex
+  type: slider
+  range: [0, *TAU]
+  disabled: not rotate or auto_rot_x
+
+auto_rot_y:
+  var: dw
+  type: checkbox
+  disabled: not rotate
+
+rot_y:
+  var: ey
+  type: slider
+  range: [0, *TAU]
+  disabled: not rotate or auto_rot_y
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+noise:
+  var: ez
+  type: checkbox
+  disabled: posterize
+
+posterize:
+  var: ew
+  type: checkbox
+
+posterize_steps:
+  var: fx
+  type: slider
+  range: [6, 48]
+  default: 24
+  step: 6
+  disabled: not posterize
+
+r:
+  var: fy
+  type: slider
+g:
+  var: fz
+  type: slider
+b:
+  var: fw
+  type: slider
+
+white_intensity:
+  var: gx
+  type: slider
+  range: [1, 10]
+  default: 1.5
+
+bg_noise:
+  var: hx
+  type: slider
+
+bg_mode:
+  var: hw
+  type: select
+  default: rgb
+  options:
+    - rgb
+    - rrr
+    - ggg
+    - bbb
+    - rrg
+    - rrb
+    - rgg
+    - rbb
+    - grr
+    - brr
+    - ggr
+    - bbr
+    - rbg
+    - grb
+    - gbr
+    - brg
+    - bgr
