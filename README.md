@@ -9,6 +9,8 @@ Built-in image/video capture supports recording output, and the overall goal is
 fast iteration with minimal boilerplate while still giving direct access to
 GPU-powered workflows when needed.
 
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/displacement_2-627iz.png" alt="displacement_2-627iz" width="90%" />
+
 You can see screenshots of some sketches authored with Xtal here on github by
 looking at the auto generated [image index](https://lokua.github.io/xtal/) or
 checkout audio-visual compositions on [Instagram][insta].
