@@ -1,0 +1,104 @@
+# ------------------------------------------------------------------------------
+#  Time
+# ------------------------------------------------------------------------------
+
+t_mult:
+  var: bx
+  type: slider
+  range: [0.125, 2]
+  default: 1
+  step: 0.125
+
+t_loop:
+  var: cz
+  type: random_slewed
+  beats: 1.0
+  range: [-4.0, 4.0]
+  slew: 0.66
+  delay: 0.0
+  stem: 88
+
+t_mix:
+  var: cw
+  type: slider
+
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+main:
+  type: separator
+
+scale_factor:
+  var: aw
+  type: slider
+  range: [0.5, 24]
+  default: 3
+  step: 0.1
+
+rot_c:
+  var: dx
+  type: checkbox
+
+c:
+  var: by
+  type: slider
+  range: [0.01, 1.0]
+  default: 0.74
+  step: 0.01
+  disabled: rot_c
+
+rot_s:
+  var: dy
+  type: checkbox
+
+s:
+  var: bz
+  type: slider
+  range: [0.01, 1.0]
+  default: 0.70
+  step: 0.01
+  disabled: rot_s
+
+weight:
+  var: bw
+  type: slider
+  range: [0.01, 12.0]
+  default: 1.8
+  step: 0.01
+
+posterize_steps:
+  var: cx
+  type: slider
+  range: [2, 66]
+  default: 9
+  step: 1
+
+fractalize:
+  var: cy
+  type: slider
+  range: [0.0, 100.0]
+  default: 0.0
+  step: 0.1
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+r:
+  var: dz
+  type: slider
+  range: [0.0, 6.0]
+
+g:
+  var: dw
+  type: slider
+  range: [0.0, 6.0]
+
+b:
+  var: ex
+  type: slider
+  range: [0.0, 6.0]

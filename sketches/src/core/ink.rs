@@ -5,43 +5,41 @@ use xtal::prelude::*;
 use crate::constants::{HD_HEIGHT, HD_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "grid_splash_bw",
-    display_name: "Grid Splash B&W",
+    name: "ink",
+    display_name: "Ink",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 134.0,
     w: HD_WIDTH,
     h: HD_HEIGHT,
-    banks: 10,
+    banks: 8,
 };
 
-pub struct GridSplashBwSketch {
-    shader_path: PathBuf,
+pub struct InkSketch {
+    pass_a: PathBuf,
+    pass_b: PathBuf,
     control_script_path: PathBuf,
 }
 
-impl Sketch for GridSplashBwSketch {
+impl Sketch for InkSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
-        let (ping, pong) = graph.feedback();
+        let rt0 = graph.texture2d();
 
         graph
             .render()
-            .shader(self.shader_path.clone())
+            .shader(self.pass_a.clone())
             .mesh(Mesh::fullscreen_quad())
             .read(params)
-            .read(ping)
-            .to(pong);
+            .to(rt0);
 
         graph
             .render()
-            .shader(self.shader_path.clone())
+            .shader(self.pass_b.clone())
             .mesh(Mesh::fullscreen_quad())
             .read(params)
-            .read(pong)
-            .to(ping);
-
-        graph.present(ping);
+            .read(rt0)
+            .to_surface();
     }
 
     fn control_script(&self) -> Option<PathBuf> {
@@ -49,11 +47,12 @@ impl Sketch for GridSplashBwSketch {
     }
 }
 
-pub fn init() -> GridSplashBwSketch {
+pub fn init() -> InkSketch {
     let assets = SketchAssets::from_file(file!());
 
-    GridSplashBwSketch {
-        shader_path: assets.wgsl(),
+    InkSketch {
+        pass_a: assets.wgsl(),
+        pass_b: assets.path("ink_post.wgsl"),
         control_script_path: assets.yaml(),
     }
 }

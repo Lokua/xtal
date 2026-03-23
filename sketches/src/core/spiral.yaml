@@ -1,0 +1,294 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+passes:
+  var: aw
+  type: slider
+  range: [1.0, 20.0]
+  default: 1.0
+  step: 1.0
+
+n_lines:
+  var: cw
+  type: slider
+  range: [1.0, 256.0]
+  default: 64.0
+  step: 1.0
+
+points_per_segment:
+  var: cx
+  type: slider
+  range: [10.0, 20000.0]
+  default: 100.0
+  step: 10.0
+
+point_size:
+  var: dx
+  type: slider
+  range: [0.0005, 0.01]
+  default: 0.001
+  step: 0.0001
+
+harmonic_influence:
+  var: gw
+  type: slider
+  range: [0.01, 10.0]
+  default: 0.2
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Noise / Shape
+# ------------------------------------------------------------------------------
+
+noise:
+  type: separator
+
+noise_scale:
+  var: cy
+  type: slider
+  range: [0.0, 0.1]
+  default: 0.001
+  step: 0.0001
+
+angle_variation:
+  var: cz
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.2
+  step: 0.1
+
+offset_mult_10:
+  var: bx
+  type: checkbox
+  default: false
+
+offset_mult:
+  var: dw
+  type: slider
+  range: [0.0, 10.0]
+  default: 0.9
+  step: 0.001
+
+circle_r_min:
+  var: dy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.001
+
+circle_r_max:
+  var: dz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.9
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Scene
+# ------------------------------------------------------------------------------
+
+scene:
+  type: separator
+
+invert:
+  var: ey
+  type: checkbox
+  default: false
+
+animate_bg:
+  var: ew
+  type: checkbox
+  default: false
+
+animate_angle_offset:
+  var: ez
+  type: checkbox
+  default: false
+
+bg_brightness:
+  var: ex
+  type: slider
+  range: [0.0, 5.0]
+  default: 1.5
+  step: 0.01
+
+phase_animation_mult:
+  var: iz
+  type: slider
+  range: [0.25, 8.0]
+  default: 3.0
+  step: 0.125
+
+spin_rate:
+  var: iw
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.06
+  step: 0.005
+
+# ------------------------------------------------------------------------------
+#  Wave
+# ------------------------------------------------------------------------------
+
+wave:
+  type: separator
+
+wave_amp:
+  var: fx
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.0
+  step: 0.0001
+
+wave_freq:
+  var: fy
+  type: slider
+  range: [0.0, 64.0]
+  default: 10.0
+  step: 1.0
+
+animate_wave_phase:
+  var: jx
+  type: checkbox
+  default: false
+
+invert_animate_wave_phase:
+  var: jy
+  type: checkbox
+  default: false
+
+wave_phase:
+  var: ix
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.001
+  disabled: animate_wave_phase
+
+# ------------------------------------------------------------------------------
+#  Stripe
+# ------------------------------------------------------------------------------
+
+stripe:
+  type: separator
+
+stripe_amp:
+  var: fz
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.0
+  step: 0.0001
+
+stripe_freq:
+  var: fw
+  type: slider
+  range: [0.0, 64.0]
+  default: 10.0
+  step: 1.0
+
+animate_stripe_phase:
+  var: jz
+  type: checkbox
+  default: false
+
+invert_animate_stripe_phase:
+  var: jw
+  type: checkbox
+  default: false
+
+stripe_phase:
+  var: iy
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.001
+  disabled: animate_stripe_phase
+
+# ------------------------------------------------------------------------------
+#  Steep
+# ------------------------------------------------------------------------------
+
+steep:
+  type: separator
+
+steep_amp:
+  var: gx
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.0
+  step: 0.0001
+
+steep_freq:
+  var: gy
+  type: slider
+  range: [0.0, 64.0]
+  default: 10.0
+  step: 1.0
+
+steepness:
+  var: gz
+  type: slider
+  range: [1.0, 100.0]
+  default: 10.0
+  step: 1.0
+
+animate_steep_phase:
+  var: kx
+  type: checkbox
+  default: false
+
+invert_animate_steep_phase:
+  var: ky
+  type: checkbox
+  default: false
+
+steep_phase:
+  var: hw
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.001
+  disabled: animate_steep_phase
+
+# ------------------------------------------------------------------------------
+#  Quant
+# ------------------------------------------------------------------------------
+
+quant:
+  type: separator
+
+quant_amp:
+  var: hx
+  type: slider
+  range: [0.0, 0.5]
+  default: 0.0
+  step: 0.0001
+
+quant_freq:
+  var: hy
+  type: slider
+  range: [0.0, 64.0]
+  default: 10.0
+  step: 1.0
+
+animate_quant_phase:
+  var: kz
+  type: checkbox
+  default: false
+
+invert_animate_quant_phase:
+  var: kw
+  type: checkbox
+  default: false
+
+quant_phase:
+  var: hz
+  type: slider
+  range: [0.0, *TAU]
+  default: 0.0
+  step: 0.001
+  disabled: animate_quant_phase

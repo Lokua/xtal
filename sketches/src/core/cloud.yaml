@@ -1,0 +1,114 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+t_mult:
+  var: dy
+  type: slider
+  range: [0.025, 2.0]
+  step: 0.025
+  default: 0.125
+
+direction:
+  var: aw
+  type: checkbox
+
+# detail:
+#   var: cz
+#   type: slider
+#   range: [0.001, 0.04]
+#   step: 0.0001
+#   default: 0.01
+
+# detail:
+#   var: cz
+#   type: triangle
+#   beats: 64.0
+#   range: [0.01, 0.03]
+#   phase: 0.0
+
+detail:
+  var: cz
+  type: random_slewed
+  beats: 16
+  range: [0.02, 0.03]
+  slew: 0.8
+  delay: 0.0
+  stem: 80
+
+# ray_scale_factor:
+#   var: cw
+#   type: slider
+#   range: [0.001, 1.0]
+#   default: 0.7
+
+ray_scale_factor:
+  var: cw
+  type: random_slewed
+  beats: 4
+  range: [0.01, 0.5]
+  slew: 0.8
+  delay: 0.0
+  stem: 89
+
+depth_scale:
+  var: dz
+  type: slider
+  range: [1, 1000]
+  default: 500
+
+zoom:
+  var: dw
+  type: slider
+  range: [0.01, 4.0]
+  step: 0.01
+  default: 1.0
+
+bg_alpha:
+  var: dx
+  type: slider
+  default: 1.0
+
+# ------------------------------------------------------------------------------
+#  Color 1
+# ------------------------------------------------------------------------------
+
+color_1:
+  type: separator
+
+h1:
+  var: bx
+  type: slider
+  default: 0.5
+
+s1:
+  var: by
+  type: slider
+  default: 0.9
+
+v1:
+  var: bz
+  type: slider
+  default: 0.2
+
+# ------------------------------------------------------------------------------
+#  Color 2
+# ------------------------------------------------------------------------------
+
+color_2:
+  type: separator
+
+h2:
+  var: bw
+  type: slider
+  default: 0.9
+
+s2:
+  var: cx
+  type: slider
+  default: 0.2
+
+v2:
+  var: cy
+  type: slider
+  default: 0.99

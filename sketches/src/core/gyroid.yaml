@@ -1,0 +1,187 @@
+PI: &PI 3.141592653589793
+PI_OVER_3: &PI_OVER_3 1.0471975511965976
+TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+iterations:
+  var: dz
+  type: slider
+  range: [16, 96]
+  default: 64
+  step: 8
+
+# x:
+#   var: aw
+#   type: ramp
+#   beats: 800
+#   range: [0.0, *PI]
+#   phase: 0.0
+x:
+  var: aw
+  type: random_slewed
+  beats: 32
+  range: [0.0, *PI_OVER_3]
+  slew: 0.9
+
+# y:
+#   var: bx
+#   type: ramp
+#   beats: 700
+#   range: [0.0, *PI_OVER_3]
+#   phase: 0.5
+y:
+  var: bx
+  type: random_slewed
+  beats: 24
+  range: [0.0, *PI_OVER_3]
+  slew: 0.9
+
+color_phase:
+  var: by
+  type: ramp
+  # bypass: 4
+  beats: 128
+  range: [0.0, *TAU]
+  phase: 0.0
+
+color_shift_speed:
+  var: bz
+  type: slider
+  range: [0.0, 4.0]
+  default: 0.75
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+color_mode:
+  var: ex
+  type: select
+  default: neon_rainbow
+  options:
+    - neon_rainbow
+    - forest_moss
+    - ocean_mist
+    - clay_dusk
+
+glow:
+  var: ey
+  type: slider
+  range: [0.25, 4.0]
+  default: 1.0
+  step: 0.01
+
+palette_comp:
+  var: ez
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.8
+  step: 0.01
+
+far_stability:
+  var: ew
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.7
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Gyroid
+# ------------------------------------------------------------------------------
+
+gyroid:
+  type: separator
+
+march_base:
+  var: bw
+  type: slider
+  range: [0.0005, 0.02]
+  default: 0.003
+  step: 0.0001
+
+march_feedback:
+  var: cx
+  type: slider
+  range: [0.0, 1.5]
+  default: 0.5
+  step: 0.001
+
+gyroid_sin_scale:
+  var: cy
+  type: random_slewed
+  beats: 10
+  range: [0.05, 2.0]
+  slew: 0.7
+
+gyroid_cos_div:
+  var: cz
+  type: random_slewed
+  beats: 14
+  range: [1.0, 16.0]
+  slew: 0.7
+
+grid_cell:
+  var: cw
+  type: slider
+  range: [0.05, 1.0]
+  default: 0.3
+  step: 0.001
+
+grid_freq:
+  var: dx
+  type: slider
+  range: [0.001, 0.2]
+  default: 0.03
+  step: 0.001
+
+tone_div:
+  var: dy
+  type: slider
+  range: [100000.0, 10000000.0]
+  default: 3000000.0
+  step: 1000.0
+
+# cell_mix:
+#   var: dw
+#   type: slider
+#   range: [0.0, 1.0]
+#   default: 0.7
+#   step: 0.001
+cell_mix:
+  var: dw
+  type: triangle
+  beats: 128
+
+# ------------------------------------------------------------------------------
+#  Post
+# ------------------------------------------------------------------------------
+
+post:
+  type: separator
+
+chroma_mix:
+  var: fz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+# chroma_px:
+#   var: gw
+#   type: slider
+#   range: [0.0, 8.0]
+#   default: 1.25
+#   step: 0.01
+chroma_px:
+  var: gw
+  type: round_robin
+  beats: 1
+  values: [0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 8, 0, 8]
+  slew: 0.6

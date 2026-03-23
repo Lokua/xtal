@@ -1,0 +1,167 @@
+# ------------------------------------------------------------------------------
+#  FBM
+# ------------------------------------------------------------------------------
+
+hash_alg:
+  var: ez
+  type: select
+  default: hash
+  options:
+    - rand_hash_dot3
+    - rand_sine_dot
+    - rand_fract
+    - rand_bit_style
+    - rand_int_floor
+
+t_mult:
+  var: gy
+  type: slider
+  default: 1.0
+  range: [0.25, 4.0]
+  step: 0.25
+
+amp:
+  var: aw
+  type: slider
+  default: 0.2
+
+freq:
+  var: bx
+  type: slider
+  range: [0, 40]
+  default: 3
+
+freq_mult:
+  var: gz
+  type: slider
+  range: [0.1, 9.0]
+  default: 2.0
+  step: 0.1
+
+swirl:
+  var: fy
+  type: slider
+
+show_grains:
+  var: gx
+  type: checkbox
+
+grain_size:
+  var: fx
+  type: slider
+  range: [50, 1000]
+  default: 500
+  disabled: not show_grains
+
+show_masks:
+  var: ew
+  type: checkbox
+  default: true
+
+# toggle between maNa and maNb animations
+use_ma_b:
+  var: ey
+  type: checkbox
+  disabled: not show_masks
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+l:
+  var: by
+  type: slider
+
+c:
+  var: bz
+  type: slider
+  range: [0, 0.5]
+
+h:
+  var: bw
+  type: slider
+
+contrast:
+  var: ex
+  type: slider
+  range: [1, 10]
+  default: 0
+
+posterize:
+  var: fz
+  type: checkbox
+
+posterize_steps:
+  var: fw
+  type: slider
+  range: [2, 6]
+  step: 1
+  default: 3
+  disabled: not posterize
+
+# ------------------------------------------------------------------------------
+#  Mask Animations
+# ------------------------------------------------------------------------------
+
+ma1a:
+  var: cx
+  type: random_slewed
+  beats: 12
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 88
+
+ma2a:
+  var: cy
+  type: random_slewed
+  beats: 16
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+  stem: 89
+
+ma3a:
+  var: cz
+  type: random_slewed
+  beats: 20
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 90
+
+ma4a:
+  var: cw
+  type: random_slewed
+  beats: 32
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+  stem: 71
+
+ma1b:
+  var: dx
+  type: ramp
+  beats: 12
+  range: [1, -1]
+
+ma2b:
+  var: dy
+  type: ramp
+  beats: 33
+  range: [1, -1]
+
+ma3b:
+  var: dz
+  type: ramp
+  beats: 13
+  range: [1, -1]
+
+ma4b:
+  var: dw
+  type: ramp
+  beats: 35
+  range: [-1, 1]

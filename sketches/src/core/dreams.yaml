@@ -1,0 +1,209 @@
+# ------------------------------------------------------------------------------
+#  Main
+# ------------------------------------------------------------------------------
+
+main:
+  type: separator
+
+scale:
+  var: bx
+  type: random_slewed
+  beats: 12
+  range: [10.0, 20.0]
+  slew: 0.7
+  delay: 0.0
+  stem: 77
+
+# scale:
+#   var: bx
+#   type: triangle
+#   beats: 128
+#   range: [10.0, 20.0]
+#   phase: 0.0
+
+octaves:
+  var: by
+  type: slider
+  default: 5
+  range: [1, 8]
+  step: 1
+
+brightness:
+  var: bz
+  type: random_slewed
+  beats: 7.0
+  range: [0.0, 2.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 101
+
+contrast:
+  var: bw
+  type: random_slewed
+  beats: 11.0
+  range: [0.5, 3.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 102
+
+# ------------------------------------------------------------------------------
+#  Shape
+# ------------------------------------------------------------------------------
+
+shape:
+  type: separator
+
+contour_levels:
+  var: cx
+  type: slider
+  default: 8.0
+  range: [2.0, 20.0]
+
+contour_smoothness:
+  var: cy
+  type: slider
+  default: 0.3
+  range: [0.0, 1.0]
+
+# depth_strength:
+#   var: cz
+#   type: slider
+#   default: 5.0
+#   range: [0.0, 20.0]
+
+depth_strength:
+  var: cz
+  type: random_slewed
+  beats: 4.0
+  range: [0.1, 0.5]
+  slew: 0.8
+  delay: 0.0
+  stem: 88
+
+roundness:
+  var: cw
+  type: slider
+  default: 0.7
+  range: [0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+#  Animation
+# ------------------------------------------------------------------------------
+
+animation:
+  type: separator
+
+scroll_down:
+  var: dx
+  type: checkbox
+  default: true
+
+scroll_speed:
+  var: dy
+  type: slider
+  default: 0.5
+  range: [0.0, 1.0]
+  step: 0.025
+
+extrude_amount:
+  var: dz
+  type: slider
+  default: 0.0
+  range: [0.0, 0.5]
+
+extrude_frequency:
+  var: dw
+  type: slider
+  default: 1.0
+  range: [0.1, 10.0]
+
+# ------------------------------------------------------------------------------
+#  Gaps
+# ------------------------------------------------------------------------------
+
+gaps:
+  type: separator
+
+# gap_amount:
+#   var: ex
+#   type: slider
+#   default: 0.0
+#   range: [0.0, 1.0]
+
+gap_amount:
+  var: ex
+  type: random_slewed
+  beats: 12.0
+  range: [0.0, 0.9]
+  slew: 0.8
+  delay: 0.0
+  stem: 33
+
+gap_amount_curve:
+  type: effect
+  kind: math
+  operator: curve
+  operand: -0.5
+
+gap_amount_modulated:
+  type: mod
+  source: gap_amount
+  modulators:
+    - gap_amount_curve
+
+# ------------------------------------------------------------------------------
+#  Density Waves
+# ------------------------------------------------------------------------------
+
+density_waves:
+  type: separator
+
+wave_enabled:
+  var: ey
+  type: checkbox
+  default: false
+
+wave_invert:
+  var: fx
+  type: checkbox
+  default: false
+
+wave_speed:
+  var: ez
+  type: slider
+  default: 0.3
+  range: [0.1, 2.0]
+
+# wave_scale:
+#   var: ew
+#   type: slider
+#   default: 0.2
+#   range: [0.0, 0.1]
+
+wave_scale:
+  var: ew
+  type: random_slewed
+  beats: 3
+  range: [0.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+  stem: 34
+
+wave_scale_bias:
+  type: effect
+  kind: math
+  operator: curve
+  operand: -0.25
+
+wave_scale_range:
+  type: effect
+  kind: math
+  operator: mult
+  operand: 0.2
+
+wave_scale_modulated:
+  type: mod
+  source: wave_scale
+  modulators:
+    - wave_scale_bias
+    - wave_scale_range
