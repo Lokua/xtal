@@ -25,8 +25,11 @@ struct Params {
     // wave2_amp, checkerboard, type_mix, curve_freq_x
     e: vec4f,
 
-    // curve_freq_y, wave_distort, smoothing, unused
+    // curve_freq_y, wave_distort, smoothing, white_hue
     f: vec4f,
+
+    // white_saturation, unused, unused, unused
+    g: vec4f,
 }
 
 @group(0) @binding(0)
@@ -68,6 +71,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let curve_freq_y = params.f.x;
     let wave_distort = params.f.y;
     let smoothing = params.f.z;
+    let white_hue = params.f.w;
+    let white_saturation = params.g.x;
 
     let wave1 = calculate_wave(
         p,
@@ -102,8 +107,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let pattern_a = square1 * square2;
     let pattern_b = abs(square1 - square2) / (square1 + square2 + 0.1);
     let value = select(pattern_a, pattern_b, checkerboard);
+    let tint = hsv_to_rgb(vec3f(white_hue, white_saturation, 1.0));
+    let base = vec3f(value);
+    let white_mask = smoothstep(0.7, 1.0, value);
+    let color = mix(base, base * tint, white_mask);
 
-    return vec4f(value);
+    return vec4f(color, 1.0);
 }
 
 fn calculate_wave(
@@ -134,4 +143,33 @@ fn calculate_wave(
     let base = fract(wave_x);
     let harmonic = fract(3.0 * wave_x + curve * wave_distort * 1.5);
     return mix(base, harmonic, type_mix);
+}
+
+fn hsv_to_rgb(hsv: vec3f) -> vec3f {
+    let h = fract(hsv.x) * 6.0;
+    let s = clamp(hsv.y, 0.0, 1.0);
+    let v = max(hsv.z, 0.0);
+
+    let i = floor(h);
+    let f = h - i;
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - s * f);
+    let t = v * (1.0 - s * (1.0 - f));
+
+    if (i < 1.0) {
+        return vec3f(v, t, p);
+    }
+    if (i < 2.0) {
+        return vec3f(q, v, p);
+    }
+    if (i < 3.0) {
+        return vec3f(p, v, t);
+    }
+    if (i < 4.0) {
+        return vec3f(p, q, v);
+    }
+    if (i < 5.0) {
+        return vec3f(t, p, v);
+    }
+    return vec3f(v, p, q);
 }

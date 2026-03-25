@@ -1,0 +1,20 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "grid_size",
+      "value": 28.0
+    },
+    {
+      "type": "Slider",
+      "name": "circle_size",
+      "value": 0.125
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": []
+}

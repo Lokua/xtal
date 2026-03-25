@@ -4,7 +4,7 @@
     {
       "type": "Slider",
       "name": "bg_gray",
-      "value": 0.65
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -14,12 +14,17 @@
     {
       "type": "Slider",
       "name": "terrain_freq",
-      "value": 0.33
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "warp_amount",
+      "value": 0.972
     },
     {
       "type": "Slider",
       "name": "warp_freq",
-      "value": 0.92
+      "value": 1.94
     },
     {
       "type": "Slider",
@@ -34,32 +39,32 @@
     {
       "type": "Slider",
       "name": "step_scale",
-      "value": 1.0
+      "value": 0.93
     },
     {
       "type": "Slider",
       "name": "top_shade",
-      "value": 0.45
+      "value": 0.98
     },
     {
       "type": "Slider",
       "name": "side_shade",
-      "value": 0.4
+      "value": 1.11
     },
     {
       "type": "Slider",
       "name": "ao_amount",
-      "value": 1.0
+      "value": 0.89
     },
     {
       "type": "Checkbox",
       "name": "invert",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
       "name": "tint",
-      "value": 0.13
+      "value": 0.85
     },
     {
       "type": "Slider",
@@ -84,17 +89,220 @@
     {
       "type": "Slider",
       "name": "orbit_amount",
-      "value": 0.13
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "focal_len",
-      "value": 1.12
+      "value": 3.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "step_scale",
+          "value": 0.93
+        },
+        {
+          "type": "Slider",
+          "name": "bg_gray",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "fog_density",
+          "value": 0.105
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp_freq",
+          "value": 1.94
+        },
+        {
+          "type": "Slider",
+          "name": "terrain_freq",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "detail_fade_density",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "orbit_amount",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "horizon_start",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "tint",
+          "value": 0.85
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amount",
+          "value": 0.972
+        },
+        {
+          "type": "Slider",
+          "name": "top_shade",
+          "value": 0.98
+        },
+        {
+          "type": "Slider",
+          "name": "time_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "ao_amount",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "side_shade",
+          "value": 1.11
+        },
+        {
+          "type": "Slider",
+          "name": "fog_start",
+          "value": 16.0
+        },
+        {
+          "type": "Slider",
+          "name": "horizon_end",
+          "value": 64.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "focal_len",
+          "value": 3.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "time_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp_freq",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "fog_density",
+          "value": 0.105
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "side_shade",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "top_shade",
+          "value": 0.45
+        },
+        {
+          "type": "Slider",
+          "name": "detail_fade_density",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "step_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "horizon_end",
+          "value": 64.0
+        },
+        {
+          "type": "Slider",
+          "name": "horizon_start",
+          "value": 10.0
+        },
+        {
+          "type": "Slider",
+          "name": "terrain_freq",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "warp_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "tint",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "bg_gray",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "orbit_amount",
+          "value": 0.13
+        },
+        {
+          "type": "Slider",
+          "name": "ao_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "focal_len",
+          "value": 1.12
+        },
+        {
+          "type": "Slider",
+          "name": "fog_start",
+          "value": 16.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": []
 }

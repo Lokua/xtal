@@ -19,7 +19,7 @@
     {
       "type": "Slider",
       "name": "glow",
-      "value": 1.0
+      "value": 1.73
     },
     {
       "type": "Slider",
@@ -44,17 +44,22 @@
     {
       "type": "Slider",
       "name": "grid_cell",
-      "value": 0.312
+      "value": 0.784
     },
     {
       "type": "Slider",
       "name": "grid_freq",
-      "value": 0.027
+      "value": 0.023
     },
     {
       "type": "Slider",
       "name": "tone_div",
-      "value": 1381000.0
+      "value": 6192000.0
+    },
+    {
+      "type": "Slider",
+      "name": "chroma_mix",
+      "value": 0.0
     }
   ],
   "midi_controls": [],
