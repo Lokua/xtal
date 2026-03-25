@@ -1,0 +1,108 @@
+# ------------------------------------------------------------------------------
+#  Wave Sphere
+# ------------------------------------------------------------------------------
+
+global_time_scale:
+  var: aw
+  type: slider
+  range: [0.25, 2.0]
+  default: 1.0
+  step: 0.25
+
+camera_travel_speed:
+  var: dx
+  type: slider
+  range: [0.25, 3.0]
+  default: 1.0
+  step: 0.25
+
+color_phase:
+  var: bw
+  type: slider
+  range: [0.0, 14.0]
+  default: 0.0
+  step: 0.25
+
+color_cycle_speed:
+  var: bz
+  type: slider
+  range: [0.25, 4.0]
+  default: 1.0
+  step: 0.25
+
+# ------------------------------------------------------------------------------
+#  Geometry
+# ------------------------------------------------------------------------------
+
+geometry:
+  type: separator
+
+layer_distance:
+  var: bx
+  type: slider
+  range: [1.0, 8.0]
+  default: 5.0
+  step: 0.125
+
+cell_size:
+  var: by
+  type: slider
+  range: [0.05, 1.0]
+  default: 0.3
+  step: 0.005
+
+sphere_scale:
+  var: cw
+  type: slider
+  range: [0.005, 0.08]
+  default: 0.03
+  step: 0.001
+
+spin_amount:
+  var: dy
+  type: slider
+  range: [0.0, 1.5]
+  default: 1.0
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Marching
+# ------------------------------------------------------------------------------
+
+marching:
+  type: separator
+
+march_steps:
+  var: cx
+  type: slider
+  range: [8.0, 96.0]
+  default: 30.0
+  step: 1.0
+
+march_advance:
+  var: cy
+  type: slider
+  range: [0.2, 1.5]
+  default: 0.8
+  step: 0.01
+
+density:
+  var: cz
+  type: slider
+  range: [0.01, 0.5]
+  default: 0.1
+  step: 0.005
+
+tone_map:
+  var: dz
+  type: slider
+  range: [0.001, 0.1]
+  default: 0.01
+  step: 0.001
+
+brightness:
+  var: dw
+  type: slider
+  range: [0.1, 3.0]
+  default: 1.0
+  step: 0.01

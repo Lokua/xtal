@@ -44,6 +44,7 @@ fn main() {
             sketches: [
                 interference,
                 layers,
+                wave_sphere,
             ]
         },
         {

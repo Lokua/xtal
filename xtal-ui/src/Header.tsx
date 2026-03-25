@@ -142,7 +142,6 @@ export default function Header({
 
         <VerticalSeparator />
 
-        <IconButton data-help-id="Save" name="Save" onClick={onSave} />
         <IconButton
           data-help-id="Monitor"
           name="Monitor"
@@ -150,6 +149,7 @@ export default function Header({
           on={monitorPreviewEnabled}
           onClick={onChangeMonitorPreview}
         />
+        <IconButton data-help-id="Save" name="Save" onClick={onSave} />
         <IconButton
           data-help-id="Settings"
           name="Settings"
