@@ -23,24 +23,31 @@ wave1_amp:
   default: 1.0
   step: 0.001
 
+wave1_phase_auto:
+  var: cz
+  type: ramp
+  beats: $animate_wave1_phase_speed
+
+animate_wave1_phase:
+  var: cx
+  type: checkbox
+  default: false
+
 wave1_phase:
   var: cy
   type: slider
   range: [0.0, 1.0]
   default: 0.0
   step: 0.0001
+  disabled: animate_wave1_phase
 
-wave1_phase_auto:
-  var: cz
-  type: random_slewed
-  beats: 2.0
-  range: [0.0, 1.0]
-  slew: 0.6
-
-animate_wave1_phase:
-  var: cx
-  type: checkbox
-  default: false
+animate_wave1_phase_speed:
+  var: cw
+  type: slider
+  range: [0.5, 6]
+  default: 2
+  step: 0.5
+  disabled: not animate_wave1_phase
 
 wave1_y_influence:
   var: cw
@@ -73,24 +80,31 @@ wave2_amp:
   default: 1.0
   step: 0.001
 
+wave2_phase_auto:
+  var: dz
+  type: ramp
+  beats: $animate_wave2_phase_speed
+
+animate_wave2_phase:
+  var: dx
+  type: checkbox
+  default: false
+
 wave2_phase:
   var: dy
   type: slider
   range: [0.0, 1.0]
   default: 0.0
   step: 0.0001
+  disabled: animate_wave2_phase
 
-wave2_phase_auto:
-  var: dz
-  type: random_slewed
-  beats: 2.0
-  range: [0.0, 1.0]
-  slew: 0.6
-
-animate_wave2_phase:
-  var: dx
-  type: checkbox
-  default: false
+animate_wave2_phase_speed:
+  var: cw
+  type: slider
+  range: [0.5, 6]
+  default: 2
+  step: 0.5
+  disabled: not animate_wave2_phase
 
 wave2_y_influence:
   var: dw
@@ -140,4 +154,25 @@ smoothing:
   type: slider
   range: [0.0, 1.0]
   default: 0.5
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+white_hue:
+  var: fw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.001
+
+white_saturation:
+  var: gx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
   step: 0.001

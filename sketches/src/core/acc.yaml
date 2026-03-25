@@ -8,7 +8,7 @@ main:
 bg_gray:
   var: aw
   type: slider
-  range: [0.0, 0.85]
+  range: [0.0, 1]
   default: 0.0
   step: 0.01
 
@@ -49,10 +49,8 @@ terrain_freq:
 
 warp_amount:
   var: dy
-  type: random_slewed
-  beats: 1
+  type: slider
   range: [0.0, 2.0]
-  slew: 0.65
 
 warp_freq:
   var: dz
@@ -171,14 +169,14 @@ camera:
   type: separator
 
 # camera_height:
-#   var: by
+#   var: b2
 #   type: slider
 #   range: [1.0, 8.0]
 #   default: 3.0
 #   step: 0.01
 
 camera_height:
-  var: by
+  var: b2
   type: random_slewed
   beats: 4
   range: [4.0, 8.0]
@@ -200,14 +198,14 @@ focal_len:
   step: 0.01
 
 # orbit_radius:
-#   var: fw
+#   var: f4
 #   type: slider
 #   range: [2.0, 24.0]
 #   default: 10.0
 #   step: 0.1
 
 orbit_radius:
-  var: fw
+  var: f4
   type: random_slewed
   beats: 16
   range: [2.0, 24.0]

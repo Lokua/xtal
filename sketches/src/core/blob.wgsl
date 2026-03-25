@@ -19,17 +19,17 @@ struct VertexOutput {
 };
 
 struct Params {
-    // x, y, edge_mix, edge_size
+    // x, y, t, edge_size
     resolution: vec4f,
     // t1, t2, t3, t4
     a: vec4f,
-    // invert, center_size, smoothness, color_mix
+    // invert, smoothness, blur, color_mix
     b: vec4f,
     // t_long, center_y, outer_scale_animation_a, center_size
     c: vec4f,
     // feedback, outer_size, outer_scale_animation_mix, outer_scale_animation_b
     d: vec4f,
-    // rot_angle, bd, clamp_mix, clamp_max
+    // rot_angle, bd, clamp_min, clamp_max
     e: vec4f,
     // chromatic_feedback_spread, unused, crt_glitch_phase, unused
     f: vec4f,
@@ -39,6 +39,7 @@ struct Params {
     h: vec4f,
     // unused, crt_phase_mix, unused, unused
     i: vec4f,
+    // edge_mix, unused, unused, unused
     j: vec4f,
 }
 
@@ -86,7 +87,7 @@ fn fs_main(
     let clamp_min = params.e.z;
     let clamp_max = params.e.w;
     let feedback = params.d.x;
-    let edge_mix = params.resolution.z;
+    let edge_mix = params.j.x;
     let crt_glitch = params.f.z;
     let crt_scanline = params.h.y;
     let crt_jitter = params.h.z;
@@ -214,8 +215,9 @@ fn correct_aspect(position: vec2f) -> vec2f {
 }
 
 fn smin(a: f32, b: f32, k: f32) -> f32 {
-    let h = max(k - abs(a - b), 0.0) / k;
-    return min(a, b) - h * h * k * 0.25;
+    let k_safe = max(k, 0.0001);
+    let h = max(k_safe - abs(a - b), 0.0) / k_safe;
+    return min(a, b) - h * h * k_safe * 0.25;
 }
 
 fn clamp_v2(p: vec2f, min: f32, max: f32) -> vec2f {

@@ -9,24 +9,28 @@ _t_beats: &t_beats 3
 
 # top-right corner
 t1:
+  var: bx
   type: triangle
   beats: *t_beats
   phase: 0
 
 # bottom-right corner
 t2:
+  var: by
   type: triangle
   beats: *t_beats
   phase: 0.25
 
 # bottom-left corner
 t3:
+  var: bz
   type: triangle
   beats: *t_beats
   phase: 0.5
 
 # top-left corner
 t4:
+  var: bw
   type: triangle
   beats: *t_beats
   phase: 0.75
@@ -36,12 +40,12 @@ t4:
 # ------------------------------------------------------------------------------
 
 outer_size:
-  var: dy
+  var: ey
   type: slider
   range: [0, 1]
 
 outer_scale_animation_mix:
-  var: dz
+  var: ez
   type: slider
 
 # outer_scale_animation_a alone adds phase cancellation to t1-4 -
@@ -51,7 +55,7 @@ outer_scale_animation_mix:
 _outer_scale_range: &outer_scale_range 1.5
 
 outer_scale_animation_a:
-  var: cz
+  var: dz
   type: automate
   breakpoints:
     - kind: ramp
@@ -67,7 +71,7 @@ outer_scale_animation_a:
       value: 0.0
 
 outer_scale_animation_b:
-  var: dw
+  var: ew
   type: automate
   breakpoints:
     - kind: ramp
@@ -90,11 +94,13 @@ center:
   type: separator
 
 t_long:
+  var: dx
   type: triangle
   beats: 32
   range: [-50, 50]
 
 center_y:
+  var: dy
   type: automate
   mode: loop
   bypass: _
@@ -157,7 +163,7 @@ center_y_mod:
 #   range: [0.25, 5]
 
 center_size:
-  var: cw
+  var: dw
   type: round_robin
   beats: 12
   values: [0.25, 0.25, 1, 5, 2, 1, 0.25]
@@ -171,19 +177,23 @@ global:
   type: separator
 
 invert:
+  var: cx
   type: slider
   range: [0, 1]
 
 # center size
 smoothness:
+  var: cy
   type: slider
   range: [0, 1]
 
 blur:
+  var: cz
   type: slider
   range: [1, 20]
 
 color_mix:
+  var: cw
   type: slider
 
 # chromatic_feedback:
@@ -191,7 +201,7 @@ color_mix:
 #   type: slider
 
 chromatic_feedback:
-  var: dx
+  var: ex
   type: random_slewed
   beats: 2
   bias: -0.5
@@ -204,7 +214,7 @@ chromatic_feedback:
 #   default: 0.01
 
 chromatic_feedback_spread:
-  var: fx
+  var: gx
   type: random_slewed
   range: [0.0001, 0.1]
   beats: 1.5
@@ -212,12 +222,14 @@ chromatic_feedback_spread:
   slew: 0.7
 
 edge_mix:
+  var: kx
   type: round_robin
   beats: 1.5
   values: [0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0.3]
   slew: 0.65
 
 edge_size:
+  var: aw
   type: slider
   range: [1, 50]
   default: 1
@@ -230,26 +242,26 @@ crt_glitch_fx:
   type: separator
 
 crt_glitch_phase:
-  var: fz
+  var: gz
   type: slider
   range: [0, 1]
   default: 0
 
 crt_scanline:
-  var: hy
+  var: iy
   type: random_slewed
   range: [0, 2]
   beats: 1
   slew: 0.6
 
 crt_jitter:
-  var: hz
+  var: iz
   type: slider
   range: [0, 2]
   default: 1
 
 crt_phase_mix:
-  var: iy
+  var: jy
   type: random_slewed
   range: [0, 1]
   bias: -0.5
@@ -264,7 +276,7 @@ transforms:
   type: separator
 
 rot_angle:
-  var: ex
+  var: fx
   type: automate
   breakpoints:
     - kind: random
@@ -288,19 +300,19 @@ rot_mod:
     - rot_slew
 
 bd:
-  var: ey
+  var: fy
   type: triangle
   beats: 1
   range: [0.6, 1]
 
 clamp_min:
-  var: ez
+  var: fz
   type: slider
   default: -1
   range: [-1, 1]
 
 clamp_max:
-  var: ew
+  var: fw
   type: automate
   breakpoints:
     - kind: ramp

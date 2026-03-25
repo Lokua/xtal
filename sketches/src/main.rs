@@ -24,9 +24,9 @@ fn main() {
                 dyn_uni,
                 flow,
                 grid_splash,
-                grid_splash_bw,
                 gyroid,
                 hatch,
+                interference,
                 ink,
                 marcher,
                 neural,
@@ -42,7 +42,8 @@ fn main() {
             title: "Drafts",
             enabled: true,
             sketches: [
-                interference,
+                displ,
+                grid_splash_bw,
                 layers,
                 wave_sphere,
             ]
