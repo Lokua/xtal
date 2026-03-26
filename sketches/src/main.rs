@@ -35,6 +35,7 @@ fn main() {
                 spiral,
                 un,
                 watercolor,
+                wave_sphere,
                 wave_fract,
             ]
         },
@@ -45,7 +46,6 @@ fn main() {
                 displ,
                 grid_splash_bw,
                 layers,
-                wave_sphere,
             ]
         },
         {
