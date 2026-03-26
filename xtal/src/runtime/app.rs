@@ -2606,7 +2606,11 @@ impl XtalRuntime {
             Ok(state) => {
                 let mappings = state.mappings.clone();
                 let exclusions = state.exclusions.clone();
-                hub.ui_controls = state.ui_controls.clone();
+                // Preserve live UI control configs (including disabled fns),
+                // and only restore persisted values.
+                for (name, value) in state.ui_controls.values() {
+                    hub.ui_controls.set(&name, value);
+                }
                 hub.midi_controls = state.midi_controls.clone();
                 hub.midi_controls.hrcc = self.hrcc;
                 hub.midi_controls.set_port(self.midi_input_port.clone());

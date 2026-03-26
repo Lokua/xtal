@@ -104,6 +104,45 @@ spin_amount:
   step: 0.01
 
 # ------------------------------------------------------------------------------
+#  Shape
+# ------------------------------------------------------------------------------
+
+shape:
+  type: separator
+
+shape_mode:
+  var: fx
+  type: select
+  default: spheres
+  options:
+    - spheres
+    - blobs
+    - rings
+
+blob_smoothness:
+  var: fy
+  type: slider
+  range: [0.01, 0.4]
+  default: 0.14
+  step: 0.01
+  disabled: shape_mode is spheres or shape_mode is rings
+
+ring_thickness:
+  var: fz
+  type: slider
+  range: [0.001, 0.05]
+  default: 0.01
+  step: 0.001
+  disabled: shape_mode is spheres or shape_mode is blobs
+
+ray_warp_amount:
+  var: fw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+# ------------------------------------------------------------------------------
 #  Marching
 # ------------------------------------------------------------------------------
 
