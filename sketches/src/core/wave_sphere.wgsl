@@ -63,7 +63,7 @@ struct Params {
     // camera_mode, camera_orbit_radius, fog_amount, layer_hue_drift
     e: vec4f,
 
-    // shape_mode, blob_smoothness, ring_thickness, ray_warp_amount
+    // ray_warp_amount, ray_warp_freq, terrain_amp, terrain_freq
     f: vec4f,
 }
 
@@ -102,10 +102,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let camera_orbit_radius = max(params.e.y, 0.0);
     let fog_amount = clamp(params.e.z, 0.0, 1.0);
     let layer_hue_drift = max(params.e.w, 0.0);
-    let shape_mode = i32(params.f.x);
-    let blob_smoothness = max(params.f.y, 0.001);
-    let ring_thickness = max(params.f.z, 0.0001);
-    let ray_warp_amount = clamp(params.f.w, 0.0, 1.0);
+    let ray_warp_amount = clamp(params.f.x, 0.0, 1.0);
+    let ray_warp_freq = max(params.f.y, 0.01);
+    let terrain_amp = max(params.f.z, 0.01);
+    let terrain_freq = max(params.f.w, 0.01);
 
     var uv = position;
     uv.x *= w / h;
@@ -149,6 +149,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         ro,
         time,
         ray_warp_amount,
+        ray_warp_freq,
     );
     rd = normalize(rd + warp);
 
@@ -159,9 +160,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         layer_distance,
         cell_size,
         sphere_scale,
-        shape_mode,
-        blob_smoothness,
-        ring_thickness,
+        terrain_amp,
+        terrain_freq,
     );
     if (cam_clearance < CAM_SAFE_CLEARANCE) {
         d = CAM_SAFE_CLEARANCE - cam_clearance;
@@ -186,9 +186,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             layer_distance,
             cell_size,
             sphere_scale,
-            shape_mode,
-            blob_smoothness,
-            ring_thickness,
+            terrain_amp,
+            terrain_freq,
         );
 
         dt = max(dt * ny_term, MIN_DT);
@@ -221,15 +220,28 @@ fn hash41(p: f32) -> vec4f {
     return fract((p4.xxyz + p4.yzzw) * p4.zywx);
 }
 
-fn get_height(id: vec2f, layer: f32, time: f32) -> f32 {
+fn get_height(
+    id: vec2f,
+    layer: f32,
+    time: f32,
+    terrain_amp: f32,
+    terrain_freq: f32,
+) -> f32 {
     let h = hash41(layer) * 1000.0;
+    let t = time;
     var o = 0.0;
-    o += sin((id.x + h.x) * 0.2 + time) * 0.3;
-    o += sin((id.y + h.y) * 0.2 + time) * 0.3;
-    o += sin((-id.x + id.y + h.z) * 0.3 + time) * 0.3;
-    o += sin((id.x + id.y + h.z) * 0.3 + time) * 0.4;
-    o += sin((id.x - id.y + h.w) * 0.8 + time) * 0.1;
-    return o;
+    o += sin(id.x * 0.2 * terrain_freq + h.x * 0.2 + t) * 0.3;
+    o += sin(id.y * 0.2 * terrain_freq + h.y * 0.2 + t) * 0.3;
+    o += sin(
+        (-id.x + id.y) * 0.3 * terrain_freq + h.z * 0.3 + t
+    ) * 0.3;
+    o += sin(
+        (id.x + id.y) * 0.3 * terrain_freq + h.z * 0.3 + t
+    ) * 0.4;
+    o += sin(
+        (id.x - id.y) * 0.8 * terrain_freq + h.w * 0.8 + t
+    ) * 0.1;
+    return o * terrain_amp;
 }
 
 fn map_scene(
@@ -238,32 +250,37 @@ fn map_scene(
     layer_distance: f32,
     cell_size: f32,
     sphere_scale: f32,
-    shape_mode: i32,
-    blob_smoothness: f32,
-    ring_thickness: f32,
+    terrain_amp: f32,
+    terrain_freq: f32,
 ) -> f32 {
     let spacing = vec3f(cell_size, layer_distance, cell_size);
-    let id = round(p / spacing);
-    let ho = get_height(id.xz, id.y, time);
+    let cell = p / spacing;
+    let id_xz = round(cell.xz);
+    let y0 = floor(cell.y);
+    let y1 = y0 + 1.0;
+    let d0 = map_layer_cell(
+        p,
+        id_xz,
+        y0,
+        time,
+        spacing,
+        sphere_scale,
+        terrain_amp,
+        terrain_freq,
+    );
+    let d1 = map_layer_cell(
+        p,
+        id_xz,
+        y1,
+        time,
+        spacing,
+        sphere_scale,
+        terrain_amp,
+        terrain_freq,
+    );
 
-    var q = p;
-    q.y += ho;
-    q -= spacing * id;
-
-    let radius = smoothstep(1.3, -1.3, ho) * sphere_scale + 0.0001;
-    let sphere = sd_sphere(q, radius);
-
-    if (shape_mode == 1) {
-        let q2 = q - vec3f(cell_size * 0.65, 0.0, -cell_size * 0.35);
-        let sphere2 = sd_sphere(q2, radius * 0.92);
-        return smin(sphere, sphere2, blob_smoothness);
-    }
-
-    if (shape_mode == 2) {
-        return abs(sphere) - ring_thickness;
-    }
-
-    return sphere;
+    let k = spacing.y * 0.12;
+    return smin(d0, d1, k);
 }
 
 fn rotate2(v: vec2f, angle: f32) -> vec2f {
@@ -284,21 +301,53 @@ fn sign_nonzero(v: f32) -> f32 {
 }
 
 fn smin(a: f32, b: f32, k: f32) -> f32 {
-    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    let h = clamp(0.5 + 0.5 * (b - a) / max(k, 1e-4), 0.0, 1.0);
     return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-fn ray_warp(rd: vec3f, ro: vec3f, time: f32, amount: f32) -> vec3f {
-    if (amount <= 0.0) {
+fn map_layer_cell(
+    p: vec3f,
+    id_xz: vec2f,
+    layer: f32,
+    time: f32,
+    spacing: vec3f,
+    sphere_scale: f32,
+    terrain_amp: f32,
+    terrain_freq: f32,
+) -> f32 {
+    let ho = get_height(id_xz, layer, time, terrain_amp, terrain_freq);
+
+    var q = p;
+    q.y += ho;
+    q -= vec3f(
+        spacing.x * id_xz.x,
+        spacing.y * layer,
+        spacing.z * id_xz.y,
+    );
+
+    let radius = smoothstep(1.3, -1.3, ho) * sphere_scale + 0.0001;
+    return sd_sphere(q, radius);
+}
+
+fn ray_warp(
+    rd: vec3f,
+    ro: vec3f,
+    time: f32,
+    amount: f32,
+    warp_freq: f32,
+) -> vec3f {
+    if (amount < 1e-4) {
         return vec3f(0.0);
     }
 
     let p = rd * 8.0 + ro * 0.04;
+    let t = time;
     let w = vec3f(
-        sin(p.y + time * 0.73) - cos(p.z * 1.7 - time * 0.41),
-        sin(p.z + time * 0.67) - cos(p.x * 1.9 + time * 0.37),
-        sin(p.x + time * 0.59) - cos(p.y * 1.5 - time * 0.53),
+        sin(p.y * warp_freq + t * 0.73) - cos(p.z * 1.7 * warp_freq - t * 0.41),
+        sin(p.z * warp_freq + t * 0.67) - cos(p.x * 1.9 * warp_freq + t * 0.37),
+        sin(p.x * warp_freq + t * 0.59) - cos(p.y * 1.5 * warp_freq - t * 0.53),
     );
 
-    return w * (amount * 0.06);
+    let amt = amount * amount;
+    return w * (amt * 0.06);
 }

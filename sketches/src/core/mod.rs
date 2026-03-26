@@ -17,4 +17,5 @@ pub mod sline;
 pub mod spiral;
 pub mod un;
 pub mod watercolor;
+pub mod wave_sphere;
 pub mod wave_fract;
