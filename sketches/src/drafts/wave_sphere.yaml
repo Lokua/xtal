@@ -30,6 +30,44 @@ color_cycle_speed:
   default: 1.0
   step: 0.25
 
+layer_hue_drift:
+  var: ew
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Camera + Atmosphere
+# ------------------------------------------------------------------------------
+
+camera_atmo:
+  type: separator
+
+camera_mode:
+  var: ex
+  type: select
+  default: linear
+  options:
+    - linear
+    - orbit
+    - helix
+
+camera_orbit_radius:
+  var: ey
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.5
+  step: 0.25
+  disabled: camera_mode is linear
+
+fog_amount:
+  var: ez
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.45
+  step: 0.01
+
 # ------------------------------------------------------------------------------
 #  Geometry
 # ------------------------------------------------------------------------------

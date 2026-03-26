@@ -2,6 +2,9 @@
 const PI: f32 = 3.141592653589793;
 const NUM_COLORS: u32 = 14u;
 const MAX_STEPS: i32 = 96;
+const MIN_DT: f32 = 0.003;
+const MAX_CONTRIB: f32 = 24.0;
+const CAM_SAFE_CLEARANCE: f32 = 0.6;
 
 const BLUE: vec3f = vec3f(47.0, 75.0, 162.0) / 255.0;
 const PINK: vec3f = vec3f(233.0, 71.0, 245.0) / 255.0;
@@ -56,6 +59,9 @@ struct Params {
 
     // camera_travel_speed, spin_amount, tone_map, brightness
     d: vec4f,
+
+    // camera_mode, camera_orbit_radius, fog_amount, layer_hue_drift
+    e: vec4f,
 }
 
 @group(0) @binding(0)
@@ -89,24 +95,43 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let spin_amount = params.d.y;
     let tone_map = max(params.d.z, 0.0001);
     let brightness = max(params.d.w, 0.0);
+    let camera_mode = i32(params.e.x);
+    let camera_orbit_radius = max(params.e.y, 0.0);
+    let fog_amount = clamp(params.e.z, 0.0, 1.0);
+    let layer_hue_drift = max(params.e.w, 0.0);
 
     var uv = position;
     uv.x *= w / h;
     uv.y *= -1.0;
 
-    let phase = time * 0.2;
-    let y = sin(phase);
+    let phase = time * 0.14;
+    let y_raw = sin(phase);
+    let y = sign_nonzero(y_raw) * sqrt(abs(y_raw));
     let ny = smoothstep(-1.0, 1.0, y);
     let color_t = fract(
         ((time * color_cycle_speed) + color_phase) / f32(NUM_COLORS),
     );
-    let c = get_color(color_t);
+    let travel = time * camera_travel_speed;
+    let base_y = y * layer_distance * 0.5;
 
-    let ro = vec3f(
-        0.0,
-        y * layer_distance * 0.5,
-        -time * camera_travel_speed,
-    );
+    var ro = vec3f(0.0, base_y, -travel);
+    if (camera_mode == 1) {
+        let orbit_a = travel * 0.35;
+        ro = vec3f(
+            sin(orbit_a) * camera_orbit_radius,
+            base_y,
+            -travel + cos(orbit_a) * camera_orbit_radius,
+        );
+    }
+    if (camera_mode == 2) {
+        let helix_a = travel * 0.6;
+        ro = vec3f(
+            sin(helix_a) * camera_orbit_radius,
+            base_y + cos(helix_a * 0.5) * layer_distance * 0.35,
+            -travel,
+        );
+    }
+
     var rd = normalize(vec3f(uv, -1.0));
     let rd_xy = rotate2(rd.xy, -ny * PI * spin_amount);
     rd = vec3f(rd_xy.x, rd_xy.y, rd.z);
@@ -114,6 +139,17 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     rd = vec3f(rd_xz.x, rd.y, rd_xz.y);
 
     var d = 0.0;
+    let cam_clearance = map_scene(
+        ro,
+        time,
+        layer_distance,
+        cell_size,
+        sphere_scale,
+    );
+    if (cam_clearance < CAM_SAFE_CLEARANCE) {
+        d = CAM_SAFE_CLEARANCE - cam_clearance;
+    }
+
     var col = vec3f(0.0);
     let steps = i32(march_steps);
     let ny_term = cos(ny * PI * 2.0) * 0.3 + 0.5;
@@ -124,6 +160,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         }
 
         let p = ro + rd * d;
+        let layer_id = round(p.y / layer_distance);
+        let layer_t = fract(color_t + layer_hue_drift * layer_id * 0.07);
+        let c = get_color(layer_t);
         var dt = map_scene(
             p,
             time,
@@ -132,20 +171,25 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             sphere_scale,
         );
 
-        dt = max(dt * ny_term, 1e-3);
-        col += (density / dt) * c * brightness;
+        dt = max(dt * ny_term, MIN_DT);
+        let energy = min(density / dt, MAX_CONTRIB);
+        col += energy * c * brightness;
         d += dt * march_advance;
     }
 
     col = tanh(col * tone_map);
+    let fog_factor = mix(1.0, exp(-d * 0.02), fog_amount);
+    let fog_color = get_color(fract(color_t + 0.5)) * 0.08;
+    col = mix(fog_color, col, fog_factor);
     return vec4f(col, 1.0);
 }
 
 fn get_color(t: f32) -> vec3f {
-    let scaled_t = clamp(t, 0.0, 1.0) * f32(NUM_COLORS - 1u);
-    let curr = u32(floor(scaled_t));
-    let next = min(curr + 1u, NUM_COLORS - 1u);
-    let local_t = scaled_t - f32(curr);
+    let wrapped_t = fract(t);
+    let scaled_t = wrapped_t * f32(NUM_COLORS);
+    let curr = u32(floor(scaled_t)) % NUM_COLORS;
+    let next = (curr + 1u) % NUM_COLORS;
+    let local_t = fract(scaled_t);
     return mix(COLORS[curr], COLORS[next], local_t);
 }
 
@@ -198,4 +242,8 @@ fn rotate2(v: vec2f, angle: f32) -> vec2f {
 
 fn sd_sphere(p: vec3f, r: f32) -> f32 {
     return length(p) - r;
+}
+
+fn sign_nonzero(v: f32) -> f32 {
+    return select(-1.0, 1.0, v >= 0.0);
 }
