@@ -154,7 +154,16 @@ fn vs_main(@builtin(vertex_index) vidx: u32) -> VertexOutput {
 
     let to_focus = focus - pos;
     let dist = max(length(to_focus), 0.0001);
-    pos += (to_focus / dist) * (focus_pull * 0.05) / (1.0 + dist * 6.0);
+    let local_focus_force =
+        (to_focus / dist) * (focus_pull * 0.05) / (1.0 + dist * 6.0);
+    // Anchor the focus force to avoid global field drift that can create
+    // large blank bands near the top/bottom of the frame.
+    let origin_to_focus = focus;
+    let origin_dist = max(length(origin_to_focus), 0.0001);
+    let anchor_focus_force =
+        (origin_to_focus / origin_dist) * (focus_pull * 0.05) /
+        (1.0 + origin_dist * 6.0);
+    pos += local_focus_force - anchor_focus_force;
 
     let grain = random_normal(point_index + 37u, 1.0) * jitter;
     let jitter_angle = 0.0;
