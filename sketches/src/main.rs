@@ -43,6 +43,7 @@ fn main() {
             title: "Drafts",
             enabled: true,
             sketches: [
+                domain_warps,
                 displ,
                 grid_splash_bw,
                 layers,

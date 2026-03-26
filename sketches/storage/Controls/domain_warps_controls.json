@@ -1,0 +1,90 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "zoom",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "warp1_amt",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "warp2_amt",
+      "value": 2.0
+    },
+    {
+      "type": "Slider",
+      "name": "field_scale",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "speed_beats",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "ring_mix",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "stripe_mix",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "palette_shift",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "contrast",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "gamma",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "energy",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "drop",
+      "value": 0.0
+    },
+    {
+      "type": "Select",
+      "name": "scene",
+      "value": "flow"
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_amount",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_beats",
+      "value": 4.0
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {},
+  "mappings": {},
+  "exclusions": [
+    "scene",
+    "pulse_amount",
+    "pulse_beats",
+    "speed_beats"
+  ]
+}
