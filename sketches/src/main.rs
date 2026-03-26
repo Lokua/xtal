@@ -32,7 +32,6 @@ fn main() {
                 neural,
                 rm,
                 rm_auto,
-                sline,
                 spiral,
                 un,
                 watercolor,
@@ -48,6 +47,7 @@ fn main() {
                 grid_splash_bw,
                 layers,
                 phase_matrix,
+                sline,
             ]
         },
         {

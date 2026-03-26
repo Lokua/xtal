@@ -14,7 +14,6 @@ pub mod marcher;
 pub mod neural;
 pub mod rm;
 pub mod rm_auto;
-pub mod sline;
 pub mod spiral;
 pub mod un;
 pub mod watercolor;
