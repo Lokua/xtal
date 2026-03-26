@@ -1,0 +1,75 @@
+movement:
+  type: separator
+
+zoom:
+  var: bx
+  type: slider
+  range: [0.7, 1.6]
+  default: 1.0
+  step: 0.01
+
+warp:
+  var: by
+  type: slider
+  range: [0.3, 1.4]
+  default: 0.9
+  step: 0.01
+
+speed_beats:
+  var: bz
+  type: slider
+  # 1 = one-beat cycle, 4 = four-beat cycle.
+  range: [1.0, 16.0]
+  default: 4.0
+  step: 1.0
+
+energy:
+  var: bw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.55
+  step: 0.01
+
+drop:
+  var: cx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+pulse_beats:
+  var: cy
+  type: slider
+  # 1 = one-beat pulse cycle, 4 = four-beat pulse cycle.
+  range: [1.0, 16.0]
+  default: 8.0
+  step: 1.0
+
+bw:
+  type: separator
+
+contrast:
+  var: cw
+  type: slider
+  range: [0.5, 2.0]
+  default: 1.1
+  step: 0.01
+
+brightness:
+  var: dx
+  type: slider
+  range: [0.3, 1.4]
+  default: 1.0
+  step: 0.01
+
+threshold:
+  var: dy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+invert:
+  var: dz
+  type: checkbox
+  default: false
