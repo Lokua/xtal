@@ -197,8 +197,12 @@ export default function Controls({
                   <label
                     data-help-id="ControlLabel"
                     htmlFor={c.name}
-                    className={clsx(!c.disabled && !isBypassed && 'clickable')}
+                    className={clsx(!disabled && !excluded && 'clickable')}
                     onClick={() => {
+                      if (disabled || excluded) {
+                        return
+                      }
+
                       if (platformModPressed) {
                         onClickRevert(c)
                       } else {
@@ -239,6 +243,9 @@ export default function Controls({
           }
 
           if (c.kind === 'Select') {
+            const isBypassed = c.name in bypassed
+            const isMapped = mappingsEnabled && c.name in mappings
+            const disabled = c.disabled || isBypassed || isMapped
             const [excluded, nodeWithCheckbox] = excludedAndNode(c.name)
 
             return (
@@ -249,7 +256,7 @@ export default function Controls({
                     id={c.name}
                     value={c.value as string}
                     options={c.options}
-                    disabled={c.disabled}
+                    disabled={disabled}
                     onChange={(value) => {
                       onChange(c, value)
                     }}
@@ -257,8 +264,11 @@ export default function Controls({
                   <label
                     data-help-id="ControlLabel"
                     htmlFor={c.name}
-                    className={clsx(!c.disabled && !excluded && 'clickable')}
+                    className={clsx(!disabled && !excluded && 'clickable')}
                     onClick={() => {
+                      if (disabled || excluded) {
+                        return
+                      }
                       onClickRandomize(c.name)
                     }}
                   >

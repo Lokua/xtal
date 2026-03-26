@@ -62,6 +62,9 @@ struct Params {
 
     // camera_mode, camera_orbit_radius, fog_amount, layer_hue_drift
     e: vec4f,
+
+    // shape_mode, blob_smoothness, ring_thickness, ray_warp_amount
+    f: vec4f,
 }
 
 @group(0) @binding(0)
@@ -99,6 +102,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let camera_orbit_radius = max(params.e.y, 0.0);
     let fog_amount = clamp(params.e.z, 0.0, 1.0);
     let layer_hue_drift = max(params.e.w, 0.0);
+    let shape_mode = i32(params.f.x);
+    let blob_smoothness = max(params.f.y, 0.001);
+    let ring_thickness = max(params.f.z, 0.0001);
+    let ray_warp_amount = clamp(params.f.w, 0.0, 1.0);
 
     var uv = position;
     uv.x *= w / h;
@@ -137,6 +144,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     rd = vec3f(rd_xy.x, rd_xy.y, rd.z);
     let rd_xz = rotate2(vec2f(rd.x, rd.z), sin(time * 0.5) * 0.4 * spin_amount);
     rd = vec3f(rd_xz.x, rd.y, rd_xz.y);
+    let warp = ray_warp(
+        rd,
+        ro,
+        time,
+        ray_warp_amount,
+    );
+    rd = normalize(rd + warp);
 
     var d = 0.0;
     let cam_clearance = map_scene(
@@ -145,6 +159,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         layer_distance,
         cell_size,
         sphere_scale,
+        shape_mode,
+        blob_smoothness,
+        ring_thickness,
     );
     if (cam_clearance < CAM_SAFE_CLEARANCE) {
         d = CAM_SAFE_CLEARANCE - cam_clearance;
@@ -169,6 +186,9 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
             layer_distance,
             cell_size,
             sphere_scale,
+            shape_mode,
+            blob_smoothness,
+            ring_thickness,
         );
 
         dt = max(dt * ny_term, MIN_DT);
@@ -218,6 +238,9 @@ fn map_scene(
     layer_distance: f32,
     cell_size: f32,
     sphere_scale: f32,
+    shape_mode: i32,
+    blob_smoothness: f32,
+    ring_thickness: f32,
 ) -> f32 {
     let spacing = vec3f(cell_size, layer_distance, cell_size);
     let id = round(p / spacing);
@@ -228,7 +251,19 @@ fn map_scene(
     q -= spacing * id;
 
     let radius = smoothstep(1.3, -1.3, ho) * sphere_scale + 0.0001;
-    return sd_sphere(q, radius);
+    let sphere = sd_sphere(q, radius);
+
+    if (shape_mode == 1) {
+        let q2 = q - vec3f(cell_size * 0.65, 0.0, -cell_size * 0.35);
+        let sphere2 = sd_sphere(q2, radius * 0.92);
+        return smin(sphere, sphere2, blob_smoothness);
+    }
+
+    if (shape_mode == 2) {
+        return abs(sphere) - ring_thickness;
+    }
+
+    return sphere;
 }
 
 fn rotate2(v: vec2f, angle: f32) -> vec2f {
@@ -246,4 +281,24 @@ fn sd_sphere(p: vec3f, r: f32) -> f32 {
 
 fn sign_nonzero(v: f32) -> f32 {
     return select(-1.0, 1.0, v >= 0.0);
+}
+
+fn smin(a: f32, b: f32, k: f32) -> f32 {
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+
+fn ray_warp(rd: vec3f, ro: vec3f, time: f32, amount: f32) -> vec3f {
+    if (amount <= 0.0) {
+        return vec3f(0.0);
+    }
+
+    let p = rd * 8.0 + ro * 0.04;
+    let w = vec3f(
+        sin(p.y + time * 0.73) - cos(p.z * 1.7 - time * 0.41),
+        sin(p.z + time * 0.67) - cos(p.x * 1.9 + time * 0.37),
+        sin(p.x + time * 0.59) - cos(p.y * 1.5 - time * 0.53),
+    );
+
+    return w * (amount * 0.06);
 }
