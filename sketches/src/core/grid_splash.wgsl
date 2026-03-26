@@ -138,26 +138,54 @@ fn fs_main(
         ) * steps
     ) / steps;
 
-    let base_color = vec3f(
+    let legacy_base_color = vec3f(
         red_or_cyan * sin(color_band_quantized * PI),
         green_or_magenta * cos(color_band_quantized * PI),
         blue_or_yellow * sin(color_band_quantized * PI)
     );
-
-    let color_intensity = mix(0.1, 1.0, color_band_quantized);
-    let color_component = base_color * color_intensity;
+    let legacy_color_intensity = mix(0.1, 1.0, color_band_quantized);
+    let legacy_color_component = legacy_base_color * legacy_color_intensity;
     let background_mask = 1.0 - smoothstep(0.0, 0.1, circle_outline);
-    let color_background = color_component * background_mask;
-    let circle_color = vec3f(displacement) * circle_outline;
-    let colorized = circle_color + color_background;
+    let legacy_background = legacy_color_component * background_mask;
+    let legacy_circle = vec3f(displacement) * circle_outline;
+    let legacy_colorized = legacy_circle + legacy_background;
+    let legacy_color = mix(legacy_circle, legacy_colorized, colorize);
 
-    var color = mix(
-        vec3f(displacement) * circle_outline, 
-        colorized, 
-        colorize
+    let band_norm = clamp(color_band_quantized * 0.5 + 0.5, 0.0, 1.0);
+    let palette_t = fract(
+        color_band_quantized * 0.42 + displacement * 0.28 +
+            dist * band_dist * 0.12
+    );
+    let control_phase = vec3f(
+        red_or_cyan,
+        green_or_magenta,
+        blue_or_yellow
+    ) * 0.35;
+    let harmonic_base = vec3f(
+        0.55 + 0.35 * cos(TAU * (palette_t + 0.02 + control_phase.x)),
+        0.55 + 0.35 * cos(TAU * (palette_t + 0.35 + control_phase.y)),
+        0.55 + 0.35 * cos(TAU * (palette_t + 0.68 + control_phase.z))
     );
 
-    color = select(color, 1.0 - color, invert);
+    var harmonic_hsv = rgb_to_hsv(
+        clamp(harmonic_base, vec3f(0.0), vec3f(1.0))
+    );
+    harmonic_hsv.y = mix(
+        0.45,
+        0.85,
+        clamp(colorize + band_norm * 0.35, 0.0, 1.0)
+    );
+    harmonic_hsv.z = mix(0.30, 1.0, band_norm);
+    let harmonic_color = hsv_to_rgb(harmonic_hsv);
+
+    let circle_gray = vec3f(clamp(displacement, 0.0, 1.0)) * circle_outline;
+    let circle_tint = harmonic_color * (0.35 + 0.65 * band_norm) *
+        circle_outline;
+    let non_invert_colorized = mix(circle_gray, circle_tint, 0.5) +
+        harmonic_color * background_mask * mix(0.25, 1.0, band_norm);
+    let non_invert_color = mix(circle_gray, non_invert_colorized, colorize);
+
+    var color = select(non_invert_color, 1.0 - legacy_color, invert);
 
     let luminance = (color.r + color.g + color.b) / 3.0;
     let mask = smoothstep(0.4, 0.9, luminance);
@@ -355,6 +383,5 @@ fn hsv_to_rgb(hsv: vec3f) -> vec3f {
     
     return vec3f(r, g, b);
 }
-
 
 
