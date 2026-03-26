@@ -31,6 +31,7 @@ fn main() {
                 marcher,
                 neural,
                 rm,
+                rm_auto,
                 sline,
                 spiral,
                 un,
@@ -46,6 +47,7 @@ fn main() {
                 displ,
                 grid_splash_bw,
                 layers,
+                phase_matrix,
             ]
         },
         {

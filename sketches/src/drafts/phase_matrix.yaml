@@ -1,0 +1,363 @@
+# ------------------------------------------------------------------------------
+#  Engines
+# ------------------------------------------------------------------------------
+
+engine_a:
+  var: aw
+  type: select
+  default: cells
+  options:
+    - cells
+    - stripes
+    - rings
+    - plasma
+    - shards
+    - tunnel
+
+engine_b:
+  var: bx
+  type: select
+  default: plasma
+  options:
+    - cells
+    - stripes
+    - rings
+    - plasma
+    - shards
+    - tunnel
+
+engine_mix:
+  var: by
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+beat_rate:
+  var: bz
+  type: slider
+  range: [1.0, 16.0]
+  default: 1.0
+  step: 1.0
+
+beat_offset:
+  var: bw
+  type: slider
+  range: [0.0, 8.0]
+  default: 0.0
+  step: 0.125
+
+accent:
+  var: cx
+  type: slider
+  range: [0.0, 1.5]
+  default: 0.3
+  step: 0.01
+
+complexity:
+  var: cy
+  type: slider
+  range: [0.5, 3.0]
+  default: 1.2
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Space
+# ------------------------------------------------------------------------------
+
+space:
+  type: separator
+
+zoom:
+  var: cz
+  type: slider
+  range: [0.4, 3.5]
+  default: 1.0
+  step: 0.01
+
+warp:
+  var: cw
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.55
+  step: 0.01
+
+swirl:
+  var: dx
+  type: slider
+  range: [-6.0, 6.0]
+  default: 1.2
+  step: 0.01
+
+twist:
+  var: dy
+  type: slider
+  range: [0.0, 4.0]
+  default: 1.3
+  step: 0.01
+
+rotation:
+  var: dz
+  type: slider
+  range: [-6.2831853072, 6.2831853072]
+  default: 0.0
+  step: 0.01
+
+drift_x:
+  var: dw
+  type: slider
+  range: [-2.0, 2.0]
+  default: 0.28
+  step: 0.01
+
+drift_y:
+  var: ex
+  type: slider
+  range: [-2.0, 2.0]
+  default: 0.17
+  step: 0.01
+
+kaleidoscope:
+  var: ey
+  type: slider
+  range: [1.0, 14.0]
+  default: 5.0
+  step: 1.0
+
+mirror:
+  var: ez
+  type: checkbox
+  default: true
+
+# ------------------------------------------------------------------------------
+#  Pattern
+# ------------------------------------------------------------------------------
+
+pattern:
+  type: separator
+
+line_mix:
+  var: ew
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+edge_mix:
+  var: fx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.28
+  step: 0.01
+
+cell_density:
+  var: fy
+  type: slider
+  range: [1.0, 32.0]
+  default: 9.0
+  step: 0.25
+  disabled: engine_a is not cells and engine_a is not shards and engine_b is not cells and engine_b is not shards
+
+stripe_density:
+  var: fz
+  type: slider
+  range: [0.5, 40.0]
+  default: 11.0
+  step: 0.25
+  disabled: engine_a is not stripes and engine_a is not plasma and engine_a is not tunnel and engine_b is not stripes and engine_b is not plasma and engine_b is not tunnel
+
+ring_density:
+  var: fw
+  type: slider
+  range: [0.5, 30.0]
+  default: 8.0
+  step: 0.25
+  disabled: engine_a is not rings and engine_a is not tunnel and engine_b is not rings and engine_b is not tunnel
+
+glitch_mix:
+  var: gx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.1
+  step: 0.01
+
+glitch_scale:
+  var: gy
+  type: slider
+  range: [1.0, 80.0]
+  default: 24.0
+  step: 1.0
+
+echo_mix:
+  var: gz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.2
+  step: 0.01
+
+quantize_levels:
+  var: gw
+  type: slider
+  range: [4, 256]
+  default: 256
+  step: 1
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+palette:
+  var: hx
+  type: select
+  default: neon
+  options:
+    - neon
+    - acid
+    - infrared
+    - cyanotype
+    - mono
+    - ember
+    - viridian
+    - dusk
+    - graphite
+    - coral
+    - aurora
+    - sepia
+
+hue_shift:
+  var: hy
+  type: slider
+  range: [-1.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+saturation:
+  var: hz
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.01
+
+brightness:
+  var: hw
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.01
+
+contrast:
+  var: ix
+  type: slider
+  range: [0.2, 3.0]
+  default: 1.2
+  step: 0.01
+
+gamma:
+  var: iy
+  type: slider
+  range: [0.3, 2.5]
+  default: 1.0
+  step: 0.01
+
+invert:
+  var: iz
+  type: checkbox
+  default: false
+
+color_scroll:
+  var: iw
+  type: slider
+  range: [-2.0, 2.0]
+  default: 0.35
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Atmosphere
+# ------------------------------------------------------------------------------
+
+atmosphere:
+  type: separator
+
+grain:
+  var: jx
+  type: slider
+  range: [0.0, 0.25]
+  default: 0.03
+  step: 0.001
+
+vignette:
+  var: jy
+  type: slider
+  range: [0.0, 3.0]
+  default: 0.6
+  step: 0.01
+
+bloom:
+  var: jz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.25
+  step: 0.01
+
+scanlines:
+  var: jw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.08
+  step: 0.01
+
+strobe_on:
+  var: kx
+  type: checkbox
+  default: false
+
+strobe_mix:
+  var: ky
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.65
+  step: 0.01
+  disabled: not strobe_on
+
+strobe_rate:
+  var: kz
+  type: slider
+  range: [1.0, 16.0]
+  default: 4.0
+  step: 1.0
+  disabled: not strobe_on
+
+soft_clip:
+  var: kw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.5
+  step: 0.01
+
+auto_mix:
+  var: lx
+  type: triangle
+  beats: 16.0
+  range: [0.0, 1.0]
+
+auto_mix_amount:
+  var: ly
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+pause_motion:
+  var: lz
+  type: checkbox
+  default: false
+
+master_gain:
+  var: lw
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.01
