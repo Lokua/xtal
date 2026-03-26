@@ -9,7 +9,17 @@
     {
       "type": "Slider",
       "name": "circle_size",
-      "value": 0.125
+      "value": 0.265
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_rate",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_influence",
+      "value": 0.195
     }
   ],
   "midi_controls": [],
