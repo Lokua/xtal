@@ -50,6 +50,13 @@ export default function MapMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentlyMapping])
 
+  useEffect(() => {
+    if (currentlyMapping && mappings[currentlyMapping]) {
+      clearCurrentlyMapping()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentlyMapping, mappings])
+
   function clearCurrentlyMapping() {
     setCurrentlyMapping('')
     onSetCurrentlyMapping('')

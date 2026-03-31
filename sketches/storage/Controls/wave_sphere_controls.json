@@ -63,8 +63,28 @@
     },
     {
       "type": "Slider",
+      "name": "ray_warp_amount",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "ray_warp_freq",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "terrain_amp",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "terrain_freq",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
       "name": "march_steps",
-      "value": 32.0
+      "value": 18.0
     },
     {
       "type": "Slider",
@@ -94,43 +114,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "brightness",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "cell_size",
-          "value": 0.3
-        },
-        {
-          "type": "Slider",
-          "name": "density",
-          "value": 0.035
-        },
-        {
-          "type": "Slider",
-          "name": "march_advance",
-          "value": 0.68
-        },
-        {
-          "type": "Slider",
-          "name": "color_cycle_speed",
-          "value": 0.75
-        },
-        {
-          "type": "Slider",
-          "name": "spin_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "tone_map",
-          "value": 0.02
-        },
-        {
-          "type": "Slider",
-          "name": "color_phase",
-          "value": 0.0
+          "name": "camera_travel_speed",
+          "value": 3.0
         },
         {
           "type": "Slider",
@@ -144,8 +129,8 @@
         },
         {
           "type": "Slider",
-          "name": "layer_distance",
-          "value": 5.0
+          "name": "brightness",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -154,8 +139,43 @@
         },
         {
           "type": "Slider",
-          "name": "camera_travel_speed",
-          "value": 3.0
+          "name": "color_phase",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "tone_map",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "density",
+          "value": 0.035
+        },
+        {
+          "type": "Slider",
+          "name": "color_cycle_speed",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "spin_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "cell_size",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "march_advance",
+          "value": 0.68
+        },
+        {
+          "type": "Slider",
+          "name": "layer_distance",
+          "value": 5.0
         }
       ],
       "midi_controls": [],
@@ -165,8 +185,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "fog_amount",
-          "value": 0.0
+          "name": "cell_size",
+          "value": 0.37
         },
         {
           "type": "Slider",
@@ -180,33 +200,18 @@
         },
         {
           "type": "Slider",
-          "name": "density",
-          "value": 0.1
-        },
-        {
-          "type": "Slider",
           "name": "layer_hue_drift",
           "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "brightness",
-          "value": 1.0
+          "name": "color_cycle_speed",
+          "value": 0.75
         },
         {
           "type": "Slider",
-          "name": "color_phase",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "camera_mode",
-          "value": "orbit"
-        },
-        {
-          "type": "Slider",
-          "name": "layer_distance",
-          "value": 8.0
+          "name": "density",
+          "value": 0.1
         },
         {
           "type": "Slider",
@@ -215,18 +220,13 @@
         },
         {
           "type": "Slider",
-          "name": "camera_orbit_radius",
-          "value": 3.0
+          "name": "fog_amount",
+          "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "spin_amount",
-          "value": 0.49
-        },
-        {
-          "type": "Slider",
-          "name": "cell_size",
-          "value": 0.37
+          "name": "color_phase",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -235,18 +235,38 @@
         },
         {
           "type": "Slider",
-          "name": "march_steps",
-          "value": 32.0
-        },
-        {
-          "type": "Slider",
           "name": "sphere_scale",
           "value": 0.02
         },
         {
           "type": "Slider",
-          "name": "color_cycle_speed",
-          "value": 0.75
+          "name": "spin_amount",
+          "value": 0.49
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "march_steps",
+          "value": 32.0
+        },
+        {
+          "type": "Slider",
+          "name": "camera_orbit_radius",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "layer_distance",
+          "value": 8.0
+        },
+        {
+          "type": "Select",
+          "name": "camera_mode",
+          "value": "orbit"
         }
       ],
       "midi_controls": [],

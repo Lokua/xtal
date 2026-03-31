@@ -4,12 +4,12 @@
     {
       "type": "Slider",
       "name": "iterations",
-      "value": 48.0
+      "value": 32.0
     },
     {
       "type": "Slider",
       "name": "color_shift_speed",
-      "value": 1.0
+      "value": 4.0
     },
     {
       "type": "Select",
@@ -19,7 +19,7 @@
     {
       "type": "Slider",
       "name": "glow",
-      "value": 1.73
+      "value": 3.96
     },
     {
       "type": "Slider",
@@ -39,22 +39,22 @@
     {
       "type": "Slider",
       "name": "march_feedback",
-      "value": 0.325
+      "value": 0.252
     },
     {
       "type": "Slider",
       "name": "grid_cell",
-      "value": 0.784
+      "value": 0.349
     },
     {
       "type": "Slider",
       "name": "grid_freq",
-      "value": 0.023
+      "value": 0.029
     },
     {
       "type": "Slider",
       "name": "tone_div",
-      "value": 6192000.0
+      "value": 8096000.0
     },
     {
       "type": "Slider",
@@ -64,7 +64,140 @@
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "iterations",
+          "value": 24.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_freq",
+          "value": 0.023
+        },
+        {
+          "type": "Slider",
+          "name": "far_stability",
+          "value": 0.52
+        },
+        {
+          "type": "Slider",
+          "name": "glow",
+          "value": 3.96
+        },
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "clay_dusk"
+        },
+        {
+          "type": "Slider",
+          "name": "march_feedback",
+          "value": 0.278
+        },
+        {
+          "type": "Slider",
+          "name": "tone_div",
+          "value": 6192000.0
+        },
+        {
+          "type": "Slider",
+          "name": "march_base",
+          "value": 0.0005
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift_speed",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_cell",
+          "value": 0.143
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "palette_comp",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "palette_comp",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "iterations",
+          "value": 32.0
+        },
+        {
+          "type": "Slider",
+          "name": "march_base",
+          "value": 0.0005
+        },
+        {
+          "type": "Slider",
+          "name": "tone_div",
+          "value": 8096000.0
+        },
+        {
+          "type": "Slider",
+          "name": "far_stability",
+          "value": 0.52
+        },
+        {
+          "type": "Slider",
+          "name": "grid_cell",
+          "value": 0.349
+        },
+        {
+          "type": "Slider",
+          "name": "glow",
+          "value": 3.96
+        },
+        {
+          "type": "Select",
+          "name": "color_mode",
+          "value": "clay_dusk"
+        },
+        {
+          "type": "Slider",
+          "name": "grid_freq",
+          "value": 0.029
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "march_feedback",
+          "value": 0.252
+        },
+        {
+          "type": "Slider",
+          "name": "color_shift_speed",
+          "value": 4.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
   "exclusions": []
 }

@@ -6,6 +6,7 @@ n_lines:
   var: aw
   type: round_robin
   beats: 6
+  bypass: 16
   # prettier-ignore
   values: [1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 12, 8, 7, 6, 5, 4, 3, 2, 1]
   slew: 0
