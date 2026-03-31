@@ -47,10 +47,12 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let wave_speed = params.e.z;
     let wave_scale = params.e.w;
     let wave_invert = params.f.x > 0.5;
+    let hue = params.f.y;
+    let saturation = params.f.z;
 
-    let bone_white = vec3f(0.96, 0.96, 0.92);
+    let highlight = hsv_to_rgb(vec3f(hue, saturation, 1.0));
     let background = vec3f(0.05, 0.05, 0.08);
-    let gap_background = vec3f(0.96, 0.96, 1.0);
+    let gap_background = mix(vec3f(0.0, 0.0, 0.0), highlight, 0.35);
 
     let pos = correct_aspect(position);
     let scroll_dir = select(-1.0, 1.0, scroll_down);
@@ -118,7 +120,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     final_value = pow(final_value, contrast);
     final_value = final_value * brightness;
 
-    let color = mix(background, bone_white, final_value);
+    let color = mix(background, highlight, final_value);
 
     return vec4f(color, 1.0);
 }
@@ -224,6 +226,33 @@ fn rounded_box_dist(
 fn posterize(value: f32, levels: f32, smoothness: f32) -> f32 {
     let stepped = floor(value * levels) / levels;
     return mix(stepped, value, smoothness);
+}
+
+fn hsv_to_rgb(hsv: vec3f) -> vec3f {
+    let h = fract(hsv.x) * 6.0;
+    let s = clamp(hsv.y, 0.0, 1.0);
+    let v = clamp(hsv.z, 0.0, 1.0);
+
+    let c = v * s;
+    let x = c * (1.0 - abs(fract(h) * 2.0 - 1.0));
+    let m = v - c;
+
+    var rgb = vec3f(0.0, 0.0, 0.0);
+    if h < 1.0 {
+        rgb = vec3f(c, x, 0.0);
+    } else if h < 2.0 {
+        rgb = vec3f(x, c, 0.0);
+    } else if h < 3.0 {
+        rgb = vec3f(0.0, c, x);
+    } else if h < 4.0 {
+        rgb = vec3f(0.0, x, c);
+    } else if h < 5.0 {
+        rgb = vec3f(x, 0.0, c);
+    } else {
+        rgb = vec3f(c, 0.0, x);
+    }
+
+    return rgb + vec3f(m, m, m);
 }
 
 fn create_depth_map(p: vec2f, base_value: f32, strength: f32) -> f32 {

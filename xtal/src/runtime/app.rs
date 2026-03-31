@@ -402,7 +402,9 @@ impl XtalRuntime {
                 );
             }
             RuntimeEvent::CommitMappings => {
-                self.map_mode.currently_mapping = None;
+                // Commiting from Settings -> Controls should also end live
+                // learn so subsequent MIDI movement does not keep remapping.
+                self.map_mode.stop();
                 let mappings = self.map_mode.mappings();
                 let mut missing_slider_ranges = Vec::new();
 

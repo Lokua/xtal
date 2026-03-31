@@ -46,6 +46,18 @@ contrast:
   delay: 0.0
   stem: 102
 
+hue:
+  var: fy
+  type: slider
+  default: 0.13
+  range: [0.0, 1.0]
+
+saturation:
+  var: fz
+  type: slider
+  default: 0.04
+  range: [0.0, 1.0]
+
 # ------------------------------------------------------------------------------
 #  Shape
 # ------------------------------------------------------------------------------
@@ -102,7 +114,7 @@ scroll_speed:
   var: dy
   type: slider
   default: 0.5
-  range: [0.0, 1.0]
+  range: [0.0, 4.0]
   step: 0.025
 
 extrude_amount:

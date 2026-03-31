@@ -22,9 +22,9 @@ iterations:
 x:
   var: aw
   type: random_slewed
-  beats: 32
+  beats: 2
   range: [0.0, *PI_OVER_3]
-  slew: 0.9
+  slew: 0.8
 
 # y:
 #   var: bx
