@@ -7,6 +7,79 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [2.0.0] 2026-04-16
+
+This is a ground-up rewrite. v2 drops the Nannou dependency entirely and
+replaces it with raw `winit` + `wgpu`, removes the `xtal-macros` proc-macro
+crate, and reorganizes the library into a cleaner, purpose-built module
+structure. The render/compute graph, `FrameClock`, and zero-boilerplate sketch
+authoring are the headline new capabilities.
+
+### Removed
+
+- **Nannou dependency** — the unmaintained Nannou 0.19.0 framework has been
+  replaced with direct `winit` + `wgpu` usage. All Nannou surface area (window,
+  device, queue, frame) is now owned by Xtal.
+- **`xtal-macros` crate** — the proc-macro approach to uniform banks is gone.
+  Uniform banks are now declared at runtime via `banks: usize` in `SketchConfig`
+  and handled by the render graph.
+- **`framework/` module** — replaced by the focused modules below.
+- **`FrameController`** — superseded by `FrameClock`.
+- **`web_view_process.rs`** — replaced by the new `WebViewBridge` IPC design.
+- **`runtime/tap_tempo.rs`** — moved to `time/`.
+
+### Added
+
+- **Render/compute graph** (`render/graph.rs`) — a declarative `GraphBuilder`
+  API for composing multi-pass render and compute pipelines. Handles are issued
+  for uniform banks, 2D textures, loaded images, and feedback-loop texture
+  pairs; nodes declare their reads, mesh, shader, and render target, then the
+  graph is built once and driven by the runtime each frame.
+- **`FullscreenShaderSketch`** — a zero-boilerplate sketch type. For the common
+  fullscreen-shader case a sketch is just a `SKETCH_CONFIG` constant plus
+  co-located WGSL and YAML files; no `update`/`view` impl required.
+- **`SketchAssets`** (`sketches/sketch_assets.rs`) — convention-over-
+  configuration asset resolution. `SketchAssets::from_file(file!())` locates
+  YAML and WGSL files relative to the sketch source file with no manual path
+  construction.
+- **`register_sketches!` macro** (`sketches/registration_macros.rs`) —
+  declarative sketch registration with named, enable-flagged categories.
+- **`FrameClock`** (`time/frame_clock.rs`) — a precise frame-timing engine with
+  transport start/stop/reset, BPM-driven beat accumulation, and adaptive
+  frame-interval smoothing. Replaces both `FrameController` and the timing
+  scattered across the old runtime.
+- **`WebViewBridge`** (`runtime/web_view_bridge.rs`) — the web-view IPC layer is
+  now a separate binary (`web_view_process`) communicating over an
+  `ipc-channel`, keeping the GPU loop free of any blocking UI work.
+- **Monitor preview window** (`runtime/monitor_preview.rs`).
+- **Integration test suite** (`xtal/tests/`) — covers control-hub snapshot
+  transitions, frame clock behavior, GPU smoke, sketch registration, registry
+  internals, and web-view event mapping.
+
+### Changed
+
+- **Module structure** — `xtal/src/` is now organized as:
+  - `control/` — `ControlHub`, audio/MIDI/OSC/UI controls, dep graph, param mod
+  - `io/` — raw audio, MIDI, and OSC I/O
+  - `motion/` — animation, easing, effects, timing (contents unchanged)
+  - `render/` — render/compute graph, `GpuState`, mesh, shader watcher, uniform
+    banks
+  - `runtime/` — app event loop, recorder, registry, serialization, storage,
+    web-view bridge
+  - `sketches/` — `Sketch` trait, `SketchConfig`, `SketchAssets`, registration
+    macros
+  - `time/` — `FrameClock`, `TapTempo`
+  - `context.rs`, `prelude.rs` at crate root
+- **`SketchConfig`** gains a `banks: usize` field and `w`/`h` are now `u32`.
+  `PlayMode` gains a `Pause` variant; a new `TimingMode` enum
+  (`Frame | Osc | Midi | Hybrid | Manual`) replaces implicit timing assumptions.
+- **`Sketch` trait** — `setup(&self, graph: &mut GraphBuilder)` replaces the old
+  Nannou `view` signature; `control_script()`, `timing_mode()`, `update()`, and
+  `view()` are all provided with defaults so simple sketches need only implement
+  what they use.
+- **`RuntimeRegistry`** gains sketch categories and factory closures, replacing
+  the old flat name-list approach.
+
 ## [0.16.0] 2025-10-22
 
 ### Fixed
