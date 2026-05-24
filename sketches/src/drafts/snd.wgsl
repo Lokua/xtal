@@ -63,22 +63,37 @@ fn apply_vhs_warp(uv: vec2f, time: f32, amount: f32, speed: f32) -> vec2f {
     let fine_wave = sin((uv.y * 210.0 - time * speed * 1.7) * 6.2831853);
     let roll = fract(time * speed * 0.08);
     let roll_band = smoothstep(0.08, 0.0, abs(uv.y - roll));
-    let x_offset = (line_wave * 0.012 + fine_wave * 0.004 + roll_band * 0.035) * amount;
+    let x_offset =
+        (line_wave * 0.012 + fine_wave * 0.004 + roll_band * 0.035) * amount;
     let y_offset = sin(time * speed * 0.35) * 0.018 * amount;
     return uv + vec2f(x_offset, y_offset);
 }
 
-fn apply_slice_shift(uv: vec2f, amount: f32, slices: f32, offset: f32, axis: f32) -> vec2f {
+fn apply_slice_shift(
+    uv: vec2f,
+    amount: f32,
+    slices: f32,
+    offset: f32,
+    axis: f32,
+) -> vec2f {
     let use_vertical = step(0.5, axis);
     let coord = mix(uv.y, uv.x, use_vertical);
-    let slice_index = floor(coord * max(slices, 1.0));
+    let n = floor(max(slices, 1.0));
+    let slice_index = floor(coord * n);
     let alternating = select(-1.0, 1.0, (i32(slice_index) & 1) == 0);
-    let varied = alternating * (0.45 + 0.55 * hash21(vec2f(slice_index, slices)));
+    let varied = alternating
+        * (0.45 + 0.55 * hash21(vec2f(slice_index, n)));
     let shift = varied * offset * amount;
     return uv + mix(vec2f(shift, 0.0), vec2f(0.0, shift), use_vertical);
 }
 
-fn chroma_split(color: vec3f, uv: vec2f, amount: f32, spread: f32, angle: f32) -> vec3f {
+fn chroma_split(
+    color: vec3f,
+    uv: vec2f,
+    amount: f32,
+    spread: f32,
+    angle: f32,
+) -> vec3f {
     let direction = vec2f(cos(angle), sin(angle));
     let offset = direction * spread * amount;
     let shifted = vec3f(
@@ -97,7 +112,13 @@ fn posterize(color: vec3f, amount: f32, threshold: f32, levels: f32) -> vec3f {
     return mix(color, mix(stepped, thresholded, amount), amount);
 }
 
-fn pixel_smear(color: vec3f, uv: vec2f, amount: f32, distance: f32, angle: f32) -> vec3f {
+fn pixel_smear(
+    color: vec3f,
+    uv: vec2f,
+    amount: f32,
+    distance: f32,
+    angle: f32,
+) -> vec3f {
     let direction = vec2f(cos(angle), sin(angle));
     let lum = luma(color);
     let signed_luma = lum * 2.0 - 1.0;
@@ -110,7 +131,13 @@ fn pixel_smear(color: vec3f, uv: vec2f, amount: f32, distance: f32, angle: f32) 
     return mix(color, smear, amount);
 }
 
-fn edge_glow(color: vec3f, uv: vec2f, amount: f32, radius: f32, gain: f32) -> vec3f {
+fn edge_glow(
+    color: vec3f,
+    uv: vec2f,
+    amount: f32,
+    radius: f32,
+    gain: f32,
+) -> vec3f {
     let dx = vec2f(radius, 0.0);
     let dy = vec2f(0.0, radius);
     let center = luma(sample_video(uv));
@@ -122,7 +149,14 @@ fn edge_glow(color: vec3f, uv: vec2f, amount: f32, radius: f32, gain: f32) -> ve
     return color + vec3f(0.35, 0.75, 1.0) * glow;
 }
 
-fn signal_texture(color: vec3f, uv: vec2f, time: f32, amount: f32, density: f32, noise_amount: f32) -> vec3f {
+fn signal_texture(
+    color: vec3f,
+    uv: vec2f,
+    time: f32,
+    amount: f32,
+    density: f32,
+    noise_amount: f32,
+) -> vec3f {
     let scan = 0.5 + 0.5 * sin((uv.y * density + time * 0.25) * 6.2831853);
     var out = color * mix(1.0, mix(0.72, 1.08, scan), amount);
     let noise = hash21(uv * vec2f(640.0, 1137.0) + vec2f(time, -time));
@@ -145,7 +179,8 @@ fn natural_color_boost(
 ) -> vec3f {
     let green_mask = hue_mask(color, vec3f(0.18, 0.78, 0.22), green_selectivity)
         * smoothstep(0.02, 0.38, color.g - max(color.r, color.b) * 0.72);
-    let yellow_mask = hue_mask(color, vec3f(1.0, 0.74, 0.16), yellow_selectivity)
+    let yellow_mask =
+        hue_mask(color, vec3f(1.0, 0.74, 0.16), yellow_selectivity)
         * smoothstep(0.22, 0.86, luma(color));
 
     var out = color;
@@ -199,9 +234,13 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     );
     var color = sample_video(warped_uv);
 
-    color = chroma_split(color, warped_uv, chroma_amount, chroma_spread, chroma_angle);
+    color = chroma_split(
+        color, warped_uv, chroma_amount, chroma_spread, chroma_angle,
+    );
     color = posterize(color, poster_amount, poster_threshold, poster_levels);
-    color = pixel_smear(color, warped_uv, smear_amount, smear_distance, smear_angle);
+    color = pixel_smear(
+        color, warped_uv, smear_amount, smear_distance, smear_angle,
+    );
     color = natural_color_boost(
         color,
         green_boost,
@@ -210,7 +249,9 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
         yellow_selectivity,
     );
     color = edge_glow(color, warped_uv, edge_amount, edge_radius, edge_gain);
-    color = signal_texture(color, in.uv, time, signal_amount, signal_density, signal_noise);
+    color = signal_texture(
+        color, in.uv, time, signal_amount, signal_density, signal_noise,
+    );
 
     let vignette = smoothstep(0.95, 0.25, length(in.uv - vec2f(0.5, 0.5)));
     color *= mix(1.0, vignette, 0.12 * luma(color));

@@ -124,12 +124,6 @@ edge_amount:
   range: [0.0, 1.0]
   default: 0.0
 
-# edge_radius:
-#   type: slider
-#   var: ey
-#   range: [0.0005, 0.015]
-#   default: 0.003
-
 edge_radius:
   type: triangle
   var: ey
@@ -149,37 +143,32 @@ edge_gain:
 slice_shift:
   type: separator
 
-# slice_amount:
-#   type: slider
-#   var: ew
-#   range: [0.0, 1.0]
-#   default: 0.0
+slice_beats: &slice_beats 8
 
 slice_amount:
   type: triangle
   var: ew
-  beats: 48.0
-  range: [0.0, 1.0]
+  beats: *slice_beats
+  range: [0.0, 0.75]
 
-# slice_count:
-#   type: slider
-#   var: fx
-#   range: [2.0, 80.0]
-#   default: 18.0
+slice_amount_ease:
+  type: effect
+  kind: math
+  operator: curve
+  operand: -0.25
+
+slice_amount_mod:
+  type: mod
+  source: slice_amount
+  modulators:
+    - slice_amount_ease
 
 slice_count:
-  type: random_slewed
+  type: round_robin
   var: fx
-  beats: 4.0
-  slew: 0.4
-  # range: [2.0, 80.0]
-  range: [2.0, 20.0]
-
-# slice_offset:
-#   type: slider
-#   var: fy
-#   range: [0.0, 0.3]
-#   default: 0.08
+  beats: *slice_beats
+  values: [3, 9, 3, 12, 3, 5, 18, 7, 3, 2]
+  slew: 0
 
 slice_offset:
   type: triangle
