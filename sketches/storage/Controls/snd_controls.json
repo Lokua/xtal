@@ -24,7 +24,7 @@
     {
       "type": "Slider",
       "name": "scanline_density",
-      "value": 128.3654
+      "value": 124.2788
     },
     {
       "type": "Slider",
@@ -109,28 +109,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "chroma_angle",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "smear_distance",
-          "value": 0.12
-        },
-        {
-          "type": "Slider",
-          "name": "signal_amount",
+          "name": "smear_amount",
           "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_spread",
-          "value": 0.0169
-        },
-        {
-          "type": "Slider",
-          "name": "scanline_density",
-          "value": 128.3654
         },
         {
           "type": "Slider",
@@ -139,53 +119,8 @@
         },
         {
           "type": "Slider",
-          "name": "smear_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_levels",
-          "value": 2.8036
-        },
-        {
-          "type": "Slider",
-          "name": "noise_amount",
-          "value": 0.4688
-        },
-        {
-          "type": "Slider",
-          "name": "smear_angle",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "green_boost",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "edge_amount",
-          "value": 0.2356
-        },
-        {
-          "type": "Slider",
-          "name": "yellow_boost",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "vhs_amount",
-          "value": 0.0885
-        },
-        {
-          "type": "Slider",
-          "name": "edge_gain",
-          "value": 1.6932
+          "name": "smear_distance",
+          "value": 0.12
         },
         {
           "type": "Slider",
@@ -194,8 +129,53 @@
         },
         {
           "type": "Slider",
+          "name": "noise_amount",
+          "value": 0.4688
+        },
+        {
+          "type": "Slider",
+          "name": "green_boost",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "scanline_density",
+          "value": 124.2788
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_angle",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "signal_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
           "name": "slice_axis",
           "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "smear_angle",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "yellow_boost",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_gain",
+          "value": 1.6932
+        },
+        {
+          "type": "Slider",
+          "name": "vhs_amount",
+          "value": 0.0885
         },
         {
           "type": "Slider",
@@ -204,8 +184,28 @@
         },
         {
           "type": "Slider",
+          "name": "edge_amount",
+          "value": 0.2356
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_spread",
+          "value": 0.0169
+        },
+        {
+          "type": "Slider",
           "name": "yellow_selectivity",
           "value": 0.6344
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 2.8036
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_amount",
+          "value": 0.0
         }
       ],
       "midi_controls": [],

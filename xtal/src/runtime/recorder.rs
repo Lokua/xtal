@@ -195,48 +195,56 @@ impl Recorder {
                 )
             })?;
 
-        let ffmpeg_preset = std::env::var("XTAL_RECORDING_PRESET")
-            .unwrap_or_else(|_| "veryfast".to_string());
         let num_buffers = std::env::var("XTAL_RECORDING_NUM_BUFFERS")
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
             .filter(|&count| count >= 2)
             .unwrap_or(DEFAULT_NUM_BUFFERS);
 
+        let encoder_args =
+            build_encoder_args(width, height, fps, output_path);
+
+        let mut args: Vec<String> = vec![
+            "-y".into(),
+            "-hide_banner".into(),
+            "-loglevel".into(),
+            "error".into(),
+            "-nostats".into(),
+            "-f".into(),
+            "rawvideo".into(),
+            "-pix_fmt".into(),
+            ffmpeg_pix_fmt.into(),
+            "-s".into(),
+            format!("{}x{}", width, height),
+            "-r".into(),
+            fps.to_string(),
+            "-i".into(),
+            "pipe:0".into(),
+        ];
+        args.extend(encoder_args);
+
         let mut ffmpeg = Command::new("ffmpeg")
-            .args([
-                "-y",
-                "-hide_banner",
-                "-loglevel",
-                "error",
-                "-nostats",
-                "-f",
-                "rawvideo",
-                "-pix_fmt",
-                ffmpeg_pix_fmt,
-                "-s",
-                &format!("{}x{}", width, height),
-                "-r",
-                &fps.to_string(),
-                "-i",
-                "pipe:0",
-                "-c:v",
-                "libx264",
-                "-crf",
-                "16",
-                "-preset",
-                ffmpeg_preset.as_str(),
-                "-pix_fmt",
-                "yuv420p",
-                output_path,
-            ])
+            .args(&args)
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn()?;
 
         let ffmpeg_stdin =
             ffmpeg.stdin.take().ok_or("Failed to open ffmpeg stdin")?;
+
+        // With `-loglevel error`, ffmpeg only writes when something is
+        // wrong. Drain on a background thread so the pipe never fills
+        // and so errors surface in logs instead of being swallowed.
+        if let Some(stderr) = ffmpeg.stderr.take() {
+            thread::spawn(move || {
+                use std::io::{BufRead, BufReader};
+                let reader = BufReader::new(stderr);
+                for line in reader.lines().map_while(Result::ok) {
+                    error!("ffmpeg: {}", line);
+                }
+            });
+        }
 
         let (buffer_return_tx, buffer_return_rx) = mpsc::channel();
         let (writer_tx, writer_rx) =
@@ -540,6 +548,74 @@ fn copy_padded_rows_to_contiguous(
         let dst_start = row * unpadded_bytes_per_row;
         let dst_end = dst_start + unpadded_bytes_per_row;
         out[dst_start..dst_end].copy_from_slice(&data[src_start..src_end]);
+    }
+}
+
+// Choose the H.264 encoder and its quality args.
+//
+// macOS defaults to `h264_videotoolbox` (hardware encoding) because the
+// software `libx264` path is fast enough on average but spiky enough at
+// >30 fps targets that it back-pressures the readback ring buffer and
+// stalls the main thread. Hardware encoding keeps per-frame writer cost
+// low and steady, so the render loop never blocks on a full buffer pool.
+//
+// Override either selection via env:
+//   XTAL_RECORDING_ENCODER=libx264|h264_videotoolbox
+//   XTAL_RECORDING_QUALITY=<encoder-specific quality value>
+//   XTAL_RECORDING_PRESET=<libx264 preset>   (libx264 only)
+fn build_encoder_args(
+    width: u32,
+    height: u32,
+    fps: f32,
+    output_path: &str,
+) -> Vec<String> {
+    let default_encoder = if cfg!(target_os = "macos") {
+        "h264_videotoolbox"
+    } else {
+        "libx264"
+    };
+    let encoder = std::env::var("XTAL_RECORDING_ENCODER")
+        .unwrap_or_else(|_| default_encoder.to_string());
+
+    match encoder.as_str() {
+        "h264_videotoolbox" => {
+            // VT in current ffmpeg builds requires bit-rate, not qscale.
+            // Default to ~0.20 bits/pixel which is visually lossless for
+            // most graphics content; user can override via env.
+            let default_kbps =
+                ((width as u64 * height as u64 * fps as u64) / 50) as u32;
+            let kbps = default_kbps.clamp(5_000, 200_000);
+            let bitrate = std::env::var("XTAL_RECORDING_QUALITY")
+                .unwrap_or_else(|_| format!("{}k", kbps));
+            vec![
+                "-c:v".into(),
+                "h264_videotoolbox".into(),
+                "-b:v".into(),
+                bitrate,
+                "-realtime".into(),
+                "1".into(),
+                "-pix_fmt".into(),
+                "yuv420p".into(),
+                output_path.into(),
+            ]
+        }
+        _ => {
+            let preset = std::env::var("XTAL_RECORDING_PRESET")
+                .unwrap_or_else(|_| "veryfast".to_string());
+            let crf = std::env::var("XTAL_RECORDING_QUALITY")
+                .unwrap_or_else(|_| "16".to_string());
+            vec![
+                "-c:v".into(),
+                encoder,
+                "-crf".into(),
+                crf,
+                "-preset".into(),
+                preset,
+                "-pix_fmt".into(),
+                "yuv420p".into(),
+                output_path.into(),
+            ]
+        }
     }
 }
 
