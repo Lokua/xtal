@@ -1,0 +1,916 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "flow_speed",
+      "value": 1.6
+    },
+    {
+      "type": "Slider",
+      "name": "step_size",
+      "value": 0.040000003
+    },
+    {
+      "type": "Slider",
+      "name": "steps",
+      "value": 63
+    },
+    {
+      "type": "Slider",
+      "name": "field_twist",
+      "value": 0.4
+    },
+    {
+      "type": "Slider",
+      "name": "advection_angle",
+      "value": 1.63
+    },
+    {
+      "type": "Slider",
+      "name": "line_density",
+      "value": 13
+    },
+    {
+      "type": "Slider",
+      "name": "line_sharpness",
+      "value": 0.45000002
+    },
+    {
+      "type": "Select",
+      "name": "palette",
+      "value": "ember"
+    },
+    {
+      "type": "Slider",
+      "name": "palette_shift",
+      "value": 0.01
+    },
+    {
+      "type": "Slider",
+      "name": "palette_contrast",
+      "value": 1.4
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 2
+    },
+    {
+      "type": "Slider",
+      "name": "grain",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "vignette",
+      "value": 0.6
+    },
+    {
+      "type": "Slider",
+      "name": "bands_count",
+      "value": 48
+    },
+    {
+      "type": "Slider",
+      "name": "gradient_mix",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "light_leak_amount",
+      "value": 0
+    },
+    {
+      "type": "Slider",
+      "name": "spectral_drive",
+      "value": 1
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "0": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 13
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 1.6
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 1.63
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "ember"
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.45000002
+        },
+        {
+          "type": "Slider",
+          "name": "light_leak_amount",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "spectral_drive",
+          "value": 1
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 48
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 63
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.040000003
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 1.4
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 96
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.006
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.62
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.6
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "mono_ink"
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 48
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 64
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 48
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.4
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "mono_ink"
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.006
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.62
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 64
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 96
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 48
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 7
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.62
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 96
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.021
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.49
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.2
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "mono_ink"
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.19
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.95
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.043
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 1.66
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 34
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 28
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.065
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.26
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 2.05
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 3.3500001
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 32
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "mono_ink"
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 1.35
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 4.7799997
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "glacier"
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 92
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.01
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.7
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 9
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 5
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.0799999
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0.58
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 1.45
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.114999995
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.017
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "6": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0.58
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "glacier"
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.79
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.017
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 4.7799997
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 1.7
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.7
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 5
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 92
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.85
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 28
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "7": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 28
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 96
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 3
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "glacier"
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 1.2
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.017
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.79
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 1
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 2
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "8": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.71999997
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 24
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.099999994
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 1.6
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 1.63
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 13
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "ember"
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 63
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.040000003
+        },
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.45000002
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "9": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "line_sharpness",
+          "value": 0.45000002
+        },
+        {
+          "type": "Slider",
+          "name": "gradient_mix",
+          "value": 0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "ember"
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.099999994
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 1.6
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "bands_count",
+          "value": 24
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "line_density",
+          "value": 13
+        },
+        {
+          "type": "Slider",
+          "name": "steps",
+          "value": 63
+        },
+        {
+          "type": "Slider",
+          "name": "field_twist",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "palette_contrast",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "advection_angle",
+          "value": 1.63
+        },
+        {
+          "type": "Slider",
+          "name": "palette_shift",
+          "value": 0.71999997
+        },
+        {
+          "type": "Slider",
+          "name": "step_size",
+          "value": 0.040000003
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}
