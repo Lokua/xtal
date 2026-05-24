@@ -45,6 +45,7 @@ fn main() {
             sketches: [
                 domain_warps,
                 displ,
+                flow_snd,
                 grid_splash_bw,
                 layers,
                 phase_matrix,
@@ -57,7 +58,6 @@ fn main() {
             sketches: [
                 animation_dev,
                 clock_dev,
-                flow_snd,
             ]
         },
         {
@@ -69,6 +69,7 @@ fn main() {
                 multipass,
                 compute,
                 image,
+                video,
             ]
         },
     }
