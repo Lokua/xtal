@@ -26,5 +26,9 @@ pub mod video {
         pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
             Ok(None)
         }
+
+        pub fn restart(&mut self) -> Result<(), String> {
+            Ok(())
+        }
     }
 }
