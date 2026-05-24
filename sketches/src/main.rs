@@ -49,6 +49,7 @@ fn main() {
                 grid_splash_bw,
                 layers,
                 phase_matrix,
+                snd,
                 sline,
             ]
         },
