@@ -1,0 +1,225 @@
+# ------------------------------------------------------------------------------
+#  Chroma Split
+# ------------------------------------------------------------------------------
+
+chroma_split:
+  type: separator
+
+chroma_amount:
+  type: slider
+  var: aw
+  range: [0.0, 1.0]
+  default: 0.0
+
+chroma_spread:
+  type: slider
+  var: bx
+  range: [0.0, 0.05]
+  default: 0.012
+
+chroma_angle:
+  type: slider
+  var: by
+  range: [0.0, 6.28318]
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Signal Texture
+# ------------------------------------------------------------------------------
+
+signal_texture:
+  type: separator
+
+signal_amount:
+  type: slider
+  var: bz
+  range: [0.0, 1.0]
+  default: 0.0
+
+scanline_density:
+  type: slider
+  var: bw
+  range: [20.0, 900.0]
+  default: 360.0
+
+noise_amount:
+  type: slider
+  var: cx
+  range: [0.0, 0.5]
+  default: 0.18
+
+# ------------------------------------------------------------------------------
+#  Luma Posterize
+# ------------------------------------------------------------------------------
+
+luma_posterize:
+  type: separator
+
+posterize_amount:
+  type: slider
+  var: cy
+  range: [0.0, 1.0]
+  default: 0.0
+
+posterize_threshold:
+  type: slider
+  var: cz
+  range: [0.0, 1.0]
+  default: 0.48
+
+posterize_levels:
+  type: slider
+  var: cw
+  range: [2.0, 12.0]
+  default: 4.0
+
+# ------------------------------------------------------------------------------
+#  Pixel Smear
+# ------------------------------------------------------------------------------
+
+pixel_smear:
+  type: separator
+
+smear_amount:
+  type: slider
+  var: dx
+  range: [0.0, 1.0]
+  default: 0.0
+
+smear_distance:
+  type: slider
+  var: dy
+  range: [0.0, 0.12]
+  default: 0.035
+
+smear_angle:
+  type: slider
+  var: dz
+  range: [0.0, 6.28318]
+  default: 1.5708
+
+# ------------------------------------------------------------------------------
+#  VHS Warp
+# ------------------------------------------------------------------------------
+
+vhs_warp:
+  type: separator
+
+vhs_amount:
+  type: slider
+  var: dw
+  range: [0.0, 1.0]
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Edge Glow
+# ------------------------------------------------------------------------------
+
+edge_glow:
+  type: separator
+
+edge_amount:
+  type: slider
+  var: ex
+  range: [0.0, 1.0]
+  default: 0.0
+
+# edge_radius:
+#   type: slider
+#   var: ey
+#   range: [0.0005, 0.015]
+#   default: 0.003
+
+edge_radius:
+  type: triangle
+  var: ey
+  beats: 2.0
+  range: [0.0005, 0.015]
+
+edge_gain:
+  type: slider
+  var: ez
+  range: [0.5, 8.0]
+  default: 3.0
+
+# ------------------------------------------------------------------------------
+#  Slice Shift
+# ------------------------------------------------------------------------------
+
+slice_shift:
+  type: separator
+
+# slice_amount:
+#   type: slider
+#   var: ew
+#   range: [0.0, 1.0]
+#   default: 0.0
+
+slice_amount:
+  type: triangle
+  var: ew
+  beats: 48.0
+  range: [0.0, 1.0]
+
+# slice_count:
+#   type: slider
+#   var: fx
+#   range: [2.0, 80.0]
+#   default: 18.0
+
+slice_count:
+  type: random_slewed
+  var: fx
+  beats: 4.0
+  slew: 0.4
+  # range: [2.0, 80.0]
+  range: [2.0, 20.0]
+
+# slice_offset:
+#   type: slider
+#   var: fy
+#   range: [0.0, 0.3]
+#   default: 0.08
+
+slice_offset:
+  type: triangle
+  var: fy
+  beats: 16.0
+  range: [0.0, 0.3]
+
+slice_axis:
+  type: slider
+  var: fz
+  range: [0.0, 1.0]
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Natural Color Boost
+# ------------------------------------------------------------------------------
+
+natural_color_boost:
+  type: separator
+
+green_boost:
+  type: slider
+  var: fw
+  range: [0.0, 1.0]
+  default: 0.0
+
+green_selectivity:
+  type: slider
+  var: gx
+  range: [0.03, 0.65]
+  default: 0.22
+
+yellow_boost:
+  type: slider
+  var: gy
+  range: [0.0, 1.0]
+  default: 0.0
+
+yellow_selectivity:
+  type: slider
+  var: gz
+  range: [0.03, 0.65]
+  default: 0.24

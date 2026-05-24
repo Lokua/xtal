@@ -141,6 +141,7 @@ fn spawn_web_view_process(server_name: &str) -> Result<Child, String> {
     command
         .args([
             "run",
+            "--no-default-features",
             "--features",
             "web_view_process",
             "--bin",

@@ -14,6 +14,7 @@ use crate::graph::{
     RenderTarget, ResourceDecl, ResourceHandle, ResourceKind, TextureHandle,
 };
 use crate::mesh::{Mesh, MeshVertexKind};
+use crate::render::video::VideoSource;
 use crate::shader_watch::ShaderWatch;
 use crate::uniforms::UniformBanks;
 
@@ -33,6 +34,8 @@ pub struct CompiledGraph {
     offscreen_resource_ids: Vec<TextureHandle>,
     offscreen_textures: HashMap<TextureHandle, GpuTexture>,
     image_textures: HashMap<TextureHandle, GpuTexture>,
+    video_sources: HashMap<TextureHandle, VideoSource>,
+    video_textures: HashMap<TextureHandle, GpuTexture>,
     texture_labels: HashMap<TextureHandle, String>,
 }
 
@@ -99,13 +102,18 @@ impl CompiledGraph {
         uniform_layout: &wgpu::BindGroupLayout,
     ) -> Result<Self, String> {
         let present_source_handle = find_present_source(&graph)?;
-        let (offscreen_resource_ids, image_resources, texture_labels) =
-            collect_texture_resources(&graph.resources);
+        let (
+            offscreen_resource_ids,
+            image_resources,
+            video_resources,
+            texture_labels,
+        ) = collect_texture_resources(&graph.resources);
 
         validate_graph_resources(
             &graph,
             &offscreen_resource_ids,
             &image_resources,
+            &video_resources,
             present_source_handle,
         )?;
 
@@ -172,6 +180,22 @@ impl CompiledGraph {
             image_textures.insert(handle, texture);
         }
 
+        let mut video_sources = HashMap::new();
+        let mut video_textures = HashMap::new();
+
+        for (handle, path) in video_resources {
+            let source = VideoSource::new(&path)?;
+            video_sources.insert(handle, source);
+            let label = texture_labels
+                .get(&handle)
+                .map(|name| name.as_str())
+                .unwrap_or("xtal-video-texture");
+            video_textures.insert(
+                handle,
+                create_placeholder_texture(device, queue, label),
+            );
+        }
+
         Ok(Self {
             surface_format,
             present_source: if let Some(source) = present_source_handle {
@@ -183,6 +207,8 @@ impl CompiledGraph {
             offscreen_resource_ids,
             offscreen_textures: HashMap::new(),
             image_textures,
+            video_sources,
+            video_textures,
             texture_labels,
         })
     }
@@ -190,11 +216,13 @@ impl CompiledGraph {
     pub fn execute(
         &mut self,
         device: &wgpu::Device,
+        queue: &wgpu::Queue,
         frame: &mut Frame,
         uniforms: &UniformBanks,
         surface_size: [u32; 2],
     ) -> Result<(), String> {
         self.ensure_offscreen_textures(device, surface_size);
+        self.update_video_textures(device, queue)?;
 
         for node in &mut self.nodes {
             match node {
@@ -210,6 +238,7 @@ impl CompiledGraph {
                             device,
                             &self.offscreen_textures,
                             &self.image_textures,
+                            &self.video_textures,
                             &node.sampled_reads,
                         )?)
                     } else {
@@ -304,24 +333,122 @@ impl CompiledGraph {
         }
 
         if let PresentSource::Texture(source) = self.present_source {
-            let source_view = if let Some(texture) =
-                self.offscreen_textures.get(&source)
-            {
-                texture.view.clone()
-            } else if let Some(texture) = self.image_textures.get(&source) {
-                texture.view.clone()
-            } else {
-                return Err(format!(
-                    "present source '{}' is not a known texture resource",
-                    texture_label(source, &self.texture_labels)
-                ));
-            };
+            let source_view =
+                if let Some(texture) = self.offscreen_textures.get(&source) {
+                    texture.view.clone()
+                } else if let Some(texture) = self.image_textures.get(&source) {
+                    texture.view.clone()
+                } else if let Some(texture) = self.video_textures.get(&source) {
+                    texture.view.clone()
+                } else {
+                    return Err(format!(
+                        "present source '{}' is not a known texture resource",
+                        texture_label(source, &self.texture_labels)
+                    ));
+                };
 
             blit_texture_to_surface(
                 device,
                 frame,
                 &source_view,
                 self.surface_format,
+            );
+        }
+
+        Ok(())
+    }
+
+    pub fn reset(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
+        for (handle, source) in &mut self.video_sources {
+            if let Err(err) = source.restart() {
+                warn!(
+                    "failed to restart video '{}': {}",
+                    texture_label(*handle, &self.texture_labels),
+                    err
+                );
+            }
+
+            let label = texture_label(*handle, &self.texture_labels);
+            self.video_textures.insert(
+                *handle,
+                create_placeholder_texture(device, queue, label),
+            );
+        }
+    }
+
+    fn update_video_textures(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+    ) -> Result<(), String> {
+        for (handle, source) in &mut self.video_sources {
+            let Some(frame) = source.next_frame()? else {
+                continue;
+            };
+
+            let width = frame.width.max(1);
+            let height = frame.height.max(1);
+            let needs_new = self
+                .video_textures
+                .get(handle)
+                .is_none_or(|texture| texture.size != [width, height]);
+
+            if needs_new {
+                let label = texture_label(*handle, &self.texture_labels);
+                let texture = device.create_texture(&wgpu::TextureDescriptor {
+                    label: Some(label),
+                    size: wgpu::Extent3d {
+                        width,
+                        height,
+                        depth_or_array_layers: 1,
+                    },
+                    mip_level_count: 1,
+                    sample_count: 1,
+                    dimension: wgpu::TextureDimension::D2,
+                    format: IMAGE_FORMAT,
+                    usage: wgpu::TextureUsages::TEXTURE_BINDING
+                        | wgpu::TextureUsages::COPY_DST,
+                    view_formats: &[],
+                });
+                let view = texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
+
+                self.video_textures.insert(
+                    *handle,
+                    GpuTexture {
+                        texture,
+                        view,
+                        size: [width, height],
+                        format: IMAGE_FORMAT,
+                    },
+                );
+            }
+
+            let texture = self.video_textures.get(handle).ok_or_else(|| {
+                format!(
+                    "video texture '{}' was not created",
+                    texture_label(*handle, &self.texture_labels)
+                )
+            })?;
+
+            queue.write_texture(
+                wgpu::TexelCopyTextureInfo {
+                    texture: &texture.texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                &frame.rgba,
+                wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(4 * width),
+                    rows_per_image: Some(height),
+                },
+                wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: 1,
+                },
             );
         }
 
@@ -390,6 +517,11 @@ impl CompiledGraph {
                     self.image_textures
                         .get(&source)
                         .map(|texture| &texture.texture)
+                })
+                .or_else(|| {
+                    self.video_textures
+                        .get(&source)
+                        .map(|texture| &texture.texture)
                 }),
         }
     }
@@ -403,6 +535,11 @@ impl CompiledGraph {
                 .map(|texture| texture.format)
                 .or_else(|| {
                     self.image_textures
+                        .get(&source)
+                        .map(|texture| texture.format)
+                })
+                .or_else(|| {
+                    self.video_textures
                         .get(&source)
                         .map(|texture| texture.format)
                 }),
@@ -510,6 +647,7 @@ impl RenderPass {
         device: &wgpu::Device,
         offscreen_textures: &HashMap<TextureHandle, GpuTexture>,
         image_textures: &HashMap<TextureHandle, GpuTexture>,
+        video_textures: &HashMap<TextureHandle, GpuTexture>,
         sampled_reads: &[TextureHandle],
     ) -> Result<wgpu::BindGroup, String> {
         let layout =
@@ -531,6 +669,8 @@ impl RenderPass {
             let view = if let Some(texture) = offscreen_textures.get(handle) {
                 &texture.view
             } else if let Some(texture) = image_textures.get(handle) {
+                &texture.view
+            } else if let Some(texture) = video_textures.get(handle) {
                 &texture.view
             } else {
                 return Err(format!(
@@ -810,22 +950,21 @@ fn vertex_buffer_layout_for_kind(
 ) -> wgpu::VertexBufferLayout<'static> {
     match mesh_kind {
         MeshVertexKind::Position2D => wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+            array_stride: std::mem::size_of::<[f32; 2]>()
+                as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &POSITION_2D_VERTEX_ATTRIBUTES,
         },
         MeshVertexKind::Position3D => wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+            array_stride: std::mem::size_of::<[f32; 3]>()
+                as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &POSITION_3D_VERTEX_ATTRIBUTES,
         },
     }
 }
 
-fn create_mesh_draw(
-    device: &wgpu::Device,
-    mesh: &Mesh,
-) -> MeshDraw {
+fn create_mesh_draw(device: &wgpu::Device, mesh: &Mesh) -> MeshDraw {
     match mesh {
         Mesh::Positions2D(vertices) => {
             let buffer =
@@ -1207,6 +1346,57 @@ fn load_image_texture(
     })
 }
 
+fn create_placeholder_texture(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    name: &str,
+) -> GpuTexture {
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some(name),
+        size: wgpu::Extent3d {
+            width: 1,
+            height: 1,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: IMAGE_FORMAT,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING
+            | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
+    });
+
+    queue.write_texture(
+        wgpu::TexelCopyTextureInfo {
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        },
+        &[0, 0, 0, 255],
+        wgpu::TexelCopyBufferLayout {
+            offset: 0,
+            bytes_per_row: Some(4),
+            rows_per_image: Some(1),
+        },
+        wgpu::Extent3d {
+            width: 1,
+            height: 1,
+            depth_or_array_layers: 1,
+        },
+    );
+
+    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+    GpuTexture {
+        texture,
+        view,
+        size: [1, 1],
+        format: IMAGE_FORMAT,
+    }
+}
+
 fn validate_shader(source: &str) -> Result<(), String> {
     let module = wgsl::parse_str(source).map_err(|err| err.to_string())?;
 
@@ -1252,10 +1442,12 @@ fn collect_texture_resources(
 ) -> (
     Vec<TextureHandle>,
     HashMap<TextureHandle, PathBuf>,
+    HashMap<TextureHandle, PathBuf>,
     HashMap<TextureHandle, String>,
 ) {
     let mut offscreen = Vec::new();
     let mut images = HashMap::new();
+    let mut videos = HashMap::new();
     let mut labels = HashMap::new();
 
     for resource in resources {
@@ -1270,17 +1462,21 @@ fn collect_texture_resources(
             ResourceKind::Image2d { path } => {
                 images.insert(handle, path.clone());
             }
+            ResourceKind::Video2d { path } => {
+                videos.insert(handle, path.clone());
+            }
             ResourceKind::Uniforms => unreachable!(),
         }
     }
 
-    (offscreen, images, labels)
+    (offscreen, images, videos, labels)
 }
 
 fn validate_graph_resources(
     graph: &GraphSpec,
     offscreen_resource_ids: &[TextureHandle],
     image_resources: &HashMap<TextureHandle, PathBuf>,
+    video_resources: &HashMap<TextureHandle, PathBuf>,
     present_source: Option<TextureHandle>,
 ) -> Result<(), String> {
     let offscreen_ids = offscreen_resource_ids
@@ -1288,11 +1484,15 @@ fn validate_graph_resources(
         .copied()
         .collect::<HashSet<_>>();
     let image_ids = image_resources.keys().copied().collect::<HashSet<_>>();
+    let video_ids = video_resources.keys().copied().collect::<HashSet<_>>();
 
     if let Some(source) = present_source {
-        if !offscreen_ids.contains(&source) && !image_ids.contains(&source) {
+        if !offscreen_ids.contains(&source)
+            && !image_ids.contains(&source)
+            && !video_ids.contains(&source)
+        {
             return Err(format!(
-                "present source texture {} is not a declared offscreen/image texture resource",
+                "present source texture {} is not a declared offscreen/image/video texture resource",
                 source.index()
             ));
         }
@@ -1315,9 +1515,10 @@ fn validate_graph_resources(
                     if let RenderRead::Texture(texture) = read {
                         if !offscreen_ids.contains(texture)
                             && !image_ids.contains(texture)
+                            && !video_ids.contains(texture)
                         {
                             return Err(format!(
-                                "render node '{}' reads texture {} which is not a declared texture2d/image resource",
+                                "render node '{}' reads texture {} which is not a declared texture2d/image/video resource",
                                 render.name,
                                 texture.index()
                             ));
@@ -1345,8 +1546,5 @@ fn texture_label(
     handle: TextureHandle,
     labels: &HashMap<TextureHandle, String>,
 ) -> &str {
-    labels
-        .get(&handle)
-        .map(String::as_str)
-        .unwrap_or("texture")
+    labels.get(&handle).map(String::as_str).unwrap_or("texture")
 }
