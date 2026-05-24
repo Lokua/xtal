@@ -530,7 +530,7 @@ impl XtalRuntime {
             }
             RuntimeEvent::MidiContinue | RuntimeEvent::MidiStart => {
                 info!("Received MIDI Start/Continue. Resetting transport.");
-                frame_clock::reset();
+                self.reset_transport();
 
                 if self.recording_state.is_queued {
                     let _ = self.on_runtime_event(
@@ -657,7 +657,7 @@ impl XtalRuntime {
                 self.emit_web_view_event(web_view::Event::Mappings(mappings));
             }
             RuntimeEvent::Reset => {
-                frame_clock::reset();
+                self.reset_transport();
                 self.alert("Reset");
             }
             RuntimeEvent::Save(exclusions) => {
@@ -1147,6 +1147,7 @@ impl XtalRuntime {
 
             if let Err(err) = graph.execute(
                 context.device.as_ref(),
+                context.queue.as_ref(),
                 &mut frame,
                 uniforms,
                 context.resolution_u32(),
@@ -2352,6 +2353,16 @@ impl XtalRuntime {
             frame_clock::advance_single_frame();
             self.request_render_now();
         }
+    }
+
+    fn reset_transport(&mut self) {
+        frame_clock::reset();
+        if let (Some(graph), Some(context)) =
+            (self.graph.as_mut(), self.context.as_ref())
+        {
+            graph.reset(context.device.as_ref(), context.queue.as_ref());
+        }
+        self.request_render_now();
     }
 
     // Swaps sketch instance/config, rebuilds runtime graph state, updates UI.

@@ -45,9 +45,11 @@ fn main() {
             sketches: [
                 domain_warps,
                 displ,
+                flow_snd,
                 grid_splash_bw,
                 layers,
                 phase_matrix,
+                snd,
                 sline,
             ]
         },
@@ -68,6 +70,7 @@ fn main() {
                 multipass,
                 compute,
                 image,
+                video,
             ]
         },
     }
