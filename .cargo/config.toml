@@ -1,0 +1,10 @@
+[env]
+GSTREAMER_1_0_ROOT = "/Library/Frameworks/GStreamer.framework/Versions/1.0"
+PKG_CONFIG = "/Library/Frameworks/GStreamer.framework/Versions/1.0/bin/pkg-config"
+PKG_CONFIG_PATH = "/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/pkgconfig"
+
+[target.aarch64-apple-darwin]
+rustflags = [
+    "-C",
+    "link-arg=-Wl,-rpath,/Library/Frameworks/GStreamer.framework/Versions/1.0/lib",
+]

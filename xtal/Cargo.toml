@@ -5,10 +5,11 @@ edition = "2024"
 license = "MIT"
 
 [features]
-default = ["xtal", "recording-report"]
+default = ["xtal", "recording-report", "video"]
 legacy_runtime = []
 xtal = []
 recording-report = []
+video = ["dep:gstreamer", "dep:gstreamer-app", "dep:gstreamer-video"]
 web_view_process = ["dep:rfd", "dep:tao", "dep:wry"]
 
 [[bin]]
@@ -50,6 +51,9 @@ wgpu = { version = "26", default-features = false, features = [
     "gles",
 ] }
 winit = "0.30.12"
+gstreamer = { version = "0.24.5", optional = true }
+gstreamer-app = { version = "0.24.5", optional = true }
+gstreamer-video = { version = "0.24.5", optional = true }
 
 [dev-dependencies]
 pollster = "0.4"
