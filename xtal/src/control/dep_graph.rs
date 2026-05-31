@@ -26,13 +26,12 @@ pub type EvalOrder = Option<Vec<String>>;
 /// 4. Use [`DepGraph::order`] to get the proper evaluation sequence and
 ///    [`DepGraph::is_prerequisite`] to check if a node is required for other
 ///    calculations
-/// ```
 #[derive(Debug, Default)]
 pub struct DepGraph {
     /// Stores original node definitions with their parameters and dependencies
     ///
     /// # Example
-    /// ```
+    /// ```text
     /// { "symmetry" -> Param::Hot("t1"), ... }
     /// ```
     node_defs: Graph,

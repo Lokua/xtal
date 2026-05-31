@@ -25,6 +25,7 @@ use super::events::{
 use super::monitor_preview::{
     MonitorPreview, RenderResult as MonitorRenderResult, preview_size_for_main,
 };
+use super::projector::{self, ProjectorQuality};
 use super::recording::{self, RecordingState};
 use super::registry::RuntimeRegistry;
 use super::serialization::{GlobalSettings, TransitorySketchState};
@@ -110,6 +111,8 @@ struct XtalRuntime {
     tap_tempo: TapTempo,
     tap_tempo_enabled: bool,
     perf_mode: bool,
+    projector_mode_enabled: bool,
+    projector_quality: ProjectorQuality,
     transition_time: f32,
     mappings_enabled: bool,
     map_mode: MapMode,
@@ -228,6 +231,8 @@ impl XtalRuntime {
             tap_tempo: TapTempo::new(config.bpm),
             tap_tempo_enabled: false,
             perf_mode: false,
+            projector_mode_enabled: global_settings.projector_mode_enabled,
+            projector_quality: global_settings.projector_quality,
             transition_time: global_settings.transition_time,
             mappings_enabled: global_settings.mappings_enabled,
             map_mode: MapMode::default(),
@@ -785,6 +790,12 @@ impl XtalRuntime {
             RuntimeEvent::SetPerfMode(perf_mode) => {
                 self.set_perf_mode(perf_mode);
             }
+            RuntimeEvent::SetProjectorMode(enabled) => {
+                self.set_projector_mode(enabled);
+            }
+            RuntimeEvent::SetProjectorQuality(quality) => {
+                self.set_projector_quality(quality);
+            }
             RuntimeEvent::SetTransitionTime(transition_time) => {
                 self.transition_time = transition_time;
                 if let Some(hub) = self.control_hub.as_mut() {
@@ -1077,6 +1088,13 @@ impl XtalRuntime {
                 return;
             };
 
+            let render_size = projector::internal_render_size(
+                [surface_config.width, surface_config.height],
+                self.projector_mode_enabled,
+                self.projector_quality,
+            );
+            context.set_render_size(render_size);
+
             // 2) Let sketch mutate runtime state before uniform upload.
             self.sketch.update(context);
 
@@ -1151,6 +1169,7 @@ impl XtalRuntime {
                 &mut frame,
                 uniforms,
                 context.resolution_u32(),
+                [surface_config.width, surface_config.height],
             ) {
                 error!("graph execution error: {}", err);
                 event_loop.exit();
@@ -1629,6 +1648,7 @@ impl XtalRuntime {
         self.surface = Some(surface);
         self.surface_config = Some(surface_config);
         self.context = Some(context);
+        self.sync_context_render_size();
 
         self.rebuild_graph_state()?;
 
@@ -2198,6 +2218,7 @@ impl XtalRuntime {
 
         surface.configure(context.device.as_ref(), surface_config);
         context.set_window_size([new_size.width, new_size.height]);
+        self.sync_context_render_size();
         if let Some(preview) = self.monitor_preview.as_ref() {
             self.monitor_preview_size_hint = Some(preview.window().inner_size());
         }
@@ -2268,6 +2289,8 @@ impl XtalRuntime {
             midi_output_ports: self.midi_output_ports.clone(),
             monitor_preview_enabled: self.monitor_preview.is_some(),
             osc_port: self.osc_port,
+            projector_mode_enabled: self.projector_mode_enabled,
+            projector_quality: self.projector_quality,
             sketches_by_category: web_view::sketches_by_category(
                 &self.registry,
             ),
@@ -2456,6 +2479,46 @@ impl XtalRuntime {
         }
     }
 
+    fn set_projector_mode(&mut self, enabled: bool) {
+        if self.projector_mode_enabled == enabled {
+            return;
+        }
+
+        self.projector_mode_enabled = enabled;
+        info!("projector mode set to {}", enabled);
+        self.sync_context_render_size();
+        self.save_global_state();
+        self.request_render_now();
+    }
+
+    fn set_projector_quality(&mut self, quality: ProjectorQuality) {
+        if self.projector_quality == quality {
+            return;
+        }
+
+        self.projector_quality = quality;
+        info!("projector quality set to {:?}", quality);
+        self.sync_context_render_size();
+        self.save_global_state();
+        self.request_render_now();
+    }
+
+    fn sync_context_render_size(&mut self) {
+        let Some(surface_config) = self.surface_config.as_ref() else {
+            return;
+        };
+        let Some(context) = self.context.as_mut() else {
+            return;
+        };
+
+        let render_size = projector::internal_render_size(
+            [surface_config.width, surface_config.height],
+            self.projector_mode_enabled,
+            self.projector_quality,
+        );
+        context.set_render_size(render_size);
+    }
+
     fn set_monitor_preview_enabled(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -2575,6 +2638,8 @@ impl XtalRuntime {
             midi_control_in_port: self.midi_input_port.clone(),
             midi_control_out_port: self.midi_output_port.clone(),
             osc_port: self.osc_port,
+            projector_mode_enabled: self.projector_mode_enabled,
+            projector_quality: self.projector_quality,
             transition_time: self.transition_time,
             user_data_dir: self.user_data_dir.clone(),
             videos_dir: self.videos_dir.clone(),

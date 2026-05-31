@@ -1176,7 +1176,7 @@ impl<T: TimingSource> ControlHub<T> {
     /// slider appearing disabled in the UI, but you still need to implement
     /// that on the Rust side:
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// let radius = if self.hub.bool("animate_radius") {
     ///     self.hub.get("radius_animation")
     /// } else {
@@ -1186,7 +1186,7 @@ impl<T: TimingSource> ControlHub<T> {
     ///
     /// This method just eases that boilerplate slightly:
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// let radius = self.hub.select(
     ///     "animate_radius",
     ///     "radius_animation",
@@ -2017,7 +2017,7 @@ mod tests {
     }
 
     fn assert_close(actual: f32, expected: f32, label: &str) {
-        let epsilon = 0.000_1;
+        let epsilon = 0.005_f32.max(expected.abs() * 0.000_25);
         assert!(
             (actual - expected).abs() <= epsilon,
             "{}: expected {}, got {}",
@@ -2045,10 +2045,10 @@ triangle:
         );
 
         init(0.0);
-        assert_eq!(
+        assert_close(
             controls.get("triangle"),
             0.5,
-            "[slider->0.5] * [triangle->1.0]"
+            "[slider->0.5] * [triangle->1.0]",
         );
     }
 

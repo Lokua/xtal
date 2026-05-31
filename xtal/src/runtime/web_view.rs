@@ -6,6 +6,7 @@ use super::registry::RuntimeRegistry;
 use crate::control::{ControlHub, ControlValue, UiControlConfig};
 use crate::core::util::HashMap;
 use crate::motion::TimingSource;
+use crate::runtime::projector::ProjectorQuality;
 
 pub type Sender = ipc_channel::ipc::IpcSender<Event>;
 pub type Receiver = ipc_channel::ipc::IpcReceiver<Event>;
@@ -152,6 +153,8 @@ pub enum Event {
         midi_output_ports: Vec<(usize, String)>,
         monitor_preview_enabled: bool,
         osc_port: u16,
+        projector_mode_enabled: bool,
+        projector_quality: ProjectorQuality,
         sketches_by_category: SketchesByCategory,
         #[serde(default)]
         sketch_catalog: Option<Vec<SketchCatalogCategory>>,
@@ -187,6 +190,8 @@ pub enum Event {
     OpenOsDir(OsDir),
     Paused(bool),
     PerfMode(bool),
+    ProjectorMode(bool),
+    ProjectorQuality(ProjectorQuality),
     QueueRecord,
     Quit,
     Randomize(Exclusions),
@@ -273,6 +278,12 @@ pub fn map_event_to_runtime_event(event: &Event) -> Option<RuntimeEvent> {
         Event::OpenOsDir(kind) => Some(RuntimeEvent::OpenOsDir(kind.clone())),
         Event::Paused(paused) => Some(RuntimeEvent::Pause(*paused)),
         Event::PerfMode(enabled) => Some(RuntimeEvent::SetPerfMode(*enabled)),
+        Event::ProjectorMode(enabled) => {
+            Some(RuntimeEvent::SetProjectorMode(*enabled))
+        }
+        Event::ProjectorQuality(quality) => {
+            Some(RuntimeEvent::SetProjectorQuality(*quality))
+        }
         Event::QueueRecord => Some(RuntimeEvent::QueueRecord),
         Event::Randomize(exclusions) => {
             Some(RuntimeEvent::Randomize(exclusions.clone()))
@@ -408,6 +419,18 @@ mod tests {
         assert_eq!(
             monitor_preview,
             Some(RuntimeEvent::SetMonitorPreview(true))
+        );
+
+        let projector_mode =
+            map_event_to_runtime_event(&Event::ProjectorMode(true));
+        assert_eq!(projector_mode, Some(RuntimeEvent::SetProjectorMode(true)));
+
+        let projector_quality = map_event_to_runtime_event(
+            &Event::ProjectorQuality(ProjectorQuality::Fast),
+        );
+        assert_eq!(
+            projector_quality,
+            Some(RuntimeEvent::SetProjectorQuality(ProjectorQuality::Fast))
         );
     }
 
@@ -626,6 +649,8 @@ mod tests {
             Event::TransitionTime(2.5),
             Event::Paused(true),
             Event::PerfMode(true),
+            Event::ProjectorMode(true),
+            Event::ProjectorQuality(ProjectorQuality::Emergency),
             Event::MonitorPreview(true),
             Event::MappingsEnabled(false),
             Event::Exclusions(vec!["foo".into()]),
