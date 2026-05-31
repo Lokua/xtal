@@ -5,6 +5,7 @@ use crate::control::control_hub::Snapshots;
 use crate::control::*;
 use crate::core::util::HashMap;
 use crate::motion::TimingSource;
+use crate::runtime::projector::ProjectorQuality;
 use crate::runtime::storage;
 use log::error;
 
@@ -23,6 +24,8 @@ pub struct GlobalSettings {
     pub midi_control_in_port: String,
     pub midi_control_out_port: String,
     pub osc_port: u16,
+    pub projector_mode_enabled: bool,
+    pub projector_quality: ProjectorQuality,
     pub transition_time: f32,
     pub user_data_dir: String,
     pub videos_dir: String,
@@ -40,6 +43,8 @@ impl Default for GlobalSettings {
             midi_control_in_port: String::new(),
             midi_control_out_port: String::new(),
             osc_port: DEFAULT_OSC_PORT,
+            projector_mode_enabled: false,
+            projector_quality: ProjectorQuality::Balanced,
             transition_time: 4.0,
             user_data_dir: storage::default_user_data_dir(),
             videos_dir: storage::default_videos_dir(),

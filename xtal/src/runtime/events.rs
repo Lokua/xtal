@@ -3,6 +3,7 @@ use std::sync::mpsc::{Receiver, Sender};
 
 use super::web_view;
 use crate::control::ControlValue;
+use crate::runtime::projector::ProjectorQuality;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RuntimeEvent {
@@ -34,6 +35,8 @@ pub enum RuntimeEvent {
     SetMappingsEnabled(bool),
     SetMonitorPreview(bool),
     SetPerfMode(bool),
+    SetProjectorMode(bool),
+    SetProjectorQuality(ProjectorQuality),
     SetTransitionTime(f32),
     StartRecording,
     StopRecording,

@@ -33,6 +33,7 @@ pub struct CompiledGraph {
     nodes: Vec<CompiledNode>,
     offscreen_resource_ids: Vec<TextureHandle>,
     offscreen_textures: HashMap<TextureHandle, GpuTexture>,
+    surface_proxy_texture: Option<GpuTexture>,
     image_textures: HashMap<TextureHandle, GpuTexture>,
     video_sources: HashMap<TextureHandle, VideoSource>,
     video_textures: HashMap<TextureHandle, GpuTexture>,
@@ -206,6 +207,7 @@ impl CompiledGraph {
             nodes,
             offscreen_resource_ids,
             offscreen_textures: HashMap::new(),
+            surface_proxy_texture: None,
             image_textures,
             video_sources,
             video_textures,
@@ -219,9 +221,11 @@ impl CompiledGraph {
         queue: &wgpu::Queue,
         frame: &mut Frame,
         uniforms: &UniformBanks,
+        render_size: [u32; 2],
         surface_size: [u32; 2],
     ) -> Result<(), String> {
-        self.ensure_offscreen_textures(device, surface_size);
+        self.ensure_offscreen_textures(device, render_size);
+        self.ensure_surface_proxy_texture(device, render_size, surface_size);
         self.update_video_textures(device, queue)?;
 
         for node in &mut self.nodes {
@@ -246,7 +250,11 @@ impl CompiledGraph {
                     };
 
                     let target_view = match node.target {
-                        RenderTarget::Surface => frame.surface_view.clone(),
+                        RenderTarget::Surface => self
+                            .surface_proxy_texture
+                            .as_ref()
+                            .map(|texture| texture.view.clone())
+                            .unwrap_or_else(|| frame.surface_view.clone()),
                         RenderTarget::Texture(texture) => self
                             .offscreen_textures
                             .get(&texture)
@@ -308,8 +316,8 @@ impl CompiledGraph {
                             &node.target,
                         )?;
 
-                    let width = surface_size[0].max(1);
-                    let height = surface_size[1].max(1);
+                    let width = render_size[0].max(1);
+                    let height = render_size[1].max(1);
                     let workgroup_x = width.div_ceil(8);
                     let workgroup_y = height.div_ceil(8);
 
@@ -351,6 +359,13 @@ impl CompiledGraph {
                 device,
                 frame,
                 &source_view,
+                self.surface_format,
+            );
+        } else if let Some(texture) = self.surface_proxy_texture.as_ref() {
+            blit_texture_to_surface(
+                device,
+                frame,
+                &texture.view,
                 self.surface_format,
             );
         }
@@ -506,9 +521,62 @@ impl CompiledGraph {
         }
     }
 
+    fn ensure_surface_proxy_texture(
+        &mut self,
+        device: &wgpu::Device,
+        render_size: [u32; 2],
+        surface_size: [u32; 2],
+    ) {
+        if !matches!(self.present_source, PresentSource::Surface)
+            || render_size == surface_size
+        {
+            self.surface_proxy_texture = None;
+            return;
+        }
+
+        let width = render_size[0].max(1);
+        let height = render_size[1].max(1);
+        let needs_new = self
+            .surface_proxy_texture
+            .as_ref()
+            .is_none_or(|texture| texture.size != [width, height]);
+
+        if !needs_new {
+            return;
+        }
+
+        let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("xtal-projector-surface-proxy"),
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: self.surface_format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        self.surface_proxy_texture = Some(GpuTexture {
+            texture,
+            view,
+            size: [width, height],
+            format: self.surface_format,
+        });
+    }
+
     pub fn recording_source_texture(&self) -> Option<&wgpu::Texture> {
         match self.present_source {
-            PresentSource::Surface => None,
+            PresentSource::Surface => self
+                .surface_proxy_texture
+                .as_ref()
+                .map(|texture| &texture.texture),
             PresentSource::Texture(source) => self
                 .offscreen_textures
                 .get(&source)
@@ -528,7 +596,10 @@ impl CompiledGraph {
 
     pub fn recording_source_format(&self) -> Option<wgpu::TextureFormat> {
         match self.present_source {
-            PresentSource::Surface => None,
+            PresentSource::Surface => self
+                .surface_proxy_texture
+                .as_ref()
+                .map(|texture| texture.format),
             PresentSource::Texture(source) => self
                 .offscreen_textures
                 .get(&source)
@@ -1547,4 +1618,17 @@ fn texture_label(
     labels: &HashMap<TextureHandle, String>,
 ) -> &str {
     labels.get(&handle).map(String::as_str).unwrap_or("texture")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn projector_stress_shader_is_valid_wgsl() {
+        validate_shader(include_str!(
+            "../../../sketches/src/dev/projector_stress.wgsl"
+        ))
+        .expect("projector stress shader should parse and validate");
+    }
 }

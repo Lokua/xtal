@@ -8,6 +8,7 @@ import {
   Exclusions,
   Mappings,
   OsDir,
+  ProjectorQuality,
   RawControl,
   UserDir,
   View,
@@ -54,6 +55,8 @@ type EventMap = {
     midiOutputPorts: [number, string][]
     monitorPreviewEnabled: boolean
     oscPort: number
+    projectorModeEnabled: boolean
+    projectorQuality: ProjectorQuality
     sketchesByCategory: Record<string, string[]>
     sketchName: string
     transitionTime: number
@@ -79,6 +82,8 @@ type EventMap = {
   OpenOsDir: OsDir
   Paused: boolean
   PerfMode: boolean
+  ProjectorMode: boolean
+  ProjectorQuality: ProjectorQuality
   QueueRecord: void
   Quit: void
   Randomize: Exclusions
@@ -212,6 +217,9 @@ export default function App() {
   const [oscPort, setOscPort] = useState(5000)
   const [paused, setPaused] = useState(false)
   const [perfMode, setPerfMode] = useState(false)
+  const [projectorModeEnabled, setProjectorModeEnabled] = useState(false)
+  const [projectorQuality, setProjectorQuality] =
+    useState<ProjectorQuality>('Balanced')
   const [showExclusions, setShowExclusions] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showSnapshots, setShowSnapshots] = useState(false)
@@ -285,6 +293,8 @@ export default function App() {
           setMidiOutputPorts(d.midiOutputPorts.map(getPort))
           setMonitorPreviewEnabled(d.monitorPreviewEnabled)
           setOscPort(d.oscPort)
+          setProjectorModeEnabled(d.projectorModeEnabled)
+          setProjectorQuality(d.projectorQuality)
           setUserDataDir(d.userDataDir)
           setSketchName(d.sketchName)
           setSketchOptionGroups(
@@ -569,6 +579,18 @@ export default function App() {
     post('PerfMode', value)
   }
 
+  function onChangeProjectorMode() {
+    const value = !projectorModeEnabled
+    setProjectorModeEnabled(value)
+    post('ProjectorMode', value)
+  }
+
+  function onChangeProjectorQuality(quality: string) {
+    const value = quality as ProjectorQuality
+    setProjectorQuality(value)
+    post('ProjectorQuality', value)
+  }
+
   function onChangeTapTempoEnabled() {
     const enabled = !tapTempoEnabled
     setTapTempoEnabled(enabled)
@@ -779,6 +801,8 @@ export default function App() {
             midiOutputPort={midiOutputPort}
             midiOutputPorts={midiOutputPorts}
             oscPort={oscPort}
+            projectorModeEnabled={projectorModeEnabled}
+            projectorQuality={projectorQuality}
             sliderNames={getSliderNames()}
             userDataDir={userDataDir}
             videosDir={videosDir}
@@ -790,6 +814,8 @@ export default function App() {
             onChangeMidiInputPort={onChangeMidiInputPort}
             onChangeMidiOutputPort={onChangeMidiOutputPort}
             onChangeOscPort={onChangeOscPort}
+            onChangeProjectorMode={onChangeProjectorMode}
+            onChangeProjectorQuality={onChangeProjectorQuality}
             onClickSend={onClickSendMidi}
             onDeleteMappings={onDeleteMappings}
             onOpenOsDir={onOpenOsDir}
