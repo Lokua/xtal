@@ -1,4 +1,4 @@
-import { Mappings, noop, OsDir, UserDir } from './types'
+import { Mappings, noop, OsDir, ProjectorQuality, UserDir } from './types'
 import Checkbox from './Checkbox'
 import MapMode from './MapMode'
 import OscPortInput from './OscPortInput'
@@ -7,6 +7,13 @@ import IconButton from './IconButton'
 import { FontSizeChoice, useLocalSettings } from './LocalSettings'
 
 type SizePreset = 'Default' | 'Large' | 'Largest'
+const PROJECTOR_QUALITY_OPTIONS: ProjectorQuality[] = [
+  'Crisp',
+  'Balanced',
+  'Fast',
+  'Faster',
+  'Emergency',
+]
 
 function toSizePreset(fontSize: FontSizeChoice) {
   return {
@@ -37,6 +44,8 @@ type Props = {
   midiOutputPort: string
   midiOutputPorts: string[]
   oscPort: number
+  projectorModeEnabled: boolean
+  projectorQuality: ProjectorQuality
   sliderNames: string[]
   userDataDir: string
   videosDir: string
@@ -48,6 +57,8 @@ type Props = {
   onChangeMidiInputPort: (port: string) => void
   onChangeMidiOutputPort: (port: string) => void
   onChangeOscPort: (port: number) => void
+  onChangeProjectorMode: noop
+  onChangeProjectorQuality: (quality: string) => void
   onClickSend: () => void
   onDeleteMappings: () => void
   onOpenOsDir: (osDir: OsDir) => void
@@ -68,6 +79,8 @@ export default function Settings({
   midiOutputPort,
   midiOutputPorts,
   oscPort,
+  projectorModeEnabled,
+  projectorQuality,
   sliderNames,
   userDataDir,
   videosDir,
@@ -79,6 +92,8 @@ export default function Settings({
   onChangeMidiInputPort,
   onChangeMidiOutputPort,
   onChangeOscPort,
+  onChangeProjectorMode,
+  onChangeProjectorQuality,
   onClickSend,
   onDeleteMappings,
   onOpenOsDir,
@@ -90,6 +105,27 @@ export default function Settings({
   return (
     <div id="settings">
       <section>
+        <h2>Projector Mode</h2>
+        <fieldset data-help-id="ProjectorMode">
+          <Checkbox
+            id="projector-mode"
+            type="checkbox"
+            checked={projectorModeEnabled}
+            onChange={onChangeProjectorMode}
+          />
+          <label htmlFor="projector-mode">Enable</label>
+        </fieldset>
+        <fieldset data-help-id="ProjectorQuality">
+          <Select
+            id="projector-quality"
+            value={projectorQuality}
+            options={PROJECTOR_QUALITY_OPTIONS}
+            disabled={!projectorModeEnabled}
+            onChange={onChangeProjectorQuality}
+          />
+          <label htmlFor="projector-quality">Quality</label>
+        </fieldset>
+
         <h2>Appearance</h2>
         <fieldset>
           <Select

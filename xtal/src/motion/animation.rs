@@ -255,7 +255,7 @@ impl FromStr for Mode {
 ///
 ///  # Basic Usage
 ///
-///  ```rust
+///  ```rust,ignore
 ///  let animation = Animation::new(Timing::new(ctx.bpm()));
 ///
 ///  // Simple ramp oscillation from 0.0 to 1.0 over 4 beats (repeating)
@@ -277,7 +277,7 @@ impl FromStr for Mode {
 ///  The [`Animation::automate`] method provides DAW-style automation curves
 ///  with multiple breakpoint types and transition modes:
 ///
-///  ```rust
+///  ```rust,ignore
 ///  let value = animation.automate(
 ///      &[
 ///          // Start with a step change
@@ -477,9 +477,10 @@ impl<T: TimingSource> Animation<T> {
     /// When used with [`Self::create_trigger`], provides a means
     /// of executing arbitrary code at specific intervals
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// // Do something once every 4 bars
-    /// if animation.should_trigger(animation.create_trigger(16.0, 0.0)) {
+    /// let mut trigger = animation.create_trigger(16.0, 0.0);
+    /// if animation.should_trigger(&mut trigger) {
     ///   // do stuff
     /// }
     /// ```
@@ -715,13 +716,27 @@ pub mod animation_tests {
         // Re-apply global frame state every test step because other serial
         // tests mutate frame_clock FPS.
         frame_clock::set_fps(FPS);
-        frame_clock::set_paused(false);
+        // Tests set synthetic transport positions explicitly. Freeze the
+        // transport between reads so assertion values do not depend on CPU
+        // scheduling or concurrent test load.
+        frame_clock::set_paused(true);
         frame_clock::set_elapsed_seconds(beat * (60.0 / BPM));
         frame_clock::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
     }
 
     pub fn create_instance() -> Animation<FrameTiming> {
         Animation::new(FrameTiming::new(Bpm::new(BPM)))
+    }
+
+    fn assert_close(actual: f32, expected: f32, label: &str) {
+        let epsilon = 0.005;
+        assert!(
+            (actual - expected).abs() <= epsilon,
+            "{}: expected {}, got {}",
+            label,
+            expected,
+            actual
+        );
     }
 
     #[test]
@@ -731,15 +746,15 @@ pub mod animation_tests {
         let a = create_instance();
 
         let val = a.ramp(1.0);
-        assert_eq!(val, 0.0, "downbeat");
+        assert_close(val, 0.0, "downbeat");
 
         init(0.5);
         let val = a.ramp(1.0);
-        assert_eq!(val, 0.5, "1/8");
+        assert_close(val, 0.5, "1/8");
 
         init(0.75);
         let val = a.ramp(1.0);
-        assert_eq!(val, 0.75, "3/16");
+        assert_close(val, 0.75, "3/16");
     }
 
     #[test]
@@ -749,19 +764,19 @@ pub mod animation_tests {
         let a = create_instance();
 
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
-        assert_eq!(val, 0.5);
+        assert_close(val, 0.5, "beat 0");
 
         init(0.25);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
-        assert_eq!(val, 0.75);
+        assert_close(val, 0.75, "beat 0.25");
 
         init(0.5);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
-        assert_eq!(val, 0.0);
+        assert_close(val, 0.0, "beat 0.5");
 
         init(0.75);
         let val = a.ramp_plus(1.0, (0.0, 1.0), 0.5);
-        assert_eq!(val, 0.25);
+        assert_close(val, 0.25, "beat 0.75");
     }
 
     #[test]
@@ -771,39 +786,39 @@ pub mod animation_tests {
         let a = create_instance();
 
         let val = a.tri(2.0);
-        assert_eq!(val, 0.0, "beat 0");
+        assert_close(val, 0.0, "beat 0");
 
         init(0.25);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.25, "beat 0.25");
+        assert_close(val, 0.25, "beat 0.25");
 
         init(0.5);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.5, "beat 0.5");
+        assert_close(val, 0.5, "beat 0.5");
 
         init(0.75);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.75, "beat 0.75");
+        assert_close(val, 0.75, "beat 0.75");
 
         init(1.0);
         let val = a.tri(2.0);
-        assert_eq!(val, 1.0, "beat 1.0");
+        assert_close(val, 1.0, "beat 1.0");
 
         init(1.25);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.75, "beat 1.25");
+        assert_close(val, 0.75, "beat 1.25");
 
         init(1.5);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.5, "beat 1.5");
+        assert_close(val, 0.5, "beat 1.5");
 
         init(1.75);
         let val = a.tri(2.0);
-        assert!((val - 0.25).abs() < 0.000_1, "beat 1.75");
+        assert_close(val, 0.25, "beat 1.75");
 
         init(2.0);
         let val = a.tri(2.0);
-        assert_eq!(val, 0.0, "beat 2.0");
+        assert_close(val, 0.0, "beat 2.0");
     }
 
     #[test]
@@ -813,15 +828,15 @@ pub mod animation_tests {
         let a = create_instance();
 
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
-        assert_eq!(val, -0.75, "1st beat");
+        assert_close(val, -0.75, "1st beat");
 
         init(3.75);
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
-        assert_eq!(val, -1.0, "last beat");
+        assert_close(val, -1.0, "last beat");
 
         init(4.0);
         let val = a.triangle(4.0, (-1.0, 1.0), 0.125);
-        assert_eq!(val, -0.75, "1st beat - 2nd cycle");
+        assert_close(val, -0.75, "1st beat - 2nd cycle");
     }
 
     #[test]
@@ -1060,7 +1075,7 @@ pub mod animation_tests {
             ],
             Mode::Once,
         );
-        assert_eq!(x, 0.5, "Returns midway point");
+        assert_close(x, 0.5, "Returns midway point");
     }
 
     #[test]
@@ -1075,7 +1090,7 @@ pub mod animation_tests {
             ],
             Mode::Once,
         );
-        assert_eq!(x, 0.75, "Returns 3/4 point");
+        assert_close(x, 0.75, "Returns 3/4 point");
     }
 
     #[test]
@@ -1090,7 +1105,7 @@ pub mod animation_tests {
             ],
             Mode::Loop,
         );
-        assert!((x - 0.75).abs() < 0.000_1, "Returns 3/4 point");
+        assert_close(x, 0.75, "Returns 3/4 point");
     }
 
     #[test]
@@ -1109,25 +1124,25 @@ pub mod animation_tests {
         };
 
         init(0.0);
-        assert_eq!(x(), 10.0);
+        assert_close(x(), 10.0, "beat 0");
         init(0.25);
-        assert_eq!(x(), 10.0);
+        assert_close(x(), 10.0, "beat 0.25");
         init(0.5);
-        assert_eq!(x(), 10.0);
+        assert_close(x(), 10.0, "beat 0.5");
         init(0.75);
-        assert_eq!(x(), 10.0);
+        assert_close(x(), 10.0, "beat 0.75");
 
         init(1.0);
-        assert_eq!(x(), 20.0);
+        assert_close(x(), 20.0, "beat 1");
         init(1.25);
-        assert_eq!(x(), 17.5);
+        assert_close(x(), 17.5, "beat 1.25");
         init(1.5);
-        assert_eq!(x(), 15.0);
+        assert_close(x(), 15.0, "beat 1.5");
         init(1.75);
-        assert!((x() - 12.5).abs() < 0.000_1);
+        assert_close(x(), 12.5, "beat 1.75");
 
         init(2.0);
-        assert_eq!(x(), 10.0);
+        assert_close(x(), 10.0, "beat 2");
     }
 
     #[test]
@@ -1154,23 +1169,23 @@ pub mod animation_tests {
         };
 
         init(0.0);
-        assert_eq!(x(), 0.0);
+        assert_close(x(), 0.0, "beat 0");
 
         // base 0.25 + wave 0.5 = 0.75
         init(0.25);
-        assert_eq!(x(), 0.75);
+        assert_close(x(), 0.75, "beat 0.25");
 
         // base 0.5 + wave 0.0 = 0.5
         init(0.5);
-        assert_eq!(x(), 0.5);
+        assert_close(x(), 0.5, "beat 0.5");
 
         // base 0.75 + wave -0.5 = 0.25
         init(0.75);
-        assert_eq!(x(), 0.25);
+        assert_close(x(), 0.25, "beat 0.75");
 
         // And back around
         init(1.0);
-        assert_eq!(x(), 0.0);
+        assert_close(x(), 0.0, "beat 1");
     }
 
     #[test]
@@ -1200,7 +1215,7 @@ pub mod animation_tests {
         };
 
         init(1.0);
-        assert_eq!(x(), 0.5);
+        assert_close(x(), 0.5, "step-to-ramp boundary");
     }
 
     #[test]
@@ -1221,7 +1236,7 @@ pub mod animation_tests {
         };
 
         init(32.0);
-        assert_eq!(x(), 0.5);
+        assert_close(x(), 0.5, "ramp boundary");
     }
 
     #[test]

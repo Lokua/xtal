@@ -73,7 +73,7 @@ impl From<String> for ControlValue {
 /// disabled or not based on the value of other controls
 ///
 /// # Example
-/// ```rust
+/// ```text
 /// Control::Slider {
 ///     name: "phase",
 ///     value: 0.0,

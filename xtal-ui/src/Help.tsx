@@ -57,6 +57,10 @@ export const Help = {
     you likely will fullsize the screen and want to keep it that way when 
     switching sketches`
   ),
+  ProjectorMode:
+    'Render internally at a capped resolution, then scale to the output window',
+  ProjectorQuality:
+    'Controls the internal render pixel budget used by Projector Mode',
   Queue: 'Queue recording to start upon receiving a MIDI Start message',
   Random: `Randomize all UI controls (Shortcut: [${mod} R])`,
   Reload: format(

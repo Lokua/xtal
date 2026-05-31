@@ -1,5 +1,6 @@
 use xtal::graph::GraphBuilder;
 use xtal::prelude::*;
+use xtal::runtime::projector::ProjectorQuality;
 
 struct TestSketch;
 
@@ -260,6 +261,8 @@ fn web_view_init_serializes_optional_sketch_catalog_in_camel_case() {
         midi_output_ports: vec![],
         monitor_preview_enabled: false,
         osc_port: 0,
+        projector_mode_enabled: false,
+        projector_quality: ProjectorQuality::Balanced,
         sketches_by_category,
         sketch_catalog: Some(vec![web_view::SketchCatalogCategory {
             title: "Main".to_string(),

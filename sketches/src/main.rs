@@ -59,6 +59,7 @@ fn main() {
             sketches: [
                 animation_dev,
                 clock_dev,
+                projector_stress,
             ]
         },
         {

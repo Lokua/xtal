@@ -35,6 +35,13 @@ export type Mappings = {
 }
 export type Exclusions = string[]
 
+export type ProjectorQuality =
+  | 'Crisp'
+  | 'Balanced'
+  | 'Fast'
+  | 'Faster'
+  | 'Emergency'
+
 export type Bypassed = Record<string, number>
 
 export type ControlValue = boolean | number | string

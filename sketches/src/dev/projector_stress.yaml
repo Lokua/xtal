@@ -1,0 +1,5 @@
+stress:
+  type: slider
+  var: bx
+  range: [0, 900]
+  default: 220

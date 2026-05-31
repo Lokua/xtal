@@ -5,6 +5,7 @@ pub struct Context {
     pub device: Arc<wgpu::Device>,
     pub queue: Arc<wgpu::Queue>,
     window_size: [u32; 2],
+    render_size: [u32; 2],
     scale_factor: f64,
     frame_count: u64,
     start_time: Instant,
@@ -21,6 +22,7 @@ impl Context {
             device,
             queue,
             window_size,
+            render_size: window_size,
             scale_factor,
             frame_count: 0,
             start_time: Instant::now(),
@@ -29,6 +31,11 @@ impl Context {
 
     pub fn set_window_size(&mut self, window_size: [u32; 2]) {
         self.window_size = window_size;
+        self.render_size = window_size;
+    }
+
+    pub fn set_render_size(&mut self, render_size: [u32; 2]) {
+        self.render_size = [render_size[0].max(1), render_size[1].max(1)];
     }
 
     pub fn set_scale_factor(&mut self, scale_factor: f64) {
@@ -36,10 +43,14 @@ impl Context {
     }
 
     pub fn resolution(&self) -> [f32; 2] {
-        [self.window_size[0] as f32, self.window_size[1] as f32]
+        [self.render_size[0] as f32, self.render_size[1] as f32]
     }
 
     pub fn resolution_u32(&self) -> [u32; 2] {
+        self.render_size
+    }
+
+    pub fn window_size_u32(&self) -> [u32; 2] {
         self.window_size
     }
 
