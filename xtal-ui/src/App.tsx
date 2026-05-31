@@ -519,6 +519,10 @@ export default function App() {
     post('ChangeAudioDevice', name)
   }
 
+  function onChangeBpm(bpm: number) {
+    post('Bpm', bpm)
+  }
+
   function onChangeControl(control: Control, value: ControlValue) {
     setControls(
       controls.map((c) =>
@@ -765,6 +769,7 @@ export default function App() {
         view={view}
         onAdvance={onAdvance}
         onCaptureFrame={onCaptureFrame}
+        onChangeBpm={onChangeBpm}
         onChangeMonitorPreview={onChangeMonitorPreview}
         onChangePerfMode={onChangePerfMode}
         onChangeTapTempoEnabled={onChangeTapTempoEnabled}

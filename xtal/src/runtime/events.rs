@@ -31,6 +31,7 @@ pub enum RuntimeEvent {
     Save(Vec<String>),
     SendMappings,
     SendMidi,
+    SetBpm(f32),
     SetHrcc(bool),
     SetMappingsEnabled(bool),
     SetMonitorPreview(bool),

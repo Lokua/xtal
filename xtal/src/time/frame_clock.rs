@@ -171,8 +171,10 @@ impl Pacer {
     }
 
     fn publish_transport_elapsed_at(&self, now: Instant) {
-        TRANSPORT_ELAPSED_SECONDS
-            .store(self.transport_elapsed(now).as_secs_f32(), Ordering::Release);
+        TRANSPORT_ELAPSED_SECONDS.store(
+            self.transport_elapsed(now).as_secs_f32(),
+            Ordering::Release,
+        );
     }
 }
 

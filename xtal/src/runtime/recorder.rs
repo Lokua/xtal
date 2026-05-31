@@ -201,8 +201,7 @@ impl Recorder {
             .filter(|&count| count >= 2)
             .unwrap_or(DEFAULT_NUM_BUFFERS);
 
-        let encoder_args =
-            build_encoder_args(width, height, fps, output_path);
+        let encoder_args = build_encoder_args(width, height, fps, output_path);
 
         let mut args: Vec<String> = vec![
             "-y".into(),

@@ -143,7 +143,9 @@ impl VideoSource {
             .map_err(|err| format!("failed to seek video to start: {}", err))?;
         self.pipeline
             .set_state(gst::State::Playing)
-            .map_err(|err| format!("failed to restart video playback: {}", err))?;
+            .map_err(|err| {
+                format!("failed to restart video playback: {}", err)
+            })?;
         Ok(())
     }
 
@@ -215,7 +217,9 @@ fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
         .build()
         .map_err(|err| format!("failed to create appsink: {}", err))?
         .downcast::<gst_app::AppSink>()
-        .map_err(|_| "GStreamer appsink factory returned wrong type".to_string())?;
+        .map_err(|_| {
+            "GStreamer appsink factory returned wrong type".to_string()
+        })?;
 
     bin.add_many([
         &convert_in,
@@ -237,10 +241,12 @@ fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
     let sink_pad = convert_in
         .static_pad("sink")
         .ok_or_else(|| "video sink missing sink pad".to_string())?;
-    let ghost_pad = gst::GhostPad::with_target(&sink_pad)
-        .map_err(|err| format!("failed to create video sink ghost pad: {}", err))?;
-    bin.add_pad(&ghost_pad)
-        .map_err(|err| format!("failed to add video sink ghost pad: {}", err))?;
+    let ghost_pad = gst::GhostPad::with_target(&sink_pad).map_err(|err| {
+        format!("failed to create video sink ghost pad: {}", err)
+    })?;
+    bin.add_pad(&ghost_pad).map_err(|err| {
+        format!("failed to add video sink ghost pad: {}", err)
+    })?;
 
     Ok((bin, appsink))
 }
@@ -254,8 +260,9 @@ impl Drop for VideoSource {
 fn init_gstreamer() -> Result<(), String> {
     GST_INIT
         .get_or_init(|| {
-            gst::init()
-                .map_err(|err| format!("failed to initialize GStreamer: {}", err))
+            gst::init().map_err(|err| {
+                format!("failed to initialize GStreamer: {}", err)
+            })
         })
         .clone()
 }

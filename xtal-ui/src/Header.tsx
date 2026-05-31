@@ -1,3 +1,4 @@
+import NumberBox from '@lokua/number-box'
 import clsx from 'clsx/lite'
 
 import type { noop } from './types'
@@ -34,6 +35,7 @@ type HeaderProps = {
   view: View
   onAdvance: noop
   onCaptureFrame: noop
+  onChangeBpm: (bpm: number) => void
   onChangeMonitorPreview: noop
   onChangePerfMode: noop
   onChangeTapTempoEnabled: noop
@@ -70,6 +72,7 @@ export default function Header({
   view,
   onAdvance,
   onCaptureFrame,
+  onChangeBpm,
   onChangeMonitorPreview,
   onChangePerfMode,
   onChangeTapTempoEnabled,
@@ -182,9 +185,20 @@ export default function Header({
 
         <VerticalSeparator />
 
-        <div data-help-id="Bpm" className="meter">
-          BPM: <span className="meter-value">{bpm.toFixed(1)}</span>
-        </div>
+        <fieldset data-help-id="Bpm">
+          <label htmlFor="bpm">BPM:</label>
+          <NumberBox
+            id="bpm"
+            className="number-box"
+            value={bpm}
+            min={1}
+            max={999}
+            step={0.1}
+            readOnly={!tapTempoEnabled}
+            disabled={!tapTempoEnabled}
+            onChange={onChangeBpm}
+          />
+        </fieldset>
         <IconButton
           data-help-id="Tap"
           name="Tap"

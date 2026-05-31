@@ -198,9 +198,10 @@ impl XtalRuntime {
             global_settings.osc_port = DEFAULT_OSC_PORT;
         }
 
-        let image_index = storage::load_image_index(&global_settings.user_data_dir)
-            .inspect_err(|e| error!("Error in runtime init: {}", e))
-            .ok();
+        let image_index =
+            storage::load_image_index(&global_settings.user_data_dir)
+                .inspect_err(|e| error!("Error in runtime init: {}", e))
+                .ok();
 
         let mut sketch_ui_state = HashMap::default();
         sketch_ui_state.insert(active_name.clone(), SketchUiState::default());
@@ -618,8 +619,9 @@ impl XtalRuntime {
                     web_view::UserDir::UserData => {
                         self.user_data_dir = dir.clone();
                         if let Some(image_index) = &self.image_index {
-                            if !storage::image_metadata_exists(&self.user_data_dir)
-                                && !image_index.items.is_empty()
+                            if !storage::image_metadata_exists(
+                                &self.user_data_dir,
+                            ) && !image_index.items.is_empty()
                             {
                                 storage::save_image_index(
                                     &self.user_data_dir,
@@ -787,6 +789,15 @@ impl XtalRuntime {
             RuntimeEvent::SetMonitorPreview(enabled) => {
                 self.set_monitor_preview_enabled(event_loop, enabled);
             }
+            RuntimeEvent::SetBpm(bpm) => {
+                if self.tap_tempo_enabled && bpm.is_finite() {
+                    self.bpm.set(bpm);
+                    self.tap_tempo = TapTempo::new(self.bpm.get());
+                    self.emit_web_view_event(web_view::Event::Bpm(
+                        self.bpm.get(),
+                    ));
+                }
+            }
             RuntimeEvent::SetPerfMode(perf_mode) => {
                 self.set_perf_mode(perf_mode);
             }
@@ -865,9 +876,10 @@ impl XtalRuntime {
                     );
                     return false;
                 };
-                let source_format = graph.recording_source_format().or_else(|| {
-                    self.surface_config.as_ref().map(|config| config.format)
-                });
+                let source_format =
+                    graph.recording_source_format().or_else(|| {
+                        self.surface_config.as_ref().map(|config| config.format)
+                    });
                 let Some(source_format) = source_format else {
                     self.alert_and_log(
                         "Failed to start recording: no capture source format available",
@@ -1179,7 +1191,8 @@ impl XtalRuntime {
             // 6) Recording readback copy is encoded pre-submit.
             if self.recording_state.is_recording {
                 if let Some(recorder) = self.recording_state.recorder.as_mut() {
-                    if let Some(source_texture) = graph.recording_source_texture()
+                    if let Some(source_texture) =
+                        graph.recording_source_texture()
                     {
                         let encoder = frame.encoder();
                         let _ = recorder
@@ -1199,9 +1212,10 @@ impl XtalRuntime {
                 self.pending_png_capture_path.take()
             {
                 let source_texture = graph.recording_source_texture();
-                let source_format = graph.recording_source_format().or_else(|| {
-                    self.surface_config.as_ref().map(|config| config.format)
-                });
+                let source_format =
+                    graph.recording_source_format().or_else(|| {
+                        self.surface_config.as_ref().map(|config| config.format)
+                    });
                 match (source_texture, source_format) {
                     (Some(source_texture), Some(source_format)) => {
                         let width = source_texture.size().width.max(1);
@@ -1323,8 +1337,8 @@ impl XtalRuntime {
                 let (encoder, source_texture) =
                     frame.encoder_and_output_texture();
                 let size = source_texture.size();
-                let fallback = context.device.create_texture(
-                    &wgpu::TextureDescriptor {
+                let fallback =
+                    context.device.create_texture(&wgpu::TextureDescriptor {
                         label: Some("xtal-monitor-preview-fallback"),
                         size: wgpu::Extent3d {
                             width: size.width.max(1),
@@ -1338,8 +1352,7 @@ impl XtalRuntime {
                         usage: wgpu::TextureUsages::TEXTURE_BINDING
                             | wgpu::TextureUsages::COPY_DST,
                         view_formats: &[],
-                    },
-                );
+                    });
 
                 encoder.copy_texture_to_texture(
                     wgpu::TexelCopyTextureInfo {
@@ -1399,8 +1412,10 @@ impl XtalRuntime {
         };
 
         // 11) Post-submit host-side effects/events.
-        if matches!(monitor_render_result, Some(MonitorRenderResult::OutOfMemory))
-        {
+        if matches!(
+            monitor_render_result,
+            Some(MonitorRenderResult::OutOfMemory)
+        ) {
             error!("monitor preview surface out of memory; exiting");
             self.shutdown(event_loop);
             return;
@@ -2220,7 +2235,8 @@ impl XtalRuntime {
         context.set_window_size([new_size.width, new_size.height]);
         self.sync_context_render_size();
         if let Some(preview) = self.monitor_preview.as_ref() {
-            self.monitor_preview_size_hint = Some(preview.window().inner_size());
+            self.monitor_preview_size_hint =
+                Some(preview.window().inner_size());
         }
     }
 
@@ -2475,7 +2491,8 @@ impl XtalRuntime {
         }
 
         if let Some(preview) = self.monitor_preview.as_ref() {
-            self.monitor_preview_size_hint = Some(preview.window().inner_size());
+            self.monitor_preview_size_hint =
+                Some(preview.window().inner_size());
         }
     }
 
@@ -2542,7 +2559,8 @@ impl XtalRuntime {
             self.request_render_now();
         } else {
             if let Some(preview) = self.monitor_preview.as_ref() {
-                self.monitor_preview_size_hint = Some(preview.window().inner_size());
+                self.monitor_preview_size_hint =
+                    Some(preview.window().inner_size());
             }
             self.monitor_preview = None;
         }

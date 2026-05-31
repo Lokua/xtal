@@ -8,6 +8,7 @@ export const Help = {
     frames (Shortcut: [A])`
   ),
   Audio: 'The Audio input device used for audio controls',
+  Bpm: 'When tap tempo is enabled, drag or double click to manually set BPM',
   Clear: format(
     `Clear any alpha blending or "fade trails" from frame persistence. Requires 
     your sketch is using the clear_color attribute via sketch_components macro`
@@ -70,9 +71,11 @@ export const Help = {
   Record: 'Start/Stop recording',
   Reset: 'Reset the frame counter and all animations (Shortcut: [R])',
   Tap: `
-    Enabled/disable tap tempo. When enabled, use the [Space] key to tap. 
+    Enable/disable tap tempo. When enabled, use the [Space] key to tap or edit
+    the BPM number box.
     Note that keeping enabled will preserve the currently tapped-in tempo when 
-    switching sketches; disabling will always revert to a sketch's configured BPM.
+    switching sketches; disabling will always revert to a sketch's configured
+    BPM.
   `,
   TransitionTime: 'Snapshot and Randomization transition time (in beats)',
   Save: format(`

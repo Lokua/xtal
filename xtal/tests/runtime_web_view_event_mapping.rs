@@ -106,6 +106,13 @@ fn web_view_command_mapping_supports_phase1_actions() {
         Some(RuntimeEvent::TapTempoEnabled(true))
     );
 
+    let bpm = web_view::parse_ui_message("{\"Bpm\":128.5}")
+        .expect("parse bpm message");
+    assert_eq!(
+        web_view::map_event_to_runtime_event(&bpm),
+        Some(RuntimeEvent::SetBpm(128.5))
+    );
+
     let hrcc =
         web_view::parse_ui_message("{\"Hrcc\":true}").expect("parse hrcc");
     assert_eq!(

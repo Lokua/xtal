@@ -166,7 +166,9 @@ pub fn image_metadata_exists(user_data_dir: &str) -> bool {
         .unwrap_or(false)
 }
 
-pub fn load_image_index(user_data_dir: &str) -> Result<ImageIndex, Box<dyn Error>> {
+pub fn load_image_index(
+    user_data_dir: &str,
+) -> Result<ImageIndex, Box<dyn Error>> {
     let bytes = fs::read(image_index_path(user_data_dir))?;
     let json = str::from_utf8(&bytes).ok().map(|s| s.to_owned()).unwrap();
     let image_index_file: ImageIndex = serde_json::from_str(&json)?;

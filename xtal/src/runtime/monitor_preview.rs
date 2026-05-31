@@ -101,15 +101,16 @@ impl MonitorBlitState {
         surface_format: wgpu::TextureFormat,
     ) -> &wgpu::RenderPipeline {
         if self.pipeline_format != Some(surface_format) {
-            let pipeline_layout =
-                device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            let pipeline_layout = device.create_pipeline_layout(
+                &wgpu::PipelineLayoutDescriptor {
                     label: Some("xtal-monitor-preview-pipeline-layout"),
                     bind_group_layouts: &[&self.bind_group_layout],
                     push_constant_ranges: &[],
-                });
+                },
+            );
 
-            let pipeline =
-                device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            let pipeline = device.create_render_pipeline(
+                &wgpu::RenderPipelineDescriptor {
                     label: Some("xtal-monitor-preview-pipeline"),
                     layout: Some(&pipeline_layout),
                     vertex: wgpu::VertexState {
@@ -143,7 +144,8 @@ impl MonitorBlitState {
                     multisample: wgpu::MultisampleState::default(),
                     multiview: None,
                     cache: None,
-                });
+                },
+            );
 
             self.pipeline = Some(pipeline);
             self.pipeline_format = Some(surface_format);
@@ -195,8 +197,9 @@ impl MonitorPreview {
             .create_surface(window.clone())
             .map_err(|err| err.to_string())?;
         let caps = surface.get_capabilities(adapter);
-        let format = choose_surface_format(&caps.formats)
-            .ok_or_else(|| "monitor preview surface has no format".to_string())?;
+        let format = choose_surface_format(&caps.formats).ok_or_else(|| {
+            "monitor preview surface has no format".to_string()
+        })?;
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -235,7 +238,9 @@ impl MonitorPreview {
     ) {
         let width = main_width.max(1);
         let height = main_height.max(1);
-        let _ = self.window.request_inner_size(PhysicalSize::new(width, height));
+        let _ = self
+            .window
+            .request_inner_size(PhysicalSize::new(width, height));
         self.resize_surface(device, width, height);
     }
 
@@ -282,34 +287,37 @@ impl MonitorPreview {
             }
         };
 
-        let output_view =
-            output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let output_view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
         let source_view =
             source_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        let bind_group = context
-            .device
-            .create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("xtal-monitor-preview-bind-group"),
-                layout: &self.blit_state.bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.blit_state.sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(
-                            &source_view,
-                        ),
-                    },
-                ],
-            });
-        let pipeline = self
-            .blit_state
-            .ensure_pipeline(context.device.as_ref(), self.surface_config.format);
+        let bind_group =
+            context
+                .device
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("xtal-monitor-preview-bind-group"),
+                    layout: &self.blit_state.bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.blit_state.sampler,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::TextureView(
+                                &source_view,
+                            ),
+                        },
+                    ],
+                });
+        let pipeline = self.blit_state.ensure_pipeline(
+            context.device.as_ref(),
+            self.surface_config.format,
+        );
 
         let source_size = source_texture.size();
         let (vx, vy, vw, vh) = fit_viewport(
@@ -319,12 +327,11 @@ impl MonitorPreview {
             self.surface_config.height.max(1),
         );
 
-        let mut encoder =
-            context
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("xtal-monitor-preview-encoder"),
-                });
+        let mut encoder = context.device.create_command_encoder(
+            &wgpu::CommandEncoderDescriptor {
+                label: Some("xtal-monitor-preview-encoder"),
+            },
+        );
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("xtal-monitor-preview-pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -358,7 +365,8 @@ impl MonitorPreview {
         width: u32,
         height: u32,
     ) {
-        if self.surface_config.width == width && self.surface_config.height == height
+        if self.surface_config.width == width
+            && self.surface_config.height == height
         {
             return;
         }
@@ -390,7 +398,8 @@ fn fit_viewport(
     let target_width = target_width.max(1) as f32;
     let target_height = target_height.max(1) as f32;
 
-    let scale = (target_width / source_width).min(target_height / source_height);
+    let scale =
+        (target_width / source_width).min(target_height / source_height);
     let viewport_width = (source_width * scale).max(1.0);
     let viewport_height = (source_height * scale).max(1.0);
     let viewport_x = (target_width - viewport_width) * 0.5;

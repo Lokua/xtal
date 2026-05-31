@@ -243,6 +243,7 @@ pub fn to_ui_message(event: &Event) -> Result<String, String> {
 pub fn map_event_to_runtime_event(event: &Event) -> Option<RuntimeEvent> {
     match event {
         Event::Advance => Some(RuntimeEvent::AdvanceSingleFrame),
+        Event::Bpm(bpm) => Some(RuntimeEvent::SetBpm(*bpm)),
         Event::CaptureFrame => Some(RuntimeEvent::CaptureFrame),
         Event::ChangeAudioDevice(name) => {
             Some(RuntimeEvent::ChangeAudioDevice(name.clone()))
@@ -476,6 +477,9 @@ mod tests {
             map_event_to_runtime_event(&Event::TransitionTime(2.5));
         assert_eq!(transition, Some(RuntimeEvent::SetTransitionTime(2.5)));
 
+        let bpm = map_event_to_runtime_event(&Event::Bpm(128.5));
+        assert_eq!(bpm, Some(RuntimeEvent::SetBpm(128.5)));
+
         let tap = map_event_to_runtime_event(&Event::Tap);
         assert_eq!(tap, Some(RuntimeEvent::Tap));
 
@@ -646,6 +650,7 @@ mod tests {
             Event::ReceiveDir(UserDir::Images, "/tmp/images".into()),
             Event::ChangeAudioDevice("Built-in".into()),
             Event::ChangeOscPort(9000),
+            Event::Bpm(128.5),
             Event::TransitionTime(2.5),
             Event::Paused(true),
             Event::PerfMode(true),

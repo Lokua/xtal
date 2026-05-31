@@ -1,5 +1,3 @@
-recursive = true
-
 # Max width of each line
 max_width = 80
 
@@ -155,5 +153,3 @@ max_width = 80
 
 # Format only these files
 #file_lines = []
-
-merge_imports = false
