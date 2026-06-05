@@ -618,20 +618,20 @@ impl XtalRuntime {
                     web_view::UserDir::Images => self.images_dir = dir.clone(),
                     web_view::UserDir::UserData => {
                         self.user_data_dir = dir.clone();
-                        if let Some(image_index) = &self.image_index {
-                            if !storage::image_metadata_exists(
+                        if let Some(image_index) = &self.image_index
+                            && !storage::image_metadata_exists(
                                 &self.user_data_dir,
-                            ) && !image_index.items.is_empty()
-                            {
-                                storage::save_image_index(
-                                    &self.user_data_dir,
-                                    image_index,
-                                )
-                                .inspect_err(|e| {
-                                    error!("Error saving image index: {}", e)
-                                })
-                                .ok();
-                            }
+                            )
+                            && !image_index.items.is_empty()
+                        {
+                            storage::save_image_index(
+                                &self.user_data_dir,
+                                image_index,
+                            )
+                            .inspect_err(|e| {
+                                error!("Error saving image index: {}", e)
+                            })
+                            .ok();
                         }
                     }
                     web_view::UserDir::Videos => self.videos_dir = dir.clone(),
@@ -1021,14 +1021,12 @@ impl XtalRuntime {
 
                 self.apply_control_update(name, value);
 
-                if should_emit_updated_controls {
-                    if let Some(hub) = self.control_hub.as_ref() {
-                        self.emit_web_view_event(
-                            web_view::Event::UpdatedControls(
-                                web_view::controls_from_hub(hub),
-                            ),
-                        );
-                    }
+                if should_emit_updated_controls
+                    && let Some(hub) = self.control_hub.as_ref()
+                {
+                    self.emit_web_view_event(web_view::Event::UpdatedControls(
+                        web_view::controls_from_hub(hub),
+                    ));
                 }
             }
             RuntimeEvent::FrameSkipped
@@ -1189,20 +1187,18 @@ impl XtalRuntime {
             }
 
             // 6) Recording readback copy is encoded pre-submit.
-            if self.recording_state.is_recording {
-                if let Some(recorder) = self.recording_state.recorder.as_mut() {
-                    if let Some(source_texture) =
-                        graph.recording_source_texture()
-                    {
-                        let encoder = frame.encoder();
-                        let _ = recorder
-                            .capture_surface_frame(encoder, source_texture);
-                    } else {
-                        let (encoder, source_texture) =
-                            frame.encoder_and_output_texture();
-                        let _ = recorder
-                            .capture_surface_frame(encoder, source_texture);
-                    }
+            if self.recording_state.is_recording
+                && let Some(recorder) = self.recording_state.recorder.as_mut()
+            {
+                if let Some(source_texture) = graph.recording_source_texture() {
+                    let encoder = frame.encoder();
+                    let _ =
+                        recorder.capture_surface_frame(encoder, source_texture);
+                } else {
+                    let (encoder, source_texture) =
+                        frame.encoder_and_output_texture();
+                    let _ =
+                        recorder.capture_surface_frame(encoder, source_texture);
                 }
             }
 
@@ -1393,10 +1389,10 @@ impl XtalRuntime {
                     None
                 };
 
-            if self.recording_state.is_recording {
-                if let Some(recorder) = self.recording_state.recorder.as_mut() {
-                    recorder.on_submitted();
-                }
+            if self.recording_state.is_recording
+                && let Some(recorder) = self.recording_state.recorder.as_mut()
+            {
+                recorder.on_submitted();
             }
 
             // 10) Advance local frame-time state after successful submits.
@@ -1425,19 +1421,18 @@ impl XtalRuntime {
             self.alert_and_log(message, log::Level::Error);
         }
 
-        if self.recording_state.is_encoding {
-            if let Some(outcome) =
+        if self.recording_state.is_encoding
+            && let Some(outcome) =
                 self.recording_state.poll_finalize(&mut self.session_id)
-            {
-                if outcome.is_error {
-                    self.alert_and_log(outcome.message, log::Level::Error);
-                } else {
-                    self.alert(outcome.message);
-                }
-                self.emit_web_view_event(web_view::Event::Encoding(
-                    self.recording_state.is_encoding,
-                ));
+        {
+            if outcome.is_error {
+                self.alert_and_log(outcome.message, log::Level::Error);
+            } else {
+                self.alert(outcome.message);
             }
+            self.emit_web_view_event(web_view::Event::Encoding(
+                self.recording_state.is_encoding,
+            ));
         }
 
         if let Some(capture) = pending_png_capture {
@@ -1568,11 +1563,8 @@ impl XtalRuntime {
                     );
                 }
             }
-            KeyCode::Space => {
-                if self.tap_tempo_enabled {
-                    return self
-                        .on_runtime_event(event_loop, RuntimeEvent::Tap);
-                }
+            KeyCode::Space if self.tap_tempo_enabled => {
+                return self.on_runtime_event(event_loop, RuntimeEvent::Tap);
             }
             _ => {}
         }

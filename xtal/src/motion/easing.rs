@@ -8,6 +8,7 @@ use std::fmt::{Display, Formatter};
 use std::result::Result;
 use std::str::FromStr;
 
+#[allow(unpredictable_function_pointer_comparisons)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Easing {
     Linear,

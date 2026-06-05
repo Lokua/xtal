@@ -254,16 +254,13 @@ impl<T: TimingSource> ControlHub<T> {
             self.get_raw(original_name, current_frame)
         };
 
-        let result =
-            self.modulations
-                .get(original_name)
-                .map_or(value, |modulators| {
-                    modulators.iter().fold(value, |v, modulator| {
-                        self.apply_modulator(v, modulator, current_frame)
-                    })
-                });
-
-        result
+        self.modulations
+            .get(original_name)
+            .map_or(value, |modulators| {
+                modulators.iter().fold(value, |v, modulator| {
+                    self.apply_modulator(v, modulator, current_frame)
+                })
+            })
     }
 
     fn get_transition_value(
@@ -417,21 +414,19 @@ impl<T: TimingSource> ControlHub<T> {
     fn get_raw(&self, name: &str, current_frame: u32) -> f32 {
         let is_dep = self.dep_graph.is_prerequisite(name);
 
-        if is_dep {
-            if let Some(value) = self.eval_cache.get(name, current_frame) {
-                return value;
-            }
+        if is_dep && let Some(value) = self.eval_cache.get(name, current_frame)
+        {
+            return value;
         }
 
-        if self.midi_overrides_enabled {
-            if let Some(value) =
+        if self.midi_overrides_enabled
+            && let Some(value) =
                 self.midi_overrides.lock().unwrap().get(name).copied()
-            {
-                if is_dep {
-                    self.eval_cache.store(name, current_frame, value);
-                }
-                return value;
+        {
+            if is_dep {
+                self.eval_cache.store(name, current_frame, value);
             }
+            return value;
         }
 
         let value = self
@@ -933,10 +928,10 @@ impl<T: TimingSource> ControlHub<T> {
             state.ok().and_then(|mut guard| guard.take())
         });
 
-        if let Some(config) = new_config {
-            if let Err(e) = self.populate_controls(&config) {
-                error!("Failed to apply new configuration: {:?}", e);
-            }
+        if let Some(config) = new_config
+            && let Err(e) = self.populate_controls(&config)
+        {
+            error!("Failed to apply new configuration: {:?}", e);
         }
 
         let sequence_disabled = self
@@ -955,31 +950,31 @@ impl<T: TimingSource> ControlHub<T> {
             self.snapshot_sequence_runtime.last_phase = None;
         }
 
-        if let Some(transition) = &self.active_transition {
-            if current_beat >= transition.end_beat {
-                for (name, (_from, to)) in &transition.values {
-                    if self.midi_override_configs.contains_key(name) {
-                        self.midi_overrides
-                            .lock()
-                            .unwrap()
-                            .insert(name.to_string(), *to);
-                        continue;
-                    } else if self.ui_controls.has(name) {
-                        let value = ControlValue::Float(*to);
-                        self.ui_controls.set(name, value);
-                        continue;
-                    } else if self.midi_controls.has(name) {
-                        self.midi_controls.set(name, *to);
-                        continue;
-                    } else if self.osc_controls.has(name) {
-                        self.osc_controls.set(name, *to);
-                        continue;
-                    }
+        if let Some(transition) = &self.active_transition
+            && current_beat >= transition.end_beat
+        {
+            for (name, (_from, to)) in &transition.values {
+                if self.midi_override_configs.contains_key(name) {
+                    self.midi_overrides
+                        .lock()
+                        .unwrap()
+                        .insert(name.to_string(), *to);
+                    continue;
+                } else if self.ui_controls.has(name) {
+                    let value = ControlValue::Float(*to);
+                    self.ui_controls.set(name, value);
+                    continue;
+                } else if self.midi_controls.has(name) {
+                    self.midi_controls.set(name, *to);
+                    continue;
+                } else if self.osc_controls.has(name) {
+                    self.osc_controls.set(name, *to);
+                    continue;
                 }
-                self.active_transition = None;
-                for callback in &self.snapshot_ended_callbacks {
-                    callback.call();
-                }
+            }
+            self.active_transition = None;
+            for callback in &self.snapshot_ended_callbacks {
+                callback.call();
             }
         }
 
@@ -1601,10 +1596,11 @@ impl<T: TimingSource> ControlHub<T> {
                 .expect("Unable to start OSC receiver");
         }
 
-        if self.midi_controls.has_port() && !self.midi_controls.is_active() {
-            if let Err(e) = self.midi_controls.start() {
-                warn!("Unable to start MIDI receiver. {}", e);
-            }
+        if self.midi_controls.has_port()
+            && !self.midi_controls.is_active()
+            && let Err(e) = self.midi_controls.start()
+        {
+            warn!("Unable to start MIDI receiver. {}", e);
         }
 
         for callback in &self.populated_callbacks {

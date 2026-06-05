@@ -412,10 +412,10 @@ impl Recorder {
     pub fn stop(mut self) -> RecordingStats {
         let _ = self.writer_tx.send(WriterMessage::Stop);
 
-        if let Some(handle) = self.writer_thread.take() {
-            if let Err(err) = handle.join() {
-                error!("Writer thread panicked: {:?}", err);
-            }
+        if let Some(handle) = self.writer_thread.take()
+            && let Err(err) = handle.join()
+        {
+            error!("Writer thread panicked: {:?}", err);
         }
 
         if let Some(mut process) = self.ffmpeg_process.take() {

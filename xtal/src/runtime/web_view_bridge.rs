@@ -97,14 +97,13 @@ impl WebViewBridge {
 
                     if let Some(command) =
                         web_view::map_event_to_runtime_event(&event)
+                        && let Err(err) = command_tx.send(command)
                     {
-                        if let Err(err) = command_tx.send(command) {
-                            warn!(
-                                "failed to dispatch runtime command from web-view: {}",
-                                err
-                            );
-                            break;
-                        }
+                        warn!(
+                            "failed to dispatch runtime command from web-view: {}",
+                            err
+                        );
+                        break;
                     }
                 }
             })

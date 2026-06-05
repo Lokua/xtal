@@ -504,11 +504,11 @@ impl
     }
 
     fn set(&mut self, name: &str, value: ControlValue) {
-        if let Some(old_value) = self.values.get(name) {
-            if *old_value != value {
-                self.change_tracker.mark_changed();
-                self.values.insert(name.to_string(), value);
-            }
+        if let Some(old_value) = self.values.get(name)
+            && *old_value != value
+        {
+            self.change_tracker.mark_changed();
+            self.values.insert(name.to_string(), value);
         }
     }
 
@@ -659,12 +659,11 @@ impl ChangeTracker {
                     panic!("Control {} does not exist", name);
                 }
             }
-            if let Some(current) = values.get(*name) {
-                if let Some(previous) = self.previous_values.get(*name) {
-                    if current != previous {
-                        return true;
-                    }
-                }
+            if let Some(current) = values.get(*name)
+                && let Some(previous) = self.previous_values.get(*name)
+                && current != previous
+            {
+                return true;
             }
         }
 

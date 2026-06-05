@@ -343,11 +343,11 @@ impl TransitorySketchState {
         controls.with_values_mut(|values| {
             for (name, value) in values.iter_mut() {
                 for s in serialized_controls {
-                    if get_name(s) == *name {
-                        if let Some(new_value) = get_value(s) {
-                            *value = new_value;
-                            break;
-                        }
+                    if get_name(s) == *name
+                        && let Some(new_value) = get_value(s)
+                    {
+                        *value = new_value;
+                        break;
                     }
                 }
             }

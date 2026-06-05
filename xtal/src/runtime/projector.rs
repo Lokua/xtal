@@ -1,18 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(
+    Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, Default,
+)]
 pub enum ProjectorQuality {
     Crisp,
+    #[default]
     Balanced,
     Fast,
     Faster,
     Emergency,
-}
-
-impl Default for ProjectorQuality {
-    fn default() -> Self {
-        Self::Balanced
-    }
 }
 
 impl ProjectorQuality {

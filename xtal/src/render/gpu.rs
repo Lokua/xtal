@@ -94,6 +94,13 @@ struct ComputePass {
     watcher: Option<ShaderWatch>,
 }
 
+struct TextureResources {
+    offscreen: Vec<TextureHandle>,
+    images: HashMap<TextureHandle, PathBuf>,
+    videos: HashMap<TextureHandle, PathBuf>,
+    labels: HashMap<TextureHandle, String>,
+}
+
 impl CompiledGraph {
     pub fn compile(
         device: &wgpu::Device,
@@ -103,12 +110,12 @@ impl CompiledGraph {
         uniform_layout: &wgpu::BindGroupLayout,
     ) -> Result<Self, String> {
         let present_source_handle = find_present_source(&graph)?;
-        let (
-            offscreen_resource_ids,
-            image_resources,
-            video_resources,
-            texture_labels,
-        ) = collect_texture_resources(&graph.resources);
+        let TextureResources {
+            offscreen: offscreen_resource_ids,
+            images: image_resources,
+            videos: video_resources,
+            labels: texture_labels,
+        } = collect_texture_resources(&graph.resources);
 
         validate_graph_resources(
             &graph,
@@ -1508,14 +1515,7 @@ fn find_present_source(
     Ok(source)
 }
 
-fn collect_texture_resources(
-    resources: &[ResourceDecl],
-) -> (
-    Vec<TextureHandle>,
-    HashMap<TextureHandle, PathBuf>,
-    HashMap<TextureHandle, PathBuf>,
-    HashMap<TextureHandle, String>,
-) {
+fn collect_texture_resources(resources: &[ResourceDecl]) -> TextureResources {
     let mut offscreen = Vec::new();
     let mut images = HashMap::new();
     let mut videos = HashMap::new();
@@ -1540,7 +1540,12 @@ fn collect_texture_resources(
         }
     }
 
-    (offscreen, images, videos, labels)
+    TextureResources {
+        offscreen,
+        images,
+        videos,
+        labels,
+    }
 }
 
 fn validate_graph_resources(
@@ -1557,43 +1562,41 @@ fn validate_graph_resources(
     let image_ids = image_resources.keys().copied().collect::<HashSet<_>>();
     let video_ids = video_resources.keys().copied().collect::<HashSet<_>>();
 
-    if let Some(source) = present_source {
-        if !offscreen_ids.contains(&source)
-            && !image_ids.contains(&source)
-            && !video_ids.contains(&source)
-        {
-            return Err(format!(
-                "present source texture {} is not a declared offscreen/image/video texture resource",
-                source.index()
-            ));
-        }
+    if let Some(source) = present_source
+        && !offscreen_ids.contains(&source)
+        && !image_ids.contains(&source)
+        && !video_ids.contains(&source)
+    {
+        return Err(format!(
+            "present source texture {} is not a declared offscreen/image/video texture resource",
+            source.index()
+        ));
     }
 
     for node in &graph.nodes {
         match node {
             NodeSpec::Render(render) => {
-                if let RenderTarget::Texture(target) = render.write {
-                    if !offscreen_ids.contains(&target) {
-                        return Err(format!(
-                            "render node '{}' writes texture {} which is not a declared texture2d resource",
-                            render.name,
-                            target.index()
-                        ));
-                    }
+                if let RenderTarget::Texture(target) = render.write
+                    && !offscreen_ids.contains(&target)
+                {
+                    return Err(format!(
+                        "render node '{}' writes texture {} which is not a declared texture2d resource",
+                        render.name,
+                        target.index()
+                    ));
                 }
 
                 for read in &render.reads {
-                    if let RenderRead::Texture(texture) = read {
-                        if !offscreen_ids.contains(texture)
-                            && !image_ids.contains(texture)
-                            && !video_ids.contains(texture)
-                        {
-                            return Err(format!(
-                                "render node '{}' reads texture {} which is not a declared texture2d/image/video resource",
-                                render.name,
-                                texture.index()
-                            ));
-                        }
+                    if let RenderRead::Texture(texture) = read
+                        && !offscreen_ids.contains(texture)
+                        && !image_ids.contains(texture)
+                        && !video_ids.contains(texture)
+                    {
+                        return Err(format!(
+                            "render node '{}' reads texture {} which is not a declared texture2d/image/video resource",
+                            render.name,
+                            texture.index()
+                        ));
                     }
                 }
             }
