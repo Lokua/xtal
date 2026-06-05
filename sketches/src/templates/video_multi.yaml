@@ -1,0 +1,18 @@
+# ------------------------------------------------------------------------------
+#  Video Mix
+# ------------------------------------------------------------------------------
+
+fit_mode:
+  type: select
+  var: bx
+  default: cover
+  options:
+    - cover
+    - contain
+    - fill
+
+xfade:
+  type: slider
+  var: aw
+  range: [0.0, 1.0]
+  default: 0.5

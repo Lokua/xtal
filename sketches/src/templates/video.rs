@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use crate::constants::{IG_HEIGHT, IG_WIDTH};
 use xtal::prelude::*;
+
+use crate::constants::{IG_HEIGHT, IG_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "video",
@@ -39,8 +40,6 @@ pub fn init() -> VideoSketch {
 
     VideoSketch {
         shader_path: assets.wgsl(),
-        video_path: PathBuf::from(
-            "/Users/lokua/Movies/Xtal/clips/Rogers Park Trees.mp4",
-        ),
+        video_path: PathBuf::from("clips/Rogers Park Trees.mp4"),
     }
 }

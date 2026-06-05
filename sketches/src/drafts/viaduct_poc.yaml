@@ -1,0 +1,27 @@
+# ------------------------------------------------------------------------------
+#  Video
+# ------------------------------------------------------------------------------
+
+video:
+  type: separator
+
+fit_mode:
+  type: select
+  var: bx
+  default: cover
+  options:
+    - cover
+    - contain
+    - fill
+
+loop_duration:
+  type: select
+  var: by
+  default: "16"
+  options:
+    - "1"
+    - "2"
+    - "4"
+    - "8"
+    - "12"
+    - "16"

@@ -51,6 +51,7 @@ fn main() {
                 phase_matrix,
                 snd,
                 sline,
+                viaduct_poc,
             ]
         },
         {
@@ -72,6 +73,7 @@ fn main() {
                 compute,
                 image,
                 video,
+                video_multi,
             ]
         },
     }

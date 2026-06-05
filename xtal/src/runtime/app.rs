@@ -408,7 +408,7 @@ impl XtalRuntime {
                 );
             }
             RuntimeEvent::CommitMappings => {
-                // Commiting from Settings -> Controls should also end live
+                // Committing from Settings -> Controls should also end live
                 // learn so subsequent MIDI movement does not keep remapping.
                 self.map_mode.stop();
                 let mappings = self.map_mode.mappings();
@@ -1665,6 +1665,7 @@ impl XtalRuntime {
     // Rebuilds graph + uniforms + control hub for startup/switch/reload.
     fn rebuild_graph_state(&mut self) -> Result<(), String> {
         let mut graph_builder = GraphBuilder::new();
+        graph_builder.set_videos_dir(self.videos_dir.clone());
         self.sketch.setup(&mut graph_builder);
         let graph_spec = graph_builder.build();
 

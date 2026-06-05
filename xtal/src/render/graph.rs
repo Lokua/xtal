@@ -98,6 +98,7 @@ pub struct GraphSpec {
 pub struct GraphBuilder {
     resources: Vec<ResourceDecl>,
     nodes: Vec<NodeSpec>,
+    videos_dir: Option<PathBuf>,
     uniform_handle: Option<UniformHandle>,
     next_texture_index: usize,
     next_render_node_index: usize,
@@ -107,6 +108,10 @@ pub struct GraphBuilder {
 impl GraphBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn set_videos_dir(&mut self, videos_dir: impl Into<PathBuf>) {
+        self.videos_dir = Some(videos_dir.into());
     }
 
     pub fn uniforms(&mut self) -> UniformHandle {
@@ -153,11 +158,12 @@ impl GraphBuilder {
     pub fn video(&mut self, path: impl Into<PathBuf>) -> TextureHandle {
         let handle = TextureHandle(self.next_texture_index);
         self.next_texture_index += 1;
+        let path = self.resolve_video_path(path.into());
 
         self.resources.push(ResourceDecl {
             handle: ResourceHandle::Texture(handle),
             name: format!("video{}", handle.0),
-            kind: ResourceKind::Video2d { path: path.into() },
+            kind: ResourceKind::Video2d { path },
         });
 
         handle
@@ -202,6 +208,18 @@ impl GraphBuilder {
             resources: self.resources,
             nodes: self.nodes,
         }
+    }
+
+    fn resolve_video_path(&self, path: PathBuf) -> PathBuf {
+        if path.is_absolute() {
+            return path;
+        }
+
+        let Some(videos_dir) = self.videos_dir.as_ref() else {
+            return path;
+        };
+
+        videos_dir.join(path)
     }
 }
 
