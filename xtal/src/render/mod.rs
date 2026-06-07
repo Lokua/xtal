@@ -30,6 +30,7 @@ pub mod video {
             &mut self,
             _transport: &VideoTransport,
             _beats: f32,
+            _bpm: f32,
         ) -> Result<(), String> {
             Ok(())
         }
@@ -45,6 +46,7 @@ pub mod video {
         pub fn restart_with_transport(
             &mut self,
             _transport: &VideoTransport,
+            _bpm: f32,
         ) -> Result<(), String> {
             Ok(())
         }

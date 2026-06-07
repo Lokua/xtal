@@ -241,12 +241,19 @@ impl CompiledGraph {
         uniforms: &UniformBanks,
         video_transports: &HashMap<String, VideoTransport>,
         beats: f32,
+        bpm: f32,
         render_size: [u32; 2],
         surface_size: [u32; 2],
     ) -> Result<(), String> {
         self.ensure_offscreen_textures(device, render_size);
         self.ensure_surface_proxy_texture(device, render_size, surface_size);
-        self.update_video_textures(device, queue, video_transports, beats)?;
+        self.update_video_textures(
+            device,
+            queue,
+            video_transports,
+            beats,
+            bpm,
+        )?;
 
         for node in &mut self.nodes {
             match node {
@@ -398,6 +405,7 @@ impl CompiledGraph {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         video_transports: &HashMap<String, VideoTransport>,
+        bpm: f32,
     ) {
         for (handle, source) in &mut self.video_sources {
             let result = if let Some(transport) = self
@@ -405,7 +413,7 @@ impl CompiledGraph {
                 .get(handle)
                 .and_then(|name| video_transports.get(name))
             {
-                source.restart_with_transport(transport)
+                source.restart_with_transport(transport, bpm)
             } else {
                 source.restart()
             };
@@ -432,12 +440,13 @@ impl CompiledGraph {
         queue: &wgpu::Queue,
         video_transports: &HashMap<String, VideoTransport>,
         beats: f32,
+        bpm: f32,
     ) -> Result<(), String> {
         for (handle, source) in &mut self.video_sources {
             if let Some(source_name) = self.video_source_names.get(handle)
                 && let Some(transport) = video_transports.get(source_name)
             {
-                source.apply_transport(transport, beats)?;
+                source.apply_transport(transport, beats, bpm)?;
             }
 
             let Some(frame) = source.next_frame()? else {

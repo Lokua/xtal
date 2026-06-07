@@ -1183,6 +1183,7 @@ impl XtalRuntime {
                 uniforms,
                 &video_transports,
                 current_beats,
+                self.bpm.get(),
                 context.resolution_u32(),
                 [surface_config.width, surface_config.height],
             ) {
@@ -2405,6 +2406,7 @@ impl XtalRuntime {
                 context.device.as_ref(),
                 context.queue.as_ref(),
                 &video_transports,
+                self.bpm.get(),
             );
         }
         self.request_render_now();

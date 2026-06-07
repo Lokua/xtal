@@ -10,5 +10,5 @@ video:
   source: a
   start: $scrub
   beats: 4
-  speed: 0.5
-  direction: forward
+  speed: 1
+  direction: ping_pong
