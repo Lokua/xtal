@@ -408,7 +408,7 @@ impl XtalRuntime {
                 );
             }
             RuntimeEvent::CommitMappings => {
-                // Commiting from Settings -> Controls should also end live
+                // Committing from Settings -> Controls should also end live
                 // learn so subsequent MIDI movement does not keep remapping.
                 self.map_mode.stop();
                 let mappings = self.map_mode.mappings();
@@ -1112,12 +1112,14 @@ impl XtalRuntime {
             let [w, h] = context.resolution();
             uniforms.set_resolution(w, h);
             let current_beats;
+            let video_transports;
 
             if let Some(hub) = self.control_hub.as_mut() {
                 if let Some(beats) = external_beats_for_frame {
                     hub.animation.timing.set_external_beats(beats);
                 }
                 hub.update();
+                video_transports = hub.video_transports();
 
                 for (id, value) in hub.var_values() {
                     if let Err(err) = uniforms.set(&id, value) {
@@ -1131,6 +1133,7 @@ impl XtalRuntime {
                 current_beats = hub.beats();
             } else {
                 current_beats = context.elapsed_seconds();
+                video_transports = HashMap::default();
             }
 
             uniforms.set_beats(current_beats);
@@ -1178,6 +1181,9 @@ impl XtalRuntime {
                 context.queue.as_ref(),
                 &mut frame,
                 uniforms,
+                &video_transports,
+                current_beats,
+                self.bpm.get(),
                 context.resolution_u32(),
                 [surface_config.width, surface_config.height],
             ) {
@@ -1665,6 +1671,7 @@ impl XtalRuntime {
     // Rebuilds graph + uniforms + control hub for startup/switch/reload.
     fn rebuild_graph_state(&mut self) -> Result<(), String> {
         let mut graph_builder = GraphBuilder::new();
+        graph_builder.set_videos_dir(self.videos_dir.clone());
         self.sketch.setup(&mut graph_builder);
         let graph_spec = graph_builder.build();
 
@@ -2388,10 +2395,19 @@ impl XtalRuntime {
 
     fn reset_transport(&mut self) {
         frame_clock::reset();
+        let video_transports = self
+            .control_hub
+            .as_ref()
+            .map_or_else(HashMap::default, ControlHub::video_transports);
         if let (Some(graph), Some(context)) =
             (self.graph.as_mut(), self.context.as_ref())
         {
-            graph.reset(context.device.as_ref(), context.queue.as_ref());
+            graph.reset(
+                context.device.as_ref(),
+                context.queue.as_ref(),
+                &video_transports,
+                self.bpm.get(),
+            );
         }
         self.request_render_now();
     }

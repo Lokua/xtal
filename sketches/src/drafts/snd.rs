@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use crate::constants::{IG_HEIGHT, IG_WIDTH};
 use xtal::prelude::*;
+
+use crate::constants::{IG_HEIGHT, IG_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "snd",
@@ -23,7 +24,7 @@ pub struct SndSketch {
 impl Sketch for SndSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
-        let video = graph.video(self.video_path.clone());
+        let video = graph.video("source", self.video_path.clone());
 
         graph
             .render()
@@ -44,9 +45,7 @@ pub fn init() -> SndSketch {
 
     SndSketch {
         shader_path: assets.wgsl(),
-        video_path: PathBuf::from(
-            "/Users/lokua/Movies/Xtal/clips/Rogers Park Trees (trimmed).mp4",
-        ),
+        video_path: PathBuf::from("clips/Rogers Park Trees (trimmed).mp4"),
         control_script_path: assets.yaml(),
     }
 }

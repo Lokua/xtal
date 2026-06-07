@@ -1,0 +1,157 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "scrub",
+      "value": 0.8955
+    },
+    {
+      "type": "Slider",
+      "name": "black_white",
+      "value": 0.21
+    },
+    {
+      "type": "Slider",
+      "name": "invert",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "posterize",
+      "value": 0.54
+    },
+    {
+      "type": "Slider",
+      "name": "posterize_levels",
+      "value": 26.0
+    },
+    {
+      "type": "Slider",
+      "name": "zoom_amount",
+      "value": 0.24
+    },
+    {
+      "type": "Checkbox",
+      "name": "auto_zoom",
+      "value": true
+    },
+    {
+      "type": "Slider",
+      "name": "zoom_x",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "zoom_y",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "slice_amount",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "slice_count",
+      "value": 3.0
+    },
+    {
+      "type": "Slider",
+      "name": "slice_offset",
+      "value": -0.25
+    },
+    {
+      "type": "Select",
+      "name": "slice_axis",
+      "value": "horizontal"
+    },
+    {
+      "type": "Select",
+      "name": "slice_boundary",
+      "value": "wrap"
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "slice_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_offset",
+          "value": -0.25
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_amount",
+          "value": 0.24
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 0.54
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.8955
+        },
+        {
+          "type": "Slider",
+          "name": "black_white",
+          "value": 0.21
+        },
+        {
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "horizontal"
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 26.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 3.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}

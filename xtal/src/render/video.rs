@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::sync::OnceLock;
+use std::time::{Duration, Instant};
 
 use gstreamer as gst;
 use gstreamer::glib;
@@ -8,7 +9,12 @@ use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 use log::{debug, warn};
 
+use crate::control::{VideoDirection, VideoTransport};
+use crate::warn_once;
+
 static GST_INIT: OnceLock<Result<(), String>> = OnceLock::new();
+const START_SEEK_THROTTLE: Duration = Duration::from_millis(50);
+const NANOSECONDS_PER_SECOND: f32 = 1_000_000_000.0;
 
 pub struct VideoFrame {
     pub width: u32,
@@ -16,10 +22,80 @@ pub struct VideoFrame {
     pub rgba: Vec<u8>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct PlannedSeek {
+    rate: f64,
+    start: gst::ClockTime,
+    stop: Option<gst::ClockTime>,
+    accurate_forward: bool,
+}
+
+impl PlannedSeek {
+    fn forward(
+        rate: f64,
+        start: gst::ClockTime,
+        accurate_forward: bool,
+    ) -> Self {
+        Self {
+            rate,
+            start,
+            stop: None,
+            accurate_forward,
+        }
+    }
+
+    fn forward_segment(
+        rate: f64,
+        start: gst::ClockTime,
+        stop: gst::ClockTime,
+    ) -> Self {
+        Self {
+            rate,
+            start,
+            stop: Some(stop),
+            accurate_forward: true,
+        }
+    }
+
+    fn backward(
+        rate: f64,
+        start: gst::ClockTime,
+        stop: gst::ClockTime,
+    ) -> Self {
+        Self {
+            rate,
+            start,
+            stop: Some(stop),
+            accurate_forward: false,
+        }
+    }
+
+    fn validate(self) -> Result<Self, String> {
+        if let Some(stop) = self.stop {
+            if self.start >= stop {
+                return Err(format!(
+                    "invalid seek bounds: start={:?}, stop={:?}",
+                    self.start, stop
+                ));
+            }
+        } else if self.rate < 0.0 {
+            return Err("backward seek missing stop time".to_string());
+        }
+
+        Ok(self)
+    }
+}
+
 pub struct VideoSource {
     pipeline: gst::Element,
     appsink: gst_app::AppSink,
     logged_frame_info: bool,
+    duration: Option<gst::ClockTime>,
+    last_loop_index: Option<i64>,
+    last_ping_second_half: Option<bool>,
+    last_transport: Option<VideoTransport>,
+    last_transport_seek_at: Option<Instant>,
+    current_rate: f64,
 }
 
 impl VideoSource {
@@ -53,6 +129,7 @@ impl VideoSource {
                     err
                 )
             })?;
+        configure_video_only_playbin(&pipeline)?;
 
         pipeline.set_state(gst::State::Playing).map_err(|err| {
             format!(
@@ -66,7 +143,155 @@ impl VideoSource {
             pipeline,
             appsink,
             logged_frame_info: false,
+            duration: None,
+            last_loop_index: None,
+            last_ping_second_half: None,
+            last_transport: None,
+            last_transport_seek_at: None,
+            current_rate: 1.0,
         })
+    }
+
+    pub fn apply_transport(
+        &mut self,
+        transport: &VideoTransport,
+        beats: f32,
+        bpm: f32,
+    ) -> Result<(), String> {
+        let loop_beats = transport.beats.max(0.000_1);
+        let loop_index = (beats / loop_beats).floor() as i64;
+        let loop_beat = beats.rem_euclid(loop_beats);
+        let ping_second_half = transport.direction == VideoDirection::PingPong
+            && loop_beat >= loop_beats * 0.5;
+        let transport_changed = self
+            .last_transport
+            .as_ref()
+            .is_none_or(|last| last != transport);
+        let start_changed = self
+            .last_transport
+            .as_ref()
+            .is_some_and(|last| last.start != transport.start);
+        let loop_changed = self.last_loop_index != Some(loop_index);
+        let ping_changed = self.last_ping_second_half != Some(ping_second_half);
+
+        if !transport_changed && !loop_changed && !ping_changed {
+            return Ok(());
+        }
+
+        let rate = transport_rate(transport, ping_second_half);
+        if self.last_transport.is_none()
+            && transport.start <= 0.0
+            && transport.direction == VideoDirection::Forward
+            && rate == 1.0
+        {
+            self.current_rate = rate;
+            self.last_loop_index = Some(loop_index);
+            self.last_ping_second_half = Some(ping_second_half);
+            self.last_transport = Some(transport.clone());
+            return Ok(());
+        }
+
+        let same_position_window = self
+            .last_transport
+            .as_ref()
+            .is_some_and(|last| same_position_window(last, transport));
+
+        let seek_plan = if ping_second_half {
+            let Some(duration) = self.duration() else {
+                return Ok(());
+            };
+            match plan_ping_pong_reverse_seek(transport, bpm, duration) {
+                Some(plan) => Some(plan),
+                None => {
+                    warn_once!(
+                        "ping_pong segment wraps past EOF; skipping reverse seek"
+                    );
+                    self.current_rate = rate;
+                    self.last_loop_index = Some(loop_index);
+                    self.last_ping_second_half = Some(ping_second_half);
+                    self.last_transport = Some(transport.clone());
+                    return Ok(());
+                }
+            }
+        } else if transport.direction == VideoDirection::PingPong {
+            let Some(duration) = self.duration() else {
+                return Ok(());
+            };
+            let position = if loop_changed || !same_position_window {
+                None
+            } else {
+                self.position()
+            };
+            match plan_ping_pong_forward_seek(
+                transport, bpm, duration, position,
+            ) {
+                Some(plan) => Some(plan),
+                None => {
+                    warn_once!(
+                        "ping_pong segment wraps past EOF; skipping forward seek"
+                    );
+                    self.current_rate = rate;
+                    self.last_loop_index = Some(loop_index);
+                    self.last_ping_second_half = Some(ping_second_half);
+                    self.last_transport = Some(transport.clone());
+                    return Ok(());
+                }
+            }
+        } else {
+            let position = if loop_changed || !same_position_window {
+                self.normalized_time(transport.start)
+            } else if let Some(position) = self.position() {
+                Some(position)
+            } else {
+                self.normalized_time(transport.start)
+            };
+            position.map(|position| {
+                PlannedSeek::forward(
+                    rate,
+                    position,
+                    transport.direction == VideoDirection::PingPong,
+                )
+            })
+        };
+        let Some(seek_plan) = seek_plan else {
+            return Ok(());
+        };
+
+        if start_changed
+            && !loop_changed
+            && !ping_changed
+            && self
+                .last_transport_seek_at
+                .is_some_and(|last| last.elapsed() < START_SEEK_THROTTLE)
+        {
+            return Ok(());
+        }
+
+        if rate == 0.0 {
+            self.pipeline
+                .set_state(gst::State::Paused)
+                .map_err(|err| format!("failed to pause video: {}", err))?;
+        } else if let Err(err) = self.execute_seek(seek_plan) {
+            warn_once!(
+                "video transport seek failed: {} ({:?})",
+                err,
+                seek_plan,
+            );
+            self.current_rate = rate;
+            self.last_loop_index = Some(loop_index);
+            self.last_ping_second_half = Some(ping_second_half);
+            self.last_transport = Some(transport.clone());
+            return Ok(());
+        } else {
+            self.last_transport_seek_at = Some(Instant::now());
+        }
+
+        self.current_rate = rate;
+        self.last_loop_index = Some(loop_index);
+        self.last_ping_second_half = Some(ping_second_half);
+        self.last_transport = Some(transport.clone());
+
+        Ok(())
     }
 
     pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
@@ -135,6 +360,11 @@ impl VideoSource {
     }
 
     pub fn restart(&mut self) -> Result<(), String> {
+        self.last_loop_index = None;
+        self.last_ping_second_half = None;
+        self.last_transport = None;
+        self.last_transport_seek_at = None;
+        self.current_rate = 1.0;
         self.pipeline
             .seek_simple(
                 gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
@@ -149,6 +379,98 @@ impl VideoSource {
         Ok(())
     }
 
+    pub fn restart_with_transport(
+        &mut self,
+        transport: &VideoTransport,
+        bpm: f32,
+    ) -> Result<(), String> {
+        self.last_loop_index = None;
+        self.last_ping_second_half = None;
+        self.last_transport = None;
+        self.last_transport_seek_at = None;
+        self.apply_transport(transport, 0.0, bpm)
+    }
+
+    fn execute_seek(&self, seek: PlannedSeek) -> Result<(), String> {
+        let seek = seek.validate()?;
+
+        if seek.rate < 0.0 {
+            let flags = gst::SeekFlags::FLUSH | gst::SeekFlags::ACCURATE;
+            let Some(stop) = seek.stop else {
+                return Err("backward seek missing stop time".to_string());
+            };
+            self.pipeline
+                .seek(
+                    seek.rate,
+                    flags,
+                    gst::SeekType::Set,
+                    seek.start,
+                    gst::SeekType::Set,
+                    stop,
+                )
+                .map_err(|err| {
+                    format!("failed to seek video backward: {}", err)
+                })?;
+        } else {
+            let flags = if seek.accurate_forward {
+                gst::SeekFlags::FLUSH | gst::SeekFlags::ACCURATE
+            } else {
+                gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT
+            };
+            let (stop_type, stop) = seek
+                .stop
+                .map_or((gst::SeekType::None, gst::ClockTime::NONE), |stop| {
+                    (gst::SeekType::Set, Some(stop))
+                });
+            self.pipeline
+                .seek(
+                    seek.rate,
+                    flags,
+                    gst::SeekType::Set,
+                    seek.start,
+                    stop_type,
+                    stop,
+                )
+                .map_err(|err| {
+                    format!("failed to seek video forward: {}", err)
+                })?;
+        }
+
+        self.pipeline
+            .set_state(gst::State::Playing)
+            .map_err(|err| {
+                format!("failed to set video pipeline playing: {}", err)
+            })?;
+
+        Ok(())
+    }
+
+    fn normalized_time(&mut self, normalized: f32) -> Option<gst::ClockTime> {
+        if normalized <= 0.0 {
+            return Some(gst::ClockTime::ZERO);
+        }
+
+        let duration = self.duration();
+        let Some(duration) = duration else {
+            return None;
+        };
+
+        let nseconds = duration.nseconds() as f64;
+        let position = (nseconds * normalized.clamp(0.0, 1.0) as f64) as u64;
+        Some(gst::ClockTime::from_nseconds(position))
+    }
+
+    fn duration(&mut self) -> Option<gst::ClockTime> {
+        if self.duration.is_none() {
+            self.duration = self.pipeline.query_duration::<gst::ClockTime>();
+        }
+        self.duration
+    }
+
+    fn position(&self) -> Option<gst::ClockTime> {
+        self.pipeline.query_position::<gst::ClockTime>()
+    }
+
     fn handle_bus_messages(&self) {
         let Some(bus) = self.pipeline.bus() else {
             return;
@@ -160,11 +482,29 @@ impl VideoSource {
         ) {
             match message.view() {
                 gst::MessageView::Eos(_) => {
-                    if let Err(err) = self.pipeline.seek_simple(
-                        gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-                        gst::ClockTime::ZERO,
-                    ) {
-                        warn!("failed to loop video pipeline: {}", err);
+                    let result = if self.current_rate < 0.0 {
+                        let duration = self
+                            .pipeline
+                            .query_duration::<gst::ClockTime>()
+                            .unwrap_or(gst::ClockTime::ZERO);
+                        self.execute_seek(PlannedSeek::backward(
+                            self.current_rate,
+                            gst::ClockTime::ZERO,
+                            duration,
+                        ))
+                    } else {
+                        self.pipeline
+                            .seek_simple(
+                                gst::SeekFlags::FLUSH
+                                    | gst::SeekFlags::KEY_UNIT,
+                                gst::ClockTime::ZERO,
+                            )
+                            .map_err(|err| {
+                                format!("failed to loop video: {}", err)
+                            })
+                    };
+                    if let Err(err) = result {
+                        warn!("{}", err);
                     }
                     if let Err(err) =
                         self.pipeline.set_state(gst::State::Playing)
@@ -251,6 +591,114 @@ fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
     Ok((bin, appsink))
 }
 
+fn configure_video_only_playbin(pipeline: &gst::Element) -> Result<(), String> {
+    let flags = pipeline.property_value("flags");
+    let flags_class =
+        glib::FlagsClass::with_type(flags.type_()).ok_or_else(|| {
+            "playbin flags property is not a flags type".to_string()
+        })?;
+    let video_only_flags = flags_class
+        .builder()
+        .set_by_nick("video")
+        .build()
+        .ok_or_else(video_only_flags_error)?;
+
+    pipeline.set_property_from_value("flags", &video_only_flags);
+
+    Ok(())
+}
+
+fn video_only_flags_error() -> String {
+    "failed to build video-only playbin flags".to_string()
+}
+
+fn transport_rate(transport: &VideoTransport, ping_second_half: bool) -> f64 {
+    let speed = transport.speed.abs() as f64;
+    if speed == 0.0 {
+        return 0.0;
+    }
+
+    match transport.direction {
+        VideoDirection::Forward => speed,
+        VideoDirection::Backward => -speed,
+        VideoDirection::PingPong if ping_second_half => -speed,
+        VideoDirection::PingPong => speed,
+    }
+}
+
+fn plan_ping_pong_reverse_seek(
+    transport: &VideoTransport,
+    bpm: f32,
+    duration: gst::ClockTime,
+) -> Option<PlannedSeek> {
+    let (start, turnaround) =
+        ping_pong_segment_bounds(transport, bpm, duration)?;
+
+    Some(PlannedSeek::backward(
+        -transport.speed.abs() as f64,
+        start,
+        turnaround,
+    ))
+}
+
+fn plan_ping_pong_forward_seek(
+    transport: &VideoTransport,
+    bpm: f32,
+    duration: gst::ClockTime,
+    position: Option<gst::ClockTime>,
+) -> Option<PlannedSeek> {
+    let (start, turnaround) =
+        ping_pong_segment_bounds(transport, bpm, duration)?;
+    let position = position
+        .filter(|position| *position >= start && *position < turnaround)
+        .unwrap_or(start);
+
+    Some(PlannedSeek::forward_segment(
+        transport.speed.abs() as f64,
+        position,
+        turnaround,
+    ))
+}
+
+fn ping_pong_segment_bounds(
+    transport: &VideoTransport,
+    bpm: f32,
+    duration: gst::ClockTime,
+) -> Option<(gst::ClockTime, gst::ClockTime)> {
+    let duration_ns = duration.nseconds();
+    if duration_ns <= 1 {
+        return None;
+    }
+
+    let start_ns = normalized_to_nseconds(transport.start, duration_ns)
+        .min(duration_ns - 1);
+    let half_beats = transport.beats.max(0.000_1) * 0.5;
+    let seconds_per_beat = 60.0 / bpm.max(1.0);
+    let media_seconds = half_beats * seconds_per_beat * transport.speed.abs();
+    let media_ns = (media_seconds.max(0.0) * NANOSECONDS_PER_SECOND) as u64;
+    let turnaround_ns = start_ns.checked_add(media_ns)?;
+
+    if turnaround_ns >= duration_ns || turnaround_ns <= start_ns {
+        return None;
+    }
+
+    Some((
+        gst::ClockTime::from_nseconds(start_ns),
+        gst::ClockTime::from_nseconds(turnaround_ns),
+    ))
+}
+
+fn normalized_to_nseconds(normalized: f32, duration_ns: u64) -> u64 {
+    (duration_ns as f32 * normalized.clamp(0.0, 1.0)) as u64
+}
+
+fn same_position_window(a: &VideoTransport, b: &VideoTransport) -> bool {
+    a.source == b.source
+        && a.start == b.start
+        && a.beats == b.beats
+        && a.direction == b.direction
+}
+
 impl Drop for VideoSource {
     fn drop(&mut self) {
         let _ = self.pipeline.set_state(gst::State::Null);
@@ -284,4 +732,120 @@ fn normalize_video_path(path: &Path) -> Result<std::path::PathBuf, String> {
     }
 
     Ok(resolved)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ping_pong_transport(start: f32) -> VideoTransport {
+        VideoTransport {
+            source: "a".to_string(),
+            start,
+            beats: 4.0,
+            speed: 1.0,
+            direction: VideoDirection::PingPong,
+        }
+    }
+
+    #[test]
+    fn ping_pong_reverse_seek_uses_scrubbed_start_as_lower_bound() {
+        let duration = gst::ClockTime::from_seconds(10);
+        let plan = plan_ping_pong_reverse_seek(
+            &ping_pong_transport(0.5),
+            120.0,
+            duration,
+        )
+        .expect("expected valid reverse seek");
+
+        assert_eq!(plan.rate, -1.0);
+        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
+        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+        assert!(plan.start < plan.stop.unwrap());
+    }
+
+    #[test]
+    fn ping_pong_forward_seek_uses_bounded_segment() {
+        let duration = gst::ClockTime::from_seconds(10);
+        let plan = plan_ping_pong_forward_seek(
+            &ping_pong_transport(0.5),
+            120.0,
+            duration,
+            None,
+        )
+        .expect("expected valid forward seek");
+
+        assert_eq!(plan.rate, 1.0);
+        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
+        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+        assert!(plan.start < plan.stop.unwrap());
+    }
+
+    #[test]
+    fn ping_pong_forward_seek_rejects_position_after_segment_stop() {
+        let duration = gst::ClockTime::from_seconds(10);
+        let plan = plan_ping_pong_forward_seek(
+            &ping_pong_transport(0.5),
+            120.0,
+            duration,
+            Some(gst::ClockTime::from_seconds(7)),
+        )
+        .expect("expected valid forward seek");
+
+        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
+        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+    }
+
+    #[test]
+    fn ping_pong_reverse_seek_rejects_wrapped_segments() {
+        let duration = gst::ClockTime::from_seconds(10);
+        let plan = plan_ping_pong_reverse_seek(
+            &ping_pong_transport(0.95),
+            120.0,
+            duration,
+        );
+
+        assert_eq!(plan, None);
+    }
+
+    #[test]
+    fn ping_pong_reverse_seek_never_plans_invalid_bounds() {
+        let duration = gst::ClockTime::from_seconds(10);
+
+        for start in [0.0, 0.1, 0.25, 0.5, 0.75, 0.85, 0.95] {
+            let plan = plan_ping_pong_reverse_seek(
+                &ping_pong_transport(start),
+                120.0,
+                duration,
+            );
+
+            if let Some(plan) = plan {
+                assert!(plan.rate < 0.0);
+                assert!(plan.stop.is_some());
+                assert!(plan.start < plan.stop.unwrap());
+            }
+        }
+    }
+
+    #[test]
+    fn backward_seek_validation_rejects_invalid_bounds() {
+        let seek = PlannedSeek::backward(
+            -1.0,
+            gst::ClockTime::from_seconds(3),
+            gst::ClockTime::from_seconds(3),
+        );
+
+        assert!(seek.validate().is_err());
+    }
+
+    #[test]
+    fn forward_segment_validation_rejects_invalid_bounds() {
+        let seek = PlannedSeek::forward_segment(
+            1.0,
+            gst::ClockTime::from_seconds(3),
+            gst::ClockTime::from_seconds(3),
+        );
+
+        assert!(seek.validate().is_err());
+    }
 }

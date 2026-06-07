@@ -10,6 +10,8 @@ pub mod video;
 pub mod video {
     use std::path::Path;
 
+    use crate::control::VideoTransport;
+
     pub struct VideoFrame {
         pub width: u32,
         pub height: u32,
@@ -23,11 +25,29 @@ pub mod video {
             Err("video resources require the xtal 'video' feature".to_string())
         }
 
+        // Keeps the graph API available when the optional video backend is off.
+        pub fn apply_transport(
+            &mut self,
+            _transport: &VideoTransport,
+            _beats: f32,
+            _bpm: f32,
+        ) -> Result<(), String> {
+            Ok(())
+        }
+
         pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
             Ok(None)
         }
 
         pub fn restart(&mut self) -> Result<(), String> {
+            Ok(())
+        }
+
+        pub fn restart_with_transport(
+            &mut self,
+            _transport: &VideoTransport,
+            _bpm: f32,
+        ) -> Result<(), String> {
             Ok(())
         }
     }

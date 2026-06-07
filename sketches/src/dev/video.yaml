@@ -1,0 +1,138 @@
+# ------------------------------------------------------------------------------
+#  Video
+# ------------------------------------------------------------------------------
+
+scrub:
+  type: slider
+
+video:
+  type: video
+  source: a
+  start: $scrub
+  beats: 8
+  speed: 1
+  direction: ping_pong
+
+filters:
+  type: separator
+
+black_white:
+  type: slider
+  var: bx
+  step: 0.01
+  default: 0.0
+
+invert:
+  type: slider
+  var: by
+  step: 0.01
+  default: 0.0
+
+posterize:
+  type: slider
+  var: bz
+  step: 0.01
+  default: 0.0
+
+posterize_levels:
+  type: slider
+  var: bw
+  range: [2.0, 32.0]
+  step: 1.0
+  default: 4.0
+
+# ------------------------------------------------------------------------------
+#  Zoom
+# ------------------------------------------------------------------------------
+
+zoom:
+  type: separator
+
+zoom_amount:
+  type: slider
+  var: cx
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+auto_zoom:
+  type: checkbox
+  var: cw
+  default: false
+
+zoom_x:
+  type: slider
+  var: cy
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+  disabled: auto_zoom
+
+zoom_y:
+  type: slider
+  var: cz
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+  disabled: auto_zoom
+
+auto_zoom_x:
+  type: random_slewed
+  var: dx
+  beats: 4
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+
+auto_zoom_y:
+  type: random_slewed
+  var: dy
+  beats: 6
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+
+# ------------------------------------------------------------------------------
+#  Slice
+# ------------------------------------------------------------------------------
+
+slice:
+  type: separator
+
+slice_axis:
+  type: select
+  var: ew
+  default: horizontal
+  options:
+    - horizontal
+    - vertical
+
+slice_boundary:
+  type: select
+  var: fx
+  default: fold
+  options:
+    - clamp
+    - wrap
+    - fold
+
+slice_amount:
+  type: slider
+  var: ex
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+slice_count:
+  type: slider
+  var: ey
+  range: [1.0, 32.0]
+  step: 1.0
+  default: 8.0
+
+slice_offset:
+  type: slider
+  var: ez
+  range: [-0.5, 0.5]
+  step: 0.01
+  default: 0.1

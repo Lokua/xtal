@@ -110,6 +110,7 @@
     "Vortx",
     "Vsync",
     "walkdir",
+    "xfade",
     "Xtal"
   ],
   "rust-analyzer.cargo.features": "all",

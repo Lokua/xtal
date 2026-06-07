@@ -1,13 +1,15 @@
-use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
+use ahash::HashMapExt;
 use log::{error, info, warn};
 use naga::front::wgsl;
 use naga::valid::{Capabilities, ValidationFlags, Validator};
 use wgpu::util::DeviceExt;
 
+use crate::control::VideoTransport;
+use crate::core::util::{HashMap, HashSet};
 use crate::frame::Frame;
 use crate::graph::{
     ComputeNodeSpec, GraphSpec, NodeSpec, RenderNodeSpec, RenderRead,
@@ -36,6 +38,7 @@ pub struct CompiledGraph {
     surface_proxy_texture: Option<GpuTexture>,
     image_textures: HashMap<TextureHandle, GpuTexture>,
     video_sources: HashMap<TextureHandle, VideoSource>,
+    video_source_names: HashMap<TextureHandle, String>,
     video_textures: HashMap<TextureHandle, GpuTexture>,
     texture_labels: HashMap<TextureHandle, String>,
 }
@@ -97,8 +100,13 @@ struct ComputePass {
 struct TextureResources {
     offscreen: Vec<TextureHandle>,
     images: HashMap<TextureHandle, PathBuf>,
-    videos: HashMap<TextureHandle, PathBuf>,
+    videos: HashMap<TextureHandle, VideoResource>,
     labels: HashMap<TextureHandle, String>,
+}
+
+struct VideoResource {
+    path: PathBuf,
+    source: String,
 }
 
 impl CompiledGraph {
@@ -189,11 +197,13 @@ impl CompiledGraph {
         }
 
         let mut video_sources = HashMap::new();
+        let mut video_source_names = HashMap::new();
         let mut video_textures = HashMap::new();
 
-        for (handle, path) in video_resources {
-            let source = VideoSource::new(&path)?;
+        for (handle, resource) in video_resources {
+            let source = VideoSource::new(&resource.path)?;
             video_sources.insert(handle, source);
+            video_source_names.insert(handle, resource.source);
             let label = texture_labels
                 .get(&handle)
                 .map(|name| name.as_str())
@@ -217,6 +227,7 @@ impl CompiledGraph {
             surface_proxy_texture: None,
             image_textures,
             video_sources,
+            video_source_names,
             video_textures,
             texture_labels,
         })
@@ -228,12 +239,21 @@ impl CompiledGraph {
         queue: &wgpu::Queue,
         frame: &mut Frame,
         uniforms: &UniformBanks,
+        video_transports: &HashMap<String, VideoTransport>,
+        beats: f32,
+        bpm: f32,
         render_size: [u32; 2],
         surface_size: [u32; 2],
     ) -> Result<(), String> {
         self.ensure_offscreen_textures(device, render_size);
         self.ensure_surface_proxy_texture(device, render_size, surface_size);
-        self.update_video_textures(device, queue)?;
+        self.update_video_textures(
+            device,
+            queue,
+            video_transports,
+            beats,
+            bpm,
+        )?;
 
         for node in &mut self.nodes {
             match node {
@@ -380,9 +400,25 @@ impl CompiledGraph {
         Ok(())
     }
 
-    pub fn reset(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
+    pub fn reset(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        video_transports: &HashMap<String, VideoTransport>,
+        bpm: f32,
+    ) {
         for (handle, source) in &mut self.video_sources {
-            if let Err(err) = source.restart() {
+            let result = if let Some(transport) = self
+                .video_source_names
+                .get(handle)
+                .and_then(|name| video_transports.get(name))
+            {
+                source.restart_with_transport(transport, bpm)
+            } else {
+                source.restart()
+            };
+
+            if let Err(err) = result {
                 warn!(
                     "failed to restart video '{}': {}",
                     texture_label(*handle, &self.texture_labels),
@@ -402,8 +438,17 @@ impl CompiledGraph {
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
+        video_transports: &HashMap<String, VideoTransport>,
+        beats: f32,
+        bpm: f32,
     ) -> Result<(), String> {
         for (handle, source) in &mut self.video_sources {
+            if let Some(source_name) = self.video_source_names.get(handle)
+                && let Some(transport) = video_transports.get(source_name)
+            {
+                source.apply_transport(transport, beats, bpm)?;
+            }
+
             let Some(frame) = source.next_frame()? else {
                 continue;
             };
@@ -1533,8 +1578,14 @@ fn collect_texture_resources(resources: &[ResourceDecl]) -> TextureResources {
             ResourceKind::Image2d { path } => {
                 images.insert(handle, path.clone());
             }
-            ResourceKind::Video2d { path } => {
-                videos.insert(handle, path.clone());
+            ResourceKind::Video2d { path, source } => {
+                videos.insert(
+                    handle,
+                    VideoResource {
+                        path: path.clone(),
+                        source: source.clone(),
+                    },
+                );
             }
             ResourceKind::Uniforms => unreachable!(),
         }
@@ -1552,7 +1603,7 @@ fn validate_graph_resources(
     graph: &GraphSpec,
     offscreen_resource_ids: &[TextureHandle],
     image_resources: &HashMap<TextureHandle, PathBuf>,
-    video_resources: &HashMap<TextureHandle, PathBuf>,
+    video_resources: &HashMap<TextureHandle, VideoResource>,
     present_source: Option<TextureHandle>,
 ) -> Result<(), String> {
     let offscreen_ids = offscreen_resource_ids

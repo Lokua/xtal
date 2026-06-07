@@ -51,6 +51,7 @@ fn main() {
                 phase_matrix,
                 snd,
                 sline,
+                viaduct_poc,
             ]
         },
         {
@@ -60,6 +61,7 @@ fn main() {
                 animation_dev,
                 clock_dev,
                 projector_stress,
+                video,
             ]
         },
         {
@@ -71,7 +73,6 @@ fn main() {
                 multipass,
                 compute,
                 image,
-                video,
             ]
         },
     }
