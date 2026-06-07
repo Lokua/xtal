@@ -2,16 +2,16 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
-use crate::constants::{IG_HEIGHT, IG_WIDTH};
+use crate::constants::{HD_HEIGHT, HD_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "video",
     display_name: "Video",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 120.0,
-    w: IG_WIDTH,
-    h: IG_HEIGHT,
+    bpm: 90.0,
+    w: HD_WIDTH,
+    h: HD_HEIGHT,
     banks: 8,
 };
 
@@ -45,7 +45,7 @@ pub fn init() -> VideoSketch {
 
     VideoSketch {
         shader_path: assets.wgsl(),
-        video_path: PathBuf::from("clips/Rogers Park Trees.mp4"),
+        video_path: PathBuf::from("clips/Viaduct - Columbia Sky.mp4"),
         control_script_path: assets.yaml(),
     }
 }

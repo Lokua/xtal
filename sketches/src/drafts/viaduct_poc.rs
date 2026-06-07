@@ -4,13 +4,11 @@ use xtal::prelude::*;
 
 use crate::constants::{HD_HEIGHT, HD_WIDTH};
 
-const VIDEO_FILES: [&str; 7] = [
+const VIDEO_FILES: [&str; 5] = [
     "clips/Viaduct - Columbia Edge.mp4",
-    "clips/Viaduct - Columbia Fingers 2.mp4",
     "clips/Viaduct - Columbia Sky.mp4",
     "clips/Viaduct - Columbia.mp4",
     "clips/Viaduct - Pratt & Glenwood.mp4",
-    "clips/Viaduct - Pratt Fish.mp4",
     "clips/Viaduct - South Evanston.mp4",
 ];
 

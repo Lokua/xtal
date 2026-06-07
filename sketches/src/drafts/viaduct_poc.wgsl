@@ -1,6 +1,7 @@
 struct Params {
     a: vec4f,
     b: vec4f,
+    c: vec4f,
 }
 
 @group(0) @binding(0)
@@ -23,12 +24,6 @@ var video_3_tex: texture_2d<f32>;
 
 @group(1) @binding(5)
 var video_4_tex: texture_2d<f32>;
-
-@group(1) @binding(6)
-var video_5_tex: texture_2d<f32>;
-
-@group(1) @binding(7)
-var video_6_tex: texture_2d<f32>;
 
 struct VsOut {
     @builtin(position) position: vec4f,
@@ -53,55 +48,32 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
     let screen_size = vec2f(max(params.a.x, 1.0), max(params.a.y, 1.0));
     let fit_mode = i32(params.b.x + 0.5);
-    let loop_duration = selected_loop_duration(i32(params.b.y + 0.5));
-    let active_video = i32(floor(params.a.z / loop_duration)) % 7;
-    return sample_active_video(uv, screen_size, fit_mode, active_video);
+    return mix_videos(uv, screen_size, fit_mode);
 }
 
-fn selected_loop_duration(index: i32) -> f32 {
-    if (index == 0) {
-        return 1.0;
-    }
-    if (index == 1) {
-        return 2.0;
-    }
-    if (index == 2) {
-        return 4.0;
-    }
-    if (index == 3) {
-        return 8.0;
-    }
-    if (index == 4) {
-        return 12.0;
-    }
-    return 16.0;
-}
-
-fn sample_active_video(
+fn mix_videos(
     uv: vec2f,
     screen_size: vec2f,
     fit_mode: i32,
-    active_video: i32,
 ) -> vec4f {
-    if (active_video == 1) {
-        return sample_video_1(uv, screen_size, fit_mode);
+    let fader_0 = clamp(params.b.y, 0.0, 1.0);
+    let fader_1 = clamp(params.b.z, 0.0, 1.0);
+    let fader_2 = clamp(params.b.w, 0.0, 1.0);
+    let fader_3 = clamp(params.c.x, 0.0, 1.0);
+    let fader_4 = clamp(params.c.y, 0.0, 1.0);
+    let total = fader_0 + fader_1 + fader_2 + fader_3 + fader_4;
+
+    if (total <= 0.0001) {
+        return vec4f(0.0, 0.0, 0.0, 1.0);
     }
-    if (active_video == 2) {
-        return sample_video_2(uv, screen_size, fit_mode);
-    }
-    if (active_video == 3) {
-        return sample_video_3(uv, screen_size, fit_mode);
-    }
-    if (active_video == 4) {
-        return sample_video_4(uv, screen_size, fit_mode);
-    }
-    if (active_video == 5) {
-        return sample_video_5(uv, screen_size, fit_mode);
-    }
-    if (active_video == 6) {
-        return sample_video_6(uv, screen_size, fit_mode);
-    }
-    return sample_video_0(uv, screen_size, fit_mode);
+
+    let mixed =
+        sample_video_0(uv, screen_size, fit_mode) * fader_0
+        + sample_video_1(uv, screen_size, fit_mode) * fader_1
+        + sample_video_2(uv, screen_size, fit_mode) * fader_2
+        + sample_video_3(uv, screen_size, fit_mode) * fader_3
+        + sample_video_4(uv, screen_size, fit_mode) * fader_4;
+    return vec4f(mixed.rgb / total, 1.0);
 }
 
 fn sample_video_0(
@@ -167,32 +139,6 @@ fn sample_video_4(
         return vec4f(0.0, 0.0, 0.0, 1.0);
     }
     return textureSample(video_4_tex, video_sampler, fit_uv);
-}
-
-fn sample_video_5(
-    uv: vec2f,
-    screen_size: vec2f,
-    fit_mode: i32,
-) -> vec4f {
-    let video_size = vec2f(textureDimensions(video_5_tex));
-    let fit_uv = fit_video_uv(uv, screen_size, video_size, fit_mode);
-    if (is_outside(fit_uv)) {
-        return vec4f(0.0, 0.0, 0.0, 1.0);
-    }
-    return textureSample(video_5_tex, video_sampler, fit_uv);
-}
-
-fn sample_video_6(
-    uv: vec2f,
-    screen_size: vec2f,
-    fit_mode: i32,
-) -> vec4f {
-    let video_size = vec2f(textureDimensions(video_6_tex));
-    let fit_uv = fit_video_uv(uv, screen_size, video_size, fit_mode);
-    if (is_outside(fit_uv)) {
-        return vec4f(0.0, 0.0, 0.0, 1.0);
-    }
-    return textureSample(video_6_tex, video_sampler, fit_uv);
 }
 
 fn fit_video_uv(

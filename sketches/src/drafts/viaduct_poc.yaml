@@ -2,9 +2,6 @@
 #  Video
 # ------------------------------------------------------------------------------
 
-video:
-  type: separator
-
 fit_mode:
   type: select
   var: bx
@@ -14,14 +11,107 @@ fit_mode:
     - contain
     - fill
 
-loop_duration:
-  type: select
+video_0:
+  type: slider
   var: by
-  default: "16"
-  options:
-    - "1"
-    - "2"
-    - "4"
-    - "8"
-    - "12"
-    - "16"
+  step: 0.01
+  default: 1.0
+
+video_1:
+  type: slider
+  var: bz
+  step: 0.01
+  default: 0.0
+
+video_2:
+  type: slider
+  var: bw
+  step: 0.01
+  default: 0.0
+
+video_3:
+  type: slider
+  var: cx
+  step: 0.01
+  default: 0.0
+
+video_4:
+  type: slider
+  var: cy
+  step: 0.01
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Transport 0
+# ------------------------------------------------------------------------------
+
+transport_0:
+  type: separator
+
+video_0_transport:
+  type: video
+  source: '0'
+  start: 0.0
+  beats: 4
+  speed: 1.0
+  direction: ping_pong
+
+# ------------------------------------------------------------------------------
+#  Transport 1
+# ------------------------------------------------------------------------------
+
+transport_1:
+  type: separator
+
+video_1_transport:
+  type: video
+  source: '1'
+  start: 0.1
+  beats: 4
+  speed: 1
+  direction: ping_pong
+
+# ------------------------------------------------------------------------------
+#  Transport 2
+# ------------------------------------------------------------------------------
+
+transport_2:
+  type: separator
+
+video_2_transport:
+  type: video
+  source: '2'
+  start: 0.0
+  beats: 4
+  speed: 1.0
+  direction: ping_pong
+
+# ------------------------------------------------------------------------------
+#  Transport 3
+# ------------------------------------------------------------------------------
+
+transport_3:
+  type: separator
+
+video_3_transport:
+  type: video
+  source: '3'
+  start: 0.1
+  beats: 4
+  speed: 0.25
+  direction: ping_pong
+
+# ------------------------------------------------------------------------------
+#  Transport 4
+# ------------------------------------------------------------------------------
+
+transport_4:
+  type: separator
+
+video_4_transport:
+  type: video
+  source: '4'
+  start: 0.5
+  beats: 4
+  speed: 1.0
+  direction: ping_pong
