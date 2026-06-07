@@ -8,6 +8,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use super::param_mod::ParamValue;
+use super::video_transport::VideoDirection;
 use crate::core::prelude::*;
 
 //------------------------------------------------------------------------------
@@ -69,6 +70,8 @@ pub enum ControlType {
     Triangle,
     #[serde(rename = "snapshot_sequence")]
     SnapshotSequence,
+    #[serde(rename = "video")]
+    Video,
 
     // Modulation & Effects
     #[serde(rename = "mod")]
@@ -128,6 +131,55 @@ pub struct SelectConfig {
     pub shared: Shared,
     pub options: Vec<String>,
     pub default: String,
+}
+
+//------------------------------------------------------------------------------
+// Video
+//------------------------------------------------------------------------------
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default)]
+pub struct VideoConfig {
+    #[allow(dead_code)]
+    #[serde(flatten)]
+    shared: Shared,
+    pub source: String,
+    pub start: ParamValue,
+    pub beats: ParamValue,
+    pub speed: ParamValue,
+    pub direction: VideoDirectionConfig,
+}
+
+impl Default for VideoConfig {
+    fn default() -> Self {
+        Self {
+            shared: Shared::default(),
+            source: String::new(),
+            start: ParamValue::Cold(0.0),
+            beats: ParamValue::Cold(4.0),
+            speed: ParamValue::Cold(1.0),
+            direction: VideoDirectionConfig::Forward,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VideoDirectionConfig {
+    #[default]
+    Forward,
+    Backward,
+    PingPong,
+}
+
+impl From<VideoDirectionConfig> for VideoDirection {
+    fn from(value: VideoDirectionConfig) -> Self {
+        match value {
+            VideoDirectionConfig::Forward => VideoDirection::Forward,
+            VideoDirectionConfig::Backward => VideoDirection::Backward,
+            VideoDirectionConfig::PingPong => VideoDirection::PingPong,
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

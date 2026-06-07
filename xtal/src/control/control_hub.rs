@@ -23,6 +23,7 @@ use super::config::*;
 use super::dep_graph::{DepGraph, Node};
 use super::eval_cache::EvalCache;
 use super::param_mod::{FromColdParams, ParamValue, SetFromParam};
+use super::video_transport::VideoTransport;
 
 use crate::core::prelude::*;
 use crate::time::frame_clock;
@@ -112,6 +113,7 @@ pub struct ControlHub<T: TimingSource> {
     pub snapshots: Snapshots,
     pub midi_overrides_enabled: bool,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
+    videos: HashMap<String, VideoConfig>,
     modulations: HashMap<String, Vec<String>>,
     effects: RefCell<HashMap<String, (EffectConfig, Effect)>>,
 
@@ -143,6 +145,7 @@ impl<T: TimingSource> ControlHub<T> {
             audio_controls: AudioControls::default(),
             animation: Animation::new(timing),
             animations: HashMap::default(),
+            videos: HashMap::default(),
             modulations: HashMap::default(),
             effects: RefCell::new(HashMap::default()),
             vars: HashMap::default(),
@@ -1128,6 +1131,30 @@ impl<T: TimingSource> ControlHub<T> {
             .collect()
     }
 
+    pub fn video_transports(&self) -> HashMap<String, VideoTransport> {
+        let current_frame = frame_clock::frame_count();
+
+        self.videos
+            .iter()
+            .map(|(name, config)| {
+                self.run_dependencies(name, current_frame);
+                let config = self.resolve_animation_config_params(
+                    config,
+                    name,
+                    current_frame,
+                );
+                let transport = VideoTransport {
+                    source: config.source.clone(),
+                    start: config.start.as_float().clamp(0.0, 1.0),
+                    beats: config.beats.as_float().max(0.000_1),
+                    speed: config.speed.as_float(),
+                    direction: config.direction.into(),
+                };
+                (transport.source.clone(), transport)
+            })
+            .collect()
+    }
+
     pub fn request_reload(&self) {
         if let Some(update_state) = self.update_state.as_ref() {
             info!(
@@ -1249,6 +1276,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         self.ui_controls = UiControls::default();
         self.animations.clear();
+        self.videos.clear();
         self.snapshot_sequence = None;
         self.snapshot_sequence_runtime = SnapshotSequenceRuntime::default();
         self.modulations.clear();
@@ -1507,6 +1535,20 @@ impl<T: TimingSource> ControlHub<T> {
                         .last()
                         .map_or(0.0, |stage| stage.position());
                     self.snapshot_sequence = Some(conf);
+                }
+                ControlType::Video => {
+                    let conf: VideoConfig =
+                        serde_yml::from_value(config.config.clone())?;
+
+                    if conf.source.is_empty() {
+                        return Err(format!(
+                            "video mapping '{}' requires source",
+                            id
+                        )
+                        .into());
+                    }
+
+                    self.videos.insert(id.to_string(), conf);
                 }
                 ControlType::Modulation => {
                     let conf: ModulationConfig =

@@ -24,7 +24,7 @@ pub struct SndSketch {
 impl Sketch for SndSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
-        let video = graph.video(self.video_path.clone());
+        let video = graph.video("source", self.video_path.clone());
 
         graph
             .render()

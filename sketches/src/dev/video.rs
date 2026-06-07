@@ -2,39 +2,36 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
-use crate::constants::{HD_HEIGHT, HD_WIDTH};
+use crate::constants::{IG_HEIGHT, IG_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
-    name: "video_multi",
-    display_name: "Video Multi",
+    name: "video",
+    display_name: "Video",
     play_mode: PlayMode::Loop,
     fps: 60.0,
     bpm: 120.0,
-    w: HD_WIDTH,
-    h: HD_HEIGHT,
-    banks: 24,
+    w: IG_WIDTH,
+    h: IG_HEIGHT,
+    banks: 8,
 };
 
-pub struct VideoMultiSketch {
+pub struct VideoSketch {
     shader_path: PathBuf,
-    video_a_path: PathBuf,
-    video_b_path: PathBuf,
+    video_path: PathBuf,
     control_script_path: PathBuf,
 }
 
-impl Sketch for VideoMultiSketch {
+impl Sketch for VideoSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
-        let video_a = graph.video(self.video_a_path.clone());
-        let video_b = graph.video(self.video_b_path.clone());
+        let video = graph.video("a", self.video_path.clone());
 
         graph
             .render()
             .shader(self.shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
             .read(params)
-            .read(video_a)
-            .read(video_b)
+            .read(video)
             .to_surface();
     }
 
@@ -43,13 +40,12 @@ impl Sketch for VideoMultiSketch {
     }
 }
 
-pub fn init() -> VideoMultiSketch {
+pub fn init() -> VideoSketch {
     let assets = SketchAssets::from_file(file!());
 
-    VideoMultiSketch {
+    VideoSketch {
         shader_path: assets.wgsl(),
-        video_a_path: PathBuf::from("clips/Viaduct - Columbia.mp4"),
-        video_b_path: PathBuf::from("clips/Viaduct - Columbia Edge.mp4"),
+        video_path: PathBuf::from("clips/Rogers Park Trees.mp4"),
         control_script_path: assets.yaml(),
     }
 }

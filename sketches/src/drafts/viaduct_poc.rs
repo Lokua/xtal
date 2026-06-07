@@ -37,7 +37,8 @@ impl Sketch for ViaductPocSketch {
         let videos = self
             .video_paths
             .iter()
-            .map(|path| graph.video(path.clone()))
+            .enumerate()
+            .map(|(index, path)| graph.video(index.to_string(), path.clone()))
             .collect::<Vec<_>>();
 
         let mut render = graph

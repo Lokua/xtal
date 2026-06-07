@@ -55,7 +55,7 @@ pub enum ResourceKind {
     Uniforms,
     Texture2d,
     Image2d { path: PathBuf },
-    Video2d { path: PathBuf },
+    Video2d { path: PathBuf, source: String },
 }
 
 #[derive(Clone, Debug)]
@@ -155,15 +155,20 @@ impl GraphBuilder {
         handle
     }
 
-    pub fn video(&mut self, path: impl Into<PathBuf>) -> TextureHandle {
+    pub fn video(
+        &mut self,
+        source: impl Into<String>,
+        path: impl Into<PathBuf>,
+    ) -> TextureHandle {
         let handle = TextureHandle(self.next_texture_index);
         self.next_texture_index += 1;
         let path = self.resolve_video_path(path.into());
+        let source = source.into();
 
         self.resources.push(ResourceDecl {
             handle: ResourceHandle::Texture(handle),
-            name: format!("video{}", handle.0),
-            kind: ResourceKind::Video2d { path },
+            name: source.clone(),
+            kind: ResourceKind::Video2d { path, source },
         });
 
         handle

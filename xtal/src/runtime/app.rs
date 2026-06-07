@@ -1112,12 +1112,14 @@ impl XtalRuntime {
             let [w, h] = context.resolution();
             uniforms.set_resolution(w, h);
             let current_beats;
+            let video_transports;
 
             if let Some(hub) = self.control_hub.as_mut() {
                 if let Some(beats) = external_beats_for_frame {
                     hub.animation.timing.set_external_beats(beats);
                 }
                 hub.update();
+                video_transports = hub.video_transports();
 
                 for (id, value) in hub.var_values() {
                     if let Err(err) = uniforms.set(&id, value) {
@@ -1131,6 +1133,7 @@ impl XtalRuntime {
                 current_beats = hub.beats();
             } else {
                 current_beats = context.elapsed_seconds();
+                video_transports = HashMap::default();
             }
 
             uniforms.set_beats(current_beats);
@@ -1178,6 +1181,8 @@ impl XtalRuntime {
                 context.queue.as_ref(),
                 &mut frame,
                 uniforms,
+                &video_transports,
+                current_beats,
                 context.resolution_u32(),
                 [surface_config.width, surface_config.height],
             ) {
@@ -2389,10 +2394,18 @@ impl XtalRuntime {
 
     fn reset_transport(&mut self) {
         frame_clock::reset();
+        let video_transports = self
+            .control_hub
+            .as_ref()
+            .map_or_else(HashMap::default, ControlHub::video_transports);
         if let (Some(graph), Some(context)) =
             (self.graph.as_mut(), self.context.as_ref())
         {
-            graph.reset(context.device.as_ref(), context.queue.as_ref());
+            graph.reset(
+                context.device.as_ref(),
+                context.queue.as_ref(),
+                &video_transports,
+            );
         }
         self.request_render_now();
     }

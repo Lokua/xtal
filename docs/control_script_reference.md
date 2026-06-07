@@ -11,6 +11,7 @@
 - [MIDI](#midi)
 - [OSC](#osc)
 - [Audio](#audio)
+- [Video](#video)
 - [Animation](#animation)
   - [ramp](#ramp)
   - [triangle](#triangle)
@@ -376,6 +377,37 @@ animation_example:
   detect: 0.0
   pre: 0.0
   range: [0.0, 100.0]
+```
+
+# Video
+
+Controls transport for a Rust-declared video source. Video mappings do not bind
+shader uniforms directly; they update the runtime video source that provides the
+texture read by WGSL.
+
+**Params**
+
+- `type` - `video`
+- `source` - the source name declared in Rust with `graph.video`
+- `start` - normalized start position in the source file, from `0.0` to `1.0`.
+  Defaults to `0.0`
+- `beats` - musical loop length before seeking back to `start`. Defaults to
+  `4.0`
+- `speed` - playback-rate multiplier, independent of `beats`. Defaults to `1.0`
+- `direction` - `forward`, `backward`, or `ping_pong`. Defaults to `forward`
+
+`start`, `beats`, and `speed` may use `$param` references.
+
+**Example**
+
+```yaml
+video_a:
+  type: video
+  source: a
+  start: 0.25
+  beats: 4
+  speed: 1.0
+  direction: forward
 ```
 
 # Animation

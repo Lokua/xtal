@@ -9,6 +9,7 @@ pub mod midi_controls;
 pub mod osc_controls;
 mod param_mod;
 pub mod ui_controls;
+pub mod video_transport;
 
 pub use audio_controls::*;
 pub use control_hub::*;
@@ -16,3 +17,4 @@ pub use control_traits::*;
 pub use midi_controls::*;
 pub use osc_controls::*;
 pub use ui_controls::*;
+pub use video_transport::*;

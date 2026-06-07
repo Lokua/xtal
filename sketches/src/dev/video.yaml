@@ -1,18 +1,14 @@
 # ------------------------------------------------------------------------------
-#  Video Mix
+#  Video
 # ------------------------------------------------------------------------------
 
-fit_mode:
-  type: select
-  var: bx
-  default: cover
-  options:
-    - cover
-    - contain
-    - fill
-
-xfade:
+scrub:
   type: slider
-  var: aw
-  range: [0.0, 1.0]
-  default: 0.5
+
+video:
+  type: video
+  source: a
+  start: $scrub
+  beats: 4
+  speed: 0.5
+  direction: forward

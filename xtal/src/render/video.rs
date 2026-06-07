@@ -8,6 +8,9 @@ use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 use log::{debug, warn};
 
+use crate::control::{VideoDirection, VideoTransport};
+use crate::warn_once;
+
 static GST_INIT: OnceLock<Result<(), String>> = OnceLock::new();
 
 pub struct VideoFrame {
@@ -20,6 +23,11 @@ pub struct VideoSource {
     pipeline: gst::Element,
     appsink: gst_app::AppSink,
     logged_frame_info: bool,
+    duration: Option<gst::ClockTime>,
+    last_loop_index: Option<i64>,
+    last_ping_second_half: Option<bool>,
+    last_transport: Option<VideoTransport>,
+    current_rate: f64,
 }
 
 impl VideoSource {
@@ -66,7 +74,79 @@ impl VideoSource {
             pipeline,
             appsink,
             logged_frame_info: false,
+            duration: None,
+            last_loop_index: None,
+            last_ping_second_half: None,
+            last_transport: None,
+            current_rate: 1.0,
         })
+    }
+
+    pub fn apply_transport(
+        &mut self,
+        transport: &VideoTransport,
+        beats: f32,
+    ) -> Result<(), String> {
+        let loop_beats = transport.beats.max(0.000_1);
+        let loop_index = (beats / loop_beats).floor() as i64;
+        let loop_beat = beats.rem_euclid(loop_beats);
+        let ping_second_half = transport.direction == VideoDirection::PingPong
+            && loop_beat >= loop_beats * 0.5;
+        let transport_changed = self
+            .last_transport
+            .as_ref()
+            .is_none_or(|last| last != transport);
+        let loop_changed = self.last_loop_index != Some(loop_index);
+        let ping_changed = self.last_ping_second_half != Some(ping_second_half);
+
+        if !transport_changed && !loop_changed && !ping_changed {
+            return Ok(());
+        }
+
+        let rate = transport_rate(transport, ping_second_half);
+        if self.last_transport.is_none()
+            && transport.start <= 0.0
+            && transport.direction == VideoDirection::Forward
+            && rate == 1.0
+        {
+            self.current_rate = rate;
+            self.last_loop_index = Some(loop_index);
+            self.last_ping_second_half = Some(ping_second_half);
+            self.last_transport = Some(transport.clone());
+            return Ok(());
+        }
+
+        let same_position_window = self
+            .last_transport
+            .as_ref()
+            .is_some_and(|last| same_position_window(last, transport));
+
+        let position = if loop_changed || !same_position_window {
+            self.normalized_time(transport.start)
+        } else if let Some(position) = self.position() {
+            Some(position)
+        } else {
+            self.normalized_time(transport.start)
+        };
+        let Some(position) = position else {
+            return Ok(());
+        };
+
+        if rate == 0.0 {
+            self.pipeline
+                .set_state(gst::State::Paused)
+                .map_err(|err| format!("failed to pause video: {}", err))?;
+        } else if let Err(err) = self.seek_with_rate(rate, position) {
+            warn_once!("video transport seek failed: {}", err);
+            return Ok(());
+        }
+
+        self.current_rate = rate;
+        self.last_loop_index = Some(loop_index);
+        self.last_ping_second_half = Some(ping_second_half);
+        self.last_transport = Some(transport.clone());
+
+        Ok(())
     }
 
     pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
@@ -135,6 +215,10 @@ impl VideoSource {
     }
 
     pub fn restart(&mut self) -> Result<(), String> {
+        self.last_loop_index = None;
+        self.last_ping_second_half = None;
+        self.last_transport = None;
+        self.current_rate = 1.0;
         self.pipeline
             .seek_simple(
                 gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
@@ -149,6 +233,86 @@ impl VideoSource {
         Ok(())
     }
 
+    pub fn restart_with_transport(
+        &mut self,
+        transport: &VideoTransport,
+    ) -> Result<(), String> {
+        self.last_loop_index = None;
+        self.last_ping_second_half = None;
+        self.last_transport = None;
+        self.apply_transport(transport, 0.0)
+    }
+
+    fn seek_with_rate(
+        &self,
+        rate: f64,
+        position: gst::ClockTime,
+    ) -> Result<(), String> {
+        let flags = gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT;
+
+        if rate < 0.0 {
+            self.pipeline
+                .seek(
+                    rate,
+                    flags,
+                    gst::SeekType::Set,
+                    gst::ClockTime::ZERO,
+                    gst::SeekType::Set,
+                    position,
+                )
+                .map_err(|err| {
+                    format!("failed to seek video backward: {}", err)
+                })?;
+        } else {
+            self.pipeline
+                .seek(
+                    rate,
+                    flags,
+                    gst::SeekType::Set,
+                    position,
+                    gst::SeekType::None,
+                    gst::ClockTime::NONE,
+                )
+                .map_err(|err| {
+                    format!("failed to seek video forward: {}", err)
+                })?;
+        }
+
+        self.pipeline
+            .set_state(gst::State::Playing)
+            .map_err(|err| {
+                format!("failed to set video pipeline playing: {}", err)
+            })?;
+
+        Ok(())
+    }
+
+    fn normalized_time(&mut self, normalized: f32) -> Option<gst::ClockTime> {
+        if normalized <= 0.0 {
+            return Some(gst::ClockTime::ZERO);
+        }
+
+        let duration = self.duration();
+        let Some(duration) = duration else {
+            return None;
+        };
+
+        let nseconds = duration.nseconds() as f64;
+        let position = (nseconds * normalized.clamp(0.0, 1.0) as f64) as u64;
+        Some(gst::ClockTime::from_nseconds(position))
+    }
+
+    fn duration(&mut self) -> Option<gst::ClockTime> {
+        if self.duration.is_none() {
+            self.duration = self.pipeline.query_duration::<gst::ClockTime>();
+        }
+        self.duration
+    }
+
+    fn position(&self) -> Option<gst::ClockTime> {
+        self.pipeline.query_position::<gst::ClockTime>()
+    }
+
     fn handle_bus_messages(&self) {
         let Some(bus) = self.pipeline.bus() else {
             return;
@@ -160,11 +324,25 @@ impl VideoSource {
         ) {
             match message.view() {
                 gst::MessageView::Eos(_) => {
-                    if let Err(err) = self.pipeline.seek_simple(
-                        gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-                        gst::ClockTime::ZERO,
-                    ) {
-                        warn!("failed to loop video pipeline: {}", err);
+                    let result = if self.current_rate < 0.0 {
+                        let duration = self
+                            .pipeline
+                            .query_duration::<gst::ClockTime>()
+                            .unwrap_or(gst::ClockTime::ZERO);
+                        self.seek_with_rate(self.current_rate, duration)
+                    } else {
+                        self.pipeline
+                            .seek_simple(
+                                gst::SeekFlags::FLUSH
+                                    | gst::SeekFlags::KEY_UNIT,
+                                gst::ClockTime::ZERO,
+                            )
+                            .map_err(|err| {
+                                format!("failed to loop video: {}", err)
+                            })
+                    };
+                    if let Err(err) = result {
+                        warn!("{}", err);
                     }
                     if let Err(err) =
                         self.pipeline.set_state(gst::State::Playing)
@@ -249,6 +427,27 @@ fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
     })?;
 
     Ok((bin, appsink))
+}
+
+fn transport_rate(transport: &VideoTransport, ping_second_half: bool) -> f64 {
+    let speed = transport.speed.abs() as f64;
+    if speed == 0.0 {
+        return 0.0;
+    }
+
+    match transport.direction {
+        VideoDirection::Forward => speed,
+        VideoDirection::Backward => -speed,
+        VideoDirection::PingPong if ping_second_half => -speed,
+        VideoDirection::PingPong => speed,
+    }
+}
+
+fn same_position_window(a: &VideoTransport, b: &VideoTransport) -> bool {
+    a.source == b.source
+        && a.start == b.start
+        && a.beats == b.beats
+        && a.direction == b.direction
 }
 
 impl Drop for VideoSource {
