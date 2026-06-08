@@ -144,6 +144,7 @@ pub struct VideoConfig {
     #[serde(flatten)]
     shared: Shared,
     pub source: String,
+    pub index: ParamValue,
     pub start: ParamValue,
     pub beats: ParamValue,
     pub speed: ParamValue,
@@ -155,6 +156,7 @@ impl Default for VideoConfig {
         Self {
             shared: Shared::default(),
             source: String::new(),
+            index: ParamValue::Cold(0.0),
             start: ParamValue::Cold(0.0),
             beats: ParamValue::Cold(4.0),
             speed: ParamValue::Cold(1.0),

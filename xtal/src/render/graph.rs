@@ -55,7 +55,7 @@ pub enum ResourceKind {
     Uniforms,
     Texture2d,
     Image2d { path: PathBuf },
-    Video2d { path: PathBuf, source: String },
+    Video2d { paths: Vec<PathBuf>, source: String },
 }
 
 #[derive(Clone, Debug)]
@@ -158,17 +158,21 @@ impl GraphBuilder {
     pub fn video(
         &mut self,
         source: impl Into<String>,
-        path: impl Into<PathBuf>,
+        paths: impl IntoVideoPaths,
     ) -> TextureHandle {
         let handle = TextureHandle(self.next_texture_index);
         self.next_texture_index += 1;
-        let path = self.resolve_video_path(path.into());
+        let paths = paths
+            .into_video_paths()
+            .into_iter()
+            .map(|path| self.resolve_video_path(path))
+            .collect();
         let source = source.into();
 
         self.resources.push(ResourceDecl {
             handle: ResourceHandle::Texture(handle),
             name: source.clone(),
-            kind: ResourceKind::Video2d { path, source },
+            kind: ResourceKind::Video2d { paths, source },
         });
 
         handle
@@ -225,6 +229,46 @@ impl GraphBuilder {
         };
 
         videos_dir.join(path)
+    }
+}
+
+pub trait IntoVideoPaths {
+    fn into_video_paths(self) -> Vec<PathBuf>;
+}
+
+impl IntoVideoPaths for PathBuf {
+    fn into_video_paths(self) -> Vec<PathBuf> {
+        vec![self]
+    }
+}
+
+impl IntoVideoPaths for &str {
+    fn into_video_paths(self) -> Vec<PathBuf> {
+        vec![PathBuf::from(self)]
+    }
+}
+
+impl IntoVideoPaths for String {
+    fn into_video_paths(self) -> Vec<PathBuf> {
+        vec![PathBuf::from(self)]
+    }
+}
+
+impl<P> IntoVideoPaths for Vec<P>
+where
+    P: Into<PathBuf>,
+{
+    fn into_video_paths(self) -> Vec<PathBuf> {
+        self.into_iter().map(Into::into).collect()
+    }
+}
+
+impl<P, const N: usize> IntoVideoPaths for [P; N]
+where
+    P: Into<PathBuf>,
+{
+    fn into_video_paths(self) -> Vec<PathBuf> {
+        self.into_iter().map(Into::into).collect()
     }
 }
 

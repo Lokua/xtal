@@ -237,6 +237,7 @@ impl SetFromParam for TriangleConfig {
 impl SetFromParam for VideoConfig {
     fn set_from_param(&mut self, name: &str, value: f32) {
         match name {
+            "index" => self.index = ParamValue::Cold(value),
             "start" => self.start = ParamValue::Cold(value),
             "beats" => self.beats = ParamValue::Cold(value),
             "speed" => self.speed = ParamValue::Cold(value),

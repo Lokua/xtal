@@ -87,6 +87,11 @@ impl PlannedSeek {
 }
 
 pub struct VideoSource {
+    sources: Vec<VideoPipeline>,
+    active_index: usize,
+}
+
+struct VideoPipeline {
     pipeline: gst::Element,
     appsink: gst_app::AppSink,
     logged_frame_info: bool,
@@ -99,7 +104,71 @@ pub struct VideoSource {
 }
 
 impl VideoSource {
-    pub fn new(path: &Path) -> Result<Self, String> {
+    pub fn new(paths: &[std::path::PathBuf]) -> Result<Self, String> {
+        if paths.is_empty() {
+            return Err("video source requires at least one path".to_string());
+        }
+
+        let mut sources = paths
+            .iter()
+            .map(|path| VideoPipeline::new(path))
+            .collect::<Result<Vec<_>, _>>()?;
+        for source in sources.iter_mut().skip(1) {
+            source.pause()?;
+        }
+
+        Ok(Self {
+            sources,
+            active_index: 0,
+        })
+    }
+
+    pub fn apply_transport(
+        &mut self,
+        transport: &VideoTransport,
+        beats: f32,
+        bpm: f32,
+    ) -> Result<(), String> {
+        self.select(transport.index)?;
+        self.active_mut().apply_transport(transport, beats, bpm)
+    }
+
+    pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
+        self.active_mut().next_frame()
+    }
+
+    pub fn restart(&mut self) -> Result<(), String> {
+        self.active_mut().restart()
+    }
+
+    pub fn restart_with_transport(
+        &mut self,
+        transport: &VideoTransport,
+        bpm: f32,
+    ) -> Result<(), String> {
+        self.select(transport.index)?;
+        self.active_mut().restart_with_transport(transport, bpm)
+    }
+
+    fn select(&mut self, index: usize) -> Result<(), String> {
+        let next_index = index.min(self.sources.len() - 1);
+        if next_index == self.active_index {
+            return Ok(());
+        }
+
+        self.sources[self.active_index].pause()?;
+        self.active_index = next_index;
+        self.sources[self.active_index].reset_transport_state();
+        Ok(())
+    }
+
+    fn active_mut(&mut self) -> &mut VideoPipeline {
+        &mut self.sources[self.active_index]
+    }
+}
+
+impl VideoPipeline {
+    fn new(path: &Path) -> Result<Self, String> {
         init_gstreamer()?;
 
         let resolved = normalize_video_path(path)?;
@@ -184,6 +253,7 @@ impl VideoSource {
             && transport.direction == VideoDirection::Forward
             && rate == 1.0
         {
+            self.play()?;
             self.current_rate = rate;
             self.last_loop_index = Some(loop_index);
             self.last_ping_second_half = Some(ping_second_half);
@@ -384,11 +454,30 @@ impl VideoSource {
         transport: &VideoTransport,
         bpm: f32,
     ) -> Result<(), String> {
+        self.reset_transport_state();
+        self.apply_transport(transport, 0.0, bpm)
+    }
+
+    fn pause(&mut self) -> Result<(), String> {
+        self.pipeline
+            .set_state(gst::State::Paused)
+            .map_err(|err| format!("failed to pause video: {}", err))?;
+        Ok(())
+    }
+
+    fn play(&mut self) -> Result<(), String> {
+        self.pipeline
+            .set_state(gst::State::Playing)
+            .map_err(|err| format!("failed to play video: {}", err))?;
+        Ok(())
+    }
+
+    fn reset_transport_state(&mut self) {
         self.last_loop_index = None;
         self.last_ping_second_half = None;
         self.last_transport = None;
         self.last_transport_seek_at = None;
-        self.apply_transport(transport, 0.0, bpm)
+        self.current_rate = 1.0;
     }
 
     fn execute_seek(&self, seek: PlannedSeek) -> Result<(), String> {
@@ -699,7 +788,7 @@ fn same_position_window(a: &VideoTransport, b: &VideoTransport) -> bool {
         && a.direction == b.direction
 }
 
-impl Drop for VideoSource {
+impl Drop for VideoPipeline {
     fn drop(&mut self) {
         let _ = self.pipeline.set_state(gst::State::Null);
     }
@@ -741,6 +830,7 @@ mod tests {
     fn ping_pong_transport(start: f32) -> VideoTransport {
         VideoTransport {
             source: "a".to_string(),
+            index: 0,
             start,
             beats: 4.0,
             speed: 1.0,

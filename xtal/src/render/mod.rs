@@ -8,7 +8,7 @@ pub mod uniforms;
 pub mod video;
 #[cfg(not(feature = "video"))]
 pub mod video {
-    use std::path::Path;
+    use std::path::PathBuf;
 
     use crate::control::VideoTransport;
 
@@ -21,7 +21,7 @@ pub mod video {
     pub struct VideoSource;
 
     impl VideoSource {
-        pub fn new(_path: &Path) -> Result<Self, String> {
+        pub fn new(_paths: &[PathBuf]) -> Result<Self, String> {
             Err("video resources require the xtal 'video' feature".to_string())
         }
 

@@ -9,6 +9,7 @@ pub enum VideoDirection {
 #[derive(Clone, Debug, PartialEq)]
 pub struct VideoTransport {
     pub source: String,
+    pub index: usize,
     pub start: f32,
     pub beats: f32,
     pub speed: f32,

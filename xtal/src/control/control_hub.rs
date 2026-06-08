@@ -1145,6 +1145,7 @@ impl<T: TimingSource> ControlHub<T> {
                 );
                 let transport = VideoTransport {
                     source: config.source.clone(),
+                    index: config.index.as_float().round().max(0.0) as usize,
                     start: config.start.as_float().clamp(0.0, 1.0),
                     beats: config.beats.as_float().max(0.000_1),
                     speed: config.speed.as_float(),

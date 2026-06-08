@@ -12,27 +12,50 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: 90.0,
     w: HD_WIDTH,
     h: HD_HEIGHT,
-    banks: 8,
+    banks: 12,
 };
 
 pub struct VideoSketch {
-    shader_path: PathBuf,
-    video_path: PathBuf,
+    video_shader_path: PathBuf,
+    feedback_shader_path: PathBuf,
+    video_paths: Vec<PathBuf>,
     control_script_path: PathBuf,
 }
 
 impl Sketch for VideoSketch {
     fn setup(&self, graph: &mut GraphBuilder) {
         let params = graph.uniforms();
-        let video = graph.video("a", self.video_path.clone());
+        let current = graph.texture2d();
+        let (ping, pong) = graph.feedback();
+        let video = graph.video("a", self.video_paths.clone());
 
         graph
             .render()
-            .shader(self.shader_path.clone())
+            .shader(self.video_shader_path.clone())
             .mesh(Mesh::fullscreen_quad())
             .read(params)
             .read(video)
-            .to_surface();
+            .to(current);
+
+        graph
+            .render()
+            .shader(self.feedback_shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
+            .read(params)
+            .read(ping)
+            .read(current)
+            .to(pong);
+
+        graph
+            .render()
+            .shader(self.feedback_shader_path.clone())
+            .mesh(Mesh::fullscreen_quad())
+            .read(params)
+            .read(pong)
+            .read(current)
+            .to(ping);
+
+        graph.present(ping);
     }
 
     fn control_script(&self) -> Option<PathBuf> {
@@ -44,8 +67,29 @@ pub fn init() -> VideoSketch {
     let assets = SketchAssets::from_file(file!());
 
     VideoSketch {
-        shader_path: assets.wgsl(),
-        video_path: PathBuf::from("clips/Viaduct - Columbia Sky.mp4"),
+        video_shader_path: assets.wgsl(),
+        feedback_shader_path: assets.path("video_feedback.wgsl"),
+        video_paths: vec![
+            PathBuf::from("clips/Rogers Park Trees (trimmed).mp4"),
+            PathBuf::from("clips/Viaduct - Columbia Edge.mp4"),
+            PathBuf::from("clips/Viaduct - Columbia Sky.mp4"),
+            PathBuf::from("clips/Viaduct - Columbia.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Alley Drive.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Howard.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Lincoln Canal.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Main 2.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Main.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Noyes Park.mp4"),
+            PathBuf::from("clips/Viaduct - Evanston Noyes.mp4"),
+            PathBuf::from("clips/Viaduct - Farwell Faces Short.mp4"),
+            PathBuf::from("clips/Viaduct - Farwell Faces.mp4"),
+            PathBuf::from("clips/Viaduct - Farwell.mp4"),
+            PathBuf::from("clips/Viaduct - Jarvis 2.mp4"),
+            PathBuf::from("clips/Viaduct - Jarvis.mp4"),
+            PathBuf::from("clips/Viaduct - Pratt & Glenwood.mp4"),
+            PathBuf::from("clips/Viaduct - Pratt Fish.mp4"),
+            PathBuf::from("clips/Viaduct - South Evanston.mp4"),
+        ],
         control_script_path: assets.yaml(),
     }
 }

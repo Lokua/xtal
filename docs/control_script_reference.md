@@ -389,6 +389,8 @@ texture read by WGSL.
 
 - `type` - `video`
 - `source` - the source name declared in Rust with `graph.video`
+- `index` - zero-based video path index when the Rust source declares multiple
+  paths. Defaults to `0`
 - `start` - normalized start position in the source file, from `0.0` to `1.0`.
   Defaults to `0.0`
 - `beats` - musical loop length before seeking back to `start`. Defaults to
@@ -396,7 +398,8 @@ texture read by WGSL.
 - `speed` - playback-rate multiplier, independent of `beats`. Defaults to `1.0`
 - `direction` - `forward`, `backward`, or `ping_pong`. Defaults to `forward`
 
-`start`, `beats`, and `speed` may use `$param` references.
+`index`, `start`, `beats`, and `speed` may use `$param` references. Referencing
+a `select` for `index` uses the selected option's zero-based position.
 
 **Example**
 
@@ -404,6 +407,7 @@ texture read by WGSL.
 video_a:
   type: video
   source: a
+  index: 0
   start: 0.25
   beats: 4
   speed: 1.0

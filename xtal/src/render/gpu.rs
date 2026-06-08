@@ -105,7 +105,7 @@ struct TextureResources {
 }
 
 struct VideoResource {
-    path: PathBuf,
+    paths: Vec<PathBuf>,
     source: String,
 }
 
@@ -201,7 +201,7 @@ impl CompiledGraph {
         let mut video_textures = HashMap::new();
 
         for (handle, resource) in video_resources {
-            let source = VideoSource::new(&resource.path)?;
+            let source = VideoSource::new(&resource.paths)?;
             video_sources.insert(handle, source);
             video_source_names.insert(handle, resource.source);
             let label = texture_labels
@@ -1578,11 +1578,11 @@ fn collect_texture_resources(resources: &[ResourceDecl]) -> TextureResources {
             ResourceKind::Image2d { path } => {
                 images.insert(handle, path.clone());
             }
-            ResourceKind::Video2d { path, source } => {
+            ResourceKind::Video2d { paths, source } => {
                 videos.insert(
                     handle,
                     VideoResource {
-                        path: path.clone(),
+                        paths: paths.clone(),
                         source: source.clone(),
                     },
                 );
