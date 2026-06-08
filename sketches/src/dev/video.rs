@@ -12,7 +12,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: 90.0,
     w: HD_WIDTH,
     h: HD_HEIGHT,
-    banks: 12,
+    banks: 24,
 };
 
 pub struct VideoSketch {

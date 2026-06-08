@@ -9,6 +9,9 @@ struct Params {
     h: vec4f,
     i: vec4f,
     j: vec4f,
+    k: vec4f,
+    l: vec4f,
+    m: vec4f,
 }
 
 @group(0) @binding(0)
@@ -55,8 +58,16 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let zoom_uv = apply_zoom(grid_uv);
     let displacement = displacement_vector(zoom_uv);
     let sample_uv = clamp(zoom_uv + displacement, vec2f(0.0), vec2f(1.0));
-    let color = textureSample(video_tex, video_sampler, sample_uv);
-    return vec4f(apply_video_fx(color.rgb), 1.0);
+    let color = textureSample(video_tex, video_sampler, sample_uv).rgb;
+    var result: vec3f;
+    if (params.d.w > 0.5) {
+        let edged = apply_edge_detect(sample_uv, color);
+        result = apply_pixel_sort(sample_uv, edged);
+    } else {
+        let sorted = apply_pixel_sort(sample_uv, color);
+        result = apply_edge_detect(sample_uv, sorted);
+    }
+    return vec4f(apply_video_fx(result), 1.0);
 }
 
 fn fit_video_uv(
@@ -89,7 +100,7 @@ fn fit_video_uv(
         }
     }
 
-    let pan = clamp(params.c.yz, vec2f(-1.0), vec2f(1.0));
+    let pan = params.c.yz;
     let pan_range = abs(1.0 - (1.0 / max(scale, vec2f(0.0001)))) * 0.5;
     return (uv - vec2f(0.5, 0.5)) / scale
         + vec2f(0.5, 0.5)
@@ -101,25 +112,22 @@ fn is_outside(uv: vec2f) -> bool {
 }
 
 fn apply_zoom(uv: vec2f) -> vec2f {
-    let amount = clamp(params.c.x, 0.0, 1.0);
-    let manual_offset = params.c.yz;
-    let auto_offset = params.d.xy;
-    var offset = manual_offset;
+    let amount = params.c.x;
+    var offset = params.c.yz;
 
     if (params.c.w > 0.5) {
-        offset = auto_offset;
+        offset = params.d.xy;
     }
 
-    offset = clamp(offset, vec2f(-1.0), vec2f(1.0));
     let scale = mix(1.0, 4.0, amount);
     let center = vec2f(0.5, 0.5) + offset * 0.5;
     return (uv - center) / scale + center;
 }
 
 fn apply_slice_shift(uv: vec2f) -> vec2f {
-    let amount = clamp(params.e.x, 0.0, 1.0);
+    let amount = params.e.x;
     let slices = max(floor(params.e.y), 1.0);
-    let offset = clamp(params.e.z, -0.5, 0.5);
+    let offset = params.e.z;
     let use_vertical = step(0.5, params.e.w);
     let boundary = i32(params.f.x + 0.5);
     let coord = mix(uv.y, uv.x, use_vertical);
@@ -136,7 +144,7 @@ fn rand(co: vec2f) -> f32 {
 }
 
 fn apply_grid_shuffle(uv: vec2f) -> vec2f {
-    let amount = clamp(params.j.x, 0.0, 1.0);
+    let amount = params.j.x;
     if (amount <= 0.0001) {
         return uv;
     }
@@ -156,7 +164,7 @@ fn apply_grid_shuffle(uv: vec2f) -> vec2f {
     let ty = rand(seeded + vec2f(83.1, 29.5));
     let target_tile = floor(vec2f(tx, ty) * n);
 
-    return clamp((target_tile + local_uv) / n, vec2f(0.0), vec2f(1.0));
+    return (target_tile + local_uv) / n;
 }
 
 fn apply_slice_boundary(uv: vec2f, boundary: i32) -> vec2f {
@@ -170,7 +178,7 @@ fn apply_slice_boundary(uv: vec2f, boundary: i32) -> vec2f {
 }
 
 fn displacement_vector(uv: vec2f) -> vec2f {
-    let amount = clamp(params.h.y, 0.0, 0.15);
+    let amount = params.h.y;
     if (amount <= 0.0001) {
         return vec2f(0.0);
     }
@@ -184,17 +192,71 @@ fn displacement_vector(uv: vec2f) -> vec2f {
     let centered = uv - vec2f(0.5);
     let primary = dot(centered, direction) * frequency + phase;
     let secondary = dot(centered, cross_direction) * frequency * 0.63;
-    let warp = clamp(params.f.z, 0.0, 1.0);
+    let warp = params.f.z;
     let wave = sin(primary * 6.28318530718);
     let folded = sin((primary + wave * warp + secondary) * 6.28318530718);
     return cross_direction * folded * amount;
 }
 
+fn luma(color: vec3f) -> f32 {
+    return dot(color, vec3f(0.2126, 0.7152, 0.0722));
+}
+
+fn sort_value(color: vec3f) -> f32 {
+    let channel = i32(params.k.w + 0.5);
+    if (channel == 1) {
+        return max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b));
+    }
+    if (channel == 2) { return color.r; }
+    if (channel == 3) { return color.g; }
+    if (channel == 4) { return color.b; }
+    return luma(color);
+}
+
+fn apply_pixel_sort(uv: vec2f, color: vec3f) -> vec3f {
+    let amount = params.k.x;
+    if (abs(amount) <= 0.0001) {
+        return color;
+    }
+    let threshold = params.k.y;
+    let val = sort_value(color);
+    if (val <= threshold) {
+        return color;
+    }
+    let use_vertical = step(0.5, params.k.z);
+    let t = (val - threshold) / max(1.0 - threshold, 0.001);
+    let offset = t * amount;
+    let displaced = uv + mix(vec2f(offset, 0.0), vec2f(0.0, offset), use_vertical);
+    return textureSampleLevel(
+        video_tex, video_sampler, clamp(displaced, vec2f(0.0), vec2f(1.0)), 0.0
+    ).rgb;
+}
+
+fn apply_edge_detect(uv: vec2f, color: vec3f) -> vec3f {
+    let amount = params.l.x;
+    if (amount <= 0.0001) {
+        return color;
+    }
+    let boost = max(params.l.y, 1.0);
+    let radius = max(params.l.w, 1.0);
+    let px = radius / vec2f(max(params.a.x, 1.0), max(params.a.y, 1.0));
+    let edge_r = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( px.x,  0.0), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
+    let edge_l = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f(-px.x,  0.0), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
+    let edge_t = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( 0.0,  px.y), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
+    let edge_b = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( 0.0, -px.y), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
+    let edge = clamp(length(vec2f(edge_r - edge_l, edge_t - edge_b)) * boost, 0.0, 1.0);
+    let edge_color = hsv_to_rgb(vec3f(params.m.x, params.m.y, 1.0)) * edge;
+    let additive = step(0.5, params.f.w);
+    let mixed = mix(color, edge_color, amount);
+    let added = clamp(color + edge_color * amount, vec3f(0.0), vec3f(1.0));
+    return mix(mixed, added, additive);
+}
+
 fn apply_video_fx(color: vec3f) -> vec3f {
-    let black_white = clamp(params.b.x, 0.0, 1.0);
-    let invert = clamp(params.b.y, 0.0, 1.0);
-    let posterize = clamp(params.b.z, 0.0, 1.0);
-    let posterize_levels = clamp(params.b.w, 2.0, 32.0);
+    let black_white = params.b.x;
+    let invert = params.b.y;
+    let posterize = params.b.z;
+    let posterize_levels = params.b.w;
     let luma = dot(color, vec3f(0.2126, 0.7152, 0.0722));
     var out_color = mix(color, vec3f(luma), black_white);
     out_color = mix(out_color, 1.0 - out_color, invert);
@@ -211,7 +273,7 @@ fn apply_video_fx(color: vec3f) -> vec3f {
 }
 
 fn apply_invert_darken(color: vec3f) -> vec3f {
-    let amount = clamp(params.j.y, 0.0, 1.0);
+    let amount = params.j.y;
     if (amount <= 0.0001) {
         return color;
     }
@@ -229,10 +291,10 @@ fn apply_highlight_color(
     luma: f32,
     black_white: f32,
 ) -> vec3f {
-    let mix_amount = clamp(params.g.x, 0.0, 1.0) * black_white;
+    let mix_amount = params.g.x * black_white;
     let hue = fract(params.g.y);
-    let sat = clamp(params.g.z, 0.0, 1.0);
-    let threshold = clamp(params.g.w, 0.0, 1.0);
+    let sat = params.g.z;
+    let threshold = params.g.w;
     let softness = max(params.h.x, 0.001);
     let mask = smoothstep(threshold, threshold + softness, luma);
     let tint = hsv_to_rgb(vec3f(hue, sat, 1.0));
@@ -240,7 +302,7 @@ fn apply_highlight_color(
 }
 
 fn apply_chroma_shift(color: vec3f) -> vec3f {
-    let amount = clamp(params.i.z, 0.0, 2.0);
+    let amount = params.i.z;
     if (amount <= 0.0001) {
         return color;
     }
@@ -255,7 +317,7 @@ fn apply_chroma_shift(color: vec3f) -> vec3f {
     let target_len = length(target_chroma);
     let chroma_dir = chroma / max(chroma_len, 0.0001);
     let target_dir = target_chroma / max(target_len, 0.0001);
-    let softness = clamp(params.i.w, 0.0, 1.0);
+    let softness = params.i.w;
     let directional_mask = smoothstep(
         0.95 - softness * 1.95,
         1.0,

@@ -9,6 +9,8 @@ struct Params {
     h: vec4f,
     i: vec4f,
     j: vec4f,
+    k: vec4f,
+    l: vec4f,
 }
 
 @group(0) @binding(0)
@@ -44,11 +46,18 @@ fn vs_main(vert: VertexInput) -> VsOut {
 @fragment
 fn fs_main(in: VsOut) -> @location(0) vec4f {
     let current = textureSample(current_tex, source_sampler, in.uv).rgb;
-    let feedback_uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+    let angle = params.l.z;
+    let centered = vec2f(in.uv.x, 1.0 - in.uv.y) - vec2f(0.5);
+    let s = sin(angle);
+    let c = cos(angle);
+    let feedback_uv = vec2f(
+        c * centered.x - s * centered.y,
+        s * centered.x + c * centered.y,
+    ) + vec2f(0.5);
     let feedback = textureSample(
         feedback_tex,
         source_sampler,
-        feedback_uv,
+        clamp(feedback_uv, vec2f(0.0), vec2f(1.0)),
     ).rgb;
     let blend = sqrt(clamp(params.j.z, 0.0, 1.0));
     return vec4f(mix(current, feedback, blend), 1.0);

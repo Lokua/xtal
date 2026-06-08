@@ -1,5 +1,24 @@
-Files sorted from most to least recent. Source code available on
+
+Files sorted from most to least recent. Source code available on 
 [GitHub](https://github.com/Lokua/xtal).
+
+
+
+## video-73mui.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-73mui.png" alt="video-73mui.png">
+
+## video-91uq2.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-91uq2.png" alt="video-91uq2.png">
+
+## video-t3g8w.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-t3g8w.png" alt="video-t3g8w.png">
+
+## video-p25dq.png
+
+<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-p25dq.png" alt="video-p25dq.png">
 
 ## video-f6da9.png
 
@@ -1564,3 +1583,4 @@ Files sorted from most to least recent. Source code available on
 ## displacement_1a-87iv9.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/displacement_1a-87iv9.png" alt="displacement_1a-87iv9.png">
+
