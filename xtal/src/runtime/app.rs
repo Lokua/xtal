@@ -3,14 +3,11 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Once;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use chrono::Utc;
 use log::{debug, error, info, trace, warn};
-use nannou_osc as osc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
@@ -44,26 +41,15 @@ use crate::graph::GraphBuilder;
 use crate::io::audio::list_audio_devices;
 use crate::io::midi;
 use crate::io::osc::SHARED_OSC_RECEIVER;
-use crate::motion::{Bpm, Timing};
+use crate::motion::{Bpm, MidiTransportEvent, Timing};
 use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
 use crate::time::frame_clock;
 use crate::time::tap_tempo::TapTempo;
 use crate::uniforms::UniformBanks;
 
-const MIDI_START: u8 = 0xFA;
-const MIDI_CONTINUE: u8 = 0xFB;
-const MIDI_STOP: u8 = 0xFC;
-const MIDI_CLOCK: u8 = 0xF8;
-const MIDI_SONG_POSITION: u8 = 0xF2;
-const MIDI_MTC_QUARTER_FRAME: u8 = 0xF1;
 const DEFAULT_OSC_PORT: u16 = 2346;
-const PULSES_PER_QUARTER_NOTE: u32 = 24;
-const TICKS_PER_QUARTER_NOTE: u32 = 960;
-const HYBRID_SYNC_THRESHOLD_BEATS: f32 = 0.5;
 const CONTINUE_HANDLING: bool = false;
 const QUIT_REQUESTED: bool = true;
-
-static OSC_TRANSPORT_CALLBACK_REGISTER: Once = Once::new();
 
 #[derive(Clone, Default)]
 struct SketchUiState {
@@ -83,6 +69,7 @@ struct PendingPngCapture {
 struct XtalRuntime {
     registry: RuntimeRegistry,
     active_sketch_name: String,
+    timing_mode_override: Option<TimingMode>,
     config: &'static SketchConfig,
     sketch: Box<dyn Sketch>,
     render_requested: bool,
@@ -137,18 +124,6 @@ struct XtalRuntime {
     shutdown_signaled: bool,
     pending_png_capture_path: Option<PathBuf>,
     modifiers: ModifiersState,
-    midi_clock_count: Arc<AtomicU32>,
-    midi_song_position_ticks: Arc<AtomicU32>,
-    osc_transport_playing: Arc<AtomicBool>,
-    osc_transport_bars: Arc<AtomicU32>,
-    osc_transport_beats: Arc<AtomicU32>,
-    osc_transport_ticks: Arc<AtomicU32>,
-    follow_song_position: Arc<AtomicBool>,
-    hybrid_mtc_sync_enabled: Arc<AtomicBool>,
-    mtc_hours: Arc<AtomicU32>,
-    mtc_minutes: Arc<AtomicU32>,
-    mtc_seconds: Arc<AtomicU32>,
-    mtc_frames: Arc<AtomicU32>,
 }
 
 impl XtalRuntime {
@@ -157,6 +132,7 @@ impl XtalRuntime {
     fn new(
         registry: RuntimeRegistry,
         initial_sketch: Option<&str>,
+        timing_mode_override: Option<TimingMode>,
         command_tx: RuntimeCommandSender,
         command_rx: RuntimeCommandReceiver,
         event_tx: Option<RuntimeEventSender>,
@@ -209,6 +185,7 @@ impl XtalRuntime {
         let mut runtime = Self {
             registry,
             active_sketch_name: active_name,
+            timing_mode_override,
             config,
             sketch,
             render_requested: false,
@@ -258,27 +235,12 @@ impl XtalRuntime {
             shutdown_signaled: false,
             pending_png_capture_path: None,
             modifiers: ModifiersState::default(),
-            midi_clock_count: Arc::new(AtomicU32::new(0)),
-            midi_song_position_ticks: Arc::new(AtomicU32::new(0)),
-            osc_transport_playing: Arc::new(AtomicBool::new(false)),
-            osc_transport_bars: Arc::new(AtomicU32::new(0)),
-            osc_transport_beats: Arc::new(AtomicU32::new(0)),
-            osc_transport_ticks: Arc::new(AtomicU32::new(0.0f32.to_bits())),
-            follow_song_position: Arc::new(AtomicBool::new(true)),
-            hybrid_mtc_sync_enabled: Arc::new(AtomicBool::new(false)),
-            mtc_hours: Arc::new(AtomicU32::new(0)),
-            mtc_minutes: Arc::new(AtomicU32::new(0)),
-            mtc_seconds: Arc::new(AtomicU32::new(0)),
-            mtc_frames: Arc::new(AtomicU32::new(0)),
         };
 
         let audio_device_updated = runtime.normalize_audio_device_selection();
         let midi_ports_updated = runtime.normalize_midi_port_selections();
         let osc_port_updated = runtime.normalize_osc_port_selection();
-        runtime.update_timing_mode_flags();
-        runtime.register_osc_transport_listener();
         runtime.start_osc_receiver();
-        runtime.start_midi_clock_listener();
         runtime.connect_midi_out();
         runtime.log_midi_startup_state();
         if audio_device_updated || midi_ports_updated || osc_port_updated {
@@ -354,7 +316,10 @@ impl XtalRuntime {
             RuntimeEvent::ChangeMidiClockPort(port) => {
                 info!("Changing MIDI clock port to '{}'", port);
                 self.midi_clock_port = port;
-                self.start_midi_clock_listener();
+                let timing = self.build_timing();
+                if let Some(hub) = self.control_hub.as_mut() {
+                    hub.animation.timing = timing;
+                }
                 self.save_global_state();
             }
             RuntimeEvent::ChangeMidiControlInputPort(port) => {
@@ -864,7 +829,8 @@ impl XtalRuntime {
             RuntimeEvent::StartRecording => {
                 let Some(context) = self.context.as_ref() else {
                     self.alert_and_log(
-                        "Failed to start recording: runtime context unavailable",
+                        "Failed to start recording: \
+                            runtime context unavailable",
                         log::Level::Error,
                     );
                     return false;
@@ -882,7 +848,8 @@ impl XtalRuntime {
                     });
                 let Some(source_format) = source_format else {
                     self.alert_and_log(
-                        "Failed to start recording: no capture source format available",
+                        "Failed to start recording: \
+                            no capture source format available",
                         log::Level::Error,
                     );
                     return false;
@@ -1075,7 +1042,6 @@ impl XtalRuntime {
         }
 
         self.render_requested = false;
-        let external_beats_for_frame = self.current_external_beats_for_mode();
 
         let (
             pending_png_capture,
@@ -1115,9 +1081,6 @@ impl XtalRuntime {
             let video_transports;
 
             if let Some(hub) = self.control_hub.as_mut() {
-                if let Some(beats) = external_beats_for_frame {
-                    hub.animation.timing.set_external_beats(beats);
-                }
                 hub.update();
                 video_transports = hub.video_transports();
 
@@ -1573,7 +1536,7 @@ impl XtalRuntime {
             present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: caps.alpha_modes[0],
             view_formats: vec![],
-            // Keep swapchain queue shallow to reduce visual beat latency under load.
+            // Keep swapchain queue shallow to reduce visual beat latency.
             desired_maximum_frame_latency: 1,
         };
 
@@ -1654,15 +1617,7 @@ impl XtalRuntime {
             return None;
         }
 
-        let timing = match self.sketch.timing_mode() {
-            TimingMode::Frame => Timing::frame(self.bpm.clone()),
-            TimingMode::Osc => Timing::osc(self.bpm.clone()),
-            TimingMode::Midi => Timing::midi(self.bpm.clone()),
-            TimingMode::Hybrid => Timing::hybrid(self.bpm.clone()),
-            TimingMode::Manual => Timing::manual(self.bpm.clone()),
-        };
-
-        let mut hub = ControlHub::from_path(path, timing);
+        let mut hub = ControlHub::from_path(path, self.build_timing());
         hub.set_transition_time(self.transition_time);
         hub.midi_overrides_enabled = self.mappings_enabled;
         hub.midi_controls.hrcc = self.hrcc;
@@ -1674,7 +1629,8 @@ impl XtalRuntime {
         hub.audio_controls
             .set_device_name(self.audio_device.clone());
         info!(
-            "Configuring sketch MIDI controls: input_port='{}', hrcc={}, mappings_enabled={}",
+            "Configuring sketch MIDI controls: \
+                input_port='{}', hrcc={}, mappings_enabled={}",
             self.midi_input_port, self.hrcc, self.mappings_enabled
         );
         hub.midi_controls
@@ -1710,233 +1666,41 @@ impl XtalRuntime {
         Some(hub)
     }
 
-    fn start_midi_clock_listener(&self) {
-        if self.midi_clock_port.is_empty() {
-            info!("Skipping MIDI clock listener setup; no MIDI clock port.");
-            return;
-        }
-
-        info!(
-            "Starting MIDI clock listener on port '{}'",
-            self.midi_clock_port
-        );
-
-        let command_tx = self.command_tx.clone();
-        let clock_count = self.midi_clock_count.clone();
-        let song_position_ticks = self.midi_song_position_ticks.clone();
-        let follow_song_position = self.follow_song_position.clone();
-        let hybrid_mtc_sync_enabled = self.hybrid_mtc_sync_enabled.clone();
-        let mtc_hours = self.mtc_hours.clone();
-        let mtc_minutes = self.mtc_minutes.clone();
-        let mtc_seconds = self.mtc_seconds.clone();
-        let mtc_frames = self.mtc_frames.clone();
-        let bpm = self.bpm.clone();
-        let midi_handler_result = midi::on_message(
-            midi::ConnectionType::Clock,
-            &self.midi_clock_port,
-            move |_stamp, message| {
-                if message.is_empty() {
-                    return;
-                }
-
-                match message[0] {
-                    MIDI_CLOCK => {
-                        clock_count.fetch_add(1, Ordering::SeqCst);
-                    }
-                    MIDI_SONG_POSITION => {
-                        if !follow_song_position.load(Ordering::Acquire) {
-                            return;
-                        }
-                        if message.len() < 3 {
-                            warn!(
-                                "Received malformed SONG_POSITION message: {:?}",
-                                message
-                            );
-                            return;
-                        }
-                        let lsb = message[1] as u32;
-                        let msb = message[2] as u32;
-                        let position = (msb << 7) | lsb;
-                        let tick_pos = position * (TICKS_PER_QUARTER_NOTE / 4);
-                        song_position_ticks.store(tick_pos, Ordering::SeqCst);
-                        clock_count.store(0, Ordering::SeqCst);
-                    }
-                    MIDI_START => {
-                        clock_count.store(0, Ordering::SeqCst);
-                        let _ = command_tx.send(RuntimeEvent::MidiStart);
-                    }
-                    MIDI_CONTINUE => {
-                        let _ = command_tx.send(RuntimeEvent::MidiContinue);
-                    }
-                    MIDI_STOP => {
-                        let _ = command_tx.send(RuntimeEvent::MidiStop);
-                    }
-                    MIDI_MTC_QUARTER_FRAME => {
-                        if message.len() < 2
-                            || !hybrid_mtc_sync_enabled.load(Ordering::Acquire)
-                        {
-                            return;
-                        }
-
-                        let data = message[1];
-                        let piece_index = (data >> 4) & 0x7;
-                        let value = data & 0xF;
-
-                        match piece_index {
-                            0 => {
-                                let current =
-                                    mtc_frames.load(Ordering::Relaxed);
-                                mtc_frames.store(
-                                    (current & 0xF0) | value as u32,
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            1 => {
-                                let current =
-                                    mtc_frames.load(Ordering::Relaxed);
-                                mtc_frames.store(
-                                    (current & 0x0F) | ((value as u32) << 4),
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            2 => {
-                                let current =
-                                    mtc_seconds.load(Ordering::Relaxed);
-                                mtc_seconds.store(
-                                    (current & 0xF0) | value as u32,
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            3 => {
-                                let current =
-                                    mtc_seconds.load(Ordering::Relaxed);
-                                mtc_seconds.store(
-                                    (current & 0x0F) | ((value as u32) << 4),
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            4 => {
-                                let current =
-                                    mtc_minutes.load(Ordering::Relaxed);
-                                mtc_minutes.store(
-                                    (current & 0xF0) | value as u32,
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            5 => {
-                                let current =
-                                    mtc_minutes.load(Ordering::Relaxed);
-                                mtc_minutes.store(
-                                    (current & 0x0F) | ((value as u32) << 4),
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            6 => {
-                                let current = mtc_hours.load(Ordering::Relaxed);
-                                mtc_hours.store(
-                                    (current & 0xF0) | value as u32,
-                                    Ordering::Relaxed,
-                                );
-                            }
-                            7 => {
-                                let hours_lsb =
-                                    mtc_hours.load(Ordering::Relaxed) & 0x0F;
-                                let hours_msb = value & 0x3;
-                                let rate_code = (value >> 2) & 0x3;
-                                let fps = match rate_code {
-                                    0 => 24.0,
-                                    1 => 25.0,
-                                    2 => 29.97,
-                                    3 => 30.0,
-                                    _ => return,
-                                };
-
-                                let full_hours =
-                                    ((hours_msb << 4) | hours_lsb as u8) & 0x1F;
-                                mtc_hours.store(
-                                    full_hours as u32,
-                                    Ordering::Relaxed,
-                                );
-
-                                let mtc_time_seconds = mtc_hours
-                                    .load(Ordering::Relaxed)
-                                    as f32
-                                    * 3600.0
-                                    + mtc_minutes.load(Ordering::Relaxed)
-                                        as f32
-                                        * 60.0
-                                    + mtc_seconds.load(Ordering::Relaxed)
-                                        as f32
-                                    + mtc_frames.load(Ordering::Relaxed) as f32
-                                        / fps;
-                                let mtc_beats =
-                                    mtc_time_seconds * (bpm.get() / 60.0);
-                                let midi_beats =
-                                    clock_count.load(Ordering::Relaxed) as f32
-                                        / PULSES_PER_QUARTER_NOTE as f32;
-                                let beat_difference =
-                                    (mtc_beats - midi_beats).abs();
-                                if beat_difference > HYBRID_SYNC_THRESHOLD_BEATS
-                                {
-                                    let clock = (mtc_beats
-                                        * PULSES_PER_QUARTER_NOTE as f32)
-                                        as u32;
-                                    clock_count.store(clock, Ordering::SeqCst);
-                                    trace!(
-                                        "Hybrid timing resync from MTC: mtc_beats={}, midi_beats={}, new_clock={}",
-                                        mtc_beats, midi_beats, clock
-                                    );
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    _ => {}
-                }
-            },
-        );
-
-        if let Err(err) = midi_handler_result {
-            warn!(
-                "Failed to initialize {:?} MIDI connection. Error: {}",
-                midi::ConnectionType::Clock,
-                err
-            );
+    fn build_timing(&self) -> Timing {
+        match self.effective_timing_mode() {
+            TimingMode::Frame => Timing::frame(self.bpm.clone()),
+            TimingMode::Osc => Timing::osc(self.bpm.clone()),
+            TimingMode::Midi => Timing::midi_with_port(
+                self.bpm.clone(),
+                &self.midi_clock_port,
+                self.midi_transport_event_sender(),
+            ),
+            TimingMode::Hybrid => Timing::hybrid_with_port(
+                self.bpm.clone(),
+                &self.midi_clock_port,
+                self.midi_transport_event_sender(),
+            ),
+            TimingMode::Manual => Timing::manual(self.bpm.clone()),
         }
     }
 
-    fn register_osc_transport_listener(&self) {
-        let playing = self.osc_transport_playing.clone();
-        let bars = self.osc_transport_bars.clone();
-        let beats = self.osc_transport_beats.clone();
-        let ticks = self.osc_transport_ticks.clone();
+    fn effective_timing_mode(&self) -> TimingMode {
+        self.timing_mode_override
+            .unwrap_or_else(|| self.sketch.timing_mode())
+    }
 
-        OSC_TRANSPORT_CALLBACK_REGISTER.call_once(move || {
-            SHARED_OSC_RECEIVER.register_callback("/transport", move |msg| {
-                if msg.args.len() < 4 {
-                    return;
-                }
-
-                if let (
-                    osc::Type::Int(a),
-                    osc::Type::Int(b),
-                    osc::Type::Int(c),
-                    osc::Type::Float(d),
-                ) = (&msg.args[0], &msg.args[1], &msg.args[2], &msg.args[3])
-                {
-                    playing.store(*a != 0, Ordering::Release);
-                    bars.store(
-                        (*b).saturating_sub(1) as u32,
-                        Ordering::Release,
-                    );
-                    beats.store(
-                        (*c).saturating_sub(1) as u32,
-                        Ordering::Release,
-                    );
-                    ticks.store(d.to_bits(), Ordering::Release);
-                }
-            });
-        });
+    fn midi_transport_event_sender(
+        &self,
+    ) -> impl Fn(MidiTransportEvent) + Send + Sync + 'static {
+        let command_tx = self.command_tx.clone();
+        move |event| {
+            let event = match event {
+                MidiTransportEvent::Continue => RuntimeEvent::MidiContinue,
+                MidiTransportEvent::Start => RuntimeEvent::MidiStart,
+                MidiTransportEvent::Stop => RuntimeEvent::MidiStop,
+            };
+            let _ = command_tx.send(event);
+        }
     }
 
     fn connect_midi_out(&mut self) {
@@ -1963,7 +1727,9 @@ impl XtalRuntime {
 
     fn log_midi_startup_state(&self) {
         info!(
-            "MIDI/OSC startup state: input_port='{}', output_port='{}', clock_port='{}', osc_port={}, hrcc={}, mappings_enabled={}",
+            "MIDI/OSC startup state: input_port='{}', \
+                output_port='{}', clock_port='{}', osc_port={}, \
+                hrcc={}, mappings_enabled={}",
             self.midi_input_port,
             self.midi_output_port,
             self.midi_clock_port,
@@ -1988,7 +1754,8 @@ impl XtalRuntime {
                 self.midi_input_port = self.midi_input_ports[0].1.clone();
                 if !previous.is_empty() {
                     warn!(
-                        "Persisted MIDI input port '{}' not found; using '{}' for this session",
+                        "Persisted MIDI input port '{}' not found; \
+                            using '{}' for this session",
                         previous, self.midi_input_port
                     );
                 }
@@ -2013,7 +1780,8 @@ impl XtalRuntime {
                 self.midi_clock_port = self.midi_input_ports[0].1.clone();
                 if !previous.is_empty() {
                     warn!(
-                        "Persisted MIDI clock port '{}' not found; using '{}' for this session",
+                        "Persisted MIDI clock port '{}' not found; \
+                            using '{}' for this session",
                         previous, self.midi_clock_port
                     );
                 }
@@ -2040,7 +1808,8 @@ impl XtalRuntime {
                 self.midi_output_port = self.midi_output_ports[0].1.clone();
                 if !previous.is_empty() {
                     warn!(
-                        "Persisted MIDI output port '{}' not found; using '{}' for this session",
+                        "Persisted MIDI output port '{}' not found; \
+                            using '{}' for this session",
                         previous, self.midi_output_port
                     );
                 }
@@ -2102,48 +1871,6 @@ impl XtalRuntime {
         if let Err(err) = SHARED_OSC_RECEIVER.restart(self.osc_port) {
             error!("Failed to restart OSC receiver: {}", err);
         }
-    }
-
-    fn current_midi_transport_beats(&self) -> f32 {
-        let clock_offset = self.midi_clock_count.load(Ordering::Relaxed) as f32
-            / PULSES_PER_QUARTER_NOTE as f32;
-        let ticks = self.midi_song_position_ticks.load(Ordering::Relaxed);
-        let beat_base = ticks as f32 / TICKS_PER_QUARTER_NOTE as f32;
-        beat_base + clock_offset
-    }
-
-    fn current_hybrid_transport_beats(&self) -> f32 {
-        self.midi_clock_count.load(Ordering::Relaxed) as f32
-            / PULSES_PER_QUARTER_NOTE as f32
-    }
-
-    fn current_osc_transport_beats(&self) -> f32 {
-        if !self.osc_transport_playing.load(Ordering::Acquire) {
-            return 0.0;
-        }
-
-        let bars = self.osc_transport_bars.load(Ordering::Acquire) as f32;
-        let beats = self.osc_transport_beats.load(Ordering::Acquire) as f32;
-        let ticks =
-            f32::from_bits(self.osc_transport_ticks.load(Ordering::Acquire));
-        (bars * 4.0) + beats + ticks
-    }
-
-    fn current_external_beats_for_mode(&self) -> Option<f32> {
-        match self.sketch.timing_mode() {
-            TimingMode::Osc => Some(self.current_osc_transport_beats()),
-            TimingMode::Midi => Some(self.current_midi_transport_beats()),
-            TimingMode::Hybrid => Some(self.current_hybrid_transport_beats()),
-            TimingMode::Manual | TimingMode::Frame => None,
-        }
-    }
-
-    fn update_timing_mode_flags(&self) {
-        let mode = self.sketch.timing_mode();
-        self.follow_song_position
-            .store(matches!(mode, TimingMode::Midi), Ordering::Release);
-        self.hybrid_mtc_sync_enabled
-            .store(matches!(mode, TimingMode::Hybrid), Ordering::Release);
     }
 
     // Applies resize to surface config and runtime context resolution.
@@ -2314,7 +2041,8 @@ impl XtalRuntime {
     fn apply_control_update(&mut self, name: String, value: ControlValue) {
         let Some(hub) = self.control_hub.as_mut() else {
             warn!(
-                "ignoring control update for '{}' because no control hub is active",
+                "ignoring control update for '{}' because no control hub \
+                    is active",
                 name
             );
             return;
@@ -2357,7 +2085,6 @@ impl XtalRuntime {
         self.active_sketch_name = name.to_string();
         self.config = config;
         self.sketch = sketch;
-        self.update_timing_mode_flags();
         let next_bpm = if self.tap_tempo_enabled {
             preserved_bpm
         } else {
@@ -2621,7 +2348,7 @@ impl XtalRuntime {
         }
     }
 
-    // Loads per-sketch controls/snapshots/mappings/exclusions into runtime + hub.
+    // Loads per-sketch controls/snapshots/mappings/exclusions into runtime.
     fn restore_sketch_state_from_disk(&mut self) {
         let current = self.current_sketch_ui_state();
         self.map_mode.set_mappings(current.mappings.clone());
@@ -2835,6 +2562,7 @@ pub fn run_registry(
     registry: RuntimeRegistry,
     initial_sketch: Option<&str>,
 ) -> Result<(), String> {
+    let timing_mode_override = parse_timing_mode_arg()?;
     let (command_tx, command_rx) = command_channel();
     let (event_tx, event_rx) = event_channel();
 
@@ -2843,6 +2571,7 @@ pub fn run_registry(
     run_registry_with_channels(
         registry,
         initial_sketch,
+        timing_mode_override,
         command_tx,
         command_rx,
         Some(event_tx),
@@ -2852,6 +2581,7 @@ pub fn run_registry(
 fn run_registry_with_channels(
     registry: RuntimeRegistry,
     initial_sketch: Option<&str>,
+    timing_mode_override: Option<TimingMode>,
     command_tx: RuntimeCommandSender,
     command_rx: RuntimeCommandReceiver,
     event_tx: Option<RuntimeEventSender>,
@@ -2864,6 +2594,7 @@ fn run_registry_with_channels(
     let mut runner = XtalRuntime::new(
         registry,
         initial_sketch,
+        timing_mode_override,
         command_tx,
         command_rx,
         event_tx,
@@ -2872,6 +2603,14 @@ fn run_registry_with_channels(
     event_loop
         .run_app(&mut runner)
         .map_err(|err| err.to_string())
+}
+
+fn parse_timing_mode_arg() -> Result<Option<TimingMode>, String> {
+    let Some(value) = env::args().nth(2) else {
+        return Ok(None);
+    };
+
+    value.parse().map(Some)
 }
 
 fn select_initial_sketch_name(

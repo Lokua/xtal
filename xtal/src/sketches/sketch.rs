@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::context::Context;
 use crate::frame::Frame;
@@ -30,6 +31,21 @@ pub enum TimingMode {
     Midi,
     Hybrid,
     Manual,
+}
+
+impl FromStr for TimingMode {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.to_lowercase().as_str() {
+            "frame" => Ok(Self::Frame),
+            "osc" => Ok(Self::Osc),
+            "midi" => Ok(Self::Midi),
+            "hybrid" => Ok(Self::Hybrid),
+            "manual" => Ok(Self::Manual),
+            _ => Err(format!("unknown timing mode '{}'", value)),
+        }
+    }
 }
 
 pub trait Sketch {
