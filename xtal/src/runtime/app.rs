@@ -38,8 +38,8 @@ use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::core::logging;
 use crate::core::util::{HashMap, uuid_5};
 use crate::frame::Frame;
-use crate::gpu::CompiledGraph;
 use crate::gpu::compute_row_padding;
+use crate::gpu::{CompiledGraph, ExecuteCtx};
 use crate::graph::GraphBuilder;
 use crate::io::audio::list_audio_devices;
 use crate::io::midi;
@@ -1176,17 +1176,18 @@ impl XtalRuntime {
 
             self.sketch.view(&mut frame, context);
 
-            if let Err(err) = graph.execute(
-                context.device.as_ref(),
-                context.queue.as_ref(),
-                &mut frame,
+            let execute_ctx = ExecuteCtx {
+                device: context.device.as_ref(),
+                queue: context.queue.as_ref(),
                 uniforms,
-                &video_transports,
-                current_beats,
-                self.bpm.get(),
-                context.resolution_u32(),
-                [surface_config.width, surface_config.height],
-            ) {
+                video_transports: &video_transports,
+                beats: current_beats,
+                bpm: self.bpm.get(),
+                render_size: context.resolution_u32(),
+                surface_size: [surface_config.width, surface_config.height],
+            };
+
+            if let Err(err) = graph.execute(&mut frame, execute_ctx) {
                 error!("graph execution error: {}", err);
                 event_loop.exit();
                 return;

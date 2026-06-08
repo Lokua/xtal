@@ -539,10 +539,7 @@ impl VideoPipeline {
             return Some(gst::ClockTime::ZERO);
         }
 
-        let duration = self.duration();
-        let Some(duration) = duration else {
-            return None;
-        };
+        let duration = self.duration()?;
 
         let nseconds = duration.nseconds() as f64;
         let position = (nseconds * normalized.clamp(0.0, 1.0) as f64) as u64;

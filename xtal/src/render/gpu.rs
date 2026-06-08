@@ -109,6 +109,17 @@ struct VideoResource {
     source: String,
 }
 
+pub struct ExecuteCtx<'a> {
+    pub device: &'a wgpu::Device,
+    pub queue: &'a wgpu::Queue,
+    pub uniforms: &'a UniformBanks,
+    pub video_transports: &'a HashMap<String, VideoTransport>,
+    pub beats: f32,
+    pub bpm: f32,
+    pub render_size: [u32; 2],
+    pub surface_size: [u32; 2],
+}
+
 impl CompiledGraph {
     pub fn compile(
         device: &wgpu::Device,
@@ -235,38 +246,35 @@ impl CompiledGraph {
 
     pub fn execute(
         &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
         frame: &mut Frame,
-        uniforms: &UniformBanks,
-        video_transports: &HashMap<String, VideoTransport>,
-        beats: f32,
-        bpm: f32,
-        render_size: [u32; 2],
-        surface_size: [u32; 2],
+        ctx: ExecuteCtx<'_>,
     ) -> Result<(), String> {
-        self.ensure_offscreen_textures(device, render_size);
-        self.ensure_surface_proxy_texture(device, render_size, surface_size);
+        self.ensure_offscreen_textures(ctx.device, ctx.render_size);
+        self.ensure_surface_proxy_texture(
+            ctx.device,
+            ctx.render_size,
+            ctx.surface_size,
+        );
         self.update_video_textures(
-            device,
-            queue,
-            video_transports,
-            beats,
-            bpm,
+            ctx.device,
+            ctx.queue,
+            ctx.video_transports,
+            ctx.beats,
+            ctx.bpm,
         )?;
 
         for node in &mut self.nodes {
             match node {
                 CompiledNode::Render(node) => {
                     node.pass.update_if_changed(
-                        device,
+                        ctx.device,
                         &node.sampled_reads,
-                        uniforms.bind_group_layout(),
+                        ctx.uniforms.bind_group_layout(),
                     );
 
                     let texture_bind_group = if !node.sampled_reads.is_empty() {
                         Some(node.pass.create_texture_bind_group(
-                            device,
+                            ctx.device,
                             &self.offscreen_textures,
                             &self.image_textures,
                             &self.video_textures,
@@ -318,7 +326,11 @@ impl CompiledGraph {
                     );
 
                     render_pass.set_pipeline(&node.pass.render_pipeline);
-                    render_pass.set_bind_group(0, uniforms.bind_group(), &[]);
+                    render_pass.set_bind_group(
+                        0,
+                        ctx.uniforms.bind_group(),
+                        &[],
+                    );
 
                     if let Some(bind_group) = texture_bind_group.as_ref() {
                         render_pass.set_bind_group(1, bind_group, &[]);
@@ -332,19 +344,19 @@ impl CompiledGraph {
                 }
                 CompiledNode::Compute(node) => {
                     node.pass.update_if_changed(
-                        device,
-                        uniforms.bind_group_layout(),
+                        ctx.device,
+                        ctx.uniforms.bind_group_layout(),
                     );
 
                     let storage_bind_group =
                         node.pass.create_storage_bind_group(
-                            device,
+                            ctx.device,
                             &self.offscreen_textures,
                             &node.target,
                         )?;
 
-                    let width = render_size[0].max(1);
-                    let height = render_size[1].max(1);
+                    let width = ctx.render_size[0].max(1);
+                    let height = ctx.render_size[1].max(1);
                     let workgroup_x = width.div_ceil(8);
                     let workgroup_y = height.div_ceil(8);
 
@@ -356,7 +368,11 @@ impl CompiledGraph {
                     );
 
                     compute_pass.set_pipeline(&node.pass.compute_pipeline);
-                    compute_pass.set_bind_group(0, uniforms.bind_group(), &[]);
+                    compute_pass.set_bind_group(
+                        0,
+                        ctx.uniforms.bind_group(),
+                        &[],
+                    );
                     compute_pass.set_bind_group(1, &storage_bind_group, &[]);
                     compute_pass.dispatch_workgroups(
                         workgroup_x,
@@ -383,14 +399,14 @@ impl CompiledGraph {
                 };
 
             blit_texture_to_surface(
-                device,
+                ctx.device,
                 frame,
                 &source_view,
                 self.surface_format,
             );
         } else if let Some(texture) = self.surface_proxy_texture.as_ref() {
             blit_texture_to_surface(
-                device,
+                ctx.device,
                 frame,
                 &texture.view,
                 self.surface_format,
