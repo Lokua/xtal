@@ -205,7 +205,9 @@ fn luma(color: vec3f) -> f32 {
 fn sort_value(color: vec3f) -> f32 {
     let channel = i32(params.k.w + 0.5);
     if (channel == 1) {
-        return max(color.r, max(color.g, color.b)) - min(color.r, min(color.g, color.b));
+        let hi = max(color.r, max(color.g, color.b));
+        let lo = min(color.r, min(color.g, color.b));
+        return hi - lo;
     }
     if (channel == 2) { return color.r; }
     if (channel == 3) { return color.g; }
@@ -226,7 +228,8 @@ fn apply_pixel_sort(uv: vec2f, color: vec3f) -> vec3f {
     let use_vertical = step(0.5, params.k.z);
     let t = (val - threshold) / max(1.0 - threshold, 0.001);
     let offset = t * amount;
-    let displaced = uv + mix(vec2f(offset, 0.0), vec2f(0.0, offset), use_vertical);
+    let displaced = uv
+        + mix(vec2f(offset, 0.0), vec2f(0.0, offset), use_vertical);
     return textureSampleLevel(
         video_tex, video_sampler, clamp(displaced, vec2f(0.0), vec2f(1.0)), 0.0
     ).rgb;
@@ -240,11 +243,24 @@ fn apply_edge_detect(uv: vec2f, color: vec3f) -> vec3f {
     let boost = max(params.l.y, 1.0);
     let radius = max(params.l.w, 1.0);
     let px = radius / vec2f(max(params.a.x, 1.0), max(params.a.y, 1.0));
-    let edge_r = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( px.x,  0.0), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
-    let edge_l = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f(-px.x,  0.0), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
-    let edge_t = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( 0.0,  px.y), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
-    let edge_b = luma(textureSampleLevel(video_tex, video_sampler, clamp(uv + vec2f( 0.0, -px.y), vec2f(0.0), vec2f(1.0)), 0.0).rgb);
-    let edge = clamp(length(vec2f(edge_r - edge_l, edge_t - edge_b)) * boost, 0.0, 1.0);
+    let uv_r = clamp(uv + vec2f(px.x, 0.0), vec2f(0.0), vec2f(1.0));
+    let uv_l = clamp(uv + vec2f(-px.x, 0.0), vec2f(0.0), vec2f(1.0));
+    let uv_t = clamp(uv + vec2f(0.0, px.y), vec2f(0.0), vec2f(1.0));
+    let uv_b = clamp(uv + vec2f(0.0, -px.y), vec2f(0.0), vec2f(1.0));
+    let edge_r = luma(
+        textureSampleLevel(video_tex, video_sampler, uv_r, 0.0).rgb
+    );
+    let edge_l = luma(
+        textureSampleLevel(video_tex, video_sampler, uv_l, 0.0).rgb
+    );
+    let edge_t = luma(
+        textureSampleLevel(video_tex, video_sampler, uv_t, 0.0).rgb
+    );
+    let edge_b = luma(
+        textureSampleLevel(video_tex, video_sampler, uv_b, 0.0).rgb
+    );
+    let grad = length(vec2f(edge_r - edge_l, edge_t - edge_b));
+    let edge = clamp(grad * boost, 0.0, 1.0);
     let edge_color = hsv_to_rgb(vec3f(params.m.x, params.m.y, 1.0)) * edge;
     let additive = step(0.5, params.f.w);
     let mixed = mix(color, edge_color, amount);
