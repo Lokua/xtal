@@ -4,7 +4,7 @@
     {
       "type": "Select",
       "name": "active_video",
-      "value": "Viaduct - Evanston Noyes Park"
+      "value": "Viaduct - Evanston Noyes"
     },
     {
       "type": "Select",
@@ -14,7 +14,7 @@
     {
       "type": "Slider",
       "name": "scrub",
-      "value": 0.6539
+      "value": 0.7299
     },
     {
       "type": "Slider",
@@ -29,7 +29,7 @@
     {
       "type": "Slider",
       "name": "black_white",
-      "value": 0.16
+      "value": 0.24
     },
     {
       "type": "Slider",
@@ -39,7 +39,7 @@
     {
       "type": "Slider",
       "name": "invert_darken",
-      "value": 0.99
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -59,7 +59,7 @@
     {
       "type": "Slider",
       "name": "highlight_hue",
-      "value": 0.33
+      "value": 0.72
     },
     {
       "type": "Slider",
@@ -79,7 +79,7 @@
     {
       "type": "Slider",
       "name": "chroma_shift",
-      "value": -0.68
+      "value": 0.89
     },
     {
       "type": "Slider",
@@ -89,7 +89,7 @@
     {
       "type": "Slider",
       "name": "chroma_amount",
-      "value": 1.12
+      "value": 1.05
     },
     {
       "type": "Slider",
@@ -124,7 +124,7 @@
     {
       "type": "Slider",
       "name": "zoom_amount",
-      "value": 0.0
+      "value": 0.12
     },
     {
       "type": "Checkbox",
@@ -159,63 +159,38 @@
     {
       "type": "Slider",
       "name": "slice_count",
-      "value": 9.0
+      "value": 3.0
     },
     {
       "type": "Slider",
       "name": "slice_offset",
       "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "grid_amount",
+      "value": 0.0
+    },
+    {
+      "type": "Slider",
+      "name": "grid_size",
+      "value": 5.0
+    },
+    {
+      "type": "Slider",
+      "name": "grid_seed",
+      "value": 24.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "3": {
+    "1": {
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "highlight_hue",
+          "name": "zoom_x",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_shift",
-          "value": -0.64
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_mix",
-          "value": 0.05
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_amount",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "slice_offset",
-          "value": 0.25
-        },
-        {
-          "type": "Select",
-          "name": "fit_mode",
-          "value": "cover"
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_sat",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "displace_warp",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "slice_axis",
-          "value": "vertical"
         },
         {
           "type": "Slider",
@@ -224,43 +199,33 @@
         },
         {
           "type": "Slider",
-          "name": "slice_count",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_threshold",
-          "value": 0.33
-        },
-        {
-          "type": "Slider",
-          "name": "displace_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "slice_amount",
+          "name": "invert_darken",
           "value": 0.0
         },
         {
           "type": "Select",
-          "name": "slice_boundary",
-          "value": "wrap"
+          "name": "active_video",
+          "value": "Viaduct - Evanston Noyes"
         },
         {
           "type": "Slider",
-          "name": "zoom_y",
+          "name": "chroma_shift",
+          "value": -0.64
+        },
+        {
+          "type": "Slider",
+          "name": "frame_blend",
           "value": 0.0
         },
         {
-          "type": "Slider",
-          "name": "speed",
-          "value": 1.0
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "horizontal"
         },
         {
           "type": "Slider",
-          "name": "posterize",
-          "value": 0.0
+          "name": "displace_frequency",
+          "value": 2.5
         },
         {
           "type": "Slider",
@@ -268,18 +233,28 @@
           "value": 6.0
         },
         {
-          "type": "Checkbox",
-          "name": "auto_zoom",
-          "value": true
+          "type": "Select",
+          "name": "fit_mode",
+          "value": "cover"
         },
         {
           "type": "Slider",
-          "name": "highlight_softness",
-          "value": 0.32
+          "name": "zoom_amount",
+          "value": 0.24
         },
         {
           "type": "Slider",
-          "name": "invert",
+          "name": "posterize",
+          "value": 0.54
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_angle",
+          "value": 0.17
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_y",
           "value": 0.0
         },
         {
@@ -289,13 +264,561 @@
         },
         {
           "type": "Slider",
+          "name": "slice_offset",
+          "value": -0.25
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 26.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_threshold",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "black_white",
+          "value": 0.21
+        },
+        {
+          "type": "Slider",
+          "name": "displace_warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_amount",
+          "value": 2.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.8955
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 3.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "displace_amount",
+          "value": 0.083
+        },
+        {
+          "type": "Slider",
+          "name": "slice_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_softness",
+          "value": 0.32
+        },
+        {
+          "type": "Slider",
+          "name": "speed",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "6": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "zoom_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_softness",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "grid_size",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_amount",
+          "value": 1.05
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 19.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "vertical"
+        },
+        {
+          "type": "Slider",
+          "name": "displace_angle",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "speed",
+          "value": 0.5
+        },
+        {
+          "type": "Select",
+          "name": "active_video",
+          "value": "Viaduct - Evanston Noyes"
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.7299
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_shift",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "black_white",
+          "value": 0.24
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "frame_blend",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_angle",
+          "value": 0.9
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_threshold",
+          "value": 0.41
+        },
+        {
+          "type": "Slider",
+          "name": "displace_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_amount",
+          "value": 0.12
+        },
+        {
+          "type": "Slider",
+          "name": "displace_speed",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_frequency",
+          "value": 2.75
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_softness",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "grid_seed",
+          "value": 24.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_offset",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "invert_darken",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "fit_mode",
+          "value": "cover"
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_mix",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 3.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "5": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "displace_frequency",
+          "value": 2.75
+        },
+        {
+          "type": "Slider",
+          "name": "displace_angle",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.6539
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_angle",
+          "value": 0.9
+        },
+        {
+          "type": "Select",
+          "name": "fit_mode",
+          "value": "cover"
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_mix",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_softness",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_softness",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_shift",
+          "value": -0.68
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_amount",
+          "value": 1.12
+        },
+        {
+          "type": "Slider",
+          "name": "invert_darken",
+          "value": 0.99
+        },
+        {
+          "type": "Slider",
+          "name": "speed",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
           "name": "frame_blend",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "displace_frequency",
-          "value": 2.5
+          "name": "slice_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_offset",
+          "value": 0.2
+        },
+        {
+          "type": "Select",
+          "name": "active_video",
+          "value": "Viaduct - Evanston Noyes Park"
+        },
+        {
+          "type": "Slider",
+          "name": "displace_speed",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_warp",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_threshold",
+          "value": 0.41
+        },
+        {
+          "type": "Slider",
+          "name": "black_white",
+          "value": 0.16
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "vertical"
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 19.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "chroma_shift",
+          "value": -0.17
+        },
+        {
+          "type": "Slider",
+          "name": "displace_warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "speed",
+          "value": 0.5
+        },
+        {
+          "type": "Select",
+          "name": "fit_mode",
+          "value": "cover"
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_mix",
+          "value": 0.21
+        },
+        {
+          "type": "Slider",
+          "name": "displace_speed",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "black_white",
+          "value": 0.11
+        },
+        {
+          "type": "Slider",
+          "name": "invert_darken",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "active_video",
+          "value": "Viaduct - South Evanston"
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.4144
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.09
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_softness",
+          "value": 0.32
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_amount",
+          "value": 1.98
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Slider",
+          "name": "frame_blend",
+          "value": 0.116
         },
         {
           "type": "Slider",
@@ -304,8 +827,74 @@
         },
         {
           "type": "Slider",
-          "name": "scrub",
-          "value": 0.844
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_softness",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_threshold",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "displace_frequency",
+          "value": 2.5
+        },
+        {
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "vertical"
+        },
+        {
+          "type": "Slider",
+          "name": "displace_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_angle",
+          "value": 0.17
+        },
+        {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "slice_offset",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "displace_angle",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Select",
+          "name": "fit_mode",
+          "value": "cover"
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -319,6 +908,91 @@
         },
         {
           "type": "Slider",
+          "name": "displace_angle",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_amount",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_shift",
+          "value": -0.64
+        },
+        {
+          "type": "Slider",
+          "name": "slice_offset",
+          "value": 0.25
+        },
+        {
+          "type": "Select",
+          "name": "slice_boundary",
+          "value": "wrap"
+        },
+        {
+          "type": "Slider",
+          "name": "zoom_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_count",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "invert",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "frame_blend",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_softness",
+          "value": 0.32
+        },
+        {
+          "type": "Slider",
+          "name": "chroma_softness",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "slice_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_frequency",
+          "value": 2.5
+        },
+        {
+          "type": "Select",
+          "name": "slice_axis",
+          "value": "vertical"
+        },
+        {
+          "type": "Slider",
           "name": "zoom_amount",
           "value": 0.04
         },
@@ -328,9 +1002,49 @@
           "value": 0.0
         },
         {
+          "type": "Checkbox",
+          "name": "auto_zoom",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "scrub",
+          "value": 0.844
+        },
+        {
+          "type": "Slider",
+          "name": "displace_warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_mix",
+          "value": 0.05
+        },
+        {
           "type": "Slider",
           "name": "chroma_angle",
           "value": 0.17
+        },
+        {
+          "type": "Slider",
+          "name": "speed",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "displace_speed",
+          "value": 6.0
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_threshold",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "posterize_levels",
+          "value": 32.0
         },
         {
           "type": "Slider",
@@ -345,23 +1059,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "slice_amount",
-          "value": 0.32
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_hue",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_sat",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "displace_amount",
-          "value": 0.083
+          "name": "highlight_mix",
+          "value": 1.0
         },
         {
           "type": "Slider",
@@ -370,13 +1069,18 @@
         },
         {
           "type": "Slider",
-          "name": "highlight_softness",
-          "value": 0.32
+          "name": "displace_frequency",
+          "value": 2.5
         },
         {
-          "type": "Select",
-          "name": "active_video",
-          "value": "Viaduct - Evanston Noyes"
+          "type": "Slider",
+          "name": "highlight_sat",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "displace_speed",
+          "value": 6.0
         },
         {
           "type": "Select",
@@ -385,48 +1089,28 @@
         },
         {
           "type": "Slider",
-          "name": "displace_warp",
-          "value": 0.0
+          "name": "posterize_levels",
+          "value": 32.0
         },
         {
           "type": "Slider",
-          "name": "highlight_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "displace_angle",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_amount",
-          "value": 0.62
-        },
-        {
-          "type": "Slider",
-          "name": "slice_offset",
-          "value": 0.25
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_threshold",
-          "value": 0.33
-        },
-        {
-          "type": "Slider",
-          "name": "displace_frequency",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "posterize",
-          "value": 1.0
+          "name": "displace_amount",
+          "value": 0.083
         },
         {
           "type": "Select",
           "name": "fit_mode",
           "value": "cover"
+        },
+        {
+          "type": "Select",
+          "name": "active_video",
+          "value": "Viaduct - Evanston Noyes"
+        },
+        {
+          "type": "Slider",
+          "name": "posterize",
+          "value": 1.0
         },
         {
           "type": "Select",
@@ -444,19 +1128,14 @@
           "value": 0.5394
         },
         {
-          "type": "Checkbox",
-          "name": "auto_zoom",
-          "value": true
-        },
-        {
           "type": "Slider",
           "name": "invert",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "displace_speed",
-          "value": 6.0
+          "name": "zoom_y",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -465,164 +1144,13 @@
         },
         {
           "type": "Slider",
-          "name": "posterize_levels",
-          "value": 32.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_y",
-          "value": 0.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "zoom_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_shift",
-          "value": -0.64
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_threshold",
-          "value": 0.33
-        },
-        {
-          "type": "Select",
-          "name": "active_video",
-          "value": "Viaduct - Evanston Noyes"
-        },
-        {
-          "type": "Slider",
-          "name": "displace_speed",
-          "value": 6.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_hue",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_x",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "slice_boundary",
-          "value": "wrap"
-        },
-        {
-          "type": "Slider",
-          "name": "slice_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_amount",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "slice_count",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
-          "name": "displace_frequency",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "black_white",
-          "value": 0.21
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_softness",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "highlight_softness",
           "value": 0.32
         },
         {
-          "type": "Slider",
-          "name": "posterize_levels",
-          "value": 26.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_angle",
-          "value": 0.17
-        },
-        {
-          "type": "Slider",
-          "name": "slice_offset",
-          "value": -0.25
-        },
-        {
-          "type": "Slider",
-          "name": "displace_warp",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "frame_blend",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_amount",
-          "value": 0.24
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_sat",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "scrub",
-          "value": 0.8955
-        },
-        {
           "type": "Checkbox",
           "name": "auto_zoom",
           "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "posterize",
-          "value": 0.54
-        },
-        {
-          "type": "Select",
-          "name": "fit_mode",
-          "value": "cover"
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "invert_darken",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "speed",
-          "value": 1.0
         },
         {
           "type": "Slider",
@@ -630,276 +1158,24 @@
           "value": 0.0
         },
         {
-          "type": "Select",
-          "name": "slice_axis",
-          "value": "horizontal"
-        },
-        {
-          "type": "Slider",
-          "name": "displace_amount",
-          "value": 0.083
-        },
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 0.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "5": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "chroma_amount",
-          "value": 1.12
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_sat",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "displace_warp",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "displace_angle",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "fit_mode",
-          "value": "cover"
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_softness",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "posterize",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "scrub",
-          "value": 0.6539
-        },
-        {
-          "type": "Checkbox",
-          "name": "auto_zoom",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "slice_offset",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_hue",
-          "value": 0.33
-        },
-        {
-          "type": "Slider",
-          "name": "black_white",
-          "value": 0.16
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_threshold",
-          "value": 0.41
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_mix",
-          "value": 0.75
-        },
-        {
           "type": "Slider",
           "name": "zoom_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "frame_blend",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "slice_count",
-          "value": 9.0
-        },
-        {
-          "type": "Slider",
-          "name": "invert_darken",
-          "value": 0.99
-        },
-        {
-          "type": "Slider",
-          "name": "speed",
-          "value": 0.5
-        },
-        {
-          "type": "Select",
-          "name": "active_video",
-          "value": "Viaduct - Evanston Noyes Park"
-        },
-        {
-          "type": "Slider",
-          "name": "displace_speed",
-          "value": 6.0
+          "value": 0.62
         },
         {
           "type": "Slider",
           "name": "slice_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_levels",
-          "value": 19.0
-        },
-        {
-          "type": "Select",
-          "name": "slice_axis",
-          "value": "vertical"
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_angle",
-          "value": 0.9
-        },
-        {
-          "type": "Slider",
-          "name": "displace_frequency",
-          "value": 2.75
-        },
-        {
-          "type": "Slider",
-          "name": "displace_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_shift",
-          "value": -0.68
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_softness",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "slice_boundary",
-          "value": "wrap"
-        },
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 0.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "4": {
-      "ui_controls": [
-        {
-          "type": "Checkbox",
-          "name": "auto_zoom",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_softness",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "slice_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_softness",
           "value": 0.32
         },
         {
           "type": "Slider",
-          "name": "displace_speed",
-          "value": 6.0
-        },
-        {
-          "type": "Slider",
-          "name": "invert",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_sat",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "invert_darken",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "displace_angle",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_amount",
-          "value": 1.98
-        },
-        {
-          "type": "Slider",
-          "name": "frame_blend",
-          "value": 0.116
-        },
-        {
-          "type": "Slider",
-          "name": "posterize_levels",
-          "value": 32.0
-        },
-        {
-          "type": "Slider",
-          "name": "black_white",
-          "value": 0.11
-        },
-        {
-          "type": "Select",
-          "name": "slice_boundary",
-          "value": "wrap"
-        },
-        {
-          "type": "Select",
-          "name": "fit_mode",
-          "value": "cover"
-        },
-        {
-          "type": "Slider",
           "name": "highlight_threshold",
           "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "highlight_hue",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -908,83 +1184,8 @@
         },
         {
           "type": "Slider",
-          "name": "highlight_mix",
-          "value": 0.21
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_angle",
-          "value": 0.17
-        },
-        {
-          "type": "Select",
-          "name": "active_video",
-          "value": "Viaduct - South Evanston"
-        },
-        {
-          "type": "Slider",
-          "name": "displace_frequency",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "highlight_hue",
-          "value": 0.09
-        },
-        {
-          "type": "Slider",
-          "name": "chroma_shift",
-          "value": -0.17
-        },
-        {
-          "type": "Slider",
-          "name": "slice_count",
-          "value": 3.0
-        },
-        {
-          "type": "Slider",
           "name": "slice_offset",
-          "value": 0.2
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "speed",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "posterize",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "slice_axis",
-          "value": "vertical"
-        },
-        {
-          "type": "Slider",
-          "name": "displace_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "scrub",
-          "value": 0.4144
+          "value": 0.25
         }
       ],
       "midi_controls": [],

@@ -51,7 +51,8 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     }
 
     let slice_uv = apply_slice_shift(fit_uv);
-    let zoom_uv = apply_zoom(slice_uv);
+    let grid_uv = apply_grid_shuffle(slice_uv);
+    let zoom_uv = apply_zoom(grid_uv);
     let displacement = displacement_vector(zoom_uv);
     let sample_uv = clamp(zoom_uv + displacement, vec2f(0.0), vec2f(1.0));
     let color = textureSample(video_tex, video_sampler, sample_uv);
@@ -128,6 +129,34 @@ fn apply_slice_shift(uv: vec2f) -> vec2f {
     let shifted = uv
         + mix(vec2f(shift, 0.0), vec2f(0.0, shift), use_vertical);
     return apply_slice_boundary(shifted, boundary);
+}
+
+fn rand(co: vec2f) -> f32 {
+    return fract(sin(dot(co, vec2f(12.9898, 78.233))) * 43758.5453);
+}
+
+fn apply_grid_shuffle(uv: vec2f) -> vec2f {
+    let amount = clamp(params.j.x, 0.0, 1.0);
+    if (amount <= 0.0001) {
+        return uv;
+    }
+
+    let n = max(floor(params.j.w + 0.5), 2.0);
+    let seed = floor(params.d.z + 0.5);
+    let tile = floor(uv * n);
+    let local_uv = fract(uv * n);
+    let seeded = tile + vec2f(seed * 127.1, seed * 311.7);
+
+    // Tiles whose hash exceeds amount stay in place
+    if (rand(seeded) > amount) {
+        return uv;
+    }
+
+    let tx = rand(seeded + vec2f(17.3, 41.7));
+    let ty = rand(seeded + vec2f(83.1, 29.5));
+    let target_tile = floor(vec2f(tx, ty) * n);
+
+    return clamp((target_tile + local_uv) / n, vec2f(0.0), vec2f(1.0));
 }
 
 fn apply_slice_boundary(uv: vec2f, boundary: i32) -> vec2f {

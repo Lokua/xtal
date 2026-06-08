@@ -1,8 +1,5 @@
-
-Files sorted from most to least recent. Source code available on 
+Files sorted from most to least recent. Source code available on
 [GitHub](https://github.com/Lokua/xtal).
-
-
 
 ## video-f6da9.png
 
@@ -11,10 +8,6 @@ Files sorted from most to least recent. Source code available on
 ## video-2132e.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-2132e.png" alt="video-2132e.png">
-
-## video-7ab5d.png
-
-<img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/video-7ab5d.png" alt="video-7ab5d.png">
 
 ## grid_splash-foev6.png
 
@@ -1571,4 +1564,3 @@ Files sorted from most to least recent. Source code available on
 ## displacement_1a-87iv9.png
 
 <img src="https://s3.us-east-1.amazonaws.com/lokua.net.xtal/images/displacement_1a-87iv9.png" alt="displacement_1a-87iv9.png">
-

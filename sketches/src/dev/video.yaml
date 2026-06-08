@@ -303,3 +303,31 @@ slice_offset:
   range: [-0.5, 0.5]
   step: 0.01
   default: 0.1
+
+# ------------------------------------------------------------------------------
+#  Grid
+# ------------------------------------------------------------------------------
+
+grid:
+  type: separator
+
+grid_amount:
+  type: slider
+  var: jx
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+grid_size:
+  type: slider
+  var: jw
+  range: [2.0, 32.0]
+  step: 1.0
+  default: 8.0
+
+grid_seed:
+  type: slider
+  var: dz
+  range: [0.0, 99.0]
+  step: 1.0
+  default: 0.0
