@@ -12,6 +12,7 @@ struct Params {
     k: vec4f,
     l: vec4f,
     m: vec4f,
+    n: vec4f,
 }
 
 @group(0) @binding(0)
@@ -216,7 +217,9 @@ fn sort_value(color: vec3f) -> f32 {
 }
 
 fn apply_pixel_sort(uv: vec2f, color: vec3f) -> vec3f {
-    let amount = params.k.x;
+    let animate = params.n.x > 0.5;
+    let anim_amount = params.n.y * params.n.z;
+    let amount = select(params.k.x, anim_amount, animate);
     if (abs(amount) <= 0.0001) {
         return color;
     }
@@ -226,8 +229,8 @@ fn apply_pixel_sort(uv: vec2f, color: vec3f) -> vec3f {
         return color;
     }
     let use_vertical = step(0.5, params.k.z);
-    let t = (val - threshold) / max(1.0 - threshold, 0.001);
-    let offset = t * amount;
+    let norm = (val - threshold) / max(1.0 - threshold, 0.001);
+    let offset = norm * amount;
     let displaced = uv
         + mix(vec2f(offset, 0.0), vec2f(0.0, offset), use_vertical);
     return textureSampleLevel(
@@ -368,6 +371,31 @@ fn hsv_to_rgb(hsv: vec3f) -> vec3f {
     return hsv.z * mix(vec3f(1.0), rgb, hsv.y);
 }
 
+fn posterize_value(v: f32, levels: f32) -> f32 {
+    return floor(v * levels) / max(levels - 1.0, 1.0);
+}
+
 fn posterize_color(color: vec3f, levels: f32) -> vec3f {
-    return floor(color * levels) / max(levels - 1.0, 1.0);
+    let mode = i32(params.m.z + 0.5);
+    let use_gamma = params.m.w > 0.5;
+    var c = color;
+    if (use_gamma) {
+        c = pow(max(c, vec3f(0.0001)), vec3f(1.0 / 2.2));
+    }
+    var result: vec3f;
+    if (mode == 1) {
+        let l = luma(c);
+        let pl = posterize_value(l, levels);
+        result = c * (pl / max(l, 0.0001));
+    } else {
+        result = vec3f(
+            posterize_value(c.r, levels),
+            posterize_value(c.g, levels),
+            posterize_value(c.b, levels),
+        );
+    }
+    if (use_gamma) {
+        result = pow(max(result, vec3f(0.0)), vec3f(2.2));
+    }
+    return clamp(result, vec3f(0.0), vec3f(1.0));
 }

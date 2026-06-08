@@ -91,7 +91,27 @@ invert_darken:
   step: 0.01
   default: 0.0
 
+# ------------------------------------------------------------------------------
+#  Posterize
+# ------------------------------------------------------------------------------
+
 posterize:
+  type: separator
+
+posterize_mode:
+  type: select
+  var: mz
+  default: rgb
+  options:
+    - rgb
+    - luma
+
+posterize_gamma:
+  type: checkbox
+  var: mw
+  default: false
+
+posterize_amount:
   type: slider
   var: bz
   step: 0.01
@@ -365,12 +385,32 @@ pixel_sort_direction:
     - horizontal
     - vertical
 
+animate_pixel_sort:
+  type: checkbox
+  var: nx
+  default: false
+
+animate_pixel_sort_attenuation:
+  type: slider
+  var: nz
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 1.0
+  disabled: not animate_pixel_sort
+
 pixel_sort_amount:
   type: slider
   var: kx
   range: [-1.0, 1.0]
   step: 0.01
   default: 0.0
+  disabled: animate_pixel_sort
+
+pixel_sort_triangle:
+  type: triangle
+  var: ny
+  beats: 8
+  range: [-1.0, 1.0]
 
 pixel_sort_threshold:
   type: slider
