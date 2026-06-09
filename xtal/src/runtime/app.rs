@@ -1,3 +1,18 @@
+//! Main application runtime for xtal.
+//!
+//! This module owns the process-level application loop:
+//!
+//! - choose and instantiate the active sketch;
+//! - create the winit window, wgpu surface, render context, and graph;
+//! - build the `ControlHub` and timing source for the active sketch;
+//! - route `RuntimeEvent` commands from the UI, keyboard, timing, and
+//!   background callbacks;
+//! - emit runtime-to-UI notifications through the web view bridge;
+//! - save and restore global settings plus per-sketch control state.
+//!
+//! `RuntimeEvent` variant docs describe when each event is sent. The dispatcher
+//! in this file describes the side effects of those events.
+
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -51,12 +66,22 @@ const DEFAULT_OSC_PORT: u16 = 2346;
 const CONTINUE_HANDLING: bool = false;
 const QUIT_REQUESTED: bool = true;
 
+/// UI-only state that should survive sketch switches in this runtime session.
+///
+/// The control hub stores live control values and MIDI/OSC/audio mappings. This
+/// cache stores the web-view shape of per-sketch mapping and randomize
+/// exclusion state so switching away from a sketch and back does not lose local
+/// UI edits before they are saved.
 #[derive(Clone, Default)]
 struct SketchUiState {
     mappings: web_view::Mappings,
     exclusions: web_view::Exclusions,
 }
 
+/// GPU readback state for a PNG capture requested from the UI or shortcut.
+///
+/// The render pass fills the buffer, then `queue_png_capture_save` maps it on a
+/// worker thread so the winit event loop does not block on PNG encoding.
 struct PendingPngCapture {
     path: PathBuf,
     buffer: wgpu::Buffer,
@@ -66,13 +91,21 @@ struct PendingPngCapture {
     source_format: wgpu::TextureFormat,
 }
 
+/// Long-lived application state owned by the winit application handler.
+///
+/// `XtalRuntime` is intentionally the place where process-wide concerns meet:
+/// windowing, GPU resources, active sketch state, the web view bridge, global
+/// settings, and background event callbacks. Sketch-specific behavior should
+/// still live in sketches, controls, timing, and graph code.
 struct XtalRuntime {
+    // Active sketch identity and factory source.
     registry: RuntimeRegistry,
     active_sketch_name: String,
     timing_mode_override: Option<TimingMode>,
     config: &'static SketchConfig,
     sketch: Box<dyn Sketch>,
     render_requested: bool,
+
     // Runtime command ingress used for cross-component async handoff.
     // Best practice:
     // - Use direct helper calls for immediate local state changes.
@@ -81,6 +114,8 @@ struct XtalRuntime {
     command_tx: RuntimeCommandSender,
     command_rx: RuntimeCommandReceiver,
     event_tx: Option<RuntimeEventSender>,
+
+    // Window, surface, device, and render context resources.
     instance: Option<wgpu::Instance>,
     adapter: Option<wgpu::Adapter>,
     window: Option<Arc<Window>>,
@@ -93,6 +128,8 @@ struct XtalRuntime {
     context: Option<Context>,
     uniforms: Option<UniformBanks>,
     graph: Option<CompiledGraph>,
+
+    // Runtime control, timing, and performance state.
     control_hub: Option<ControlHub<Timing>>,
     bpm: Bpm,
     tap_tempo: TapTempo,
@@ -106,6 +143,8 @@ struct XtalRuntime {
     sketch_ui_state: HashMap<String, SketchUiState>,
     recording_state: RecordingState,
     session_id: String,
+
+    // External IO selections and live output handles.
     audio_device: String,
     audio_devices: Vec<String>,
     hrcc: bool,
@@ -116,6 +155,8 @@ struct XtalRuntime {
     midi_input_ports: Vec<(usize, String)>,
     midi_output_ports: Vec<(usize, String)>,
     osc_port: u16,
+
+    // Storage locations and cross-frame bookkeeping.
     images_dir: String,
     user_data_dir: String,
     videos_dir: String,
@@ -127,8 +168,12 @@ struct XtalRuntime {
 }
 
 impl XtalRuntime {
-    // Builds runtime state from registry + persisted settings before window/GPU
-    // init.
+    /// Builds runtime state before window and GPU initialization.
+    ///
+    /// This loads global settings from the sketch storage root, normalizes
+    /// persisted device/port selections against currently available devices,
+    /// starts shared OSC and MIDI output listeners, and leaves GPU/window
+    /// resources empty until the winit `resumed` hook runs.
     fn new(
         registry: RuntimeRegistry,
         initial_sketch: Option<&str>,
@@ -240,7 +285,7 @@ impl XtalRuntime {
         let audio_device_updated = runtime.normalize_audio_device_selection();
         let midi_ports_updated = runtime.normalize_midi_port_selections();
         let osc_port_updated = runtime.normalize_osc_port_selection();
-        runtime.start_osc_receiver();
+        runtime.restart_osc_receiver();
         runtime.connect_midi_out();
         runtime.log_midi_startup_state();
         if audio_device_updated || midi_ports_updated || osc_port_updated {
@@ -250,8 +295,14 @@ impl XtalRuntime {
         Ok(runtime)
     }
 
-    // Single command/event dispatcher for runtime behavior changes.
-    // Returns `QUIT_REQUESTED` when handling should terminate early.
+    /// Applies one runtime command on the main application thread.
+    ///
+    /// `RuntimeEvent` documents when each event is sent. This dispatcher owns
+    /// the actual side effects: mutating runtime state, restarting listeners,
+    /// updating the control hub, requesting redraws, saving state, and
+    /// notifying the web view.
+    ///
+    /// Returns `QUIT_REQUESTED` when handling should terminate early.
     fn on_runtime_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -1005,8 +1056,12 @@ impl XtalRuntime {
         CONTINUE_HANDLING
     }
 
-    // Drains inbound command channel and routes events through the central
-    // dispatcher.
+    /// Drains pending commands from the async command channel.
+    ///
+    /// The web view bridge, timing callbacks, control hub callbacks, and
+    /// background tasks cannot safely mutate runtime state directly. They send
+    /// `RuntimeEvent` values here so all side effects happen on the main winit
+    /// thread through `on_runtime_event`.
     fn process_commands(&mut self, event_loop: &ActiveEventLoop) {
         while let Ok(event) = self.command_rx.try_recv() {
             if self.on_runtime_event(event_loop, event) == QUIT_REQUESTED {
@@ -1015,7 +1070,7 @@ impl XtalRuntime {
         }
     }
 
-    // Throttled FPS broadcast to UI (once per second).
+    /// Broadcasts average FPS to the UI at most once per second.
     fn emit_average_fps_if_due(&mut self, now: Instant) {
         if now.duration_since(self.last_average_fps_emit)
             < Duration::from_secs(1)
@@ -1029,13 +1084,14 @@ impl XtalRuntime {
         ));
     }
 
-    // Main render/update pipeline.
-    //
-    // Order matters:
-    // 1) Update sketch + hub, write uniforms.
-    // 2) Acquire surface frame, run sketch view + graph execution.
-    // 3) Encode recording/capture readback copies before submit.
-    // 4) Submit once, then run post-submit host-side work.
+    /// Runs one update/render pass when a redraw is requested.
+    ///
+    /// Order matters:
+    ///
+    /// 1. Update sketch + hub, then write uniforms.
+    /// 2. Acquire the surface frame and execute the graph.
+    /// 3. Encode recording/capture readback copies before submit.
+    /// 4. Submit once, then run post-submit host-side work.
     fn render(&mut self, event_loop: &ActiveEventLoop) {
         if !self.render_requested {
             return;
@@ -1349,7 +1405,11 @@ impl XtalRuntime {
         }
     }
 
-    // Main-window keyboard handling mirroring UI shortcut semantics.
+    /// Converts main-window shortcuts into the same events used by the UI.
+    ///
+    /// The web view has its own keyboard focus, so this only handles shortcuts
+    /// delivered to the render window. Keeping shortcuts routed through
+    /// `RuntimeEvent` avoids a second implementation path for the same actions.
     fn handle_main_window_shortcut(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -1476,7 +1536,10 @@ impl XtalRuntime {
         false
     }
 
-    // Creates window/surface/device/context then compiles sketch graph state.
+    /// Creates the window, GPU resources, render context, and sketch graph.
+    ///
+    /// Winit calls this from `resumed`, which is the first point where creating
+    /// platform windows and surfaces is valid.
     fn init_runtime(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -1566,7 +1629,12 @@ impl XtalRuntime {
         Ok(())
     }
 
-    // Rebuilds graph + uniforms + control hub for startup/switch/reload.
+    /// Rebuilds graph, uniforms, and control hub for startup or sketch switch.
+    ///
+    /// Rebuilding the control hub here attaches the active sketch's YAML
+    /// controls and timing source to the render graph. Saved per-sketch state
+    /// is restored after the hub exists so persisted values apply to current
+    /// control definitions.
     fn rebuild_graph_state(&mut self) -> Result<(), String> {
         let mut graph_builder = GraphBuilder::new();
         graph_builder.set_videos_dir(self.videos_dir.clone());
@@ -1604,7 +1672,11 @@ impl XtalRuntime {
         Ok(())
     }
 
-    // Builds hub from sketch control script and wires callback bridges.
+    /// Builds the control hub from the active sketch control script.
+    ///
+    /// This is where sketch controls receive their timing source. MIDI, audio,
+    /// snapshot, and populated callbacks are also bridged back into the runtime
+    /// command channel here.
     fn build_control_hub(&self) -> Option<ControlHub<Timing>> {
         let path = self.sketch.control_script()?;
 
@@ -1666,6 +1738,11 @@ impl XtalRuntime {
         Some(hub)
     }
 
+    /// Builds the effective timing source for the active sketch.
+    ///
+    /// The CLI timing override wins over the sketch's configured timing mode.
+    /// MIDI and hybrid timing also receive a callback that reports transport
+    /// Start/Continue/Stop back to the runtime.
     fn build_timing(&self) -> Timing {
         match self.effective_timing_mode() {
             TimingMode::Frame => Timing::frame(self.bpm.clone()),
@@ -1684,11 +1761,16 @@ impl XtalRuntime {
         }
     }
 
+    /// Returns the timing mode after applying the optional CLI override.
     fn effective_timing_mode(&self) -> TimingMode {
         self.timing_mode_override
             .unwrap_or_else(|| self.sketch.timing_mode())
     }
 
+    /// Creates the callback timing sources use for MIDI transport events.
+    ///
+    /// Timing code owns clock parsing. The runtime only needs transport
+    /// lifecycle events so it can reset graph state and start/stop recording.
     fn midi_transport_event_sender(
         &self,
     ) -> impl Fn(MidiTransportEvent) + Send + Sync + 'static {
@@ -1703,6 +1785,7 @@ impl XtalRuntime {
         }
     }
 
+    /// Connects or reconnects MIDI output for sending control snapshots.
     fn connect_midi_out(&mut self) {
         if self.midi_output_port.is_empty() {
             info!("Skipping MIDI output connection; no MIDI output port.");
@@ -1725,6 +1808,7 @@ impl XtalRuntime {
         };
     }
 
+    /// Logs resolved MIDI and OSC startup selections.
     fn log_midi_startup_state(&self) {
         info!(
             "MIDI/OSC startup state: input_port='{}', \
@@ -1741,6 +1825,10 @@ impl XtalRuntime {
         debug!("MIDI output ports: {:?}", self.midi_output_ports);
     }
 
+    /// Resolves persisted MIDI ports against currently available ports.
+    ///
+    /// Returns true when any persisted selection was replaced so global
+    /// settings can be saved with the resolved value.
     fn normalize_midi_port_selections(&mut self) -> bool {
         let mut changed = false;
 
@@ -1829,6 +1917,7 @@ impl XtalRuntime {
         changed
     }
 
+    /// Resolves the persisted audio device against currently available devices.
     fn normalize_audio_device_selection(&mut self) -> bool {
         if self.audio_devices.is_empty() {
             return false;
@@ -1852,6 +1941,7 @@ impl XtalRuntime {
         true
     }
 
+    /// Replaces an invalid persisted OSC port with the runtime default.
     fn normalize_osc_port_selection(&mut self) -> bool {
         if self.osc_port == 0 {
             self.osc_port = DEFAULT_OSC_PORT;
@@ -1861,19 +1951,18 @@ impl XtalRuntime {
         false
     }
 
-    fn start_osc_receiver(&self) {
-        if let Err(err) = SHARED_OSC_RECEIVER.restart(self.osc_port) {
-            error!("Failed to restart OSC receiver: {}", err);
-        }
-    }
-
+    /// Restarts the shared OSC receiver on the current runtime port.
+    ///
+    /// The receiver itself is shared by OSC controls and OSC timing; runtime
+    /// only owns the configured port and restarts the shared listener when that
+    /// setting changes.
     fn restart_osc_receiver(&self) {
         if let Err(err) = SHARED_OSC_RECEIVER.restart(self.osc_port) {
             error!("Failed to restart OSC receiver: {}", err);
         }
     }
 
-    // Applies resize to surface config and runtime context resolution.
+    /// Applies resize to surface config and runtime context resolution.
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width == 0 || new_size.height == 0 {
             return;
@@ -1901,7 +1990,10 @@ impl XtalRuntime {
         }
     }
 
-    // Internal runtime event emitter.
+    /// Emits a runtime notification to external listeners.
+    ///
+    /// This is the runtime-to-bridge path, not the command path. It is used for
+    /// web view updates and lifecycle notifications.
     fn emit_event(&self, event: RuntimeEvent) {
         let Some(event_tx) = self.event_tx.as_ref() else {
             return;
@@ -1912,12 +2004,12 @@ impl XtalRuntime {
         }
     }
 
-    // Convenience wrapper for runtime -> webview events.
+    /// Wraps a web view event in `RuntimeEvent::WebView` and emits it.
     fn emit_web_view_event(&self, event: web_view::Event) {
         self.emit_event(RuntimeEvent::WebView(Box::new(event)));
     }
 
-    // Returns cached per-sketch UI state.
+    /// Returns cached per-sketch UI state.
     fn current_sketch_ui_state(&self) -> SketchUiState {
         self.sketch_ui_state
             .get(&self.active_sketch_name)
@@ -1925,14 +2017,14 @@ impl XtalRuntime {
             .unwrap_or_default()
     }
 
-    // Returns mutable per-sketch UI state, creating default if needed.
+    /// Returns mutable per-sketch UI state, creating default if needed.
     fn current_sketch_ui_state_mut(&mut self) -> &mut SketchUiState {
         self.sketch_ui_state
             .entry(self.active_sketch_name.clone())
             .or_default()
     }
 
-    // Derives UI mapping payload from hub MIDI override configs.
+    /// Derives the web-view mapping payload from hub MIDI override configs.
     fn mappings_from_hub(&self) -> web_view::Mappings {
         let Some(hub) = self.control_hub.as_ref() else {
             return HashMap::default();
@@ -1950,7 +2042,11 @@ impl XtalRuntime {
         mappings
     }
 
-    // Sends one-time UI bootstrap payload.
+    /// Sends the one-time UI bootstrap payload.
+    ///
+    /// This initializes global settings, port/device lists, sketch catalog
+    /// data, and persisted directory choices before the active sketch payload
+    /// is sent.
     fn emit_web_view_init(&self) {
         let event = web_view::Event::Init {
             audio_device: self.audio_device.clone(),
@@ -1983,7 +2079,10 @@ impl XtalRuntime {
         self.emit_web_view_event(event);
     }
 
-    // Sends active sketch payload (controls/snapshots/mappings/toggles).
+    /// Sends the active sketch payload to the web view.
+    ///
+    /// This includes controls, bypassed state, snapshot slots, mappings,
+    /// exclusions, BPM, play-state toggles, and sketch dimensions.
     fn emit_web_view_load_sketch(&mut self) {
         let controls = self
             .control_hub
@@ -2037,7 +2136,10 @@ impl XtalRuntime {
         self.emit_web_view_event(event);
     }
 
-    // Applies one UI control mutation into the hub and requests redraw.
+    /// Applies one UI control mutation into the hub.
+    ///
+    /// In advance mode, control edits should be visible immediately even though
+    /// the frame clock is paused, so this advances and redraws one frame.
     fn apply_control_update(&mut self, name: String, value: ControlValue) {
         let Some(hub) = self.control_hub.as_mut() else {
             warn!(
@@ -2056,6 +2158,11 @@ impl XtalRuntime {
         }
     }
 
+    /// Resets frame timing plus graph-owned video/animation transport state.
+    ///
+    /// MIDI Start/Continue, manual reset, and sketch changes all converge here
+    /// so the frame clock, graph, and video transports return to beat zero
+    /// together.
     fn reset_transport(&mut self) {
         frame_clock::reset();
         let video_transports = self
@@ -2075,7 +2182,10 @@ impl XtalRuntime {
         self.request_render_now();
     }
 
-    // Swaps sketch instance/config, rebuilds runtime graph state, updates UI.
+    /// Swaps sketch instance/config, rebuilds graph state, and updates the UI.
+    ///
+    /// Tap-tempo BPM is preserved across sketches while tap tempo is active;
+    /// otherwise the new sketch's configured BPM becomes the runtime BPM.
     fn switch_sketch(&mut self, name: &str) -> Result<(), String> {
         self.map_mode.stop();
 
@@ -2124,6 +2234,7 @@ impl XtalRuntime {
         Ok(())
     }
 
+    /// Requests a redraw on the next event loop cycle.
     fn request_render_now(&mut self) {
         self.render_requested = true;
         if let Some(window) = self.window.as_ref() {
@@ -2131,6 +2242,7 @@ impl XtalRuntime {
         }
     }
 
+    /// Applies the active sketch's play mode to the frame clock.
     fn apply_play_mode(&self) {
         let paused = match self.config.play_mode {
             PlayMode::Loop => false,
@@ -2139,7 +2251,11 @@ impl XtalRuntime {
         frame_clock::set_paused(paused);
     }
 
-    // Toggles performance-mode window policy.
+    /// Toggles performance-mode window policy.
+    ///
+    /// Leaving performance mode restores the sketch's configured window size
+    /// and anchor. Entering performance mode leaves the user's current layout
+    /// alone.
     fn set_perf_mode(&mut self, perf_mode: bool) {
         if self.perf_mode == perf_mode {
             return;
@@ -2166,6 +2282,7 @@ impl XtalRuntime {
         }
     }
 
+    /// Enables or disables projector render sizing.
     fn set_projector_mode(&mut self, enabled: bool) {
         if self.projector_mode_enabled == enabled {
             return;
@@ -2178,6 +2295,7 @@ impl XtalRuntime {
         self.request_render_now();
     }
 
+    /// Changes projector render quality and recomputes internal render size.
     fn set_projector_quality(&mut self, quality: ProjectorQuality) {
         if self.projector_quality == quality {
             return;
@@ -2190,6 +2308,7 @@ impl XtalRuntime {
         self.request_render_now();
     }
 
+    /// Synchronizes context render size with surface and projector settings.
     fn sync_context_render_size(&mut self) {
         let Some(surface_config) = self.surface_config.as_ref() else {
             return;
@@ -2206,6 +2325,7 @@ impl XtalRuntime {
         context.set_render_size(render_size);
     }
 
+    /// Opens or closes the monitor preview window.
     fn set_monitor_preview_enabled(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -2238,6 +2358,7 @@ impl XtalRuntime {
         self.emit_web_view_event(web_view::Event::MonitorPreview(enabled));
     }
 
+    /// Creates a monitor preview using the existing GPU instance and adapter.
     fn create_monitor_preview(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -2282,12 +2403,12 @@ impl XtalRuntime {
         Ok(())
     }
 
-    // Sends a UI alert message.
+    /// Sends a UI alert message.
     fn alert(&self, message: impl Into<String>) {
         self.emit_web_view_event(web_view::Event::Alert(message.into()));
     }
 
-    // Sends UI alert and emits log entry with matching level.
+    /// Sends a UI alert and emits a log entry with the same message.
     fn alert_and_log(&self, message: impl Into<String>, level: log::Level) {
         let message = message.into();
         self.alert(message.clone());
@@ -2300,7 +2421,7 @@ impl XtalRuntime {
         }
     }
 
-    // Resolves requested OS directory kind to an absolute path.
+    /// Resolves a requested OS directory kind to an absolute path.
     fn os_dir_path(&self, kind: &web_view::OsDir) -> PathBuf {
         match kind {
             web_view::OsDir::Cache => storage::cache_dir()
@@ -2309,12 +2430,14 @@ impl XtalRuntime {
         }
     }
 
-    // Updates cached randomize/save exclusions for active sketch.
+    /// Updates cached randomize/save exclusions for the active sketch.
     fn set_exclusions(&mut self, exclusions: web_view::Exclusions) {
         self.current_sketch_ui_state_mut().exclusions = exclusions;
     }
 
-    // Persists global runtime settings.
+    /// Persists global runtime settings to the user data directory.
+    ///
+    /// Per-sketch controls are saved separately through `RuntimeEvent::Save`.
     fn save_global_state(&self) {
         let settings = GlobalSettings {
             version: super::serialization::GLOBAL_SETTINGS_VERSION.to_string(),
@@ -2348,7 +2471,11 @@ impl XtalRuntime {
         }
     }
 
-    // Loads per-sketch controls/snapshots/mappings/exclusions into runtime.
+    /// Loads per-sketch controls, snapshots, mappings, and exclusions.
+    ///
+    /// This intentionally restores persisted values into the freshly populated
+    /// hub instead of replacing current UI control definitions, so YAML schema
+    /// changes remain authoritative.
     fn restore_sketch_state_from_disk(&mut self) {
         let current = self.current_sketch_ui_state();
         self.map_mode.set_mappings(current.mappings.clone());
@@ -2419,7 +2546,7 @@ impl XtalRuntime {
         }
     }
 
-    // Emits one-time shutdown events to peers.
+    /// Emits one-time shutdown events to peers.
     fn signal_shutdown(&mut self) {
         if self.shutdown_signaled {
             return;
@@ -2430,7 +2557,7 @@ impl XtalRuntime {
         self.emit_event(RuntimeEvent::Stopped);
     }
 
-    // Requests graceful exit of the event loop.
+    /// Requests graceful exit of the event loop.
     fn shutdown(&mut self, event_loop: &ActiveEventLoop) {
         self.signal_shutdown();
         event_loop.exit();
@@ -2458,7 +2585,10 @@ impl ApplicationHandler for XtalRuntime {
         self.emit_web_view_load_sketch();
     }
 
-    // Main window event router for input, resize, redraw, and close.
+    // Winit window event hook: route input, resize, redraw, and close events.
+    //
+    // Monitor preview window events are handled first because they belong to a
+    // separate window id but share the same application handler.
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -2523,7 +2653,10 @@ impl ApplicationHandler for XtalRuntime {
         }
     }
 
-    // Tick hook: drain commands and schedule frames via frame controller.
+    // Winit idle hook: drain commands and schedule frames through the clock.
+    //
+    // Runtime commands are processed before frame scheduling so UI, MIDI, OSC,
+    // and background callbacks can affect the next frame deterministically.
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         self.process_commands(event_loop);
         let now = Instant::now();
@@ -2552,12 +2685,17 @@ impl ApplicationHandler for XtalRuntime {
         ));
     }
 
-    // Final lifecycle hook.
+    // Winit final lifecycle hook.
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
         self.signal_shutdown();
     }
 }
 
+/// Runs a registry-backed xtal app with the production web view bridge.
+///
+/// `initial_sketch` selects the first active sketch. The optional timing mode
+/// override is parsed from the second process argument so launchers can choose
+/// frame, OSC, MIDI, hybrid, or manual timing at runtime.
 pub fn run_registry(
     registry: RuntimeRegistry,
     initial_sketch: Option<&str>,
@@ -2578,6 +2716,10 @@ pub fn run_registry(
     )
 }
 
+/// Runs the app with caller-provided command and notification channels.
+///
+/// This keeps the production launcher small while allowing tests or embedding
+/// code to provide their own bridge around the same runtime loop.
 fn run_registry_with_channels(
     registry: RuntimeRegistry,
     initial_sketch: Option<&str>,
@@ -2605,6 +2747,7 @@ fn run_registry_with_channels(
         .map_err(|err| err.to_string())
 }
 
+/// Parses the optional timing mode override from argv position 2.
 fn parse_timing_mode_arg() -> Result<Option<TimingMode>, String> {
     let Some(value) = env::args().nth(2) else {
         return Ok(None);
@@ -2613,6 +2756,7 @@ fn parse_timing_mode_arg() -> Result<Option<TimingMode>, String> {
     value.parse().map(Some)
 }
 
+/// Chooses the startup sketch by requested name or registry fallback.
 fn select_initial_sketch_name(
     registry: &RuntimeRegistry,
     initial_sketch: Option<&str>,
@@ -2634,6 +2778,7 @@ fn select_initial_sketch_name(
         .ok_or_else(|| "runtime registry is empty".to_string())
 }
 
+/// Instantiates one registered sketch and returns its static config.
 fn instantiate_sketch(
     registry: &RuntimeRegistry,
     name: &str,
@@ -2648,6 +2793,7 @@ fn instantiate_sketch(
     Ok((config, sketch))
 }
 
+/// Chooses the preferred surface format for the main render target.
 fn choose_surface_format(
     formats: &[wgpu::TextureFormat],
 ) -> Option<wgpu::TextureFormat> {
@@ -2658,6 +2804,7 @@ fn choose_surface_format(
         .or_else(|| formats.first().copied())
 }
 
+/// Places a non-performance-mode window at the top-left of its monitor.
 fn anchor_window_top_left(window: &Window) {
     let Some(monitor) = window.current_monitor() else {
         return;
@@ -2670,6 +2817,7 @@ fn anchor_window_top_left(window: &Window) {
     window.set_outer_position(winit::dpi::PhysicalPosition::new(x, y));
 }
 
+/// Maps a GPU readback buffer and writes it as an RGBA PNG.
 fn save_png_capture(
     device: &wgpu::Device,
     submission_index: wgpu::SubmissionIndex,
@@ -2745,6 +2893,7 @@ fn save_png_capture(
     Ok(())
 }
 
+/// Saves a completed PNG capture on a worker thread and alerts the UI.
 fn queue_png_capture_save(
     device: Arc<wgpu::Device>,
     submission_index: wgpu::SubmissionIndex,
@@ -2776,18 +2925,21 @@ fn queue_png_capture_save(
     });
 }
 
+/// Derives the default storage directory from a sketch control script path.
 fn default_user_data_dir_for_sketch(sketch: &dyn Sketch) -> Option<String> {
     let control_script = sketch.control_script()?;
     let crate_root = find_crate_root(control_script.as_path())?;
     Some(crate_root.join("storage").display().to_string())
 }
 
+/// Finds the containing crate root for a file path.
 fn find_crate_root(path: &Path) -> Option<PathBuf> {
     path.ancestors()
         .find(|ancestor| ancestor.join("Cargo.toml").exists())
         .map(Path::to_path_buf)
 }
 
+/// Converts top-row digit keys into snapshot slot identifiers.
 fn digit_from_key_code(code: KeyCode) -> Option<char> {
     match code {
         KeyCode::Digit0 => Some('0'),

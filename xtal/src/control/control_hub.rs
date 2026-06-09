@@ -201,7 +201,7 @@ impl<T: TimingSource> ControlHub<T> {
 
         let file_content =
             fs::read_to_string(&path).expect("Unable to read file");
-        let initial_content_hash = content_hash(&file_content);
+        let initial_content_hash = stable_hash(&file_content);
 
         let mut script = Self::new(Some(&file_content), timing);
         let has_changes = Arc::new(AtomicBool::new(false));
@@ -1476,7 +1476,7 @@ impl<T: TimingSource> ControlHub<T> {
                     let mut conf: RandomConfig =
                         serde_yml::from_value(config.config.clone())?;
                     conf.stem =
-                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
+                        Some(conf.stem.unwrap_or_else(|| stable_hash(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1487,7 +1487,7 @@ impl<T: TimingSource> ControlHub<T> {
                     let mut conf: RandomSlewedConfig =
                         serde_yml::from_value(config.config.clone())?;
                     conf.stem =
-                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
+                        Some(conf.stem.unwrap_or_else(|| stable_hash(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1501,7 +1501,7 @@ impl<T: TimingSource> ControlHub<T> {
                     let mut conf: RoundRobinConfig =
                         serde_yml::from_value(config.config.clone())?;
                     conf.stem =
-                        Some(conf.stem.unwrap_or_else(|| hash_stem(id)));
+                        Some(conf.stem.unwrap_or_else(|| stable_hash(id)));
 
                     self.animations.insert(
                         id.to_string(),
@@ -1878,7 +1878,7 @@ impl<T: TimingSource> ControlHub<T> {
                 }
             };
 
-            let new_hash = content_hash(&file_content);
+            let new_hash = stable_hash(&file_content);
             if let Ok(mut guard) = last_loaded_hash.lock() {
                 if guard.is_some_and(|existing_hash| existing_hash == new_hash)
                 {
@@ -2013,18 +2013,9 @@ fn path_matches_target(path: &Path, target: &Path) -> bool {
     }
 }
 
-/// Produce a deterministic `u64` from a mapping name, used as the default
-/// stem when the user omits `stem` from a YAML mapping. The hash is stable
-/// across runs for the same name.
-fn hash_stem(name: &str) -> u64 {
+fn stable_hash(value: &str) -> u64 {
     let mut hasher = DefaultHasher::new();
-    name.hash(&mut hasher);
-    hasher.finish()
-}
-
-fn content_hash(content: &str) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    content.hash(&mut hasher);
+    value.hash(&mut hasher);
     hasher.finish()
 }
 

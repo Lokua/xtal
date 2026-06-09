@@ -1,3 +1,38 @@
+//! GPU compiler and executor for an xtal render graph.
+//!
+//! The sketch code builds a `GraphSpec` with `GraphBuilder`: "these are my
+//! textures, these are my render or compute nodes, and this texture should be
+//! presented." This module turns that recipe into real `wgpu` objects.
+//!
+//! The important split is:
+//!
+//! - `compile` happens when the sketch starts or switches. It reads shader
+//!   files, validates WGSL, creates GPU pipelines, loads static images, and
+//!   opens video sources.
+//! - `execute` happens every frame. It makes sure textures have the current
+//!   render size, uploads the next video frames, runs every graph node in
+//!   order, and finally copies the chosen output to the window surface.
+//!
+//! A few wgpu terms in plain language:
+//!
+//! - A `Texture` is GPU image memory.
+//! - A `TextureView` is the way a pass reads or writes that image.
+//! - A `BindGroupLayout` says what a shader expects at each `@group` binding.
+//! - A `BindGroup` is the actual set of buffers, samplers, and textures used by
+//!   one draw or dispatch.
+//! - A `RenderPipeline` is a compiled vertex + fragment shader setup.
+//! - A `ComputePipeline` is a compiled compute shader setup.
+//! - A `CommandEncoder` records GPU work. The runtime submits that work after
+//!   graph execution finishes.
+//!
+//! Xtal's WGSL convention here is:
+//!
+//! - render shaders use `vs_main` and `fs_main`;
+//! - compute shaders use `cs_main`;
+//! - uniforms are always bind group 0;
+//! - sampled textures for render passes are bind group 1;
+//! - compute write targets are bind group 1 as a storage texture.
+
 use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
@@ -23,12 +58,22 @@ use crate::uniforms::UniformBanks;
 const OFFSCREEN_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 const IMAGE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
+/// Returns the extra bytes needed to satisfy wgpu's copy-row alignment.
+///
+/// GPU-to-CPU texture copies are stricter than PNG rows. Each copied row must
+/// be aligned to `wgpu::COPY_BYTES_PER_ROW_ALIGNMENT`, currently 256 bytes.
+/// Recording and image capture use this when allocating readback buffers.
 pub fn compute_row_padding(unpadded_bytes_per_row: u32) -> u32 {
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
     let rem = unpadded_bytes_per_row % align;
     if rem == 0 { 0 } else { align - rem }
 }
 
+/// GPU-ready version of a sketch graph.
+///
+/// `GraphSpec` is just a declarative recipe. `CompiledGraph` stores the actual
+/// GPU pipelines, loaded image/video sources, live offscreen textures, and the
+/// presentation rule used every frame.
 pub struct CompiledGraph {
     surface_format: wgpu::TextureFormat,
     present_source: PresentSource,
@@ -43,6 +88,11 @@ pub struct CompiledGraph {
     texture_labels: HashMap<TextureHandle, String>,
 }
 
+/// Texture plus the small bits of metadata the executor needs later.
+///
+/// `texture` owns GPU memory. `view` is what render, compute, and sampling
+/// passes bind. `size` lets us lazily recreate textures after resize. `format`
+/// matters for recording and presentation.
 struct GpuTexture {
     texture: wgpu::Texture,
     view: wgpu::TextureView,
@@ -50,11 +100,13 @@ struct GpuTexture {
     format: wgpu::TextureFormat,
 }
 
+/// A graph node after its shader has been compiled for the GPU.
 enum CompiledNode {
     Render(RenderNode),
     Compute(ComputeNode),
 }
 
+/// A render node with its resolved target and sampled texture dependencies.
 struct RenderNode {
     name: String,
     target: RenderTarget,
@@ -62,18 +114,28 @@ struct RenderNode {
     pass: RenderPass,
 }
 
+/// A compute node that writes into one offscreen texture.
 struct ComputeNode {
     name: String,
     target: TextureHandle,
     pass: ComputePass,
 }
 
+/// Where the final image comes from.
+///
+/// `Surface` means the graph writes directly to the window-sized render target.
+/// `Texture` means a `Present` node selected an offscreen/image/video texture.
 #[derive(Clone, Copy)]
 enum PresentSource {
     Surface,
     Texture(TextureHandle),
 }
 
+/// Compiled state for one render pass.
+///
+/// A render pass draws one or more meshes through a WGSL vertex/fragment
+/// shader. It always binds uniforms at group 0. If it samples textures, it also
+/// owns the group 1 texture layout and sampler.
 struct RenderPass {
     shader_path: PathBuf,
     target_format: wgpu::TextureFormat,
@@ -85,11 +147,16 @@ struct RenderPass {
     watcher: Option<ShaderWatch>,
 }
 
+/// Vertex buffer prepared from a `Mesh`.
 struct MeshDraw {
     vertex_buffer: wgpu::Buffer,
     vertex_count: u32,
 }
 
+/// Compiled state for one compute pass.
+///
+/// Xtal compute nodes write to one offscreen texture. The compute shader gets
+/// uniforms at group 0 and the writable storage texture at group 1.
 struct ComputePass {
     shader_path: PathBuf,
     compute_pipeline: wgpu::ComputePipeline,
@@ -97,6 +164,7 @@ struct ComputePass {
     watcher: Option<ShaderWatch>,
 }
 
+/// Texture resource declarations split into the groups the compiler needs.
 struct TextureResources {
     offscreen: Vec<TextureHandle>,
     images: HashMap<TextureHandle, PathBuf>,
@@ -104,11 +172,17 @@ struct TextureResources {
     labels: HashMap<TextureHandle, String>,
 }
 
+/// Data needed to open a video source and bind it to a control source name.
 struct VideoResource {
     paths: Vec<PathBuf>,
     source: String,
 }
 
+/// Per-frame inputs supplied by the runtime when executing the graph.
+///
+/// Most fields are borrowed from `Context`, `ControlHub`, and frame timing.
+/// This keeps `CompiledGraph` focused on GPU work while the runtime remains the
+/// owner of application state.
 pub struct ExecuteCtx<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
@@ -121,6 +195,14 @@ pub struct ExecuteCtx<'a> {
 }
 
 impl CompiledGraph {
+    /// Turns a graph recipe into GPU objects.
+    ///
+    /// This is intentionally front-loaded work. Shader files are read and
+    /// compiled, render/compute pipelines are built, image files are uploaded,
+    /// and video sources are opened here so the per-frame path can stay small.
+    ///
+    /// Offscreen textures are not allocated here because their size depends on
+    /// the current render size. They are created lazily in `execute`.
     pub fn compile(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -128,6 +210,9 @@ impl CompiledGraph {
         graph: GraphSpec,
         uniform_layout: &wgpu::BindGroupLayout,
     ) -> Result<Self, String> {
+        // A graph may either render directly to the surface or present one
+        // texture explicitly. The latter is what enables multi-pass graphs:
+        // pass A writes a texture, pass B reads it, Present shows the result.
         let present_source_handle = find_present_source(&graph)?;
         let TextureResources {
             offscreen: offscreen_resource_ids,
@@ -136,6 +221,8 @@ impl CompiledGraph {
             labels: texture_labels,
         } = collect_texture_resources(&graph.resources);
 
+        // Validate references before creating GPU objects. Without this, a
+        // missing texture handle would fail later in the middle of rendering.
         validate_graph_resources(
             &graph,
             &offscreen_resource_ids,
@@ -146,9 +233,13 @@ impl CompiledGraph {
 
         let mut nodes = Vec::new();
 
+        // Compile executable nodes in graph order. The order matters: a later
+        // render pass can sample a texture written by an earlier pass.
         for node in graph.nodes {
             match node {
                 NodeSpec::Render(render) => {
+                    // Uniform reads use the shared uniform bind group. Texture
+                    // reads need per-pass bind group layouts and views.
                     let sampled_reads = render
                         .reads
                         .iter()
@@ -158,6 +249,9 @@ impl CompiledGraph {
                         })
                         .collect::<Vec<_>>();
 
+                    // A shader pipeline must know the format it writes to.
+                    // Window surfaces use the platform-selected format;
+                    // offscreen textures use Xtal's fixed internal format.
                     let target_format = match render.write {
                         RenderTarget::Surface => surface_format,
                         RenderTarget::Texture(_) => OFFSCREEN_FORMAT,
@@ -196,6 +290,7 @@ impl CompiledGraph {
             return Err("graph has no executable nodes".to_string());
         }
 
+        // Images are static, so load and upload them once at compile time.
         let mut image_textures = HashMap::new();
 
         for (handle, path) in image_resources {
@@ -207,6 +302,8 @@ impl CompiledGraph {
             image_textures.insert(handle, texture);
         }
 
+        // Videos are dynamic. Open the source now, but start with a 1x1
+        // placeholder texture until the first decoded frame arrives.
         let mut video_sources = HashMap::new();
         let mut video_source_names = HashMap::new();
         let mut video_textures = HashMap::new();
@@ -244,17 +341,28 @@ impl CompiledGraph {
         })
     }
 
+    /// Executes the compiled graph for one frame.
+    ///
+    /// The runtime has already updated the control hub and uploaded uniforms
+    /// before calling this. This method only records GPU commands into the
+    /// frame encoder; the runtime submits those commands after recording and
+    /// capture copies have also been encoded.
     pub fn execute(
         &mut self,
         frame: &mut Frame,
         ctx: ExecuteCtx<'_>,
     ) -> Result<(), String> {
+        // Resize-sensitive resources are maintained lazily. This avoids
+        // rebuilding pipelines just because the window or projector size
+        // changed.
         self.ensure_offscreen_textures(ctx.device, ctx.render_size);
         self.ensure_surface_proxy_texture(
             ctx.device,
             ctx.render_size,
             ctx.surface_size,
         );
+        // Video sources are advanced from beat/time controls before any render
+        // pass samples them.
         self.update_video_textures(
             ctx.device,
             ctx.queue,
@@ -263,15 +371,22 @@ impl CompiledGraph {
             ctx.bpm,
         )?;
 
+        // The graph builder order is the execution order. Xtal does not infer a
+        // dependency graph here; sketch setup must add nodes in the order they
+        // should run.
         for node in &mut self.nodes {
             match node {
                 CompiledNode::Render(node) => {
+                    // Hot-reload swaps the pipeline in place if the WGSL file
+                    // changed. Bad reloads keep the previous working pipeline.
                     node.pass.update_if_changed(
                         ctx.device,
                         &node.sampled_reads,
                         ctx.uniforms.bind_group_layout(),
                     );
 
+                    // Texture bind groups are created per frame because the
+                    // texture views can change after resize or video decode.
                     let texture_bind_group = if !node.sampled_reads.is_empty() {
                         Some(node.pass.create_texture_bind_group(
                             ctx.device,
@@ -284,6 +399,8 @@ impl CompiledGraph {
                         None
                     };
 
+                    // Render passes write either to the window path or to an
+                    // offscreen texture that another node can sample later.
                     let target_view = match node.target {
                         RenderTarget::Surface => self
                             .surface_proxy_texture
@@ -295,14 +412,20 @@ impl CompiledGraph {
                             .get(&texture)
                             .ok_or_else(|| {
                                 format!(
-                                    "render target '{}' was not declared as texture2d",
-                                    texture_label(texture, &self.texture_labels)
+                                    "render target '{}' was not declared as \
+                                        texture2d",
+                                    texture_label(
+                                        texture,
+                                        &self.texture_labels
+                                    )
                                 )
                             })?
                             .view
                             .clone(),
                     };
 
+                    // Beginning a render pass records "draw into this target"
+                    // commands into the frame command encoder.
                     let mut render_pass = frame.encoder().begin_render_pass(
                         &wgpu::RenderPassDescriptor {
                             label: Some(&node.name),
@@ -336,6 +459,7 @@ impl CompiledGraph {
                         render_pass.set_bind_group(1, bind_group, &[]);
                     }
 
+                    // Each mesh is drawn with the same shader and bindings.
                     for mesh in &node.pass.meshes {
                         render_pass
                             .set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
@@ -343,6 +467,8 @@ impl CompiledGraph {
                     }
                 }
                 CompiledNode::Compute(node) => {
+                    // Compute shaders do not draw triangles. They dispatch
+                    // workgroups that write pixels into a storage texture.
                     node.pass.update_if_changed(
                         ctx.device,
                         ctx.uniforms.bind_group_layout(),
@@ -355,6 +481,9 @@ impl CompiledGraph {
                             &node.target,
                         )?;
 
+                    // Xtal compute shaders are dispatched in 8x8 workgroups.
+                    // Shader code should guard against invocation ids outside
+                    // the actual image bounds on non-multiple-of-8 sizes.
                     let width = ctx.render_size[0].max(1);
                     let height = ctx.render_size[1].max(1);
                     let workgroup_x = width.div_ceil(8);
@@ -383,6 +512,9 @@ impl CompiledGraph {
             }
         }
 
+        // Presentation is the final copy to the actual surface. Even when a
+        // graph wrote to an intermediate texture, the window only displays the
+        // surface texture acquired by the runtime for this frame.
         if let PresentSource::Texture(source) = self.present_source {
             let source_view =
                 if let Some(texture) = self.offscreen_textures.get(&source) {
@@ -416,6 +548,10 @@ impl CompiledGraph {
         Ok(())
     }
 
+    /// Resets video sources and clears their current GPU textures.
+    ///
+    /// This runs on transport reset, MIDI Start/Continue, and sketch reset so
+    /// beat-synced video returns to the start with the rest of the graph.
     pub fn reset(
         &mut self,
         device: &wgpu::Device,
@@ -450,6 +586,11 @@ impl CompiledGraph {
         }
     }
 
+    /// Updates every video-backed GPU texture for the current frame.
+    ///
+    /// If a video has a named transport in the control hub, that transport is
+    /// applied before decoding. The decoded RGBA frame is then uploaded into
+    /// the texture that render passes sample.
     fn update_video_textures(
         &mut self,
         device: &wgpu::Device,
@@ -538,6 +679,12 @@ impl CompiledGraph {
         Ok(())
     }
 
+    /// Ensures every declared offscreen texture exists at the render size.
+    ///
+    /// These textures are where multi-pass render nodes and compute nodes
+    /// write.
+    /// They are recreated on resize, which invalidates old `TextureView`s and
+    /// is why render bind groups are rebuilt each frame.
     fn ensure_offscreen_textures(
         &mut self,
         device: &wgpu::Device,
@@ -589,6 +736,12 @@ impl CompiledGraph {
         }
     }
 
+    /// Creates the proxy used when render size differs from surface size.
+    ///
+    /// In projector mode the graph can render internally at a lower resolution
+    /// than the actual window. In that case direct-to-surface render nodes draw
+    /// into this proxy first, and the proxy is scaled to the real surface at
+    /// the end of `execute`.
     fn ensure_surface_proxy_texture(
         &mut self,
         device: &wgpu::Device,
@@ -639,6 +792,11 @@ impl CompiledGraph {
         });
     }
 
+    /// Returns the texture that recording should copy from.
+    ///
+    /// If the graph presents an offscreen/image/video texture, that exact
+    /// texture is the recording source. If the graph presents the surface path,
+    /// recording only has a texture source when a surface proxy exists.
     pub fn recording_source_texture(&self) -> Option<&wgpu::Texture> {
         match self.present_source {
             PresentSource::Surface => self
@@ -662,6 +820,7 @@ impl CompiledGraph {
         }
     }
 
+    /// Returns the format of `recording_source_texture`.
     pub fn recording_source_format(&self) -> Option<wgpu::TextureFormat> {
         match self.present_source {
             PresentSource::Surface => self
@@ -687,6 +846,12 @@ impl CompiledGraph {
 }
 
 impl RenderPass {
+    /// Builds one render pipeline from a render node spec.
+    ///
+    /// The shader must read `params` because Xtal always exposes runtime
+    /// controls through the uniform bank. Texture reads are optional; when a
+    /// node has them, this creates the sampler and texture bind group layout
+    /// expected by the shader.
     fn new(
         device: &wgpu::Device,
         target_format: wgpu::TextureFormat,
@@ -696,6 +861,8 @@ impl RenderPass {
     ) -> Result<Self, String> {
         let shader_path = normalize_shader_path(&node.shader_path)?;
 
+        // This keeps shader/runtime expectations explicit. If a render node
+        // does not declare the uniform read, it would not get bind group 0.
         if !node
             .reads
             .iter()
@@ -723,6 +890,9 @@ impl RenderPass {
             )
         })?;
 
+        // Binding layout for sampled textures:
+        // - binding 0 is one shared sampler;
+        // - bindings 1..N are the texture views in node.read order.
         let (texture_bind_group_layout, sampler) = if sampled_reads.is_empty() {
             (None, None)
         } else {
@@ -781,6 +951,11 @@ impl RenderPass {
         })
     }
 
+    /// Creates the actual texture bind group for this frame.
+    ///
+    /// The layout was created at compile time, but the views can change at
+    /// runtime because offscreen textures resize and video textures can change
+    /// dimensions. Rebuilding this small bind group per frame keeps it correct.
     fn create_texture_bind_group(
         &self,
         device: &wgpu::Device,
@@ -831,6 +1006,10 @@ impl RenderPass {
         }))
     }
 
+    /// Reloads this pass's WGSL file if the watcher reports a change.
+    ///
+    /// Failed reloads are logged and ignored, leaving the last valid pipeline
+    /// in place so live coding mistakes do not kill the running sketch.
     fn update_if_changed(
         &mut self,
         device: &wgpu::Device,
@@ -877,7 +1056,8 @@ impl RenderPass {
         if !sampled_reads.is_empty() && self.texture_bind_group_layout.is_none()
         {
             warn!(
-                "shader '{}' reads textures but no texture bind group layout is configured",
+                "shader '{}' reads textures but no texture bind group layout \
+                    is configured",
                 self.shader_path.display()
             );
         }
@@ -887,6 +1067,10 @@ impl RenderPass {
 }
 
 impl ComputePass {
+    /// Builds one compute pipeline from a compute node spec.
+    ///
+    /// A compute node has exactly one writable texture target. That texture is
+    /// bound as a write-only storage texture at group 1 binding 0.
     fn new(
         device: &wgpu::Device,
         node: &ComputeNodeSpec,
@@ -941,6 +1125,10 @@ impl ComputePass {
         })
     }
 
+    /// Creates the storage bind group for this frame's compute target.
+    ///
+    /// Like render texture bind groups, this is rebuilt as needed because the
+    /// target texture can be recreated after a resize.
     fn create_storage_bind_group(
         &self,
         device: &wgpu::Device,
@@ -964,6 +1152,9 @@ impl ComputePass {
         }))
     }
 
+    /// Reloads this compute shader if the WGSL file changed.
+    ///
+    /// A failed reload keeps the previous working compute pipeline alive.
     fn update_if_changed(
         &mut self,
         device: &wgpu::Device,
@@ -1011,6 +1202,10 @@ impl ComputePass {
     }
 }
 
+/// Creates a render pipeline for Xtal's render shader convention.
+///
+/// The shader must expose `vs_main` and `fs_main`. Bind group 0 is uniforms;
+/// bind group 1 exists only when the render node samples textures.
 fn create_render_pipeline(
     device: &wgpu::Device,
     format: wgpu::TextureFormat,
@@ -1084,6 +1279,7 @@ const POSITION_2D_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
 const POSITION_3D_VERTEX_ATTRIBUTES: [wgpu::VertexAttribute; 1] =
     wgpu::vertex_attr_array![0 => Float32x3];
 
+/// Returns the vertex-buffer layout matching the mesh data for a render node.
 fn vertex_buffer_layout_for_kind(
     mesh_kind: MeshVertexKind,
 ) -> wgpu::VertexBufferLayout<'static> {
@@ -1103,6 +1299,7 @@ fn vertex_buffer_layout_for_kind(
     }
 }
 
+/// Uploads a CPU mesh into a GPU vertex buffer.
 fn create_mesh_draw(device: &wgpu::Device, mesh: &Mesh) -> MeshDraw {
     match mesh {
         Mesh::Positions2D(vertices) => {
@@ -1132,6 +1329,11 @@ fn create_mesh_draw(device: &wgpu::Device, mesh: &Mesh) -> MeshDraw {
     }
 }
 
+/// Ensures every mesh in one render node uses the same vertex format.
+///
+/// A single wgpu render pipeline has one vertex-buffer layout. Mixing 2D and 3D
+/// meshes in the same node would require different layouts, so Xtal rejects it
+/// early.
 fn infer_mesh_kind_for_node(
     node: &RenderNodeSpec,
 ) -> Result<MeshVertexKind, String> {
@@ -1143,7 +1345,8 @@ fn infer_mesh_kind_for_node(
     for (index, mesh) in node.meshes.iter().enumerate() {
         if mesh.vertex_kind() != mesh_kind {
             return Err(format!(
-                "render node '{}' has mixed mesh vertex kinds; mesh {} differs from first mesh",
+                "render node '{}' has mixed mesh vertex kinds; mesh {} \
+                    differs from first mesh",
                 node.name, index
             ));
         }
@@ -1152,6 +1355,10 @@ fn infer_mesh_kind_for_node(
     Ok(mesh_kind)
 }
 
+/// Creates a compute pipeline for Xtal's compute shader convention.
+///
+/// The shader must expose `cs_main`. Bind group 0 is uniforms and bind group 1
+/// is the writable storage texture.
 fn create_compute_pipeline(
     device: &wgpu::Device,
     uniform_layout: &wgpu::BindGroupLayout,
@@ -1181,6 +1388,15 @@ fn create_compute_pipeline(
     })
 }
 
+/// Creates the group 1 layout used by render passes that sample textures.
+///
+/// The corresponding WGSL shape is:
+///
+/// ```wgsl
+/// @group(1) @binding(0) var samp: sampler;
+/// @group(1) @binding(1) var tex0: texture_2d<f32>;
+/// @group(1) @binding(2) var tex1: texture_2d<f32>;
+/// ```
 fn create_texture_bind_group_layout(
     device: &wgpu::Device,
     texture_count: usize,
@@ -1215,6 +1431,11 @@ fn create_texture_bind_group_layout(
     })
 }
 
+/// Creates the group 1 layout used by compute passes.
+///
+/// The compute shader writes pixels into this storage texture. The texture
+/// format must match `OFFSCREEN_FORMAT`, because compute targets are always
+/// declared offscreen `texture2d` resources.
 fn create_storage_bind_group_layout(
     device: &wgpu::Device,
 ) -> wgpu::BindGroupLayout {
@@ -1233,6 +1454,10 @@ fn create_storage_bind_group_layout(
     })
 }
 
+/// Draws one texture onto the real window surface.
+///
+/// This is the final presentation copy. It uses a tiny built-in shader rather
+/// than asking every sketch shader to know about surface scaling and formats.
 fn blit_texture_to_surface(
     device: &wgpu::Device,
     frame: &mut Frame,
@@ -1374,6 +1599,10 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
 }
 "#;
 
+/// Loads a PNG file and uploads it into a sampled GPU texture.
+///
+/// Xtal currently accepts 8-bit RGB and RGBA PNGs here. RGB data is expanded to
+/// RGBA because the GPU upload path and shaders expect four bytes per pixel.
 fn load_image_texture(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -1433,7 +1662,8 @@ fn load_image_texture(
         }
         _ => {
             return Err(format!(
-                "unsupported PNG format for '{}': {:?} {:?} (expected RGB/RGBA 8-bit)",
+                "unsupported PNG format for '{}': {:?} {:?} \
+                    (expected RGB/RGBA 8-bit)",
                 name, info.color_type, info.bit_depth
             ));
         }
@@ -1485,6 +1715,10 @@ fn load_image_texture(
     })
 }
 
+/// Creates a black 1x1 texture used until real image/video data is available.
+///
+/// This prevents render passes from failing just because a video source has not
+/// produced its first frame yet.
 fn create_placeholder_texture(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -1536,6 +1770,10 @@ fn create_placeholder_texture(
     }
 }
 
+/// Parses and validates WGSL before creating a wgpu pipeline.
+///
+/// This catches many shader errors at graph compile or hot-reload time and
+/// lets Xtal print a normal error instead of failing later in GPU submission.
 fn validate_shader(source: &str) -> Result<(), String> {
     let module = wgsl::parse_str(source).map_err(|err| err.to_string())?;
 
@@ -1548,6 +1786,11 @@ fn validate_shader(source: &str) -> Result<(), String> {
         .map(|_| ())
 }
 
+/// Resolves relative asset paths against the current process directory.
+///
+/// Sketches usually pass paths relative to the workspace they are run from.
+/// This helper turns them into absolute paths before shader/image loading and
+/// file watching.
 fn normalize_shader_path(path: &Path) -> Result<PathBuf, String> {
     if path.is_absolute() {
         return Ok(path.to_path_buf());
@@ -1559,6 +1802,11 @@ fn normalize_shader_path(path: &Path) -> Result<PathBuf, String> {
     Ok(cwd.join(path))
 }
 
+/// Finds the single optional `Present` node in a graph.
+///
+/// Without a `Present` node, direct-to-surface rendering is used. With one,
+/// the selected texture is copied to the surface after all executable nodes
+/// run.
 fn find_present_source(
     graph: &GraphSpec,
 ) -> Result<Option<TextureHandle>, String> {
@@ -1576,6 +1824,11 @@ fn find_present_source(
     Ok(source)
 }
 
+/// Splits graph resource declarations into concrete texture categories.
+///
+/// The graph builder stores all resources together. The compiler needs separate
+/// maps because offscreen textures, images, and videos are created and updated
+/// differently.
 fn collect_texture_resources(resources: &[ResourceDecl]) -> TextureResources {
     let mut offscreen = Vec::new();
     let mut images = HashMap::new();
@@ -1615,6 +1868,11 @@ fn collect_texture_resources(resources: &[ResourceDecl]) -> TextureResources {
     }
 }
 
+/// Checks that graph nodes only refer to declared texture resources.
+///
+/// This is a friendly validation pass before GPU execution. It catches common
+/// mistakes like rendering to an undeclared texture, sampling a missing
+/// texture, or asking a compute node to write to an image/video texture.
 fn validate_graph_resources(
     graph: &GraphSpec,
     offscreen_resource_ids: &[TextureHandle],
@@ -1635,7 +1893,8 @@ fn validate_graph_resources(
         && !video_ids.contains(&source)
     {
         return Err(format!(
-            "present source texture {} is not a declared offscreen/image/video texture resource",
+            "present source texture {} is not a declared \
+                offscreen/image/video texture resource",
             source.index()
         ));
     }
@@ -1647,7 +1906,8 @@ fn validate_graph_resources(
                     && !offscreen_ids.contains(&target)
                 {
                     return Err(format!(
-                        "render node '{}' writes texture {} which is not a declared texture2d resource",
+                        "render node '{}' writes texture {} which is not a \
+                            declared texture2d resource",
                         render.name,
                         target.index()
                     ));
@@ -1660,7 +1920,8 @@ fn validate_graph_resources(
                         && !video_ids.contains(texture)
                     {
                         return Err(format!(
-                            "render node '{}' reads texture {} which is not a declared texture2d/image/video resource",
+                            "render node '{}' reads texture {} which is not a \
+                                declared texture2d/image/video resource",
                             render.name,
                             texture.index()
                         ));
@@ -1670,7 +1931,8 @@ fn validate_graph_resources(
             NodeSpec::Compute(compute) => {
                 if !offscreen_ids.contains(&compute.read_write) {
                     return Err(format!(
-                        "compute node '{}' read_write target '{}' is not a declared texture2d resource",
+                        "compute node '{}' read_write target '{}' is not a \
+                            declared texture2d resource",
                         compute.name,
                         compute.read_write.index()
                     ));
@@ -1683,6 +1945,7 @@ fn validate_graph_resources(
     Ok(())
 }
 
+/// Returns the human-readable graph label for diagnostics.
 fn texture_label(
     handle: TextureHandle,
     labels: &HashMap<TextureHandle, String>,
