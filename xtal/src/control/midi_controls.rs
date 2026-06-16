@@ -1,3 +1,9 @@
+//! MIDI CC control collection and message encoding.
+//!
+//! `MidiControls` maps incoming MIDI Control Change messages into named scalar
+//! values. It supports standard 7-bit CC and optional high-resolution CC
+//! pairing for controllers below 32.
+
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
@@ -5,16 +11,23 @@ use super::control_traits::{ControlCollection, ControlConfig};
 use crate::core::prelude::*;
 use crate::io::midi::{self, is_control_change};
 
+/// Runtime configuration for one MIDI CC-backed control.
 #[derive(Clone, Debug)]
 pub struct MidiControlConfig {
+    /// Zero-based MIDI channel.
     pub channel: u8,
+    /// Control Change number.
     pub cc: u8,
+    /// Minimum mapped output value.
     pub min: f32,
+    /// Maximum mapped output value.
     pub max: f32,
+    /// Initial mapped value.
     pub value: f32,
 }
 
 impl MidiControlConfig {
+    /// Creates a MIDI control config from `(channel, cc)`, range, and value.
     pub fn new(midi: (u8, u8), range: (f32, f32), value: f32) -> Self {
         Self {
             channel: midi.0,
@@ -28,8 +41,10 @@ impl MidiControlConfig {
 
 impl ControlConfig<f32, f32> for MidiControlConfig {}
 
+/// MIDI-backed control collection.
 #[derive(Clone, Debug, Default)]
 pub struct MidiControls {
+    /// Enables high-resolution CC pairing for CC numbers below 32.
     pub hrcc: bool,
     configs: HashMap<String, MidiControlConfig>,
     override_configs: HashMap<String, MidiControlConfig>,
@@ -40,14 +55,17 @@ pub struct MidiControls {
 }
 
 impl MidiControls {
+    /// Returns whether an input port has been configured.
     pub fn has_port(&self) -> bool {
         self.port.is_some()
     }
 
+    /// Sets the MIDI input port used by [`Self::start`].
     pub fn set_port(&mut self, port: String) {
         self.port = if port.is_empty() { None } else { Some(port) };
     }
 
+    /// Sets MIDI-learn override configs keyed by UI control name.
     pub fn set_override_configs(
         &mut self,
         configs: HashMap<String, MidiControlConfig>,
@@ -55,6 +73,7 @@ impl MidiControls {
         self.override_configs = configs;
     }
 
+    /// Sets the shared state map where MIDI-learn override values are stored.
     pub fn set_override_state(
         &mut self,
         override_state: Arc<Mutex<HashMap<String, f32>>>,
@@ -62,6 +81,7 @@ impl MidiControls {
         self.override_state = Some(override_state);
     }
 
+    /// Starts listening for incoming MIDI Control Change messages.
     pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
         let Some(midi_control_in_port) = self.port.clone() else {
             warn!(
@@ -233,16 +253,19 @@ impl MidiControls {
         }
     }
 
+    /// Restarts the MIDI listener on the configured port.
     pub fn restart(&mut self) -> Result<(), Box<dyn Error>> {
         self.is_active = false;
         info!("Restarting...");
         self.start()
     }
 
+    /// Returns whether the MIDI listener is currently active.
     pub fn is_active(&self) -> bool {
         self.is_active
     }
 
+    /// Encodes current values as standard 7-bit MIDI CC messages.
     pub fn messages(&self) -> Vec<[u8; 3]> {
         let values = self.values();
         let mut messages: Vec<[u8; 3]> = vec![];
@@ -259,6 +282,7 @@ impl MidiControls {
         messages
     }
 
+    /// Encodes current values as HRCC MSB/LSB pairs when supported.
     pub fn messages_hrcc(&self) -> Vec<[u8; 3]> {
         let values = self.values();
         let mut messages: Vec<[u8; 3]> = vec![];
@@ -366,21 +390,25 @@ impl
     }
 }
 
+/// Builder for programmatic MIDI control collections.
 #[derive(Default)]
 pub struct MidiControlBuilder {
     controls: MidiControls,
 }
 
 impl MidiControlBuilder {
+    /// Creates an empty MIDI control builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds one MIDI control config.
     pub fn control(mut self, name: &str, config: MidiControlConfig) -> Self {
         self.controls.add(name, config);
         self
     }
 
+    /// Builds the configured MIDI control collection.
     pub fn build(self) -> MidiControls {
         self.controls
     }
@@ -430,6 +458,7 @@ mod tests {
     }
 }
 
+/// Zero-based MIDI channel and Control Change number.
 pub type ChannelAndController = (u8, u8);
 type Msb = u8;
 

@@ -1,4 +1,5 @@
-//! Provides runtime mapping of MIDI CCs to UI sliders, AKA "MIDI learn".
+//! Runtime mapping of MIDI CCs to UI sliders, also known as MIDI learn.
+
 use std::error::Error;
 use std::fmt;
 use std::sync::{Arc, Mutex};
@@ -6,11 +7,15 @@ use std::sync::{Arc, Mutex};
 use crate::core::prelude::*;
 use crate::io::midi;
 
+/// Zero-based MIDI channel and Control Change number used by MIDI learn.
 pub type ChannelAndController = (usize, usize);
+/// UI control names mapped to `(channel, cc)` pairs.
 pub type Mappings = HashMap<String, ChannelAndController>;
 
+/// Shared MIDI-learn mapping state.
 #[derive(Debug)]
 pub struct MapModeState {
+    /// Learned mappings keyed by UI control name.
     mappings: Mappings,
     /// Stores MSB keys for pending HRCC MSB/LSB pairs.
     msb_ccs: Vec<ChannelAndController>,
@@ -20,6 +25,7 @@ pub struct MapModeState {
 pub struct MapMode {
     /// Name of slider currently selected for live mapping.
     pub currently_mapping: Option<String>,
+    /// Shared mapping state used by MIDI callbacks.
     pub state: Arc<Mutex<MapModeState>>,
 }
 
@@ -36,26 +42,30 @@ impl Default for MapMode {
 }
 
 impl MapMode {
+    /// Returns all learned mappings.
     pub fn mappings(&self) -> Mappings {
         let state = self.state.lock().unwrap();
         state.mappings.clone()
     }
 
+    /// Replaces the current learned mappings.
     pub fn set_mappings(&mut self, mappings: Mappings) {
         let mut state = self.state.lock().unwrap();
         state.mappings = mappings;
     }
 
+    /// Removes the mapping for one UI control.
     pub fn remove(&mut self, name: &str) {
         self.state.lock().unwrap().mappings.remove(name);
     }
 
     #[allow(dead_code)]
+    /// Clears all learned mappings.
     pub fn clear(&mut self) {
         self.state.lock().unwrap().mappings.clear();
     }
 
-    /// Start listening for Control Change messages to learn one mapping target.
+    /// Starts listening for Control Change messages for one mapping target.
     pub fn start<F>(
         &self,
         name: &str,
@@ -159,6 +169,7 @@ impl MapMode {
         )
     }
 
+    /// Stops MIDI learn and disconnects the mapping input listener.
     pub fn stop(&mut self) {
         self.currently_mapping = None;
         midi::disconnect(midi::ConnectionType::Mapping);
@@ -185,9 +196,12 @@ impl MapMode {
     }
 }
 
+/// Error emitted while learning a MIDI mapping.
 #[derive(Debug)]
 pub enum MappingError {
+    /// The learned controller was already mapped elsewhere.
     DuplicateMappings(Vec<String>),
+    /// HRCC learn received two MSB messages without the matching LSB.
     ConsecutiveHrccMsb,
 }
 
@@ -196,7 +210,8 @@ impl fmt::Display for MappingError {
         match self {
             Self::DuplicateMappings(removed_mappings) => write!(
                 f,
-                "Mapping the same MIDI controller to multiple destinations is not supported. Removed: {:?}",
+                "Mapping the same MIDI controller to multiple destinations is \
+                not supported. Removed: {:?}",
                 removed_mappings
             ),
             Self::ConsecutiveHrccMsb => {

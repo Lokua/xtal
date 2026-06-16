@@ -1,4 +1,4 @@
-//! Various syncing mechanisms for Xtal's [`Animation`][animation] system.
+//! Beat timing sources for Xtal's [`Animation`][animation] system.
 //!
 //! # Current Timing Implementations
 //!
@@ -47,57 +47,86 @@ const PULSES_PER_QUARTER_NOTE: u32 = 24;
 const TICKS_PER_QUARTER_NOTE: u32 = 960;
 const HYBRID_SYNC_THRESHOLD_BEATS: f32 = 0.5;
 
+/// Transport event emitted by MIDI-backed timing sources.
 #[derive(Clone, Copy, Debug)]
 pub enum MidiTransportEvent {
+    /// MIDI Continue message.
     Continue,
+    /// MIDI Start message.
     Start,
+    /// MIDI Stop message.
     Stop,
 }
 
+/// Shared, mutable BPM value used by timing sources.
+///
+/// Clones point to the same atomic value, so changing BPM through one handle
+/// affects every timing source that was constructed from a clone of it.
 #[derive(Clone, Debug)]
 pub struct Bpm(Arc<AtomicF32>);
 
 impl Bpm {
+    /// Creates a BPM handle, clamping values below `1.0` to `1.0`.
     pub fn new(bpm: f32) -> Self {
         Self(Arc::new(AtomicF32::new(bpm.max(1.0))))
     }
 
+    /// Returns the current BPM.
     pub fn get(&self) -> f32 {
         self.0.load(Ordering::Relaxed)
     }
 
+    /// Updates the current BPM, clamping values below `1.0` to `1.0`.
     pub fn set(&self, bpm: f32) {
         self.0.store(bpm.max(1.0), Ordering::Release);
     }
 }
 
+/// Common interface for beat-based timing sources.
 pub trait TimingSource: Clone {
+    /// Returns the current transport position in beats.
     fn beats(&self) -> f32;
+    /// Returns the current tempo in beats per minute.
     fn bpm(&self) -> f32;
 }
 
+/// Runtime-selectable timing source wrapper.
+///
+/// Use this enum when a sketch should accept the runtime timing mode instead
+/// of committing to one concrete timing implementation.
 #[derive(Clone, Debug)]
 pub enum Timing {
+    /// Beat position derived from Xtal's global frame clock.
     Frame(FrameTiming),
+    /// Beat position received from OSC transport messages.
     Osc(OscTransportTiming),
+    /// Beat position derived from MIDI Clock and Song Position Pointer.
     Midi(MidiSongTiming),
+    /// Beat position derived from MIDI Clock with MIDI Time Code correction.
     Hybrid(HybridTiming),
+    /// Beat position set explicitly by the caller.
     Manual(ManualTiming),
 }
 
 impl Timing {
+    /// Creates frame-clock timing.
     pub fn frame(bpm: Bpm) -> Self {
         Self::Frame(FrameTiming::new(bpm))
     }
 
+    /// Creates OSC transport timing.
     pub fn osc(bpm: Bpm) -> Self {
         Self::Osc(OscTransportTiming::new(bpm))
     }
 
+    /// Creates MIDI song timing without connecting to a MIDI port.
     pub fn midi(bpm: Bpm) -> Self {
         Self::Midi(MidiSongTiming::new(bpm, "", ignore_midi_event))
     }
 
+    /// Creates MIDI song timing for a named MIDI clock port.
+    ///
+    /// `on_event` is called when Start, Continue, or Stop messages arrive.
     pub fn midi_with_port<F>(bpm: Bpm, port: &str, on_event: F) -> Self
     where
         F: Fn(MidiTransportEvent) + Send + Sync + 'static,
@@ -105,10 +134,14 @@ impl Timing {
         Self::Midi(MidiSongTiming::new(bpm, port, on_event))
     }
 
+    /// Creates hybrid MIDI timing without connecting to a MIDI port.
     pub fn hybrid(bpm: Bpm) -> Self {
         Self::Hybrid(HybridTiming::new(bpm, "", ignore_midi_event))
     }
 
+    /// Creates hybrid MIDI timing for a named MIDI clock/MTC port.
+    ///
+    /// `on_event` is called when Start, Continue, or Stop messages arrive.
     pub fn hybrid_with_port<F>(bpm: Bpm, port: &str, on_event: F) -> Self
     where
         F: Fn(MidiTransportEvent) + Send + Sync + 'static,
@@ -116,6 +149,7 @@ impl Timing {
         Self::Hybrid(HybridTiming::new(bpm, port, on_event))
     }
 
+    /// Creates manual timing with an initial beat position of `0.0`.
     pub fn manual(bpm: Bpm) -> Self {
         Self::Manual(ManualTiming::new(bpm))
     }
@@ -143,12 +177,14 @@ impl TimingSource for Timing {
     }
 }
 
+/// Timing source backed by Xtal's global frame clock.
 #[derive(Clone, Debug)]
 pub struct FrameTiming {
     bpm: Bpm,
 }
 
 impl FrameTiming {
+    /// Creates frame-clock timing at the provided BPM.
     pub fn new(bpm: Bpm) -> Self {
         Self { bpm }
     }
@@ -164,6 +200,11 @@ impl TimingSource for FrameTiming {
     }
 }
 
+/// Timing source backed by OSC transport messages.
+///
+/// The shared OSC receiver is expected to deliver `/transport` messages with
+/// playing state, bar, beat, and fractional tick values. Bar and beat values
+/// are converted from one-based transport positions to zero-based beat counts.
 #[derive(Clone, Debug)]
 pub struct OscTransportTiming {
     bpm: Bpm,
@@ -174,6 +215,7 @@ pub struct OscTransportTiming {
 }
 
 impl OscTransportTiming {
+    /// Creates OSC transport timing and registers its listener callback.
     pub fn new(bpm: Bpm) -> Self {
         let timing = Self {
             bpm,
@@ -231,6 +273,10 @@ impl TimingSource for OscTransportTiming {
     }
 }
 
+/// Timing source backed by MIDI Clock and Song Position Pointer.
+///
+/// Song Position Pointer establishes the coarse transport location, then MIDI
+/// Clock pulses advance beat position from that base.
 #[derive(Clone, Debug)]
 pub struct MidiSongTiming {
     clock_count: Arc<AtomicU32>,
@@ -239,6 +285,10 @@ pub struct MidiSongTiming {
 }
 
 impl MidiSongTiming {
+    /// Creates MIDI song timing for `port`.
+    ///
+    /// If `port` is empty no MIDI listener is installed. `on_event` receives
+    /// transport start, continue, and stop messages from the MIDI stream.
     pub fn new<F>(bpm: Bpm, port: &str, on_event: F) -> Self
     where
         F: Fn(MidiTransportEvent) + Send + Sync + 'static,
@@ -320,6 +370,11 @@ impl TimingSource for MidiSongTiming {
     }
 }
 
+/// Timing source backed by MIDI Clock with MIDI Time Code resync.
+///
+/// MIDI Clock drives beat advancement. MIDI Time Code quarter-frame messages
+/// are used to correct drift when the two positions differ by more than the
+/// hybrid sync threshold.
 #[derive(Clone, Debug)]
 pub struct HybridTiming {
     clock_count: Arc<AtomicU32>,
@@ -331,6 +386,10 @@ pub struct HybridTiming {
 }
 
 impl HybridTiming {
+    /// Creates hybrid MIDI timing for `port`.
+    ///
+    /// If `port` is empty no MIDI listener is installed. `on_event` receives
+    /// transport start, continue, and stop messages from the MIDI stream.
     pub fn new<F>(bpm: Bpm, port: &str, on_event: F) -> Self
     where
         F: Fn(MidiTransportEvent) + Send + Sync + 'static,
@@ -423,6 +482,10 @@ impl TimingSource for HybridTiming {
     }
 }
 
+/// Timing source whose beat position is set explicitly by the caller.
+///
+/// This is useful for tests, static animation previews, and tooling that wants
+/// to scrub musical time without a live transport.
 #[derive(Clone, Debug)]
 pub struct ManualTiming {
     bpm: Bpm,
@@ -430,6 +493,7 @@ pub struct ManualTiming {
 }
 
 impl ManualTiming {
+    /// Creates manual timing with beat position `0.0`.
     pub fn new(bpm: Bpm) -> Self {
         Self {
             bpm,
@@ -437,6 +501,7 @@ impl ManualTiming {
         }
     }
 
+    /// Sets the current beat position.
     pub fn set_beats(&self, beats: f32) {
         self.beats.store(beats, Ordering::Release);
     }

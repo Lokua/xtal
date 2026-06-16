@@ -1,5 +1,9 @@
-//! Signal processing effects designed to operate on the results of
-//! [`Animation`][animation] methods but may be suitable for other domains.
+//! Small signal processors for animation and control values.
+//!
+//! Effects are designed to operate on the results of [`Animation`][animation]
+//! methods, though most are generic enough for any `f32` control signal. Some
+//! effects keep state internally, so reuse the same instance when you want
+//! smoothing, hysteresis, or previous-value behavior to continue across frames.
 //!
 //! [animation]: crate::motion::animation
 
@@ -10,28 +14,47 @@ use std::str::FromStr;
 use crate::core::prelude::*;
 use crate::ternary;
 
+/// Runtime-dispatchable effect wrapper.
+///
+/// This enum is mainly useful when control scripts need to hold heterogeneous
+/// effect instances in a single value.
 #[derive(Debug)]
 pub enum Effect {
+    /// Range constraint effect.
     Constrain(Constrain),
+    /// Schmitt-trigger threshold effect.
     Hysteresis(Hysteresis),
+    /// Linear range mapping effect.
     Map(Map),
+    /// Arithmetic or curve transform effect.
     Math(Math),
+    /// Step quantization effect.
     Quantizer(Quantizer),
+    /// Carrier/modulator blend effect.
     RingModulator(RingModulator),
+    /// Soft saturation effect.
     Saturator(Saturator),
+    /// Stateful slew-rate limiter effect.
     SlewLimiter(SlewLimiter),
+    /// Wave-folding effect.
     WaveFolder(WaveFolder),
 }
 
+/// Range handling applied after an animation or effect produces a value.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Constrain {
+    /// Return the value unchanged.
     None,
+    /// Clamp values to the inclusive `(min, max)` range.
     Clamp(f32, f32),
+    /// Fold values back into the `(min, max)` range.
     Fold(f32, f32),
+    /// Wrap values around the `(min, max)` range.
     Wrap(f32, f32),
 }
 
 impl Constrain {
+    /// Applies this range constraint to `value`.
     pub fn apply(&self, value: f32) -> f32 {
         match self {
             Self::None => value,
@@ -64,28 +87,36 @@ enum HysteresisState {
     Low,
 }
 
-/// Implements a Schmitt trigger with configurable thresholds that outputs:
+/// Stateful Schmitt trigger with configurable thresholds.
+///
+/// The output behavior is:
+///
 /// - `output_high` when input rises above `upper_threshold`
 /// - `output_low` when input falls below `lower_threshold`
 /// - previous output when input is between thresholds
 /// - input value when between thresholds and `pass_through` is true
 #[derive(Debug, Clone)]
 pub struct Hysteresis {
-    /// When true, allows values that are between the upper and lower thresholds
-    /// to pass through. When false, binary hysteresis is applied
+    /// Allows values between the thresholds to pass through unchanged.
+    ///
+    /// When false, binary hysteresis is applied between `output_low` and
+    /// `output_high`.
     pub pass_through: bool,
+    /// Upper threshold that moves the trigger into the high state.
     pub upper_threshold: f32,
+    /// Lower threshold that moves the trigger into the low state.
     pub lower_threshold: f32,
 
-    /// The value to output when input is above the upper threshold
+    /// Value to output when the trigger is in the high state.
     pub output_high: f32,
 
-    /// The value to output when input is below the lower threshold
+    /// Value to output when the trigger is in the low state.
     pub output_low: f32,
     state: RefCell<HysteresisState>,
 }
 
 impl Hysteresis {
+    /// Creates a hysteresis processor and normalizes threshold order.
     pub fn new(
         lower_threshold: f32,
         upper_threshold: f32,
@@ -105,6 +136,7 @@ impl Hysteresis {
         }
     }
 
+    /// Applies hysteresis to one input sample and updates internal state.
     pub fn apply(&self, input: f32) -> f32 {
         if input >= self.upper_threshold {
             self.state.replace(HysteresisState::High);
@@ -134,10 +166,14 @@ impl Default for Hysteresis {
     }
 }
 
+/// Arithmetic operation used by [`Math`].
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
+    /// Add the operand to the input.
     Add,
+    /// Apply [`Easing::Curve`] with the operand as curvature.
     Curve,
+    /// Multiply the input by the operand.
     Mult,
 }
 
@@ -154,20 +190,21 @@ impl FromStr for Operator {
     }
 }
 
-/// **⚠️ Experimental**
+/// Experimental arithmetic and curve transform effect.
 ///
 /// Perform addition, multiplication, or apply a custom exponential easing on
-/// the result of an animation. This is mainly useful in a [control script][cs]
-/// context.
-///
-/// [cs]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
+/// the result of an animation. This is mainly useful in a control script
+/// context. See `docs/control_script_reference.md` for control script usage.
 #[derive(Debug, Clone)]
 pub struct Math {
+    /// Operation applied by this effect.
     pub operator: Operator,
+    /// Operand used by the selected operation.
     pub operand: f32,
 }
 
 impl Math {
+    /// Creates a math effect from an operator and operand.
     pub fn new(op: Operator, value: f32) -> Self {
         Self {
             operator: op,
@@ -175,6 +212,7 @@ impl Math {
         }
     }
 
+    /// Applies the configured operation to `input`.
     pub fn apply(&self, input: f32) -> f32 {
         match self.operator {
             Operator::Add => self.operand + input,
@@ -196,17 +234,22 @@ impl Default for Math {
     }
 }
 
+/// Linear mapper from one numeric range to another.
 #[derive(Debug, Clone)]
 pub struct Map {
+    /// Input range expected by [`Self::apply`].
     pub domain: (f32, f32),
+    /// Output range produced by [`Self::apply`].
     pub range: (f32, f32),
 }
 
 impl Map {
+    /// Creates a mapper from `domain` to `range`.
     pub fn new(domain: (f32, f32), range: (f32, f32)) -> Self {
         Self { domain, range }
     }
 
+    /// Maps `input` from `domain` to `range`.
     pub fn apply(&self, input: f32) -> f32 {
         map_range(
             input,
@@ -231,12 +274,13 @@ impl Default for Map {
 /// transitions.
 ///
 /// For example, with a step size of 0.25 in range (0.0, 1.0):
+///
 /// - Input 0.12 -> Output 0.0
 /// - Input 0.26 -> Output 0.25
 /// - Input 0.51 -> Output 0.50
 #[derive(Debug, Clone)]
 pub struct Quantizer {
-    /// The size of each discrete step
+    /// Size of each discrete step.
     pub step: f32,
 
     /// The (assumed) domain and range of the input and output signal
@@ -244,10 +288,12 @@ pub struct Quantizer {
 }
 
 impl Quantizer {
+    /// Creates a quantizer with a step size and output range.
     pub fn new(step: f32, range: (f32, f32)) -> Self {
         Self { step, range }
     }
 
+    /// Quantizes `input` to the nearest step and clamps it to the range.
     pub fn apply(&self, input: f32) -> f32 {
         let (min, max) = self.range;
         let steps_from_zero = (input / self.step).round();
@@ -255,6 +301,7 @@ impl Quantizer {
         quantized.clamp(min, max)
     }
 
+    /// Updates the clamp range used by [`Self::apply`].
     pub fn set_range(&mut self, range: (f32, f32)) {
         self.range = range;
     }
@@ -272,10 +319,11 @@ impl Default for Quantizer {
 /// Implements ring modulation by combining a carrier and modulator signal.
 #[derive(Debug, Clone)]
 pub struct RingModulator {
-    /// Controls the blend between carrier and modulated signal
-    /// - 0.0: outputs carrier signal
-    /// - 0.5: outputs true ring modulation (carrier * modulator)
-    /// - 1.0: outputs modulator signal
+    /// Controls the blend between carrier and modulated signal.
+    ///
+    /// - `0.0`: outputs carrier signal
+    /// - `0.5`: outputs true ring modulation, `carrier * modulator`
+    /// - `1.0`: outputs modulator signal
     pub mix: f32,
 
     /// The (assumed) domain and range of the input and output signal
@@ -283,10 +331,12 @@ pub struct RingModulator {
 }
 
 impl RingModulator {
+    /// Creates a ring modulator with blend depth and signal range.
     pub fn new(depth: f32, range: (f32, f32)) -> Self {
         Self { mix: depth, range }
     }
 
+    /// Applies ring modulation between `carrier` and `modulator`.
     pub fn apply(&self, carrier: f32, modulator: f32) -> f32 {
         let (min, max) = self.range;
         let range = max - min;
@@ -314,6 +364,7 @@ impl RingModulator {
         ((result / 2.0) + midpoint).clamp(min, max)
     }
 
+    /// Updates the assumed signal range used by [`Self::apply`].
     pub fn set_range(&mut self, range: (f32, f32)) {
         self.range = range;
     }
@@ -332,16 +383,17 @@ impl Default for RingModulator {
 /// approach the range boundaries. Higher drive values create more aggressive
 /// saturation effects.
 ///
-/// Note: WIP - this is just tanh clipping at this point
+/// This is currently tanh clipping with a special low-drive crossfade.
 #[derive(Debug, Clone)]
 pub struct Saturator {
     /// Controls the intensity of the saturation effect. Higher values push more
     /// of the signal into the saturated region.
-    /// - 0.0: no saturation (pure pass-through)
-    /// - >0.0 & <1.0: experimental WIP easing between dry signal and saturation
-    /// - 1.0: subtle saturation
-    /// - 2.0-4.0: moderate saturation
-    /// - 4.0+: aggressive saturation
+    ///
+    /// - `0.0`: no saturation, pure pass-through
+    /// - `0.0..1.0`: crossfade between dry signal and tanh saturation
+    /// - `1.0`: subtle saturation
+    /// - `2.0..4.0`: moderate saturation
+    /// - `4.0+`: aggressive saturation
     pub drive: f32,
 
     /// The (assumed) domain and range of the input and output signal
@@ -349,10 +401,12 @@ pub struct Saturator {
 }
 
 impl Saturator {
+    /// Creates a saturator with drive amount and signal range.
     pub fn new(drive: f32, range: (f32, f32)) -> Self {
         Self { drive, range }
     }
 
+    /// Applies saturation to `input`.
     pub fn apply(&self, input: f32) -> f32 {
         if self.drive == 0.0 {
             return input;
@@ -376,6 +430,7 @@ impl Saturator {
         saturated * (range / 2.0) + midpoint
     }
 
+    /// Updates the assumed signal range used by [`Self::apply`].
     pub fn set_range(&mut self, range: (f32, f32)) {
         self.range = range;
     }
@@ -390,23 +445,26 @@ impl Default for Saturator {
     }
 }
 
-/// Limits the rate of change (slew rate) of a signal
+/// Stateful rate-of-change limiter for control signals.
 #[derive(Debug, Clone)]
 pub struct SlewLimiter {
     /// Controls smoothing when signal amplitude increases.
-    /// - 0.0 = instant attack (no smoothing)
-    /// - 1.0 = very slow attack (maximum smoothing)
+    ///
+    /// - `0.0`: instant attack, no smoothing
+    /// - `1.0`: very slow attack, maximum smoothing
     pub rise: f32,
 
     /// Controls smoothing when signal amplitude decreases.
-    /// - 0.0 = instant decay (no smoothing)
-    /// - 1.0 = very slow decay (maximum smoothing)
+    ///
+    /// - `0.0`: instant decay, no smoothing
+    /// - `1.0`: very slow decay, maximum smoothing
     pub fall: f32,
 
     previous_value: RefCell<f32>,
 }
 
 impl SlewLimiter {
+    /// Creates a slew limiter with separate rise and fall rates.
     pub fn new(rise: f32, fall: f32) -> Self {
         Self {
             previous_value: RefCell::new(0.0),
@@ -415,11 +473,12 @@ impl SlewLimiter {
         }
     }
 
+    /// Applies slew limiting using the stored rise and fall rates.
     pub fn apply(&self, value: f32) -> f32 {
         self.slew_with_rates(value, self.rise, self.fall)
     }
 
-    /// Stateful version that takes new rates but doesn't save them
+    /// Applies slew limiting with temporary rates that are not stored.
     pub fn slew_with_rates(&self, value: f32, rise: f32, fall: f32) -> f32 {
         let slewed =
             Self::slew_pure(*self.previous_value.borrow(), value, rise, fall);
@@ -427,6 +486,7 @@ impl SlewLimiter {
         slewed
     }
 
+    /// Stateless slew calculation from `previous_value` to `value`.
     pub fn slew_pure(
         previous_value: f32,
         value: f32,
@@ -442,6 +502,7 @@ impl SlewLimiter {
         previous_value + coeff * (value - previous_value)
     }
 
+    /// Updates the stored rise and fall rates.
     pub fn set_rates(&mut self, rise: f32, fall: f32) {
         self.rise = rise;
         self.fall = fall;
@@ -458,50 +519,54 @@ impl Default for SlewLimiter {
     }
 }
 
-/// ⚠️ Experimental
+/// Experimental wave-folder for shaping normalized control signals.
 #[derive(Debug, Clone)]
 pub struct WaveFolder {
     /// Suggested range: 1.0 to 10.0
-    /// - <1.0: Bypassed
-    /// - 1.0: unity gain
-    /// - 2.0-4.0: typical folding range
-    /// - 4.0-10.0: extreme folding
+    ///
+    /// - `<1.0`: bypassed
+    /// - `1.0`: unity gain
+    /// - `2.0..4.0`: typical folding range
+    /// - `4.0..10.0`: extreme folding
     pub gain: f32,
 
     /// Suggested range: 1 to 8
-    /// - 1-2: subtle harmonics
-    /// - 3-4: moderate complexity
-    /// - 5+: extreme/digital sound
+    ///
+    /// - `1..2`: subtle harmonics
+    /// - `3..4`: moderate complexity
+    /// - `5+`: extreme or digital sound
     pub iterations: usize,
 
-    /// changes the relative intensity of folding above vs below the center
+    /// Changes the relative intensity of folding above vs below the center
     /// point by scaling the positive and negative portions differently.
     ///
     /// Suggested range: 0.5 to 2.0
-    /// - 1.0: perfectly symmetric
-    /// - <1.0: negative side folds less
-    /// - >1.0: negative side folds more
+    ///
+    /// - `1.0`: perfectly symmetric
+    /// - `<1.0`: negative side folds less
+    /// - `>1.0`: negative side folds more
     pub symmetry: f32,
 
     /// Shifts the center point of folding, effectively moving the "zero
     /// crossing" point.
     ///
     /// Suggested range: -1.0 to 1.0
-    /// - 0.0: no DC offset
-    /// - ±0.1-0.3: subtle asymmetry
-    /// - ±0.5-1.0: extreme asymmetry
+    ///
+    /// - `0.0`: no DC offset
+    /// - `+/-0.1..0.3`: subtle asymmetry
+    /// - `+/-0.5..1.0`: extreme asymmetry
     pub bias: f32,
 
     /// Suggested range: -2.0 to 2.0 (values below -2.0 are hard capped)
-    /// - 0.0: linear folding
-    /// - < 0.0: softer folding curves
-    /// - -1.0: perfectly sine-shaped folds
-    /// - < -2.0: introduces intermediary folds but slight loss in overall
+    ///
+    /// - `0.0`: linear folding
+    /// - `<0.0`: softer folding curves
+    /// - `-1.0`: sine-shaped folds
+    /// - `<-2.0`: introduces intermediary folds but slight loss in overall
     ///   amplitude around ~-2.5
-    /// - > 0.0: sharper folding edges, power function with exponent (1.0 +
-    ///   > shape)
-    /// - 1.0: quadratic folding (power of 2.0)
-    /// - 2.0: cubic folding (power of 3.0)
+    /// - `>0.0`: sharper folding edges using exponent `1.0 + shape`
+    /// - `1.0`: quadratic folding, power of 2.0
+    /// - `2.0`: cubic folding, power of 3.0
     pub shape: f32,
 
     /// The (assumed) domain and range of the input and output signal
@@ -509,6 +574,7 @@ pub struct WaveFolder {
 }
 
 impl WaveFolder {
+    /// Creates a wave folder with explicit shaping parameters.
     pub fn new(
         gain: f32,
         iterations: usize,
@@ -527,6 +593,7 @@ impl WaveFolder {
         }
     }
 
+    /// Applies wave folding to `input`.
     pub fn apply(&self, input: f32) -> f32 {
         let mut output = input;
         for _ in 0..self.iterations {
@@ -535,6 +602,7 @@ impl WaveFolder {
         output
     }
 
+    /// Updates the assumed signal range used by [`Self::apply`].
     pub fn set_range(&mut self, range: (f32, f32)) {
         self.range = range;
     }
@@ -641,7 +709,10 @@ impl Default for WaveFolder {
     }
 }
 
-/// Assumes all parameters are within normalized range
+/// Blends two normalized signals with equal-power gain curves.
+///
+/// `mix` is clamped to `0.0..=1.0`; `a` and `b` are assumed to already be in
+/// the desired normalized signal range.
 pub fn equal_power_crossfade(a: f32, b: f32, mix: f32) -> f32 {
     let t = mix.clamp(0.0, 1.0);
 

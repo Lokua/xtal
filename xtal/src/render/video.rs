@@ -1,3 +1,15 @@
+//! GStreamer-backed video textures for render graphs.
+//!
+//! A graph video resource can contain one or more files. `VideoSource` keeps a
+//! `VideoPipeline` per file, selects the active one from `VideoTransport`, and
+//! returns RGBA frames that the GPU executor uploads into a texture.
+//!
+//! Transport is beat-based, not wall-time-based. Runtime controls define the
+//! source name, file index, normalized start point, loop length in beats,
+//! playback speed, and direction. This module translates those controls into
+//! GStreamer play, pause, and seek operations while avoiding repeated seeks for
+//! equivalent transport state.
+
 use std::path::Path;
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
@@ -16,12 +28,18 @@ static GST_INIT: OnceLock<Result<(), String>> = OnceLock::new();
 const START_SEEK_THROTTLE: Duration = Duration::from_millis(50);
 const NANOSECONDS_PER_SECOND: f32 = 1_000_000_000.0;
 
+/// Decoded RGBA frame ready for upload into a `wgpu` texture.
 pub struct VideoFrame {
     pub width: u32,
     pub height: u32,
     pub rgba: Vec<u8>,
 }
 
+/// Concrete seek command planned from beat transport state.
+///
+/// GStreamer reverse playback requires both a start and stop bound. Forward
+/// playback can be unbounded, or bounded when a ping-pong segment needs a
+/// precise turnaround point.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct PlannedSeek {
     rate: f64,
@@ -31,6 +49,7 @@ struct PlannedSeek {
 }
 
 impl PlannedSeek {
+    /// Creates an unbounded forward seek.
     fn forward(
         rate: f64,
         start: gst::ClockTime,
@@ -44,6 +63,7 @@ impl PlannedSeek {
         }
     }
 
+    /// Creates a bounded forward seek for the first half of ping-pong motion.
     fn forward_segment(
         rate: f64,
         start: gst::ClockTime,
@@ -57,6 +77,7 @@ impl PlannedSeek {
         }
     }
 
+    /// Creates a bounded backward seek for reverse playback.
     fn backward(
         rate: f64,
         start: gst::ClockTime,
@@ -70,6 +91,7 @@ impl PlannedSeek {
         }
     }
 
+    /// Rejects seek plans GStreamer cannot execute safely.
     fn validate(self) -> Result<Self, String> {
         if let Some(stop) = self.stop {
             if self.start >= stop {
@@ -86,11 +108,13 @@ impl PlannedSeek {
     }
 }
 
+/// Multi-file video source bound to one graph video resource.
 pub struct VideoSource {
     sources: Vec<VideoPipeline>,
     active_index: usize,
 }
 
+/// GStreamer pipeline and cached transport state for one video file.
 struct VideoPipeline {
     pipeline: gst::Element,
     appsink: gst_app::AppSink,
@@ -104,6 +128,7 @@ struct VideoPipeline {
 }
 
 impl VideoSource {
+    /// Opens all file paths and starts the first pipeline.
     pub fn new(paths: &[std::path::PathBuf]) -> Result<Self, String> {
         if paths.is_empty() {
             return Err("video source requires at least one path".to_string());
@@ -123,6 +148,7 @@ impl VideoSource {
         })
     }
 
+    /// Selects a file index and applies beat-synced transport to it.
     pub fn apply_transport(
         &mut self,
         transport: &VideoTransport,
@@ -133,14 +159,17 @@ impl VideoSource {
         self.active_mut().apply_transport(transport, beats, bpm)
     }
 
+    /// Pulls the newest decoded RGBA frame from the active pipeline.
     pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
         self.active_mut().next_frame()
     }
 
+    /// Restarts the active pipeline from the beginning.
     pub fn restart(&mut self) -> Result<(), String> {
         self.active_mut().restart()
     }
 
+    /// Restarts the selected pipeline and reapplies its transport at beat 0.
     pub fn restart_with_transport(
         &mut self,
         transport: &VideoTransport,
@@ -150,6 +179,7 @@ impl VideoSource {
         self.active_mut().restart_with_transport(transport, bpm)
     }
 
+    /// Switches the active file, pausing the previously active pipeline.
     fn select(&mut self, index: usize) -> Result<(), String> {
         let next_index = index.min(self.sources.len() - 1);
         if next_index == self.active_index {
@@ -162,12 +192,14 @@ impl VideoSource {
         Ok(())
     }
 
+    /// Returns the currently selected pipeline.
     fn active_mut(&mut self) -> &mut VideoPipeline {
         &mut self.sources[self.active_index]
     }
 }
 
 impl VideoPipeline {
+    /// Builds a video-only playbin pipeline that outputs RGBA frames.
     fn new(path: &Path) -> Result<Self, String> {
         init_gstreamer()?;
 
@@ -221,6 +253,11 @@ impl VideoPipeline {
         })
     }
 
+    /// Applies beat-derived transport state to the pipeline.
+    ///
+    /// This method seeks only when the file index, loop, ping-pong half, or
+    /// transport parameters changed enough to require it. Plain forward
+    /// playback from the beginning is allowed to run without constant seeks.
     pub fn apply_transport(
         &mut self,
         transport: &VideoTransport,
@@ -248,6 +285,7 @@ impl VideoPipeline {
         }
 
         let rate = transport_rate(transport, ping_second_half);
+        // Let GStreamer free-run for the common "play from start at 1x" case.
         if self.last_transport.is_none()
             && transport.start <= 0.0
             && transport.direction == VideoDirection::Forward
@@ -270,11 +308,13 @@ impl VideoPipeline {
             let Some(duration) = self.duration() else {
                 return Ok(());
             };
+            // The second ping-pong half plays backward between bounded points.
             match plan_ping_pong_reverse_seek(transport, bpm, duration) {
                 Some(plan) => Some(plan),
                 None => {
                     warn_once!(
-                        "ping_pong segment wraps past EOF; skipping reverse seek"
+                        "ping_pong segment wraps past EOF; skipping reverse \
+                        seek"
                     );
                     self.current_rate = rate;
                     self.last_loop_index = Some(loop_index);
@@ -287,6 +327,8 @@ impl VideoPipeline {
             let Some(duration) = self.duration() else {
                 return Ok(());
             };
+            // The first ping-pong half uses a bounded forward segment so the
+            // later reverse half starts from the intended turnaround point.
             let position = if loop_changed || !same_position_window {
                 None
             } else {
@@ -298,7 +340,8 @@ impl VideoPipeline {
                 Some(plan) => Some(plan),
                 None => {
                     warn_once!(
-                        "ping_pong segment wraps past EOF; skipping forward seek"
+                        "ping_pong segment wraps past EOF; skipping forward \
+                        seek"
                     );
                     self.current_rate = rate;
                     self.last_loop_index = Some(loop_index);
@@ -308,6 +351,8 @@ impl VideoPipeline {
                 }
             }
         } else {
+            // Non-ping-pong transport can keep its current position while only
+            // speed changes within the same media window.
             let position = if loop_changed || !same_position_window {
                 self.normalized_time(transport.start)
             } else if let Some(position) = self.position() {
@@ -327,6 +372,8 @@ impl VideoPipeline {
             return Ok(());
         };
 
+        // Scrubbing the normalized start control can generate many tiny seek
+        // changes in one gesture. Throttle only that case.
         if start_changed
             && !loop_changed
             && !ping_changed
@@ -364,6 +411,7 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Pulls one decoded sample and normalizes it to tightly packed RGBA rows.
     pub fn next_frame(&mut self) -> Result<Option<VideoFrame>, String> {
         self.handle_bus_messages();
 
@@ -429,6 +477,7 @@ impl VideoPipeline {
         }))
     }
 
+    /// Seeks the active pipeline to the beginning and starts playback.
     pub fn restart(&mut self) -> Result<(), String> {
         self.last_loop_index = None;
         self.last_ping_second_half = None;
@@ -449,6 +498,7 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Clears cached transport state and applies transport from beat 0.
     pub fn restart_with_transport(
         &mut self,
         transport: &VideoTransport,
@@ -458,6 +508,7 @@ impl VideoPipeline {
         self.apply_transport(transport, 0.0, bpm)
     }
 
+    /// Pauses this pipeline when another source index becomes active.
     fn pause(&mut self) -> Result<(), String> {
         self.pipeline
             .set_state(gst::State::Paused)
@@ -465,6 +516,7 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Starts or resumes this pipeline.
     fn play(&mut self) -> Result<(), String> {
         self.pipeline
             .set_state(gst::State::Playing)
@@ -472,6 +524,7 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Clears transport cache so the next update will issue a fresh seek.
     fn reset_transport_state(&mut self) {
         self.last_loop_index = None;
         self.last_ping_second_half = None;
@@ -480,6 +533,7 @@ impl VideoPipeline {
         self.current_rate = 1.0;
     }
 
+    /// Executes a validated seek and resumes playback.
     fn execute_seek(&self, seek: PlannedSeek) -> Result<(), String> {
         let seek = seek.validate()?;
 
@@ -534,6 +588,7 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Converts normalized 0..1 media position to a clock time.
     fn normalized_time(&mut self, normalized: f32) -> Option<gst::ClockTime> {
         if normalized <= 0.0 {
             return Some(gst::ClockTime::ZERO);
@@ -546,6 +601,7 @@ impl VideoPipeline {
         Some(gst::ClockTime::from_nseconds(position))
     }
 
+    /// Returns cached media duration, querying GStreamer on first use.
     fn duration(&mut self) -> Option<gst::ClockTime> {
         if self.duration.is_none() {
             self.duration = self.pipeline.query_duration::<gst::ClockTime>();
@@ -553,10 +609,12 @@ impl VideoPipeline {
         self.duration
     }
 
+    /// Returns the current media position when GStreamer can report it.
     fn position(&self) -> Option<gst::ClockTime> {
         self.pipeline.query_position::<gst::ClockTime>()
     }
 
+    /// Drains end-of-stream and error messages without blocking frame render.
     fn handle_bus_messages(&self) {
         let Some(bus) = self.pipeline.bus() else {
             return;
@@ -612,6 +670,7 @@ impl VideoPipeline {
     }
 }
 
+/// Creates a sink bin that converts decoded video into RGBA appsink samples.
 fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
     let bin = gst::Bin::with_name("xtal_video_sink");
     let convert_in = gst::ElementFactory::make("videoconvert")
@@ -677,6 +736,7 @@ fn create_video_sink() -> Result<(gst::Bin, gst_app::AppSink), String> {
     Ok((bin, appsink))
 }
 
+/// Configures playbin to decode video only and discard audio.
 fn configure_video_only_playbin(pipeline: &gst::Element) -> Result<(), String> {
     let flags = pipeline.property_value("flags");
     let flags_class =
@@ -694,10 +754,12 @@ fn configure_video_only_playbin(pipeline: &gst::Element) -> Result<(), String> {
     Ok(())
 }
 
+/// Returns an error message for failed video-only flag construction.
 fn video_only_flags_error() -> String {
     "failed to build video-only playbin flags".to_string()
 }
 
+/// Converts Xtal transport direction and speed to a GStreamer playback rate.
 fn transport_rate(transport: &VideoTransport, ping_second_half: bool) -> f64 {
     let speed = transport.speed.abs() as f64;
     if speed == 0.0 {
@@ -712,6 +774,7 @@ fn transport_rate(transport: &VideoTransport, ping_second_half: bool) -> f64 {
     }
 }
 
+/// Plans the reverse half of a ping-pong loop.
 fn plan_ping_pong_reverse_seek(
     transport: &VideoTransport,
     bpm: f32,
@@ -727,6 +790,7 @@ fn plan_ping_pong_reverse_seek(
     ))
 }
 
+/// Plans the forward half of a ping-pong loop.
 fn plan_ping_pong_forward_seek(
     transport: &VideoTransport,
     bpm: f32,
@@ -746,6 +810,7 @@ fn plan_ping_pong_forward_seek(
     ))
 }
 
+/// Returns bounded media positions for one ping-pong half-loop.
 fn ping_pong_segment_bounds(
     transport: &VideoTransport,
     bpm: f32,
@@ -774,10 +839,12 @@ fn ping_pong_segment_bounds(
     ))
 }
 
+/// Converts a normalized media position into nanoseconds.
 fn normalized_to_nseconds(normalized: f32, duration_ns: u64) -> u64 {
     (duration_ns as f32 * normalized.clamp(0.0, 1.0)) as u64
 }
 
+/// Returns whether two transports refer to the same media time window.
 fn same_position_window(a: &VideoTransport, b: &VideoTransport) -> bool {
     a.source == b.source
         && a.start == b.start
@@ -786,11 +853,13 @@ fn same_position_window(a: &VideoTransport, b: &VideoTransport) -> bool {
 }
 
 impl Drop for VideoPipeline {
+    /// Releases GStreamer resources by putting the pipeline into Null state.
     fn drop(&mut self) {
         let _ = self.pipeline.set_state(gst::State::Null);
     }
 }
 
+/// Initializes GStreamer once per process.
 fn init_gstreamer() -> Result<(), String> {
     GST_INIT
         .get_or_init(|| {
@@ -801,6 +870,7 @@ fn init_gstreamer() -> Result<(), String> {
         .clone()
 }
 
+/// Resolves a video path and verifies that the file exists.
 fn normalize_video_path(path: &Path) -> Result<std::path::PathBuf, String> {
     let resolved = if path.is_absolute() {
         path.to_path_buf()

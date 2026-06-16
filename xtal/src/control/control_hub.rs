@@ -1,8 +1,23 @@
-//! Provides a means of controlling sketch parameters with the various Xtal
-//! control systems from an external yaml file that can be hot-reloaded. See the
-//! [Control Script Reference][ref]
+//! Runtime control system for sketch parameters.
 //!
-//! [ref]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
+//! This module owns the live parameter layer shared by sketches, the runtime,
+//! and external inputs:
+//!
+//! - parse YAML control scripts, including merge keys and hot parameters;
+//! - build UI, MIDI, OSC, audio, animation, video, and effect controls;
+//! - resolve `var` aliases to stable control names;
+//! - evaluate beat-based animation and parameter dependencies once per frame;
+//! - apply MIDI overrides, bypasses, modulations, effects, and snapshots;
+//! - watch YAML files and hot-reload changed control definitions;
+//! - expose transport data for video-driven sketch inputs.
+//!
+//! `ControlHub` is the single source of truth for runtime parameter values.
+//! Sketches should ask the hub for current values rather than duplicating
+//! control state locally. The control script format is documented in the
+//! [Control Script Reference][ref].
+//!
+//! [ref]:
+//!     https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 
 use log::{debug, error, info, trace, warn};
 use notify::{Event, RecursiveMode, Watcher};
@@ -48,6 +63,11 @@ struct UpdateState {
     has_changes: Arc<AtomicBool>,
 }
 
+/// In-flight interpolation from current values to snapshot target values.
+///
+/// Snapshot recall and randomization both use this structure. Values are
+/// sampled through `ControlHub::get`, then committed to their backing controls
+/// by `ControlHub::update` once the transition reaches `end_beat`.
 #[derive(Debug)]
 struct SnapshotTransition {
     values: HashMap<String, (f32, f32)>,
@@ -55,6 +75,11 @@ struct SnapshotTransition {
     end_beat: f32,
 }
 
+/// Runtime bookkeeping for beat-synced snapshot sequence playback.
+///
+/// The parsed YAML sequence stores stage definitions. This companion state
+/// stores the computed loop length, the extracted disabled predicate, and the
+/// previous loop phase so update can detect stage crossings.
 struct SnapshotSequenceRuntime {
     sequence_length: f32,
     disabled: DisabledFn,
@@ -79,6 +104,7 @@ impl std::fmt::Debug for SnapshotSequenceRuntime {
 
 pub type Snapshots = HashMap<String, ControlValues>;
 
+/// Control names excluded from a snapshot or randomization operation.
 pub type Exclusions = Vec<String>;
 
 struct Callback(Box<dyn Fn()>);
@@ -95,22 +121,47 @@ impl std::fmt::Debug for Callback {
     }
 }
 
-/// The single point of entry for all Xtal controls and animations. When
-/// declaring controls and animations in Rust code, use the
-/// [`crate::prelude::ControlHubBuilder`], otherwise if using a [Control
-/// Script][script-ref], see [`Self::from_path`].
+/// Live parameter hub for one sketch.
 ///
-/// [script-ref]: https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
+/// `ControlHub` gathers all control inputs into one lookup surface. A sketch
+/// typically calls `get`, `float`, `bool`, `string`, `beats`, or
+/// `video_transports` while drawing. Runtime code updates UI/MIDI/OSC state,
+/// snapshot state, and hot-reloaded YAML through the same instance.
+///
+/// Values are resolved in this broad order:
+///
+/// - map `var` aliases to original control names;
+/// - return explicit bypass values when configured;
+/// - evaluate prerequisite hot parameters for the current frame;
+/// - prefer active snapshot transitions, then MIDI overrides, then raw control
+///   values;
+/// - apply configured modulation/effect chains.
+///
+/// When declaring controls and animations in Rust code, use the
+/// [`crate::prelude::ControlHubBuilder`]. When using a [Control Script][ref],
+/// instantiate the hub with [`Self::from_path`].
+///
+/// [ref]:
+///     https://github.com/Lokua/xtal/blob/main/docs/control_script_reference.md
 #[derive(Debug)]
 pub struct ControlHub<T: TimingSource> {
+    /// Beat/time evaluator used by animation controls.
     pub animation: Animation<T>,
+    /// Slider, checkbox, select, and separator controls mirrored by the UI.
     pub ui_controls: UiControls,
+    /// Direct MIDI CC controls declared in the control script.
     pub midi_controls: MidiControls,
+    /// Runtime MIDI-learn override values keyed by control name.
     pub midi_overrides: Arc<Mutex<HashMap<String, f32>>>,
+    /// MIDI-learn override ranges and controller bindings.
     pub midi_override_configs: HashMap<String, MidiControlConfig>,
+    /// OSC controls keyed by OSC address.
     pub osc_controls: OscControls,
+    /// Audio analysis controls updated from input channels.
     pub audio_controls: AudioControls,
+    /// Saved snapshots keyed by user/runtime supplied snapshot id.
     pub snapshots: Snapshots,
+    /// Whether MIDI-learn overrides participate in value lookup.
     pub midi_overrides_enabled: bool,
     animations: HashMap<String, (AnimationConfig, KeyframeSequence)>,
     videos: HashMap<String, VideoConfig>,
@@ -135,6 +186,10 @@ pub struct ControlHub<T: TimingSource> {
 }
 
 impl<T: TimingSource> ControlHub<T> {
+    /// Creates a hub from an optional YAML string and a timing source.
+    ///
+    /// This constructor is useful for tests and programmatic setup. Production
+    /// sketches usually use `from_path` so YAML changes can hot-reload.
     pub fn new(yaml_str: Option<&str>, timing: T) -> Self {
         let mut script = Self {
             ui_controls: UiControls::default(),
@@ -221,6 +276,11 @@ impl<T: TimingSource> ControlHub<T> {
         script
     }
 
+    /// Returns the current numeric value for a control, animation, or alias.
+    ///
+    /// `name` may be either the YAML id or a `var` alias. The returned value
+    /// includes active snapshot transitions, MIDI overrides, hot parameter
+    /// dependency evaluation, and modulation/effect chains.
     pub fn get(&self, name: &str) -> f32 {
         let current_frame = frame_clock::frame_count();
         let current_beat = self.animation.beats();
@@ -266,6 +326,7 @@ impl<T: TimingSource> ControlHub<T> {
             })
     }
 
+    /// Samples an active snapshot transition for one control.
     fn get_transition_value(
         &self,
         current_beat: f32,
@@ -287,6 +348,7 @@ impl<T: TimingSource> ControlHub<T> {
         Some(lerp(from, to, t))
     }
 
+    /// Evaluates prerequisite hot-parameter nodes before a target lookup.
     fn run_dependencies(&self, target_name: &str, current_frame: u32) {
         if let Some(order) = &self.dep_graph.order() {
             for name in order.iter() {
@@ -303,6 +365,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Applies a configured modulator or effect to an already resolved value.
     fn apply_modulator(
         &self,
         value: f32,
@@ -385,7 +448,8 @@ impl<T: TimingSource> ControlHub<T> {
                 }
                 Effect::RingModulator(_) => {
                     warn_once!(
-                        "Unexpected RingModulator branch for '{}'; bypassing effect",
+                        "Unexpected RingModulator branch for '{}'; \
+                        bypassing effect",
                         modulator
                     );
                     value
@@ -394,6 +458,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Refreshes hot effect parameters before applying a stateful effect.
     fn update_effect_params(
         &self,
         effect: &mut impl SetFromParam,
@@ -414,6 +479,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Reads the backing value before snapshot transitions and modulations.
     fn get_raw(&self, name: &str, current_frame: u32) -> f32 {
         let is_dep = self.dep_graph.is_prerequisite(name);
 
@@ -538,7 +604,8 @@ impl<T: TimingSource> ControlHub<T> {
                         }
                         _ => {
                             warn_once!(
-                                "Unsupported animation sequence for '{}'; defaulting to 0.0",
+                                "Unsupported animation sequence for '{}'; \
+                                defaulting to 0.0",
                                 name
                             );
                             0.0
@@ -561,6 +628,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Resolves hot parameters nested inside automate breakpoint arrays.
     fn resolve_breakpoint_params(
         &self,
         node_name: &str,
@@ -596,6 +664,7 @@ impl<T: TimingSource> ControlHub<T> {
         breakpoints
     }
 
+    /// Resolves hot parameters on a clone of an animation/video/effect config.
     fn resolve_animation_config_params<P>(
         &self,
         config: &P,
@@ -623,6 +692,7 @@ impl<T: TimingSource> ControlHub<T> {
         config
     }
 
+    /// Returns cloned automate breakpoints for editing or UI display.
     pub fn breakpoints(&self, name: &str) -> Vec<Breakpoint> {
         self.animations
             .get(name)
@@ -635,6 +705,7 @@ impl<T: TimingSource> ControlHub<T> {
             .unwrap_or_else(|| panic!("No breakpoints for name: {}", name))
     }
 
+    /// Returns all controls currently pinned by a YAML `bypass` value.
     pub fn bypassed(&self) -> HashMap<String, f32> {
         self.bypassed
             .iter()
@@ -642,7 +713,7 @@ impl<T: TimingSource> ControlHub<T> {
             .collect()
     }
 
-    /// Helper to create snapshot (values only)
+    /// Creates a snapshot value map without storing it.
     fn create_snapshot(
         &mut self,
         exclusions: Exclusions,
@@ -694,12 +765,13 @@ impl<T: TimingSource> ControlHub<T> {
         snapshot
     }
 
-    /// Create and store a snapshot for later recall
+    /// Captures current snapshot-capable values under `id`.
     pub fn take_snapshot(&mut self, id: &str) {
         let snapshot = self.create_snapshot(Vec::new());
         self.snapshots.insert(id.to_string(), snapshot);
     }
 
+    /// Starts a transition from current values to the saved snapshot `id`.
     pub fn recall_snapshot(&mut self, id: &str) -> Result<(), String> {
         match self.snapshots.get(id) {
             Some(snapshot) => {
@@ -775,6 +847,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Returns the current value including an already active transition.
     fn current_snapshot_value(
         &self,
         name: &str,
@@ -789,14 +862,17 @@ impl<T: TimingSource> ControlHub<T> {
             .unwrap_or_else(|| self.get_raw(name, current_frame))
     }
 
+    /// Deletes a saved snapshot by id.
     pub fn delete_snapshot(&mut self, id: &str) {
         self.snapshots.remove(id);
     }
 
+    /// Deletes all saved snapshots.
     pub fn clear_snapshots(&mut self) {
         self.snapshots.clear()
     }
 
+    /// Returns whether the configured snapshot sequence is currently active.
     pub fn snapshot_sequence_enabled(&self) -> bool {
         if self.snapshot_sequence.is_none() {
             return false;
@@ -808,6 +884,7 @@ impl<T: TimingSource> ControlHub<T> {
             .is_none_or(|disabled| !disabled(&self.ui_controls))
     }
 
+    /// Registers a callback fired after a snapshot transition commits.
     pub fn register_snapshot_ended_callback<F>(&mut self, callback: F)
     where
         F: Fn() + 'static,
@@ -816,22 +893,24 @@ impl<T: TimingSource> ControlHub<T> {
             .push(Callback(Box::new(callback)));
     }
 
+    /// Sets snapshot recall and randomization transition length in beats.
     pub fn set_transition_time(&mut self, transition_time: f32) {
         self.transition_time = transition_time;
     }
 
+    /// Returns sorted snapshot ids for deterministic UI display.
     pub fn snapshot_keys_sorted(&self) -> Vec<String> {
         let mut keys: Vec<_> = self.snapshots.keys().cloned().collect();
         keys.sort();
         keys
     }
 
-    #[allow(rustdoc::private_intra_doc_links)]
-    /// Uses the [`Self::active_transition`] to store a temporary snapshot of
-    /// randomized parameter values. See [this commit][commit] for the original
-    /// frontend POC (App.tsx)
+    /// Randomizes snapshot-capable values and eases to them over the current
+    /// transition time.
     ///
-    /// [commit]: https://github.com/Lokua/xtal/commit/bcb1328
+    /// Boolean and select UI controls are applied immediately because they
+    /// cannot interpolate meaningfully. Numeric controls, MIDI overrides, MIDI
+    /// controls, and OSC controls transition through `active_transition`.
     pub fn randomize(&mut self, exclusions: Exclusions) {
         let current_frame = frame_clock::frame_count();
         let current_beat = self.animation.beats();
@@ -921,6 +1000,12 @@ impl<T: TimingSource> ControlHub<T> {
         self.active_transition = Some(transition);
     }
 
+    /// Advances hot-reload, snapshot transitions, and snapshot sequencing.
+    ///
+    /// Runtime code should call this once per frame before sampling controls.
+    /// It pulls pending YAML reloads from the watcher, commits finished
+    /// transitions to their backing controls, fires snapshot callbacks, and
+    /// triggers beat-crossed snapshot sequence stages.
     pub fn update(&mut self) {
         let new_config = self.update_state.as_ref().and_then(|update_state| {
             if !update_state.has_changes.load(Ordering::Acquire) {
@@ -988,6 +1073,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Recalls snapshot stages that were crossed since the previous update.
     fn update_snapshot_sequences(&mut self) {
         let current_beat = self.animation.beats();
         let beat_epsilon =
@@ -1063,6 +1149,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Detects whether a loop phase advanced across a stage position.
     fn is_stage_crossed(
         previous_phase: f32,
         phase: f32,
@@ -1080,6 +1167,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Detects a stage hit on the first update after sequence activation.
     fn is_within_forward_window(
         phase: f32,
         stage_position: f32,
@@ -1088,6 +1176,7 @@ impl<T: TimingSource> ControlHub<T> {
         phase >= stage_position && phase < stage_position + beat_epsilon
     }
 
+    /// Registers a callback fired after controls are populated or reloaded.
     pub fn register_populated_callback<F>(&mut self, callback: F)
     where
         F: Fn() + 'static,
@@ -1095,35 +1184,52 @@ impl<T: TimingSource> ControlHub<T> {
         self.populated_callbacks.push(Callback(Box::new(callback)));
     }
 
+    /// Alias for `get` when call sites want to signal scalar intent.
     pub fn float(&self, name: &str) -> f32 {
         self.get(name)
     }
+
+    /// Returns the current boolean value for a UI checkbox.
     pub fn bool(&self, name: &str) -> bool {
         self.ui_controls.bool(name)
     }
+
+    /// Returns a checkbox as `1.0` when true and `0.0` when false.
     pub fn bool_as_f32(&self, name: &str) -> f32 {
         self.ui_controls.bool_as_f32(name)
     }
+
+    /// Returns the current string value for a UI select control.
     pub fn string(&self, name: &str) -> String {
         self.ui_controls.string(name)
     }
+
+    /// Returns whether any UI control has changed since the last clear.
     pub fn changed(&self) -> bool {
         self.ui_controls.changed()
     }
+
+    /// Returns whether any named UI control has changed since the last clear.
     pub fn any_changed_in(&self, names: &[&str]) -> bool {
         self.ui_controls.any_changed_in(names)
     }
+
+    /// Clears the UI changed flag after a sketch has consumed updates.
     pub fn mark_unchanged(&mut self) {
         self.ui_controls.mark_unchanged();
     }
+
+    /// Enables or disables high-resolution MIDI CC handling.
     pub fn hrcc(&mut self, hrcc: bool) {
         self.midi_controls.hrcc = hrcc;
     }
 
+    /// Returns the current beat from the hub timing source.
     pub fn beats(&self) -> f32 {
         self.animation.beats()
     }
 
+    /// Returns all declared `var` aliases mapped to their resolved values.
     pub fn var_values(&self) -> HashMap<String, f32> {
         self.vars
             .keys()
@@ -1131,6 +1237,7 @@ impl<T: TimingSource> ControlHub<T> {
             .collect()
     }
 
+    /// Resolves video transport configs for all declared video controls.
     pub fn video_transports(&self) -> HashMap<String, VideoTransport> {
         let current_frame = frame_clock::frame_count();
 
@@ -1156,6 +1263,7 @@ impl<T: TimingSource> ControlHub<T> {
             .collect()
     }
 
+    /// Queues a manual YAML reload for the next `update` call.
     pub fn request_reload(&self) {
         if let Some(update_state) = self.update_state.as_ref() {
             info!(
@@ -1176,6 +1284,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Sets whether live UI, MIDI, and OSC values survive YAML reloads.
     pub fn set_preserve_values_on_reload(&mut self, preserve: bool) {
         self.preserve_values_on_reload = preserve;
     }
@@ -1229,6 +1338,7 @@ impl<T: TimingSource> ControlHub<T> {
         )
     }
 
+    /// Parses, expands YAML merge keys, deserializes, and validates a script.
     fn parse_from_str(yaml_str: &str) -> Result<ConfigFile, Box<dyn Error>> {
         let raw_config = serde_yml::from_str(yaml_str)?;
         let merged_config = merge_keys_serde_yml(raw_config)?;
@@ -1237,12 +1347,19 @@ impl<T: TimingSource> ControlHub<T> {
         Ok(config)
     }
 
+    /// Reads and parses a control script from disk.
     fn parse_from_path(path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
         let file_content = fs::read_to_string(path)?;
         let config = Self::parse_from_str(&file_content)?;
         Ok(config)
     }
 
+    /// Rebuilds all runtime control collections from a parsed config file.
+    ///
+    /// Live UI/MIDI/OSC values are carried across reloads when
+    /// `preserve_values_on_reload` is enabled. Derived runtime state such as
+    /// hot parameter graphs, animation maps, effects, video transports, and
+    /// active transitions is rebuilt from the new config.
     fn populate_controls(
         &mut self,
         control_configs: &ConfigFile,
@@ -1657,6 +1774,7 @@ impl<T: TimingSource> ControlHub<T> {
         Ok(())
     }
 
+    /// Moves a compiled disabled predicate out of shared control config.
     fn extract_disabled_fn(shared: &mut Shared) -> DisabledFn {
         if let Some(disabled_config) = &mut shared.disabled {
             disabled_config.disabled_fn.take()
@@ -1665,6 +1783,7 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Moves a compiled disabled predicate out of snapshot sequence config.
     fn extract_snapshot_sequence_disabled_fn(
         disabled: &mut Option<DisabledConfig>,
     ) -> DisabledFn {
@@ -1675,13 +1794,15 @@ impl<T: TimingSource> ControlHub<T> {
         }
     }
 
+    /// Validates the structural rules for one snapshot sequence.
     fn validate_snapshot_sequence_config(
         name: &str,
         conf: &SnapshotSequenceConfig,
     ) -> Result<(), Box<dyn Error>> {
         if conf.stages.len() < 2 {
             return Err(format!(
-                "snapshot_sequence {} must contain at least one stage and one end",
+                "snapshot_sequence {} must contain at least one stage and \
+                one end",
                 name
             )
             .into());
@@ -1734,7 +1855,8 @@ impl<T: TimingSource> ControlHub<T> {
             !matches!(stage, SnapshotSequenceStageConfig::Stage { .. })
         }) {
             return Err(format!(
-                "snapshot_sequence {} entries before the final end must be kind: stage",
+                "snapshot_sequence {} entries before the final end must be \
+                kind: stage",
                 name
             )
             .into());
@@ -1743,6 +1865,7 @@ impl<T: TimingSource> ControlHub<T> {
         Ok(())
     }
 
+    /// Validates cross-control script rules after YAML deserialization.
     fn validate_config_file(config: &ConfigFile) -> Result<(), Box<dyn Error>> {
         let mut sequence_count = 0;
 
@@ -1775,6 +1898,7 @@ impl<T: TimingSource> ControlHub<T> {
         Ok(())
     }
 
+    /// Finds `$control` hot parameters in a raw YAML control config.
     fn find_hot_params(&self, raw_config: &serde_yml::Value) -> Node {
         let mut hot_params = Node::default();
 
@@ -1808,6 +1932,7 @@ impl<T: TimingSource> ControlHub<T> {
         hot_params
     }
 
+    /// Parses one YAML value as a hot parameter reference if possible.
     fn try_parse_hot_param(
         &self,
         value: &serde_yml::Value,
@@ -1817,6 +1942,7 @@ impl<T: TimingSource> ControlHub<T> {
             .filter(|param| matches!(param, ParamValue::Hot(_)))
     }
 
+    /// Creates the file watcher that parses YAML off the runtime hot path.
     fn setup_watcher(
         path: PathBuf,
         state: Arc<Mutex<Option<ConfigFile>>>,
@@ -1870,7 +1996,8 @@ impl<T: TimingSource> ControlHub<T> {
                 Ok(content) => content,
                 Err(err) => {
                     trace!(
-                        "control config change event before readable file '{}': {}",
+                        "control config change event before readable file \
+                        '{}': {}",
                         path.display(),
                         err
                     );
@@ -1921,7 +2048,8 @@ impl<T: TimingSource> ControlHub<T> {
 
                         if already_pending {
                             debug!(
-                                "loaded new control configuration while pending: {}",
+                                "loaded new control configuration while \
+                                pending: {}",
                                 path.display()
                             );
                             return;
@@ -1944,13 +2072,11 @@ impl<T: TimingSource> ControlHub<T> {
                         };
 
                         if should_log_info {
-                            info!(
-                                "control config changed: {}",
-                                path.display()
-                            );
+                            info!("control config changed: {}", path.display());
                         } else {
                             debug!(
-                                "control config change suppressed by debounce: {}",
+                                "control config change suppressed by \
+                                debounce: {}",
                                 path.display()
                             );
                         }

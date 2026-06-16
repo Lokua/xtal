@@ -1,5 +1,8 @@
-//! Deserialization types needed for converting the Xtal yaml format into
-//! controls
+//! YAML control script schema and deserialization helpers.
+//!
+//! These types mirror the control script format before it is expanded into
+//! runtime control collections by `ControlHub`. Public fields correspond to
+//! YAML keys or normalized schema values used during population.
 
 use std::error::Error;
 use std::fmt;
@@ -15,76 +18,100 @@ use crate::core::prelude::*;
 // Top-level Types
 //------------------------------------------------------------------------------
 
-/// Uses [`IndexMap`] so we maintain the exact order of UI controls that are
-/// declared in yaml
+/// Parsed control script keyed by YAML control name.
+///
+/// Uses [`IndexMap`] so UI controls keep declaration order.
 pub type ConfigFile = IndexMap<String, MaybeControlConfig>;
 
+/// YAML entry that may or may not be a recognized Xtal control.
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 pub enum MaybeControlConfig {
+    /// Recognized control entry with a `type` field.
     Control(ScriptedControlConfig),
+    /// Unknown or non-control YAML retained only for tolerant parsing.
     #[allow(dead_code)]
     Other(serde_yml::Value),
 }
 
+/// Parsed control entry with its type and raw remaining fields.
 #[derive(Deserialize, Debug)]
 pub struct ScriptedControlConfig {
+    /// Control type selected by the YAML `type` field.
     #[serde(rename = "type")]
     pub control_type: ControlType,
+    /// Raw config payload deserialized later by concrete config type.
     #[serde(flatten)]
     pub config: serde_yml::Value,
 }
 
+/// Supported YAML control `type` values.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ControlType {
-    // UI controls
+    /// UI slider control.
     #[serde(rename = "slider")]
     Slider,
+    /// UI checkbox control.
     #[serde(rename = "checkbox")]
     Checkbox,
+    /// UI select control.
     #[serde(rename = "select")]
     Select,
+    /// UI section separator.
     #[serde(rename = "separator")]
     Separator,
 
-    // External control
+    /// Direct MIDI CC control.
     #[serde(rename = "midi")]
     Midi,
+    /// OSC address control.
     #[serde(rename = "osc")]
     Osc,
+    /// Audio input control.
     #[serde(rename = "audio")]
     Audio,
 
-    // Animation
+    /// Breakpoint automation control.
     #[serde(rename = "automate")]
     Automate,
+    /// Repeating ramp animation.
     #[serde(rename = "ramp")]
     Ramp,
+    /// Deterministic stepped random animation.
     #[serde(rename = "random")]
     Random,
+    /// Deterministic random animation with slew smoothing.
     #[serde(rename = "random_slewed")]
     RandomSlewed,
+    /// Beat-stepped sequence animation.
     #[serde(rename = "round_robin")]
     RoundRobin,
+    /// Triangle-wave animation.
     #[serde(rename = "triangle")]
     Triangle,
+    /// Beat-scheduled snapshot recall sequence.
     #[serde(rename = "snapshot_sequence")]
     SnapshotSequence,
+    /// Video transport control.
     #[serde(rename = "video")]
     Video,
 
-    // Modulation & Effects
+    /// Modulation chain control.
     #[serde(rename = "mod")]
     Modulation,
+    /// Effect control.
     #[serde(rename = "effect")]
     Effects,
 }
 
+/// Fields shared by most YAML control types.
 #[allow(dead_code)]
 #[derive(Clone, Deserialize, Debug, Default)]
 pub struct Shared {
+    /// Optional constant value that bypasses the live control.
     #[serde(default, deserialize_with = "deserialize_number_or_none")]
     pub bypass: Option<f32>,
+    /// Optional short alias exposed to shader uniform banks.
     #[serde(default)]
     pub var: Option<String>,
     // TODO: this really shouldn't be on shared because only UI controls use it
@@ -96,13 +123,18 @@ pub struct Shared {
 // UI
 //------------------------------------------------------------------------------
 
+/// YAML config for a UI slider.
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct SliderConfig {
+    /// Shared control fields.
     #[serde(flatten)]
     pub shared: Shared,
+    /// Slider range as `[min, max]`.
     pub range: [f32; 2],
+    /// Initial slider value.
     pub default: f32,
+    /// Slider step size.
     pub step: f32,
 }
 
@@ -117,19 +149,26 @@ impl Default for SliderConfig {
     }
 }
 
+/// YAML config for a UI checkbox.
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct CheckboxConfig {
+    /// Shared control fields.
     #[serde(flatten)]
     pub shared: Shared,
+    /// Initial checkbox value.
     pub default: bool,
 }
 
+/// YAML config for a UI select.
 #[derive(Deserialize, Debug)]
 pub struct SelectConfig {
+    /// Shared control fields.
     #[serde(flatten)]
     pub shared: Shared,
+    /// Available option labels.
     pub options: Vec<String>,
+    /// Initial selected option.
     pub default: String,
 }
 
@@ -137,17 +176,24 @@ pub struct SelectConfig {
 // Video
 //------------------------------------------------------------------------------
 
+/// YAML config for a video transport control.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(default)]
 pub struct VideoConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Video source identifier or path.
     pub source: String,
+    /// Clip/frame index or hot parameter reference.
     pub index: ParamValue,
+    /// Start beat or hot parameter reference.
     pub start: ParamValue,
+    /// Duration in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Playback speed or hot parameter reference.
     pub speed: ParamValue,
+    /// Playback direction.
     pub direction: VideoDirectionConfig,
 }
 
@@ -165,12 +211,16 @@ impl Default for VideoConfig {
     }
 }
 
+/// YAML playback direction for video controls.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum VideoDirectionConfig {
+    /// Advance video forward.
     #[default]
     Forward,
+    /// Advance video backward.
     Backward,
+    /// Alternate direction each cycle.
     PingPong,
 }
 
@@ -188,15 +238,20 @@ impl From<VideoDirectionConfig> for VideoDirection {
 // External
 //------------------------------------------------------------------------------
 
+/// YAML config for a direct MIDI CC control.
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct MidiConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Zero-based MIDI channel.
     pub channel: u8,
+    /// Control Change number.
     pub cc: u8,
+    /// Mapped output range as `[min, max]`.
     pub range: [f32; 2],
+    /// Initial mapped value.
     pub default: f32,
 }
 
@@ -212,13 +267,16 @@ impl Default for MidiConfig {
     }
 }
 
+/// YAML config for an OSC control.
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct OscConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Mapped output range as `[min, max]`.
     pub range: [f32; 2],
+    /// Initial mapped value.
     pub default: f32,
 }
 
@@ -232,17 +290,24 @@ impl Default for OscConfig {
     }
 }
 
+/// YAML config for an audio input control.
 #[derive(Clone, Deserialize, Debug)]
 #[serde(default)]
 pub struct AudioConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Zero-based audio input channel.
     pub channel: usize,
+    /// Slew rise and fall values.
     pub slew: [f32; 2],
+    /// Pre-emphasis amount.
     pub pre: f32,
+    /// Detection coefficient.
     pub detect: f32,
+    /// Mapped output range as `[min, max]`.
     pub range: [f32; 2],
+    /// Optional bypass value specific to audio controls.
     pub bypass: Option<f32>,
 }
 
@@ -264,29 +329,42 @@ impl Default for AudioConfig {
 // Animation
 //------------------------------------------------------------------------------
 
+/// Parsed animation config before runtime animation evaluation.
 #[derive(Debug)]
 pub enum AnimationConfig {
+    /// Breakpoint automation.
     Automate(AutomateConfig),
+    /// Ramp animation.
     Ramp(RampConfig),
+    /// Random step animation.
     Random(RandomConfig),
+    /// Slewed random animation.
     RandomSlewed(RandomSlewedConfig),
+    /// Round-robin animation.
     RoundRobin(RoundRobinConfig),
+    /// Triangle animation.
     Triangle(TriangleConfig),
 }
 
+/// Runtime keyframe payload extracted from animation config.
 #[derive(Clone, Debug)]
 pub enum KeyframeSequence {
+    /// Breakpoint list for automate controls.
     Breakpoints(Vec<Breakpoint>),
+    /// No keyframe sequence.
     None,
 }
 
+/// YAML config for a breakpoint automation control.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct AutomateConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Breakpoints in beat order.
     pub breakpoints: Vec<BreakpointConfig>,
+    /// Playback mode, usually `loop` or `once`.
     #[serde(default = "default_mode")]
     pub mode: String,
 }
@@ -301,61 +379,88 @@ impl Default for AutomateConfig {
     }
 }
 
+/// YAML config for one automation breakpoint.
 #[derive(Clone, Deserialize, Debug)]
 pub struct BreakpointConfig {
+    /// Beat position or hot parameter reference.
     pub position: ParamValue,
+    /// Base value or hot parameter reference.
     pub value: ParamValue,
+    /// Segment kind and kind-specific fields.
     #[serde(flatten)]
     pub kind: KindConfig,
 }
 
+/// YAML segment kind for one automation breakpoint.
 #[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum KindConfig {
+    /// Hold the current value until the next breakpoint.
     Step,
+    /// Ramp to the next breakpoint value.
     Ramp {
+        /// Easing function name.
         #[serde(default = "default_easing")]
         easing: String,
     },
+    /// Ramp with periodic modulation.
     Wave {
+        /// Wave shape name.
         #[serde(default = "default_shape")]
         shape: String,
+        /// Modulation cycle length in beats or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         frequency: ParamValue,
+        /// Modulation depth or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         amplitude: ParamValue,
+        /// Wave duty cycle or skew.
         #[serde(default = "default_param_value_0_5")]
         width: ParamValue,
+        /// Easing function name for the underlying ramp.
         #[serde(default = "default_easing")]
         easing: String,
+        /// Constraint mode applied after modulation.
         #[serde(default = "default_none_string")]
         constrain: String,
     },
+    /// Deterministic random value around the breakpoint value.
     Random {
+        /// Maximum random deviation or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         amplitude: ParamValue,
     },
+    /// Smooth noise around the ramped breakpoint value.
     RandomSmooth {
+        /// Noise cycle length in beats or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         frequency: ParamValue,
+        /// Maximum noise deviation or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         amplitude: ParamValue,
+        /// Easing function name for the underlying ramp.
         #[serde(default = "default_easing")]
         easing: String,
+        /// Constraint mode applied after modulation.
         #[serde(default = "default_none_string")]
         constrain: String,
     },
+    /// Final endpoint marker.
     End,
 }
 
+/// YAML config for a ramp animation.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct RampConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Cycle length in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Mapped output range.
     pub range: [f32; 2],
+    /// Phase offset or hot parameter reference.
     pub phase: ParamValue,
 }
 
@@ -370,28 +475,33 @@ impl Default for RampConfig {
     }
 }
 
+/// YAML config for a deterministic random animation.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct RandomConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Cycle length in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Mapped output range.
     pub range: [f32; 2],
+    /// Beat delay before random steps begin.
     pub delay: ParamValue,
+    /// Reserved bias parameter used by older control scripts.
     pub bias: ParamValue,
     /// See [`RandomConfig::stem` documentation](Self#stem-resolution).
     ///
     /// # Stem Resolution
     ///
     /// When `None` (omitted from YAML), a deterministic stem is generated by
-    /// hashing the mapping's YAML key name during
-    /// [`ControlHub::populate_controls`]. This ensures every mapping gets a
-    /// unique, stable stem without manual bookkeeping.
+    /// hashing the mapping's YAML key name during control population. This
+    /// ensures every mapping gets a unique, stable stem without manual
+    /// bookkeeping.
     ///
     /// When explicitly provided, the value is used as-is. Note that sequential
     /// stems (e.g. 300, 301) can produce correlated output because the internal
-    /// seed formula only shifts by 1 per loop cycle — prefer omitting `stem` or
+    /// seed formula only shifts by 1 per loop cycle. Prefer omitting `stem` or
     /// spacing explicit values well apart.
     pub stem: Option<u64>,
 }
@@ -409,16 +519,22 @@ impl Default for RandomConfig {
     }
 }
 
+/// YAML config for a deterministic random animation with slew smoothing.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct RandomSlewedConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Cycle length in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Mapped output range.
     pub range: [f32; 2],
+    /// Slew amount or hot parameter reference.
     pub slew: ParamValue,
+    /// Beat delay before random steps begin.
     pub delay: ParamValue,
+    /// Reserved bias parameter used by older control scripts.
     pub bias: ParamValue,
     /// See [`RandomConfig`] for stem resolution docs.
     pub stem: Option<u64>,
@@ -438,14 +554,18 @@ impl Default for RandomSlewedConfig {
     }
 }
 
+/// YAML config for a round-robin value sequence.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct RoundRobinConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Values to cycle through.
     pub values: Vec<f32>,
+    /// Step length in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Slew amount or hot parameter reference.
     pub slew: ParamValue,
     /// See [`RandomConfig`] for stem resolution docs.
     pub stem: Option<u64>,
@@ -463,14 +583,18 @@ impl Default for RoundRobinConfig {
     }
 }
 
+/// YAML config for a triangle animation.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(default)]
 pub struct TriangleConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Cycle length in beats or hot parameter reference.
     pub beats: ParamValue,
+    /// Mapped output range.
     pub range: [f32; 2],
+    /// Phase offset or hot parameter reference.
     pub phase: ParamValue,
 }
 
@@ -485,9 +609,12 @@ impl Default for TriangleConfig {
     }
 }
 
+/// YAML config for beat-scheduled snapshot recall.
 #[derive(Debug, Clone, Default)]
 pub struct SnapshotSequenceConfig {
+    /// Optional disabled predicate.
     pub disabled: Option<DisabledConfig>,
+    /// Ordered snapshot stages plus final end marker.
     pub stages: Vec<SnapshotSequenceStageConfig>,
 }
 
@@ -603,20 +730,27 @@ impl<'de> Deserialize<'de> for SnapshotSequenceConfig {
     }
 }
 
+/// One normalized snapshot sequence stage.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum SnapshotSequenceStageConfig {
+    /// Recalls `snapshot` when playback crosses `position`.
     Stage {
+        /// Snapshot id to recall.
         #[serde(deserialize_with = "deserialize_stage_id")]
         snapshot: String,
+        /// Stage position in beats.
         position: f32,
     },
+    /// Marks the end position for sequence looping.
     End {
+        /// End position in beats.
         position: f32,
     },
 }
 
 impl SnapshotSequenceStageConfig {
+    /// Returns this stage's beat position.
     pub fn position(&self) -> f32 {
         match self {
             SnapshotSequenceStageConfig::Stage { position, .. } => *position,
@@ -624,6 +758,7 @@ impl SnapshotSequenceStageConfig {
         }
     }
 
+    /// Returns the snapshot id for recall stages.
     pub fn snapshot(&self) -> Option<&str> {
         match self {
             SnapshotSequenceStageConfig::Stage { snapshot, .. } => {
@@ -638,99 +773,140 @@ impl SnapshotSequenceStageConfig {
 // Modulation & Effects
 //------------------------------------------------------------------------------
 
+/// YAML config for a modulation control.
 #[derive(Clone, Deserialize, Debug)]
 pub struct ModulationConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Source control value to modulate.
     pub source: String,
+    /// Ordered modulator and effect names applied to the source.
     pub modulators: Vec<String>,
 }
 
+/// YAML config for an effect control.
 #[derive(Clone, Deserialize, Debug)]
 pub struct EffectConfig {
     #[allow(dead_code)]
     #[serde(flatten)]
     shared: Shared,
+    /// Effect kind and kind-specific parameters.
     #[serde(flatten)]
     pub kind: EffectKind,
 }
 
+/// Supported YAML effect kinds.
 #[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum EffectKind {
+    /// Range constraint effect.
     Constrain {
+        /// Constraint mode name.
         #[serde(default = "default_clamp_string")]
         mode: String,
+        /// Constraint range.
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
 
+    /// Hysteresis effect.
     Hysteresis {
+        /// Lower threshold or hot parameter reference.
         #[serde(default = "default_param_value_0_3")]
         lower_threshold: ParamValue,
+        /// Upper threshold or hot parameter reference.
         #[serde(default = "default_param_value_0_7")]
         upper_threshold: ParamValue,
+        /// Low-state output value or hot parameter reference.
         #[serde(default = "default_param_value_0")]
         output_low: ParamValue,
+        /// High-state output value or hot parameter reference.
         #[serde(default = "default_param_value_1")]
         output_high: ParamValue,
+        /// Whether in-between input values pass through unchanged.
         #[serde(default = "default_false")]
         pass_through: bool,
     },
 
+    /// Linear range mapping effect.
     Map {
+        /// Input domain.
         domain: (f32, f32),
+        /// Output range.
         range: (f32, f32),
     },
 
+    /// Arithmetic or curve effect.
     Math {
+        /// Operator name.
         operator: String,
+        /// Operand or hot parameter reference.
         operand: ParamValue,
     },
 
+    /// Step quantization effect.
     Quantizer {
+        /// Step size or hot parameter reference.
         #[serde(default = "default_param_value_0_25")]
         step: ParamValue,
+        /// Output clamp range.
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
 
+    /// Ring modulation effect.
     RingModulator {
+        /// Ring-mod blend or hot parameter reference.
         #[serde(default = "default_param_value_0")]
         mix: ParamValue,
+        /// Signal range.
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
+        /// Named modulator control used as the second input.
         modulator: String,
     },
 
+    /// Saturation effect.
     Saturator {
+        /// Drive amount or hot parameter reference.
         #[serde(default = "default_param_value_1")]
         drive: ParamValue,
+        /// Signal range.
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
 
+    /// Slew limiter effect.
     SlewLimiter {
+        /// Rise smoothing or hot parameter reference.
         #[serde(default = "default_param_value_0")]
         rise: ParamValue,
+        /// Fall smoothing or hot parameter reference.
         #[serde(default = "default_param_value_0")]
         fall: ParamValue,
     },
 
+    /// Wave folder effect.
     #[serde()]
     WaveFolder {
+        /// Input gain or hot parameter reference.
         #[serde(default = "default_param_value_1")]
         gain: ParamValue,
+        /// Number of fold passes.
         #[serde(default = "default_iterations")]
         iterations: usize,
+        /// Fold symmetry or hot parameter reference.
         #[serde(default = "default_param_value_1")]
         symmetry: ParamValue,
+        /// Fold bias or hot parameter reference.
         #[serde(default = "default_param_value_0")]
         bias: ParamValue,
+        /// Fold shape or hot parameter reference.
         #[serde(default = "default_param_value_1")]
         shape: ParamValue,
         // TODO: make Option and consider None to mean "adaptive range"?
+        /// Signal range.
         #[serde(default = "default_normalized_range")]
         range: (f32, f32),
     },
@@ -740,8 +916,10 @@ pub enum EffectKind {
 // Disabled Impl
 //------------------------------------------------------------------------------
 
+/// Compiled disabled predicate for UI controls and snapshot sequences.
 #[derive(Default, Deserialize)]
 pub struct DisabledConfig {
+    /// Predicate evaluated against current UI controls.
     #[serde(skip)]
     pub disabled_fn: DisabledFn,
 }

@@ -1,4 +1,4 @@
-//! Control sketch parameters with GUI controls.
+//! UI-facing controls and values for sketch parameters.
 //!
 //! Sketches do not need to interact with this module directly – see
 //! [`ControlHub`].
@@ -12,14 +12,19 @@ use serde::{Deserialize, Serialize};
 use crate::core::prelude::*;
 use crate::warn_once;
 
+/// Runtime value stored for one UI control.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum ControlValue {
+    /// Numeric slider value.
     Float(f32),
+    /// Checkbox value.
     Bool(bool),
+    /// Select option value.
     String(String),
 }
 
 impl ControlValue {
+    /// Returns the contained float, if this is [`Self::Float`].
     pub fn as_float(&self) -> Option<f32> {
         if let ControlValue::Float(v) = self {
             Some(*v)
@@ -28,6 +33,7 @@ impl ControlValue {
         }
     }
 
+    /// Returns the contained bool, if this is [`Self::Bool`].
     pub fn as_bool(&self) -> Option<bool> {
         if let ControlValue::Bool(v) = self {
             Some(*v)
@@ -36,6 +42,7 @@ impl ControlValue {
         }
     }
 
+    /// Returns the contained string, if this is [`Self::String`].
     pub fn as_string(&self) -> Option<&str> {
         if let ControlValue::String(v) = self {
             Some(v)
@@ -69,8 +76,7 @@ impl From<String> for ControlValue {
     }
 }
 
-/// Used by [`UiControls`] to compute if a [`UiControlConfig`] should be
-/// disabled or not based on the value of other controls
+/// Predicate used by [`UiControls`] to compute whether a control is disabled.
 ///
 /// # Example
 /// ```text
@@ -86,19 +92,27 @@ impl From<String> for ControlValue {
 /// ```
 pub type DisabledFn = Option<Box<dyn Fn(&UiControls) -> bool>>;
 
+/// UI control definition mirrored to the web UI.
 pub enum UiControlConfig {
+    /// Numeric slider control.
     Slider {
+        /// Stable control name.
         name: String,
         /// Represents the initial value of this control and will not be updated
         /// after instantiation
         value: f32,
+        /// Minimum slider value.
         min: f32,
+        /// Maximum slider value.
         max: f32,
+        /// Slider step size.
         step: f32,
         /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
+    /// Boolean checkbox control.
     Checkbox {
+        /// Stable control name.
         name: String,
         /// Represents the initial value of this control and will not be updated
         /// after instantiation
@@ -106,21 +120,27 @@ pub enum UiControlConfig {
         /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
+    /// String select control.
     Select {
+        /// Stable control name.
         name: String,
         /// Represents the initial value of this control and will not be updated
         /// after instantiation
         value: String,
+        /// Allowed option labels.
         options: Vec<String>,
         /// See [`DisabledFn`]
         disabled: DisabledFn,
     },
+    /// Visual separator in the UI.
     Separator {
+        /// Stable separator id.
         name: String,
     },
 }
 
 impl UiControlConfig {
+    /// Returns the stable control name.
     pub fn name(&self) -> &str {
         match self {
             UiControlConfig::Slider { name, .. } => name,
@@ -130,6 +150,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Returns this config's initial value.
     pub fn value(&self) -> ControlValue {
         match self {
             UiControlConfig::Slider { value, .. } => {
@@ -145,6 +166,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Creates a checkbox config.
     pub fn checkbox(name: &str, value: bool) -> UiControlConfig {
         UiControlConfig::Checkbox {
             name: name.to_string(),
@@ -153,6 +175,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Creates a select config.
     pub fn select<S>(name: &str, value: &str, options: &[S]) -> UiControlConfig
     where
         S: AsRef<str>,
@@ -165,6 +188,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Creates a slider config with explicit range and step.
     pub fn slider(
         name: &str,
         value: f32,
@@ -181,7 +205,7 @@ impl UiControlConfig {
         }
     }
 
-    /// Convenience version of [`Self::slider`] with default [0.0, 1.0] range.
+    /// Creates a normalized slider with default `0.0..=1.0` range.
     pub fn slider_n(name: &str, value: f32) -> UiControlConfig {
         UiControlConfig::Slider {
             name: name.to_string(),
@@ -193,6 +217,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Returns whether this control is disabled for the current UI state.
     pub fn is_disabled(&self, controls: &UiControls) -> bool {
         match self {
             UiControlConfig::Slider { disabled, .. }
@@ -204,6 +229,7 @@ impl UiControlConfig {
         }
     }
 
+    /// Returns this config's variant name for UI serialization.
     pub fn variant_string(&self) -> String {
         (match self {
             Self::Checkbox { .. } => "Checkbox",
@@ -214,6 +240,7 @@ impl UiControlConfig {
         .to_string()
     }
 
+    /// Returns whether this config is a separator.
     pub fn is_separator(&self) -> bool {
         matches!(self, Self::Separator { .. })
     }
@@ -317,6 +344,7 @@ impl fmt::Debug for UiControlConfig {
     }
 }
 
+/// Runtime UI control values keyed by control name.
 pub type ControlValues = HashMap<String, ControlValue>;
 
 /// A generic abstraction over UI controls that sketches can directly interact
@@ -333,6 +361,7 @@ pub struct UiControls {
 }
 
 impl UiControls {
+    /// Creates a UI collection from ordered control configs.
     pub fn new(controls: &[UiControlConfig]) -> Self {
         let configs: IndexMap<String, UiControlConfig> = controls
             .iter()
@@ -351,6 +380,7 @@ impl UiControls {
         }
     }
 
+    /// Returns a float control value or logs and returns `0.0`.
     pub fn float(&self, name: &str) -> f32 {
         self.values
             .get(name)
@@ -361,6 +391,7 @@ impl UiControls {
             })
     }
 
+    /// Returns a checkbox value or logs and returns `false`.
     pub fn bool(&self, name: &str) -> bool {
         self.values
             .get(name)
@@ -371,11 +402,12 @@ impl UiControls {
             })
     }
 
-    /// Converts checkbox value into 0.0 or 1.0 (useful in shader context)
+    /// Converts a checkbox value into `0.0` or `1.0`.
     pub fn bool_as_f32(&self, name: &str) -> f32 {
         bool_to_f32(self.bool(name))
     }
 
+    /// Returns a select string value or logs and returns an empty string.
     pub fn string(&self, name: &str) -> String {
         self.values
             .get(name)
@@ -390,8 +422,7 @@ impl UiControls {
             })
     }
 
-    /// Returns the matching option index of a select as f32 (useful in shader
-    /// context)
+    /// Returns the matching option index of a select as `f32`.
     pub fn string_as_f32(&self, name: &str) -> f32 {
         let value = self.string(name);
         if let Some(UiControlConfig::Select { options, .. }) = self.config(name)
@@ -402,23 +433,29 @@ impl UiControls {
         0.0
     }
 
+    /// Returns whether any UI value has changed since the last reset.
     pub fn changed(&self) -> bool {
         self.change_tracker.changed()
     }
+    /// Returns whether any named UI value has changed since the last reset.
     pub fn any_changed_in(&self, names: &[&str]) -> bool {
         self.change_tracker.any_changed_in(names, &self.values)
     }
+    /// Marks all current values as consumed by the sketch.
     pub fn mark_unchanged(&mut self) {
         self.change_tracker.mark_unchanged(&self.values);
     }
+    /// Marks the collection as changed.
     pub fn mark_changed(&mut self) {
         self.change_tracker.mark_changed();
     }
 
+    /// Returns whether a named control is currently disabled.
     pub fn disabled(&self, name: &str) -> bool {
         self.configs.get(name).is_some_and(|c| c.is_disabled(self))
     }
 
+    /// Returns the slider range for `name`, if `name` is a slider.
     pub fn slider_range(&self, name: &str) -> Option<(f32, f32)> {
         self.config(name).and_then(|control| match control {
             UiControlConfig::Slider { min, max, .. } => Some((min, max)),
@@ -432,6 +469,7 @@ impl UiControls {
         })
     }
 
+    /// Returns ordered config references.
     pub fn config_refs(&self) -> &IndexMap<String, UiControlConfig> {
         &self.configs
     }
@@ -533,21 +571,25 @@ impl fmt::Debug for UiControls {
     }
 }
 
+/// Builder for programmatic UI control collections.
 #[derive(Default)]
 pub struct UiControlBuilder {
     controls: Vec<UiControlConfig>,
 }
 
 impl UiControlBuilder {
+    /// Creates an empty UI control builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds an already constructed UI control config.
     pub fn control(mut self, control: UiControlConfig) -> Self {
         self.controls.push(control);
         self
     }
 
+    /// Adds a checkbox control.
     pub fn checkbox(
         self,
         name: &str,
@@ -561,6 +603,7 @@ impl UiControlBuilder {
         })
     }
 
+    /// Adds a select control.
     pub fn select<S>(
         self,
         name: &str,
@@ -579,16 +622,19 @@ impl UiControlBuilder {
         })
     }
 
+    /// Adds a separator with an explicit id.
     pub fn separator_internal(self, name: &str) -> Self {
         self.control(UiControlConfig::Separator {
             name: name.to_string(),
         })
     }
 
+    /// Adds a separator with a generated id.
     pub fn separator(self) -> Self {
         self.separator_internal(&uuid_5())
     }
 
+    /// Adds a slider with explicit range, step, and disabled predicate.
     pub fn slider(
         self,
         name: &str,
@@ -607,6 +653,7 @@ impl UiControlBuilder {
         })
     }
 
+    /// Adds a normalized slider with default `0.0..=1.0` range.
     pub fn slider_n(self, name: &str, value: f32) -> Self {
         self.control(UiControlConfig::Slider {
             name: name.to_string(),
@@ -618,6 +665,7 @@ impl UiControlBuilder {
         })
     }
 
+    /// Builds the configured UI control collection.
     pub fn build(self) -> UiControls {
         UiControls::new(&self.controls)
     }

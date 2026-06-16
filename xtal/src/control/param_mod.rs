@@ -16,10 +16,8 @@
 //!   symmetry: $t1
 //! ```
 //!
-//! See the [parameter handling documentation](link) for details on how
-//! different parameter types are processed.
-//!
-//! [link]: https://github.com/Lokua/xtal/blob/main/docs/parameter_handling.md
+//! See `docs/parameter_handling.md` for details on how different parameter
+//! types are processed.
 
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
@@ -28,15 +26,20 @@ use super::config::*;
 use crate::core::prelude::*;
 use crate::warn_once;
 
+/// YAML parameter value that is either literal or references another control.
 #[derive(Clone, Debug)]
 pub enum ParamValue {
+    /// Literal value known at parse time.
     Cold(f32),
+    /// Reference to another control by name, written as `$name` in YAML.
     Hot(String),
 }
 
 impl ParamValue {
-    /// This should only be called after the dep_graph has been resolved and
-    /// [`FromColdParams::from_cold_params`] has been called
+    /// Returns the wrapped float after hot parameters have been resolved.
+    ///
+    /// This should only be called after the dependency graph has been resolved
+    /// and [`FromColdParams::from_cold_params`] has been called.
     pub fn as_float(&self) -> f32 {
         match self {
             ParamValue::Cold(x) => *x,
@@ -52,8 +55,7 @@ impl ParamValue {
         }
     }
 
-    /// Receive the wrapped float if [`Self::Cold`], otherwise execute `f` in
-    /// case of [`Self::Hot`] with Hot String.
+    /// Returns the cold float or resolves a hot parameter through `f`.
     pub fn cold_or(&self, f: impl Fn(String) -> f32) -> f32 {
         match self {
             Self::Cold(x) => *x,
@@ -97,7 +99,9 @@ impl<'de> Deserialize<'de> for ParamValue {
     }
 }
 
+/// Updates one named parameter field on an existing config or effect.
 pub trait SetFromParam {
+    /// Sets `name` to `value`, warning for unsupported fields.
     fn set_from_param(&mut self, name: &str, value: f32);
 }
 
@@ -109,13 +113,13 @@ fn warn_for(thing: &str, field: &str) {
 // Effects
 //------------------------------------------------------------------------------
 
-/// Used for part 1 of an Effect's instantiation phase (TODO: document more
-/// specifically how this works in the greater scheme)
+/// Creates an effect instance from only cold parameter values.
+///
+/// Hot parameters are intentionally skipped here. `ControlHub::get` resolves
+/// them each frame and applies them through [`SetFromParam`] before the effect
+/// runs.
 pub trait FromColdParams: Default + SetFromParam {
-    /// Extract the f32s from [`ParamValue::Cold`] variants and sets them on a
-    /// newly created Effect instance. Will use the Effect's default instead of
-    /// [`ParamValue::Hot`] since those are swapped in during
-    /// [`ControlHub::get`].
+    /// Builds an instance from cold fields in `config`.
     fn from_cold_params(config: &EffectConfig) -> Self;
 }
 
@@ -129,7 +133,8 @@ fn apply_if_cold<T: SetFromParam>(
     }
 }
 
-/// Generate [`FromColdParams`] and [`SetFromParam`] implementations for an effect
+/// Generate [`FromColdParams`] and [`SetFromParam`] implementations for an
+/// effect.
 macro_rules! impl_effect_params {
     ($type:ty, $variant:path, $($field:ident),*) => {
         impl FromColdParams for $type {
@@ -137,7 +142,13 @@ macro_rules! impl_effect_params {
                 let mut instance = Self::default();
 
                 if let $variant { $($field),*, .. } = &config.kind {
-                    $(apply_if_cold(&mut instance, $field, stringify!($field));)*
+                    $(
+                        apply_if_cold(
+                            &mut instance,
+                            $field,
+                            stringify!($field),
+                        );
+                    )*
                 }
 
                 instance

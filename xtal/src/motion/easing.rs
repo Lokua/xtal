@@ -1,70 +1,110 @@
-//! Easing functions, most of which borrowed from
-//! [easings.net](https://github.com/ai/easings.net), which in turn come from
-//! [Robert Penner](http://robertpenner.com/easing/), the guy who literally
-//! wrote the book.
+//! Easing curves for shaping normalized interpolation.
+//!
+//! Most functions are based on the formulas collected by
+//! [easings.net](https://github.com/ai/easings.net), which trace back to
+//! Robert Penner's easing equations. Unless a function says otherwise, `t` is
+//! expected to be a normalized value from `0.0` to `1.0`.
 
 use std::f32::consts::PI;
 use std::fmt::{Display, Formatter};
 use std::result::Result;
 use std::str::FromStr;
 
+/// Named easing curve or custom easing callback.
 #[allow(unpredictable_function_pointer_comparisons)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Easing {
+    /// Linear pass-through.
     Linear,
 
+    /// Alias for [`Self::EaseInQuad`].
     #[doc(alias = "EaseInQuad")]
     EaseIn,
 
+    /// Alias for [`Self::EaseOutQuad`].
     #[doc(alias = "EaseOutQuad")]
     EaseOut,
 
+    /// Alias for [`Self::EaseInOutQuad`].
     #[doc(alias = "EaseInOutQuad")]
     EaseInOut,
 
+    /// Quadratic ease-in.
     EaseInQuad,
+    /// Quadratic ease-out.
     EaseOutQuad,
+    /// Quadratic ease-in/ease-out.
     EaseInOutQuad,
+    /// Cubic ease-in.
     EaseInCubic,
+    /// Cubic ease-out.
     EaseOutCubic,
+    /// Cubic ease-in/ease-out.
     EaseInOutCubic,
+    /// Quartic ease-in.
     EaseInQuart,
+    /// Quartic ease-out.
     EaseOutQuart,
+    /// Quartic ease-in/ease-out.
     EaseInOutQuart,
+    /// Quintic ease-in.
     EaseInQuint,
+    /// Quintic ease-out.
     EaseOutQuint,
+    /// Quintic ease-in/ease-out.
     EaseInOutQuint,
+    /// Sinusoidal ease-in.
     EaseInSine,
+    /// Sinusoidal ease-out.
     EaseOutSine,
+    /// Sinusoidal ease-in/ease-out.
     EaseInOutSine,
+    /// Exponential ease-in.
     EaseInExpo,
+    /// Exponential ease-out.
     EaseOutExpo,
+    /// Exponential ease-in/ease-out.
     EaseInOutExpo,
+    /// Circular ease-in.
     EaseInCirc,
+    /// Circular ease-out.
     EaseOutCirc,
+    /// Circular ease-in/ease-out.
     EaseInOutCirc,
+    /// Back ease-in with overshoot.
     EaseInBack,
+    /// Back ease-out with overshoot.
     EaseOutBack,
+    /// Back ease-in/ease-out with overshoot.
     EaseInOutBack,
+    /// Elastic ease-in with overshoot.
     EaseInElastic,
+    /// Elastic ease-out with overshoot.
     EaseOutElastic,
+    /// Elastic ease-in/ease-out with overshoot.
     EaseInOutElastic,
+    /// Bounce ease-in.
     EaseInBounce,
+    /// Bounce ease-out.
     EaseOutBounce,
+    /// Bounce ease-in/ease-out.
     EaseInOutBounce,
+    /// Logarithmic curve normalized to `0.0..=1.0`.
     Logarithmic,
 
+    /// Caller-provided unary easing function.
     Custom(fn(f32) -> f32),
 
-    // ------------------
-    // PARAMETRIC EASINGS
-    // ------------------
+    /// Power curve where larger exponents bias values toward zero.
     Exponential(f32),
+    /// Symmetric curve controlled by curvature and max exponent.
     Curve(f32, f32),
+    /// Logistic sigmoid with configurable steepness.
     Sigmoid(f32),
 }
 
 impl Easing {
+    /// String names accepted by [`FromStr`] and displayed by [`Display`].
     pub const FUNCTION_NAMES: &[&str] = &[
         "linear",
         "ease_in",
@@ -123,6 +163,7 @@ impl Easing {
             .collect()
     }
 
+    /// Applies this easing curve to normalized input `t`.
     pub fn apply(&self, t: f32) -> f32 {
         match self {
             Self::Linear => linear(t),
@@ -278,18 +319,22 @@ const C3: f32 = C1 + 1.0;
 const C4: f32 = (2.0 * PI) / 3.0;
 const C5: f32 = (2.0 * PI) / 4.5;
 
+/// Linear pass-through easing.
 pub fn linear(t: f32) -> f32 {
     t
 }
 
+/// Quadratic ease-in.
 pub fn ease_in_quad(t: f32) -> f32 {
     t * t
 }
 
+/// Quadratic ease-out.
 pub fn ease_out_quad(t: f32) -> f32 {
     1.0 - (1.0 - t) * (1.0 - t)
 }
 
+/// Quadratic ease-in/ease-out.
 pub fn ease_in_out_quad(t: f32) -> f32 {
     if t < 0.5 {
         2.0 * t * t
@@ -298,14 +343,17 @@ pub fn ease_in_out_quad(t: f32) -> f32 {
     }
 }
 
+/// Cubic ease-in.
 pub fn ease_in_cubic(t: f32) -> f32 {
     t * t * t
 }
 
+/// Cubic ease-out.
 pub fn ease_out_cubic(t: f32) -> f32 {
     1.0 - (1.0 - t).powi(3)
 }
 
+/// Cubic ease-in/ease-out.
 pub fn ease_in_out_cubic(t: f32) -> f32 {
     if t < 0.5 {
         4.0 * t * t * t
@@ -314,14 +362,17 @@ pub fn ease_in_out_cubic(t: f32) -> f32 {
     }
 }
 
+/// Quartic ease-in.
 pub fn ease_in_quart(t: f32) -> f32 {
     t * t * t * t
 }
 
+/// Quartic ease-out.
 pub fn ease_out_quart(t: f32) -> f32 {
     1.0 - (1.0 - t).powi(4)
 }
 
+/// Quartic ease-in/ease-out.
 pub fn ease_in_out_quart(t: f32) -> f32 {
     if t < 0.5 {
         8.0 * t * t * t * t
@@ -330,14 +381,17 @@ pub fn ease_in_out_quart(t: f32) -> f32 {
     }
 }
 
+/// Quintic ease-in.
 pub fn ease_in_quint(t: f32) -> f32 {
     t * t * t * t * t
 }
 
+/// Quintic ease-out.
 pub fn ease_out_quint(t: f32) -> f32 {
     1.0 - (1.0 - t).powi(5)
 }
 
+/// Quintic ease-in/ease-out.
 pub fn ease_in_out_quint(t: f32) -> f32 {
     if t < 0.5 {
         16.0 * t * t * t * t * t
@@ -346,18 +400,22 @@ pub fn ease_in_out_quint(t: f32) -> f32 {
     }
 }
 
+/// Sinusoidal ease-in.
 pub fn ease_in_sine(t: f32) -> f32 {
     1.0 - ((t * PI / 2.0).cos())
 }
 
+/// Sinusoidal ease-out.
 pub fn ease_out_sine(t: f32) -> f32 {
     (t * PI / 2.0).sin()
 }
 
+/// Sinusoidal ease-in/ease-out.
 pub fn ease_in_out_sine(t: f32) -> f32 {
     -(t * PI).cos() / 2.0 + 0.5
 }
 
+/// Exponential ease-in.
 pub fn ease_in_expo(t: f32) -> f32 {
     if t == 0.0 {
         0.0
@@ -366,6 +424,7 @@ pub fn ease_in_expo(t: f32) -> f32 {
     }
 }
 
+/// Exponential ease-out.
 pub fn ease_out_expo(t: f32) -> f32 {
     if t == 1.0 {
         1.0
@@ -374,6 +433,7 @@ pub fn ease_out_expo(t: f32) -> f32 {
     }
 }
 
+/// Exponential ease-in/ease-out.
 pub fn ease_in_out_expo(t: f32) -> f32 {
     if t == 0.0 {
         0.0
@@ -386,14 +446,17 @@ pub fn ease_in_out_expo(t: f32) -> f32 {
     }
 }
 
+/// Circular ease-in.
 pub fn ease_in_circ(t: f32) -> f32 {
     1.0 - (1.0 - t * t).sqrt()
 }
 
+/// Circular ease-out.
 pub fn ease_out_circ(t: f32) -> f32 {
     ((1.0 - t) * (1.0 - t)).sqrt()
 }
 
+/// Circular ease-in/ease-out.
 pub fn ease_in_out_circ(t: f32) -> f32 {
     if t < 0.5 {
         (1.0 - (1.0 - (2.0 * t).powi(2)).sqrt()) / 2.0
@@ -402,14 +465,17 @@ pub fn ease_in_out_circ(t: f32) -> f32 {
     }
 }
 
+/// Back ease-in with overshoot.
 pub fn ease_in_back(t: f32) -> f32 {
     C3 * t * t * t - C1 * t * t
 }
 
+/// Back ease-out with overshoot.
 pub fn ease_out_back(t: f32) -> f32 {
     1.0 + C3 * (t - 1.0).powi(3) + C1 * (t - 1.0).powi(2)
 }
 
+/// Back ease-in/ease-out with overshoot.
 pub fn ease_in_out_back(t: f32) -> f32 {
     if t < 0.5 {
         ((2.0 * t).powi(2) * ((C2 + 1.0) * 2.0 * t - C2)) / 2.0
@@ -419,6 +485,7 @@ pub fn ease_in_out_back(t: f32) -> f32 {
     }
 }
 
+/// Elastic ease-in with overshoot.
 pub fn ease_in_elastic(t: f32) -> f32 {
     if t == 0.0 {
         0.0
@@ -429,6 +496,7 @@ pub fn ease_in_elastic(t: f32) -> f32 {
     }
 }
 
+/// Elastic ease-out with overshoot.
 pub fn ease_out_elastic(t: f32) -> f32 {
     if t == 0.0 {
         0.0
@@ -439,6 +507,7 @@ pub fn ease_out_elastic(t: f32) -> f32 {
     }
 }
 
+/// Elastic ease-in/ease-out with overshoot.
 pub fn ease_in_out_elastic(t: f32) -> f32 {
     if t == 0.0 {
         0.0
@@ -454,10 +523,12 @@ pub fn ease_in_out_elastic(t: f32) -> f32 {
     }
 }
 
+/// Bounce ease-in.
 pub fn ease_in_bounce(t: f32) -> f32 {
     1.0 - bounce_out(1.0 - t)
 }
 
+/// Bounce ease-in/ease-out.
 pub fn ease_in_out_bounce(t: f32) -> f32 {
     if t < 0.5 {
         (1.0 - bounce_out(1.0 - 2.0 * t)) / 2.0
@@ -484,6 +555,7 @@ fn bounce_out(t: f32) -> f32 {
     }
 }
 
+/// Logarithmic curve normalized to `0.0..=1.0`.
 pub fn logarithmic(t: f32) -> f32 {
     (1.0 + t * 9.0).ln() / 10.0f32.ln()
 }
@@ -492,22 +564,26 @@ pub fn logarithmic(t: f32) -> f32 {
 //  PARAMETRIC EASINGS
 // -----------------------------------------------------------------------------
 
+/// Raises `t` to `exponent`.
 pub fn exponential(t: f32, exponent: f32) -> f32 {
     t.powf(exponent)
 }
 
+/// Default maximum exponent suggested for [`curve`].
 pub const SUGGESTED_CURVE_MAX_EXPONENT: f32 = 10.0;
 
 /// Creates a symmetric exponential easing function where the parameter controls
 /// the curve in both directions from linear.
 ///
-/// * `t` - Input value (0.0 to 1.0)
-/// * `curvature` - Controls curve shape
+/// - `t`: input value, normally `0.0..=1.0`
+/// - `curvature`: controls curve shape
+/// - `max_exponent`: strongest exponent used at full curvature
 ///
 /// # Example
-/// * curvature = 0.0 → Linear curve
-/// * curvature = 1.0 → strong ease-out / bias towards max
-/// * curvature = -1.0 → strong ease-in / bias towards min
+///
+/// - `curvature = 0.0`: linear curve
+/// - `curvature = 1.0`: strong ease-out, biased toward max
+/// - `curvature = -1.0`: strong ease-in, biased toward min
 pub fn curve(t: f32, curvature: f32, max_exponent: f32) -> f32 {
     if curvature == 0.0 {
         return t;
@@ -529,10 +605,13 @@ pub fn curve(t: f32, curvature: f32, max_exponent: f32) -> f32 {
     }
 }
 
-/// Suggested range [1, 10]
-/// - 1-5 Smooth
-/// - 5-15 = Balanced curves, noticeable transition but not overly sharp
-/// - 15-20 = Very steep curves, almost like a step function
+/// Logistic sigmoid curve centered around `0.5`.
+///
+/// Suggested steepness ranges:
+///
+/// - `1..5`: smooth
+/// - `5..15`: balanced, noticeable transition but not overly sharp
+/// - `15..20`: very steep, almost like a step function
 pub fn sigmoid(t: f32, steepness: f32) -> f32 {
     1.0 / (1.0 + (-steepness * (t - 0.5)).exp())
 }

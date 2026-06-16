@@ -1,3 +1,9 @@
+//! Dependency graph for hot control parameters.
+//!
+//! Hot parameters are YAML values such as `$foo` that depend on another control
+//! value. `DepGraph` records those relationships and determines which source
+//! controls must be evaluated before their consumers during a frame.
+
 use std::collections::VecDeque;
 
 use log::warn;
@@ -6,15 +12,18 @@ use super::param_mod::ParamValue;
 use crate::core::prelude::*;
 use crate::ternary;
 
+/// Parameter map for one consumer node.
 pub type Node = HashMap<String, ParamValue>;
+/// Consumer nodes keyed by control name.
 pub type Graph = HashMap<String, Node>;
+/// Topologically sorted prerequisite names, or `None` when empty or invalid.
 pub type EvalOrder = Option<Vec<String>>;
 
 /// A directed graph structure that manages parameter dependency relationships.
 ///
 /// The `DepGraph` keeps track of which control nodes ("consumers") depend on
 /// other nodes ("prerequisites") and calculates the correct order in which they
-/// should be evaluated..
+/// should be evaluated.
 ///
 /// # Usage Flow
 ///
@@ -44,29 +53,33 @@ pub struct DepGraph {
 }
 
 impl DepGraph {
+    /// Returns whether `name` is required by another node.
     pub fn is_prerequisite(&self, name: &str) -> bool {
         *self.prerequisites.get(name).unwrap_or(&false)
     }
 
+    /// Returns the current prerequisite evaluation order.
     pub fn order(&self) -> &EvalOrder {
         &self.eval_order
     }
 
+    /// Returns the original parameter map for one node.
     pub fn node(&self, name: &str) -> Option<&Node> {
         self.node_defs.get(name)
     }
 
+    /// Inserts or replaces a node definition.
     pub fn insert_node(&mut self, name: &str, node: Node) {
         self.node_defs.insert(name.to_string(), node);
     }
 
+    /// Clears all node definitions and computed graph state.
     pub fn clear(&mut self) {
         self.node_defs.clear();
         self.eval_order = None;
     }
 
-    /// Builds the prerequisite evaluation order using a modified Kahn's
-    /// Algorithm for topological sorting
+    /// Builds prerequisite evaluation order using topological sorting.
     pub fn build_graph(&mut self) {
         let (graph, mut in_degree) = self.extract_relationships();
 
@@ -125,6 +138,7 @@ impl DepGraph {
     /// Analyzes the node definitions to identify prerequisite relationships.
     ///
     /// Returns:
+    ///
     /// - A map of each prerequisite to the nodes that consume it
     /// - A map tracking the number of prerequisites each node depends on
     fn extract_relationships(

@@ -1,4 +1,15 @@
-//! Animation module providing musically-timed animation and transition methods
+//! Beat-synchronized animation and automation helpers.
+//!
+//! This module turns a [`TimingSource`] into repeatable animation values:
+//!
+//! - simple phase ramps and triangle waves;
+//! - deterministic random and slewed random values;
+//! - round-robin value sequencing;
+//! - interval triggers for beat-scheduled events;
+//! - DAW-style breakpoint automation with ramps, modulation, and constraints.
+//!
+//! Durations, offsets, and breakpoint positions are expressed in beats unless
+//! a function explicitly says otherwise.
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -27,8 +38,10 @@ impl PerlinNoise {
     }
 }
 
-/// Data structure used in conjunction with
-/// [`Animation::create_trigger`] and [`Animation::should_trigger`]
+/// Stateful interval marker used by [`Animation::should_trigger`].
+///
+/// Create triggers with [`Animation::create_trigger`] so their internal
+/// bookkeeping starts in the correct pre-trigger state.
 #[derive(Debug)]
 pub struct Trigger {
     every: f32,
@@ -36,17 +49,23 @@ pub struct Trigger {
     last_trigger_count: f32,
 }
 
-/// The core structure needed to configure segments for the
-/// [`Animation::automate`] method. See the various constructors such as
-/// [`Breakpoint::step`], [`Breakpoint::ramp`], etc. for in depth details.
+/// One point in an [`Animation::automate`] breakpoint sequence.
+///
+/// `position` is the beat position of this breakpoint, `value` is the base
+/// output at that position, and `kind` describes how the segment from this
+/// point to the next point is generated.
 #[derive(Clone, Debug)]
 pub struct Breakpoint {
+    /// Segment generator used from this breakpoint to the next breakpoint.
     pub kind: Kind,
+    /// Beat position of this breakpoint within the automation sequence.
     pub position: f32,
+    /// Base output value at this breakpoint.
     pub value: f32,
 }
 
 impl Breakpoint {
+    /// Creates a breakpoint with an explicit segment kind.
     pub fn new(kind: Kind, position: f32, value: f32) -> Self {
         Self {
             kind,
@@ -55,21 +74,24 @@ impl Breakpoint {
         }
     }
 
-    /// Create a step that will be held at `value` until the next breakpoint.
+    /// Creates a step held at `value` until the next breakpoint.
     pub fn step(position: f32, value: f32) -> Self {
         Self::new(Kind::Step, position, value)
     }
 
-    /// Create a step that will curve from this `value` to the next breakpoint's
+    /// Creates a ramp from this `value` to the next breakpoint's
     /// value with adjustable easing. `position` is expressed in beats.
     pub fn ramp(position: f32, value: f32, easing: Easing) -> Self {
         Self::new(Kind::Ramp { easing }, position, value)
     }
 
-    /// Creates a linear ramp from this `value` to the next breakpoint's value
-    /// with amplitude modulation applied over it and finalized by various
-    /// clamping modes and easing algorithms that together can produce extremely
-    /// complex curves. Like position, `frequency` is expressed in beats.
+    /// Creates a ramp with beat-synchronized modulation over the segment.
+    ///
+    /// The ramp moves from this `value` to the next breakpoint's value with
+    /// the provided `easing`, then adds a modulation wave before applying the
+    /// selected `constrain` mode. Like `position`, `frequency` is expressed in
+    /// beats.
+    ///
     /// `amplitude` represents how much above and below the base interpolated
     /// value the modulation will add or subtract depending on its phase.
     /// Negative amplitudes can be used to invert the modulation. For
@@ -110,16 +132,17 @@ impl Breakpoint {
         )
     }
 
-    /// Create a step chosen randomly from the passed in `amplitude` which
+    /// Creates a step chosen randomly from the passed in `amplitude` which
     /// specifies the range of possible deviation from `value`.
     ///
-    /// > TIP: you can make this a smooth random by applying a
-    /// > [`SlewLimiter`] to the output.
+    /// You can make this a smooth random by applying a [`SlewLimiter`] to the
+    /// output.
     pub fn random(position: f32, value: f32, amplitude: f32) -> Self {
         Self::new(Kind::Random { amplitude }, position, value)
     }
 
-    /// # ⚠️ Experimental
+    /// Experimental smooth random modulation for automation segments.
+    ///
     /// Similar to [`Self::wave`], only uses Perlin noise to amplitude modulate
     /// the base curve. Useful for adding jitter when `frequency` is shorter
     /// than the duration of this point's `position` and the next; larger values
@@ -144,6 +167,8 @@ impl Breakpoint {
         )
     }
 
+    /// Creates an explicit end marker for an automation sequence.
+    ///
     /// The last breakpoint in any sequence represents the final value and is
     /// never actually entered. Technically any kind of breakpoint can be used
     /// at the end and will be interpreted exactly the same way (only value and
@@ -156,29 +181,48 @@ impl Breakpoint {
     }
 }
 
+/// Segment type used by [`Animation::automate`].
 #[derive(Clone, Debug)]
 pub enum Kind {
+    /// Hold the breakpoint value until the next breakpoint.
     Step,
+    /// Ramp to the next breakpoint value with the provided easing curve.
     Ramp {
+        /// Easing curve used to shape the ramp interpolation.
         easing: Easing,
     },
+    /// Pick a deterministic random value near this breakpoint value.
     Random {
+        /// Maximum random deviation above or below the breakpoint value.
         amplitude: f32,
     },
+    /// Add deterministic smooth noise over a ramped base value.
     RandomSmooth {
+        /// Noise cycle length in beats.
         frequency: f32,
+        /// Maximum random deviation above or below the ramped value.
         amplitude: f32,
+        /// Easing curve used to shape the underlying ramp.
         easing: Easing,
+        /// Constraint applied after noise modulation.
         constrain: Constrain,
     },
+    /// Add a periodic modulation wave over a ramped base value.
     Wave {
+        /// Waveform used for the modulation signal.
         shape: Shape,
+        /// Maximum modulation depth above or below the ramped value.
         amplitude: f32,
+        /// Duty cycle or skew of the modulation waveform.
         width: f32,
+        /// Modulation cycle length in beats.
         frequency: f32,
+        /// Easing curve used to shape the underlying ramp.
         easing: Easing,
+        /// Constraint applied after wave modulation.
         constrain: Constrain,
     },
+    /// Sequence endpoint. Only its position and value are used.
     End,
 }
 
@@ -212,10 +256,14 @@ impl FromStr for Kind {
     }
 }
 
+/// Periodic waveform used by [`Breakpoint::wave`].
 #[derive(Clone, Debug, PartialEq)]
 pub enum Shape {
+    /// Smooth sinusoidal modulation.
     Sine,
+    /// Linear up/down modulation.
     Triangle,
+    /// Two-state modulation with hard transitions.
     Square,
 }
 impl FromStr for Shape {
@@ -231,9 +279,12 @@ impl FromStr for Shape {
     }
 }
 
+/// Playback behavior for [`Animation::automate`].
 #[derive(Debug, PartialEq)]
 pub enum Mode {
+    /// Wrap beat position back to the start after the final breakpoint.
     Loop,
+    /// Stop at the final breakpoint value after the sequence duration.
     Once,
 }
 
@@ -249,26 +300,28 @@ impl FromStr for Mode {
     }
 }
 
-///  Animation module providing musically-timed animation methods with support
-///  for incredibly easy to use basic oscillations as well as ultra-complex and
-///  expressive automation
+/// Beat-synchronized animation helper backed by a timing source.
+///
+/// `Animation` is intentionally lightweight: clone it freely, keep it on a
+/// sketch, or construct it around the runtime [`Timing`] source. Methods read
+/// the current beat from `timing` each time they are called.
 ///
 ///  # Basic Usage
 ///
 ///  ```rust,ignore
-///  let animation = Animation::new(Timing::new(ctx.bpm()));
+///  let animation = Animation::new(Timing::frame(ctx.bpm()));
 ///
 ///  // Simple ramp oscillation from 0.0 to 1.0 over 4 beats (repeating)
-///  let phase = animation.loop_phase(4.0);
+///  let phase = animation.ramp(4.0);
 ///
 ///  // Triangle wave oscillation between ranges
 ///  let value = animation.triangle(
 ///      // Duration in beats
 ///      4.0,
 ///      // Min/max range
-///      (0.0, 100.0),  
+///      (0.0, 100.0),
 ///      // Phase offset
-///      0.0,           
+///      0.0,
 ///  );
 ///  ```
 ///
@@ -303,19 +356,21 @@ impl FromStr for Mode {
 ///          // Mark end of sequence
 ///          Breakpoint::end(4.0, 0.0),
 ///      ],
-///      Mode::Loop
+///      Mode::Loop,
 ///  );
 ///  ```
 ///
 /// See [`crate::prelude::effects`] for ways you can post-process the results
-/// of any animation method to achieve more complex results
+/// of any animation method to achieve more complex results.
 #[derive(Clone, Debug)]
 pub struct Animation<T: TimingSource> {
+    /// Timing source used to read the current beat and BPM.
     pub timing: T,
     random_smooth_previous_values: RefCell<HashMap<u64, f32>>,
 }
 
 impl<T: TimingSource> Animation<T> {
+    /// Creates an animation helper around a timing source.
     pub fn new(timing: T) -> Self {
         Self {
             timing,
@@ -323,27 +378,27 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
-    /// Return the number of beats that have elapsed
-    /// since (re)start of this Animation's Timing source
+    /// Returns elapsed beats from this animation's timing source.
     pub fn beats(&self) -> f32 {
         self.timing.beats()
     }
 
-    /// Convert `beats` to frame count
+    /// Converts a beat duration to frames at the current BPM and global FPS.
     pub fn beats_to_frames(&self, beats: f32) -> f32 {
         let seconds_per_beat = 60.0 / self.timing.bpm();
         let total_seconds = beats * seconds_per_beat;
         total_seconds * frame_clock::fps()
     }
 
-    /// Return a relative phase position from [0, 1] within
-    /// the passed in duration (specified in beats)
+    /// Returns a repeating phase from `0.0` to `1.0`.
+    ///
+    /// `duration` is the cycle length in beats.
     pub fn ramp(&self, duration: f32) -> f32 {
         let total_beats = self.beats();
         (total_beats / duration) % 1.0
     }
 
-    /// Like [`Self::ramp`] with range mapping and phase offset
+    /// Returns [`Self::ramp`] mapped into a range with a phase offset.
     pub fn ramp_plus(
         &self,
         duration: f32,
@@ -354,14 +409,15 @@ impl<T: TimingSource> Animation<T> {
         map_range(x, 0.0, 1.0, min, max)
     }
 
-    /// Cycle from 0 to 1 and back to 0 over the passed in duration
-    /// See [`Self::triangle`] for an advanced version with more options
+    /// Cycles from `0.0` to `1.0` and back to `0.0`.
+    ///
+    /// See [`Self::triangle`] for range mapping and phase offset support.
     pub fn tri(&self, duration: f32) -> f32 {
         let x = (self.beats() / duration) % 1.0;
         ternary!(x < 0.5, x, 1.0 - x) * 2.0
     }
 
-    /// Cycle from `min` to `max` and back to `min` in exactly `duration`
+    /// Cycles from `min` to `max` and back to `min` in exactly `duration`
     /// beats. `phase_offset` in [0.0..1.0] shifts our position in that cycle.
     /// Only positive offsets are supported.
     pub fn triangle(
@@ -375,7 +431,7 @@ impl<T: TimingSource> Animation<T> {
         map_range(x, 0.0, 1.0, min, max)
     }
 
-    /// Generate a randomized value once during every cycle of `duration`. The
+    /// Generates a randomized value once during every cycle of `duration`. The
     /// function is completely deterministic given the same parameters in
     /// relation to the current beat.
     pub fn random(
@@ -392,7 +448,7 @@ impl<T: TimingSource> Animation<T> {
         rng.random_range(min..=max)
     }
 
-    /// Generate a randomized value once during every cycle of `duration`. The
+    /// Generates a randomized value once during every cycle of `duration`. The
     /// function is completely deterministic given the same parameters in
     /// relation to the current beat. The `seed` - which serves as the root of
     /// an internal seed generator - is also a unique ID for internal slew state
@@ -428,7 +484,7 @@ impl<T: TimingSource> Animation<T> {
         value
     }
 
-    /// Cycle through an arbitrary list of values, advancing to the next value
+    /// Cycles through an arbitrary list of values, advancing to the next value
     /// every `every` beats. The output is optionally smoothed by a slew
     /// limiter. `slew` controls smoothing when the value changes, with 0.0
     /// being instant and 1.0 being essentially frozen. A unique `stem` is
@@ -463,8 +519,7 @@ impl<T: TimingSource> Animation<T> {
         value
     }
 
-    /// Creates a new [`Trigger`] with specified interval and delay;
-    /// Use with [`Self::should_trigger`].
+    /// Creates a beat interval trigger for use with [`Self::should_trigger`].
     pub fn create_trigger(&self, every: f32, delay: f32) -> Trigger {
         Trigger {
             every,
@@ -473,9 +528,10 @@ impl<T: TimingSource> Animation<T> {
         }
     }
 
-    /// Checks if a trigger should fire based on current beat position.
-    /// When used with [`Self::create_trigger`], provides a means
-    /// of executing arbitrary code at specific intervals
+    /// Checks whether a trigger should fire at the current beat position.
+    ///
+    /// When used with [`Self::create_trigger`], this provides a way to execute
+    /// arbitrary code once per beat interval.
     ///
     /// ```rust,ignore
     /// // Do something once every 4 bars
@@ -499,16 +555,16 @@ impl<T: TimingSource> Animation<T> {
         should_trigger
     }
 
-    /// An advanced animation method modelled on DAW automation lanes. It is
-    /// capable of producing the same results as just about every other
+    /// Evaluates a DAW-style breakpoint automation lane.
+    ///
+    /// This advanced animation method is modelled on DAW automation lanes. It
+    /// can produce the same results as just about every other
     /// animation method yet is more powerful, but as such requires a bit more
     /// configuration. While other animation methods are focused on one style of
     /// keyframe/transition, `automate` allows many different types of
     /// transitions defined by a list of [`Breakpoint`], each with its own
-    /// configurable [`Kind`]. See [breakpoints] for a static visualization of
-    /// the kinds of curves `automate` can produce.
-    ///
-    /// [breakpoints]: https://github.com/Lokua/xtal/blob/main/src/sketches/breakpoints.rs
+    /// configurable [`Kind`]. See the `breakpoints` sketch for a static
+    /// visualization of the curves `automate` can produce.
     pub fn automate(&self, breakpoints: &[Breakpoint], mode: Mode) -> f32 {
         assert!(!breakpoints.is_empty(), "At least 1 breakpoint is required");
         assert!(
@@ -693,6 +749,7 @@ impl<T: TimingSource> Animation<T> {
 }
 
 #[cfg(test)]
+/// Test helpers and coverage for beat-based animation methods.
 pub mod animation_tests {
     use super::*;
     use serial_test::serial;
@@ -700,7 +757,9 @@ pub mod animation_tests {
 
     // With BPM=360 and FPS=24, each beat = 4 frames, each 1/16 = 1 frame.
     // This keeps frame counts small and avoids precision issues.
+    /// Test FPS chosen so one sixteenth note equals one frame.
     pub const FPS: f32 = 24.0;
+    /// Test BPM chosen so one beat equals four frames.
     pub const BPM: f32 = 360.0;
     const FRAMES_PER_BEAT: f32 = (60.0 / BPM) * FPS;
 
@@ -724,6 +783,7 @@ pub mod animation_tests {
         frame_clock::set_frame_count((beat * FRAMES_PER_BEAT) as u32);
     }
 
+    /// Creates an animation instance backed by deterministic frame timing.
     pub fn create_instance() -> Animation<FrameTiming> {
         Animation::new(FrameTiming::new(Bpm::new(BPM)))
     }

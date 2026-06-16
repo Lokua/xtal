@@ -1,3 +1,9 @@
+//! Audio input control collection.
+//!
+//! `AudioControls` opens a `cpal` input stream, keeps a short multichannel
+//! buffer per frame, derives configured control values from channel data, and
+//! stores the mapped values for `ControlHub` lookups.
+
 use cpal::{Device, Stream, StreamConfig, traits::*};
 use std::error::Error;
 use std::rc::Rc;
@@ -11,17 +17,25 @@ use crate::motion::SlewLimiter;
 use crate::time::frame_clock;
 use crate::warn_once;
 
+/// Runtime configuration for one audio-derived control value.
 #[derive(Clone, Debug)]
 pub struct AudioControlConfig {
+    /// Zero-based input channel index sampled for this control.
     pub channel: usize,
+    /// Slew limiter applied after detection.
     pub slew_limiter: SlewLimiter,
+    /// Pre-emphasis amount applied before detection.
     pub pre_emphasis: f32,
+    /// Detection coefficient passed to the audio processor.
     pub detect: f32,
+    /// Output range used to map normalized detector output.
     pub range: (f32, f32),
+    /// Initial value before the audio stream produces updates.
     pub value: f32,
 }
 
 impl AudioControlConfig {
+    /// Creates an audio control config.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         channel: usize,
@@ -51,9 +65,11 @@ struct State {
     values: HashMap<String, f32>,
 }
 
+/// Function used to convert one channel buffer into a normalized value.
 pub type BufferProcessor =
     fn(buffer: &[f32], config: &AudioControlConfig) -> f32;
 
+/// Default audio detector with pre-emphasis and transient detection.
 pub fn default_buffer_processor(
     buffer: &[f32],
     config: &AudioControlConfig,
@@ -67,6 +83,7 @@ pub fn default_buffer_processor(
     )
 }
 
+/// Pass-through processor that returns the latest sample in the buffer.
 pub fn thru_buffer_processor(
     buffer: &[f32],
     _config: &AudioControlConfig,
@@ -74,8 +91,13 @@ pub fn thru_buffer_processor(
     *buffer.last().unwrap_or(&0.0)
 }
 
+/// Audio-backed control collection.
+///
+/// The stream runs on the audio callback thread and stores mapped values in a
+/// mutex-protected state map. Clones share the same runtime state.
 #[derive(Clone)]
 pub struct AudioControls {
+    /// Whether an input stream is currently active.
     pub is_active: bool,
     buffer_processor: BufferProcessor,
     state: Arc<Mutex<State>>,
@@ -90,6 +112,7 @@ impl Default for AudioControls {
 }
 
 impl AudioControls {
+    /// Creates audio controls using a custom buffer processor.
     pub fn new(buffer_processor: BufferProcessor) -> Self {
         let processor = MultichannelAudioProcessor::new(800, 16);
         Self {
@@ -105,6 +128,7 @@ impl AudioControls {
         }
     }
 
+    /// Updates one named audio control config in place.
     pub fn update_control<F>(&mut self, name: &str, f: F)
     where
         F: FnOnce(&mut AudioControlConfig),
@@ -115,6 +139,7 @@ impl AudioControls {
         }
     }
 
+    /// Updates every audio control config in place.
     pub fn update_controls<F>(&mut self, f: F)
     where
         F: Fn(&mut AudioControlConfig),
@@ -125,10 +150,12 @@ impl AudioControls {
         }
     }
 
+    /// Replaces the buffer processor used by future stream callbacks.
     pub fn set_buffer_processor(&mut self, buffer_processor: BufferProcessor) {
         self.buffer_processor = buffer_processor
     }
 
+    /// Sets the input device name used by [`Self::start`].
     pub fn set_device_name(&mut self, device_name: String) {
         self.device_name = if device_name.is_empty() {
             None
@@ -137,10 +164,12 @@ impl AudioControls {
         };
     }
 
+    /// Returns whether the audio stream is currently active.
     pub fn is_active(&self) -> bool {
         self.is_active
     }
 
+    /// Opens the configured input device and starts processing audio.
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let Some(device_name) = self.device_name.clone() else {
             warn!("Skipping AudioControls listener setup; no audio device.");
@@ -176,7 +205,8 @@ impl AudioControls {
                         if config.channel >= state.processor.channel_data.len()
                         {
                             warn_once!(
-                                "Using AudioControlConfig with channel beyond available device channels: {:?}",
+                                "Using AudioControlConfig with channel \
+                                beyond available device channels: {:?}",
                                 config
                             );
                             return None;
@@ -213,6 +243,7 @@ impl AudioControls {
         Ok(())
     }
 
+    /// Stops the current input stream, if one is running.
     pub fn stop(&mut self) {
         if let Some(_stream) = self.stream.take() {
             self.is_active = false;
@@ -220,6 +251,7 @@ impl AudioControls {
         }
     }
 
+    /// Restarts the audio stream after a short delay.
     pub fn restart(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.stop();
         info!("Restarting...");
@@ -322,23 +354,27 @@ impl std::fmt::Debug for AudioControls {
     }
 }
 
+/// Builder for programmatic audio control collections.
 #[derive(Default)]
 pub struct AudioControlBuilder {
     controls: AudioControls,
 }
 
 impl AudioControlBuilder {
+    /// Creates an audio control builder using the default buffer processor.
     pub fn new() -> Self {
         Self {
             controls: AudioControls::new(default_buffer_processor),
         }
     }
 
+    /// Adds one audio control config.
     pub fn control(mut self, name: &str, config: AudioControlConfig) -> Self {
         self.controls.add(name, config);
         self
     }
 
+    /// Sets the buffer processor used by built controls.
     pub fn with_buffer_processor(
         mut self,
         buffer_processor: BufferProcessor,
@@ -347,10 +383,12 @@ impl AudioControlBuilder {
         self
     }
 
+    /// Builds the audio controls and attempts to start the input stream.
     pub fn build(mut self) -> AudioControls {
         if let Err(e) = self.controls.start() {
             warn!(
-                "Failed to initialize audio controls: {}. Using default values.",
+                "Failed to initialize audio controls: {}. \
+                Using default values.",
                 e
             );
         }
@@ -395,6 +433,7 @@ impl MultichannelAudioProcessor {
         &self.channel_data[channel]
     }
 
+    /// Applies one-pole pre-emphasis to a buffer.
     pub fn apply_pre_emphasis(buffer: &[f32], coefficient: f32) -> Vec<f32> {
         let mut filtered = Vec::with_capacity(buffer.len());
         filtered.push(*buffer.first().unwrap_or(&0.0));

@@ -1,3 +1,9 @@
+//! WGSL file watcher used by render graph hot reload.
+//!
+//! `ShaderWatch` watches a shader's parent directory because many editors save
+//! by replacing files atomically. Events are filtered back down to the target
+//! path, then content hashes suppress reloads for metadata-only changes.
+
 use std::collections::hash_map::DefaultHasher;
 use std::fs;
 use std::hash::{Hash, Hasher};
@@ -9,12 +15,18 @@ use std::sync::{Arc, Mutex};
 use log::{info, trace, warn};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
+/// Change detector for one shader file.
+///
+/// The watcher callback runs off the render hot path and only flips an atomic
+/// flag. The runtime consumes that flag with `take_changed` and decides when to
+/// rebuild GPU pipelines.
 pub struct ShaderWatch {
     changed: Arc<AtomicBool>,
     _watcher: RecommendedWatcher,
 }
 
 impl ShaderWatch {
+    /// Starts watching a shader file for meaningful content changes.
     pub fn start(path: PathBuf) -> Result<Self, notify::Error> {
         let changed = Arc::new(AtomicBool::new(false));
         let changed_flag = changed.clone();
@@ -96,11 +108,13 @@ impl ShaderWatch {
         })
     }
 
+    /// Returns whether the shader changed since the previous call.
     pub fn take_changed(&self) -> bool {
         self.changed.swap(false, Ordering::SeqCst)
     }
 }
 
+/// Hashes shader contents so equivalent save events do not trigger reloads.
 fn file_content_hash(path: &Path) -> Result<u64, std::io::Error> {
     let bytes = fs::read(path)?;
     let mut hasher = DefaultHasher::new();
@@ -108,6 +122,7 @@ fn file_content_hash(path: &Path) -> Result<u64, std::io::Error> {
     Ok(hasher.finish())
 }
 
+/// Returns true when a filesystem event may represent the target shader.
 fn shader_changed(event: &Event, shader_path: &Path) -> bool {
     if !matches!(
         event.kind,
@@ -126,6 +141,7 @@ fn shader_changed(event: &Event, shader_path: &Path) -> bool {
         .any(|path| path_matches_target(path, shader_path))
 }
 
+/// Matches exact, filename-only, or canonicalized paths for editor saves.
 fn path_matches_target(
     path: &std::path::Path,
     target: &std::path::Path,

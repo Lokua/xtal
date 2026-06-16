@@ -1,6 +1,21 @@
+//! Uniform bank storage for WGSL shader parameters.
+//!
+//! Xtal exposes dynamic shader parameters as an array of `vec4<f32>` banks.
+//! Control scripts address components with compact names such as `ax`, `bz`,
+//! or `cw`. Bank `a` is also reserved for runtime values:
+//!
+//! - `ax`: render width;
+//! - `ay`: render height;
+//! - `az`: current beat;
+//! - `aw`: currently unused.
+//!
+//! The whole bank array is uploaded to a single uniform buffer and bound at
+//! group 0 for render and compute shaders.
+
 use crate::warn_once;
 use wgpu::util::DeviceExt;
 
+/// CPU mirror and GPU binding for Xtal uniform banks.
 pub struct UniformBanks {
     data: Vec<[f32; 4]>,
     buffer: wgpu::Buffer,
@@ -9,6 +24,7 @@ pub struct UniformBanks {
 }
 
 impl UniformBanks {
+    /// Allocates `banks` vec4 uniform slots and their GPU binding objects.
     pub fn new(device: &wgpu::Device, banks: usize) -> Self {
         assert!(banks > 0, "uniform bank count must be > 0");
 
@@ -59,15 +75,18 @@ impl UniformBanks {
         }
     }
 
+    /// Updates reserved resolution components `ax` and `ay`.
     pub fn set_resolution(&mut self, w: f32, h: f32) {
         self.data[0][0] = w;
         self.data[0][1] = h;
     }
 
+    /// Updates reserved beat component `az`.
     pub fn set_beats(&mut self, beats: f32) {
         self.data[0][2] = beats;
     }
 
+    /// Sets one bank component addressed by names like `ax` or `bw`.
     pub fn set(&mut self, bank: &str, value: f32) -> Result<(), String> {
         let (bank_idx, component_idx) =
             parse_bank_component(bank).map_err(|message| {
@@ -87,19 +106,23 @@ impl UniformBanks {
         Ok(())
     }
 
+    /// Uploads the CPU mirror to the GPU uniform buffer.
     pub fn upload(&self, queue: &wgpu::Queue) {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.data));
     }
 
+    /// Returns the layout used by render and compute pipelines.
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
     }
 
+    /// Returns the bind group used at shader group 0.
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
 }
 
+/// Parses compact bank syntax into bank and component indexes.
 fn parse_bank_component(input: &str) -> Result<(usize, usize), &'static str> {
     if input.len() != 2 {
         return Err("expected exactly two chars like 'ax'");

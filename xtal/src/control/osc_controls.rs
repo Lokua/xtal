@@ -1,3 +1,9 @@
+//! OSC control collection.
+//!
+//! `OscControls` registers callbacks with the shared OSC receiver and maps
+//! numeric OSC arguments into named scalar control values. YAML keys are stored
+//! without a leading slash; incoming OSC addresses are normalized the same way.
+
 use std::sync::{Arc, Mutex};
 
 use super::control_traits::{ControlCollection, ControlConfig};
@@ -6,15 +12,21 @@ use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::warn_once;
 use nannou_osc as osc;
 
+/// Runtime configuration for one OSC-backed control.
 #[derive(Clone, Debug)]
 pub struct OscControlConfig {
+    /// OSC address, usually without the leading slash.
     pub address: String,
+    /// Minimum mapped output value.
     pub min: f32,
+    /// Maximum mapped output value.
     pub max: f32,
+    /// Initial mapped value.
     pub value: f32,
 }
 
 impl OscControlConfig {
+    /// Creates an OSC control config from address, range, and initial value.
     pub fn new(address: &str, range: (f32, f32), value: f32) -> Self {
         Self {
             address: address.to_string(),
@@ -27,14 +39,17 @@ impl OscControlConfig {
 
 impl ControlConfig<f32, f32> for OscControlConfig {}
 
+/// OSC-backed control collection.
 #[derive(Clone, Debug, Default)]
 pub struct OscControls {
+    /// Whether the shared OSC callback has been registered.
     pub is_active: bool,
     configs: HashMap<String, OscControlConfig>,
     state: Arc<Mutex<State>>,
 }
 
 impl OscControls {
+    /// Registers a wildcard OSC callback for the current configs.
     pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let state = self.state.clone();
         let configs = self.configs.clone();
@@ -124,21 +139,25 @@ impl
     }
 }
 
+/// Builder for programmatic OSC control collections.
 #[derive(Default)]
 pub struct OscControlBuilder {
     controls: OscControls,
 }
 
 impl OscControlBuilder {
+    /// Creates an empty OSC control builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds one OSC control config.
     pub fn control(mut self, name: &str, config: OscControlConfig) -> Self {
         self.controls.add(name, config);
         self
     }
 
+    /// Builds the configured OSC control collection.
     pub fn build(self) -> OscControls {
         self.controls
     }

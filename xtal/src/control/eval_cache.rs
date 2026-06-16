@@ -1,4 +1,4 @@
-//! Cache for control values that are [parameter modulation sources](pmod).
+//! Cache for control values that are [parameter modulation sources][pmod].
 //! These are evaluated per-frame before the consumers that depend on them so we
 //! cache their results for the eventual subsequent request for their value. For
 //! example:
@@ -25,13 +25,18 @@ type NodeName = String;
 type Frame = u32;
 type CachedValue = f32;
 
-/// See [`crate::control::eval_cache`]
+/// Per-frame cache keyed by control node name.
+///
+/// Values are only valid for the frame they were stored on. This allows a hot
+/// parameter to be evaluated once while still serving later requests from UI or
+/// dependent controls during the same frame.
 #[derive(Debug, Default)]
 pub struct EvalCache {
     cache: RefCell<HashMap<NodeName, (Frame, CachedValue)>>,
 }
 
 impl EvalCache {
+    /// Returns whether `name` has a cached value for `frame`.
     pub fn has(&self, name: &str, frame: Frame) -> bool {
         if let Some(&(cached_frame, _)) = self.cache.borrow().get(name) {
             return cached_frame == frame;
@@ -39,12 +44,14 @@ impl EvalCache {
         false
     }
 
+    /// Stores `value` for `name` on `frame`.
     pub fn store(&self, name: &str, frame: Frame, value: CachedValue) {
         self.cache
             .borrow_mut()
             .insert(name.to_string(), (frame, value));
     }
 
+    /// Returns the cached value for `name` when it matches `frame`.
     pub fn get(&self, name: &str, frame: Frame) -> Option<CachedValue> {
         self.cache
             .borrow()
@@ -58,6 +65,7 @@ impl EvalCache {
             })
     }
 
+    /// Clears all cached frame values.
     pub fn clear(&self) {
         self.cache.borrow_mut().clear();
     }
