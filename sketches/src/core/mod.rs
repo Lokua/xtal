@@ -1,4 +1,3 @@
-pub mod acc;
 pub mod blob;
 pub mod cloud;
 pub mod d_warp;
@@ -8,7 +7,6 @@ pub mod flow;
 pub mod grid_splash;
 pub mod gyroid;
 pub mod hatch;
-pub mod ink;
 pub mod interference;
 pub mod marcher;
 pub mod neural;
@@ -18,4 +16,3 @@ pub mod spiral;
 pub mod un;
 pub mod watercolor;
 pub mod wave_fract;
-pub mod wave_sphere;

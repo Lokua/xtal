@@ -4,22 +4,22 @@
     {
       "type": "Select",
       "name": "engine_a",
-      "value": "stripes"
+      "value": "cells"
     },
     {
       "type": "Select",
       "name": "engine_b",
-      "value": "rings"
+      "value": "plasma"
     },
     {
       "type": "Slider",
       "name": "engine_mix",
-      "value": 0.0
+      "value": 0.3
     },
     {
       "type": "Slider",
       "name": "beat_rate",
-      "value": 4.0
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -34,7 +34,7 @@
     {
       "type": "Slider",
       "name": "complexity",
-      "value": 1.65
+      "value": 1.58
     },
     {
       "type": "Slider",
@@ -79,17 +79,17 @@
     {
       "type": "Checkbox",
       "name": "mirror",
-      "value": false
+      "value": true
     },
     {
       "type": "Slider",
       "name": "line_mix",
-      "value": 0.62
+      "value": 0.33
     },
     {
       "type": "Slider",
       "name": "edge_mix",
-      "value": 0.0
+      "value": 0.02
     },
     {
       "type": "Slider",
@@ -134,7 +134,7 @@
     {
       "type": "Slider",
       "name": "hue_shift",
-      "value": 0.07
+      "value": -0.89
     },
     {
       "type": "Slider",
@@ -230,13 +230,234 @@
   ],
   "osc_controls": [],
   "snapshots": {
-    "4": {
+    "5": {
       "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": -1.7199999
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.95
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.203
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.29
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.38
+        },
+        {
+          "type": "Slider",
+          "name": "echo_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 4.25
+        },
+        {
+          "type": "Checkbox",
+          "name": "mirror",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.97999996
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 1.25
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.48
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.07
+        },
+        {
+          "type": "Slider",
+          "name": "drift_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.69
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 256.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 1.78
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 3.875
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "mono"
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_rate",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 0.52
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 1.68
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.92
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "tunnel"
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": -0.16
+        },
+        {
+          "type": "Slider",
+          "name": "gamma",
+          "value": 0.65999997
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_density",
+          "value": 40.0
+        },
         {
           "type": "Checkbox",
           "name": "pause_motion",
           "value": false
         },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "tunnel"
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "master_gain",
+          "value": 1.9399999
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.34
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.28
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 13.0
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 1.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
         {
           "type": "Slider",
           "name": "quantize_levels",
@@ -254,23 +475,13 @@
         },
         {
           "type": "Slider",
-          "name": "scanlines",
-          "value": 0.07
+          "name": "auto_mix_amount",
+          "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "beat_rate",
-          "value": 9.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "cells"
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": false
+          "name": "swirl",
+          "value": 0.0
         },
         {
           "type": "Checkbox",
@@ -279,8 +490,93 @@
         },
         {
           "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
+          "name": "beat_rate",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_rate",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.61
+        },
+        {
+          "type": "Checkbox",
+          "name": "pause_motion",
+          "value": false
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "plasma"
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.8
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": -0.01
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.108
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "shards"
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.69
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -294,83 +590,63 @@
         },
         {
           "type": "Slider",
-          "name": "ring_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "bloom",
-          "value": 0.27
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.052
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 1.9
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "kaleidoscope",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 0.88
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.66
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
           "name": "drift_x",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "auto_mix_amount",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "gamma",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.61
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
           "value": 0.0
         },
         {
           "type": "Slider",
           "name": "contrast",
-          "value": 2.44
+          "value": 1.65
         },
         {
           "type": "Slider",
-          "name": "stripe_density",
-          "value": 7.25
+          "name": "zoom",
+          "value": 0.7
         },
         {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": 0.33
-        },
-        {
-          "type": "Slider",
-          "name": "complexity",
-          "value": 0.5
+          "type": "Select",
+          "name": "palette",
+          "value": "infrared"
         },
         {
           "type": "Slider",
@@ -379,43 +655,59 @@
         },
         {
           "type": "Slider",
-          "name": "glitch_scale",
-          "value": 8.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": false
+          "name": "engine_mix",
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "line_mix",
-          "value": 0.44
+          "name": "master_gain",
+          "value": 2.0
         },
         {
           "type": "Slider",
           "name": "cell_density",
-          "value": 5.25
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "stripes"
+          "value": 1.0
         },
         {
           "type": "Slider",
-          "name": "gamma",
-          "value": 1.84
+          "name": "echo_mix",
+          "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "zoom",
-          "value": 0.7
+          "name": "stripe_density",
+          "value": 0.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "4": {
+      "ui_controls": [
+        {
+          "type": "Checkbox",
+          "name": "pause_motion",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 1.5
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -429,6 +721,161 @@
         },
         {
           "type": "Slider",
+          "name": "glitch_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 9.0
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 5.25
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.7
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_density",
+          "value": 7.25
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "stripes"
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.88
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": -0.63
+        },
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_rate",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": 0.33
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 0.07
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "cells"
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.052
+        },
+        {
+          "type": "Slider",
+          "name": "master_gain",
+          "value": 1.9
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.27
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.44
+        },
+        {
+          "type": "Checkbox",
+          "name": "mirror",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 256.0
+        },
+        {
+          "type": "Slider",
           "name": "engine_mix",
           "value": 0.12
         },
@@ -439,470 +886,23 @@
         },
         {
           "type": "Slider",
-          "name": "soft_clip",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 1.5
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 0.0
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Select",
-          "name": "palette",
-          "value": "infrared"
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "ring_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_scroll",
-          "value": -0.63
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.92
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_scale",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "twist",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "mirror",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "cell_density",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "plasma"
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.65
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "shards"
-        },
-        {
-          "type": "Slider",
-          "name": "gamma",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "drift_y",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "grain",
-          "value": 0.108
-        },
-        {
-          "type": "Slider",
-          "name": "vignette",
-          "value": 0.69
-        },
-        {
-          "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "echo_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.7
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "quantize_levels",
-          "value": 256.0
-        },
-        {
-          "type": "Slider",
-          "name": "bloom",
-          "value": 0.8
-        },
-        {
-          "type": "Slider",
-          "name": "scanlines",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "soft_clip",
-          "value": 0.61
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": -0.01
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "line_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "kaleidoscope",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 1.61
-        },
-        {
-          "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "complexity",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "engine_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "pause_motion",
-          "value": false
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "3": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "color_scroll",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "soft_clip",
-          "value": 0.89
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_density",
-          "value": 23.25
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.1
-        },
-        {
-          "type": "Slider",
-          "name": "kaleidoscope",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.74
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "gamma",
-          "value": 1.96
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "echo_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "twist",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "line_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "tunnel"
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "cell_density",
-          "value": 1.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "mirror",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "bloom",
-          "value": 0.87
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_scale",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "stripes"
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.003
-        },
-        {
-          "type": "Slider",
-          "name": "engine_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 3.25
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 1.61
-        },
-        {
-          "type": "Slider",
-          "name": "complexity",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "vignette",
-          "value": 0.69
+          "name": "contrast",
+          "value": 2.44
         },
         {
           "type": "Slider",
           "name": "saturation",
-          "value": 0.92
+          "value": 0.66
         },
         {
           "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": -0.13
-        },
-        {
-          "type": "Slider",
-          "name": "drift_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "quantize_levels",
-          "value": 256.0
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.97
-        },
-        {
-          "type": "Select",
-          "name": "palette",
-          "value": "cyanotype"
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "ring_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "scanlines",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "pause_motion",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": false
+          "name": "gamma",
+          "value": 1.84
         }
       ],
       "midi_controls": [],
@@ -912,23 +912,38 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "echo_mix",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "pause_motion",
+          "value": false
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "shards"
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "grain",
-          "value": 0.108
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "rings"
+          "name": "strobe_rate",
+          "value": 2.0
         },
         {
           "type": "Slider",
-          "name": "zoom",
-          "value": 0.4
+          "name": "echo_mix",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -937,8 +952,103 @@
         },
         {
           "type": "Slider",
+          "name": "zoom",
+          "value": 0.4
+        },
+        {
+          "type": "Slider",
+          "name": "gamma",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
           "name": "kaleidoscope",
           "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.108
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 8.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.44
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.61
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": -0.63
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 1.49
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 4.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "rings"
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.13
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 14.75
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.65
+        },
+        {
+          "type": "Checkbox",
+          "name": "mirror",
+          "value": false
         },
         {
           "type": "Slider",
@@ -952,73 +1062,8 @@
         },
         {
           "type": "Slider",
-          "name": "soft_clip",
-          "value": 0.61
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 1.13
-        },
-        {
-          "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ring_density",
-          "value": 14.75
-        },
-        {
-          "type": "Slider",
           "name": "quantize_levels",
           "value": 256.0
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "shards"
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 1.49
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_scale",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 2.0
         },
         {
           "type": "Slider",
@@ -1027,88 +1072,13 @@
         },
         {
           "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "engine_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "complexity",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 4.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.92
-        },
-        {
-          "type": "Slider",
-          "name": "gamma",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
           "name": "cell_density",
           "value": 15.25
         },
         {
           "type": "Slider",
-          "name": "twist",
+          "name": "warp",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "line_mix",
-          "value": 0.44
-        },
-        {
-          "type": "Slider",
-          "name": "color_scroll",
-          "value": -0.63
-        },
-        {
-          "type": "Checkbox",
-          "name": "pause_motion",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.65
         },
         {
           "type": "Slider",
@@ -1122,13 +1092,43 @@
         },
         {
           "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "master_gain",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
           "name": "scanlines",
           "value": 0.0
         },
         {
-          "type": "Checkbox",
-          "name": "mirror",
-          "value": false
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 1.0
         }
       ],
       "midi_controls": [],
@@ -1138,43 +1138,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "swirl",
+          "name": "drift_y",
           "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 0.64
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": -0.01
-        },
-        {
-          "type": "Select",
-          "name": "palette",
-          "value": "infrared"
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "plasma"
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_scroll",
-          "value": -0.63
         },
         {
           "type": "Slider",
@@ -1183,13 +1148,58 @@
         },
         {
           "type": "Slider",
-          "name": "engine_mix",
+          "name": "grain",
+          "value": 0.108
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "shards"
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.61
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 15.25
+        },
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": -0.63
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "infrared"
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_mix",
           "value": 0.0
         },
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 1.65
+          "name": "swirl",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -1197,14 +1207,49 @@
           "value": 0.61
         },
         {
+          "type": "Slider",
+          "name": "warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
           "type": "Checkbox",
-          "name": "pause_motion",
+          "name": "invert",
           "value": false
         },
         {
           "type": "Slider",
-          "name": "saturation",
-          "value": 0.92
+          "name": "master_gain",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.64
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "plasma"
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.65
         },
         {
           "type": "Slider",
@@ -1217,24 +1262,14 @@
           "value": -0.0031855
         },
         {
-          "type": "Slider",
-          "name": "cell_density",
-          "value": 15.25
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.108
-        },
-        {
           "type": "Checkbox",
           "name": "mirror",
           "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": -0.01
         },
         {
           "type": "Slider",
@@ -1243,23 +1278,13 @@
         },
         {
           "type": "Slider",
-          "name": "stripe_density",
-          "value": 0.5
+          "name": "beat_rate",
+          "value": 1.0
         },
         {
-          "type": "Slider",
-          "name": "twist",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "shards"
-        },
-        {
-          "type": "Slider",
-          "name": "quantize_levels",
-          "value": 256.0
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
         },
         {
           "type": "Slider",
@@ -1268,27 +1293,7 @@
         },
         {
           "type": "Slider",
-          "name": "brightness",
-          "value": 1.61
-        },
-        {
-          "type": "Slider",
-          "name": "bloom",
-          "value": 0.8
-        },
-        {
-          "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "vignette",
-          "value": 0.69
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
+          "name": "twist",
           "value": 0.0
         },
         {
@@ -1298,28 +1303,18 @@
         },
         {
           "type": "Slider",
-          "name": "zoom",
-          "value": 0.7
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "drift_y",
-          "value": 0.0
+          "name": "quantize_levels",
+          "value": 256.0
         },
         {
           "type": "Checkbox",
-          "name": "invert",
+          "name": "pause_motion",
           "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.69
         },
         {
           "type": "Slider",
@@ -1328,18 +1323,8 @@
         },
         {
           "type": "Slider",
-          "name": "master_gain",
-          "value": 2.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "kaleidoscope",
-          "value": 1.0
+          "name": "zoom",
+          "value": 0.7
         },
         {
           "type": "Slider",
@@ -1348,12 +1333,479 @@
         },
         {
           "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 0.0
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": -0.13
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_density",
+          "value": 23.25
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.89
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.97
+        },
+        {
+          "type": "Slider",
           "name": "scanlines",
           "value": 0.0
         },
         {
           "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 256.0
+        },
+        {
+          "type": "Slider",
+          "name": "gamma",
+          "value": 1.96
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.003
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "pause_motion",
+          "value": false
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Checkbox",
+          "name": "mirror",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.74
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.1
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "tunnel"
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_rate",
+          "value": 3.25
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.61
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.69
+        },
+        {
+          "type": "Slider",
+          "name": "echo_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "stripes"
+        },
+        {
+          "type": "Slider",
+          "name": "master_gain",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
           "name": "glitch_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "cyanotype"
+        },
+        {
+          "type": "Slider",
+          "name": "drift_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.87
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "8": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "accent",
+          "value": 0.06
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.58
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "master_gain",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "vignette",
+          "value": 0.69
+        },
+        {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "cells"
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.71
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.61
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "ring_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "line_mix",
+          "value": 0.33
+        },
+        {
+          "type": "Checkbox",
+          "name": "mirror",
+          "value": true
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "complexity",
+          "value": 1.58
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 1.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "plasma"
+        },
+        {
+          "type": "Slider",
+          "name": "stripe_density",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "kaleidoscope",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "pause_motion",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "rotation",
+          "value": -0.0031855
+        },
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "drift_y",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.108
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.92
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "color_scroll",
+          "value": -0.55
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 9.0
+        },
+        {
+          "type": "Select",
+          "name": "palette",
+          "value": "cyanotype"
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": -0.89
+        },
+        {
+          "type": "Slider",
+          "name": "gamma",
+          "value": 1.18
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.02
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 241.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_rate",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "echo_mix",
           "value": 0.0
         }
       ],
@@ -1364,48 +1816,38 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "saturation",
-          "value": 0.92
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "rings"
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.92
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": 0.07
+          "name": "master_gain",
+          "value": 2.0
         },
         {
           "type": "Checkbox",
-          "name": "strobe_on",
+          "name": "pause_motion",
           "value": false
         },
         {
           "type": "Slider",
-          "name": "echo_mix",
-          "value": 0.0
+          "name": "rotation",
+          "value": -0.0031855
         },
         {
           "type": "Slider",
-          "name": "line_mix",
-          "value": 0.62
+          "name": "saturation",
+          "value": 0.92
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.108
+        },
+        {
+          "type": "Slider",
+          "name": "scanlines",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "soft_clip",
+          "value": 0.58
         },
         {
           "type": "Slider",
@@ -1414,12 +1856,57 @@
         },
         {
           "type": "Slider",
+          "name": "strobe_rate",
+          "value": 2.0
+        },
+        {
+          "type": "Slider",
+          "name": "echo_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "quantize_levels",
+          "value": 241.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.71
+        },
+        {
+          "type": "Slider",
+          "name": "warp",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "drift_x",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "twist",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "engine_mix",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
           "name": "vignette",
           "value": 0.69
         },
         {
+          "type": "Select",
+          "name": "engine_a",
+          "value": "stripes"
+        },
+        {
           "type": "Slider",
-          "name": "swirl",
+          "name": "glitch_mix",
           "value": 0.0
         },
         {
@@ -1429,73 +1916,8 @@
         },
         {
           "type": "Slider",
-          "name": "bloom",
-          "value": 0.8
-        },
-        {
-          "type": "Checkbox",
-          "name": "mirror",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "kaleidoscope",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "twist",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "stripes"
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "scanlines",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_scale",
-          "value": 9.0
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 2.0
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "drift_y",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "ring_density",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "engine_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 0.0
+          "name": "accent",
+          "value": 0.06
         },
         {
           "type": "Slider",
@@ -1504,244 +1926,8 @@
         },
         {
           "type": "Slider",
-          "name": "color_scroll",
-          "value": -0.55
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.65
-        },
-        {
-          "type": "Checkbox",
-          "name": "pause_motion",
-          "value": false
-        },
-        {
-          "type": "Slider",
-          "name": "soft_clip",
-          "value": 0.58
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "cell_density",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.71
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 1.61
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.108
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 0.06
-        },
-        {
-          "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "quantize_levels",
-          "value": 241.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "invert",
-          "value": false
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "5": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "soft_clip",
-          "value": 0.28
-        },
-        {
-          "type": "Slider",
-          "name": "echo_mix",
-          "value": 0.0
-        },
-        {
-          "type": "Select",
-          "name": "engine_b",
-          "value": "tunnel"
-        },
-        {
-          "type": "Slider",
-          "name": "beat_rate",
-          "value": 13.0
-        },
-        {
-          "type": "Slider",
-          "name": "drift_y",
-          "value": 0.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "strobe_on",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "mirror",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "master_gain",
-          "value": 1.9399999
-        },
-        {
-          "type": "Slider",
-          "name": "drift_x",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "bloom",
-          "value": 0.95
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 1.78
-        },
-        {
-          "type": "Slider",
-          "name": "rotation",
-          "value": -0.0031855
-        },
-        {
-          "type": "Slider",
-          "name": "swirl",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "accent",
-          "value": 0.65
-        },
-        {
-          "type": "Slider",
-          "name": "gamma",
-          "value": 0.65999997
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.97999996
-        },
-        {
-          "type": "Slider",
-          "name": "warp",
-          "value": 1.25
-        },
-        {
-          "type": "Slider",
-          "name": "beat_offset",
-          "value": 3.875
-        },
-        {
-          "type": "Slider",
-          "name": "auto_mix_amount",
-          "value": 0.34
-        },
-        {
-          "type": "Slider",
-          "name": "stripe_density",
-          "value": 40.0
-        },
-        {
-          "type": "Select",
-          "name": "palette",
-          "value": "mono"
-        },
-        {
-          "type": "Slider",
-          "name": "brightness",
-          "value": 1.48
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_rate",
-          "value": 4.0
-        },
-        {
-          "type": "Slider",
-          "name": "cell_density",
-          "value": 4.25
-        },
-        {
-          "type": "Slider",
           "name": "line_mix",
-          "value": 0.38
-        },
-        {
-          "type": "Slider",
-          "name": "complexity",
-          "value": 1.68
-        },
-        {
-          "type": "Slider",
-          "name": "glitch_scale",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "engine_mix",
-          "value": 0.52
-        },
-        {
-          "type": "Select",
-          "name": "engine_a",
-          "value": "tunnel"
-        },
-        {
-          "type": "Slider",
-          "name": "hue_shift",
-          "value": -0.16
-        },
-        {
-          "type": "Slider",
-          "name": "scanlines",
-          "value": 1.0
+          "value": 0.62
         },
         {
           "type": "Slider",
@@ -1750,63 +1936,103 @@
         },
         {
           "type": "Slider",
-          "name": "contrast",
-          "value": 1.92
-        },
-        {
-          "type": "Slider",
-          "name": "edge_mix",
-          "value": 0.29
-        },
-        {
-          "type": "Slider",
-          "name": "grain",
-          "value": 0.203
-        },
-        {
-          "type": "Slider",
-          "name": "twist",
+          "name": "drift_y",
           "value": 0.0
         },
         {
           "type": "Slider",
           "name": "ring_density",
-          "value": 1.0
+          "value": 0.5
         },
         {
           "type": "Slider",
-          "name": "glitch_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "vignette",
-          "value": 0.07
-        },
-        {
-          "type": "Slider",
-          "name": "strobe_mix",
-          "value": 0.69
-        },
-        {
-          "type": "Slider",
-          "name": "quantize_levels",
-          "value": 256.0
+          "name": "stripe_density",
+          "value": 0.5
         },
         {
           "type": "Checkbox",
-          "name": "invert",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "pause_motion",
+          "name": "mirror",
           "value": false
         },
         {
           "type": "Slider",
           "name": "color_scroll",
-          "value": -1.7199999
+          "value": -0.55
+        },
+        {
+          "type": "Checkbox",
+          "name": "strobe_on",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.92
+        },
+        {
+          "type": "Slider",
+          "name": "hue_shift",
+          "value": 0.07
+        },
+        {
+          "type": "Slider",
+          "name": "swirl",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "strobe_mix",
+          "value": 0.65
+        },
+        {
+          "type": "Slider",
+          "name": "cell_density",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "beat_rate",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.61
+        },
+        {
+          "type": "Slider",
+          "name": "glitch_scale",
+          "value": 9.0
+        },
+        {
+          "type": "Select",
+          "name": "engine_b",
+          "value": "rings"
+        },
+        {
+          "type": "Slider",
+          "name": "bloom",
+          "value": 0.8
+        },
+        {
+          "type": "Slider",
+          "name": "auto_mix_amount",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "beat_offset",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "edge_mix",
+          "value": 0.0
         }
       ],
       "midi_controls": [],

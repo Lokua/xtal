@@ -16,7 +16,6 @@ fn main() {
             title: "Main",
             enabled: true,
             sketches: [
-                acc,
                 blob,
                 cloud,
                 d_warp,
@@ -27,7 +26,6 @@ fn main() {
                 gyroid,
                 hatch,
                 interference,
-                ink,
                 marcher,
                 neural,
                 rm,
@@ -35,7 +33,6 @@ fn main() {
                 spiral,
                 un,
                 watercolor,
-                wave_sphere,
                 wave_fract,
             ]
         },
@@ -43,15 +40,18 @@ fn main() {
             title: "Drafts",
             enabled: true,
             sketches: [
+                acc,
                 domain_warps,
                 displ,
                 flow_snd,
                 grid_splash_bw,
+                ink,
                 layers,
                 phase_matrix,
                 snd,
                 sline,
                 viaduct_poc,
+                wave_sphere,
             ]
         },
         {
