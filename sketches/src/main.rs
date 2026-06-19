@@ -22,6 +22,7 @@ fn main() {
                 dreams,
                 dyn_uni,
                 flow,
+                grid_splash_2,
                 grid_splash,
                 gyroid,
                 hatch,

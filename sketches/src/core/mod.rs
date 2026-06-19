@@ -4,6 +4,7 @@ pub mod d_warp;
 pub mod dreams;
 pub mod dyn_uni;
 pub mod flow;
+pub mod grid_splash_2;
 pub mod grid_splash;
 pub mod gyroid;
 pub mod hatch;
