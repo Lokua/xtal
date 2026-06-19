@@ -840,7 +840,7 @@ impl<T: TimingSource> ControlHub<T> {
 
                 self.active_transition = Some(transition);
 
-                info!("Snapshot \"{}\" recalled", id);
+                trace!("Snapshot \"{}\" recalled", id);
                 Ok(())
             }
             None => Err(format!("No snapshot \"{}\"", id)),

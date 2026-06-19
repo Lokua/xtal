@@ -170,6 +170,13 @@ export default function Header({
           value={sketchName}
           optionGroups={sketchOptionGroups}
           onChange={onSwitchSketch}
+          onKeyDown={(event) => {
+            // Printable keys are one character; navigation keys such as
+            // ArrowDown and Enter retain their native select behavior.
+            if (event.key.length === 1) {
+              event.preventDefault()
+            }
+          }}
           style={{ maxWidth: '164px' }}
         />
 

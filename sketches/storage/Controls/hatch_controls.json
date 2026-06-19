@@ -4,12 +4,12 @@
     {
       "type": "Select",
       "name": "shading_mode",
-      "value": "full"
+      "value": "balanced"
     },
     {
       "type": "Slider",
       "name": "internal_resolution",
-      "value": 0.1
+      "value": 0.5
     },
     {
       "type": "Slider",
@@ -18,8 +18,13 @@
     },
     {
       "type": "Slider",
+      "name": "cam_z",
+      "value": -2.41
+    },
+    {
+      "type": "Slider",
       "name": "light_angle",
-      "value": 4.96
+      "value": 1.42
     },
     {
       "type": "Checkbox",
@@ -34,47 +39,313 @@
     {
       "type": "Slider",
       "name": "tint",
-      "value": 0.31
+      "value": 0.64
+    },
+    {
+      "type": "Slider",
+      "name": "hue",
+      "value": 0.7
+    },
+    {
+      "type": "Slider",
+      "name": "morph",
+      "value": 0.82
     },
     {
       "type": "Slider",
       "name": "limb_rotation_rate",
-      "value": 0.225
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "limb_rotation_range",
+      "value": 1.98
+    },
+    {
+      "type": "Slider",
+      "name": "arm_layout",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "limb_warp",
+      "value": 0.0
     },
     {
       "type": "Slider",
       "name": "hatch_density",
-      "value": 10.0
-    },
-    {
-      "type": "Slider",
-      "name": "hatch_layers",
-      "value": 7.0
-    },
-    {
-      "type": "Slider",
-      "name": "hatch_strength",
       "value": 4.0
     },
     {
       "type": "Slider",
+      "name": "hatch_layers",
+      "value": 4.0
+    },
+    {
+      "type": "Slider",
+      "name": "hatch_strength",
+      "value": 3.35
+    },
+    {
+      "type": "Slider",
       "name": "hatch_angle_spread",
-      "value": 0.3
+      "value": 0.076
     },
     {
       "type": "Slider",
       "name": "paper_grain",
-      "value": 0.738
+      "value": 0.711
     },
     {
       "type": "Slider",
       "name": "brightness",
-      "value": 0.19
+      "value": 0.37
+    },
+    {
+      "type": "Slider",
+      "name": "grain_amount",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "noise_amp",
+      "value": 0.25
+    },
+    {
+      "type": "Slider",
+      "name": "noise_freq",
+      "value": 7.0
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
-  "snapshots": {},
+  "snapshots": {
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "hatch_layers",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "limb_rotation_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "include_ao",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "tint",
+          "value": 0.64
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.37
+        },
+        {
+          "type": "Slider",
+          "name": "internal_resolution",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_angle_spread",
+          "value": 0.22500001
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_density",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "paper_grain",
+          "value": 0.711
+        },
+        {
+          "type": "Slider",
+          "name": "noise_freq",
+          "value": 6.89
+        },
+        {
+          "type": "Slider",
+          "name": "rot_speed",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -1.37
+        },
+        {
+          "type": "Slider",
+          "name": "noise_amp",
+          "value": 0.091000006
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_strength",
+          "value": 2.08
+        },
+        {
+          "type": "Slider",
+          "name": "arm_layout",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "light_angle",
+          "value": 1.42
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.26999998
+        },
+        {
+          "type": "Select",
+          "name": "shading_mode",
+          "value": "full"
+        },
+        {
+          "type": "Slider",
+          "name": "morph",
+          "value": 0.78
+        },
+        {
+          "type": "Slider",
+          "name": "limb_rotation_range",
+          "value": 1.61
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "tint",
+          "value": 0.64
+        },
+        {
+          "type": "Slider",
+          "name": "cam_z",
+          "value": -2.41
+        },
+        {
+          "type": "Slider",
+          "name": "noise_freq",
+          "value": 3.42
+        },
+        {
+          "type": "Slider",
+          "name": "noise_amp",
+          "value": 0.241
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 0.37
+        },
+        {
+          "type": "Slider",
+          "name": "limb_rotation_range",
+          "value": 1.98
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_strength",
+          "value": 3.35
+        },
+        {
+          "type": "Slider",
+          "name": "paper_grain",
+          "value": 0.711
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_layers",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.7
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_angle_spread",
+          "value": 0.076
+        },
+        {
+          "type": "Checkbox",
+          "name": "include_ao",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "morph",
+          "value": 0.82
+        },
+        {
+          "type": "Slider",
+          "name": "limb_rotation_rate",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "rot_speed",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "arm_layout",
+          "value": 1.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "invert",
+          "value": false
+        },
+        {
+          "type": "Select",
+          "name": "shading_mode",
+          "value": "fast"
+        },
+        {
+          "type": "Slider",
+          "name": "light_angle",
+          "value": 1.42
+        },
+        {
+          "type": "Slider",
+          "name": "hatch_density",
+          "value": 4.0
+        },
+        {
+          "type": "Slider",
+          "name": "internal_resolution",
+          "value": 0.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
   "mappings": {},
-  "exclusions": []
+  "exclusions": [
+    "rot_speed",
+    "limb_rotation_rate"
+  ]
 }

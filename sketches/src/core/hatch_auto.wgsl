@@ -30,7 +30,7 @@ struct Params {
     // arm_layout, limb_rotation_rate,
     // limb_rotation_range, internal_resolution
     f: vec4f,
-    // shading_mode, _, _, _
+    // shading_mode, limb_warp, grain_amount, _
     g: vec4f,
     h: vec4f,
     i: vec4f,
@@ -77,6 +77,7 @@ fn fs_main(
     let noise_freq = params.e.w;
     let internal_resolution = clamp(params.f.w, 0.0, 1.0);
     let shading_mode = i32(params.g.x + 0.5);
+    let grain_amount = params.g.z;
 
     let aspect = w / h;
     let pixel_block = mix(1.0, 6.0, internal_resolution);
@@ -104,7 +105,7 @@ fn fs_main(
     let morph_smooth = smoothstep(0.0, 1.0, morph);
     let bound_radius = mix(
         1.1,
-        2.95 + noise_amp * 0.35,
+        2.95 + noise_amp * 0.35 + grain_amount * 0.35,
         morph_smooth,
     );
     let bounds = ray_sphere_bounds(ro, rd, bound_radius);
@@ -113,7 +114,8 @@ fn fs_main(
     if bounds.y > bounds.x {
         let result = ray_march(
             ro, rd, t, rot_speed, morph, arm_layout,
-            noise_amp, noise_freq, internal_resolution,
+            noise_amp, noise_freq, grain_amount,
+            internal_resolution,
             aspect,
             bounds.x, min(bounds.y, MAX_DIST),
         );
@@ -131,7 +133,7 @@ fn fs_main(
         if shading_mode <= 0 {
             n = calc_normal(
                 hit_pos, t, rot_speed, morph, arm_layout,
-                noise_amp, noise_freq, aspect,
+                noise_amp, noise_freq, grain_amount, aspect,
             );
             diff = max(dot(n, light), 0.0);
             if !disable_ao {
@@ -278,6 +280,19 @@ fn sd_capsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
     return length(pa - ba * h) - r;
 }
 
+fn sd_bent_capsule(
+    p: vec3f,
+    a: vec3f,
+    b: vec3f,
+    bend: vec3f,
+    r: f32,
+) -> f32 {
+    let ba = b - a;
+    let h = clamp(dot(p - a, ba) / dot(ba, ba), 0.0, 1.0);
+    let center = a + ba * h + bend * sin(h * 3.14159265);
+    return length(p - center) - r;
+}
+
 fn blob_dir(i: i32) -> vec3f {
     switch i {
         case 0 { return normalize(vec3f(1.0, 0.2, 0.0)); }
@@ -326,6 +341,7 @@ fn exploded_cluster_sdf(
 ) -> f32 {
     let limb_rotation_rate = params.f.y;
     let limb_rotation_range = max(params.f.z, 0.0);
+    let limb_warp = max(params.g.y, 0.0);
     let m = smoothstep(0.0, 1.0, morph);
     let shape_mix = arm_layout;
     let core_radius = mix(0.8, mix(0.22, 0.19, shape_mix), m);
@@ -382,12 +398,17 @@ fn exploded_cluster_sdf(
         d = smooth_min(d, blob, blend_k);
 
         let strand_radius = strand_base * (0.8 + 0.35 * (1.0 - seed));
-        let strand = sd_capsule(
-            p,
-            root,
-            center * 0.92,
-            strand_radius,
+        let strand_end = center * 0.92;
+        var strand = sd_capsule(
+            p, root, strand_end, strand_radius,
         );
+        if limb_warp > 0.0001 {
+            let bend_phase = seed * 18.7 + t * 0.35;
+            let bend = tangent * sin(bend_phase) * limb_warp;
+            strand = sd_bent_capsule(
+                p, root, strand_end, bend, strand_radius,
+            );
+        }
         d = smooth_min(d, strand, blend_k * 0.8);
     }
 
@@ -402,12 +423,13 @@ fn scene_sdf(
     arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
+    grain_amount: f32,
     aspect: f32,
 ) -> f32 {
     let rp = scene_space(p, t, rot_speed);
     return scene_sdf_core(rp, t, morph, arm_layout, aspect)
-        + scene_noise_displacement(
-            rp, t, morph, noise_amp, noise_freq,
+        + scene_surface_displacement(
+            rp, t, morph, noise_amp, noise_freq, grain_amount,
         );
 }
 
@@ -420,13 +442,15 @@ fn ray_march(
     arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
+    grain_amount: f32,
     internal_resolution: f32,
     aspect: f32,
     min_dist: f32,
     max_dist: f32,
 ) -> vec2f {
     var d = max(min_dist, 0.0);
-    let near_band = 0.22 + noise_amp * 0.35;
+    let near_band = 0.22 + noise_amp * 0.35
+        + grain_amount * 0.35;
     var hit = 0.0;
     var prev_ds = 1000.0;
     var prev_d = d;
@@ -447,8 +471,8 @@ fn ray_march(
         );
         var ds = ds_core;
         if ds_core < near_band {
-            ds += scene_noise_displacement(
-                rp, t, morph, noise_amp, noise_freq,
+            ds += scene_surface_displacement(
+                rp, t, morph, noise_amp, noise_freq, grain_amount,
             );
         }
         if abs(ds) < SURF_DIST {
@@ -514,9 +538,21 @@ fn scene_sdf_core(
     return mix(sphere, cluster, m);
 }
 
+fn scene_surface_displacement(
+    rp: vec3f,
+    t: f32,
+    morph: f32,
+    noise_amp: f32,
+    noise_freq: f32,
+    grain_amount: f32,
+) -> f32 {
+    return scene_noise_displacement(
+        rp, morph, noise_amp, noise_freq,
+    ) + scene_grain_displacement(rp, t, morph, grain_amount);
+}
+
 fn scene_noise_displacement(
     rp: vec3f,
-    _t: f32,
     morph: f32,
     noise_amp: f32,
     noise_freq: f32,
@@ -530,6 +566,35 @@ fn scene_noise_displacement(
     return (n - 0.5) * noise_amp * mix(0.45, 1.0, m);
 }
 
+fn scene_grain_displacement(
+    rp: vec3f,
+    t: f32,
+    morph: f32,
+    grain_amount: f32,
+) -> f32 {
+    if grain_amount <= 0.0001 {
+        return 0.0;
+    }
+    let m = smoothstep(0.0, 1.0, morph);
+    let rotated = vec3f(
+        dot(rp, vec3f(0.80, 0.36, 0.48)),
+        dot(rp, vec3f(-0.42, 0.90, 0.10)),
+        dot(rp, vec3f(-0.43, -0.28, 0.86)),
+    );
+    let drift = vec3f(
+        t * 0.07,
+        -t * 0.045,
+        t * 0.03,
+    );
+    let lattice = rotated * mix(18.0, 26.0, m) + drift;
+    let cell = fract(lattice) - vec3f(0.5);
+    let sphere_distance = length(cell);
+    let circle = 1.0 - smoothstep(0.10, 0.27, sphere_distance);
+    let rounded_circle = circle * circle * (3.0 - 2.0 * circle);
+    return -rounded_circle * grain_amount * 0.3
+        * mix(0.55, 1.0, m);
+}
+
 fn calc_normal(
     p: vec3f,
     t: f32,
@@ -538,28 +603,29 @@ fn calc_normal(
     arm_layout: f32,
     noise_amp: f32,
     noise_freq: f32,
+    grain_amount: f32,
     aspect: f32,
 ) -> vec3f {
     let e = vec2f(0.001, 0.0);
     let d = scene_sdf(
         p, t, rot_speed, morph, arm_layout,
-        noise_amp, noise_freq, aspect,
+        noise_amp, noise_freq, grain_amount, aspect,
     );
     let n = vec3f(
         scene_sdf(
             p + e.xyy, t, rot_speed, morph,
             arm_layout,
-            noise_amp, noise_freq, aspect,
+            noise_amp, noise_freq, grain_amount, aspect,
         ) - d,
         scene_sdf(
             p + e.yxy, t, rot_speed, morph,
             arm_layout,
-            noise_amp, noise_freq, aspect,
+            noise_amp, noise_freq, grain_amount, aspect,
         ) - d,
         scene_sdf(
             p + e.yyx, t, rot_speed, morph,
             arm_layout,
-            noise_amp, noise_freq, aspect,
+            noise_amp, noise_freq, grain_amount, aspect,
         ) - d,
     );
     return normalize(n);
