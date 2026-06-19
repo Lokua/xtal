@@ -204,3 +204,17 @@ noise_freq:
   range: [1.0, 7.0]
   default: 1.0
   step: 0.01
+
+# ------------------------------------------------------------------------------
+#  texture_effects
+# ------------------------------------------------------------------------------
+
+texture_effects:
+  type: separator
+
+texture_effect_amount:
+  var: hx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
