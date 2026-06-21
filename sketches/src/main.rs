@@ -49,6 +49,7 @@ fn main() {
                 hatch,
                 ink,
                 layers,
+                liquid_horizon,
                 phase_matrix,
                 snd,
                 sline,

@@ -6,6 +6,7 @@ pub mod grid_splash_bw;
 pub mod hatch;
 pub mod ink;
 pub mod layers;
+pub mod liquid_horizon;
 pub mod phase_matrix;
 pub mod sline;
 pub mod snd;
