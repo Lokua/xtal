@@ -235,21 +235,11 @@ impl<T: TimingSource> ControlHub<T> {
         script
     }
 
-    /// Instantiate a hub instance from a YAML control script. It is recommended
-    /// to place your script next to your sketch.rs file:
+    /// Creates a hub from a YAML control script and timing source.
     ///
-    /// # Example
-    /// ```rs
-    /// // my_sketch.rs
-    /// pub fn init(app: &App, ctx: &Context) -> MySketch {
-    ///     let hub = ControlHub::from_path(
-    ///         to_absolute_path(file!(), "my_sketch.yaml"),
-    ///         Timing::new(ctx.bpm()),
-    ///     );
-    ///
-    ///     MySketch { hub }
-    /// }
-    /// ```
+    /// The runtime normally calls this using the path returned by
+    /// `Sketch::control_script`. Direct callers are responsible for supplying
+    /// the timing source and calling `update` once per frame.
     pub fn from_path(path: PathBuf, timing: T) -> Self {
         let state = Arc::new(Mutex::new(None));
         let state_clone = state.clone();

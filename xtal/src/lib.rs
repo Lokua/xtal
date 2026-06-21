@@ -1,4 +1,3 @@
-pub mod context;
 pub mod control;
 pub mod core;
 pub mod io;

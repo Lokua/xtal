@@ -1,4 +1,3 @@
-pub use crate::context::Context;
 pub use crate::control::*;
 pub use crate::core::logging::init_logger;
 pub use crate::core::logging::{debug, error, info, trace, warn};
@@ -10,6 +9,7 @@ pub use crate::mesh::*;
 pub use crate::motion::*;
 pub use crate::register_sketches;
 pub use crate::run_registry;
+pub use crate::runtime::context::RuntimeContext;
 pub use crate::runtime::events::{
     RuntimeCommand, RuntimeCommandReceiver, RuntimeCommandSender, RuntimeEvent,
     RuntimeEventReceiver, RuntimeEventSender, command_channel, event_channel,

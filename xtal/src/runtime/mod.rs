@@ -1,4 +1,5 @@
 pub mod app;
+pub mod context;
 pub mod events;
 pub mod monitor_preview;
 pub mod projector;

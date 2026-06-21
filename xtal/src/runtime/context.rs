@@ -1,7 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-pub struct Context {
+/// Shared GPU and frame state exposed to advanced sketch hooks.
+pub struct RuntimeContext {
     pub device: Arc<wgpu::Device>,
     pub queue: Arc<wgpu::Queue>,
     window_size: [u32; 2],
@@ -11,7 +12,7 @@ pub struct Context {
     start_time: Instant,
 }
 
-impl Context {
+impl RuntimeContext {
     pub fn new(
         device: Arc<wgpu::Device>,
         queue: Arc<wgpu::Queue>,

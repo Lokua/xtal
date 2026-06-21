@@ -6,7 +6,7 @@ use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes, WindowId};
 
-use crate::context::Context;
+use crate::runtime::context::RuntimeContext;
 
 const MONITOR_PREVIEW_MAX_LONG_EDGE_PX: u32 = 640;
 const MONITOR_PREVIEW_MAX_SHORT_EDGE_PX: u32 = 180;
@@ -257,7 +257,7 @@ impl MonitorPreview {
 
     pub fn render_if_due(
         &mut self,
-        context: &Context,
+        context: &RuntimeContext,
         source_texture: &wgpu::Texture,
         now: Instant,
     ) -> RenderResult {

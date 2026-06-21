@@ -180,7 +180,8 @@ struct VideoResource {
 
 /// Per-frame inputs supplied by the runtime when executing the graph.
 ///
-/// Most fields are borrowed from `Context`, `ControlHub`, and frame timing.
+/// Most fields are borrowed from `RuntimeContext`, `ControlHub`, and frame
+/// timing.
 /// This keeps `CompiledGraph` focused on GPU work while the runtime remains the
 /// owner of application state.
 pub struct ExecuteCtx<'a> {

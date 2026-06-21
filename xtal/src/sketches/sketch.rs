@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use crate::context::Context;
 use crate::frame::Frame;
 use crate::graph::GraphBuilder;
 use crate::mesh::Mesh;
+use crate::runtime::context::RuntimeContext;
 
 pub struct SketchConfig {
     pub name: &'static str,
@@ -59,9 +59,11 @@ pub trait Sketch {
         TimingMode::Frame
     }
 
-    fn update(&mut self, _ctx: &Context) {}
+    /// Updates sketch-owned state before runtime uniforms are uploaded.
+    fn update(&mut self, _ctx: &RuntimeContext) {}
 
-    fn view(&mut self, _frame: &mut Frame, _ctx: &Context) {}
+    /// Records custom GPU work before the configured graph executes.
+    fn view(&mut self, _frame: &mut Frame, _ctx: &RuntimeContext) {}
 }
 
 pub struct FullscreenShaderSketch {

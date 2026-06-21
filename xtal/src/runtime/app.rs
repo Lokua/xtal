@@ -44,7 +44,6 @@ use super::serialization::{GlobalSettings, TransitorySketchState};
 use super::storage;
 use super::web_view;
 use super::web_view_bridge::WebViewBridge;
-use crate::context::Context;
 use crate::control::map_mode::MapMode;
 use crate::control::{ControlCollection, ControlHub, ControlValue};
 use crate::core::logging;
@@ -57,6 +56,7 @@ use crate::io::audio::list_audio_devices;
 use crate::io::midi;
 use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::motion::{Bpm, Timing};
+use crate::runtime::context::RuntimeContext;
 use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
 use crate::time::frame_clock;
 use crate::time::tap_tempo::TapTempo;
@@ -128,7 +128,7 @@ struct XtalRuntime {
     windowed_size_before_fullscreen: Option<winit::dpi::PhysicalSize<u32>>,
     surface: Option<wgpu::Surface<'static>>,
     surface_config: Option<wgpu::SurfaceConfiguration>,
-    context: Option<Context>,
+    context: Option<RuntimeContext>,
     uniforms: Option<UniformBanks>,
     graph: Option<CompiledGraph>,
 
@@ -1132,7 +1132,7 @@ impl XtalRuntime {
             );
             context.set_render_size(render_size);
 
-            // 2) Let sketch mutate runtime state before uniform upload.
+            // 2) Let the sketch update its own state before uniform upload.
             self.sketch.update(context);
 
             // 3) Runtime-owned uniforms: resolution + beat source + hub vars.
@@ -1613,7 +1613,7 @@ impl XtalRuntime {
         let device = Arc::new(device);
         let queue = Arc::new(queue);
 
-        let context = Context::new(
+        let context = RuntimeContext::new(
             device.clone(),
             queue.clone(),
             [width, height],
