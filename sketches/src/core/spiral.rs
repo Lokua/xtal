@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
-use crate::constants::{HD_HEIGHT, HD_WIDTH};
+use crate::constants::{HD_HEIGHT, HD_WIDTH, WORKING_BPM};
 
 // auto_spiral used a very dense procedural draw count at runtime.
 // Keep this high so the rendered structure reads as a stable spiral
@@ -14,7 +14,8 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Spiral",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    // bpm: 134.0,
+    bpm: WORKING_BPM,
     w: HD_WIDTH,
     h: HD_HEIGHT,
     banks: 12,

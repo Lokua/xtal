@@ -38,25 +38,12 @@ use crate::io::osc::SHARED_OSC_RECEIVER;
 use crate::time::frame_clock;
 
 const MIDI_START: u8 = 0xFA;
-const MIDI_CONTINUE: u8 = 0xFB;
-const MIDI_STOP: u8 = 0xFC;
 const MIDI_CLOCK: u8 = 0xF8;
 const MIDI_SONG_POSITION: u8 = 0xF2;
 const MIDI_MTC_QUARTER_FRAME: u8 = 0xF1;
 const PULSES_PER_QUARTER_NOTE: u32 = 24;
 const TICKS_PER_QUARTER_NOTE: u32 = 960;
 const HYBRID_SYNC_THRESHOLD_BEATS: f32 = 0.5;
-
-/// Transport event emitted by MIDI-backed timing sources.
-#[derive(Clone, Copy, Debug)]
-pub enum MidiTransportEvent {
-    /// MIDI Continue message.
-    Continue,
-    /// MIDI Start message.
-    Start,
-    /// MIDI Stop message.
-    Stop,
-}
 
 /// Shared, mutable BPM value used by timing sources.
 ///
@@ -119,34 +106,14 @@ impl Timing {
         Self::Osc(OscTransportTiming::new(bpm))
     }
 
-    /// Creates MIDI song timing without connecting to a MIDI port.
-    pub fn midi(bpm: Bpm) -> Self {
-        Self::Midi(MidiSongTiming::new(bpm, "", ignore_midi_event))
-    }
-
     /// Creates MIDI song timing for a named MIDI clock port.
-    ///
-    /// `on_event` is called when Start, Continue, or Stop messages arrive.
-    pub fn midi_with_port<F>(bpm: Bpm, port: &str, on_event: F) -> Self
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
-        Self::Midi(MidiSongTiming::new(bpm, port, on_event))
-    }
-
-    /// Creates hybrid MIDI timing without connecting to a MIDI port.
-    pub fn hybrid(bpm: Bpm) -> Self {
-        Self::Hybrid(HybridTiming::new(bpm, "", ignore_midi_event))
+    pub fn midi(bpm: Bpm, port: &str) -> Self {
+        Self::Midi(MidiSongTiming::new(bpm, port))
     }
 
     /// Creates hybrid MIDI timing for a named MIDI clock/MTC port.
-    ///
-    /// `on_event` is called when Start, Continue, or Stop messages arrive.
-    pub fn hybrid_with_port<F>(bpm: Bpm, port: &str, on_event: F) -> Self
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
-        Self::Hybrid(HybridTiming::new(bpm, port, on_event))
+    pub fn hybrid(bpm: Bpm, port: &str) -> Self {
+        Self::Hybrid(HybridTiming::new(bpm, port))
     }
 
     /// Creates manual timing with an initial beat position of `0.0`.
@@ -287,26 +254,19 @@ pub struct MidiSongTiming {
 impl MidiSongTiming {
     /// Creates MIDI song timing for `port`.
     ///
-    /// If `port` is empty no MIDI listener is installed. `on_event` receives
-    /// transport start, continue, and stop messages from the MIDI stream.
-    pub fn new<F>(bpm: Bpm, port: &str, on_event: F) -> Self
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
+    /// If `port` is empty no MIDI listener is installed.
+    pub fn new(bpm: Bpm, port: &str) -> Self {
         let timing = Self {
             clock_count: Arc::new(AtomicU32::new(0)),
             song_position_ticks: Arc::new(AtomicU32::new(0)),
             bpm,
         };
 
-        timing.setup_midi_listener(port, on_event);
+        timing.setup_midi_listener(port);
         timing
     }
 
-    fn setup_midi_listener<F>(&self, port: &str, on_event: F)
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
+    fn setup_midi_listener(&self, port: &str) {
         if port.is_empty() {
             info!("Skipping MIDI clock listener setup; no MIDI clock port.");
             return;
@@ -333,13 +293,6 @@ impl MidiSongTiming {
                     }
                     MIDI_START => {
                         clock_count.store(0, Ordering::SeqCst);
-                        on_event(MidiTransportEvent::Start);
-                    }
-                    MIDI_CONTINUE => {
-                        on_event(MidiTransportEvent::Continue);
-                    }
-                    MIDI_STOP => {
-                        on_event(MidiTransportEvent::Stop);
                     }
                     _ => {}
                 }
@@ -388,12 +341,8 @@ pub struct HybridTiming {
 impl HybridTiming {
     /// Creates hybrid MIDI timing for `port`.
     ///
-    /// If `port` is empty no MIDI listener is installed. `on_event` receives
-    /// transport start, continue, and stop messages from the MIDI stream.
-    pub fn new<F>(bpm: Bpm, port: &str, on_event: F) -> Self
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
+    /// If `port` is empty no MIDI listener is installed.
+    pub fn new(bpm: Bpm, port: &str) -> Self {
         let timing = Self {
             clock_count: Arc::new(AtomicU32::new(0)),
             mtc_hours: Arc::new(AtomicU32::new(0)),
@@ -403,14 +352,11 @@ impl HybridTiming {
             bpm,
         };
 
-        timing.setup_midi_listener(port, on_event);
+        timing.setup_midi_listener(port);
         timing
     }
 
-    fn setup_midi_listener<F>(&self, port: &str, on_event: F)
-    where
-        F: Fn(MidiTransportEvent) + Send + Sync + 'static,
-    {
+    fn setup_midi_listener(&self, port: &str) {
         if port.is_empty() {
             info!("Skipping MIDI clock listener setup; no MIDI clock port.");
             return;
@@ -437,13 +383,6 @@ impl HybridTiming {
                     }
                     MIDI_START => {
                         clock_count.store(0, Ordering::SeqCst);
-                        on_event(MidiTransportEvent::Start);
-                    }
-                    MIDI_CONTINUE => {
-                        on_event(MidiTransportEvent::Continue);
-                    }
-                    MIDI_STOP => {
-                        on_event(MidiTransportEvent::Stop);
                     }
                     MIDI_MTC_QUARTER_FRAME => {
                         handle_mtc_quarter_frame(
@@ -620,5 +559,3 @@ fn sync_hybrid_from_mtc(
         );
     }
 }
-
-fn ignore_midi_event(_event: MidiTransportEvent) {}

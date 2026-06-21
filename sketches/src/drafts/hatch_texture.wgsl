@@ -42,8 +42,13 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let texture_effect_amount = params.h.x;
+    let texture_copy_size = params.h.y;
+    let texture_copy_darkness = params.h.z;
     let source = textureSample(hatch_texture, hatch_sampler, in.uv);
-    let mirrored_uv = mirror_background_uv(in.uv);
+    let mirrored_uv = mirror_background_uv(
+        in.uv,
+        texture_copy_size,
+    );
     let mirrored = textureSample(
         hatch_texture,
         hatch_sampler,
@@ -55,15 +60,17 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         vec3f(0.299, 0.587, 0.114),
     );
     let background_mask = 1.0 - smoothstep(0.02, 0.32, source_ink);
-    let effect_mix = texture_effect_amount * background_mask * 0.72;
+    let effect_mix = texture_effect_amount
+        * texture_copy_darkness
+        * background_mask;
     let layered = mix(source.rgb, mirrored.rgb, effect_mix);
 
     return vec4f(layered, source.a);
 }
 
-fn mirror_background_uv(uv: vec2f) -> vec2f {
-    let centered = uv * 2.0 - vec2f(1.0);
-    let mirrored = abs(centered);
-    let enlarged = mirrored * 0.68;
+fn mirror_background_uv(uv: vec2f, size: f32) -> vec2f {
+    var centered = uv * 2.0 - vec2f(1.0);
+    centered.x = -centered.x;
+    let enlarged = centered / max(size, 1.0);
     return enlarged * 0.5 + vec2f(0.5);
 }

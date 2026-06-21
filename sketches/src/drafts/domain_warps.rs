@@ -1,13 +1,14 @@
 use xtal::prelude::*;
 
-use crate::constants::{HD_HEIGHT, HD_WIDTH};
+use crate::constants::{HD_HEIGHT, HD_WIDTH, WORKING_BPM};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "domain_warps",
     display_name: "Domain Warps",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    // bpm: 134.0,
+    bpm: WORKING_BPM,
     w: HD_WIDTH,
     h: HD_HEIGHT,
     banks: 12,

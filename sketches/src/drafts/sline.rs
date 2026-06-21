@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
-use crate::constants::{HD_HEIGHT, HD_WIDTH};
+use crate::constants::{HD_HEIGHT, HD_WIDTH, WORKING_BPM};
 
 const PROCEDURAL_VERTICES: usize = 300_000;
 
@@ -11,7 +11,8 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Spiral | Lines Version",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 120.0,
+    // bpm: 120.0,
+    bpm: WORKING_BPM,
     w: HD_WIDTH,
     h: HD_HEIGHT,
     banks: 12,

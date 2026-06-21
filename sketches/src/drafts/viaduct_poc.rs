@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
-use crate::constants::{HD_HEIGHT, HD_WIDTH};
+use crate::constants::{HD_HEIGHT, HD_WIDTH, WORKING_BPM};
 
 const VIDEO_FILES: [&str; 5] = [
     "clips/Viaduct - Columbia Edge.mp4",
@@ -17,7 +17,8 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "Viaduct POC",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    // bpm: 134.0,
+    bpm: WORKING_BPM,
     w: HD_WIDTH,
     h: HD_HEIGHT,
     banks: 12,

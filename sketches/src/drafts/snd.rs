@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
+use crate::constants::WORKING_BPM;
+
 use crate::constants::{IG_HEIGHT, IG_WIDTH};
 
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
@@ -9,7 +11,8 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     display_name: "SND",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 134.0,
+    // bpm: 134.0,
+    bpm: WORKING_BPM,
     w: IG_WIDTH,
     h: IG_HEIGHT,
     banks: 12,

@@ -56,13 +56,16 @@ use crate::graph::GraphBuilder;
 use crate::io::audio::list_audio_devices;
 use crate::io::midi;
 use crate::io::osc::SHARED_OSC_RECEIVER;
-use crate::motion::{Bpm, MidiTransportEvent, Timing};
+use crate::motion::{Bpm, Timing};
 use crate::sketch::{PlayMode, Sketch, SketchConfig, TimingMode};
 use crate::time::frame_clock;
 use crate::time::tap_tempo::TapTempo;
 use crate::uniforms::UniformBanks;
 
 const DEFAULT_OSC_PORT: u16 = 2346;
+const MIDI_START: u8 = 0xFA;
+const MIDI_CONTINUE: u8 = 0xFB;
+const MIDI_STOP: u8 = 0xFC;
 const CONTINUE_HANDLING: bool = false;
 const QUIT_REQUESTED: bool = true;
 
@@ -286,6 +289,7 @@ impl XtalRuntime {
         let midi_ports_updated = runtime.normalize_midi_port_selections();
         let osc_port_updated = runtime.normalize_osc_port_selection();
         runtime.restart_osc_receiver();
+        runtime.start_global_midi_transport_listener();
         runtime.connect_midi_out();
         runtime.log_midi_startup_state();
         if audio_device_updated || midi_ports_updated || osc_port_updated {
@@ -367,6 +371,7 @@ impl XtalRuntime {
             RuntimeEvent::ChangeMidiClockPort(port) => {
                 info!("Changing MIDI clock port to '{}'", port);
                 self.midi_clock_port = port;
+                self.start_global_midi_transport_listener();
                 let timing = self.build_timing();
                 if let Some(hub) = self.control_hub.as_mut() {
                     hub.animation.timing = timing;
@@ -1747,16 +1752,12 @@ impl XtalRuntime {
         match self.effective_timing_mode() {
             TimingMode::Frame => Timing::frame(self.bpm.clone()),
             TimingMode::Osc => Timing::osc(self.bpm.clone()),
-            TimingMode::Midi => Timing::midi_with_port(
-                self.bpm.clone(),
-                &self.midi_clock_port,
-                self.midi_transport_event_sender(),
-            ),
-            TimingMode::Hybrid => Timing::hybrid_with_port(
-                self.bpm.clone(),
-                &self.midi_clock_port,
-                self.midi_transport_event_sender(),
-            ),
+            TimingMode::Midi => {
+                Timing::midi(self.bpm.clone(), &self.midi_clock_port)
+            }
+            TimingMode::Hybrid => {
+                Timing::hybrid(self.bpm.clone(), &self.midi_clock_port)
+            }
             TimingMode::Manual => Timing::manual(self.bpm.clone()),
         }
     }
@@ -1767,21 +1768,37 @@ impl XtalRuntime {
             .unwrap_or_else(|| self.sketch.timing_mode())
     }
 
-    /// Creates the callback timing sources use for MIDI transport events.
+    /// Listens for MIDI transport events independently of the timing source.
     ///
-    /// Timing code owns clock parsing. The runtime only needs transport
-    /// lifecycle events so it can reset graph state and start/stop recording.
-    fn midi_transport_event_sender(
-        &self,
-    ) -> impl Fn(MidiTransportEvent) + Send + Sync + 'static {
+    /// Every timing mode uses MIDI Start to synchronize sketch state. MIDI and
+    /// hybrid timing sources separately listen for clock pulses and position.
+    fn start_global_midi_transport_listener(&self) {
+        if self.midi_clock_port.is_empty() {
+            midi::disconnect(midi::ConnectionType::GlobalStartStop);
+            info!("Skipping global MIDI transport; no MIDI clock port.");
+            return;
+        }
+
         let command_tx = self.command_tx.clone();
-        move |event| {
-            let event = match event {
-                MidiTransportEvent::Continue => RuntimeEvent::MidiContinue,
-                MidiTransportEvent::Start => RuntimeEvent::MidiStart,
-                MidiTransportEvent::Stop => RuntimeEvent::MidiStop,
-            };
-            let _ = command_tx.send(event);
+        let result = midi::on_message(
+            midi::ConnectionType::GlobalStartStop,
+            &self.midi_clock_port,
+            move |_stamp, message| {
+                let Some(status) = message.first() else {
+                    return;
+                };
+                let event = match *status {
+                    MIDI_START => RuntimeEvent::MidiStart,
+                    MIDI_CONTINUE => RuntimeEvent::MidiContinue,
+                    MIDI_STOP => RuntimeEvent::MidiStop,
+                    _ => return,
+                };
+                let _ = command_tx.send(event);
+            },
+        );
+
+        if let Err(err) = result {
+            warn!("Failed to initialize global MIDI transport: {}", err);
         }
     }
 

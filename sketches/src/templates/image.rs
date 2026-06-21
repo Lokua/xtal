@@ -2,12 +2,15 @@ use std::path::PathBuf;
 
 use xtal::prelude::*;
 
+use crate::constants::WORKING_BPM;
+
 pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     name: "image",
     display_name: "Image",
     play_mode: PlayMode::Loop,
     fps: 60.0,
-    bpm: 120.0,
+    // bpm: 120.0,
+    bpm: WORKING_BPM,
     w: 700,
     h: 700,
     banks: 4,
