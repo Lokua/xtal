@@ -932,7 +932,11 @@ impl<T: TimingSource> ControlHub<T> {
                             min, max, step, ..
                         } = self.ui_controls.config(name).unwrap()
                         {
-                            let from = self.get_raw(name, current_frame);
+                            let from = self.current_snapshot_value(
+                                name,
+                                current_frame,
+                                current_beat,
+                            );
                             let to =
                                 random_within_range_stepped(min, max, step);
                             transition
@@ -968,7 +972,11 @@ impl<T: TimingSource> ControlHub<T> {
                 transition.values.insert(
                     name.to_string(),
                     (
-                        self.get_raw(name, current_frame),
+                        self.current_snapshot_value(
+                            name,
+                            current_frame,
+                            current_beat,
+                        ),
                         rand::rng().random_range(config.min..=config.max),
                     ),
                 );
@@ -977,7 +985,11 @@ impl<T: TimingSource> ControlHub<T> {
                 transition.values.insert(
                     name.to_string(),
                     (
-                        self.get_raw(name, current_frame),
+                        self.current_snapshot_value(
+                            name,
+                            current_frame,
+                            current_beat,
+                        ),
                         rand::rng().random_range(config.min..=config.max),
                     ),
                 );
@@ -2405,6 +2417,54 @@ y:
         controls.update();
         assert_close(controls.get("x"), x_to, "x randomize end");
         assert_close(controls.get("y"), y_to, "y randomize end");
+    }
+
+    #[test]
+    #[serial]
+    fn test_randomize_retargets_from_active_transition_value() {
+        let mut controls = create_instance(
+            r#"
+x:
+  type: slider
+  min: 0
+  max: 100
+  step: 1
+  default: 20
+m:
+  type: midi
+  min: 0
+  max: 100
+  default: 30
+o:
+  type: osc
+  min: 0
+  max: 100
+  default: 40
+"#,
+        );
+
+        controls.set_transition_time(2.0);
+        let mut values = HashMap::default();
+        values.insert("x".to_string(), (20.0, 80.0));
+        values.insert("m".to_string(), (30.0, 90.0));
+        values.insert("o".to_string(), (40.0, 100.0));
+        controls.active_transition = Some(SnapshotTransition {
+            values,
+            start_beat: 0.0,
+            end_beat: 2.0,
+        });
+
+        init(1.0);
+        assert_close(controls.get("x"), 50.0, "x active midpoint");
+        assert_close(controls.get("m"), 60.0, "m active midpoint");
+        assert_close(controls.get("o"), 70.0, "o active midpoint");
+
+        controls.randomize(vec![]);
+
+        let transition = controls.active_transition.as_ref().unwrap();
+        assert_close(transition.values["x"].0, 50.0, "x retarget source");
+        assert_close(transition.values["m"].0, 60.0, "m retarget source");
+        assert_close(transition.values["o"].0, 70.0, "o retarget source");
     }
 
     #[test]

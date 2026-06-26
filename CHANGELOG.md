@@ -7,6 +7,14 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [2.1.1] 2026-06-26
+
+### Fixed
+
+- **Control transitions** — randomizing while a transition is already active
+  now starts the new transition from the current interpolated value instead of
+  the old backing value.
+
 ## [2.1.0] 2026-06-26
 
 ### Added

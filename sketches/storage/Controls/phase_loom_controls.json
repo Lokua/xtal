@@ -34,7 +34,7 @@
     {
       "type": "Slider",
       "name": "pulse_amount",
-      "value": 8.9
+      "value": 1.34
     },
     {
       "type": "Slider",
@@ -44,7 +44,7 @@
     {
       "type": "Slider",
       "name": "pulse_shift",
-      "value": 0.19
+      "value": 0.5
     },
     {
       "type": "Slider",
@@ -94,38 +94,13 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "grain",
-          "value": 0.31
-        },
-        {
-          "type": "Slider",
           "name": "saturation",
           "value": 0.7
         },
         {
           "type": "Slider",
-          "name": "brightness",
-          "value": 1.35
-        },
-        {
-          "type": "Slider",
-          "name": "ink",
-          "value": 0.72
-        },
-        {
-          "type": "Slider",
-          "name": "bg_hue",
-          "value": 0.589
-        },
-        {
-          "type": "Slider",
-          "name": "density",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "scale",
-          "value": 1.07
+          "name": "seed",
+          "value": 0.185
         },
         {
           "type": "Slider",
@@ -134,13 +109,38 @@
         },
         {
           "type": "Slider",
-          "name": "stroke_hue",
-          "value": 0.646
+          "name": "bg_hue",
+          "value": 0.589
         },
         {
           "type": "Slider",
-          "name": "seed",
-          "value": 0.185
+          "name": "ink",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "density",
+          "value": 2.5
+        },
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.31
+        },
+        {
+          "type": "Slider",
+          "name": "scale",
+          "value": 1.07
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.35
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_hue",
+          "value": 0.646
         },
         {
           "type": "Slider",
