@@ -1,4 +1,10 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
+
 import NumberBox from '@lokua/number-box'
+import CaretDown from
+  '@material-symbols/svg-400/outlined/keyboard_arrow_down.svg?react'
+import CaretUp from
+  '@material-symbols/svg-400/outlined/keyboard_arrow_up.svg?react'
 import clsx from 'clsx/lite'
 
 import type { noop } from './types'
@@ -11,6 +17,22 @@ import IconButton from './IconButton'
 const transitionTimes = [
   32, 24, 16, 12, 8, 6, 4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25, 0.0,
 ]
+
+// TODO: Move input key filtering and arrow stepping into @lokua/number-box.
+const bpmInputControlKeys = new Set([
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'Backspace',
+  'Delete',
+  'End',
+  'Enter',
+  'Escape',
+  'Home',
+  'Tab',
+])
+
 type TransitionTime = (typeof transitionTimes)[number]
 type OptionGroup = {
   label: string
@@ -54,6 +76,16 @@ type HeaderProps = {
   onToggleSnapshots: noop
 }
 
+function isValidBpmInputKey(event: ReactKeyboardEvent<HTMLInputElement>) {
+  return (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    bpmInputControlKeys.has(event.key) ||
+    /^[0-9.]$/.test(event.key)
+  )
+}
+
 export default function Header({
   bpm,
   fps,
@@ -90,6 +122,10 @@ export default function Header({
   onTogglePlay,
   onToggleSnapshots,
 }: HeaderProps) {
+  function changeBpmBy(amount: number) {
+    onChangeBpm(Math.min(999, Math.max(1, bpm + amount)))
+  }
+
   return (
     <header>
       <section>
@@ -192,7 +228,7 @@ export default function Header({
 
         <VerticalSeparator />
 
-        <fieldset data-help-id="Bpm">
+        <fieldset data-help-id="Bpm" className="bpm-control">
           <label htmlFor="bpm">BPM:</label>
           <NumberBox
             id="bpm"
@@ -203,8 +239,69 @@ export default function Header({
             step={0.1}
             readOnly={!tapTempoEnabled}
             disabled={!tapTempoEnabled}
+            onKeyDown={(event) => {
+              if (
+                (event.metaKey || event.ctrlKey) &&
+                event.key.toLowerCase() === 'a'
+              ) {
+                event.preventDefault()
+                event.stopPropagation()
+                event.currentTarget.select()
+                return
+              }
+
+              if (!isValidBpmInputKey(event)) {
+                event.preventDefault()
+                return
+              }
+
+              if (event.key === 'Enter') {
+                event.currentTarget.blur()
+                return
+              }
+
+              if (!tapTempoEnabled) {
+                return
+              }
+
+              if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                changeBpmBy(1)
+              } else if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                changeBpmBy(-1)
+              }
+            }}
             onChange={onChangeBpm}
           />
+          <div className="bpm-stepper">
+            <button
+              type="button"
+              aria-label="Increase BPM"
+              disabled={!tapTempoEnabled}
+              onMouseDown={(event) => {
+                event.preventDefault()
+              }}
+              onClick={() => {
+                changeBpmBy(1)
+              }}
+            >
+              <CaretUp />
+            </button>
+            <button
+              type="button"
+              aria-label="Decrease BPM"
+              disabled={!tapTempoEnabled}
+              onMouseDown={(event) => {
+                event.preventDefault()
+              }}
+              onClick={() => {
+                changeBpmBy(-1)
+              }}
+            >
+              <CaretDown />
+            </button>
+          </div>
         </fieldset>
         <IconButton
           data-help-id="Tap"

@@ -330,6 +330,40 @@ button.icon-button {
   padding: 0.375rem;
 }
 
+.bpm-control {
+  .number-box {
+    margin-right: 0.0625rem;
+  }
+}
+
+.bpm-stepper {
+  display: inline-flex;
+  flex-direction: column;
+  width: 0.875rem;
+  height: var(--control-height);
+  margin-right: var(--control-margin);
+
+  button {
+    width: 100%;
+    height: 50%;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: 0.125rem;
+
+    svg {
+      width: 0.75rem;
+      height: 0.75rem;
+      fill: currentColor;
+    }
+
+    &:disabled {
+      color: var(--control-disabled-text-color);
+      background: var(--control-disabled-background-color);
+    }
+  }
+}
+
 .select-wrapper {
   position: relative;
   display: inline-block;
