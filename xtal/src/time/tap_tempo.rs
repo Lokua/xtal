@@ -115,6 +115,8 @@ impl TapTempo {
     fn estimate_span_bpm(&self) -> Option<f32> {
         let first = *self.taps.front()?;
         let last = *self.taps.back()?;
+        // Early taps use the whole sequence span so small tap errors can
+        // cancel out before there are enough points for the linear fit.
         let beats = self.taps.len().saturating_sub(1) as f32;
         let seconds = last.duration_since(first).as_secs_f32();
 

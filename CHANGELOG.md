@@ -7,6 +7,22 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [2.1.0] 2026-06-26
+
+### Added
+
+- **Tap-tempo BPM editing** — when tap tempo is enabled, the header BPM field
+  can be edited directly, adjusted with arrow keys, or stepped with inline
+  increment/decrement controls.
+
+### Changed
+
+- **Tap-tempo estimation** — the default tap algorithm now uses a rolling
+  four-tap window with span/linear-fit BPM estimation, a timeout reset, and
+  phase-locking so accepted taps land on beat boundaries.
+- **Tap-tempo fallback** — the old two-tap algorithm remains available with
+  `XTAL_TAP_TEMPO_MODE=legacy`.
+
 ## [2.0.0] 2026-04-16
 
 This is a ground-up rewrite. v2 drops the Nannou dependency entirely and
