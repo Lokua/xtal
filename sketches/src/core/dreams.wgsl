@@ -16,6 +16,7 @@ struct Params {
     f: vec4f,
     g: vec4f,
     h: vec4f,
+    i: vec4f,
 }
 
 @group(0) @binding(0)
@@ -34,8 +35,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let time = params.a.z;
     let scale = params.b.x;
     let octaves = i32(params.b.y);
-    let brightness = params.b.z;
-    let contrast = params.b.w;
+    let brightness_anim = params.b.z;
+    let contrast_anim = params.b.w;
     let contour_levels = params.c.x;
     let contour_smoothness = params.c.y;
     let depth_strength = params.c.z;
@@ -57,6 +58,22 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let sep_wave = params.g.w;
     let auto_sep_bias = params.h.x > 0.5;
     let sep_bias_anim = params.h.y;
+    let sep_wave_angle = params.h.z;
+    let sep_wave_beats = params.h.w;
+    let manual_tone = params.i.x > 0.5;
+    let manual_brightness = params.i.y;
+    let manual_contrast = params.i.z;
+    let sep_wave_count = params.i.w;
+    let brightness = select(
+        brightness_anim,
+        manual_brightness,
+        manual_tone
+    );
+    let contrast = select(
+        contrast_anim,
+        manual_contrast,
+        manual_tone
+    );
     let sep_bias = select(
         sep_bias_manual,
         sep_bias_anim,
@@ -113,6 +130,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         sep_amount,
         sep_bias,
         sep_wave,
+        sep_wave_angle,
+        sep_wave_count,
+        sep_wave_beats,
+        pos,
         tile_cluster
     );
 
@@ -174,6 +195,10 @@ fn voronoi_boxes(
     sep_amount: f32,
     sep_bias: f32,
     sep_wave: f32,
+    sep_wave_angle: f32,
+    sep_wave_count: f32,
+    sep_wave_beats: f32,
+    sep_wave_pos: vec2f,
     tile_cluster: f32
 ) -> VoronoiResult {
     let cell = floor(p);
@@ -220,11 +245,14 @@ fn voronoi_boxes(
             let tile_sep = tile_sep_amount(
                 cell_id,
                 cell_hash,
-                p,
                 time,
                 sep,
                 sep_bias,
-                sep_wave
+                sep_wave,
+                sep_wave_angle,
+                sep_wave_count,
+                sep_wave_beats,
+                sep_wave_pos
             );
             var size_mod = 1.0;
             if animate_extrude {
@@ -271,17 +299,27 @@ fn voronoi_boxes(
 fn tile_sep_amount(
     cell_id: vec2f,
     cell_hash: f32,
-    p: vec2f,
     time: f32,
     sep: f32,
     sep_bias: f32,
-    sep_wave: f32
+    sep_wave: f32,
+    sep_wave_angle: f32,
+    sep_wave_count: f32,
+    sep_wave_beats: f32,
+    sep_wave_pos: vec2f
 ) -> f32 {
     let bias = clamp(sep_bias, 0.0, 1.0);
     let wave_amount = clamp(sep_wave, 0.0, 1.0);
+    let wave_count = max(1.0, round(sep_wave_count));
+    let wave_beats = max(1.0, round(sep_wave_beats));
     let sparse = smoothstep(0.78, 0.98, cell_hash);
     let bias_mask = mix(sparse, 1.0, bias);
-    let wave_phase = (p.y + cell_id.x * 0.18) * 1.4 - time * 6.28318;
+    let wave_angle = sep_wave_angle * 6.28318;
+    let wave_dir = vec2f(sin(wave_angle), cos(wave_angle));
+    let wave_coord = dot(sep_wave_pos, wave_dir);
+    let wave_scale = wave_count * 1.4;
+    let wave_phase = wave_coord * wave_scale -
+        time * (wave_scale / wave_beats);
     let wave = sin(wave_phase) * 0.5 + 0.5;
     let wave_mask = smoothstep(0.35, 0.95, wave);
     return sep * bias_mask * mix(1.0, wave_mask, wave_amount);

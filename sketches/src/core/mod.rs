@@ -9,6 +9,7 @@ pub mod grid_splash_2;
 pub mod gyroid;
 pub mod hatch_auto;
 pub mod interference;
+pub mod liquid_horizon;
 pub mod marcher;
 pub mod neural;
 pub mod rm;

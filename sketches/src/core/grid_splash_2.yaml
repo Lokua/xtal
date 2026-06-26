@@ -2,11 +2,11 @@
 #  Main
 # ------------------------------------------------------------------------------
 
-sequence:
-  type: snapshot_sequence
-  disabled: true
-  beats: 32
-  snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+# sequence:
+# type: snapshot_sequence
+# disabled: true
+# beats: 32
+# snapshots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
 grid_size:
   var: aw
@@ -36,6 +36,13 @@ t_wave:
   var: cy
   type: slider
   range: [0, 50]
+
+t_cycle_beats:
+  var: jx
+  type: slider
+  range: [1, 16]
+  step: 1
+  default: 1
 
 ab_cd_mix:
   var: dw
@@ -198,7 +205,7 @@ hue_spread:
 saturation:
   var: ez
   type: slider
-  range: [0.0, 1.0]
+  range: [0.0, 1]
   default: 0.72
 
 # ------------------------------------------------------------------------------

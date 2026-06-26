@@ -11,7 +11,7 @@ pub static SKETCH_CONFIG: SketchConfig = SketchConfig {
     bpm: WORKING_BPM,
     w: HD_WIDTH,
     h: HD_HEIGHT,
-    banks: 8,
+    banks: 12,
 };
 
 pub fn init() -> FullscreenShaderSketch {

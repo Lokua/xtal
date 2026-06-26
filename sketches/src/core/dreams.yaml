@@ -29,6 +29,7 @@ brightness:
   slew: 0.8
   delay: 0.0
   stem: 101
+  disabled: manual_tone
 
 contrast:
   var: bw
@@ -38,6 +39,7 @@ contrast:
   slew: 0.8
   delay: 0.0
   stem: 102
+  disabled: manual_tone
 
 hue:
   var: fy
@@ -50,6 +52,27 @@ saturation:
   type: slider
   default: 0.04
   range: [0.0, 1.0]
+
+manual_tone:
+  var: ix
+  type: checkbox
+  default: false
+
+manual_brightness:
+  var: iy
+  type: slider
+  default: 1.0
+  range: [0.0, 2.0]
+  step: 0.01
+  disabled: not manual_tone
+
+manual_contrast:
+  var: iz
+  type: slider
+  default: 1.0
+  range: [0.5, 3.0]
+  step: 0.01
+  disabled: not manual_tone
 
 # ------------------------------------------------------------------------------
 #  Separation
@@ -97,6 +120,27 @@ sep_wave:
   default: 0.0
   range: [0.0, 1.0]
   step: 0.01
+
+sep_wave_angle:
+  var: hz
+  type: slider
+  default: 0.0
+  range: [0.0, 0.5]
+  step: 0.001
+
+sep_wave_count:
+  var: iw
+  type: slider
+  default: 1
+  range: [1, 8]
+  step: 1
+
+sep_wave_beats:
+  var: hw
+  type: slider
+  default: 4
+  range: [1, 16]
+  step: 1
 
 # ------------------------------------------------------------------------------
 #  Performance

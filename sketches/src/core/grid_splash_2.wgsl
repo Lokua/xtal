@@ -1,3 +1,5 @@
+const TAU: f32 = 6.28318530718;
+
 const STANDARD_LUMINANCE: vec3f = vec3f(0.2126, 0.7152, 0.0722);
 
 var<private> OFFSETS: array<vec2f, 4> = array<vec2f, 4>(
@@ -36,6 +38,7 @@ struct Params {
     h: vec4f,
     // link_ab_amp, link_ab_freq, link_cd_amp, link_cd_freq
     i: vec4f,
+    // t_cycle_beats
     j: vec4f,
 }
 
@@ -62,7 +65,7 @@ fn fs_main(
     @location(0) position: vec2f,
     @location(1) uv: vec2f
 ) -> @location(0) vec4f {
-    let t = params.a.z * 0.25;
+    let t = params.a.z * TAU / params.j.x;
     let grid_size = params.a.w;
     var circle_radius = params.b.x;
     let line_width = params.b.y;
@@ -232,6 +235,18 @@ fn apply_feedback(
     return select(mix(color, sample_rgb, mix_amount), color, is_dark);
 }
 
+fn powf(x: f32, y: f32) -> f32 {
+    let y_rounded = round(y);
+    if (abs(y - y_rounded) < 1e-4 && modulo(y_rounded, 2.0) == 1.0) {
+        return sign(x) * pow(abs(x), y);
+    }
+    return pow(abs(x), y);
+}
+
+fn modulo(x: f32, y: f32) -> f32 {
+    return x - y * floor(x / y);
+}
+
 fn weave_a(p1: vec2f, p2: vec2f, frequency: f32) -> f32 {
     let t = params.a.z;
     let exp = params.c.z;
@@ -262,16 +277,21 @@ fn weave_c(p1: vec2f, p2: vec2f, frequency: f32) -> f32 {
     let p = rotate_point(p2, rotation);
     let dx = powf(abs(p2.x - p1.x), exp);
     let dy = powf(abs(p2.y - p1.y), exp);
-    return (sin(p.x * frequency) + cos(p.y * frequency))
-        * cos(sqrt(dx + dy) * 0.05) * 100.0;
+    return (sin(p.x * frequency) + sin(p.y * frequency))
+        * sin(exp(-length(vec2f(dx, dy))) * 5.0) * 10.0;
 }
 
 fn weave_d(p1: vec2f, p2: vec2f, frequency: f32) -> f32 {
     let exp = params.c.w;
     let dx = powf(abs(p2.x - p1.x), exp);
     let dy = powf(abs(p2.y - p1.y), exp);
-    let wave_pattern = cos(p2.x * frequency) + cos(p2.y * frequency);
-    return wave_pattern * cos(sqrt(dx + dy) * 0.05) * 100.0;
+    let wave_pattern = cos(p2.x * frequency) + sin(p2.y * frequency);
+    let distance = length(vec2f(dx, dy));
+    let angle_factor = abs(atan2(dy, dx));
+    let center_distance = length(p2 - p1);
+    let blend = smoothstep(0.0, 0.2, center_distance);
+    let modified_angle = mix(1.0, angle_factor, blend);
+    return wave_pattern * modified_angle * 2.0;
 }
 
 fn n(v: f32) -> f32 {
