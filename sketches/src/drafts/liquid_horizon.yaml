@@ -80,6 +80,46 @@ warp_mod:
     - warp_scale
     - warp_shift
 
+disturbance_probe:
+  var: gz
+  type: checkbox
+  default: false
+
+disturbance_amount:
+  var: fy
+  type: slider
+  range: [0.0, 2.0]
+  default: 0.45
+  step: 0.05
+
+disturbance_scale:
+  var: fz
+  type: slider
+  range: [0.25, 8.0]
+  default: 2.0
+  step: 0.25
+
+disturbance_radius:
+  var: fw
+  type: slider
+  range: [0.05, 2.0]
+  default: 0.55
+  step: 0.05
+
+disturbance_x:
+  var: gx
+  type: random_slewed
+  beats: 4.0
+  range: [-0.45, 0.45]
+  slew: 0.7
+
+disturbance_y:
+  var: gy
+  type: random_slewed
+  beats: 3.0
+  range: [-0.45, 0.45]
+  slew: 0.7
+
 # ------------------------------------------------------------------------------
 #  Contours
 # ------------------------------------------------------------------------------
@@ -129,12 +169,24 @@ color_mix:
   default: 0.9
   step: 0.01
 
+auto_hue:
+  var: ey
+  type: checkbox
+  default: false
+
 hue:
   var: dx
   type: slider
   range: [0.0, 1.0]
   default: 0.56
   step: 0.01
+  disabled: auto_hue
+
+hue_animation:
+  var: fx
+  type: triangle
+  beats: 64.0
+  range: [0.0, 1.0]
 
 saturation:
   var: dy

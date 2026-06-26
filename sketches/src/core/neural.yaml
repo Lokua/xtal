@@ -5,22 +5,36 @@
 t_mult:
   var: bx
   type: slider
-  range: [0.125, 2]
+  range: [0.125, 4]
   default: 1
   step: 0.125
-
-t_loop:
-  var: cz
-  type: random_slewed
-  beats: 1.0
-  range: [-4.0, 4.0]
-  slew: 0.66
-  delay: 0.0
-  stem: 88
 
 t_mix:
   var: cw
   type: slider
+  range: [0.0, 1.0]
+  default: 1.0
+  step: 0.01
+
+t_loop:
+  var: cz
+  type: triangle
+  beats: 1.0
+  range: [0.0, 1.0]
+
+t_loop_amount:
+  var: ey
+  type: slider
+  range: [0.0, 8.0]
+  default: 1.0
+  step: 0.01
+
+nucleus_pulse_amount:
+  var: ez
+  type: slider
+  range: [0.0, 2.0]
+  default: 1.0
+  step: 0.01
 
 # ------------------------------------------------------------------------------
 #  Main

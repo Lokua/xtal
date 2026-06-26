@@ -10,7 +10,7 @@ struct VertexOutput {
 };
 
 struct Params {
-    // w, h, time, scale_factor 
+    // w, h, beats, scale_factor
     a: vec4f,
     // t_mult, c, s, weight
     b: vec4f,
@@ -18,7 +18,7 @@ struct Params {
     c: vec4f,
     // rot_c, rot_s, r, g
     d: vec4f,
-    // b, ...
+    // b, t_loop_amount, nucleus_pulse_amount, ...
     e: vec4f,
     f: vec4f,
 }
@@ -41,25 +41,32 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let weight = params.b.w;
     let posterize_steps = params.c.x;
     let fractalize = params.c.y;
-    let t_loop = params.c.z * params.b.x;
+    let beat_tri = params.c.z;
+    let t_loop_amount = params.e.y;
+    let nucleus_pulse_amount = params.e.z;
+    let t_loop = (beat_tri * 2.0 - 1.0) * t_loop_amount;
     let t_mix = params.c.w;
+    let neural_t = mix(t, t_loop, t_mix);
+    let nucleus_pulse = 1.0 - beat_tri;
+    let nucleus_beat_scale = mix(1.18, 0.72, nucleus_pulse);
+    let nucleus_scale = mix(1.0, nucleus_beat_scale, nucleus_pulse_amount);
     let rot_c = params.d.x;
     let rot_s = params.d.y;
     let c = select(
-        params.b.y, 
-        cos(params.b.y * mix(t, t_loop, t_mix) * 0.5), 
+        params.b.y,
+        cos(params.b.y * neural_t * 0.5),
         bool(rot_c)
     );
     let s = select(
-        params.b.z, 
-        cos(params.b.z * mix(t, t_loop, t_mix) * 0.5), 
+        params.b.z,
+        cos(params.b.z * neural_t * 0.5),
         bool(rot_s)
     );
     let r = params.d.z;
     let g = params.d.w;
     let b = params.e.x;
     
-    var p = correct_aspect(position);
+    var p = correct_aspect(position) * nucleus_scale;
     var n = p * fractalize;
     
     var acc = 0.0;
@@ -72,7 +79,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         p = m * p;
         n = m * n;
         
-        let q = p * scale_factor + n - mix(t, t_loop, t_mix);
+        let q = p * scale_factor + n - neural_t;
         acc += dot(cos(q), vec2f(weight)) / scale_factor;
         n += sin(q);
         scale_factor *= 1.2;
@@ -108,4 +115,3 @@ fn correct_aspect(position: vec2f) -> vec2f {
     p.x *= aspect;
     return p;
 }
-

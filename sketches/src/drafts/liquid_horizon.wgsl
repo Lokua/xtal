@@ -20,8 +20,12 @@ struct Params {
     c: vec4f,
     // hue, saturation, contrast, zoom
     d: vec4f,
-    // flow_direction, unused, light_angle, edge_glow
+    // flow_direction, auto_hue, light_angle, edge_glow
     e: vec4f,
+    // hue_animation, disturbance_amount, disturbance_scale, disturbance_radius
+    f: vec4f,
+    // disturbance_x, disturbance_y, disturbance_probe, unused
+    g: vec4f,
 }
 
 @group(0) @binding(0)
@@ -48,7 +52,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let warp = params.c.y;
     let refraction = params.c.z;
     let specular = params.c.w;
-    let hue = params.d.x;
+    let auto_hue = bool(params.e.y);
+    let hue = select(params.d.x, params.f.x, auto_hue);
+    let disturbance_amount = params.f.y;
+    let disturbance_scale = params.f.z;
+    let disturbance_radius = params.f.w;
+    let disturbance_center = vec2f(params.g.x, params.g.y);
+    let disturbance_probe = bool(params.g.z);
     let saturation = params.d.y;
     let contrast = params.d.z;
     let zoom = params.d.w;
@@ -62,16 +72,47 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
 
     let time = beats * flow_speed;
     let direction = get_flow_direction(flow_direction);
-    let sample_uv = uv * noise_scale - direction * time;
+    let sample_uv = disturbed_sample(
+        uv,
+        noise_scale,
+        direction,
+        time,
+        disturbance_center,
+        disturbance_amount,
+        disturbance_scale,
+        disturbance_radius,
+        warp,
+    );
     let height = water(sample_uv, warp, attract) * amplitude;
     let epsilon = 0.012 * noise_scale;
+    let uv_epsilon = epsilon / max(noise_scale, 0.001);
     let height_x = water(
-        sample_uv + vec2f(epsilon, 0.0),
+        disturbed_sample(
+            uv + vec2f(uv_epsilon, 0.0),
+            noise_scale,
+            direction,
+            time,
+            disturbance_center,
+            disturbance_amount,
+            disturbance_scale,
+            disturbance_radius,
+            warp,
+        ),
         warp,
         attract,
     ) * amplitude;
     let height_y = water(
-        sample_uv + vec2f(0.0, epsilon),
+        disturbed_sample(
+            uv + vec2f(0.0, uv_epsilon),
+            noise_scale,
+            direction,
+            time,
+            disturbance_center,
+            disturbance_amount,
+            disturbance_scale,
+            disturbance_radius,
+            warp,
+        ),
         warp,
         attract,
     ) * amplitude;
@@ -113,7 +154,76 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     color += fresnel * edge_glow * edge_color;
     color = (color - 0.5) * contrast + 0.5;
     color = 1.0 - exp(-max(color, vec3f(0.0)) * 1.35);
+    color = draw_probe(color, uv, disturbance_center, beats, disturbance_probe);
     return vec4f(color, 1.0);
+}
+
+fn draw_probe(
+    color: vec3f,
+    uv: vec2f,
+    center: vec2f,
+    beats: f32,
+    enabled: bool,
+) -> vec3f {
+    if !enabled {
+        return color;
+    }
+
+    let d = distance(uv, center);
+    let beat_phase = fract(beats);
+    let ping_radius = mix(0.025, 0.18, beat_phase);
+    let ping_fade = pow(1.0 - beat_phase, 1.6);
+    let dot_mask = 1.0 - smoothstep(0.012, 0.02, d);
+    let ping_mask = 1.0 - smoothstep(0.0, 0.012, abs(d - ping_radius));
+    let probe = max(dot_mask, ping_mask * ping_fade);
+    return mix(color, vec3f(1.0, 0.0, 0.0), probe);
+}
+
+fn disturbed_sample(
+    uv: vec2f,
+    noise_scale: f32,
+    direction: vec2f,
+    time: f32,
+    center: vec2f,
+    amount: f32,
+    scale: f32,
+    radius: f32,
+    warp: f32,
+) -> vec2f {
+    let p = uv * noise_scale - direction * time;
+    return apply_disturbance(
+        p,
+        uv,
+        center,
+        amount,
+        scale,
+        radius,
+        warp,
+    );
+}
+
+fn apply_disturbance(
+    p: vec2f,
+    uv: vec2f,
+    center: vec2f,
+    amount: f32,
+    scale: f32,
+    radius: f32,
+    warp: f32,
+) -> vec2f {
+    let safe_radius = max(radius, 0.001);
+    let local = uv - center;
+    let shaped = vec2f(local.x * 1.3, local.y * 0.8);
+    let mask = exp(-dot(shaped, shaped) / (safe_radius * safe_radius));
+    let warp_offset = vec2f(warp * 0.37, -warp * 0.23);
+    let swim_p = shaped * max(scale, 0.001) + warp_offset;
+    let noise_vec = vec2f(
+        fbm(swim_p + vec2f(2.1, 4.3)),
+        fbm(swim_p + vec2f(7.7, 1.9)),
+    );
+    let swirl = vec2f(-local.y, local.x) / safe_radius;
+    let push = swirl * 0.2 + noise_vec * 0.65;
+    return p + push * mask * amount;
 }
 
 fn water(p: vec2f, warp: f32, attract: f32) -> f32 {
