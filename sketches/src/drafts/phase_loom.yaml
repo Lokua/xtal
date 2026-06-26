@@ -1,0 +1,168 @@
+_vars:
+  TAU: &TAU 6.283185307179586
+
+# ------------------------------------------------------------------------------
+#  Signal
+# ------------------------------------------------------------------------------
+
+signal:
+  type: separator
+
+seed:
+  var: aw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.37
+  step: 0.001
+
+density:
+  var: bx
+  type: slider
+  range: [2.0, 16.0]
+  default: 5.0
+  step: 0.125
+
+variation:
+  var: by
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.35
+  step: 0.01
+
+aperture:
+  var: bz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.46
+  step: 0.01
+
+line_weight:
+  var: cz
+  type: slider
+  range: [0.65, 3.8]
+  default: 1.0
+  step: 0.01
+
+scale:
+  var: bw
+  type: slider
+  range: [0.35, 1.6]
+  default: 0.68
+  step: 0.01
+
+phase:
+  var: cx
+  type: ramp
+  beats: 32
+  range: [0.0, *TAU]
+
+drift:
+  var: cy
+  type: random_slewed
+  beats: 16
+  range: [-1.0, 1.0]
+  slew: 0.82
+  stem: 211
+
+# ------------------------------------------------------------------------------
+#  Pulse
+# ------------------------------------------------------------------------------
+
+pulse_section:
+  type: separator
+
+pulse:
+  var: ex
+  type: triangle
+  beats: $pulse_beat
+  range: [-1.0, 1.0]
+
+pulse_amount:
+  var: cw
+  type: slider
+  range: [0.0, 9.5]
+  default: 0.45
+  step: 0.01
+
+pulse_beat:
+  type: slider
+  range: [1, 4]
+  default: 1
+  step: 1
+
+pulse_shift:
+  var: ey
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.0
+  step: 0.01
+
+pulse_count:
+  var: ez
+  type: slider
+  range: [1, 8]
+  default: 3
+  step: 1
+
+# ------------------------------------------------------------------------------
+#  Tone
+# ------------------------------------------------------------------------------
+
+tone:
+  type: separator
+
+ink:
+  var: dx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.68
+  step: 0.01
+
+bg_hue:
+  var: dy
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.62
+  step: 0.001
+
+stroke_hue:
+  var: dz
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.08
+  step: 0.001
+
+accent_hue:
+  var: dw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.86
+  step: 0.001
+
+# ------------------------------------------------------------------------------
+#  Color
+# ------------------------------------------------------------------------------
+
+color:
+  type: separator
+
+saturation:
+  var: fx
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.7
+  step: 0.01
+
+brightness:
+  var: fy
+  type: slider
+  range: [0.35, 1.35]
+  default: 0.9
+  step: 0.01
+
+grain:
+  var: fw
+  type: slider
+  range: [0.0, 1.0]
+  default: 0.22
+  step: 0.01

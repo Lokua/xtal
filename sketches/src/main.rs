@@ -51,6 +51,7 @@ fn main() {
                 ink,
                 layers,
                 phase_matrix,
+                phase_loom,
                 snd,
                 sline,
                 viaduct_poc,

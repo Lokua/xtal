@@ -1,0 +1,162 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "seed",
+      "value": 0.628
+    },
+    {
+      "type": "Slider",
+      "name": "density",
+      "value": 10.625
+    },
+    {
+      "type": "Slider",
+      "name": "variation",
+      "value": 0.03
+    },
+    {
+      "type": "Slider",
+      "name": "aperture",
+      "value": 0.55
+    },
+    {
+      "type": "Slider",
+      "name": "line_weight",
+      "value": 1.93
+    },
+    {
+      "type": "Slider",
+      "name": "scale",
+      "value": 1.14
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_amount",
+      "value": 8.9
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_beat",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_shift",
+      "value": 0.19
+    },
+    {
+      "type": "Slider",
+      "name": "pulse_count",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "ink",
+      "value": 0.75
+    },
+    {
+      "type": "Slider",
+      "name": "bg_hue",
+      "value": 0.337
+    },
+    {
+      "type": "Slider",
+      "name": "stroke_hue",
+      "value": 0.292
+    },
+    {
+      "type": "Slider",
+      "name": "accent_hue",
+      "value": 0.952
+    },
+    {
+      "type": "Slider",
+      "name": "saturation",
+      "value": 0.26999998
+    },
+    {
+      "type": "Slider",
+      "name": "brightness",
+      "value": 0.63
+    },
+    {
+      "type": "Slider",
+      "name": "grain",
+      "value": 0.27
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "grain",
+          "value": 0.31
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.7
+        },
+        {
+          "type": "Slider",
+          "name": "brightness",
+          "value": 1.35
+        },
+        {
+          "type": "Slider",
+          "name": "ink",
+          "value": 0.72
+        },
+        {
+          "type": "Slider",
+          "name": "bg_hue",
+          "value": 0.589
+        },
+        {
+          "type": "Slider",
+          "name": "density",
+          "value": 2.5
+        },
+        {
+          "type": "Slider",
+          "name": "scale",
+          "value": 1.07
+        },
+        {
+          "type": "Slider",
+          "name": "aperture",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "stroke_hue",
+          "value": 0.646
+        },
+        {
+          "type": "Slider",
+          "name": "seed",
+          "value": 0.185
+        },
+        {
+          "type": "Slider",
+          "name": "accent_hue",
+          "value": 0.25300002
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": [
+    "pulse_amount",
+    "pulse_beat",
+    "pulse_shift",
+    "pulse_count"
+  ]
+}
