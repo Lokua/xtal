@@ -14,17 +14,32 @@
     {
       "type": "Slider",
       "name": "noise_scale",
-      "value": 0.8721
+      "value": 2.6
     },
     {
       "type": "Slider",
       "name": "amplitude",
-      "value": 0.25
+      "value": 0.1
+    },
+    {
+      "type": "Slider",
+      "name": "warp_beats",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "warp_range",
+      "value": 0.6
+    },
+    {
+      "type": "Slider",
+      "name": "warp_offset",
+      "value": 1.55
     },
     {
       "type": "Slider",
       "name": "rings",
-      "value": 34.0
+      "value": 1.0
     },
     {
       "type": "Slider",
@@ -34,27 +49,27 @@
     {
       "type": "Slider",
       "name": "refraction",
-      "value": 0.095
+      "value": 0.5
     },
     {
       "type": "Slider",
       "name": "zoom",
-      "value": 0.55
+      "value": 0.85
     },
     {
       "type": "Slider",
       "name": "color_mix",
-      "value": 0.2
+      "value": 0.75
     },
     {
       "type": "Slider",
       "name": "hue",
-      "value": 0.49
+      "value": 0.62
     },
     {
       "type": "Slider",
       "name": "saturation",
-      "value": 0.36
+      "value": 0.76
     },
     {
       "type": "Slider",
@@ -64,23 +79,215 @@
     {
       "type": "Slider",
       "name": "specular",
-      "value": 2.15
+      "value": 2.7
     },
     {
       "type": "Slider",
       "name": "edge_glow",
-      "value": 0.25
+      "value": 0.3
     }
   ],
   "midi_controls": [],
   "osc_controls": [],
   "snapshots": {
-    "3": {
+    "2": {
       "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 2.9
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "edge_glow",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.0
+        },
+        {
+          "type": "Select",
+          "name": "flow_direction",
+          "value": "south"
+        },
+        {
+          "type": "Slider",
+          "name": "attract",
+          "value": 0.88
+        },
+        {
+          "type": "Slider",
+          "name": "specular",
+          "value": 3.0
+        },
+        {
+          "type": "Slider",
+          "name": "refraction",
+          "value": 0.26
+        },
         {
           "type": "Slider",
           "name": "zoom",
           "value": 2.5
+        },
+        {
+          "type": "Slider",
+          "name": "rings",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.0
+        },
+        {
+          "type": "Slider",
+          "name": "amplitude",
+          "value": 0.6
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 2.5
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "edge_glow",
+          "value": 0.3
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.75
+        },
+        {
+          "type": "Slider",
+          "name": "refraction",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.76
+        },
+        {
+          "type": "Slider",
+          "name": "rings",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "attract",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "flow_speed",
+          "value": 0.25
+        },
+        {
+          "type": "Select",
+          "name": "flow_direction",
+          "value": "north"
+        },
+        {
+          "type": "Slider",
+          "name": "amplitude",
+          "value": 0.1
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 0.85
+        },
+        {
+          "type": "Slider",
+          "name": "specular",
+          "value": 2.7
+        },
+        {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.62
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 2.6
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "3": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "saturation",
+          "value": 0.48
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.55
+        },
+        {
+          "type": "Slider",
+          "name": "noise_scale",
+          "value": 8.0
+        },
+        {
+          "type": "Select",
+          "name": "flow_direction",
+          "value": "south"
+        },
+        {
+          "type": "Slider",
+          "name": "edge_glow",
+          "value": 0.35
+        },
+        {
+          "type": "Slider",
+          "name": "color_mix",
+          "value": 0.47
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 2.5
+        },
+        {
+          "type": "Slider",
+          "name": "specular",
+          "value": 2.7
+        },
+        {
+          "type": "Slider",
+          "name": "refraction",
+          "value": 0.405
         },
         {
           "type": "Slider",
@@ -98,206 +305,14 @@
           "value": 0.63
         },
         {
-          "type": "Select",
-          "name": "flow_direction",
-          "value": "south"
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.55
-        },
-        {
-          "type": "Slider",
-          "name": "noise_scale",
-          "value": 8.0
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.48
-        },
-        {
           "type": "Slider",
           "name": "flow_speed",
           "value": 0.15
         },
         {
           "type": "Slider",
-          "name": "refraction",
-          "value": 0.405
-        },
-        {
-          "type": "Slider",
           "name": "rings",
           "value": 10.0
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.47
-        },
-        {
-          "type": "Slider",
-          "name": "edge_glow",
-          "value": 0.35
-        },
-        {
-          "type": "Slider",
-          "name": "specular",
-          "value": 2.7
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "1": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "specular",
-          "value": 2.7
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 0.85
-        },
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 0.75
-        },
-        {
-          "type": "Slider",
-          "name": "attract",
-          "value": 1.0
-        },
-        {
-          "type": "Select",
-          "name": "flow_direction",
-          "value": "north"
-        },
-        {
-          "type": "Slider",
-          "name": "rings",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "hue",
-          "value": 0.62
-        },
-        {
-          "type": "Slider",
-          "name": "flow_speed",
-          "value": 0.25
-        },
-        {
-          "type": "Slider",
-          "name": "noise_scale",
-          "value": 2.6
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.4
-        },
-        {
-          "type": "Slider",
-          "name": "refraction",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.76
-        },
-        {
-          "type": "Slider",
-          "name": "amplitude",
-          "value": 0.1
-        },
-        {
-          "type": "Slider",
-          "name": "edge_glow",
-          "value": 0.3
-        }
-      ],
-      "midi_controls": [],
-      "osc_controls": []
-    },
-    "2": {
-      "ui_controls": [
-        {
-          "type": "Slider",
-          "name": "color_mix",
-          "value": 1.0
-        },
-        {
-          "type": "Slider",
-          "name": "flow_speed",
-          "value": 0.25
-        },
-        {
-          "type": "Slider",
-          "name": "hue",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "edge_glow",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "noise_scale",
-          "value": 2.9
-        },
-        {
-          "type": "Select",
-          "name": "flow_direction",
-          "value": "south"
-        },
-        {
-          "type": "Slider",
-          "name": "rings",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "refraction",
-          "value": 0.26
-        },
-        {
-          "type": "Slider",
-          "name": "attract",
-          "value": 0.88
-        },
-        {
-          "type": "Slider",
-          "name": "zoom",
-          "value": 2.5
-        },
-        {
-          "type": "Slider",
-          "name": "saturation",
-          "value": 0.0
-        },
-        {
-          "type": "Slider",
-          "name": "amplitude",
-          "value": 0.6
-        },
-        {
-          "type": "Slider",
-          "name": "specular",
-          "value": 3.0
         }
       ],
       "midi_controls": [],
@@ -307,13 +322,23 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "hue",
-          "value": 0.49
+          "name": "edge_glow",
+          "value": 0.25
         },
         {
           "type": "Slider",
-          "name": "edge_glow",
+          "name": "amplitude",
           "value": 0.25
+        },
+        {
+          "type": "Slider",
+          "name": "contrast",
+          "value": 1.4
+        },
+        {
+          "type": "Slider",
+          "name": "rings",
+          "value": 34.0
         },
         {
           "type": "Slider",
@@ -341,6 +366,11 @@
           "value": 0.2
         },
         {
+          "type": "Slider",
+          "name": "hue",
+          "value": 0.49
+        },
+        {
           "type": "Select",
           "name": "flow_direction",
           "value": "north"
@@ -359,21 +389,6 @@
           "type": "Slider",
           "name": "flow_speed",
           "value": 0.25
-        },
-        {
-          "type": "Slider",
-          "name": "amplitude",
-          "value": 0.25
-        },
-        {
-          "type": "Slider",
-          "name": "contrast",
-          "value": 1.4
-        },
-        {
-          "type": "Slider",
-          "name": "rings",
-          "value": 34.0
         }
       ],
       "midi_controls": [],

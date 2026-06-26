@@ -37,13 +37,48 @@ amplitude:
   default: 1.4
   step: 0.05
 
+warp_beats:
+  type: slider
+  range: [1, 4]
+  default: 1
+  step: 1
+
+warp_range:
+  type: slider
+  range: [0.0, 3.0]
+  default: 2.0
+  step: 0.05
+
+warp_offset:
+  type: slider
+  range: [0, 3.0]
+  default: 0.0
+  step: 0.05
+
 warp:
   var: cy
   type: triangle
-  beats: 1.0
-  # range: [0.55, 1.35]
-  range: [0, 2]
-  # slew: 0.8
+  beats: $warp_beats
+  range: [0.0, 1.0]
+
+warp_scale:
+  type: effect
+  kind: math
+  operator: mult
+  operand: $warp_range
+
+warp_shift:
+  type: effect
+  kind: math
+  operator: add
+  operand: $warp_offset
+
+warp_mod:
+  type: mod
+  source: warp
+  modulators:
+    - warp_scale
+    - warp_shift
 
 # ------------------------------------------------------------------------------
 #  Contours
