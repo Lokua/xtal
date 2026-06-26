@@ -57,12 +57,17 @@ feedback_rotation:
   step: 0.001
   default: 0.0
 
+video_beats:
+  type: slider
+  range: [1.0, 16.0]
+  step: 1.0
+
 video:
   type: video
   source: a
   index: $active_video
   start: $scrub
-  beats: 16
+  beats: $video_beats
   speed: $speed
   direction: ping_pong
 
