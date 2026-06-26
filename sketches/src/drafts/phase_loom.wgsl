@@ -58,15 +58,23 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
     let screen_p = (in.uv * resolution - 0.5 * resolution) / resolution.y;
     let p = screen_p * scale;
 
-    let loom = phase_loom(p, seed, density, variation, phase, drift);
+    let loom = phase_loom(
+        p,
+        seed,
+        density,
+        variation,
+        phase,
+        drift,
+    );
+    let field = loom.x;
     let pulse_mask = pulse_regions(
-        loom.x,
+        field,
         loom.y,
         seed,
         pulse_shift,
         pulse_count,
     );
-    let pulsed_field = loom.x + pulse * pulse_amount * pulse_mask * 0.16;
+    let pulsed_field = field + pulse * pulse_amount * pulse_mask * 0.16;
     let line = contour_lines(
         pulsed_field,
         aperture,
@@ -118,7 +126,7 @@ fn phase_loom(
 
     for (var i = 0; i < 6; i = i + 1) {
         let fi = f32(i) + 1.0;
-        let spin = seed * TAU + fi * 2.399963 + drift * 0.28;
+        let spin = seed * TAU + fi * 2.399963 + drift * 0.8;
         let wobble = phase_a * sin(fi * 1.7) * 0.18 +
             phase_b * cos(fi * 0.9) * 0.11;
         let dir = unit(spin + wobble);
