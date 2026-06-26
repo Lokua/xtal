@@ -1,6 +1,11 @@
 // Following along at https://iquilezles.org/articles/warp/
 
 const TAU: f32 = 6.283185307179586;
+const GRAIN_FAST_BEATS_MULT: f32 = 4.0;
+const GRAIN_SLOW_BEATS_MULT: f32 = 8.0;
+const MASK_FAST_BEATS_MULT: f32 = 2.0;
+const MASK_MED_BEATS_MULT: f32 = 4.0;
+const MASK_SLOW_BEATS_MULT: f32 = 8.0;
 
 struct VertexInput {
     @location(0) position: vec2f,
@@ -24,7 +29,7 @@ struct Params {
     e: vec4f,
     // grain_size, swirl, posterize, posterize_steps
     f: vec4f,
-    // show_grains, t_mult, unused, unused
+    // show_grains, motion_beats, unused, unused
     g: vec4f,
 }
 
@@ -41,8 +46,30 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
-    let t_mult = params.g.y;
-    let t = params.a.z * t_mult;
+    let beats = params.a.z;
+    let motion_beats = max(params.g.y, 0.25);
+    let swirl_phase = beat_phase(beats, motion_beats);
+    let drift_time = beats / motion_beats;
+    let grain_fast_phase = beat_phase(
+        beats,
+        motion_beats * GRAIN_FAST_BEATS_MULT
+    );
+    let grain_slow_phase = beat_phase(
+        beats,
+        motion_beats * GRAIN_SLOW_BEATS_MULT
+    );
+    let mask_fast_phase = beat_phase(
+        beats,
+        motion_beats * MASK_FAST_BEATS_MULT
+    );
+    let mask_med_phase = beat_phase(
+        beats,
+        motion_beats * MASK_MED_BEATS_MULT
+    );
+    let mask_slow_phase = beat_phase(
+        beats,
+        motion_beats * MASK_SLOW_BEATS_MULT
+    );
     let l = params.b.y;
     let c = params.b.z;
     let h = params.b.w;
@@ -71,12 +98,13 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let d = length(p);
 
     let angle = atan2(p.y, p.x);
-    let mod_angle = angle + sin(d * 3.0 + t) * swirl;
+    let mod_angle = angle + sin(d * 3.0 + swirl_phase) * swirl;
     let mod_p = vec2f(cos(mod_angle), sin(mod_angle)) * d;
+    let drift = vec2f(drift_time * 0.1);
 
     let q = vec2f(
-        fbm(mod_p + vec2f(0.0) + t * 0.1),
-        fbm(mod_p + vec2f(5.2, 1.3) + t * 0.1)
+        fbm(mod_p + vec2f(0.0) + drift),
+        fbm(mod_p + vec2f(5.2, 1.3) + drift)
     );
 
     var r: vec2f;
@@ -84,14 +112,31 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let grain_opacity = 1.0;
     let grain = select(
         0.0, 
-        grain_size + (sin(t * 0.1) + cos(t * 0.2)) * (grain_size * 0.1), 
+        grain_size
+            + (sin(grain_slow_phase) + cos(grain_fast_phase))
+                * (grain_size * 0.1), 
         show_grains
     );
 
     if (show_masks) {
-        let mask1 = make_wrapped_mask(p, vec2f(ma1, ma2), 0.7, t * 0.75);
-        let mask2 = make_wrapped_mask(p, vec2f(ma4, ma2), 0.5, t * 0.10);
-        let mask3 = make_wrapped_mask(p, vec2f(ma3, ma4), 0.3, t * 0.33);
+        let mask1 = make_wrapped_mask(
+            p,
+            vec2f(ma1, ma2),
+            0.7,
+            mask_fast_phase
+        );
+        let mask2 = make_wrapped_mask(
+            p,
+            vec2f(ma4, ma2),
+            0.5,
+            mask_slow_phase
+        );
+        let mask3 = make_wrapped_mask(
+            p,
+            vec2f(ma3, ma4),
+            0.3,
+            mask_med_phase
+        );
         let mask = clamp(mask1 + mask2 + mask3, 0.0, 1.0);
         let r_strength = mix(1.0, 5.0, mask);
         r = vec2f(
@@ -138,6 +183,10 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     }
 
     return vec4f(oklch_to_rgb(color), 1.0);
+}
+
+fn beat_phase(beats: f32, period_beats: f32) -> f32 {
+    return fract(beats / max(period_beats, 0.25)) * TAU;
 }
 
 fn film_grain(color: vec3f, p: vec2f, intensity: f32) -> vec3f {

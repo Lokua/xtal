@@ -1,0 +1,188 @@
+{
+  "version": "2",
+  "ui_controls": [
+    {
+      "type": "Slider",
+      "name": "t_mult",
+      "value": 1.0
+    },
+    {
+      "type": "Checkbox",
+      "name": "direction",
+      "value": false
+    },
+    {
+      "type": "Slider",
+      "name": "depth_scale",
+      "value": 706.2599
+    },
+    {
+      "type": "Slider",
+      "name": "zoom",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "bg_alpha",
+      "value": 1.0
+    },
+    {
+      "type": "Slider",
+      "name": "h1",
+      "value": 0.5
+    },
+    {
+      "type": "Slider",
+      "name": "s1",
+      "value": 0.9
+    },
+    {
+      "type": "Slider",
+      "name": "v1",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "h2",
+      "value": 0.9
+    },
+    {
+      "type": "Slider",
+      "name": "s2",
+      "value": 0.2
+    },
+    {
+      "type": "Slider",
+      "name": "v2",
+      "value": 0.99
+    }
+  ],
+  "midi_controls": [],
+  "osc_controls": [],
+  "snapshots": {
+    "1": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 706.2599
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.9
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.99
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    },
+    "2": {
+      "ui_controls": [
+        {
+          "type": "Slider",
+          "name": "t_mult",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "h1",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "zoom",
+          "value": 1.87
+        },
+        {
+          "type": "Slider",
+          "name": "v1",
+          "value": 0.2
+        },
+        {
+          "type": "Slider",
+          "name": "bg_alpha",
+          "value": 1.0
+        },
+        {
+          "type": "Slider",
+          "name": "v2",
+          "value": 0.99
+        },
+        {
+          "type": "Slider",
+          "name": "s2",
+          "value": 0.2
+        },
+        {
+          "type": "Checkbox",
+          "name": "direction",
+          "value": false
+        },
+        {
+          "type": "Slider",
+          "name": "h2",
+          "value": 0.9
+        },
+        {
+          "type": "Slider",
+          "name": "s1",
+          "value": 0.8223
+        },
+        {
+          "type": "Slider",
+          "name": "depth_scale",
+          "value": 115.4506
+        }
+      ],
+      "midi_controls": [],
+      "osc_controls": []
+    }
+  },
+  "mappings": {},
+  "exclusions": []
+}

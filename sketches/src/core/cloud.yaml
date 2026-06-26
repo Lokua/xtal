@@ -30,7 +30,7 @@ direction:
 detail:
   var: cz
   type: random_slewed
-  beats: 16
+  beats: 8
   range: [0.02, 0.03]
   slew: 0.8
   delay: 0.0
@@ -45,11 +45,29 @@ detail:
 ray_scale_factor:
   var: cw
   type: random_slewed
-  beats: 4
+  beats: 1
   range: [0.01, 0.5]
   slew: 0.8
   delay: 0.0
   stem: 89
+
+ray_scale_pulse:
+  type: triangle
+  beats: 4
+  range: [0.7, 1]
+  phase: 0.0
+
+ray_scale_pulse_mult:
+  type: effect
+  kind: math
+  operator: mult
+  operand: $ray_scale_pulse
+
+ray_scale_factor_modulated:
+  type: mod
+  source: ray_scale_factor
+  modulators:
+    - ray_scale_pulse_mult
 
 depth_scale:
   var: dz
