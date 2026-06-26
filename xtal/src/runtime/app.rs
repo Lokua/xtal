@@ -983,9 +983,12 @@ impl XtalRuntime {
             }
             RuntimeEvent::Tap => {
                 if self.tap_tempo_enabled {
-                    let bpm = self.tap_tempo.tap();
-                    self.bpm.set(bpm);
-                    self.emit_web_view_event(web_view::Event::Bpm(bpm));
+                    let result = self.tap_tempo.tap();
+                    self.bpm.set(result.bpm);
+                    if result.phase_lock {
+                        self.phase_lock_tap(result.bpm);
+                    }
+                    self.emit_web_view_event(web_view::Event::Bpm(result.bpm));
                 }
             }
             RuntimeEvent::TapTempoEnabled(enabled) => {
@@ -2196,6 +2199,24 @@ impl XtalRuntime {
                 self.bpm.get(),
             );
         }
+        self.request_render_now();
+    }
+
+    /// Treats an accepted tap as an observed beat boundary.
+    ///
+    /// Tempo comes from tap spacing. Phase comes from the tap instant, so this
+    /// shifts the frame timing origin to put the current position on the
+    /// nearest integer beat without changing the selected BPM.
+    fn phase_lock_tap(&mut self, bpm: f32) {
+        if !bpm.is_finite() || bpm <= 0.0 {
+            return;
+        }
+
+        let elapsed_seconds = frame_clock::elapsed_seconds();
+        let current_beats = elapsed_seconds * bpm / 60.0;
+        let anchored_beats = current_beats.round().max(0.0);
+        let anchored_seconds = anchored_beats * 60.0 / bpm;
+        frame_clock::set_elapsed_seconds(anchored_seconds);
         self.request_render_now();
     }
 
