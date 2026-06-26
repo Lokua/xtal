@@ -8,18 +8,11 @@ main:
 scale:
   var: bx
   type: random_slewed
-  beats: 12
+  beats: 4
   range: [10.0, 20.0]
   slew: 0.7
   delay: 0.0
   stem: 77
-
-# scale:
-#   var: bx
-#   type: triangle
-#   beats: 128
-#   range: [10.0, 20.0]
-#   phase: 0.0
 
 octaves:
   var: by
@@ -57,6 +50,67 @@ saturation:
   type: slider
   default: 0.04
   range: [0.0, 1.0]
+
+# ------------------------------------------------------------------------------
+#  Separation
+# ------------------------------------------------------------------------------
+
+separation:
+  type: separator
+
+sep_amount:
+  var: gx
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+  step: 0.01
+
+auto_sep_bias:
+  var: hx
+  type: checkbox
+  default: false
+
+sep_bias:
+  var: gz
+  type: slider
+  default: 1.0
+  range: [0.0, 1.0]
+  step: 0.01
+  disabled: auto_sep_bias
+
+sep_bias_anim_beats:
+  type: slider
+  default: 4
+  range: [1, 4]
+  step: 1
+  disabled: not auto_sep_bias
+
+sep_bias_anim:
+  var: hy
+  type: triangle
+  beats: $sep_bias_anim_beats
+  range: [0.0, 1.0]
+
+sep_wave:
+  var: gw
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+  step: 0.01
+
+# ------------------------------------------------------------------------------
+#  Performance
+# ------------------------------------------------------------------------------
+
+performance:
+  type: separator
+
+tile_cluster:
+  var: gy
+  type: slider
+  default: 0.0
+  range: [0.0, 1.0]
+  step: 0.01
 
 # ------------------------------------------------------------------------------
 #  Shape
@@ -183,8 +237,9 @@ wave_invert:
 wave_speed:
   var: ez
   type: slider
-  default: 0.3
-  range: [0.1, 2.0]
+  default: 0.5
+  range: [0.5, 4.0]
+  step: 0.5
 
 # wave_scale:
 #   var: ew

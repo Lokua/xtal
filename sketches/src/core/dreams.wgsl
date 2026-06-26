@@ -14,6 +14,8 @@ struct Params {
     d: vec4f,
     e: vec4f,
     f: vec4f,
+    g: vec4f,
+    h: vec4f,
 }
 
 @group(0) @binding(0)
@@ -49,16 +51,29 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let wave_invert = params.f.x > 0.5;
     let hue = params.f.y;
     let saturation = params.f.z;
+    let sep_amount = params.g.x;
+    let tile_cluster = params.g.y;
+    let sep_bias_manual = params.g.z;
+    let sep_wave = params.g.w;
+    let auto_sep_bias = params.h.x > 0.5;
+    let sep_bias_anim = params.h.y;
+    let sep_bias = select(
+        sep_bias_manual,
+        sep_bias_anim,
+        auto_sep_bias
+    );
 
     let highlight = hsv_to_rgb(vec3f(hue, saturation, 1.0));
     let background = vec3f(0.05, 0.05, 0.08);
     let gap_background = mix(vec3f(0.0, 0.0, 0.0), highlight, 0.35);
 
     let pos = correct_aspect(position);
+
     let scroll_dir = select(-1.0, 1.0, scroll_down);
     let scroll_phase = scroll_dir * time * scroll_speed;
 
     var local_scale = scale;
+
     let wave_active = wave_enabled && abs(wave_scale) > 0.0001;
     if wave_active {
         let movement = vec2f(
@@ -83,8 +98,8 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         );
     }
 
-    // Decouple advection from animated scale to keep a stable fall speed/direction.
-    // This multiplier sets visual speed in pattern space without tying it to scale.
+    // Decouple advection from animated scale to keep a stable fall
+    // speed/direction. This keeps the fall from changing with scale.
     let pattern_scroll = vec2f(0.0, scroll_phase * 12.0);
     let pattern_pos = pos * local_scale + pattern_scroll;
 
@@ -94,8 +109,16 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
         time,
         extrude_amount,
         extrude_frequency,
-        gap_amount
+        gap_amount,
+        sep_amount,
+        sep_bias,
+        sep_wave,
+        tile_cluster
     );
+
+    if voronoi_result.is_space {
+        return vec4f(background, 1.0);
+    }
 
     if voronoi_result.is_gap {
         return vec4f(gap_background, 1.0);
@@ -138,6 +161,7 @@ struct VoronoiResult {
     value: f32,
     edge_dist: f32,
     is_gap: bool,
+    is_space: bool,
 }
 
 fn voronoi_boxes(
@@ -146,21 +170,34 @@ fn voronoi_boxes(
     time: f32,
     extrude_amount: f32,
     extrude_frequency: f32,
-    gap_amount: f32
+    gap_amount: f32,
+    sep_amount: f32,
+    sep_bias: f32,
+    sep_wave: f32,
+    tile_cluster: f32
 ) -> VoronoiResult {
     let cell = floor(p);
     let local_p = fract(p);
     let animate_extrude = extrude_amount > 0.0001;
     let extrude_phase = time * extrude_frequency;
     let corner_radius = mix(0.0, 0.3, roundness);
+    let sep = smoothstep(0.0, 1.0, sep_amount);
 
     var min_dist = 1000.0;
     var second_min = 1000.0;
     var closest_value = 0.0;
     var closest_cell_id = vec2f(0.0);
+    var closest_space_threshold = 0.65;
 
-    for (var y = -1; y <= 1; y++) {
-        for (var x = -1; x <= 1; x++) {
+    let tile_motion_active = tile_cluster > 0.0001;
+    let search_radius = select(1, 3, tile_motion_active);
+
+    for (var y = -3; y <= 3; y++) {
+        for (var x = -3; x <= 3; x++) {
+            if abs(x) > search_radius || abs(y) > search_radius {
+                continue;
+            }
+
             let neighbor = vec2f(f32(x), f32(y));
             let cell_id = cell + neighbor;
 
@@ -170,9 +207,25 @@ fn voronoi_boxes(
                 jitter_seed * 13.37 + 0.17,
                 jitter_seed * 91.73 + 0.83
             ));
-            let point = neighbor + rand_offset;
+            let base_anchor = cell_id + rand_offset;
+            let cluster_center = tile_cluster_center(cell_id);
+            let moved_anchor = move_tile_anchor(
+                base_anchor,
+                cluster_center,
+                tile_cluster
+            );
+            let point = moved_anchor - cell;
 
             let cell_hash = hash(cell_id + vec2f(43.21, 19.17));
+            let tile_sep = tile_sep_amount(
+                cell_id,
+                cell_hash,
+                p,
+                time,
+                sep,
+                sep_bias,
+                sep_wave
+            );
             var size_mod = 1.0;
             if animate_extrude {
                 let pulse_offset = cell_hash * 6.28318;
@@ -180,6 +233,7 @@ fn voronoi_boxes(
                 let pulse_01 = pulse * 0.5 + 0.5;
                 size_mod = 1.0 - (pulse_01 * extrude_amount);
             }
+            size_mod *= mix(1.0, 0.45, tile_sep);
 
             let to_point = point - local_p;
             let box_dist = rounded_box_dist(
@@ -193,6 +247,7 @@ fn voronoi_boxes(
                 min_dist = box_dist;
                 closest_value = cell_hash;
                 closest_cell_id = cell_id;
+                closest_space_threshold = mix(0.65, 0.0, tile_sep);
             } else if box_dist < second_min {
                 second_min = box_dist;
             }
@@ -201,6 +256,7 @@ fn voronoi_boxes(
 
     let gap_hash = hash(closest_cell_id + vec2f(77.7, 55.5));
     let is_gap = gap_hash < gap_amount;
+    let is_space = sep > 0.0 && min_dist > closest_space_threshold;
 
     let edge_dist = smoothstep(0.0, 0.1, second_min - min_dist);
 
@@ -208,7 +264,49 @@ fn voronoi_boxes(
     result.value = closest_value;
     result.edge_dist = 1.0 - edge_dist;
     result.is_gap = is_gap;
+    result.is_space = is_space;
     return result;
+}
+
+fn tile_sep_amount(
+    cell_id: vec2f,
+    cell_hash: f32,
+    p: vec2f,
+    time: f32,
+    sep: f32,
+    sep_bias: f32,
+    sep_wave: f32
+) -> f32 {
+    let bias = clamp(sep_bias, 0.0, 1.0);
+    let wave_amount = clamp(sep_wave, 0.0, 1.0);
+    let sparse = smoothstep(0.78, 0.98, cell_hash);
+    let bias_mask = mix(sparse, 1.0, bias);
+    let wave_phase = (p.y + cell_id.x * 0.18) * 1.4 - time * 6.28318;
+    let wave = sin(wave_phase) * 0.5 + 0.5;
+    let wave_mask = smoothstep(0.35, 0.95, wave);
+    return sep * bias_mask * mix(1.0, wave_mask, wave_amount);
+}
+
+fn tile_cluster_center(cell_id: vec2f) -> vec2f {
+    let cluster_size = 3.0;
+    let cluster_id = floor(cell_id / cluster_size);
+    let base = cluster_id * cluster_size + vec2f(cluster_size * 0.5);
+    let jitter = vec2f(
+        hash(cluster_id + vec2f(13.1, 71.7)),
+        hash(cluster_id + vec2f(91.3, 27.9))
+    ) - vec2f(0.5);
+    return base + jitter * 0.9;
+}
+
+fn move_tile_anchor(
+    anchor: vec2f,
+    cluster_center: vec2f,
+    tile_cluster: f32
+) -> vec2f {
+    let cluster_amount = clamp(tile_cluster, 0.0, 1.0);
+    let from_cluster = anchor - cluster_center;
+    return cluster_center + from_cluster *
+        mix(1.0, 0.18, cluster_amount);
 }
 
 fn rounded_box_dist(

@@ -6,6 +6,7 @@ const GRAIN_SLOW_BEATS_MULT: f32 = 8.0;
 const MASK_FAST_BEATS_MULT: f32 = 2.0;
 const MASK_MED_BEATS_MULT: f32 = 4.0;
 const MASK_SLOW_BEATS_MULT: f32 = 8.0;
+const PAN_CANVAS_DISTANCE: f32 = 2.0;
 
 struct VertexInput {
     @location(0) position: vec2f,
@@ -29,7 +30,7 @@ struct Params {
     e: vec4f,
     // grain_size, swirl, posterize, posterize_steps
     f: vec4f,
-    // show_grains, motion_beats, unused, unused
+    // show_grains, pan_beats, freq_mult, swirl_beats
     g: vec4f,
 }
 
@@ -47,28 +48,29 @@ fn vs_main(vert: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let beats = params.a.z;
-    let motion_beats = max(params.g.y, 0.25);
-    let swirl_phase = beat_phase(beats, motion_beats);
-    let drift_time = beats / motion_beats;
+    let pan_beats = max(params.g.y, 0.25);
+    let swirl_beats = max(params.g.w, 0.25);
+    let swirl_phase = beat_phase(beats, swirl_beats);
+    let drift_time = beats / pan_beats;
     let grain_fast_phase = beat_phase(
         beats,
-        motion_beats * GRAIN_FAST_BEATS_MULT
+        pan_beats * GRAIN_FAST_BEATS_MULT
     );
     let grain_slow_phase = beat_phase(
         beats,
-        motion_beats * GRAIN_SLOW_BEATS_MULT
+        pan_beats * GRAIN_SLOW_BEATS_MULT
     );
     let mask_fast_phase = beat_phase(
         beats,
-        motion_beats * MASK_FAST_BEATS_MULT
+        pan_beats * MASK_FAST_BEATS_MULT
     );
     let mask_med_phase = beat_phase(
         beats,
-        motion_beats * MASK_MED_BEATS_MULT
+        pan_beats * MASK_MED_BEATS_MULT
     );
     let mask_slow_phase = beat_phase(
         beats,
-        motion_beats * MASK_SLOW_BEATS_MULT
+        pan_beats * MASK_SLOW_BEATS_MULT
     );
     let l = params.b.y;
     let c = params.b.z;
@@ -100,7 +102,7 @@ fn fs_main(@location(0) position: vec2f) -> @location(0) vec4f {
     let angle = atan2(p.y, p.x);
     let mod_angle = angle + sin(d * 3.0 + swirl_phase) * swirl;
     let mod_p = vec2f(cos(mod_angle), sin(mod_angle)) * d;
-    let drift = vec2f(drift_time * 0.1);
+    let drift = vec2f(drift_time * PAN_CANVAS_DISTANCE);
 
     let q = vec2f(
         fbm(mod_p + vec2f(0.0) + drift),

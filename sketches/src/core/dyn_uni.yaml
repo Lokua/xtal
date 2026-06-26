@@ -79,7 +79,7 @@ origin_offset:
 origin_anim_x:
   var: gx
   type: random_slewed
-  beats: 16
+  beats: 12
   range: [-1, 1]
   slew: 0.8
   stem: 94

@@ -33,7 +33,7 @@ struct Params {
     e: vec4f,
     // chromatic_feedback_spread, unused, crt_glitch_phase, unused
     f: vec4f,
-    // unused
+    // unused, unused, feedback_tunnel, unused
     g: vec4f,
     // unused, crt_scanline, crt_jitter, unused
     h: vec4f,
@@ -92,6 +92,7 @@ fn fs_main(
     let crt_scanline = params.h.y;
     let crt_jitter = params.h.z;
     let crt_phase_mix = params.i.y;
+    let feedback_tunnel = params.g.z;
 
     var p = correct_aspect(position);
 
@@ -183,10 +184,26 @@ fn fs_main(
     color = color * (0.3 + 0.99 * circle_brightness); 
     color = mix(color, 1.0 - color, invert_color);
 
-    color = edge_detect(uv, color, edge_mix);
-    color = chromatic_feedback(uv, color + (color * feedback), feedback);
+    let feedback_uv = feedback_tunnel_uv(uv, feedback_tunnel);
+    let tunnel_edge_mix = mix(
+        edge_mix,
+        max(edge_mix, 0.14),
+        feedback_tunnel
+    );
+    let tunnel_feedback = mix(
+        feedback,
+        max(feedback, 0.74),
+        feedback_tunnel
+    );
+
+    color = edge_detect(feedback_uv, color, tunnel_edge_mix);
+    color = chromatic_feedback(
+        feedback_uv,
+        color + (color * tunnel_feedback),
+        tunnel_feedback
+    );
     color = crt_glitch_phase(
-        uv,
+        feedback_uv,
         color,
         crt_glitch,
         crt_scanline,
@@ -225,6 +242,34 @@ fn clamp_v2(p: vec2f, min: f32, max: f32) -> vec2f {
         clamp(p.x, min, max), 
         clamp(p.y, min, max)
     );
+}
+
+fn feedback_tunnel_uv(uv: vec2f, amount: f32) -> vec2f {
+    if amount <= 0.0001 {
+        return uv;
+    }
+
+    let t_long = params.c.x;
+    let centered = uv * 2.0 - 1.0;
+    let radius = length(centered);
+    let twist = amount * (0.25 + radius * 1.75);
+    let pulse = 0.82 + 0.08 * sin(t_long * 0.04);
+    let tunnel_scale = mix(1.0, pulse, amount);
+    let ripple = sin(radius * 22.0 - t_long * 0.08) * amount * 0.018;
+    let warped = rotate_point(centered, twist) * tunnel_scale;
+    let tunneled = warped + normalize_or_zero(centered) * ripple;
+
+    return clamp(tunneled * 0.5 + 0.5, vec2f(0.001), vec2f(0.999));
+}
+
+fn normalize_or_zero(v: vec2f) -> vec2f {
+    let len = length(v);
+
+    if len <= 0.0001 {
+        return vec2f(0.0);
+    }
+
+    return v / len;
 }
 
 fn chromatic_feedback(uv: vec2f, color: vec3f, mix: f32) -> vec3f {

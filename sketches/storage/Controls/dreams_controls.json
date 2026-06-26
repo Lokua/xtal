@@ -8,6 +8,16 @@
     },
     {
       "type": "Slider",
+      "name": "hue",
+      "value": 0.13
+    },
+    {
+      "type": "Slider",
+      "name": "saturation",
+      "value": 0.0544
+    },
+    {
+      "type": "Slider",
       "name": "contour_levels",
       "value": 20.0
     },
@@ -54,7 +64,7 @@
     {
       "type": "Slider",
       "name": "wave_speed",
-      "value": 0.7378
+      "value": 0.5
     }
   ],
   "midi_controls": [],
@@ -64,23 +74,8 @@
       "ui_controls": [
         {
           "type": "Slider",
-          "name": "octaves",
-          "value": 5.0
-        },
-        {
-          "type": "Checkbox",
-          "name": "scroll_down",
-          "value": true
-        },
-        {
-          "type": "Slider",
-          "name": "extrude_amount",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "roundness",
-          "value": 0.0
+          "name": "contour_smoothness",
+          "value": 0.493
         },
         {
           "type": "Slider",
@@ -89,13 +84,18 @@
         },
         {
           "type": "Slider",
-          "name": "contour_levels",
-          "value": 20.0
+          "name": "scroll_speed",
+          "value": 0.05
         },
         {
           "type": "Slider",
-          "name": "scroll_speed",
-          "value": 0.05
+          "name": "octaves",
+          "value": 5.0
+        },
+        {
+          "type": "Slider",
+          "name": "roundness",
+          "value": 0.0
         },
         {
           "type": "Slider",
@@ -103,14 +103,24 @@
           "value": 0.9308
         },
         {
-          "type": "Checkbox",
-          "name": "wave_invert",
-          "value": true
+          "type": "Slider",
+          "name": "contour_levels",
+          "value": 20.0
         },
         {
           "type": "Slider",
-          "name": "contour_smoothness",
-          "value": 0.493
+          "name": "extrude_amount",
+          "value": 0.5
+        },
+        {
+          "type": "Checkbox",
+          "name": "scroll_down",
+          "value": true
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_invert",
+          "value": true
         },
         {
           "type": "Checkbox",
@@ -125,17 +135,32 @@
       "ui_controls": [
         {
           "type": "Slider",
+          "name": "extrude_amount",
+          "value": 0.5
+        },
+        {
+          "type": "Slider",
+          "name": "contour_levels",
+          "value": 20.0
+        },
+        {
+          "type": "Slider",
+          "name": "roundness",
+          "value": 0.0
+        },
+        {
+          "type": "Checkbox",
+          "name": "wave_invert",
+          "value": true
+        },
+        {
+          "type": "Slider",
           "name": "wave_speed",
           "value": 0.5
         },
         {
           "type": "Checkbox",
           "name": "scroll_down",
-          "value": true
-        },
-        {
-          "type": "Checkbox",
-          "name": "wave_enabled",
           "value": true
         },
         {
@@ -154,29 +179,14 @@
           "value": 0.9308
         },
         {
-          "type": "Slider",
-          "name": "octaves",
-          "value": 5.0
-        },
-        {
           "type": "Checkbox",
-          "name": "wave_invert",
+          "name": "wave_enabled",
           "value": true
         },
         {
           "type": "Slider",
-          "name": "extrude_amount",
-          "value": 0.5
-        },
-        {
-          "type": "Slider",
-          "name": "contour_levels",
-          "value": 20.0
-        },
-        {
-          "type": "Slider",
-          "name": "roundness",
-          "value": 0.0
+          "name": "octaves",
+          "value": 5.0
         }
       ],
       "midi_controls": [],
