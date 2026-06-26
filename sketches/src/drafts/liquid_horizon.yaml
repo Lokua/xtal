@@ -26,9 +26,9 @@ flow_speed:
 noise_scale:
   var: bx
   type: slider
-  range: [0.5, 8.0]
+  range: [0.01, 8.0]
   default: 3.1
-  step: 0.05
+  # step: 0.01
 
 amplitude:
   var: by
@@ -39,11 +39,11 @@ amplitude:
 
 warp:
   var: cy
-  type: random_slewed
+  type: triangle
   beats: 1.0
   # range: [0.55, 1.35]
   range: [0, 2]
-  slew: 0.8
+  # slew: 0.8
 
 # ------------------------------------------------------------------------------
 #  Contours

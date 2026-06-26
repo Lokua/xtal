@@ -188,8 +188,10 @@ fn normalized_sine(value: f32) -> f32 {
 }
 
 fn hsv_to_rgb(hsv: vec3f) -> vec3f {
-    let p = abs(fract(hsv.xxx + vec3f(0.0, 2.0 / 3.0, 1.0 / 3.0))
-        * 6.0 - 3.0);
+    let p = abs(
+        fract(hsv.xxx + vec3f(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 
+        6.0 - 3.0
+    );
     let rgb = clamp(p - 1.0, vec3f(0.0), vec3f(1.0));
     return hsv.z * mix(vec3f(1.0), rgb, hsv.y);
 }

@@ -10,7 +10,7 @@
   "osc_port": 2346,
   "projector_mode_enabled": false,
   "projector_quality": "Crisp",
-  "transition_time": 1.0,
+  "transition_time": 4.0,
   "user_data_dir": "/Users/lokua/code/xtal-project/sketches/storage",
   "videos_dir": "/Users/lokua/Movies/Xtal"
 }
