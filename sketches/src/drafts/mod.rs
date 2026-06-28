@@ -7,7 +7,6 @@ pub mod hatch;
 pub mod ink;
 pub mod layers;
 pub mod phase_matrix;
-pub mod phase_loom;
 pub mod sline;
 pub mod snd;
 pub mod viaduct_poc;

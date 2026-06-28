@@ -11,6 +11,7 @@ pub mod hatch_auto;
 pub mod interference;
 pub mod liquid_horizon;
 pub mod marcher;
+pub mod phase_loom;
 pub mod neural;
 pub mod rm;
 pub mod rm_auto;
