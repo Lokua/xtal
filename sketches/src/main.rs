@@ -1,10 +1,12 @@
 use xtal::prelude::*;
 
 mod constants;
+mod auto;
 mod core;
 mod dev;
 mod drafts;
 mod templates;
+use auto::*;
 use core::*;
 use dev::*;
 use drafts::*;
@@ -66,6 +68,13 @@ fn main() {
                 clock_dev,
                 projector_stress,
                 video,
+            ]
+        },
+        {
+            title: "Auto",
+            enabled: true,
+            sketches: [
+                light_alley,
             ]
         },
         {

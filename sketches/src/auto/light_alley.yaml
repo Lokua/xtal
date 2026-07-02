@@ -1,0 +1,487 @@
+# ------------------------------------------------------------------------------
+#  Video
+# ------------------------------------------------------------------------------
+
+# TODO: instead of random selection, we'll use round robin to
+# cycle through the videos; same for scrub. Manually play around, note down
+# the parts of the videos you like, then set up the round robins.
+
+# active_video:
+#   type: select
+#   default: Viaduct - Columbia Sky
+#   options:
+#     - Rogers Park Trees (trimmed) # 0
+#     - Viaduct - Columbia Edge # 1
+#     - Viaduct - Columbia Sky # 2
+#     - Viaduct - Columbia # 3
+#     - Viaduct - Evanston Alley Drive # 4
+#     - Viaduct - Evanston Howard # 5
+#     - Viaduct - Evanston Lincoln Canal # 6
+#     - Viaduct - Evanston Main 2 # 7
+#     - Viaduct - Evanston Main # 8
+#     - Viaduct - Evanston Noyes Park # 9
+#     - Viaduct - Evanston Noyes # 10
+#     - Viaduct - Farwell Faces Short # 11
+#     - Viaduct - Farwell Faces # 12
+#     - Viaduct - Farwell # 13
+#     - Viaduct - Jarvis 2 # 14
+#     - Viaduct - Jarvis # 15
+#     - Viaduct - Pratt & Glenwood # 16
+#     - Viaduct - Pratt Fish # 17
+#     - Viaduct - South Evanston # 18
+active_video:
+  type: round_robin
+  beats: 8
+  values: [12, 13, 3, 2, 1, 17, 16, 9, 10]
+
+fit_mode:
+  type: select
+  var: aw
+  default: cover
+  options:
+    - cover
+    - contain
+    - fill
+
+scrub:
+  type: random_slewed
+  beats: 8
+  slew: 0
+  stem: 617
+
+speed:
+  type: slider
+  range: [0.125, 4.0]
+  step: 0.125
+  default: 1.0
+
+frame_blend:
+  type: slider
+  var: jz
+  step: 0.0001
+  default: 0.0
+
+feedback_rotation:
+  type: slider
+  var: lz
+  range: [-0.05, 0.05]
+  step: 0.001
+  default: 0.0
+
+video_beats:
+  type: slider
+  range: [1.0, 16.0]
+  step: 1.0
+
+video:
+  type: video
+  source: a
+  index: $active_video
+  start: $scrub
+  beats: $video_beats
+  speed: $speed
+  direction: ping_pong
+
+# ------------------------------------------------------------------------------
+#  Filters
+# ------------------------------------------------------------------------------
+
+filters:
+  type: separator
+
+black_white:
+  type: slider
+  var: bx
+  step: 0.01
+  default: 0.0
+
+invert:
+  type: slider
+  var: by
+  step: 0.01
+  default: 0.0
+
+invert_darken:
+  type: slider
+  var: jy
+  step: 0.01
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Posterize
+# ------------------------------------------------------------------------------
+
+posterize:
+  type: separator
+
+posterize_mode:
+  type: select
+  var: mz
+  default: rgb
+  options:
+    - rgb
+    - luma
+
+posterize_gamma:
+  type: checkbox
+  var: mw
+  default: false
+
+posterize_amount:
+  type: slider
+  var: bz
+  step: 0.01
+  default: 0.0
+
+posterize_levels:
+  type: slider
+  var: bw
+  range: [2.0, 32.0]
+  step: 1.0
+  default: 4.0
+
+# ------------------------------------------------------------------------------
+#  Highlight
+# ------------------------------------------------------------------------------
+
+highlight:
+  type: separator
+
+highlight_mix:
+  type: slider
+  var: gx
+  step: 0.01
+  default: 0.0
+
+highlight_hue:
+  type: triangle
+  beats: 64
+  var: gy
+
+highlight_sat:
+  type: slider
+  var: gz
+  step: 0.01
+  default: 0.85
+
+highlight_threshold:
+  type: slider
+  var: gw
+  step: 0.01
+  default: 0.72
+
+highlight_softness:
+  type: slider
+  var: hx
+  step: 0.01
+  default: 0.22
+
+# ------------------------------------------------------------------------------
+#  Chroma
+# ------------------------------------------------------------------------------
+
+chroma:
+  type: separator
+
+chroma_shift:
+  type: slider
+  var: ix
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+chroma_angle:
+  type: slider
+  var: iy
+  step: 0.01
+  default: 0.0
+
+chroma_amount:
+  type: slider
+  var: iz
+  range: [0.0, 2.0]
+  step: 0.01
+  default: 0.0
+
+chroma_softness:
+  type: slider
+  var: iw
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.75
+
+# ------------------------------------------------------------------------------
+#  Displace
+# ------------------------------------------------------------------------------
+
+displace:
+  type: separator
+
+displace_amount:
+  type: slider
+  var: hy
+  range: [0.0, 0.15]
+  step: 0.001
+  default: 0.0
+
+displace_frequency:
+  type: slider
+  var: hz
+  range: [1.0, 40.0]
+  step: 0.25
+  default: 12.0
+
+displace_speed:
+  type: slider
+  var: hw
+  range: [1.0, 16.0]
+  step: 1.0
+  default: 4.0
+
+displace_angle:
+  type: slider
+  var: fy
+  step: 0.01
+  default: 0.0
+
+displace_warp:
+  type: slider
+  var: fz
+  step: 0.01
+  default: 0.35
+
+# ------------------------------------------------------------------------------
+#  Zoom
+# ------------------------------------------------------------------------------
+
+zoom:
+  type: separator
+
+zoom_amount:
+  type: slider
+  var: cx
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+auto_zoom:
+  type: checkbox
+  var: cw
+  default: false
+
+zoom_x:
+  type: slider
+  var: cy
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+  disabled: auto_zoom
+
+zoom_y:
+  type: slider
+  var: cz
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+  disabled: auto_zoom
+
+auto_zoom_x:
+  type: random_slewed
+  var: dx
+  beats: 8
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.0
+
+auto_zoom_y:
+  type: random_slewed
+  var: dy
+  beats: 6
+  range: [-1.0, 1.0]
+  slew: 0.8
+  delay: 0.5
+
+# ------------------------------------------------------------------------------
+#  Slice
+# ------------------------------------------------------------------------------
+
+slice:
+  type: separator
+
+slice_axis:
+  type: select
+  var: ew
+  default: horizontal
+  options:
+    - horizontal
+    - vertical
+
+slice_boundary:
+  type: select
+  var: fx
+  default: fold
+  options:
+    - clamp
+    - wrap
+    - fold
+
+slice_amount:
+  type: slider
+  var: ex
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+slice_count:
+  type: slider
+  var: ey
+  range: [1.0, 32.0]
+  step: 1.0
+  default: 8.0
+
+slice_offset:
+  type: triangle
+  var: ez
+  beats: 4
+  range: [-0.2, 0.2]
+
+# ------------------------------------------------------------------------------
+#  Grid
+# ------------------------------------------------------------------------------
+
+grid:
+  type: separator
+
+grid_amount:
+  type: slider
+  var: jx
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+grid_size:
+  type: slider
+  var: jw
+  range: [2.0, 32.0]
+  step: 1.0
+  default: 8.0
+
+grid_seed:
+  type: slider
+  var: dz
+  range: [0.0, 99.0]
+  step: 1.0
+  default: 0.0
+
+# ------------------------------------------------------------------------------
+#  Pixel Sort
+# ------------------------------------------------------------------------------
+
+pixel_sort:
+  type: separator
+
+pixel_sort_channel:
+  type: select
+  var: kw
+  default: luma
+  options:
+    - luma
+    - saturation
+    - red
+    - green
+    - blue
+
+pixel_sort_direction:
+  type: select
+  var: kz
+  default: horizontal
+  options:
+    - horizontal
+    - vertical
+
+animate_pixel_sort:
+  type: checkbox
+  var: nx
+  default: false
+
+animate_pixel_sort_attenuation:
+  type: slider
+  var: nz
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 1.0
+  disabled: not animate_pixel_sort
+
+pixel_sort_amount:
+  type: slider
+  var: kx
+  range: [-1.0, 1.0]
+  step: 0.01
+  default: 0.0
+  disabled: animate_pixel_sort
+
+pixel_sort_triangle:
+  type: triangle
+  var: ny
+  beats: 12
+  range: [-0.3, 0.3]
+
+pixel_sort_threshold:
+  type: slider
+  var: ky
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.5
+
+# ------------------------------------------------------------------------------
+#  Edge Detect
+# ------------------------------------------------------------------------------
+
+edge_detect:
+  type: separator
+
+edge_before_sort:
+  type: checkbox
+  var: dw
+  default: true
+
+edge_mode:
+  type: select
+  var: fw
+  default: mix
+  options:
+    - mix
+    - add
+
+edge_amount:
+  type: slider
+  var: lx
+  range: [0.0, 1.0]
+  step: 0.01
+  default: 0.0
+
+edge_boost:
+  type: slider
+  var: ly
+  range: [1.0, 10.0]
+  step: 0.5
+  default: 3.0
+
+edge_radius:
+  type: slider
+  var: lw
+  range: [1.0, 16.0]
+  step: 0.5
+  default: 1.0
+
+edge_hue:
+  type: slider
+  var: mx
+  step: 0.01
+  default: 0.0
+
+edge_sat:
+  type: slider
+  var: my
+  step: 0.01
+  default: 0.0

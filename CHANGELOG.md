@@ -7,6 +7,15 @@ The format is loosely based on
 eventually adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 when it reaches v1, but until then consider all changes as possibly breaking.
 
+## [Unreleased]
+
+### Fixed
+
+- **Video scrub transport** — normalized video `start` values are now mapped
+  into the valid playable window instead of EOF-adjacent positions, so reset
+  and MIDI start/continue can recover deterministically across the full `0.0`
+  to `1.0` scrub range.
+
 ## [2.1.1] 2026-06-26
 
 ### Fixed

@@ -392,7 +392,9 @@ texture read by WGSL.
 - `index` - zero-based video path index when the Rust source declares multiple
   paths. Defaults to `0`
 - `start` - normalized start position in the source file, from `0.0` to `1.0`.
-  Defaults to `0.0`
+  Defaults to `0.0`. This is not a raw media offset; the runtime maps the
+  normalized value into a valid seek window for the selected transport so the
+  result stays playable.
 - `beats` - musical loop length before seeking back to `start`. Defaults to
   `4.0`
 - `speed` - playback-rate multiplier, independent of `beats`. Defaults to `1.0`
@@ -400,6 +402,17 @@ texture read by WGSL.
 
 `index`, `start`, `beats`, and `speed` may use `$param` references. Referencing
 a `select` for `index` uses the selected option's zero-based position.
+
+For `start`, the runtime clamps the value to the playable media range before
+seeking. In practice that means:
+
+- `0.0` maps to the first valid start position.
+- `1.0` maps to the latest valid start position that still leaves room for the
+  requested transport window.
+- values outside `0.0..1.0` are treated as the nearest endpoint.
+
+This is why `start` should be thought of as a normalized scrub control over the
+usable window, not as a request to jump to EOF.
 
 **Example**
 

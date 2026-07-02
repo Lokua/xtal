@@ -9,4 +9,4 @@ pub const IG_WIDTH: u32 = 1080 / 2;
 pub const IG_HEIGHT: u32 = 1920 / 2;
 
 #[allow(dead_code)]
-pub const WORKING_BPM: f32 = 95.0;
+pub const WORKING_BPM: f32 = 134.0;

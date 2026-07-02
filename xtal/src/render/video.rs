@@ -536,6 +536,7 @@ impl VideoPipeline {
     /// Executes a validated seek and resumes playback.
     fn execute_seek(&self, seek: PlannedSeek) -> Result<(), String> {
         let seek = seek.validate()?;
+        self.drain_samples();
 
         if seek.rate < 0.0 {
             let flags = gst::SeekFlags::FLUSH | gst::SeekFlags::ACCURATE;
@@ -588,17 +589,15 @@ impl VideoPipeline {
         Ok(())
     }
 
+    /// Drops decoded frames that were queued before a transport seek.
+    fn drain_samples(&self) {
+        while self.appsink.try_pull_sample(gst::ClockTime::ZERO).is_some() {}
+    }
+
     /// Converts normalized 0..1 media position to a clock time.
     fn normalized_time(&mut self, normalized: f32) -> Option<gst::ClockTime> {
-        if normalized <= 0.0 {
-            return Some(gst::ClockTime::ZERO);
-        }
-
         let duration = self.duration()?;
-
-        let nseconds = duration.nseconds() as f64;
-        let position = (nseconds * normalized.clamp(0.0, 1.0) as f64) as u64;
-        Some(gst::ClockTime::from_nseconds(position))
+        normalized_media_time(normalized, duration)
     }
 
     /// Returns cached media duration, querying GStreamer on first use.
@@ -821,17 +820,20 @@ fn ping_pong_segment_bounds(
         return None;
     }
 
-    let start_ns = normalized_to_nseconds(transport.start, duration_ns)
-        .min(duration_ns - 1);
+    let playable_end_ns = duration_ns - 1;
     let half_beats = transport.beats.max(0.000_1) * 0.5;
     let seconds_per_beat = 60.0 / bpm.max(1.0);
     let media_seconds = half_beats * seconds_per_beat * transport.speed.abs();
-    let media_ns = (media_seconds.max(0.0) * NANOSECONDS_PER_SECOND) as u64;
-    let turnaround_ns = start_ns.checked_add(media_ns)?;
-
-    if turnaround_ns >= duration_ns || turnaround_ns <= start_ns {
+    let requested_span_ns =
+        (media_seconds.max(0.0) * NANOSECONDS_PER_SECOND) as u64;
+    if requested_span_ns == 0 {
         return None;
     }
+
+    let span_ns = requested_span_ns.min(playable_end_ns).max(1);
+    let latest_start_ns = playable_end_ns.saturating_sub(span_ns);
+    let start_ns = normalized_to_nseconds(transport.start, latest_start_ns);
+    let turnaround_ns = start_ns + span_ns;
 
     Some((
         gst::ClockTime::from_nseconds(start_ns),
@@ -839,9 +841,23 @@ fn ping_pong_segment_bounds(
     ))
 }
 
+/// Converts normalized media position into a seekable time before EOF.
+fn normalized_media_time(
+    normalized: f32,
+    duration: gst::ClockTime,
+) -> Option<gst::ClockTime> {
+    let duration_ns = duration.nseconds();
+    if duration_ns <= 1 {
+        return None;
+    }
+
+    let position_ns = normalized_to_nseconds(normalized, duration_ns - 1);
+    Some(gst::ClockTime::from_nseconds(position_ns))
+}
+
 /// Converts a normalized media position into nanoseconds.
 fn normalized_to_nseconds(normalized: f32, duration_ns: u64) -> u64 {
-    (duration_ns as f32 * normalized.clamp(0.0, 1.0)) as u64
+    (duration_ns as f64 * normalized.clamp(0.0, 1.0) as f64).floor() as u64
 }
 
 /// Returns whether two transports refer to the same media time window.
@@ -905,9 +921,22 @@ mod tests {
         }
     }
 
+    fn expected_ping_pong_start(
+        start: f32,
+        duration: gst::ClockTime,
+        span: gst::ClockTime,
+    ) -> gst::ClockTime {
+        let latest_start_ns = duration.nseconds() - 1 - span.nseconds();
+        gst::ClockTime::from_nseconds(normalized_to_nseconds(
+            start,
+            latest_start_ns,
+        ))
+    }
+
     #[test]
     fn ping_pong_reverse_seek_uses_scrubbed_start_as_lower_bound() {
         let duration = gst::ClockTime::from_seconds(10);
+        let span = gst::ClockTime::from_seconds(1);
         let plan = plan_ping_pong_reverse_seek(
             &ping_pong_transport(0.5),
             120.0,
@@ -916,14 +945,15 @@ mod tests {
         .expect("expected valid reverse seek");
 
         assert_eq!(plan.rate, -1.0);
-        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
-        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+        assert_eq!(plan.start, expected_ping_pong_start(0.5, duration, span));
+        assert_eq!(plan.stop, Some(plan.start + span));
         assert!(plan.start < plan.stop.unwrap());
     }
 
     #[test]
     fn ping_pong_forward_seek_uses_bounded_segment() {
         let duration = gst::ClockTime::from_seconds(10);
+        let span = gst::ClockTime::from_seconds(1);
         let plan = plan_ping_pong_forward_seek(
             &ping_pong_transport(0.5),
             120.0,
@@ -933,14 +963,15 @@ mod tests {
         .expect("expected valid forward seek");
 
         assert_eq!(plan.rate, 1.0);
-        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
-        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+        assert_eq!(plan.start, expected_ping_pong_start(0.5, duration, span));
+        assert_eq!(plan.stop, Some(plan.start + span));
         assert!(plan.start < plan.stop.unwrap());
     }
 
     #[test]
     fn ping_pong_forward_seek_rejects_position_after_segment_stop() {
         let duration = gst::ClockTime::from_seconds(10);
+        let span = gst::ClockTime::from_seconds(1);
         let plan = plan_ping_pong_forward_seek(
             &ping_pong_transport(0.5),
             120.0,
@@ -949,20 +980,42 @@ mod tests {
         )
         .expect("expected valid forward seek");
 
-        assert_eq!(plan.start, gst::ClockTime::from_seconds(5));
-        assert_eq!(plan.stop, Some(gst::ClockTime::from_seconds(6)));
+        assert_eq!(plan.start, expected_ping_pong_start(0.5, duration, span));
+        assert_eq!(plan.stop, Some(plan.start + span));
     }
 
     #[test]
-    fn ping_pong_reverse_seek_rejects_wrapped_segments() {
+    fn ping_pong_forward_seek_maps_one_to_latest_valid_start() {
         let duration = gst::ClockTime::from_seconds(10);
+        let plan = plan_ping_pong_forward_seek(
+            &ping_pong_transport(1.0),
+            90.0,
+            duration,
+            None,
+        )
+        .expect("expected valid forward seek");
+
+        assert_eq!(plan.rate, 1.0);
+        assert!(plan.start > gst::ClockTime::from_seconds(8));
+        assert!(plan.start < plan.stop.unwrap());
+        assert!(plan.stop.unwrap() < duration);
+        assert!(plan.accurate_forward);
+    }
+
+    #[test]
+    fn ping_pong_reverse_seek_maps_one_to_latest_valid_start() {
+        let duration = gst::ClockTime::from_seconds(10);
+        let span = gst::ClockTime::from_seconds(1);
         let plan = plan_ping_pong_reverse_seek(
-            &ping_pong_transport(0.95),
+            &ping_pong_transport(1.0),
             120.0,
             duration,
-        );
+        )
+        .expect("expected valid reverse seek");
 
-        assert_eq!(plan, None);
+        assert_eq!(plan.start, expected_ping_pong_start(1.0, duration, span));
+        assert_eq!(plan.stop, Some(plan.start + span));
+        assert!(plan.start < plan.stop.unwrap());
     }
 
     #[test]
